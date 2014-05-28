@@ -20,7 +20,9 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBlockEvaluator;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,42 +66,60 @@ public class PyBlockEvaluatorTest extends PyTestCase {
 
   public void testDict() {
     PyBlockEvaluator eval = doEvaluate("a={'b': 'c'}");
-    Map map = (Map) eval.getValue("a");
+    Map map = (Map)eval.getValue("a");
     assertEquals(1, map.size());
     assertEquals("c", map.get("b"));
   }
 
   public void testDictNoEvaluate() {
     PyBlockEvaluator eval = doEvaluate("a={'b': 'c'}", true);
-    Map map = (Map) eval.getValue("a");
+    Map map = (Map)eval.getValue("a");
     assertEquals(1, map.size());
     assertTrue(map.get("b") instanceof PyStringLiteralExpression);
   }
 
   public void testDictAssign() {
     PyBlockEvaluator eval = doEvaluate("a={}\na['b']='c'");
-    Map map = (Map) eval.getValue("a");
+    Map map = (Map)eval.getValue("a");
     assertEquals(1, map.size());
     assertEquals("c", map.get("b"));
   }
 
   public void testDictAssignNoEvaluate() {
     PyBlockEvaluator eval = doEvaluate("a={}\na['b']='c'", true);
-    Map map = (Map) eval.getValue("a");
+    Map map = (Map)eval.getValue("a");
     assertEquals(1, map.size());
     assertTrue(map.get("b") instanceof PyStringLiteralExpression);
   }
 
   public void testDictUpdate() {
     PyBlockEvaluator eval = doEvaluate("a={}\na.update({'b': 'c'})");
-    Map map = (Map) eval.getValue("a");
+    Map map = (Map)eval.getValue("a");
     assertEquals(1, map.size());
     assertEquals("c", map.get("b"));
   }
 
+  /**
+   * Ensures module has any vars imported from external modules
+   */
+  public void testImport() {
+    myFixture.copyDirectoryToProject("blockEvaluator", "");
+    final PyFile file = PyUtil.as(myFixture.configureByFile("my_module.py"), PyFile.class);
+    assert file != null : "Failed to read file";
+    final PyBlockEvaluator sut = new PyBlockEvaluator();
+    sut.evaluate(file);
+
+    Assert.assertEquals("Failed to read var from package module", "foo", sut.getValueAsString("VARIABLE_IN_PACKAGE_MODULE"));
+    Assert.assertEquals("Failed to read var from package", "foo", sut.getValueAsString("VARIABLE_IN_PACKAGE"));
+    Assert.assertEquals("Failed to read list from another module", Arrays.asList("a", "b", "c", "d"), sut.getValueAsList("SOME_LIST"));
+    Assert.assertEquals("Failed to read var from another module", "42", sut.getValueAsString("SOME_VARIABLE"));
+    Assert.assertEquals("Failed to read var from another module with alias", "foo", sut.getValueAsString("MY_RENAMED_VAR"));
+  }
+
   public void testFunction() {
     PyBlockEvaluator eval = new PyBlockEvaluator();
-    PyFile file = (PyFile)PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("a.py", PythonFileType.INSTANCE, "def foo(): return 'a'");
+    PyFile file = (PyFile)PsiFileFactory.getInstance(myFixture.getProject())
+      .createFileFromText("a.py", PythonFileType.INSTANCE, "def foo(): return 'a'");
     PyFunction foo = file.findTopLevelFunction("foo");
     eval.evaluate(foo);
     assertEquals("a", eval.getReturnValue());

@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.LightColors;
@@ -171,9 +172,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
         panel.setOpaque(true);
-        final Color bg = isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
+        Color bg = UIUtil.getListBackground(isSelected);
         panel.setBackground(bg);
 
+        Color groupFg = isSelected ? UIUtil.getListForeground() : UIUtil.getLabelDisabledForeground();
 
         if (value instanceof ActionWrapper) {
 
@@ -197,32 +199,30 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (groupName != null) {
             final JLabel groupLabel = new JLabel(groupName);
             groupLabel.setBackground(bg);
-            groupLabel.setForeground(fg);
+            groupLabel.setForeground(groupFg);
             panel.add(groupLabel, BorderLayout.EAST);
           }
         }
         else if (value instanceof OptionDescription) {
-          if (!isSelected && !UIUtil.isUnderDarcula()) {
-            panel.setBackground(LightColors.SLIGHTLY_GRAY);
+          if (!isSelected) {
+            panel.setBackground(UIUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY);
           }
           String hit = ((OptionDescription)value).getHit();
           if (hit == null) {
             hit = ((OptionDescription)value).getOption();
           }
           hit = StringUtil.unescapeXml(hit);
-          if (hit.length() > 50) {
-            hit = hit.substring(0, 50) + "...";
-          }
+          hit = StringUtil.first(hit, 50, true);
           hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+          final Color fg = UIUtil.getListForeground(isSelected);
           final JLabel label = new JLabel(hit.trim());
           label.setIcon(EMPTY_ICON);
           label.setForeground(fg);
           label.setBackground(bg);
           panel.add(label, BorderLayout.WEST);
           final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
-          settingsLabel.setForeground(fg);
+          settingsLabel.setForeground(groupFg);
           settingsLabel.setBackground(bg);
           panel.add(settingsLabel, BorderLayout.EAST);
         }
@@ -538,7 +538,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
 
-  private String convertPattern(String pattern) {
+  private static String convertPattern(String pattern) {
     final int eol = pattern.indexOf('\n');
     if (eol != -1) {
       pattern = pattern.substring(0, eol);
@@ -666,7 +666,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
 
     @Override
-    public int compareTo(ActionWrapper o) {
+    public int compareTo(@NotNull ActionWrapper o) {
       final int compared = myMode.compareTo(o.getMode());
       return compared != 0
              ? compared

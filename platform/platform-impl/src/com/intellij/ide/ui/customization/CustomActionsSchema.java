@@ -204,7 +204,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
         if (pair.first.equals(id)){
           final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
           if (actionGroup != null) { //J2EE/Commander plugin was disabled
-            myIdToActionGroup.put(id, CustomizationUtil.correctActionGroup(actionGroup, this, pair.second));
+            myIdToActionGroup.put(id, CustomizationUtil.correctActionGroup(actionGroup, this, pair.second, pair.second));
           }
         }
       }
@@ -216,7 +216,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     for (Pair pair : myIdToNameList) {
       final ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(pair.first);
       if (actionGroup != null) { //J2EE/Commander plugin was disabled
-        myIdToActionGroup.put(pair.first, CustomizationUtil.correctActionGroup(actionGroup, this, pair.second));
+        myIdToActionGroup.put(pair.first, CustomizationUtil.correctActionGroup(actionGroup, this, pair.second, pair.second));
       }
     }
   }

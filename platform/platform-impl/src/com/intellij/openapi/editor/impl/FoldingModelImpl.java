@@ -138,8 +138,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return getCollapsedRegionAtOffset(offset) != null;
   }
 
-  private void assertIsDispatchThreadForEditor() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  private static void assertIsDispatchThreadForEditor() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
   private static void assertReadAccess() {
     ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();

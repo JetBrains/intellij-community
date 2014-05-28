@@ -185,7 +185,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       String substAttr = myDescriptorTag.getAttributeValue("substitutionGroup");
       if (substAttr != null) {
         final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(substAttr);
-        final String namespace = "".equals(namespacePrefix) ?
+        final String namespace = namespacePrefix.isEmpty() ?
                                  ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
                                  myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
         final String local = XmlUtil.findLocalNameByQualifiedName(substAttr);
@@ -327,7 +327,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     final String localName = XmlUtil.findLocalNameByQualifiedName(attributeName);
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(attributeName);
     final XmlNSDescriptorImpl xmlNSDescriptor = (XmlNSDescriptorImpl)getNSDescriptor();
-    final String namespace = namespacePrefix != null && namespacePrefix.isEmpty() ?
+    final String namespace = namespacePrefix.isEmpty() ?
                              ((xmlNSDescriptor != null)?xmlNSDescriptor.getDefaultNamespace():"") :
                              context.getNamespaceByPrefix(namespacePrefix);
 
@@ -377,11 +377,6 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(namespace, qName);
 
       if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
-        for (XmlAttributeDescriptor attributeDescriptor : descriptors) {
-          if (attributeDescriptor.getName().equals(attributeName)) {
-            return attributeDescriptor;
-          }
-        }
         return new AnyXmlAttributeDescriptor(attributeName, containAttributeType);
       }
     }
@@ -403,7 +398,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
   public XmlElementDescriptor getElementDescriptor(final String name) {
       final String localName = XmlUtil.findLocalNameByQualifiedName(name);
       final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
-      final String namespace = "".equals(namespacePrefix) ?
+      final String namespace = namespacePrefix.isEmpty() ?
                                ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
                                myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
     return getElementDescriptor(localName, namespace, null, name);

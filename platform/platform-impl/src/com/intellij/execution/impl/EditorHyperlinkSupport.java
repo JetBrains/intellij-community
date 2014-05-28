@@ -265,11 +265,11 @@ public class EditorHyperlinkSupport {
       Filter.Result result = customFilter.applyFilter(text, endOffset);
       if (result != null) {
         for (Filter.ResultItem resultItem : result.getResultItems()) {
-          if (resultItem.hyperlinkInfo != null) {
-            createHyperlink(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes, resultItem.hyperlinkInfo);
+          if (resultItem.getHyperlinkInfo() != null) {
+            createHyperlink(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHighlightAttributes(), resultItem.getHyperlinkInfo());
           }
-          else if (resultItem.highlightAttributes != null) {
-            addHighlighter(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.highlightAttributes);
+          else if (resultItem.getHighlightAttributes() != null) {
+            addHighlighter(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHighlightAttributes());
           }
         }
       }

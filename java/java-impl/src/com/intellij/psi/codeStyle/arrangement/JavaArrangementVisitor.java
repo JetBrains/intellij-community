@@ -172,7 +172,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       @Override
       public void run() {
         PsiExpressionList list = aClass.getArgumentList();
-        if (list != null) {
+        if (list != null && list.getTextLength() > 0) {
           JavaElementArrangementEntry listEntry = createNewEntry(list, list.getTextRange(), ANON_CLASS_PARAMETER_LIST, aClass.getName(), true);
           processEntry(listEntry, null, list);
         }

@@ -54,7 +54,7 @@ import java.util.List;
  */
 public class CompilerTester {
   private final boolean myExternalMake;
-  private final Module myModule;
+  private Module myModule;
   private TempDirTestFixture myMainOutput;
 
   public CompilerTester(boolean externalMake, Module module) throws Exception {
@@ -91,8 +91,10 @@ public class CompilerTester {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    } finally {
+      myMainOutput = null;
+      myModule = null;
     }
-    myMainOutput = null;
   }
 
   private Project getProject() {

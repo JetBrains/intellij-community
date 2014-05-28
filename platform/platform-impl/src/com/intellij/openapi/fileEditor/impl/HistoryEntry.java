@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -39,6 +40,8 @@ final class HistoryEntry{
   private static final String STATE_ELEMENT = "state";
 
   public final VirtualFile myFile;
+  // This reference is kept to ensure cached value in FileDocumentManager is not cleared
+  @SuppressWarnings("UnusedDeclaration") private final Document myDocument;
   /**
    * can be null when read from XML
    */ 
@@ -47,6 +50,7 @@ final class HistoryEntry{
 
   public HistoryEntry(@NotNull VirtualFile file, @NotNull FileEditorProvider[] providers, @NotNull FileEditorState[] states, @NotNull FileEditorProvider selectedProvider){
     myFile = file;
+    myDocument = null;
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
     mySelectedProvider = selectedProvider;
     for (int i = 0; i < providers.length; i++) {
@@ -58,7 +62,7 @@ final class HistoryEntry{
     this(project, e, false);
   }
   
-  public HistoryEntry(Project project, Element e, boolean ensureDocumentCreated) throws InvalidDataException{
+  public HistoryEntry(Project project, Element e, boolean cacheDocument) throws InvalidDataException{
     if (!e.getName().equals(TAG)) {
       throw new IllegalArgumentException("unexpected tag: " + e);
     }
@@ -71,11 +75,9 @@ final class HistoryEntry{
 
     myFile = file;
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
-    if (ensureDocumentCreated) {
-      // May be necessary for correct initialisation. For example, stored fold regions info is not applied if target document
-      // hasn't been initialised yet.
-      FileDocumentManager.getInstance().getDocument(myFile);
-    } 
+    // Make sure document is available for history entry deserialization (in particular, for folding information) and it remains
+    // in cache till editor opening
+    myDocument = cacheDocument ? FileDocumentManager.getInstance().getDocument(myFile) : null;
 
     List providers = e.getChildren(PROVIDER_ELEMENT);
     for (final Object provider1 : providers) {

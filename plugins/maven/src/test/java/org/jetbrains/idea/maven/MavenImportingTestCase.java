@@ -197,7 +197,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertTrue(getCompilerExtension(module).isCompilerOutputPathInherited());
   }
 
-  private CompilerModuleExtension getCompilerExtension(String module) {
+  protected CompilerModuleExtension getCompilerExtension(String module) {
     ModuleRootManager m = getRootManager(module);
     return CompilerModuleExtension.getInstance(m.getModule());
   }

@@ -17,7 +17,6 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.actions.JavaValueModifier;
 import com.intellij.debugger.actions.JumpToObjectAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -149,6 +148,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
         node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
       }
     });
+  }
+
+  String getValueString() {
+    return splitValue(myValueDescriptor.getValueLabel())[1];
   }
 
   private static class TypedStringValuePresentation extends XStringValuePresentation {

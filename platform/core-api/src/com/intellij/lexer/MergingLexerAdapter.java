@@ -19,21 +19,32 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class MergingLexerAdapter extends MergingLexerAdapterBase {
+  private final TokenSet myTokenSet;
+  private final MergeFunction myMergeFunction = new MyMergeFunction();
+
   public MergingLexerAdapter(final Lexer original, final TokenSet tokensToMerge){
-    super(original, new MergeFunction() {
+    super(original);
+    myTokenSet = tokensToMerge;
+  }
+
+  @Override
+  public MergeFunction getMergeFunction() {
+    return myMergeFunction;
+  }
+
+  private class MyMergeFunction implements MergeFunction {
       @Override
       public IElementType merge(final IElementType type, final Lexer originalLexer) {
-        if (!tokensToMerge.contains(type)){
+        if (!myTokenSet.contains(type)) {
           return type;
         }
 
-        while(true){
+        while (true) {
           final IElementType tokenType = originalLexer.getTokenType();
           if (tokenType != type) break;
           originalLexer.advance();
         }
         return type;
       }
-    });
   }
 }

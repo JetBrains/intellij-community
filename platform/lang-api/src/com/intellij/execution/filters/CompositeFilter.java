@@ -33,7 +33,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
   private final List<Filter> myFilters = new ArrayList<Filter>();
   private boolean myIsAnyHeavy;
-  private boolean forceUseAllFilters = true;
+  private boolean forceUseAllFilters = false;
   private final DumbService myDumbService;
 
   public CompositeFilter(@NotNull Project project) {
@@ -85,8 +85,8 @@ public class CompositeFilter implements Filter, FilterMixin {
     }
     if (resultItems.size() == 1) {
       ResultItem resultItem = resultItems.get(0);
-      return new Result(resultItem.highlightStartOffset, resultItem.highlightEndOffset, resultItem.hyperlinkInfo,
-                        resultItem.highlightAttributes);
+      return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
+                        resultItem.getHighlightAttributes());
     }
     return new Result(resultItems);
   }
@@ -104,7 +104,7 @@ public class CompositeFilter implements Filter, FilterMixin {
       List<ResultItem> newItems = newResult.getResultItems();
       for (int i = 0; i < newItems.size(); i++) {
         ResultItem item = newItems.get(i);
-        if (item.hyperlinkInfo == null || !intersects(resultItems, item)) {
+        if (item.getHyperlinkInfo() == null || !intersects(resultItems, item)) {
           resultItems.add(item);
         }
       }
@@ -117,7 +117,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
     for (int i = 0; i < items.size(); i++) {
       ResultItem item = items.get(i);
-      if (item.hyperlinkInfo != null) {
+      if (item.getHyperlinkInfo() != null) {
         if (newItemTextRange == null) {
           newItemTextRange = new TextRange(newItem.highlightStartOffset, newItem.highlightEndOffset);
         }

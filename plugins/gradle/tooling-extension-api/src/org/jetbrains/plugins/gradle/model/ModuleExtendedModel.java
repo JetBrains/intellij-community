@@ -67,4 +67,11 @@ public interface ModuleExtendedModel extends Serializable {
    * @return the build directory.
    */
   File getBuildDir();
+
+  /**
+   * The compiler output directories.
+   *
+   * @return the compiler output directories.
+   */
+  ExtIdeaCompilerOutput getCompilerOutput();
 }

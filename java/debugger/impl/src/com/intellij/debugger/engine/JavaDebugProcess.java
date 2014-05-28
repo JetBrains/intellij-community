@@ -35,6 +35,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
@@ -285,6 +286,20 @@ public class JavaDebugProcess extends XDebugProcess {
             }
           }
         }, threadsContent);
+      }
+
+      @NotNull
+      @Override
+      public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+        Content content = null;
+        if (console instanceof ExecutionConsoleEx) {
+          ((ExecutionConsoleEx)console).buildUi(ui);
+          content = ui.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
+        }
+        if (content == null) {
+          content = super.registerConsoleContent(ui, console);
+        }
+        return content;
       }
     };
   }

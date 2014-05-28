@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -21,11 +20,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorComboBox;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -60,8 +57,6 @@ public class HgPullDialog extends DialogWrapper {
 
   public void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
-    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
     myRepositoryURL.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -75,11 +70,6 @@ public class HgPullDialog extends DialogWrapper {
     for (String path : paths) {
       myRepositoryURL.prependItem(path);
     }
-  }
-
-  public void rememberSettings() {
-    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
-    rememberedInputs.addUrl(HgUtil.removePasswordIfNeeded(getSource()));
   }
 
   @NotNull

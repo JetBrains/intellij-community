@@ -103,10 +103,10 @@ public final class TestProxyPrinterProvider {
         throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
       }
       if (result != null) {
-        defaultPrint(line.substring(0, result.highlightStartOffset), contentType);
-        String linkText = line.substring(result.highlightStartOffset, result.highlightEndOffset);
-        printHyperlink(linkText, result.hyperlinkInfo);
-        defaultPrint(line.substring(result.highlightEndOffset), contentType);
+        defaultPrint(line.substring(0, result.getHighlightStartOffset()), contentType);
+        String linkText = line.substring(result.getHighlightStartOffset(), result.getHighlightEndOffset());
+        printHyperlink(linkText, result.getHyperlinkInfo());
+        defaultPrint(line.substring(result.getHighlightEndOffset()), contentType);
       }
       else {
         defaultPrint(line, contentType);

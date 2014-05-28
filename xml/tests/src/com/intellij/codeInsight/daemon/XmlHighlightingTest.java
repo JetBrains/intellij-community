@@ -1550,7 +1550,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
-  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testDocBook5() throws Exception {
     doTestWithLocations(
       new String[][] {
@@ -2048,6 +2047,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     PsiReference at = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
     PsiElement resolve = at.resolve();
     assertTrue(resolve instanceof XmlTag);
+  }
+
+  public void testQualifiedAttributeReference() throws Exception {
+    configureByFiles(null, BASE_PATH + "qualified.xml", BASE_PATH + "qualified.xsd");
+    doDoTest(true, false);
   }
 
   @Override

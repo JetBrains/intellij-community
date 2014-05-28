@@ -10,18 +10,6 @@ PsiJavaFileStub []
       PsiModifierListStub[mask=25]
     PsiFieldStub[enumconst C:AnnotatedEnumConstructor]
       PsiModifierListStub[mask=25]
-    PsiMethodStub[values:AnnotatedEnumConstructor[]]
-      PsiModifierListStub[mask=9]
-      PsiTypeParameterListStub
-      PsiParameterListStub
-      PsiRefListStub[THROWS_LIST:]
-    PsiMethodStub[valueOf:AnnotatedEnumConstructor]
-      PsiModifierListStub[mask=9]
-      PsiTypeParameterListStub
-      PsiParameterListStub
-        PsiParameterStub[name:java.lang.String]
-          PsiModifierListStub[mask=0]
-      PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[cons varargs AnnotatedEnumConstructor:void]
       PsiModifierListStub[mask=2]
       PsiTypeParameterListStub

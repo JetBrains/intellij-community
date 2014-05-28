@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor implements PsiWritableMetaData, XmlAttributeDescriptor {
   private XmlTag myTag;
   String myUse;
+  String myReferenceName;
 
   @NonNls
   public static final String REQUIRED_ATTR_VALUE = "required";
@@ -110,22 +111,34 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
 
   public String getName(PsiElement context) {
 
+    String name = getName();
     if (context == null) {
-      return getName();
+      return name;
     }
-    final String form = myTag.getAttributeValue("form");
-    boolean isQualifiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
 
     final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getRootTag();
     assert rootTag != null;
     String targetNs = rootTag.getAttributeValue("targetNamespace");
-    XmlTag contextTag = (XmlTag)context;
-    String name = getName();
+    if (targetNs == null) return name;
 
+    XmlTag contextTag = (XmlTag)context;
+    if (QUALIFIED_ATTR_VALUE.equals(myTag.getAttributeValue("form")) ||
+        QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
+        shouldBeQualified(targetNs, contextTag)) {
+      final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
+      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
+        name = prefixByNamespace + ":" + name;
+      }
+    }
+
+    return name;
+  }
+
+  private boolean shouldBeQualified(String targetNs, XmlTag contextTag) {
     boolean attributeShouldBeQualified = false;
 
     String contextNs = contextTag.getNamespace();
-    if (targetNs != null && !contextNs.equals(targetNs)) {
+    if (!contextNs.equals(targetNs)) {
       final XmlElementDescriptor xmlElementDescriptor = contextTag.getDescriptor();
 
       if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
@@ -134,6 +147,13 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
 
         if (type instanceof ComplexTypeDescriptor) {
           final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
+          if (myReferenceName != null) {
+            return myReferenceName.indexOf(':') != 0;
+          }
+          XmlAttributeDescriptor[] attributes = ((ComplexTypeDescriptor)type).getAttributes(contextTag);
+          if (ArrayUtil.contains(this, attributes)) {
+            return false;
+          }
           attributeShouldBeQualified = typeDescriptor.canContainAttribute(targetNs, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
         }
 
@@ -142,20 +162,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
         }
       }
     }
-
-    if (targetNs != null &&
-        ( isQualifiedAttr ||
-          QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
-          attributeShouldBeQualified
-        )
-      ) {
-      final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
-      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
-        name = prefixByNamespace + ":" + name;
-      }
-    }
-
-    return name;
+    return attributeShouldBeQualified;
   }
 
   public void setName(String name) throws IncorrectOperationException {

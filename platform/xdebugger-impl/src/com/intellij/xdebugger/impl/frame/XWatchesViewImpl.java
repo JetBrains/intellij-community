@@ -19,13 +19,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.openapi.CompositeDisposable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -46,9 +49,11 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +68,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   @NotNull private final XDebugSession mySession;
   private final XDebugSessionData mySessionData;
   private final JPanel myDecoratedPanel;
+  private final CompositeDisposable myDisposables = new CompositeDisposable();
 
   public XWatchesViewImpl(@NotNull final XDebugSession session, final @NotNull XDebugSessionData sessionData) {
     mySession = session;
@@ -105,11 +111,97 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
 
     myTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
 
+    installEditListeners();
+  }
+
+  private void installEditListeners() {
+    final XDebuggerTree watchTree = myTreePanel.getTree();
+    final Alarm quitePeriod = new Alarm();
+    final Alarm editAlarm = new Alarm();
+    final ClickListener mouseListener = new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (!SwingUtilities.isLeftMouseButton(event) ||
+            ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
+          return false;
+        }
+        boolean sameRow = isAboveSelectedItem(event, watchTree);
+        final AnAction editWatchAction = ActionManager.getInstance().getAction(XDebuggerActions.XEDIT_WATCH);
+        Presentation presentation = editWatchAction.getTemplatePresentation().clone();
+        DataContext context = DataManager.getInstance().getDataContext(watchTree);
+        final AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
+        Runnable runnable = new Runnable() {
+          public void run() {
+            editWatchAction.actionPerformed(actionEvent);
+          }
+        };
+        if (sameRow && editAlarm.isEmpty() && quitePeriod.isEmpty()) {
+          editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
+        } else {
+          editAlarm.cancelAllRequests();
+        }
+        return false;
+      }
+    };
+    final ClickListener mouseEmptySpaceListener = new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        if (!isAboveSelectedItem(event, watchTree)) {
+          myRootNode.addNewWatch();
+          return true;
+        }
+        return false;
+      }
+    };
+    ListenerUtil.addClickListener(watchTree, mouseListener);
+    ListenerUtil.addClickListener(watchTree, mouseEmptySpaceListener);
+
+    final FocusListener focusListener = new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        editAlarm.cancelAllRequests();
+      }
+    };
+    ListenerUtil.addFocusListener(watchTree, focusListener);
+
+    final TreeSelectionListener selectionListener = new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+      }
+    };
+    watchTree.addTreeSelectionListener(selectionListener);
+    myDisposables.add(new Disposable() {
+      @Override
+      public void dispose() {
+        ListenerUtil.removeClickListener(watchTree, mouseListener);
+        ListenerUtil.removeClickListener(watchTree, mouseEmptySpaceListener);
+        ListenerUtil.removeFocusListener(watchTree, focusListener);
+        watchTree.removeTreeSelectionListener(selectionListener);
+      }
+    });
   }
 
   @Override
   public void dispose() {
+    Disposer.dispose(myDisposables);
     DnDManager.getInstance().unregisterTarget(this, myTreePanel.getTree());
+  }
+
+  private static boolean isAboveSelectedItem(MouseEvent event, XDebuggerTree watchTree) {
+    Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
+    if (bounds != null) {
+      bounds.width = watchTree.getWidth();
+      if (bounds.contains(event.getPoint())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void executeAction(@NotNull String watch) {

@@ -25,7 +25,7 @@ public class PasswordSafeOptionsPanel {
   /**
    * The password storage policy option
    */
-  private JRadioButton myRememberOnDiskProtectedRadioButton;
+  private JRadioButton mySaveOnDiskRadioButton;
   /**
    * The change password button
    */
@@ -44,11 +44,11 @@ public class PasswordSafeOptionsPanel {
     final PasswordSafeImpl ps = (PasswordSafeImpl)passwordSafe;
     final ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        boolean isDisk = myRememberOnDiskProtectedRadioButton.isSelected();
+        boolean isDisk = mySaveOnDiskRadioButton.isSelected();
         myManagePasswordButton.setEnabled(isDisk);
       }
     };
-    myRememberOnDiskProtectedRadioButton.addChangeListener(listener);
+    mySaveOnDiskRadioButton.addChangeListener(listener);
     listener.stateChanged(null);
     myManagePasswordButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -88,7 +88,7 @@ public class PasswordSafeOptionsPanel {
         myRememberPasswordsUntilClosingRadioButton.setSelected(true);
         break;
       case MASTER_PASSWORD:
-        myRememberOnDiskProtectedRadioButton.setSelected(true);
+        mySaveOnDiskRadioButton.setSelected(true);
         break;
       default:
         throw new IllegalStateException("Unknown provider type: " + t);

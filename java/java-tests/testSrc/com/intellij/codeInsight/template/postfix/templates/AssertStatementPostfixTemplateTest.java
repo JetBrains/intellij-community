@@ -63,5 +63,13 @@ public class AssertStatementPostfixTemplateTest extends PostfixTemplateTestCase 
   public void testNotNull() {
     doTest();
   }
+
+  public void testBeforeAssignment() {
+    doTest();
+  }
+
+  public void testSimpleWithSemicolon() {
+    doTest();
+  }
 }
 

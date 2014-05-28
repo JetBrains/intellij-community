@@ -34,7 +34,6 @@ public class HgPullAction extends HgAbstractGlobalAction {
     final HgPullDialog dialog = new HgPullDialog(project, repos, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
-      dialog.rememberSettings();
       final String source = dialog.getSource();
       final HgRepository hgRepository = dialog.getRepository();
       new Task.Backgroundable(project, "Pulling changes from " + source, false) {

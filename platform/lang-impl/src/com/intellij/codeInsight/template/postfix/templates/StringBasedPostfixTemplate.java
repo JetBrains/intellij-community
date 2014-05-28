@@ -15,13 +15,16 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class StringBasedPostfixTemplate extends TypedPostfixTemplate {
 
@@ -38,10 +41,48 @@ public abstract class StringBasedPostfixTemplate extends TypedPostfixTemplate {
     assert expr != null;
     Project project = context.getProject();
     Document document = editor.getDocument();
-    document.deleteString(expr.getTextRange().getStartOffset(), expr.getTextRange().getEndOffset());
+    PsiElement elementForRemoving = shouldRemoveParent() ? expr.getParent() : expr;
+    document.deleteString(elementForRemoving.getTextRange().getStartOffset(), elementForRemoving.getTextRange().getEndOffset());
     TemplateManager manager = TemplateManager.getInstance(project);
-    expandWithTemplateManager(manager, expr, editor);
+
+    String templateString = getTemplateString(expr);
+    if (templateString == null) {
+      PostfixTemplatesUtils.showErrorHint(expr.getProject(), editor);
+      return;
+    }
+
+
+    Template template = createTemplate(manager, templateString);
+
+    if (shouldAddExpressionToContext()) {
+      template.addVariable("expr", new TextExpression(expr.getText()), false);
+    }
+
+    setVariables(template, expr);
+    manager.startTemplate(editor, template);
   }
 
-  public abstract void expandWithTemplateManager(TemplateManager manager, PsiElement expression, Editor editor);
+  public Template createTemplate(TemplateManager manager, String templateString) {
+    Template template = manager.createTemplate("", "", templateString);
+    template.setToReformat(shouldReformat());
+    return template;
+  }
+
+  public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
+  }
+
+  @Nullable
+  public abstract String getTemplateString(@NotNull PsiElement element);
+
+  protected boolean shouldAddExpressionToContext() {
+    return true;
+  }
+
+  protected boolean shouldReformat() {
+    return true;
+  }
+
+  protected boolean shouldRemoveParent() {
+    return true;
+  }
 }

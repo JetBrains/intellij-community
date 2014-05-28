@@ -43,22 +43,20 @@ public abstract class ForIndexedPostfixTemplate extends StringBasedPostfixTempla
   }
 
   @Override
-  public void expandWithTemplateManager(TemplateManager manager, PsiElement expression, Editor editor) {
-    PsiExpression expr = (PsiExpression)expression;
-    String bound = getExpressionBound(expr);
-    if (bound == null) {
-      PostfixTemplatesUtils.showErrorHint(expr.getProject(), editor);
-      return;
-    }
-
-    String templateWithMacro = getStringTemplate(expr).replace("$bound$", bound).replace("$type$", suggestIndexType(expr));
-
-    Template template = manager.createTemplate("", "", templateWithMacro);
-
-    template.setToReformat(true);
+  public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
     MacroCallNode index = new MacroCallNode(new SuggestVariableNameMacro());
     template.addVariable("index", index, index, true);
-    manager.startTemplate(editor, template);
+  }
+
+  @Override
+  public final String getTemplateString(@NotNull PsiElement element) {
+    PsiExpression expr = (PsiExpression)element;
+    String bound = getExpressionBound(expr);
+    if (bound == null) {
+      return null;
+    }
+
+    return getStringTemplate(expr).replace("$bound$", bound).replace("$type$", suggestIndexType(expr));
   }
 
   @NotNull
@@ -86,5 +84,10 @@ public abstract class ForIndexedPostfixTemplate extends StringBasedPostfixTempla
       return type.getCanonicalText();
     }
     return "int";
+  }
+
+  @Override
+  protected boolean shouldAddExpressionToContext() {
+    return false;
   }
 }
