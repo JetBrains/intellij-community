@@ -79,9 +79,11 @@ public class SignatureParsing {
           jlo = true;
           continue;
         }
+        bounds = ContainerUtil.newSmartList();
+        if (jlo) {
+          bounds.add(CommonClassNames.JAVA_LANG_OBJECT);
+        }
       }
-      bounds = ContainerUtil.newSmartList();
-      if (jlo) bounds.add(CommonClassNames.JAVA_LANG_OBJECT);
       bounds.add(bound);
     }
 
