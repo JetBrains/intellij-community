@@ -50,7 +50,10 @@ public class CustomizationUtil {
   private CustomizationUtil() {
   }
 
-  public static ActionGroup correctActionGroup(final ActionGroup group, final CustomActionsSchema schema, final String defaultGroupName) {
+  public static ActionGroup correctActionGroup(final ActionGroup group,
+                                               final CustomActionsSchema schema,
+                                               final String defaultGroupName,
+                                               final String rootGroupName) {
     if (!schema.isCorrectActionGroup(group, defaultGroupName)){
        return group;
      }
@@ -65,11 +68,15 @@ public class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName);
+    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName, rootGroupName);
   }
 
 
-  static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
+  static AnAction [] getReordableChildren(ActionGroup group,
+                                          CustomActionsSchema schema,
+                                          String defaultGroupName,
+                                          String rootGroupName,
+                                          AnActionEvent e) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<AnAction>();
@@ -78,7 +85,7 @@ public class CustomizationUtil {
     for (ActionUrl actionUrl : actions) {
       if ((actionUrl.getParentGroup().equals(text) ||
            actionUrl.getParentGroup().equals(defaultGroupName) ||
-           actionUrl.getParentGroup().equals(actionManager.getId(group)))) {
+           actionUrl.getParentGroup().equals(actionManager.getId(group)) && actionUrl.getRootGroup().equals(rootGroupName))) {
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
           if (actionUrl.getActionType() == ActionUrl.ADDED) {
@@ -109,7 +116,7 @@ public class CustomizationUtil {
     for (int i = 0; i < reorderedChildren.size(); i++) {
       if (reorderedChildren.get(i) instanceof ActionGroup) {
         final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
-        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "");
+        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName);
         reorderedChildren.set(i, correctedAction);
       }
     }

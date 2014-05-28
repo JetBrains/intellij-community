@@ -80,6 +80,10 @@ public class ActionUrl implements JDOMExternalizable {
   public String getParentGroup(){
     return myGroupPath.get(myGroupPath.size() - 1);
   }
+  
+  public String getRootGroup() {
+    return myGroupPath.size() >= 1 ? myGroupPath.get(1) : "";
+  }
 
   public Object getComponent() {
     return myComponent;
