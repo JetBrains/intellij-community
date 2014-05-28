@@ -43,6 +43,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, @Nullable Class klass, @Nullable ClassLoader classLoader) {
     final Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.getMap(myResources, version, true);
     assert map != null;
+    resource = new String(resource); // enforce copying; todo remove after final migration to JDK 1.7
     map.put(resource, new ExternalResourceManagerExImpl.Resource(fileName, klass, classLoader));
   }
 
