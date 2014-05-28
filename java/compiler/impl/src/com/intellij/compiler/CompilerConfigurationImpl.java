@@ -282,6 +282,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     DEFAULT_COMPILER = myDefaultJavaCompiler.getId();
   }
 
+  public Collection<BackendCompiler> getRegisteredJavaCompilers() {
+    createCompilers();
+    return myRegisteredCompilers;
+  }
+
   public String[] getResourceFilePatterns() {
     return getWildcardPatterns();
   }
