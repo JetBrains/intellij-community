@@ -217,23 +217,40 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleCompileOutputSettings(@NotNull IdeaModule gradleModule,
                                                   @NotNull DataNode<ModuleData> ideModule) {
     IdeaCompilerOutput moduleCompilerOutput = gradleModule.getCompilerOutput();
-    if (moduleCompilerOutput == null) {
-      return;
+
+    File sourceCompileOutputPath = null;
+    File testCompileOutputPath = null;
+    boolean inheritOutputDirs = false;
+
+    ModuleData moduleData = ideModule.getData();
+    if (moduleCompilerOutput != null) {
+      sourceCompileOutputPath = moduleCompilerOutput.getOutputDir();
+      testCompileOutputPath = moduleCompilerOutput.getTestOutputDir();
+      inheritOutputDirs = moduleCompilerOutput.getInheritOutputDirs();
     }
 
-    File sourceCompileOutputPath = moduleCompilerOutput.getOutputDir();
-    ModuleData moduleData = ideModule.getData();
+    if (!inheritOutputDirs && (sourceCompileOutputPath == null || testCompileOutputPath == null)) {
+      ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
+      if (moduleExtendedModel != null) {
+        ExtIdeaCompilerOutput output = moduleExtendedModel.getCompilerOutput();
+        if (output != null) {
+          if (sourceCompileOutputPath == null) {
+            sourceCompileOutputPath = output.getMainClassesDir();
+          }
+          if (testCompileOutputPath == null) {
+            testCompileOutputPath = output.getTestClassesDir();
+          }
+        }
+      }
+    }
+
     if (sourceCompileOutputPath != null) {
       moduleData.setCompileOutputPath(ExternalSystemSourceType.SOURCE, sourceCompileOutputPath.getAbsolutePath());
     }
-
-    File testCompileOutputPath = moduleCompilerOutput.getTestOutputDir();
     if (testCompileOutputPath != null) {
       moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST, testCompileOutputPath.getAbsolutePath());
     }
-    moduleData.setInheritProjectCompileOutputPath(
-      moduleCompilerOutput.getInheritOutputDirs() || sourceCompileOutputPath == null || testCompileOutputPath == null
-    );
+    moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs || sourceCompileOutputPath == null);
   }
 
   @Override
