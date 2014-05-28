@@ -1,6 +1,7 @@
 package org.jetbrains.java.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -72,7 +73,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
                                                  boolean isPhysical) {
     TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
     if (text != null && context != null) {
-      CodeFragmentFactory factory = DebuggerEditorImpl.findAppropriateFactory(text, context);
+      CodeFragmentFactory factory = new CodeFragmentFactoryContextWrapper(DebuggerEditorImpl.findAppropriateFactory(text, context));
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
       if (context != null) {

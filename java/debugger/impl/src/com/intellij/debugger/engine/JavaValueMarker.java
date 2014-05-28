@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author egor
  */
-public class JavaValueMarker extends XValueMarkerProvider<JavaValue, Long> {
+public class JavaValueMarker extends XValueMarkerProvider<JavaValue, ObjectReference> {
   public JavaValueMarker() {
     super(JavaValue.class);
   }
@@ -35,10 +35,10 @@ public class JavaValueMarker extends XValueMarkerProvider<JavaValue, Long> {
   }
 
   @Override
-  public Long getMarker(@NotNull JavaValue value) {
+  public ObjectReference getMarker(@NotNull JavaValue value) {
     Value obj = value.getDescriptor().getValue();
     if (obj instanceof ObjectReference) {
-      return ((ObjectReference)obj).uniqueID();
+      return ((ObjectReference)obj);
     }
     return null;
   }
