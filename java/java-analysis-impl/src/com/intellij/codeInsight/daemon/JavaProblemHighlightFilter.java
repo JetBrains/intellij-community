@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,14 +26,14 @@ import org.jetbrains.annotations.NotNull;
 public class JavaProblemHighlightFilter extends ProblemHighlightFilter {
   @Override
   public boolean shouldHighlight(@NotNull PsiFile psiFile) {
-    return psiFile.getFileType() != StdFileTypes.JAVA || !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile);
+    return psiFile.getFileType() != JavaFileType.INSTANCE || !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile);
   }
 
   @Override
   public boolean shouldProcessInBatch(@NotNull PsiFile psiFile) {
     final boolean shouldHighlight = shouldHighlightFile(psiFile);
     if (shouldHighlight) {
-      if (psiFile.getFileType() == StdFileTypes.JAVA) {
+      if (psiFile.getFileType() == JavaFileType.INSTANCE) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile != null && ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().isInLibrarySource(virtualFile)) {
           return false;

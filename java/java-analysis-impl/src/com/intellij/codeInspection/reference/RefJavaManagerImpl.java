@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private static final UserDataCache<Ref<UnusedDeclarationInspection>, PsiFile, RefManagerImpl> DEAD_CODE_TOOL = new UserDataCache<Ref<UnusedDeclarationInspection>, PsiFile, RefManagerImpl>("DEAD_CODE_TOOL") {
     @Override
     protected Ref<UnusedDeclarationInspection> compute(PsiFile file, RefManagerImpl refManager) {
-      Tools tools = ((GlobalInspectionContextImpl)refManager.getContext()).getTools().get(UnusedDeclarationInspection.SHORT_NAME);
+      Tools tools = ((GlobalInspectionContextBase)refManager.getContext()).getTools().get(UnusedDeclarationInspection.SHORT_NAME);
       InspectionToolWrapper toolWrapper = tools == null ? null : tools.getEnabledTool(file);
       InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
       return Ref.create(tool instanceof UnusedDeclarationInspection ? (UnusedDeclarationInspection)tool : null);
@@ -360,7 +360,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   public EntryPointsManager getEntryPointsManager() {
     if (myEntryPointsManager == null) {
       final Project project = myRefManager.getProject();
-      myEntryPointsManager = new EntryPointsManagerImpl(project);
+      myEntryPointsManager = EntryPointsManager.getInstance(project);
       ((EntryPointsManagerBase)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerBase.getInstance(project));
     }
     return myEntryPointsManager;

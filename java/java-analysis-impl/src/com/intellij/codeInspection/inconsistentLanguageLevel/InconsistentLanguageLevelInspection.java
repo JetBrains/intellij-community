@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,14 @@ package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -85,7 +83,7 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
             "Inconsistent language level settings: module " + module.getName() + " with language level " + languageLevel +
             " depends on module " + dependantModule.getName() +" with language level " + dependantLanguageLevel,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(module, dependantModule),
-            new OpenModuleSettingsFix(module));
+            QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
           problemProcessor.addProblemElement(refModule, problemDescriptor);
         }
       }
@@ -117,30 +115,4 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
     return "InconsistentLanguageLevel";
   }
 
-  private static class OpenModuleSettingsFix implements QuickFix {
-    private final Module myModule;
-
-    private OpenModuleSettingsFix(Module module) {
-      myModule = module;
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return "Open module " + myModule.getName() + " settings";
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
-      if (!myModule.isDisposed()) {
-        ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModule.getName(), ProjectBundle.message("modules.classpath.title"));
-      }
-    }
-  }
 }

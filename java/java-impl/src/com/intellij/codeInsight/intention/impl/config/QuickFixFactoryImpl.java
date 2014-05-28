@@ -44,6 +44,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -334,8 +335,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element) {
+  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element) {
     return new ShowModulePropertiesFix(element);
+  }
+  @NotNull
+  @Override
+  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module) {
+    return new ShowModulePropertiesFix(module);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.psi.PsiFile;
 
 /**
@@ -26,7 +25,7 @@ import com.intellij.psi.PsiFile;
 public class RedundantSuppressInspection extends RedundantSuppressInspectionBase {
   @Override
   protected GlobalInspectionContextBase createContext(PsiFile file) {
-    final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(file.getProject()));
-    return inspectionManagerEx.createNewGlobalContext(false);
+    final InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
+    return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext(false);
   }
 }

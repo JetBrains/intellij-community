@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.util;
+package icons;
 
-import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.openapi.util.IconLoader;
 
-public abstract class IgnorableRefFilter extends RefFilter {
-  public abstract void addIgnoreList(RefElement refElement);
+import javax.swing.*;
+
+/**
+ * NOTE THIS FILE IS AUTO-GENERATED
+ * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ */
+public class PropertiesIcons {
+  private static Icon load(String path) {
+    return IconLoader.getIcon(path, PropertiesIcons.class);
+  }
+
+  public static final Icon XmlProperties = load("/icons/xmlProperties.png"); // 16x16
 }
