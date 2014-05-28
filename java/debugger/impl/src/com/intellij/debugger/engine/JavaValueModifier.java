@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.actions;
+package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -43,6 +41,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -55,6 +54,12 @@ public class JavaValueModifier extends XValueModifier {
 
   public JavaValueModifier(JavaValue javaValue) {
     myJavaValue = javaValue;
+  }
+
+  @Nullable
+  @Override
+  public String getInitialValueEditorText() {
+    return myJavaValue.getValueString();
   }
 
   //public void update(AnActionEvent e) {
