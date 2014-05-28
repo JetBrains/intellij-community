@@ -15,25 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-
 /**
- * @author ven
-*/
-public enum CreateClassKind implements ClassKind {
-  CLASS     (QuickFixBundle.message("create.class")),
-  INTERFACE (QuickFixBundle.message("create.interface")),
-  ENUM      (QuickFixBundle.message("create.enum")),
-  ANNOTATION("annotation");
-
-  private final String myDescription;
-
-  CreateClassKind(final String description) {
-    myDescription = description;
-  }
-
-  @Override
-  public String getDescription() {
-    return myDescription;
-  }
+ * Created by Max Medvedev on 28/05/14
+ */
+public interface ClassKind {
+  String getDescription();
 }

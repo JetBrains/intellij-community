@@ -68,8 +68,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -643,6 +643,8 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   private Icon getIconInner() {
     if (isAnnotationType()) return JetgroovyIcons.Groovy.AnnotationType;
+
+    if (isTrait()) return JetgroovyIcons.Groovy.Trait;
 
     if (isInterface()) return JetgroovyIcons.Groovy.Interface;
 

@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind
 
 /**
- * @author ven
-*/
-public enum CreateClassKind implements ClassKind {
-  CLASS     (QuickFixBundle.message("create.class")),
-  INTERFACE (QuickFixBundle.message("create.interface")),
-  ENUM      (QuickFixBundle.message("create.enum")),
+ * Created by Max Medvedev on 28/05/14
+ */
+enum GrCreateClassKind implements ClassKind {
+  CLASS     ("class"),
+  INTERFACE ("interface"),
+  TRAIT     ("trait"),
+  ENUM      ("enum"),
   ANNOTATION("annotation");
 
   private final String myDescription;
 
-  CreateClassKind(final String description) {
+  public GrCreateClassKind(final String description) {
     myDescription = description;
   }
 
-  @Override
   public String getDescription() {
     return myDescription;
   }

@@ -57,6 +57,7 @@ public class JetgroovyIcons {
     public static final Icon Interface = load("/icons/groovy/interface.png"); // 16x16
     public static final Icon Method = load("/icons/groovy/method.png"); // 16x16
     public static final Icon Property = load("/icons/groovy/property.png"); // 16x16
+    public static final Icon Trait = load("/icons/groovy/trait.png"); // 16x16
     public static final Icon Variable = load("/icons/groovy/variable.png"); // 16x16
 
   }

@@ -19,7 +19,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -41,11 +40,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -534,26 +534,26 @@ public class GrUnresolvedAccessChecker {
     else if (canBeClassOrPackage(refElement)) {
       if (shouldBeInterface(refElement)) {
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.INTERFACE), key);
+                                                                                                             GrCreateClassKind.INTERFACE), key);
       }
       else if (shouldBeClass(refElement)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, CreateClassKind.CLASS), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.CLASS), key);
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.ENUM), key);
+                                                                                                             GrCreateClassKind.ENUM), key);
       }
       else if (shouldBeAnnotation(refElement)) {
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.ANNOTATION), key);
+                                                                                                             GrCreateClassKind.ANNOTATION), key);
       }
       else {
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.CLASS), key);
+                                                                                                             GrCreateClassKind.CLASS), key);
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.INTERFACE), key);
+                                                                                                             GrCreateClassKind.INTERFACE), key);
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.ENUM), key);
+                                                                                                             GrCreateClassKind.ENUM), key);
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             CreateClassKind.ANNOTATION), key);
+                                                                                                             GrCreateClassKind.ANNOTATION), key);
       }
     }
   }
