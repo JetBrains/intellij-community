@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,20 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.MergeQuery;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, AnnotatedPackagesSearch.Parameters> {
-  public static final AnnotatedPackagesSearch INSTANCE = new AnnotatedPackagesSearch();
+public class AnnotationTargetsSearch {
+  public static AnnotationTargetsSearch INSTANCE = new AnnotationTargetsSearch();
 
   public static class Parameters {
     private final PsiClass myAnnotationClass;
@@ -46,13 +49,15 @@ public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, 
     }
   }
 
-  private AnnotatedPackagesSearch() {}
+  private AnnotationTargetsSearch() {}
 
-  public static Query<PsiPackage> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
-    return INSTANCE.createQuery(new Parameters(annotationClass, scope));
+  public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+    final Query<PsiMember> members = AnnotatedMembersSearch.search(annotationClass, scope);
+    final Query<PsiPackage> packages = AnnotatedPackagesSearch.search(annotationClass, scope);
+    return new MergeQuery<PsiModifierListOwner>(members, packages);
   }
 
-  public static Query<PsiPackage> search(@NotNull PsiClass annotationClass) {
+  public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(annotationClass.getProject()));
   }
 }
