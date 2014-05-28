@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.*;
 import com.intellij.xdebugger.XExpression;
@@ -192,7 +191,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     }
 
     private Condition(boolean disabled, XExpression expression) {
-      super(disabled, expression.getExpression(), expression.getLanguage() != null ? expression.getLanguage().getID() : null, expression.getCustomInfo());
+      super(disabled, expression);
     }
 
     @Nullable
@@ -210,7 +209,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     }
 
     private LogExpression(boolean disabled, XExpression expression) {
-      super(disabled, expression.getExpression(), expression.getLanguage() != null ? expression.getLanguage().getID() : null, expression.getCustomInfo());
+      super(disabled, expression);
     }
 
     @Nullable
@@ -219,44 +218,6 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
         return null;
       }
       return new LogExpression(disabled, expression);
-    }
-  }
-
-  private static class XExpressionState {
-    @Attribute("disabled")
-    public boolean myDisabled;
-
-    @Attribute("expression")
-    public String myExpression;
-
-    @Attribute("language")
-    public String myLanguage;
-
-    @Attribute("custom")
-    public String myCustomInfo;
-
-    @Text
-    public String myOldExpression;
-
-    public XExpressionState() {
-    }
-
-    public XExpressionState(boolean disabled, @NotNull String expression, String language, String customInfo) {
-      myDisabled = disabled;
-      myExpression = expression;
-      myLanguage = language;
-      myCustomInfo = customInfo;
-    }
-
-    void checkConverted() {
-      if (myOldExpression != null) {
-        myExpression = myOldExpression;
-        myOldExpression = null;
-      }
-    }
-
-    public XExpression toXExpression() {
-      return new XExpressionImpl(myExpression, Language.findLanguageByID(myLanguage), myCustomInfo);
     }
   }
 }

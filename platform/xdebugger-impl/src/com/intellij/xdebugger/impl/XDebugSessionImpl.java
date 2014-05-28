@@ -913,4 +913,9 @@ public class XDebugSessionImpl implements XDebugSession {
       }
     }
   }
+
+  public void setWatchExpressions(@NotNull XExpression[] watchExpressions) {
+    mySessionData.setWatchExpressions(watchExpressions);
+    myDebuggerManager.getWatchesManager().setWatches(getSessionName(), watchExpressions);
+  }
 }

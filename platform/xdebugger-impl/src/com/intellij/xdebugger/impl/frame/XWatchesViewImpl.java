@@ -30,14 +30,12 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
@@ -65,14 +63,12 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
   private final WatchesRootNode myRootNode;
-  @NotNull private final XDebugSession mySession;
-  private final XDebugSessionData mySessionData;
+  @NotNull private final XDebugSessionImpl mySession;
   private final JPanel myDecoratedPanel;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
 
-  public XWatchesViewImpl(@NotNull final XDebugSession session, final @NotNull XDebugSessionData sessionData) {
+  public XWatchesViewImpl(@NotNull final XDebugSessionImpl session) {
     mySession = session;
-    mySessionData = sessionData;
     myTreePanel = new XDebuggerTreePanel(session.getProject(), session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP, ((XDebugSessionImpl)session).getValueMarkers());
 
@@ -86,7 +82,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
     actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
 
     DnDManager.getInstance().registerTarget(this, tree);
-    myRootNode = new WatchesRootNode(tree, session, this, sessionData.getWatchExpressions());
+    myRootNode = new WatchesRootNode(tree, session, this, session.getSessionData().getWatchExpressions());
     tree.setRoot(myRootNode, false);
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTreePanel.getTree()).disableUpDownActions();
@@ -295,7 +291,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
         watchExpressions.add(child.getExpression());
       }
     }
-    mySessionData.setWatchExpressions(watchExpressions.toArray(new XExpression[watchExpressions.size()]));
+    mySession.setWatchExpressions(watchExpressions.toArray(new XExpression[watchExpressions.size()]));
   }
 
   @Override
