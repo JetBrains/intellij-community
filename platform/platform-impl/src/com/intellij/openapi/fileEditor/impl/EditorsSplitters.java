@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.Keymap;
@@ -798,13 +800,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         return null;
       }
 
-      final List<Element> children = ContainerUtil.newArrayList(leaf.getChildren("file"));
+      List<Element> fileElements = leaf.getChildren("file");
+      final List<Element> children = new ArrayList<Element>(fileElements.size());
 
       // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      for (Iterator<Element> iterator = children.iterator(); iterator.hasNext() && UISettings.getInstance().EDITOR_TAB_LIMIT < children.size(); ) {
-        Element child = iterator.next();
-        if (!Boolean.valueOf(child.getAttributeValue(PINNED)).booleanValue()) {
-          iterator.remove();
+      int toRemove = fileElements.size() - UISettings.getInstance().EDITOR_TAB_LIMIT;
+      for (Element fileElement : fileElements) {
+        if (toRemove <= 0 || Boolean.valueOf(fileElement.getAttributeValue(PINNED)).booleanValue()) {
+          children.add(fileElement);
+        }
+        else {
+          toRemove--;
         }
       }
 
@@ -833,7 +839,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         final Element file = fileElements.get(i);
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
-          final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), file.getChild(HistoryEntry.TAG), true);
+          Element historyElement = file.getChild(HistoryEntry.TAG);
+          VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
+          // This document reference is kept on stack to make sure document will be available for folding state deserialization
+          // and that document will be created only once during file opening
+          @SuppressWarnings("UnusedDeclaration") Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), historyElement);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           final int index = i;
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {

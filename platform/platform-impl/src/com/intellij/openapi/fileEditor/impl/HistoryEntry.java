@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -40,8 +38,6 @@ final class HistoryEntry{
   private static final String STATE_ELEMENT = "state";
 
   public final VirtualFile myFile;
-  // This reference is kept to ensure cached value in FileDocumentManager is not cleared
-  @SuppressWarnings("UnusedDeclaration") private final Document myDocument;
   /**
    * can be null when read from XML
    */ 
@@ -50,7 +46,6 @@ final class HistoryEntry{
 
   public HistoryEntry(@NotNull VirtualFile file, @NotNull FileEditorProvider[] providers, @NotNull FileEditorState[] states, @NotNull FileEditorProvider selectedProvider){
     myFile = file;
-    myDocument = null;
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
     mySelectedProvider = selectedProvider;
     for (int i = 0; i < providers.length; i++) {
@@ -59,25 +54,8 @@ final class HistoryEntry{
   }
 
   public HistoryEntry(Project project, Element e) throws InvalidDataException {
-    this(project, e, false);
-  }
-  
-  public HistoryEntry(Project project, Element e, boolean cacheDocument) throws InvalidDataException{
-    if (!e.getName().equals(TAG)) {
-      throw new IllegalArgumentException("unexpected tag: " + e);
-    }
-
-    String url = e.getAttributeValue(FILE_ATTR);
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (file == null){
-      throw new InvalidDataException("No file exists: " + url);
-    }
-
-    myFile = file;
+    myFile = getVirtualFile(e);
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
-    // Make sure document is available for history entry deserialization (in particular, for folding information) and it remains
-    // in cache till editor opening
-    myDocument = cacheDocument ? FileDocumentManager.getInstance().getDocument(myFile) : null;
 
     List providers = e.getChildren(PROVIDER_ELEMENT);
     for (final Object provider1 : providers) {
@@ -97,7 +75,7 @@ final class HistoryEntry{
         throw new InvalidDataException();
       }
 
-      FileEditorState state = provider.readState(stateElement, project, file);
+      FileEditorState state = provider.readState(stateElement, project, myFile);
       putState(provider, state);
     }
   }
@@ -135,5 +113,19 @@ final class HistoryEntry{
     }
 
     return e;
+  }
+
+  @NotNull
+  public static VirtualFile getVirtualFile(Element historyElement) throws InvalidDataException {
+    if (!historyElement.getName().equals(TAG)) {
+      throw new IllegalArgumentException("unexpected tag: " + historyElement);
+    }
+
+    String url = historyElement.getAttributeValue(FILE_ATTR);
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (file == null){
+      throw new InvalidDataException("No file exists: " + url);
+    }
+    return file;
   }
 }
