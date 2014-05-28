@@ -555,20 +555,12 @@ NSString *integratedGPUNames() {
     NSBundle *vm = findMatchingVm();
     NSLog(@"--- launch");
     // check if the macbook is working on battery
-    CFDictionaryRef cfDictionary = IOPSCopyExternalPowerAdapterDetails();
-    CFTypeRef cRef = IOPSCopyPowerSourcesInfo();
-    CFArrayRef cfArray = IOPSCopyPowerSourcesList(cRef);
-    if (cfDictionary == NULL) {
-        NSLog(@"Battery is used. ");
-    } else {
-        NSLog(@"The power cable is switch ON. Battery is NOT used. ");
-        IOObjectRelease(cfDictionary);
-    }
     if (! switcherOpen()) {
         NSLog(@"Can't open connection to AppleGraphicsControl. There is no a possibility to switch GPU.");
     } else {
         // check if the macbook is working on battery
-        if (cfArray == NULL) {
+        CFDictionaryRef powerAdapter = IOPSCopyExternalPowerAdapterDetails();
+        if (powerAdapter == NULL) {
            NSLog(@"Battery is used. ");
             NSString *intCard = integratedGPUNames();
             if (intCard != nil) {
@@ -601,6 +593,7 @@ NSString *integratedGPUNames() {
                 NSLog(@"There is no Integrated GPU present.");
             }
         } else {
+          IOObjectRelease(powerAdapter);
           NSLog(@"The power cable is switch ON. Battery is NOT used. ");
         }
     }
