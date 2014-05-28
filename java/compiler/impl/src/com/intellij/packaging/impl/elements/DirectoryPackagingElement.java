@@ -16,15 +16,18 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
-import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.ui.DirectoryElementPresentation;
-import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.ui.DirectoryElementPresentation;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,13 +66,6 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     }
     children.addAll(computeChildrenGenerators(resolvingContext, creator.subFolder(myDirectoryName), generationContext, artifactType));
     return children;
-  }
-
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    computeChildrenInstructions(creator.subFolder(myDirectoryName), resolvingContext, compilerContext, artifactType);
   }
 
   public DirectoryPackagingElement getState() {

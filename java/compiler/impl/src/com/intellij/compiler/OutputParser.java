@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -27,12 +26,12 @@ public abstract class OutputParser {
   protected final List<ParserAction> myParserActions = new ArrayList<ParserAction>(10);
 
   public interface Callback {
-    @NonNls String getNextLine();        
-    @NonNls String getCurrentLine();
+    String getNextLine();        
+    String getCurrentLine();
     void pushBack(String line);
     void setProgressText(String text);
-    void fileProcessed(@NonNls String path);
-    void fileGenerated(@NonNls FileObject path);
+    void fileProcessed(String path);
+    void fileGenerated(String path);
     void message(CompilerMessageCategory category, String message, @NonNls String url, int lineNum, int columnNum);
   }
 
@@ -64,9 +63,5 @@ public abstract class OutputParser {
 
   protected static void addMessage(Callback callback, CompilerMessageCategory type, String text, String url, int line, int column){
     callback.message(type, text, url, line, column);
-  }
-
-  public boolean isTrimLines() {
-    return true;
   }
 }

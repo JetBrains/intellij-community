@@ -101,7 +101,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -457,7 +458,7 @@ public class BuildManager implements ApplicationComponent{
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
+    if (!config.MAKE_PROJECT_ON_SAVE) {
       return false;
     }
     if (!config.allowAutoMakeWhileRunningApplication() && hasRunningProcess(project)) {

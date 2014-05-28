@@ -24,24 +24,21 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.Compiler;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -49,14 +46,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
@@ -66,7 +58,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
   private final boolean myShouldUpdateProblemsView;
   private CompileScope myCompileScope;
-  private final DependencyCache myDependencyCache;
   private final boolean myMake;
   private final boolean myIsRebuild;
   private final boolean myIsAnnotationProcessorsEnabled;
@@ -74,11 +65,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
-  private final Map<VirtualFile, Pair<SourceGeneratingCompiler, Module>> myOutputRootToSourceGeneratorMap = new HashMap<VirtualFile, Pair<SourceGeneratingCompiler, Module>>();
   private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
-  private VirtualFile[] myOutputDirectories;
-  private Set<VirtualFile> myTestOutputDirectories;
-  private final TIntHashSet myGeneratedSources = new TIntHashSet();
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -87,11 +74,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public CompileContextImpl(final Project project,
                             final CompilerTask compilerSession,
                             CompileScope compileScope,
-                            DependencyCache dependencyCache, boolean isMake, boolean isRebuild) {
+                            boolean isMake, boolean isRebuild) {
     myProject = project;
     myTask = compilerSession;
     myCompileScope = compileScope;
-    myDependencyCache = dependencyCache;
     myMake = isMake;
     myIsRebuild = isRebuild;
     myStartCompilationStamp = System.currentTimeMillis();
@@ -108,108 +94,20 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
         compilerSession.setSessionId(sessionId);
       }
     }
-    recalculateOutputDirs();
     final CompilerWorkspaceConfiguration workspaceConfig = CompilerWorkspaceConfiguration.getInstance(myProject);
-    myShouldUpdateProblemsView = workspaceConfig.useOutOfProcessBuild() && workspaceConfig.MAKE_PROJECT_ON_SAVE;
+    myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
   public boolean shouldUpdateProblemsView() {
     return myShouldUpdateProblemsView;
   }
 
-  public void recalculateOutputDirs() {
-    final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-
-    final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>();
-    final Set<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
-    final Set<VirtualFile> productionOutputDirs = new java.util.HashSet<VirtualFile>();
-
-    for (Module module : allModules) {
-      final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
-      final VirtualFile output = manager.getCompilerOutputPath();
-      if (output != null && output.isValid()) {
-        allDirs.add(output);
-        productionOutputDirs.add(output);
-      }
-      final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
-      if (testsOutput != null && testsOutput.isValid()) {
-        allDirs.add(testsOutput);
-        testOutputDirs.add(testsOutput);
-      }
-    }
-    myOutputDirectories = VfsUtil.toVirtualFileArray(allDirs);
-    // need this to ensure that the sent contains only _dedicated_ test output dirs
-    // Directories that are configured for both test and production classes must not be added in the resulting set
-    testOutputDirs.removeAll(productionOutputDirs);
-    myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
-  }
-
-  public void markGenerated(Collection<VirtualFile> files) {
-    for (final VirtualFile file : files) {
-      myGeneratedSources.add(FileBasedIndex.getFileId(file));
-    }
-  }
-
   public long getStartCompilationStamp() {
     return myStartCompilationStamp;
   }
 
-  public boolean isGenerated(VirtualFile file) {
-    if (myGeneratedSources.contains(FileBasedIndex.getFileId(file))) {
-      return true;
-    }
-    if (VfsUtilCore.isUnder(file, myRootToModuleMap.keySet())) {
-      return true;
-    }
-    final Module module = getModuleByFile(file);
-    if (module != null) {
-      final String procGenRoot = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-      if (procGenRoot != null && VfsUtil.isAncestor(new File(procGenRoot), new File(file.getPath()), true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /*
-  private JBZipFile lookupZip(String outputDir) {
-    synchronized (myOpenZipFiles) {
-      JBZipFile zip = myOpenZipFiles.get(outputDir);
-      if (zip == null) {
-        final File zipFile = CompilerPathsEx.getZippedOutputPath(myProject, outputDir);
-        try {
-          try {
-            zip = new JBZipFile(zipFile);
-          }
-          catch (FileNotFoundException e) {
-            try {
-              zipFile.createNewFile();
-              zip = new JBZipFile(zipFile);
-            }
-            catch (IOException e1) {
-              zipFile.getParentFile().mkdirs();
-              zipFile.createNewFile();
-              zip = new JBZipFile(zipFile);
-            }
-          }
-          myOpenZipFiles.put(outputDir, zip);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          addMessage(CompilerMessageCategory.ERROR, "Cannot create zip file " + zipFile.getPath() + ": " + e.getMessage(), null, -1, -1);
-        }
-      }
-      return zip;
-    }
-  }
-  */
-
   public Project getProject() {
     return myProject;
-  }
-
-  public DependencyCache getDependencyCache() {
-    return myDependencyCache;
   }
 
   public CompilerMessage[] getMessages(CompilerMessageCategory category) {
@@ -221,38 +119,14 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findPresentableFileForMessage(url), lineNum, columnNum, null);
+    final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, null);
     addMessage(msg);
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum,
                          Navigatable navigatable) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findPresentableFileForMessage(url), lineNum, columnNum, navigatable);
+    final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
     addMessage(msg);
-  }
-
-  @Nullable
-  private VirtualFile findPresentableFileForMessage(@Nullable final String url) {
-    final VirtualFile file = findFileByUrl(url);
-    if (file == null) {
-      return null;
-    }
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        if (file.isValid()) {
-          for (final Map.Entry<VirtualFile, Pair<SourceGeneratingCompiler, Module>> entry : myOutputRootToSourceGeneratorMap.entrySet()) {
-            final VirtualFile root = entry.getKey();
-            if (VfsUtilCore.isAncestor(root, file, false)) {
-              final Pair<SourceGeneratingCompiler, Module> pair = entry.getValue();
-              final VirtualFile presentableFile = pair.getFirst().getPresentableFile(CompileContextImpl.this, pair.getSecond(), root, file);
-              return presentableFile != null ? presentableFile : file;
-            }
-          }
-        }
-        return file;
-      }
-    });
   }
 
   @Nullable 
@@ -312,10 +186,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (!myRebuildRequested) {
       myRebuildRequested = true;
       myRebuildReason = message;
-      final boolean isOutOfProcessBuild = myDependencyCache == null;
-      if (!isOutOfProcessBuild) {
-        addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
-      }
     }
   }
 
@@ -329,36 +199,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public ProgressIndicator getProgressIndicator() {
-    //if (myProgressIndicatorProxy != null) {
-    //  return myProgressIndicatorProxy;
-    //}
     return myTask.getIndicator();
-  }
-
-  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, final boolean isTestSource, @Nullable Compiler compiler) {
-    try {
-      myRootToModuleMap.put(root, module);
-      Set<VirtualFile> set = myModuleToRootsMap.get(module);
-      if (set == null) {
-        set = new HashSet<VirtualFile>();
-        myModuleToRootsMap.put(module, set);
-      }
-      set.add(root);
-      if (isTestSource) {
-        myGeneratedTestRoots.add(root);
-      }
-      if (compiler instanceof SourceGeneratingCompiler) {
-        myOutputRootToSourceGeneratorMap.put(root, Pair.create((SourceGeneratingCompiler)compiler, module));
-      }
-    }
-    finally {
-      myModuleToRootsCache.remove(module);
-    }
-  }
-
-  @Nullable
-  public VirtualFile getSourceFileByOutputFile(VirtualFile outputFile) {
-    return TranslatingCompilerFilesMonitor.getSourceFileByOutput(outputFile);
   }
 
   public Module getModuleByFile(VirtualFile file) {
@@ -417,15 +258,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       }
     }
     return true;
-  }
-
-  public VirtualFile[] getAllOutputDirectories() {
-    return myOutputDirectories;
-  }
-
-  @NotNull
-  public Set<VirtualFile> getTestOutputDirectories() {
-    return myTestOutputDirectories;
   }
 
   public VirtualFile getModuleOutputDirectory(Module module) {

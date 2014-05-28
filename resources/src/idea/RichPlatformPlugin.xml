@@ -35,9 +35,6 @@
     <extensionPoint name="compiler.buildParticipantProvider"
                     interface="com.intellij.openapi.compiler.make.BuildParticipantProvider"/>
 
-    <extensionPoint name="compiler.additionalCompileScopeProvider"
-                    interface="com.intellij.compiler.impl.AdditionalCompileScopeProvider"/>
-
     <extensionPoint name="compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
 
@@ -46,9 +43,6 @@
 
     <extensionPoint name="compiler.optionsManager"
                     interface="com.intellij.compiler.options.CompilerOptionsFilter"/>
-
-    <extensionPoint name="compiler.resourceCompilerExtension"
-                    interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
 
     <extensionPoint name="java.programPatcher"
                     interface="com.intellij.execution.runners.JavaProgramPatcher"/>

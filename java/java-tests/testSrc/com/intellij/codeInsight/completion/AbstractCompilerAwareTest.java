@@ -33,7 +33,7 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myCompilerTester = new CompilerTester(true, myModule);
+    myCompilerTester = new CompilerTester(myModule);
   }
 
   @Override

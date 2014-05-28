@@ -26,7 +26,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
@@ -43,6 +46,24 @@ import java.util.HashSet;
 import java.util.List;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
+
+  private static VirtualFile findSourceFile(final CompileContext context, final VirtualFile formFile, final String className) {
+    final Module module = context.getModuleByFile(formFile);
+    if (module == null) {
+      return null;
+    }
+    final PsiClass aClass = FormEditingUtil.findClassToBind(module, className);
+    if (aClass == null) {
+      return null;
+    }
+
+    final PsiFile containingFile = aClass.getContainingFile();
+    if (containingFile == null){
+      return null;
+    }
+
+    return containingFile.getVirtualFile();
+  }
 
   @NotNull
   public String getDescription() {
@@ -96,7 +117,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
 
-            final VirtualFile sourceFile = Form2ByteCodeCompiler.findSourceFile(context, formFile, classToBind);
+            final VirtualFile sourceFile = findSourceFile(context, formFile, classToBind);
             if (sourceFile == null) {
               if (scope.belongs(formFile.getUrl())) {
                 addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)), formFile);

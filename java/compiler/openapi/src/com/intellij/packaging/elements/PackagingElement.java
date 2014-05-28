@@ -44,10 +44,6 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
                                                                    @NotNull ArtifactAntGenerationContext generationContext,
                                                                    @NotNull ArtifactType artifactType);
 
-  public abstract void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator, @NotNull PackagingElementResolvingContext resolvingContext,
-                                                              @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                              @NotNull ArtifactType artifactType);
-
   public abstract boolean isEqualTo(@NotNull PackagingElement<?> element);
 
   @NotNull

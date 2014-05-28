@@ -46,9 +46,6 @@ import java.util.*;
  * @author nik
  */
 public abstract class BaseCompilerTestCase extends ModuleTestCase {
-  protected boolean useExternalCompiler() {
-    return false;
-  }
 
   @Override
   protected void setUpModule() {
@@ -57,19 +54,14 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    if (useExternalCompiler()) {
-      myProject.getMessageBus().connect(myTestRootDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-        @Override
-        public void rootsChanged(ModuleRootEvent event) {
-          //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
-          forceFSRescan();
-        }
-      });
-      CompilerTestUtil.enableExternalCompiler(myProject);
-    }
-    else {
-      CompilerTestUtil.disableExternalCompiler(myProject);
-    }
+    myProject.getMessageBus().connect(myTestRootDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
+        forceFSRescan();
+      }
+    });
+    CompilerTestUtil.enableExternalCompiler();
   }
 
   protected void forceFSRescan() {
@@ -78,10 +70,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    if (useExternalCompiler()) {
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    }
-    return super.getTestProjectJdk();
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
   }
 
   @Override
@@ -92,9 +81,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
       }
     }
-    if (useExternalCompiler()) {
-      CompilerTestUtil.disableExternalCompiler(myProject);
-    }
+    CompilerTestUtil.disableExternalCompiler();
 
     super.tearDown();
   }
@@ -279,11 +266,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
             }
           }
         };
-        if (useExternalCompiler()) {
-          myProject.save();
-          CompilerTestUtil.saveApplicationSettings();
-          CompilerTestUtil.scanSourceRootsToRecompile(myProject);
-        }
+        myProject.save();
+        CompilerTestUtil.saveApplicationSettings();
+        CompilerTestUtil.scanSourceRootsToRecompile(myProject);
         action.run(callback);
       }
     });
@@ -353,31 +338,26 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected File getIprFile() throws IOException {
     File iprFile = super.getIprFile();
-    if (useExternalCompiler()) {
-      FileUtil.delete(iprFile);
-    }
+    FileUtil.delete(iprFile);
     return iprFile;
   }
 
   @Override
   protected Module doCreateRealModule(String moduleName) {
-    if (useExternalCompiler()) {
-      //todo[nik] reuse code from PlatformTestCase
-      final VirtualFile baseDir = myProject.getBaseDir();
-      Assert.assertNotNull(baseDir);
-      final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      PlatformTestCase.myFilesToDelete.add(moduleFile);
-      return new WriteAction<Module>() {
-        @Override
-        protected void run(Result<Module> result) throws Throwable {
-          Module module = ModuleManager.getInstance(myProject)
-            .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
-          module.getModuleFile();
-          result.setResult(module);
-        }
-      }.execute().getResultObject();
-    }
-    return super.doCreateRealModule(moduleName);
+    //todo[nik] reuse code from PlatformTestCase
+    final VirtualFile baseDir = myProject.getBaseDir();
+    Assert.assertNotNull(baseDir);
+    final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    PlatformTestCase.myFilesToDelete.add(moduleFile);
+    return new WriteAction<Module>() {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        Module module = ModuleManager.getInstance(myProject)
+          .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
+        module.getModuleFile();
+        result.setResult(module);
+      }
+    }.execute().getResultObject();
   }
 
   @Override
@@ -451,13 +431,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
 
     public void assertUpToDate() {
-      if (useExternalCompiler()) {
-        assertTrue(myExternalBuildUpToDate);
-      }
-      else {
-        checkRecompiled();
-        checkDeleted();
-      }
+      assertTrue(myExternalBuildUpToDate);
     }
 
     public void assertRecompiled(String... expected) {
@@ -480,13 +454,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
 
     private void checkRecompiled(String... expected) {
-      if (useExternalCompiler()) return;
-      assertSet("recompiled", myRecompiledPaths, expected);
     }
 
     private void checkDeleted(String... expected) {
-      if (useExternalCompiler()) return;
-      assertSet("deleted", myDeletedPaths, expected);
     }
 
     public CompilerMessage[] getErrors() {

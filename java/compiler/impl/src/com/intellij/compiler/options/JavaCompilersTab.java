@@ -46,20 +46,13 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private JPanel myTargetOptionsPanel;
   private final CardLayout myCardLayout;
 
-  private final Project myProject;
   private final BackendCompiler myDefaultCompiler;
   private BackendCompiler mySelectedCompiler;
   private final CompilerConfigurationImpl myCompilerConfiguration;
   private final Collection<Configurable> myConfigurables;
   private final TargetOptionsComponent myTargetLevelComponent;
 
-  public JavaCompilersTab(final Project project) {
-    this(project, ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getRegisteredJavaCompilers(),
-         ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler());
-  }
-
   public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
-    myProject = project;
     myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     myConfigurables = new ArrayList<Configurable>(compilers.size());

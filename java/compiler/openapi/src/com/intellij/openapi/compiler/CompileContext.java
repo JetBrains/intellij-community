@@ -122,13 +122,6 @@ public interface CompileContext extends UserDataHolder {
   VirtualFile[] getSourceRoots(Module module);
 
   /**
-   * Returns the list of all output directories.
-   *
-   * @return a list of all configured output directories from all modules (including output directories for tests)
-   */
-  VirtualFile[] getAllOutputDirectories();
-
-  /**
    * Returns the output directory for the specified module.
    *
    * @param module the module to check.

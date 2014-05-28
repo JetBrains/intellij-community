@@ -3,8 +3,6 @@
 <idea-plugin version="2">
 
   <extensions defaultExtensionNs="com.intellij">
-    <compiler implementation="org.intellij.plugins.intelliLang.pattern.compiler.impl.PatternValidationCompiler"/>
-
     <localInspection shortName="UnknownLanguage" displayName="Unknown Language ID" groupName="Language Injection" enabledByDefault="true"
                      level="ERROR" implementationClass="org.intellij.plugins.intelliLang.inject.java.validation.UnknownLanguageID"/>
     <localInspection shortName="LanguageMismatch" displayName="Language Mismatch" groupName="Language Injection" enabledByDefault="true"

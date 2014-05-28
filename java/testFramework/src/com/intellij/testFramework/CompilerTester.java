@@ -53,12 +53,11 @@ import java.util.List;
  * @author peter
  */
 public class CompilerTester {
-  private final boolean myExternalMake;
+
   private Module myModule;
   private TempDirTestFixture myMainOutput;
 
-  public CompilerTester(boolean externalMake, Module module) throws Exception {
-    myExternalMake = externalMake;
+  public CompilerTester(Module module) throws Exception {
     myModule = module;
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
@@ -69,29 +68,23 @@ public class CompilerTester {
       protected void run(Result result) throws Throwable {
         //noinspection ConstantConditions
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-        if (myExternalMake) {
-          CompilerTestUtil.enableExternalCompiler(getProject());
-          ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-        }
-        else {
-          CompilerTestUtil.disableExternalCompiler(getProject());
-        }
+        CompilerTestUtil.enableExternalCompiler();
+        ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
       }
     }.execute();
 
   }
 
   public void tearDown() {
-    if (myExternalMake) {
-      CompilerTestUtil.disableExternalCompiler(getProject());
-    }
+    CompilerTestUtil.disableExternalCompiler();
 
     try {
       myMainOutput.tearDown();
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    } finally {
+    } 
+    finally {
       myMainOutput = null;
       myModule = null;
     }
@@ -104,15 +97,8 @@ public class CompilerTester {
   public void deleteClassFile(final String className) throws IOException {
     AccessToken token = WriteAction.start();
     try {
-      if (myExternalMake) {
         //noinspection ConstantConditions
-        touch(
-          JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
-      }
-      else {
-        //noinspection ConstantConditions
-        findClassFile(className, myModule).delete(this);
-      }
+        touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
     }
     finally {
       token.finish();
@@ -206,14 +192,13 @@ public class CompilerTester {
       @Override
       public void run() {
         try {
-          if (myExternalMake) {
+          getProject().save();
+          CompilerTestUtil.saveApplicationSettings();
+          final VirtualFile moduleFile = myModule.getModuleFile();
+          File ioFile = VfsUtil.virtualToIoFile(moduleFile);
+          if (!ioFile.exists()) {
             getProject().save();
-            CompilerTestUtil.saveApplicationSettings();
-            File ioFile = VfsUtil.virtualToIoFile(myModule.getModuleFile());
-            if (!ioFile.exists()) {
-              getProject().save();
-              assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
-            }
+            assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
           }
           runnable.consume(callback);
         }

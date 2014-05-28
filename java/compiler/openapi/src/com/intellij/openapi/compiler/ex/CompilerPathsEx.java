@@ -19,10 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -34,16 +31,6 @@ import java.util.Collection;
 import java.util.Set;
 
 public class CompilerPathsEx extends CompilerPaths {
-  public static final Key<Boolean> CLEAR_ALL_OUTPUTS_KEY = Key.create("_should_clear_all_outputs_");
-
-  public static File getZippedOutputPath(Project project, String outputDirectoryPath) {
-    final File outputDir = new File(outputDirectoryPath);
-    return new File(getZipStoreDirectory(project), "_" + outputDir.getName() + Integer.toHexString(outputDirectoryPath.hashCode()) + ".zip");
-  }
-
-  public static File getZipStoreDirectory(Project project) {
-    return new File(getCompilerSystemDirectory(project), ".zip");
-  }
 
   public static class FileVisitor {
     protected void accept(final VirtualFile file, final String fileRoot, final String filePath) {
@@ -106,20 +93,5 @@ public class CompilerPathsEx extends CompilerPaths {
       }
     }
     return ArrayUtil.toStringArray(outputPaths);
-  }
-
-  public static VirtualFile[] getOutputDirectories(final Module[] modules) {
-    final Set<VirtualFile> dirs = new OrderedSet<VirtualFile>();
-    for (Module module : modules) {
-      final VirtualFile outputDir = getModuleOutputDirectory(module, false);
-      if (outputDir != null) {
-        dirs.add(outputDir);
-      }
-      VirtualFile testsOutputDir = getModuleOutputDirectory(module, true);
-      if (testsOutputDir != null) {
-        dirs.add(testsOutputDir);
-      }
-    }
-    return VfsUtil.toVirtualFileArray(dirs);
   }
 }

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -168,8 +167,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             AccessToken token = ReadAction.start();
 
             try {
-              if (!CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild()) return true;
-
               new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
             }
             finally {

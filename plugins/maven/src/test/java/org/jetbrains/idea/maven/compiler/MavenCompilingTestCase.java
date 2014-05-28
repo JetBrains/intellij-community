@@ -19,7 +19,6 @@ import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -63,10 +62,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
         for (Module module : scope.getAffectedModules()) {
           setupJdkForModule(module.getName());
         }
-        if (useJps()) {
-          new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
-            .generateBuildConfiguration(false);
-        }
+        new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests()).generateBuildConfiguration(false);
       }
     });
 
@@ -74,9 +70,6 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     CompilerManagerImpl.testSetup();
 
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
-    TranslatingCompilerFilesMonitor.getInstance()
-      .scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
-
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();

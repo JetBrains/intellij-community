@@ -27,8 +27,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -122,35 +120,6 @@ public class CompilerCacheManager implements ProjectComponent {
       LOG.assertTrue(cache instanceof FileProcessingCompilerStateCache);
     }
     return (FileProcessingCompilerStateCache)cache;
-  }
-
-  public synchronized StateCache<ValidityState> getGeneratingCompilerCache(final GeneratingCompiler compiler) throws IOException {
-    Object cache = myCompilerToCacheMap.get(compiler);
-    if (cache == null) {
-      final File cacheDir = getCompilerRootDir(compiler);
-      final StateCache<ValidityState> stateCache = new StateCache<ValidityState>(new File(cacheDir, "timestamps")) {
-        public ValidityState read(DataInput stream) throws IOException {
-          return compiler.createValidityState(stream);
-        }
-  
-        public void write(ValidityState validityState, DataOutput out) throws IOException {
-          validityState.save(out);
-        }
-      };
-      myCompilerToCacheMap.put(compiler, stateCache);
-      myCacheDisposables.add(new Disposable() {
-        public void dispose() {
-          try {
-            stateCache.close();
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
-      });
-      cache = stateCache;
-    }
-    return (StateCache<ValidityState>)cache;
   }
 
   public static String getCompilerIdString(Compiler compiler) {

@@ -15,9 +15,7 @@
  */
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
-import com.intellij.compiler.impl.javaCompiler.jikes.JikesOutputParser;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -181,30 +179,6 @@ public class OutputParser{
     }
   }
 
-  private static boolean isJikesMessage(String errorMessage) {
-    for (int j = 0; j < errorMessage.length(); j++) {
-      if (errorMessage.charAt(j) == ':') {
-        int offset = getNextTwoPoints(j, errorMessage);
-        if (offset < 0) {
-          continue;
-        }
-        offset = getNextTwoPoints(offset, errorMessage);
-        if (offset < 0) {
-          continue;
-        }
-        offset = getNextTwoPoints(offset, errorMessage);
-        if (offset < 0) {
-          continue;
-        }
-        offset = getNextTwoPoints(offset, errorMessage);
-        if (offset >= 0) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   private static int getNextTwoPoints(int offset, String message) {
     for (int i = offset + 1; i < message.length(); i++) {
       char c = message.charAt(i);
@@ -220,30 +194,18 @@ public class OutputParser{
   }
 
   private static void processJavacMessages(final List<String> javacMessages, final AntBuildMessageView messageView, Project project) {
-    if (javacMessages == null) return;
-
-    boolean isJikes = false;
-    for (String errorMessage : javacMessages) {
-      if (isJikesMessage(errorMessage)) {
-        isJikes = true;
-        break;
-      }
+    if (javacMessages == null) {
+      return;
     }
 
-    com.intellij.compiler.OutputParser outputParser;
-    if (isJikes) {
-      outputParser = new JikesOutputParser(project);
-    }
-    else {
-      outputParser = new JavacOutputParser(project);
-    }
+    final com.intellij.compiler.OutputParser outputParser = new JavacOutputParser(project);
 
     com.intellij.compiler.OutputParser.Callback callback = new com.intellij.compiler.OutputParser.Callback() {
       private int myIndex = -1;
 
       @Nullable
       public String getCurrentLine() {
-        if (javacMessages == null || myIndex >= javacMessages.size()) {
+        if (myIndex >= javacMessages.size()) {
           return null;
         }
         return javacMessages.get(myIndex);
@@ -289,7 +251,7 @@ public class OutputParser{
       public void fileProcessed(String path) {
       }
 
-      public void fileGenerated(FileObject path) {
+      public void fileGenerated(String path) {
       }
     };
     try {

@@ -26,7 +26,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.ExtractedDirectoryPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -103,17 +106,6 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     return Collections.singletonList(creator.createDirectoryContentCopyInstruction(tempDirPath + "/" + pathInJar));
   }
 
-
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext,
-                                                     @NotNull ArtifactType artifactType) {
-    final VirtualFile file = findFile();
-    if (file != null && file.isValid() && file.isDirectory()) {
-      creator.addDirectoryCopyInstructions(file);
-    }
-  }
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
