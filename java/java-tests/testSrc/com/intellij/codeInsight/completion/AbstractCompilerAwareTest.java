@@ -18,14 +18,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +39,7 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   @Override
   protected void tearDown() throws Exception {
     myCompilerTester.tearDown();
+    myCompilerTester = null;
     super.tearDown();
   }
 
