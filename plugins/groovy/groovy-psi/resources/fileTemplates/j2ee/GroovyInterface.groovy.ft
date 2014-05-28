@@ -2,6 +2,6 @@
 #end
 
 #parse("File Header.java")
-public interface ${NAME} {
+interface ${NAME} {
 
 }
