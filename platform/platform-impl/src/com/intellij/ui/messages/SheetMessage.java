@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -116,7 +117,19 @@ public class SheetMessage {
     LaterInvocator.enterModal(myWindow);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
-    beforeShowFocusOwner.get().requestFocus();
+
+    Component focusCandidate = beforeShowFocusOwner.get();
+
+    if (focusCandidate == null) {
+      focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
+    }
+
+    LOG.assertTrue(focusCandidate != null, "The should return focus on closing the message");
+
+    if (focusCandidate != null) {
+      focusCandidate.requestFocus();
+    }
+
   }
 
   private void setWindowOpacity(float opacity) {
