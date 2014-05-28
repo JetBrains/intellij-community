@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Block marker comment</problem_class>
+    <description />
+  </problem>
+</problems>

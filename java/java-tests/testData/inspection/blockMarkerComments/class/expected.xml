@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Block marker comment</problem_class>
+    <description />
+  </problem>
+  <problem>
+    <file>Foo.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Block marker comment</problem_class>
+    <description />
+  </problem>
+  <problem>
+    <file>Foo.java</file>
+    <line>13</line>
+    <module>0</module>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Block marker comment</problem_class>
+    <description />
+  </problem>
+</problems>
