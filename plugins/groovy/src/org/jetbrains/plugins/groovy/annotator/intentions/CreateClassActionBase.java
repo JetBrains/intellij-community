@@ -58,6 +58,8 @@ public abstract class CreateClassActionBase extends Intention {
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
     switch (getType()) {
+      case TRAIT:
+        return GroovyBundle.message("create.trait", referenceName);
       case ENUM:
         return GroovyBundle.message("create.enum", referenceName);
       case CLASS:

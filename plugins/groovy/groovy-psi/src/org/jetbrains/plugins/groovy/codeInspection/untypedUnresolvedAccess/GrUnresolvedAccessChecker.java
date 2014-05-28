@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -533,29 +534,42 @@ public class GrUnresolvedAccessChecker {
     }
     else if (canBeClassOrPackage(refElement)) {
       if (shouldBeInterface(refElement)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.INTERFACE), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.INTERFACE), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.TRAIT), key);
       }
       else if (shouldBeClass(refElement)) {
         QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.CLASS), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.ENUM), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ENUM), key);
       }
       else if (shouldBeAnnotation(refElement)) {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.ANNOTATION), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ANNOTATION), key);
       }
       else {
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.CLASS), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.INTERFACE), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.ENUM), key);
-        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement,
-                                                                                                             GrCreateClassKind.ANNOTATION), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.CLASS), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.INTERFACE), key);
+
+        if (!refElement.isQualified() || resolvesToGroovy(refElement.getQualifier())) {
+          QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.TRAIT), key);
+        }
+
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ENUM), key);
+        QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createClassFixAction(refElement, GrCreateClassKind.ANNOTATION), key);
       }
     }
+  }
+
+  private static boolean resolvesToGroovy(PsiElement qualifier) {
+    if (qualifier instanceof GrReferenceElement) {
+      return ((GrReferenceElement)qualifier).resolve() instanceof GroovyPsiElement;
+    }
+    if (qualifier instanceof GrExpression) {
+      PsiType type = ((GrExpression)qualifier).getType();
+      if (type instanceof PsiClassType) {
+        PsiClass resolved = ((PsiClassType)type).resolve();
+        return resolved instanceof GroovyPsiElement;
+      }
+    }
+    return false;
   }
 
   private static boolean canBeClassOrPackage(@NotNull GrReferenceElement refElement) {

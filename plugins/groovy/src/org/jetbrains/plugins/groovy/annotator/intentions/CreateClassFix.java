@@ -228,6 +228,13 @@ public abstract class CreateClassFix {
         switch (getType()) {
           case ENUM:
             return factory.createEnum(name);
+          case TRAIT:
+            if (factory instanceof GroovyPsiElementFactory) {
+              return ((GroovyPsiElementFactory)factory).createTrait(name);
+            }
+            else {
+              return null;
+            }
           case CLASS:
             return factory.createClass(name);
           case INTERFACE:
