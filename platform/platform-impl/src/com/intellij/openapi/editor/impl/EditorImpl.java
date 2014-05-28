@@ -133,7 +133,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
-  public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
