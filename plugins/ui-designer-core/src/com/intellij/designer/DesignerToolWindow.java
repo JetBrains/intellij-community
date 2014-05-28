@@ -135,7 +135,7 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myTreeBuilder != null) {
-          myTreeBuilder.expandAll(null);
+          TreeUtil.expandAll(myComponentTree);
         }
       }
     };
