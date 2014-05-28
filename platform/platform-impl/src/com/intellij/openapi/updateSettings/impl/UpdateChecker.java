@@ -252,7 +252,7 @@ public final class UpdateChecker {
             prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
           } else {
             final String newVersion = loadedPlugin.getVersion();
-            if (StringUtil.compareVersionNumbers(newVersion, installedPlugin.getVersion()) > 0) {
+            if (PluginDownloader.compareVersionsSkipBroken(installedPlugin, newVersion) > 0) {
               updateSettings.myOutdatedPlugins.add(idString);
               if (isReadyToUpdate(idString, newVersion) && !disabledPlugins.contains(idString)) {
                 prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
@@ -422,7 +422,7 @@ public final class UpdateChecker {
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
               final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
               if (loadedPlugin == null || pluginVersion == null ||
-                  StringUtil.compareVersionNumbers(pluginVersion, loadedPlugin.getVersion()) > 0) {
+                  PluginDownloader.compareVersionsSkipBroken(loadedPlugin, pluginVersion) > 0) {
                 if (isReadyToUpdate(pluginId, pluginVersion) && downloader.prepareToInstall(progressIndicator, buildNumber)) {
                   downloaded.put(PluginId.getId(pluginId), downloader);
                 }
