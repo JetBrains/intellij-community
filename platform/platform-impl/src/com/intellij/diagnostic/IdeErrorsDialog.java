@@ -111,7 +111,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private AttachmentsTabForm myAttachmentsTabForm;
 
   private ClearFatalsAction myClearAction = new ClearFatalsAction();
-  private BlameAction myBlameAction = new BlameAction();
+  private BlameAction myBlameAction;
   @Nullable
   private AnalyzeAction myAnalyzeAction;
   private boolean myMute;
@@ -219,7 +219,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
-    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+    myBlameAction = new BlameAction();
+    myBlameAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
   }
 
   private class ForwardAction extends AnAction implements DumbAware {
