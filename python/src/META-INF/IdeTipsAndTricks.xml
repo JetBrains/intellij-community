@@ -108,5 +108,11 @@
     <tipAndTrick file="CheckRegExp.html"/>
     <tipAndTrick file="CtrlDotInLookups.html"/>
     <tipAndTrick file="HorizontalScrolling.html"/>
+    <tipAndTrick file="LiveTemplatesRestore.html"/>
+    <tipAndTrick file="Multicursor.html"/>
+    <tipAndTrick file="Multicursor1.html"/>
+    <tipAndTrick file="QuickDocInSuggestionList.html"/>
+    <tipAndTrick file="QuickDocOnMouseMove.html"/>
+    <tipAndTrick file="TerminalOpen.html"/>
   </extensions>
 </idea-plugin>
