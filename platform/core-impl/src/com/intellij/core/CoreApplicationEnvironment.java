@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.*;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -125,6 +126,7 @@ public class CoreApplicationEnvironment {
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
+    myApplication.registerService(CodeFoldingSettings.class, new CodeFoldingSettings());
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
