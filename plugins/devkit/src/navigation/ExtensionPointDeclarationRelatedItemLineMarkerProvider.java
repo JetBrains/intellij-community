@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,16 +95,10 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Rela
 
   @Nullable
   private static PsiClass resolveExtensionPointClass(PsiField psiField) {
-    final PsiClassType type = (PsiClassType)psiField.getType();
-    final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
-    final PsiClass psiClass = resolveResult.getElement();
-    if (psiClass == null) return null;
-    final PsiTypeParameter[] parameters = psiClass.getTypeParameters();
-    if (parameters.length != 1) return null;
-    final PsiTypeParameter parameter = parameters[0];
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiType substituteType = substitutor.substitute(parameter);
-    return PsiTypesUtil.getPsiClass(substituteType);
+    final PsiType typeParameter = PsiUtil.substituteTypeParameter(psiField.getType(),
+                                                                  ExtensionPointName.class.getName(),
+                                                                  0, false);
+    return PsiUtil.resolveClassInClassTypeOnly(typeParameter);
   }
 
   private static String resolveEpName(PsiField psiField) {
