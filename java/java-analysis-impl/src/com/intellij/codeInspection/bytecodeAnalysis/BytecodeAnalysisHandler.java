@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -46,23 +47,28 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class BytecodeAnalysisHandler extends AbstractProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisHandler");
-  protected final PsiManager myPsiManager;
+  private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
+
+  private final PsiManager myPsiManager;
+  private ArrayList<IntIdEquation> myIntIdEquations;
+
+  private final Enumerators myEnumerators;
 
   private MostlySingularMultiMap<String, AnnotationData> myAnnotations = new MostlySingularMultiMap<String, AnnotationData>();
-
-  void setAnnotations(MostlySingularMultiMap<String, AnnotationData> annotations) {
-    this.myAnnotations = annotations;
-  }
 
   public BytecodeAnalysisHandler(Project project, PsiManager psiManager) {
     super(project);
@@ -81,15 +87,42 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
         doIndex();
       }
     });
+    Enumerators enumerators;
+    try {
+      enumerators = new Enumerators(getEnumerator(project, "internalKeys"), getEnumerator(project, "signatures"));
+    }
+    catch (IOException e) {
+      LOG.error("Cannot initialize enumerators", e);
+      enumerators = null;
+    }
+    myEnumerators = enumerators;
   }
 
+  // TODO - key should be an int
+  void setAnnotations(MostlySingularMultiMap<String, AnnotationData> annotations) {
+    this.myAnnotations = annotations;
+  }
+
+  private static PersistentStringEnumerator getEnumerator(Project project, String name) throws IOException {
+    File dir = new File(PathManager.getIndexRoot(), "faba");
+    File enumeratorFile = new File(dir, project.getLocationHash() + name);
+    return new PersistentStringEnumerator(enumeratorFile);
+  }
+
+  // solutions
+  public void setIntIdEquations(ArrayList<IntIdEquation> equations) {
+    this.myIntIdEquations = equations;
+  }
+
+  // TODO: what follows was just copied/modified from BaseExternalAnnotationsManager
+  // TODO: refactor?
   @Nullable
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     String key = getExternalName(listOwner);
     if (key == null) {
       return null;
     }
-    SmartList<AnnotationData> list = collectInferredAnnotations(listOwner);
+    List<AnnotationData> list = collectInferredAnnotations(listOwner);
     AnnotationData data = findByFQN(list, annotationFQN);
     if (data == null) {
       return null;
@@ -98,19 +131,10 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     return data.getAnnotation(this);
   }
 
-  @Nullable
-  private static AnnotationData findByFQN(@NotNull List<AnnotationData> map, @NotNull final String annotationFQN) {
-    return ContainerUtil.find(map, new Condition<AnnotationData>() {
-      @Override
-      public boolean value(AnnotationData data) {
-        return data.annotationClassFqName.equals(annotationFQN);
-      }
-    });
-  }
 
   @Nullable
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    SmartList<AnnotationData> result = collectInferredAnnotations(listOwner);
+    List<AnnotationData> result = collectInferredAnnotations(listOwner);
     if (result == null || result.isEmpty()) return null;
     PsiAnnotation[] myResult = ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
       @Override
@@ -123,10 +147,20 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     return myResult;
   }
 
-  private SmartList<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
+  @Nullable
+  private static AnnotationData findByFQN(@NotNull List<AnnotationData> map, @NotNull final String annotationFQN) {
+    return ContainerUtil.find(map, new Condition<AnnotationData>() {
+      @Override
+      public boolean value(AnnotationData data) {
+        return data.annotationClassFqName.equals(annotationFQN);
+      }
+    });
+  }
+
+  private List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
     String key = getExternalName(listOwner);
     if (key == null) {
-      return null;
+      return NO_DATA;
     }
     SmartList<AnnotationData> result = new SmartList<AnnotationData>();
     Iterable<AnnotationData> inferred = myAnnotations.get(key);
@@ -138,6 +172,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
     return PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
   }
+
   // interner for storing annotation FQN
   private final CharTableImpl charTable = new CharTableImpl();
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
@@ -162,7 +197,9 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
   }
 
   private void doIndex() {
-    DumbService.getInstance(myProject).queueTask(new BytecodeAnalysisTask(myProject));
+    if (myEnumerators != null) {
+      DumbService.getInstance(myProject).queueTask(new BytecodeAnalysisTask(myProject, myEnumerators));
+    }
   }
 }
 
@@ -211,20 +248,36 @@ class AnnotationData {
   }
 }
 
+// TODO - this should application-level
+class Enumerators {
+  @NotNull
+  final PersistentStringEnumerator internalKeyEnumerator;
+  @NotNull
+  final PersistentStringEnumerator annotationKeyEnumerator;
+
+  Enumerators(@NotNull PersistentStringEnumerator internalKeyEnumerator,
+              @NotNull PersistentStringEnumerator annotationKeyEnumerator) {
+    this.internalKeyEnumerator = internalKeyEnumerator;
+    this.annotationKeyEnumerator = annotationKeyEnumerator;
+  }
+}
+
 class BytecodeAnalysisTask extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisTask");
   private final Project myProject;
-  private long myFileCount = 0;
+  private long myClassFilesCount = 0;
+  private final Enumerators myEnumerators;
 
-  BytecodeAnalysisTask(Project project) {
+  BytecodeAnalysisTask(Project project, Enumerators enumerators) {
     myProject = project;
+    myEnumerators = enumerators;
   }
 
-  private VirtualFileVisitor<?> myCountFileVisitor = new VirtualFileVisitor() {
+  private VirtualFileVisitor<?> myClassFilesCounter = new VirtualFileVisitor() {
     @Override
     public boolean visitFile(@NotNull VirtualFile file) {
       if (!file.isDirectory() && "class".equals(file.getExtension())) {
-        myFileCount ++;
+        myClassFilesCount++;
       }
       return true;
     }
@@ -233,28 +286,30 @@ class BytecodeAnalysisTask extends DumbModeTask {
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
     indicator.setText("Bytecode analysis");
+    indicator.setIndeterminate(false);
     HashSet<VirtualFile> classRoots = new HashSet<VirtualFile>();
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for (Module module : moduleManager.getModules()) {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       OrderEntry[] entries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : entries) {
-        if (!(entry instanceof JdkOrderEntry)) {
+        //if (!(entry instanceof JdkOrderEntry)) {
           Collections.addAll(classRoots, entry.getFiles(OrderRootType.CLASSES));
-        }
+        //}
       }
     }
-    // to display progress
+
     for (VirtualFile classRoot : classRoots) {
-      VfsUtilCore.visitChildrenRecursively(classRoot, myCountFileVisitor);
+      VfsUtilCore.visitChildrenRecursively(classRoot, myClassFilesCounter);
     }
-    indicator.setFraction(0.01);
-    LOG.info("Found " + myFileCount + " classes to Index");
-    ClassProcessor myClassProcessor = new ClassProcessor(indicator, myFileCount);
+    LOG.info("Found " + myClassFilesCount + " classes to Index");
+    BytecodeAnalysisHandler handler = myProject.getComponent(BytecodeAnalysisHandler.class);
+    ClassProcessor myClassProcessor = new ClassProcessor(indicator, myClassFilesCount, myEnumerators);
     for (VirtualFile classRoot : classRoots) {
       VfsUtilCore.visitChildrenRecursively(classRoot, myClassProcessor);
     }
-    myProject.getComponent(BytecodeAnalysisHandler.class).setAnnotations(myClassProcessor.annotations());
+    handler.setAnnotations(myClassProcessor.annotations());
+    handler.setIntIdEquations(myClassProcessor.myIntIdSolver.equations);
   }
 
 

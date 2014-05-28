@@ -83,12 +83,9 @@ final class Component<Id> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     Component component = (Component) o;
-
     if (touched != component.touched) return false;
     if (!ids.equals(component.ids)) return false;
-
     return true;
   }
 
@@ -108,42 +105,54 @@ final class Component<Id> {
   }
 }
 
-interface Result<Id, T> {
-  static class ResultUtil<Id, T extends Enum<T>> {
-    private final ELattice<T> lattice;
-    final T top;
-    ResultUtil(ELattice<T> lattice) {
-      this.lattice = lattice;
-      top = lattice.top;
-    }
+// component specialized for ints
+final class IntIdComponent {
+  boolean touched;
+  final int[] ids;
 
-    Result<Id, T> join(Result<Id, T> r1, Result<Id, T> r2) {
-      if (r1 instanceof Final && ((Final) r1).value == top) {
-        return r1;
-      }
-      if (r2 instanceof Final && ((Final) r2).value == top) {
-        return r2;
-      }
-      if (r1 instanceof Final && r2 instanceof Final) {
-        return new Final<Id, T>(lattice.join(((Final<?, T>) r1).value, ((Final<?, T>) r2).value));
-      }
-      if (r1 instanceof Final && r2 instanceof Pending) {
-        Pending<Id, T> pending = (Pending<Id, T>) r2;
-        return new Pending<Id, T>(lattice.join(((Final<Id, T>) r1).value, pending.infinum), pending.delta);
-      }
-      if (r1 instanceof Pending && r2 instanceof Final) {
-        Pending<Id, T> pending = (Pending<Id, T>) r1;
-        return new Pending<Id, T>(lattice.join(((Final<Id, T>) r2).value, pending.infinum), pending.delta);
-      }
-      Pending<Id, T> pending1 = (Pending<Id, T>) r1;
-      Pending<Id, T> pending2 = (Pending<Id, T>) r2;
-      Set<Component<Id>> delta = new HashSet<Component<Id>>();
-      delta.addAll(pending1.delta);
-      delta.addAll(pending2.delta);
-      return new Pending<Id, T>(lattice.join(pending1.infinum, pending2.infinum), delta);
+  IntIdComponent(boolean touched, int[] ids) {
+    this.touched = touched;
+    this.ids = ids;
+  }
+
+}
+
+class ResultUtil<Id, T extends Enum<T>> {
+  private final ELattice<T> lattice;
+  final T top;
+  ResultUtil(ELattice<T> lattice) {
+    this.lattice = lattice;
+    top = lattice.top;
+  }
+
+  Result<Id, T> join(Result<Id, T> r1, Result<Id, T> r2) {
+    if (r1 instanceof Final && ((Final) r1).value == top) {
+      return r1;
     }
+    if (r2 instanceof Final && ((Final) r2).value == top) {
+      return r2;
+    }
+    if (r1 instanceof Final && r2 instanceof Final) {
+      return new Final<Id, T>(lattice.join(((Final<?, T>) r1).value, ((Final<?, T>) r2).value));
+    }
+    if (r1 instanceof Final && r2 instanceof Pending) {
+      Pending<Id, T> pending = (Pending<Id, T>) r2;
+      return new Pending<Id, T>(lattice.join(((Final<Id, T>) r1).value, pending.infinum), pending.delta);
+    }
+    if (r1 instanceof Pending && r2 instanceof Final) {
+      Pending<Id, T> pending = (Pending<Id, T>) r1;
+      return new Pending<Id, T>(lattice.join(((Final<Id, T>) r2).value, pending.infinum), pending.delta);
+    }
+    Pending<Id, T> pending1 = (Pending<Id, T>) r1;
+    Pending<Id, T> pending2 = (Pending<Id, T>) r2;
+    Set<Component<Id>> delta = new HashSet<Component<Id>>();
+    delta.addAll(pending1.delta);
+    delta.addAll(pending2.delta);
+    return new Pending<Id, T>(lattice.join(pending1.infinum, pending2.infinum), delta);
   }
 }
+
+interface Result<Id, T> {}
 final class Final<Id, T> implements Result<Id, T> {
   final T value;
   Final(T value) {
@@ -155,16 +164,6 @@ final class Final<Id, T> implements Result<Id, T> {
     return "Final{" +
            "value=" + value +
            '}';
-  }
-}
-
-final class Solution<Id, Val> {
-  final Id id;
-  final Val value;
-
-  Solution(Id id, Val value) {
-    this.id = id;
-    this.value = value;
   }
 }
 
@@ -183,6 +182,43 @@ final class Pending<Id, T> implements Result<Id, T> {
            "infinum=" + infinum +
            ", delta=" + delta +
            '}';
+  }
+}
+
+interface IntIdResult<T> {}
+// this just wrapper, no need for this really
+final class IntIdFinal<T> implements IntIdResult<T> {
+  final T value;
+  public IntIdFinal(T value) {
+    this.value = value;
+  }
+}
+final class IntIdPending<T> implements IntIdResult<T> {
+  final T infinum;
+  final IntIdComponent[] delta;
+
+  IntIdPending(T infinum, IntIdComponent[] delta) {
+    this.infinum = infinum;
+    this.delta = delta;
+  }
+}
+final class IntIdEquation<T> {
+  final int id;
+  final IntIdResult<T> rhs;
+
+  IntIdEquation(int id, IntIdResult<T> rhs) {
+    this.id = id;
+    this.rhs = rhs;
+  }
+}
+
+final class Solution<Id, Val> {
+  final Id id;
+  final Val value;
+
+  Solution(Id id, Val value) {
+    this.id = id;
+    this.value = value;
   }
 }
 
@@ -266,6 +302,7 @@ final class Solver<Id, Val extends Enum<Val>> {
     return solved;
   }
 
+  // we can make it in place
   Result<Id, Val> substitute(Pending<Id, Val> pending, Id id, Val value) {
     if (value.equals(lattice.bot)) {
       HashSet<Component<Id>> delta = new HashSet<Component<Id>>();
@@ -319,5 +356,12 @@ final class Solver<Id, Val extends Enum<Val>> {
         return new Pending<Id, Val>(infinum, delta);
       }
     }
+  }
+}
+
+final class IntIdSolver {
+  ArrayList<IntIdEquation> equations = new ArrayList<IntIdEquation>();
+  void addEquation(IntIdEquation equation) {
+    equations.add(equation);
   }
 }

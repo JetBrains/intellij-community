@@ -30,8 +30,8 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
-  final Result.ResultUtil<Key, Value> resultUtil =
-    new Result.ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
+  final ResultUtil<Key, Value> resultUtil =
+    new ResultUtil<Key, Value>(new ELattice<Value>(Value.Bot, Value.Top));
 
   private final InOutInterpreter interpreter;
   private final Value inValue;

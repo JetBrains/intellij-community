@@ -26,24 +26,26 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ClassProcessor extends VirtualFileVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ClassProcessor");
 
   final static ELattice<Value> valueLattice = new ELattice<Value>(Value.Bot, Value.Top);
   final Solver<Key, Value> solver = new Solver<Key, Value>(valueLattice);
+  final IntIdSolver myIntIdSolver = new IntIdSolver();
   final Map<Method, MethodExtra> extras = new HashMap<Method, MethodExtra>();
-  final @NotNull ProgressIndicator myProgressIndicator;
+
+  @NotNull
+  final ProgressIndicator myProgressIndicator;
   private final long totalClassFiles;
+  private final Enumerators myEnumerators;
   long processed = 0;
 
-  public ClassProcessor(@NotNull ProgressIndicator indicator, long totalClassFiles) {
+  public ClassProcessor(@NotNull ProgressIndicator indicator, long totalClassFiles, Enumerators enumerators) {
     this.myProgressIndicator = indicator;
     this.totalClassFiles = totalClassFiles;
+    this.myEnumerators = enumerators;
   }
 
   @Override
@@ -53,9 +55,10 @@ public class ClassProcessor extends VirtualFileVisitor {
         processClass(new ClassReader(file.contentsToByteArray()));
       }
       catch (IOException e) {
-        // TODO
+        LOG.debug("Error when processing " + file.getPresentableUrl(), e);
       }
-      myProgressIndicator.setFraction((double)processed++ / totalClassFiles);
+      myProgressIndicator.setText2(file.getPresentableUrl());
+      myProgressIndicator.setFraction(((double) processed++) / totalClassFiles);
     }
     return true;
   }
@@ -119,17 +122,13 @@ public class ClassProcessor extends VirtualFileVisitor {
           }
           added = true;
           for (Equation<Key, Value> equation : toAdd) {
-            solver.addEquation(equation);
+            addEquation(equation);
           }
         } catch (AnalyzerException e) {
           throw new RuntimeException();
         }
       } else {
-        LOG.debug("CFG for " +
-                  className + " " +
-                  methodNode.name +
-                  methodNode.desc + " " +
-                  "is not reducible");
+        LOG.debug("CFG for " + method + " is not reducible");
       }
     }
 
@@ -141,23 +140,60 @@ public class ClassProcessor extends VirtualFileVisitor {
         boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
 
         if (isReferenceArg) {
-          solver.addEquation(new Equation<Key, Value>(new Key(method, new In(i)), new Final<Key, Value>(Value.Top)));
+          addEquation(new Equation<Key, Value>(new Key(method, new In(i)), new Final<Key, Value>(Value.Top)));
           if (isReferenceResult || isBooleanResult) {
-            solver.addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null)), new Final<Key, Value>(Value.Top)));
-            solver.addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull)), new Final<Key, Value>(Value.Top)));
+            addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null)), new Final<Key, Value>(Value.Top)));
+            addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull)), new Final<Key, Value>(Value.Top)));
           }
         }
         if (Type.BOOLEAN_TYPE.equals(argType)) {
           if (isReferenceResult || isBooleanResult) {
-            solver.addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False)), new Final<Key, Value>(Value.Top)));
-            solver.addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True)), new Final<Key, Value>(Value.Top)));
+            addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False)), new Final<Key, Value>(Value.Top)));
+            addEquation(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True)), new Final<Key, Value>(Value.Top)));
           }
         }
       }
       if (isReferenceResult) {
-        solver.addEquation(new Equation<Key, Value>(new Key(method, new Out()), new Final<Key, Value>(Value.Top)));
+        addEquation(new Equation<Key, Value>(new Key(method, new Out()), new Final<Key, Value>(Value.Top)));
       }
     }
+  }
+
+  void addEquation(Equation<Key, Value> equation) {
+    try {
+      myIntIdSolver.addEquation(enumerate(equation));
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      //solver.addEquation(equation);
+    }
+  }
+
+  IntIdEquation<Value> enumerate(Equation<Key, Value> equation) throws IOException {
+    com.intellij.codeInspection.bytecodeAnalysis.Result<Key, Value> rhs = equation.rhs;
+    IntIdResult<Value> result;
+    if (rhs instanceof Final) {
+      result = new IntIdFinal<Value>(((Final<Key, Value>)rhs).value);
+    } else {
+      Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
+      Set<Component<Key>> deltaOrig = pending.delta;
+      IntIdComponent[] components = new IntIdComponent[deltaOrig.size()];
+      int componentI = 0;
+      for (Component<Key> keyComponent : deltaOrig) {
+        int[] ids = new int[keyComponent.ids.size()];
+        int idI = 0;
+        for (Key id : keyComponent.ids) {
+          ids[idI] = myEnumerators.internalKeyEnumerator.enumerate(id.toString());
+          idI++;
+        }
+        IntIdComponent intIdComponent = new IntIdComponent(keyComponent.touched, ids);
+        components[componentI] = intIdComponent;
+        componentI++;
+      }
+      result = new IntIdPending<Value>(pending.infinum, components);
+    }
+    int key = myEnumerators.internalKeyEnumerator.enumerate(equation.id.toString());
+    return new IntIdEquation<Value>(key, result);
   }
 
   MostlySingularMultiMap<String, AnnotationData> annotations() {

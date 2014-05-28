@@ -54,11 +54,7 @@ final class Method {
 
   @Override
   public String toString() {
-    return "Method(" +
-           internalClassName + ',' +
-           methodName + ',' +
-           methodDesc +
-           ')';
+    return internalClassName + ' ' + methodName + ' ' + methodDesc;
   }
 }
 
@@ -76,7 +72,7 @@ final class In implements Direction {
 
   @Override
   public String toString() {
-    return "In(" + paramIndex + ")";
+    return "In " + paramIndex;
   }
 
   @Override
@@ -125,10 +121,7 @@ final class InOut implements Direction {
 
   @Override
   public String toString() {
-    return "InOut(" +
-           paramIndex +
-           ", " + inValue +
-           ')';
+    return "InOut " + paramIndex + " " + inValue.toString();
   }
 }
 
@@ -180,10 +173,7 @@ final class Key {
 
   @Override
   public String toString() {
-    return "Key{" +
-           "method=" + method +
-           ", direction=" + direction +
-           '}';
+    return "" + method + ' ' + direction;
   }
 }
 
