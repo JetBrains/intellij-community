@@ -27,7 +27,7 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
     super(original);
   }
 
-  public abstract MergeFunction defineMergeFunction();
+  public abstract MergeFunction getMergeFunction();
 
   @Override
   public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
@@ -73,7 +73,7 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
       myState = orig.getState();
       if (myTokenType == null) return;
       orig.advance();
-      myTokenType = defineMergeFunction().merge(myTokenType, orig);
+      myTokenType = getMergeFunction().merge(myTokenType, orig);
     }
   }
 
