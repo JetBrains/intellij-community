@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package com.intellij.remoteServer.agent.util;
 
-/**
- * @author michael.golubev
- */
-public interface CloudAgentConfigBase extends CloudAgentConfig, CloudAgentProxyConfig {
+public interface CloudAgentProxyConfig extends CloudAgentConfig {
 
-  String getEmail();
-
-  String getPassword();
+  CloudProxySettings getProxySettings();
 }
