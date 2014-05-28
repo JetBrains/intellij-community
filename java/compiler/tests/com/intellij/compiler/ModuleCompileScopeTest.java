@@ -15,10 +15,6 @@ import static com.intellij.util.io.TestFileSystemBuilder.fs;
  * @author nik
  */
 public class ModuleCompileScopeTest extends BaseCompilerTestCase {
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
 
   public void testCompileFile() {
     VirtualFile a = createFile("src/A.java", "class A{}");

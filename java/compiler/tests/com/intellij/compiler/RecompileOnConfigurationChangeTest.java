@@ -15,10 +15,6 @@ import static com.intellij.util.io.TestFileSystemBuilder.fs;
  * @author nik
  */
 public class RecompileOnConfigurationChangeTest extends BaseCompilerTestCase {
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
 
   public void testChangeOutput() throws IOException {
     VirtualFile srcRoot = createFile("src/A.java", "class A{}").getParent();

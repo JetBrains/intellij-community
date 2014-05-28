@@ -88,7 +88,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     if (ex[0] != null) {
       throw ex[0];
     }
-    CompilerTestUtil.disableExternalCompiler(myProject);
+    CompilerTestUtil.disableExternalCompiler();
     CompilerTestUtil.setupJavacForTests(myProject);
   }
 

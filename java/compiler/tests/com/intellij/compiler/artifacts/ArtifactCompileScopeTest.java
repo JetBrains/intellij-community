@@ -1,6 +1,5 @@
 package com.intellij.compiler.artifacts;
 
-import com.intellij.compiler.BaseCompilerTestCase;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
@@ -19,77 +18,71 @@ import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
  * @author nik
  */
 public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
-  public static class ExternalModeTest extends ArtifactCompileScopeTest {
-    @Override
-    protected boolean useExternalCompiler() {
-      return true;
-    }
 
-    public void testDoNotCleanArtifactOutputOnRebuild()  {
-      Artifact a = addArtifact(root().file(createFile("a.txt")));
-      make(a);
-      createFileInOutput(a, "b.txt");
-      assertOutput(a, fs().file("a.txt").file("b.txt"));
+  public void testDoNotCleanArtifactOutputOnRebuild()  {
+    Artifact a = addArtifact(root().file(createFile("a.txt")));
+    make(a);
+    createFileInOutput(a, "b.txt");
+    assertOutput(a, fs().file("a.txt").file("b.txt"));
 
-      rebuild();
-      assertOutput(a, fs().file("a.txt").file("b.txt"));
-    }
+    rebuild();
+    assertOutput(a, fs().file("a.txt").file("b.txt"));
+  }
 
-    public void testMakeArtifactAfterRebuild()  {
-      Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
-      Artifact a = addArtifact(root().module(m));
-      make(a);
-      assertOutput(m, fs().file("A.class"));
+  public void testMakeArtifactAfterRebuild()  {
+    Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
+    Artifact a = addArtifact(root().module(m));
+    make(a);
+    assertOutput(m, fs().file("A.class"));
 
-      createFileInOutput(a, "a.txt");
-      assertOutput(a, fs().file("A.class").file("a.txt"));
+    createFileInOutput(a, "a.txt");
+    assertOutput(a, fs().file("A.class").file("a.txt"));
 
-      createFile("src/B.java", "class B{}");
+    createFile("src/B.java", "class B{}");
 
-      rebuild();
-      assertOutput(m, fs().file("A.class").file("B.class"));
-      assertOutput(a, fs().file("A.class").file("a.txt"));
+    rebuild();
+    assertOutput(m, fs().file("A.class").file("B.class"));
+    assertOutput(a, fs().file("A.class").file("a.txt"));
 
-      make(a);
-      assertOutput(a, fs().file("A.class").file("B.class").file("a.txt"));
-    }
+    make(a);
+    assertOutput(a, fs().file("A.class").file("B.class").file("a.txt"));
+  }
 
-    public void testRebuildArtifactOnProjectRebuildIfBuildOnMakeOptionIsEnabled() {
-      Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
-      Artifact a = addArtifact(root().module(m));
-      setBuildOnMake(a);
-      make(a);
-      createFileInOutput(a, "a.txt");
-      assertOutput(a, fs().file("A.class").file("a.txt"));
+  public void testRebuildArtifactOnProjectRebuildIfBuildOnMakeOptionIsEnabled() {
+    Module m = addModule("m", createFile("src/A.java", "class A{}").getParent());
+    Artifact a = addArtifact(root().module(m));
+    setBuildOnMake(a);
+    make(a);
+    createFileInOutput(a, "a.txt");
+    assertOutput(a, fs().file("A.class").file("a.txt"));
 
-      rebuild();
-      assertOutput(a, fs().file("A.class"));
-    }
+    rebuild();
+    assertOutput(a, fs().file("A.class"));
+  }
 
-    public void testDoNotRebuildIncludedModulesOnRebuildingArtifact() throws IOException {
-      Module m = addModule("m", createFile("src/AB.java", "class A{} class B{}").getParent());
-      Artifact a = addArtifact(root().module(m));
-      make(a);
-      deleteFileInOutput(a, "A.class");
-      deleteFileInOutput(a, "B.class");
-      deleteFileInOutput(m, "A.class");
-      assertOutput(a, fs());
-      assertOutput(m, fs().file("B.class"));
+  public void testDoNotRebuildIncludedModulesOnRebuildingArtifact() throws IOException {
+    Module m = addModule("m", createFile("src/AB.java", "class A{} class B{}").getParent());
+    Artifact a = addArtifact(root().module(m));
+    make(a);
+    deleteFileInOutput(a, "A.class");
+    deleteFileInOutput(a, "B.class");
+    deleteFileInOutput(m, "A.class");
+    assertOutput(a, fs());
+    assertOutput(m, fs().file("B.class"));
 
-      recompile(a);
-      assertOutput(a, fs().file("B.class"));
-      assertOutput(m, fs().file("B.class"));
-    }
+    recompile(a);
+    assertOutput(a, fs().file("B.class"));
+    assertOutput(m, fs().file("B.class"));
+  }
 
-    private static void deleteFileInOutput(Artifact a, final String fileName) {
-      boolean deleted = FileUtil.delete(new File(VfsUtilCore.virtualToIoFile(getOutputDir(a)), fileName));
-      assertTrue(deleted);
-    }
+  private static void deleteFileInOutput(Artifact a, final String fileName) {
+    boolean deleted = FileUtil.delete(new File(VfsUtilCore.virtualToIoFile(getOutputDir(a)), fileName));
+    assertTrue(deleted);
+  }
 
-    private static void deleteFileInOutput(Module m, final String fileName) {
-      boolean deleted = FileUtil.delete(new File(getOutputDir(m), fileName));
-      assertTrue(deleted);
-    }
+  private static void deleteFileInOutput(Module m, final String fileName) {
+    boolean deleted = FileUtil.delete(new File(getOutputDir(m), fileName));
+    assertTrue(deleted);
   }
 
   @Override
@@ -161,10 +154,7 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     compile(true, file1).assertRecompiledAndDeleted(aPath, aPath);
 
     ensureTimeChanged();
-    BaseCompilerTestCase.CompilationLog make = make(module);
-    if (!useExternalCompiler()) {
-      make.assertUpToDate();
-    }
+    make(module);
 
     ensureTimeChanged();
     final String[] bothPaths = {"out/production/module/A.class", "out/production/module/B.class"};

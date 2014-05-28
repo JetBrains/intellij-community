@@ -16,10 +16,6 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
  * @author nik
  */
 public class CorruptedBuildCachesTest extends BaseCompilerTestCase {
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
 
   public void testTimestampsStorage() {
     VirtualFile a = createFile("src/A.java", "class A{}");

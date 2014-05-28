@@ -16,10 +16,6 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
  * @author nik
  */
 public class JavaCompilerBasicTest extends BaseCompilerTestCase {
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
 
   public void testAddRemoveJavaClass() throws IOException {
     final VirtualFile file = createFile("src/A.java", "public class A {}");

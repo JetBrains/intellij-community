@@ -12,10 +12,6 @@ import static com.intellij.util.io.TestFileSystemBuilder.fs;
  * @author nik
  */
 public class ForcedCompilationTest extends BaseCompilerTestCase {
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
 
   public void testHandleDeletedFilesOnForcedCompilation() {
     VirtualFile a = createFile("dep/src/A.java", "class A{}");

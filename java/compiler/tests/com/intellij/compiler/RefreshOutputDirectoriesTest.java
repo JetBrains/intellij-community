@@ -19,11 +19,6 @@ import java.util.List;
 public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
   private int myRootsChangedCount;
 
-  @Override
-  protected boolean useExternalCompiler() {
-    return true;
-  }
-
   public void testSingleModule() {
     final VirtualFile file = createFile("src/A.java", "public class A {}");
     final Module module = addModule("m", file.getParent());
