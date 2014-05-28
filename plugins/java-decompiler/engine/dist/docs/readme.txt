@@ -51,6 +51,7 @@ occ (0): ouput copyright comment
 ner (1): assume return not throwing exceptions
 den (1): decompile enumerations
 rgn (1): remove getClass() invocation, when it is part of a qualified new statement
+lit (0): output numeric and character literals "as-is"
 bto (1): interpret int 1 as boolean true (workaround to a compiler bug)
 nns (1): allow for not set synthetic attribute (workaround to a compiler bug)
 uto (1): consider nameless types as java.lang.Object (workaround to a compiler architecture flaw)

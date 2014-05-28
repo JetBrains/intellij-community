@@ -28,7 +28,8 @@ public interface IFernflowerPreferences {
 	public static final String NO_EXCEPTIONS_RETURN = "ner";			
 	public static final String DECOMPILE_ENUM = "den";						
 	public static final String REMOVE_GETCLASS_NEW = "rgn";				
-	public static final String BOOLEAN_TRUE_ONE = "bto";					
+	public static final String LITERALS_AS_IS = "bto";
+	public static final String BOOLEAN_TRUE_ONE = "bto";
 	public static final String SYNTHETIC_NOT_SET = "nns";		
 	public static final String UNDEFINED_PARAM_TYPE_OBJECT = "uto";
 	public static final String USE_DEBUG_VARNAMES = "udv";

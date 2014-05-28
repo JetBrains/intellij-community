@@ -101,7 +101,8 @@ public class ConstExprent extends Exprent {
 	}
 	
 	public String toJava(int indent) {
-		
+    boolean literal = DecompilerContext.getOption(IFernflowerPreferences.LITERALS_AS_IS);
+
 		if(consttype.type != CodeConstants.TYPE_NULL && value == null) {
 			return ExprProcessor.getCastTypeName(consttype);
 		} else {
@@ -112,7 +113,7 @@ public class ConstExprent extends Exprent {
 				Integer val = (Integer)value;
 				String ret = escapes.get(val);
 				if(ret == null) {
-					if(val.intValue() >= 32 && val.intValue() < 127) {
+					if(literal || val.intValue() >= 32 && val.intValue() < 127) {
 						ret = String.valueOf((char)val.intValue());
 					} else {
 						ret = InterpreterUtil.charToUnicodeLiteral(val);
@@ -126,8 +127,10 @@ public class ConstExprent extends Exprent {
 			case CodeConstants.TYPE_INT:
 				int ival = ((Integer)value).intValue();
 				
-				String intfield; 
-				if(ival == Integer.MAX_VALUE) {
+				String intfield;
+				if(literal) {
+          return value.toString();
+        } else if(ival == Integer.MAX_VALUE) {
 					intfield = "MAX_VALUE";
 				} else if(ival == Integer.MIN_VALUE) {
 					intfield = "MIN_VALUE";
@@ -139,7 +142,9 @@ public class ConstExprent extends Exprent {
 				long lval = ((Long)value).longValue();
 				
 				String longfield;
-				if(lval == Long.MAX_VALUE) {
+				if(literal) {
+          return value.toString()+"L";
+        } else if(lval == Long.MAX_VALUE) {
 					longfield = "MAX_VALUE";
 				} else if(lval == Long.MIN_VALUE) {
 					longfield = "MIN_VALUE";
@@ -151,7 +156,17 @@ public class ConstExprent extends Exprent {
 				double dval = ((Double)value).doubleValue();
 				
 				String doublefield;
-				if(Double.isNaN(dval)) {
+				if(literal) {
+          if(Double.isNaN(dval)) {
+            return "0.0D / 0.0";
+          } else if(dval == Double.POSITIVE_INFINITY) {
+            return "1.0D / 0.0";
+          } else if(dval == Double.NEGATIVE_INFINITY) {
+            return "-1.0D / 0.0";
+          } else {
+            return value.toString() + "D";
+          }
+        } else if(Double.isNaN(dval)) {
 					doublefield = "NaN";
 				} else if(dval == Double.POSITIVE_INFINITY) {
 					doublefield = "POSITIVE_INFINITY";
@@ -169,7 +184,17 @@ public class ConstExprent extends Exprent {
 				float fval = ((Float)value).floatValue();
 				
 				String floatfield;
-				if(Float.isNaN(fval)) {
+				if(literal) {
+          if(Double.isNaN(fval)) {
+            return "0.0F / 0.0";
+          } else if(fval == Double.POSITIVE_INFINITY) {
+            return "1.0F / 0.0";
+          } else if(fval == Double.NEGATIVE_INFINITY) {
+            return "-1.0F / 0.0";
+          } else {
+            return value.toString() + "F";
+          }
+        } else if(Float.isNaN(fval)) {
 					floatfield = "NaN";
 				} else if(fval == Float.POSITIVE_INFINITY) {
 					floatfield = "POSITIVE_INFINITY";
