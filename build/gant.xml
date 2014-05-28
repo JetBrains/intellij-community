@@ -29,6 +29,7 @@
        <include name="oromatcher.jar"/>
        <include name="cli-parser-*.jar"/>
        <include name="nanoxml-*.jar"/>
+       <include name="jsr166e.jar"/>
     </fileset>
   </path>
 
