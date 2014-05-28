@@ -31,7 +31,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
@@ -827,12 +826,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
     for (int i = 0; i < editors.length; i++) {
       final FileEditor editor = editors[i];
-      if (editor instanceof TextEditor) {
-        // hack!!!
-        // This code prevents "jumping" on next repaint.
-        ((EditorEx)((TextEditor)editor).getEditor()).stopOptimizedScrolling();
-      }
-
       final FileEditorProvider provider = providers[i];//getProvider(editor);
 
       // Restore editor state

@@ -812,9 +812,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-
     myScrollPane.setRowHeaderView(myGutterComponent);
-    stopOptimizedScrolling();
 
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(true);
@@ -1679,7 +1677,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     clearTextWidthCache();
 
-    stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
@@ -1714,7 +1711,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScrollPane == null || myDocument.isInBulkUpdate()) return;
 
     clearTextWidthCache();
-    stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
@@ -1810,7 +1806,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myPreferredSize = dim;
 
-      stopOptimizedScrolling();
       myGutterComponent.setLineNumberAreaWidth(new TIntFunction() {
         @Override
         public int execute(int lineNumber) {
@@ -1935,8 +1930,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
     }
-
-    startOptimizedScrolling();
 
     if (myUpdateCursor) {
       setCursorPosition();
@@ -4376,10 +4369,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void updateCaretCursor() {
-    if (!ourIsUnitTestMode && !IJSwingUtilities.hasFocus(getContentComponent())) {
-      stopOptimizedScrolling();
-    }
-
     myUpdateCursor = true;
   }
 
@@ -4466,11 +4455,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void stopOptimizedScrolling() {
-    //myEditorComponent.setOpaque(false);
-  }
-
-  private void startOptimizedScrolling() {
-    //myEditorComponent.setOpaque(true);
   }
 
   private static class CaretRectangle {
