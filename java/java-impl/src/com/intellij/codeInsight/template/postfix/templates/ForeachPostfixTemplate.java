@@ -16,15 +16,13 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
-import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.impl.VariableNode;
 import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_ITERABLE_OR_ARRAY;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
@@ -35,18 +33,17 @@ public class ForeachPostfixTemplate extends StringBasedPostfixTemplate {
   }
 
   @Override
-  public void expandWithTemplateManager(TemplateManager manager, PsiElement expression, Editor editor) {
-
-    String finalPart = JavaCodeStyleSettingsFacade.getInstance(expression.getProject()).isGenerateFinalLocals() ? "final " : "";
-    Template template = manager.createTemplate("", "", "for (" + finalPart + "$type$ $name$ : $variable$) {\n    $END$\n}");
+  public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
     MacroCallNode type = new MacroCallNode(new IterableComponentTypeMacro());
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
-    String variable = "variable";
-    type.addParameter(new VariableNode(variable, null));
+    type.addParameter(new VariableNode("expr", null));
     template.addVariable("type", type, type, false);
     template.addVariable("name", name, name, true);
-    template.addVariable(variable, new TextExpression(expression.getText()), false);
+  }
 
-    manager.startTemplate(editor, template);
+  @Override
+  public String getTemplateString(@NotNull PsiElement element) {
+    String finalPart = JavaCodeStyleSettingsFacade.getInstance(element.getProject()).isGenerateFinalLocals() ? "final " : "";
+    return "for (" + finalPart + "$type$ $name$ : $expr$) {\n    $END$\n}";
   }
 }
