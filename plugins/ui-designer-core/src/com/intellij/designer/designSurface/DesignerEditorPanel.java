@@ -143,7 +143,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected String myLastExecuteCommand;
 
-  public DesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+  public DesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, Module module, @NotNull VirtualFile file) {
     myEditor = editor;
     myProject = project;
     myModule = module;
