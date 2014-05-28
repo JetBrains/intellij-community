@@ -181,7 +181,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) {
         PsiElement parent = tag.getParent();
         boolean hasBalance = true;
-        while(parent instanceof XmlTag) {
+        loop: while(parent instanceof XmlTag) {
           if (name.equals(((XmlTag)parent).getName())) {
             hasBalance = false;
             ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parent.getNode());
@@ -189,8 +189,13 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
               hasBalance = true;
               break;
             }
+            for (PsiElement el = parent.getNextSibling(); el != null; el = el.getNextSibling()) {
+              if (el instanceof PsiErrorElement && el.getText().startsWith("</" + name)) {
+                hasBalance = true;
+                break loop;
+              }
+            }
           }
-
           parent = parent.getParent();
         }
         if (hasBalance) return Result.CONTINUE;
