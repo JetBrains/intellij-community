@@ -64,7 +64,7 @@ public abstract class GotoActionBase extends AnAction {
     try {
       myInAction = getClass();
       List<String> strings = ourHistory.get(myInAction);
-      myHistoryIndex = strings == null || strings.size() <= 1 ? 0 : 1;
+      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(myInAction) ? 0 : 1;
       gotoActionPerformed(e);
     }
     catch (Throwable t) {
