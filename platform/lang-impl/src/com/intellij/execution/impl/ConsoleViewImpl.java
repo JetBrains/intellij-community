@@ -74,6 +74,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -538,9 +539,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void disposeEditor() {
-    if (!myEditor.isDisposed()) {
-      EditorFactory.getInstance().releaseEditor(myEditor);
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (!myEditor.isDisposed()) {
+          EditorFactory.getInstance().releaseEditor(myEditor);
+        }
+      }
+    });
   }
 
   @Override

@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides services for creating document and editor instances.
+ *
+ * Creating and releasing of editors must be done from EDT.
  */
 public abstract class EditorFactory {
   /**
@@ -61,6 +63,8 @@ public abstract class EditorFactory {
   /**
    * Creates an editor for the specified document.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @return the editor instance.
    * @see #releaseEditor(Editor)
@@ -70,6 +74,8 @@ public abstract class EditorFactory {
   /**
    * Creates a read-only editor for the specified document.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @return the editor instance.
    * @see #releaseEditor(Editor)
@@ -78,6 +84,8 @@ public abstract class EditorFactory {
 
   /**
    * Creates an editor for the specified document associated with the specified project.
+   *
+   * Must be invoked in EDT.
    *
    * @param document the document to create the editor for.
    * @param project  the project with which the editor is associated.
@@ -89,6 +97,8 @@ public abstract class EditorFactory {
 
   /**
    * Creates an editor for the specified document associated with the specified project.
+   *
+   * Must be invoked in EDT.
    *
    * @param document the document to create the editor for.
    * @param project  the project for which highlighter should be created
@@ -103,6 +113,8 @@ public abstract class EditorFactory {
   /**
    * Creates an editor for the specified document associated with the specified project.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @param project  the project for which highlighter should be created
    * @param file     the file according to which the editor contents is highlighted.
@@ -116,6 +128,8 @@ public abstract class EditorFactory {
   /**
    * Creates a read-only editor for the specified document associated with the specified project.
    *
+   * Must be invoked in EDT.
+   *
    * @param document the document to create the editor for.
    * @param project  the project with which the editor is associated.
    * @return the editor instance.
@@ -126,6 +140,8 @@ public abstract class EditorFactory {
 
   /**
    * Disposes of the specified editor instance.
+   *
+   * Must be invoked in EDT.
    *
    * @param editor the editor instance to release.
    */
