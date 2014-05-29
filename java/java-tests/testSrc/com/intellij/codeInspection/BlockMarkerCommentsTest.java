@@ -17,25 +17,38 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Batkovich
  */
-public class BlockMarkerCommentsTest extends JavaCodeInsightFixtureTestCase {
+public class BlockMarkerCommentsTest extends LightCodeInsightFixtureTestCase {
+
+  private final BlockMarkerCommentsInspection myInspection = new BlockMarkerCommentsInspection();
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/blockMarkerComments/";
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(myInspection);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    myFixture.disableInspections(myInspection);
+    super.tearDown();
+  }
+
   private void doTestInspection() {
-    myFixture.testInspection(getTestName(true), new LocalInspectionToolWrapper(new BlockMarkerCommentsInspection()));
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
   private void doTestQuickFix() {
-    final String testFileName = getTestName(true);
+    final String testFileName = getTestName(false);
     myFixture.enableInspections(new BlockMarkerCommentsInspection());
     myFixture.configureByFile(testFileName + ".java");
     final IntentionAction intentionAction = myFixture.findSingleIntention("Remove block marker comments");

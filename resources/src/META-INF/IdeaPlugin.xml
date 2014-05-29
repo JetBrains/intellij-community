@@ -660,7 +660,7 @@
                      displayName="Class may extend a commonly used base class instead of implementing interface"/>
     <localInspection language="JAVA" shortName="BlockMarkerComments"
                      groupBundle="messages.InspectionsBundle"
-                     groupName="Code style issues" enabledByDefault="true" level="WARNING"
+                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
                      displayName="Block marker comment"/>
 

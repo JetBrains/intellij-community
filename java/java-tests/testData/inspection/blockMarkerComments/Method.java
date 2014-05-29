@@ -2,7 +2,7 @@ class Foo {
 
   void m() {
 
-  } // end this is block marker
+  } <warning descr="Redundant block marker">// end method</warning>
 
   void m1() {
 

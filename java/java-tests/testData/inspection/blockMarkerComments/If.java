@@ -6,11 +6,11 @@ class Foo {
 
     } else {
 
-    } //endif
+    } <warning descr="Redundant block marker">//endif</warning>
 
     if (true) {
 
-    } // end if
+    } <warning descr="Redundant block marker">// end if</warning>
 
     if (true) {
 
