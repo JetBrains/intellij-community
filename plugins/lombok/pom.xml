@@ -25,8 +25,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 
-    <lombok.version>1.12.6</lombok.version>
+    <lombok.version>1.14.0</lombok.version>
     <lombok-pg.version>0.11.3</lombok-pg.version>
+    <hrisey.version>0.1.1</hrisey.version>
   </properties>
 
   <dependencyManagement>
@@ -46,6 +47,11 @@
         <artifactId>lombok-pg</artifactId>
         <classifier>runtime</classifier>
         <version>${lombok-pg.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>pl.mg6.hrisey</groupId>
+        <artifactId>hrisey</artifactId>
+        <version>${hrisey.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
