@@ -22,8 +22,5 @@
     <action id="ShowFilePath">
       <keyboard-shortcut first-keystroke="control alt shift 2"/>
     </action>
-    <action id="RunAPT">
-      <keyboard-shortcut first-keystroke="control alt shift 9"/>
-    </action>
   </keymap>
 </component>
