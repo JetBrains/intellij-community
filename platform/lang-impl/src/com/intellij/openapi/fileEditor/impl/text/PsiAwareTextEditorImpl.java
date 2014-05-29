@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,15 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAwareTextEditorImpl extends TextEditorImpl {
+  private static final Logger LOG = Logger.getInstance(PsiAwareTextEditorImpl.class);
+
   private TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
   public PsiAwareTextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
@@ -43,15 +45,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   @Override
   protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
     return new PsiAwareTextEditorComponent(project, file, this);
-  }
-
-  @Override
-  public void initFolding() {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        CodeFoldingManager.getInstance(myProject).buildInitialFoldings(getEditor());
-      }
-    });
   }
 
   @Override

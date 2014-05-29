@@ -282,7 +282,7 @@ public class EditorWindow {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     final Integer second = info.getSecond();
     if (file != null) {
-      getManager().openFileImpl4(this, file, true, null, true, second == null ? -1 : second.intValue());
+      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue());
     }
   }
 

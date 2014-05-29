@@ -60,8 +60,9 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
                                        final PsiManager psiManager,
                                        final WolfTheProblemSolver problemSolver,
                                        DockManager dockManager,
-                                       MessageBus messageBus) {
-    super(project, dockManager);
+                                       MessageBus messageBus,
+                                       EditorHistoryManager editorHistoryManager) {
+    super(project, dockManager, editorHistoryManager);
     myPsiManager = psiManager;
     myProblemSolver = problemSolver;
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();

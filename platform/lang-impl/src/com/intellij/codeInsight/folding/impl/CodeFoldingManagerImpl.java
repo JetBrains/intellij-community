@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -203,65 +202,73 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void buildInitialFoldings(@NotNull final Editor editor) {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     final Project project = editor.getProject();
-    if (project == null || !project.equals(myProject)) return;
+    if (project == null || !project.equals(myProject) || editor.isDisposed()) return;
+    if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
+    if (!EditorUtil.supportsDumbModeFolding(editor)) return;
 
-    final Document document = editor.getDocument();
-    // Do not save/restore folding for code fragments
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (file == null || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
-    if (!foldingModel.isFoldingEnabled()) return;
-    if (project.isDisposed() || editor.isDisposed() || !file.isValid()) return;
-
-    if (EditorUtil.supportsDumbModeFolding(editor)) {
-      // Else: Postpone operation until first call of #updateFoldRegionsAsync with the [firstTime] param [true]
-      PsiDocumentManager.getInstance(myProject).commitDocument(document);
-      createInitFoldingAction(updateFoldRegions(editor, true, true), editor).run();
+    CodeFoldingState foldingState = buildInitialFoldings(editor.getDocument());
+    if (foldingState != null) {
+      foldingState.setToEditor(editor);
     }
   }
 
-  @NotNull
-  private Runnable createInitFoldingAction(@Nullable final Runnable updateFoldingRegionAction,
-                                           @NotNull final Editor editor) {
-    assert !DumbService.getInstance(myProject).isDumb() || EditorUtil.supportsDumbModeFolding(editor) : "Forbidden state for folding initialization";
-    return new Runnable() {
+  @Nullable
+  @Override
+  public CodeFoldingState buildInitialFoldings(@NotNull final Document document) {
+    if (myProject.isDisposed()) {
+      return null;
+    }
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    //Do not save/restore folding for code fragments
+    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (file == null || !file.isValid() || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
+
+    final FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(myProject, file, document, true);
+
+    return new CodeFoldingState() {
       @Override
-      public void run() {
-        if (updateFoldingRegionAction != null) {
-          updateFoldingRegionAction.run();
-        }
+      public void setToEditor(@NotNull final Editor editor) {
+        ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
         if (myProject.isDisposed() || editor.isDisposed()) return;
-        // Restore folding state if need (it could be done concurrently)
-        if (!isFoldingsInitializedInEditor(editor)) {
-          editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-            @Override
-            public void run() {
-              Document document = editor.getDocument();
-              DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+        final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
+        if (!foldingModel.isFoldingEnabled()) return;
+        if (isFoldingsInitializedInEditor(editor)) return;
 
-              // Folding state could be changed in another editor
-              Editor[] editors = EditorFactory.getInstance().getEditors(document, editor.getProject());
-              for (Editor otherEditor : editors) {
-                if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
-                // Any active editor overwrites folding from saved state (document info is empty for the case)
-                documentFoldingInfo.loadFromEditor(otherEditor);
-                break;
-              }
-              documentFoldingInfo.setToEditor(editor);
-
-              // Drop fording info for document. Next editor will load it from active editor.
-              // Then the last editor is closed, folding info saves into the document.
-              documentFoldingInfo.clear();
-              editor.getDocument().putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
-              editor.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
-            }
-          });
-        }
+        foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+          @Override
+          public void run() {
+            new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, true, false).run();
+          }
+        });
+        initFolding(editor);
       }
     };
+  }
+
+  private void initFolding(@NotNull final Editor editor) {
+    final Document document = editor.getDocument();
+    editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+        for (Editor otherEditor : editors) {
+          if (otherEditor == editor || !isFoldingsInitializedInEditor(otherEditor)) continue;
+          documentFoldingInfo.loadFromEditor(otherEditor);
+          break;
+        }
+        documentFoldingInfo.setToEditor(editor);
+        documentFoldingInfo.clear();
+
+        editor.getDocument().putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
+        editor.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
+      }
+    });
   }
 
   @Override
@@ -317,28 +324,19 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   @Nullable
-  public Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime) {
-    if (firstTime) {
-      final Document document = editor.getDocument();
-      if (!isFoldingsInitializedInDocument(document)) {
-        // all editors need to be initialized
-        return new Runnable() {
-          @Override
-          public void run() {
-            final Editor[] editors = EditorFactory.getInstance().getEditors(document);
-            for(Editor anyEditor:editors) if (!isFoldingsInitializedInEditor(anyEditor)) {
-              createInitFoldingAction(updateFoldRegions(anyEditor, true, false), anyEditor).run();
-            }
-          }
-        };
+  public Runnable updateFoldRegionsAsync(@NotNull final Editor editor, final boolean firstTime) {
+    final Runnable runnable = updateFoldRegions(editor, firstTime, false);
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (runnable != null) {
+          runnable.run();
+        }
+        if (firstTime && !isFoldingsInitializedInEditor(editor)) {
+          initFolding(editor);
+        }
       }
-      if (!isFoldingsInitializedInEditor(editor)) {
-        // Restores folding state after regions initialization.
-        // That is called after the first folding pass
-        return createInitFoldingAction(updateFoldRegions(editor, true, false), editor);
-      }
-    }
-    return updateFoldRegions(editor, firstTime, false);
+    };
   }
 
   @Nullable
@@ -366,13 +364,18 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isFoldingsInitializedInEditor(editor)) {
-      ((DocumentFoldingInfo)state).setToEditor(editor);
+      state.setToEditor(editor);
     }
   }
 
   @Override
   public void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) throws WriteExternalException {
-    ((DocumentFoldingInfo)state).writeExternal(element);
+    if (state instanceof DocumentFoldingInfo) {
+      ((DocumentFoldingInfo)state).writeExternal(element);
+    }
+    else {
+      throw new WriteExternalException();
+    }
   }
 
   @Override
