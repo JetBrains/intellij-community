@@ -56,7 +56,7 @@ public abstract class CleanupIntention implements IntentionAction, LowPriorityAc
     final AnalysisScope scope = getScope(project, file);
     if (scope != null) {
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-      globalContext.codeCleanup(project, scope, profile, getText(), null);
+      globalContext.codeCleanup(project, scope, profile, getText(), null, false);
     }
   }
 

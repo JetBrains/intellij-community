@@ -39,6 +39,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -409,13 +410,19 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   public void codeCleanup(final Project project,
                           final AnalysisScope scope,
                           final InspectionProfile profile,
-                          final String commandName, Runnable postRunnable) {}
+                          final String commandName, Runnable postRunnable, 
+                          final boolean modal) {}
 
   public static void codeCleanup(Project project, AnalysisScope scope, Runnable runnable) {
-    GlobalInspectionContextBase globalContext =
-      (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    globalContext.codeCleanup(project, scope, profile, null, runnable);
+    globalContext.codeCleanup(project, scope, profile, null, runnable, false);
+  }
+
+  public static void cleanupElements(Project project, Runnable runnable, PsiElement... scope) {
+    GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    globalContext.codeCleanup(project, new AnalysisScope(new LocalSearchScope(scope), project), profile, null, runnable, true);
   }
 
    public void close(boolean noSuspisiousCodeFound) {

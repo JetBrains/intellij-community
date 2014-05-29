@@ -136,8 +136,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
         }
       }
 
-      AnalysisScope scope = new AnalysisScope(new LocalSearchScope(elements.toArray(new PsiElement[elements.size()])), project);
-      GlobalInspectionContextBase.codeCleanup(project, scope, null);
+      GlobalInspectionContextBase.cleanupElements(project, null, elements.toArray(new PsiElement[elements.size()]));
     }
 
     final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();
