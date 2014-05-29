@@ -38,9 +38,6 @@
     <extensionPoint name="compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
 
-    <extensionPoint name="compiler.makeDependencyProcessor"
-                    interface="com.intellij.compiler.DependencyProcessor"/>
-
     <extensionPoint name="compiler.optionsManager"
                     interface="com.intellij.compiler.options.CompilerOptionsFilter"/>
 
