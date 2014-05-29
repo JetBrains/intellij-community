@@ -42,6 +42,7 @@ public class ProjectPaths {
   private ProjectPaths() {
   }
 
+  @NotNull
   public static Collection<File> getCompilationClasspathFiles(ModuleChunk chunk,
                                                        boolean includeTests,
                                                        final boolean excludeMainModuleOutput,
@@ -49,14 +50,17 @@ public class ProjectPaths {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.WHOLE, exportedOnly);
   }
 
+  @NotNull
   public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
   }
 
+  @NotNull
   public static Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.AFTER_JDK, true);
   }
 
+  @NotNull
   private static Collection<File> getClasspathFiles(ModuleChunk chunk,
                                              JpsJavaClasspathKind kind,
                                              final boolean excludeMainModuleOutput,
