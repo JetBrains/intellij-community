@@ -418,7 +418,10 @@ public class SSAUConstructorSparseEx {
 		
 		FastSparseSet<Integer> versCopy = vers.getCopy();
 		HashSet<Integer> phiVers = new HashSet<Integer>();
-		
+
+		// take into account the corresponding mm/pp node if existing
+		int ppvers = phantomppnodes.containsKey(phivar) ? phantomppnodes.get(phivar).version : -1;
+				
 		// ssu graph
 		VarVersionNode phinode = ssuversions.nodes.getWithKey(phivar);
 		List<VarVersionEdge> lstPreds = new ArrayList<VarVersionEdge>(phinode.preds);  
@@ -430,7 +433,7 @@ public class SSAUConstructorSparseEx {
 		} else {
 			for(VarVersionEdge edge: lstPreds) {
 				int verssrc = edge.source.preds.iterator().next().source.version;
-				if(!vers.contains(verssrc)) {
+				if(!vers.contains(verssrc) && verssrc != ppvers) {
 					edge.source.removeSuccessor(edge);
 					phinode.removePredecessor(edge);
 				} else {

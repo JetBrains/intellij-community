@@ -33,6 +33,7 @@ import de.fernflower.modules.decompiler.sforms.DirectNode;
 import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper;
 import de.fernflower.modules.decompiler.sforms.SSAConstructorSparseEx;
 import de.fernflower.modules.decompiler.sforms.SSAUConstructorSparseEx;
+import de.fernflower.modules.decompiler.stats.DoStatement;
 import de.fernflower.modules.decompiler.stats.RootStatement;
 import de.fernflower.modules.decompiler.stats.Statement;
 import de.fernflower.modules.decompiler.vars.VarVersionEdge;
@@ -217,6 +218,21 @@ public class StackVarsProcessor {
 			for(DirectNode ndx: nd.succs) {
 				stack.add(ndx);
 				stackMaps.add(new HashMap<VarVersionPaar, Exprent>(mapVarValues));
+			}
+			
+			// make sure the 3 special exprent lists in a loop (init, condition, increment) are not empty
+			// change loop type if necessary
+			if(nd.exprents.isEmpty() && 
+					(nd.type == DirectNode.NODE_INIT || nd.type == DirectNode.NODE_CONDITION || nd.type == DirectNode.NODE_INCREMENT)) {
+				nd.exprents.add(null);
+				
+				if(nd.statement.type == Statement.TYPE_DO) {
+					DoStatement loop = (DoStatement)nd.statement;
+					
+					if(nd.type == DirectNode.NODE_INCREMENT && loop.getLooptype() == DoStatement.LOOP_FOR) { // "downgrade" loop to 'while'
+						loop.setLooptype(DoStatement.LOOP_WHILE);
+					}
+				}
 			}
 		}
 		

@@ -150,6 +150,10 @@ public class DotExporter {
 	private static String directBlockIdToDot(String id) {
 		id = id.replaceAll("_try", "999");
 		id = id.replaceAll("_tail", "888");
+
+		id = id.replaceAll("_init", "111");
+		id = id.replaceAll("_cond", "222");
+		id = id.replaceAll("_inc", "333");
 		return id;
 	}
 

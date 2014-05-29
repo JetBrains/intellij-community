@@ -51,6 +51,9 @@ public class VarVersionEdge { // FIXME: can be removed?
 		return hashCode;
 	}
 	
-	
+	@Override
+	public String toString() {
+		return source.toString() + " ->" + type + "-> " + dest.toString();
+	}
 	
 }

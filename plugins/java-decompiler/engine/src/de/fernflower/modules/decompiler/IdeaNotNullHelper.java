@@ -36,13 +36,21 @@ import de.fernflower.util.VBStyleCollection;
 public class IdeaNotNullHelper {
 
 	
-	public static void removeHardcodedChecks(Statement root, StructMethod mt) {
+	public static boolean removeHardcodedChecks(Statement root, StructMethod mt) {
 
+		boolean checks_removed = false;
+		
 		// parameter @NotNull annotations
-		while(findAndRemoveParameterCheck(root, mt)); // iterate until nothing found. Each invocation removes one parameter check. 
+		while(findAndRemoveParameterCheck(root, mt)) { // iterate until nothing found. Each invocation removes one parameter check.
+			checks_removed = true;
+		}
 		
 		// method @NotNull annotation
-		while(findAndRemoveReturnCheck(root, mt)); // iterate until nothing found. Each invocation handles one method exit check.
+		while(findAndRemoveReturnCheck(root, mt)) { // iterate until nothing found. Each invocation handles one method exit check.
+			checks_removed = true;
+		}
+		
+		return checks_removed;
 	}
 
 	private static boolean findAndRemoveParameterCheck(Statement stat, StructMethod mt) {

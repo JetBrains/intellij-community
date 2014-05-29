@@ -186,7 +186,7 @@ public class MethodProcessorThread implements Runnable {
 			StackVarsProcessor stackproc = new StackVarsProcessor();
 			stackproc.simplifyStackVars(root, mt, cl);
 			
-//			System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
+			//System.out.println("~~~~~~~~~~~~~~~~~~~~~~ \r\n"+root.toJava());
 			
 			varproc.setVarVersions(root);
 
@@ -216,14 +216,15 @@ public class MethodProcessorThread implements Runnable {
 			
 			if(DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
 				
-				IdeaNotNullHelper.removeHardcodedChecks(root, mt);
+				if(IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
 				
-				SequenceHelper.condenseSequences(root);
-				
-				StackVarsProcessor stackproc = new StackVarsProcessor();
-				stackproc.simplifyStackVars(root, mt, cl);
-				
-				varproc.setVarVersions(root);
+					SequenceHelper.condenseSequences(root);
+					
+					StackVarsProcessor stackproc = new StackVarsProcessor();
+					stackproc.simplifyStackVars(root, mt, cl);
+					
+					varproc.setVarVersions(root);
+				}
 			}
 			
 			LabelHelper.identifyLabels(root);
