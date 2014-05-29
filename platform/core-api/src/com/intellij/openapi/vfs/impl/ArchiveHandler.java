@@ -16,7 +16,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.reference.SoftReference;
@@ -138,7 +138,7 @@ public abstract class ArchiveHandler {
   protected EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
     EntryInfo entry = map.get(entryName);
     if (entry == null) {
-      Couple<String> path = splitPath(entryName);
+      Pair<String, String> path = splitPath(entryName);
       EntryInfo parentEntry = getOrCreate(map, path.first);
       entry = new EntryInfo(parentEntry, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP);
       map.put(entryName, entry);
@@ -147,11 +147,11 @@ public abstract class ArchiveHandler {
   }
 
   @NotNull
-  protected Couple<String> splitPath(@NotNull String entryName) {
+  protected Pair<String, String> splitPath(@NotNull String entryName) {
     int p = entryName.lastIndexOf('/');
     String parentName = p > 0 ? entryName.substring(0, p) : "";
     String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-    return Couple.newOne(parentName, shortName);
+    return Pair.create(parentName, shortName);
   }
 
   @NotNull
