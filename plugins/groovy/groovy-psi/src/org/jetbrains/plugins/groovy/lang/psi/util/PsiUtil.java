@@ -704,7 +704,8 @@ public class PsiUtil {
     return nextSibling;
   }
 
-  public static PsiIdentifier getJavaNameIdentifier(GrNamedElement namedElement) {
+  @NotNull
+  public static PsiIdentifier getJavaNameIdentifier(@NotNull GrNamedElement namedElement) {
     final PsiElement element = namedElement.getNameIdentifierGroovy();
     JavaIdentifier identifier = element.getUserData(NAME_IDENTIFIER);
     if (identifier == null) {

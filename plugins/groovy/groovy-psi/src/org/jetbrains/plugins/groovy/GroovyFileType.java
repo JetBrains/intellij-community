@@ -55,8 +55,10 @@ public class GroovyFileType extends LanguageFileType {
         return new GroovyEditorHighlighter(colors);
       }
     });
+    GROOVY_FILE_TYPES.add(GROOVY_FILE_TYPE);
   }
 
+  @NotNull
   public static FileType[] getGroovyEnabledFileTypes() {
     return GROOVY_FILE_TYPES.toArray(new FileType[GROOVY_FILE_TYPES.size()]);
   }
