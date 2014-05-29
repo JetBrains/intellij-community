@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +42,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Max Medvedev
  */
 public class GrReferenceAdjuster implements ReferenceAdjuster {
-
   public GrReferenceAdjuster() {
+    int i = 0;
   }
 
   public static void shortenAllReferencesIn(@Nullable GroovyPsiElement newTypeElement) {
@@ -68,8 +67,8 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
 
   @Override
   public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, Project project) {
-    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
-    return process(element, addImports, incompleteCode, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    GroovyCodeStyleSettingsFacade facade = GroovyCodeStyleSettingsFacade.getInstance(project);
+    return process(element, addImports, incompleteCode, facade.useFqClassNamesInJavadoc(), facade.useFqClassNames());
   }
 
   @Override
@@ -79,8 +78,8 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
 
   @Override
   public void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project) {
-    final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
-    processRange(element, startOffset, endOffset, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    GroovyCodeStyleSettingsFacade facade = GroovyCodeStyleSettingsFacade.getInstance(project);
+    processRange(element, startOffset, endOffset, facade.useFqClassNamesInJavadoc(), facade.useFqClassNames());
   }
 
   private static boolean process(@NotNull PsiElement element,
@@ -110,11 +109,10 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
   }
 
   public static <T extends PsiElement> boolean shortenReference(@NotNull GrQualifiedReference<T> ref) {
-    final GroovyCodeStyleSettings settings =
-      CodeStyleSettingsManager.getInstance(ref.getProject()).getCurrentSettings().getCustomSettings(GroovyCodeStyleSettings.class);
-    boolean result = shortenReferenceInner(ref, true, false, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    GroovyCodeStyleSettingsFacade facade = GroovyCodeStyleSettingsFacade.getInstance(ref.getProject());
+    boolean result = shortenReferenceInner(ref, true, false, facade.useFqClassNamesInJavadoc(), facade.useFqClassNames());
     final TextRange range = ref.getTextRange();
-    result |= process(ref, range.getStartOffset(), range.getEndOffset(), true, false, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
+    result |= process(ref, range.getStartOffset(), range.getEndOffset(), true, false, facade.useFqClassNamesInJavadoc(), facade.useFqClassNames());
     return result;
   }
 

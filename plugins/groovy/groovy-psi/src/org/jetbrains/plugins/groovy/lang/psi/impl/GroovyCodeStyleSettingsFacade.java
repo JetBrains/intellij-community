@@ -25,6 +25,7 @@ public abstract class GroovyCodeStyleSettingsFacade {
   }
 
   public abstract boolean useFqClassNames();
+  public abstract boolean useFqClassNamesInJavadoc();
 
   public abstract int staticFieldsOrderWeight();
 

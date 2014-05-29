@@ -27,9 +27,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.unscramble.UnscrambleDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -54,51 +54,10 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
         final Annotation annotation = holder.createWarningAnnotation(psiElement, message);
         annotation.setFileLevelAnnotation(true);
         if (!modified) {
-          annotation.registerFix(new InvestigateFix(reason));
+          annotation.registerFix(GroovyQuickFixFactory.getInstance().createInvestigateFix(reason));
         }
         annotation.registerFix(new ActivateFix(vfile));
       }
-    }
-  }
-
-  static void analyzeStackTrace(Project project, String exceptionText) {
-    final UnscrambleDialog dialog = new UnscrambleDialog(project);
-    dialog.setText(exceptionText);
-    dialog.show();
-  }
-
-  private static class InvestigateFix implements IntentionAction {
-    private final String myReason;
-
-    public InvestigateFix(String reason) {
-      myReason = reason;
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return "View details";
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Investigate DSL descriptor processing error";
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      analyzeStackTrace(project, myReason);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
     }
   }
 

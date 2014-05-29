@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Max Medvedev
  */
 public abstract class GrMethodComparator {
-  private static final ExtensionPointName<GrMethodComparator> EP_NAME = ExtensionPointName.create("org.intellij.groovy.methodComparator");
+  public static final ExtensionPointName<GrMethodComparator> EP_NAME = ExtensionPointName.create("org.intellij.groovy.methodComparator");
 
   public interface Context {
     @Nullable

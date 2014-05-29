@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.dgm;
+package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 
-/**
- * @author Max Medvedev
- */
-public class DGMImplicitPropertyUsageProvider extends ImplicitPropertyUsageProvider {
+
+public class GroovySyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
+   @NotNull
   @Override
-  protected boolean isUsed(Property property) {
-    if (DGMUtil.isInDGMFile(property)) {
-      String name = property.getName();
-      return ArrayUtil.find(DGMUtil.KEYS, name) >= 0;
-    }
-    return  false;
-  }
+  protected SyntaxHighlighter createHighlighter() {
+    return new GroovySyntaxHighlighter();
+   }
 }

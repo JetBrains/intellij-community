@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  */
 public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
-  protected AccessorReferencesSearcher() {
+  public AccessorReferencesSearcher() {
     super(true);
   }
 

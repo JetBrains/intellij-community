@@ -77,4 +77,6 @@ public abstract class GroovyQuickFixFactory {
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
   public abstract IntentionAction createRemoveUnusedGrParameterFix(GrParameter parameter);
+
+  public abstract IntentionAction createInvestigateFix(String reason);
 }

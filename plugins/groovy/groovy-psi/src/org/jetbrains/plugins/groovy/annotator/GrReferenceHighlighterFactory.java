@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
  * @author Max Medvedev
  */
 public class GrReferenceHighlighterFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  protected GrReferenceHighlighterFactory(Project project) {
+  public GrReferenceHighlighterFactory(Project project) {
     super(project);
     TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, false, -1);
   }

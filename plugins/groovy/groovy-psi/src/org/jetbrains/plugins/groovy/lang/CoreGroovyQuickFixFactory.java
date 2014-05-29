@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInspection;
+package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.annotator.intentions.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
-import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
-import org.jetbrains.plugins.groovy.codeInspection.local.RemoveUnusedGrParameterFix;
-import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -38,114 +32,114 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
-public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
+public class CoreGroovyQuickFixFactory extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types) {
-    return new DynamicMethodFix(expression, types);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createDynamicPropertyFix(GrReferenceExpression expression) {
-    return new DynamicPropertyFix(expression);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createGroovyAddImportAction(GrReferenceElement element) {
-    return new GroovyAddImportAction(element);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createClassFromNewAction(GrNewExpression parent) {
-    return CreateClassFix.createClassFromNewAction(parent);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createClassFixAction(GrReferenceElement element, CreateClassKind anInterface) {
-    return CreateClassFix.createClassFixAction(element, anInterface);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createCreateFieldFromUsageFix(GrReferenceExpression expr) {
-    return new CreateFieldFromUsageFix(expr);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createCreateGetterFromUsageFix(GrReferenceExpression expr, PsiClass aClass) {
-    return new CreateGetterFromUsageFix(expr, aClass);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createCreateSetterFromUsageFix(GrReferenceExpression expr) {
-    return new CreateSetterFromUsageFix(expr);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createCreateMethodFromUsageFix(GrReferenceExpression expr) {
-    return new CreateMethodFromUsageFix(expr);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createCreateLocalVariableFromUsageFix(GrReferenceExpression expr, GrVariableDeclarationOwner owner) {
-    return new CreateLocalVariableFromUsageFix(expr, owner);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createCreateParameterFromUsageFix(GrReferenceExpression expr) {
-    return new CreateParameterFromUsageFix(expr);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createGroovyStaticImportMethodFix(GrMethodCall parent) {
-    return new GroovyStaticImportMethodFix(parent);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public GroovyFix createRenameFix() {
-    return GroovyQuickFixFactory.getInstance().createRenameFix();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public GroovyFix createReplaceWithImportFix() {
-    return new ReplaceWithImportFix();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public LocalQuickFix createGrMoveToDirFix(String actual) {
-    return new GrMoveToDirFix(actual);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public LocalQuickFix createCreateFieldFromConstructorLabelFix(GrTypeDefinition element, GrNamedArgument argument) {
-    return new CreateFieldFromConstructorLabelFix(element, argument);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public LocalQuickFix createDynamicPropertyFix(GrArgumentLabel label, PsiClass element) {
-    return new DynamicPropertyFix(label, element);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public GroovyFix createAddMethodFix(String methodName, GrTypeDefinition aClass) {
-    return new AddMethodFix(methodName, aClass);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public GroovyFix createAddClassToExtendsFix(GrTypeDefinition aClass, String comparable) {
-    return new AddClassToExtendsFix(aClass, comparable);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createOptimizeImportsFix(boolean onTheFly) {
-    return new GroovyOptimizeImportsFix(onTheFly);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createRemoveUnusedGrParameterFix(GrParameter parameter) {
-    return new RemoveUnusedGrParameterFix(parameter);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public IntentionAction createInvestigateFix(String reason) {
-    return new InvestigateFix(reason);
+    throw new UnsupportedOperationException();
   }
 }

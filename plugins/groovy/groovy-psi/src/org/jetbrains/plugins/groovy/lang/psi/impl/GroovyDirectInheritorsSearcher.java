@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * @author ven
  */
-class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
 
   public GroovyDirectInheritorsSearcher() {
   }

@@ -32,7 +32,7 @@ import java.util.List;
  * @author Max Medvedev
  */
 public abstract class AstTransformContributor {
-  private static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
+  public static final ExtensionPointName<AstTransformContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformContributor");
 
   public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
 

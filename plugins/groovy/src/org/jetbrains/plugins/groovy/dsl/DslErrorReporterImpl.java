@@ -57,7 +57,7 @@ public class DslErrorReporterImpl extends DslErrorReporter {
                                             @Override
                                             public void hyperlinkUpdate(@NotNull Notification notification,
                                                                         @NotNull HyperlinkEvent event) {
-                                              GroovyDslAnnotator.analyzeStackTrace(project, exceptionText);
+                                              InvestigateFix.analyzeStackTrace(project, exceptionText);
                                               notification.expire();
                                             }
                                           }).notify(project);
