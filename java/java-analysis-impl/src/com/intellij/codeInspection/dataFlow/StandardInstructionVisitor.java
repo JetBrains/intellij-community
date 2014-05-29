@@ -245,7 +245,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaConstValue.Factory constFactory = factory.getConstFactory();
     List<DfaMemoryState> falseStates = ContainerUtil.newArrayList();
     for (int i = 0; i < argValues.length; i++) {
-      List<DfaMemoryState> nextStates = ContainerUtil.newArrayList();
       DfaValue argValue = argValues[i];
       MethodContract.ValueConstraint constraint = contract.arguments[i];
       DfaConstValue expectedValue = constraint == NULL_VALUE || constraint == NOT_NULL_VALUE ? constFactory.getNull() :
@@ -257,10 +256,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       boolean invertCondition = constraint == NOT_NULL_VALUE;
       DfaValue condition = factory.getRelationFactory().createRelation(argValue, expectedValue, EQEQ, invertCondition);
       if (condition == null) {
-        if (!(argValue instanceof DfaConstValue)) continue;
+        if (!(argValue instanceof DfaConstValue)) {
+          falseStates.addAll(states);
+          continue;
+        }
         condition = constFactory.createFromValue(argValue == expectedValue, PsiType.BOOLEAN, null);
       }
 
+      List<DfaMemoryState> nextStates = ContainerUtil.newArrayList();
       for (DfaMemoryState state : states) {
         boolean unknownVsNull = expectedValue == constFactory.getNull() &&
                                 argValue instanceof DfaVariableValue &&
