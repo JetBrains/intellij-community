@@ -172,6 +172,7 @@
 		<ul>
 		<li>0.8.7
 				<ol>
+				    <li>Fixed issue 104(on GoogleCode):	Intellij reports unused field with @Getter and @Setter</li>
 				    <li>Fixed #50 : @SneakyThrows does not work for try-with-resource statements</li>
 				</ol>
 			</li>

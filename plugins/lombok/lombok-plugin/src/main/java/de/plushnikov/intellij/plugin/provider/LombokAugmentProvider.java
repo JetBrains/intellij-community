@@ -108,8 +108,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
         log.debug(String.format("Process call for type: %s class: %s", type, psiClass.getQualifiedName()));
       }
 
-      cleanAttributeUsage(psiClass);
-
       final List<Psi> result = new ArrayList<Psi>();
       for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
         if (processor.canProduce(type) && processor.isEnabled(project)) {
@@ -176,11 +174,4 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     return false;
   }
-
-  protected void cleanAttributeUsage(PsiClass psiClass) {
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      UserMapKeys.removeAllUsagesFrom(psiField);
-    }
-  }
-
 }
