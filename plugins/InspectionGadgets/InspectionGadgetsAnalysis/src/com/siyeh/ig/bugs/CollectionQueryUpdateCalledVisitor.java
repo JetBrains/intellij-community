@@ -16,15 +16,31 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementVisitor {
+
+  private static final HashSet<String> COLLECTIONS_QUERIES =
+    ContainerUtil.newHashSet("binarySearch", "disjoint", "frequency", "indexOfSubList", "lastIndexOfSubList", "max", "min", "nCopies",
+                             "unmodifiableList", "unmodifiableMap", "unmodifiableNavigableMap", "unmodifiableNavigableSet",
+                             "unmodifiableSet", "unmodifiableSortedMap", "unmodifiableSortedSet");
+
+  private static final HashSet<String> COLLECTIONS_TRANSFORMS =
+    ContainerUtil.newHashSet("asLifoQueue", "checkedCollection", "checkedList", "checkedMap", "checkedNavigableMap", "checkedNavigableSet",
+                             "checkedQueue", "checkedSet", "checkedSortedMap", "checkedSortedSet", "enumeration", "newSetFromMap",
+                             "synchronizedCollection", "singleton", "singletonList", "singletonMap", "singletonSpliterator",
+                             "synchronizedList", "synchronizedMap", "synchronizedNavigableMap", "synchronizedNavigableSet",
+                             "synchronizedSet", "synchronizedSortedMap", "synchronizedSortedSet", "unmodifiableCollection");
 
   @NonNls private final Set<String> myQueryUpdateNames;
   private final boolean myCheckForQuery;
@@ -43,6 +59,67 @@ class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementVisitor {
     if (!myQueriedUpdated) {
       super.visitElement(element);
     }
+  }
+
+  @Override
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    super.visitReferenceExpression(expression);
+    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+    if (!(parent instanceof PsiExpressionList)) {
+      return;
+    }
+    final PsiExpressionList expressionList = (PsiExpressionList)parent;
+    final PsiElement grandParent = expressionList.getParent();
+    if (!(grandParent instanceof PsiMethodCallExpression)) {
+      return;
+    }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final String name = methodExpression.getReferenceName();
+    if (myCheckForQuery) {
+      if (COLLECTIONS_QUERIES.contains(name) || COLLECTIONS_TRANSFORMS.contains(name)) {
+        if (methodCallExpression.getParent() instanceof PsiExpressionStatement) {
+          return;
+        }
+      }
+      else if ("addAll".equals(name) || "copy".equals(name) || "fill".equals(name) || "replaceAll".equals(name)) {
+        final PsiExpression[] arguments = expressionList.getExpressions();
+        if (arguments.length < 2 || PsiTreeUtil.isAncestor(arguments[0], expression, false)) {
+          return;
+        }
+      }
+      else {
+        return;
+      }
+    }
+    else {
+      if ("addAll".equals(name) || "fill".equals(name) || "copy".equals(name) || "replaceAll".equals(name)) {
+        if (!PsiTreeUtil.isAncestor(expressionList.getExpressions()[0], expression, false)) {
+          return;
+        }
+      }
+      else if (COLLECTIONS_TRANSFORMS.contains(name)) {
+        if (methodCallExpression.getParent() instanceof PsiExpressionStatement) {
+          return;
+        }
+      }
+      else {
+        return;
+      }
+    }
+    final PsiMethod method = methodCallExpression.resolveMethod();
+    if (method == null) {
+      return;
+    }
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return;
+    }
+    final String qualifiedName = aClass.getQualifiedName();
+    if (!"java.util.Collections".equals(qualifiedName)) {
+      return;
+    }
+    checkExpression(expression);
   }
 
   @Override

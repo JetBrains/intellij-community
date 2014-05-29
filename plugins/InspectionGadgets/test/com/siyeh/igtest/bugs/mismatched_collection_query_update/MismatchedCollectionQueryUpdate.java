@@ -226,3 +226,36 @@ class MethReference<E> {
     }
   }
 }
+class CollectionsUser {
+  void a(List<String> list) {
+    List<String> l = new ArrayList();
+    Collections.addAll(l, "1", "2", "4");
+    Collections.copy(list, l);
+  }
+
+  int b(List<String> list) {
+    List<String> l = new ArrayList();
+    Collections.addAll(l, "1", "2", "4");
+    return Collections.indexOfSubList(list, l);
+  }
+
+  void c() {
+    List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList();
+    final int frequency = Collections.frequency(l, "one");
+  }
+
+  List<String> d() {
+    List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList();
+    return Collections.unmodifiableList(l);
+  }
+
+  List<String> e() {
+    List<String> l = new ArrayList<String>();
+    return Collections.checkedList(l, String.class);
+  }
+
+  private final List<Object> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<Object>();
+  public void add() {
+    Collections.addAll(list, "Hello");
+  }
+}
