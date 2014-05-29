@@ -368,6 +368,45 @@ class ConsoleWriter(InteractiveInterpreter):
                 self.skip = 1
             sys.stderr.write(data)
 
+    def showsyntaxerror(self, filename=None):
+        """Display the syntax error that just occurred."""
+        #Override for avoid using sys.excepthook PY-12600
+        type, value, tb = sys.exc_info()
+        sys.last_type = type
+        sys.last_value = value
+        sys.last_traceback = tb
+        if filename and type is SyntaxError:
+            # Work hard to stuff the correct filename in the exception
+            try:
+                msg, (dummy_filename, lineno, offset, line) = value.args
+            except ValueError:
+                # Not the format we expect; leave it alone
+                pass
+            else:
+                # Stuff in the right filename
+                value = SyntaxError(msg, (filename, lineno, offset, line))
+                sys.last_value = value
+        list = traceback.format_exception_only(type, value)
+        sys.stderr.write(''.join(list))
+
+    def showtraceback(self):
+        """Display the exception that just occurred."""
+        #Override for avoid using sys.excepthook PY-12600
+        try:
+            type, value, tb = sys.exc_info()
+            sys.last_type = type
+            sys.last_value = value
+            sys.last_traceback = tb
+            tblist = traceback.extract_tb(tb)
+            del tblist[:1]
+            lines = traceback.format_list(tblist)
+            if lines:
+                lines.insert(0, "Traceback (most recent call last):\n")
+            lines.extend(traceback.format_exception_only(type, value))
+        finally:
+            tblist = tb = None
+        sys.stderr.write(''.join(lines))
+
 def consoleExec(thread_id, frame_id, expression):
     """returns 'False' in case expression is partialy correct
     """
