@@ -15,13 +15,16 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +199,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
     @Nullable
     public static Condition create(boolean disabled, XExpression expression) {
-      if (expression == null || StringUtil.isEmpty(expression.getExpression())) {
+      if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
         return null;
       }
       return new Condition(disabled, expression);
@@ -214,7 +217,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
     @Nullable
     public static LogExpression create(boolean disabled, XExpression expression) {
-      if (expression == null || StringUtil.isEmpty(expression.getExpression())) {
+      if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
         return null;
       }
       return new LogExpression(disabled, expression);

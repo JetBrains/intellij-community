@@ -38,7 +38,7 @@ public class XDebuggerHistoryManager {
   }
 
   public boolean addRecentExpression(@NotNull @NonNls String id, @Nullable XExpression expression) {
-    if (expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression())) {
+    if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
       return false;
     }
 
