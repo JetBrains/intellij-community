@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
@@ -54,7 +53,7 @@ public class CoreGroovyQuickFixFactory extends GroovyQuickFixFactory {
   }
 
   @Override
-  public IntentionAction createClassFixAction(GrReferenceElement element, CreateClassKind anInterface) {
+  public IntentionAction createClassFixAction(GrReferenceElement element, GrCreateClassKind anInterface) {
     throw new UnsupportedOperationException();
   }
 
