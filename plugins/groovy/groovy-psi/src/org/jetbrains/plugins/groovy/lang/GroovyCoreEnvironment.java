@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreProjectEnvironment;
@@ -281,6 +282,8 @@ public class GroovyCoreEnvironment {
 
       appEnvironment.registerApplicationService(GroovyQuickFixFactory.class, new CoreGroovyQuickFixFactory());
       appEnvironment.registerApplicationComponent(DslActivationStatus.class, new DslActivationStatus());
+
+      appEnvironment.addExtension(ReadWriteAccessDetector.EP_NAME, new GroovyReadWriteAccessDetector());
     }
 
     protected ExternalResourceManagerEx createExternalResourceManager() {
