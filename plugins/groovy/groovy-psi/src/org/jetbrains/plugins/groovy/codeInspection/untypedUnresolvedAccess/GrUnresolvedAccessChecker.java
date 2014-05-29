@@ -23,7 +23,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -41,10 +40,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.findUsages.MissingMethodAndPropertyUtil;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -412,30 +411,8 @@ public class GrUnresolvedAccessChecker {
   private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
                                                       boolean strongError,
                                                       @NotNull String message) {
-    PsiElement refNameElement = ref.getReferenceNameElement();
-    assert refNameElement != null;
-
-    if (strongError) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
-    }
-
-    HighlightDisplayLevel displayLevel = GrUnresolvedAccessInspection.getHighlightDisplayLevel(ref.getProject(), ref);
-
-    if (displayLevel == HighlightDisplayLevel.ERROR) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
-    }
-
-    if (displayLevel == HighlightDisplayLevel.WEAK_WARNING) {
-      boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      HighlightInfoType infotype = isTestMode ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
-
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
-      builder.descriptionAndTooltip(message);
-      return builder.needsUpdateOnTyping(false).textAttributes(DefaultHighlighter.UNRESOLVED_ACCESS).create();
-    }
-
-    HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
-    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
+    HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR : GrUnresolvedAccessInspection.getHighlightDisplayLevel(ref.getProject(), ref);
+    return GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message);
   }
 
   @Nullable
