@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -63,6 +64,11 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
           substitutionMap.put(typeParameter, TypesUtil.getItemType(opType));
           final PsiSubstitutor substitutor = JavaPsiFacade.getElementFactory(cast.getProject()).createSubstitutor(substitutionMap);
           return JavaPsiFacade.getElementFactory(cast.getProject()).createType(resolved, substitutor);
+        }
+
+        GrTraitType traitClassType = GrTraitType.createTraitClassType(cast);
+        if (traitClassType != null) {
+          return traitClassType;
         }
 
         return TypesUtil.boxPrimitiveType(castType, cast.getManager(), cast.getResolveScope());
