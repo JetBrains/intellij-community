@@ -30,9 +30,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -104,6 +108,43 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         }
       }
     };
+  }
+
+  private static PsiType getInferredType(PsiAnonymousClass aClass) {
+    final PsiExpression expression = (PsiExpression)aClass.getParent();
+    final PsiType psiType = PsiTypesUtil.getExpectedTypeByParent(expression);
+    if (psiType != null) {
+      return psiType;
+    }
+
+    PsiExpression topExpr = expression;
+    while (topExpr.getParent() instanceof PsiParenthesizedExpression) {
+      topExpr = (PsiExpression)topExpr.getParent();
+    }
+
+    final PsiElement parent = topExpr.getParent();
+    if (parent instanceof PsiExpressionList) {
+      PsiExpressionList expressionList = (PsiExpressionList)parent;
+      final PsiElement callExpr = expressionList.getParent();
+      if (callExpr instanceof PsiCallExpression) {
+        final JavaResolveResult result = ((PsiCallExpression)callExpr).resolveMethodGenerics();
+        if (result instanceof MethodCandidateInfo) {
+          final PsiMethod method = ((MethodCandidateInfo)result).getElement();
+          PsiExpression[] expressions = expressionList.getExpressions();
+          int i = ArrayUtilRt.find(expressions, topExpr);
+          if (i < 0) return null;
+          expressions[i] = null;
+
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(aClass.getProject())
+            .inferTypeArguments(method.getTypeParameters(), parameters, expressions,
+                                ((MethodCandidateInfo)result).getSiteSubstitutor(), callExpr.getParent(),
+                                DefaultParameterTypeInferencePolicy.INSTANCE);
+          return substitutor.substitute(parameters[i].getType());
+        }
+      }
+    }
+    return null;
   }
 
   private static class ReplaceWithLambdaFix implements LocalQuickFix, HighPriorityAction {
@@ -328,10 +369,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
 
+    private final boolean myRawType;
+
     public ForbiddenRefsChecker(PsiMethod method,
                                 PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
+      final PsiType inferredType = getInferredType(aClass);
+      myRawType = inferredType instanceof PsiClassType && ((PsiClassType)inferredType).isRaw(); 
     }
 
     @Override
@@ -390,6 +435,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
             if (initializer == null ||
                 initializer.getTextOffset() > myAnonymClass.getTextOffset() && !((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
+              return;
             }
           }
         } else {
@@ -407,12 +453,27 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                   final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, startOffset, false);
                   if (!writtenVariables.contains(resolved)) {
                     myBodyContainsForbiddenRefs = true;
+                    return;
                   }
                 }
               }
               catch (AnalysisCanceledException e) {
                 myBodyContainsForbiddenRefs = true;
+                return;
               }
+            }
+          }
+        }
+      }
+
+      if (myRawType) {
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getDeclarationScope() == myMethod) {
+          final int parameterIndex = myMethod.getParameterList().getParameterIndex((PsiParameter)resolved);
+          for (PsiMethod superMethod : myMethod.findDeepestSuperMethods()) {
+            if (PsiUtil.resolveClassInType(superMethod.getParameterList().getParameters()[parameterIndex].getType()) instanceof PsiTypeParameter) {
+              myBodyContainsForbiddenRefs = true;
+              return;
             }
           }
         }
