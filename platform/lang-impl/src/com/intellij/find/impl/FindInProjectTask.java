@@ -249,6 +249,9 @@ class FindInProjectTask {
               return;
             }
 
+            if (virtualFile.getFileType().isBinary()) {
+              return;
+            }
             if (skipIndexed && isCoveredByIndex(virtualFile) &&
                 (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
               return;
