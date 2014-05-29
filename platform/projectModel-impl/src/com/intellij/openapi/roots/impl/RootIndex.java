@@ -68,7 +68,7 @@ public class RootIndex extends DirectoryIndex {
   private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
 
   // made public for Upsource
-  public RootIndex(@NotNull Project project, InfoCache cache) {
+  public RootIndex(@NotNull Project project, @NotNull InfoCache cache) {
     myProject = project;
     myInfoCache = cache;
     final RootInfo info = buildRootInfo(project);
