@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public abstract class GotoActionBase extends AnAction {
     try {
       myInAction = getClass();
       List<String> strings = ourHistory.get(myInAction);
-      myHistoryIndex = Math.min(1, ContainerUtil.isEmpty(strings) ? 0 : strings.size() - 1);
+      myHistoryIndex = strings == null || strings.size() <= 1 ? 0 : 1;
       gotoActionPerformed(e);
     }
     catch (Throwable t) {
