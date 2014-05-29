@@ -42,7 +42,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, NamedArgumentDescriptor> result) {
-    PsiType returnType = ((PsiMethod)resolve).getReturnType();
+    PsiType returnType = resolve == null ? null : ((PsiMethod)resolve).getReturnType();
     PsiClass aClass = PsiTypesUtil.getPsiClass(returnType);
     if (aClass == null) return;
 

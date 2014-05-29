@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class PsiTypesUtil {
   }
 
   @Nullable
-  public static PsiClass getPsiClass(final PsiType psiType) {
+  public static PsiClass getPsiClass(@Nullable PsiType psiType) {
     return psiType instanceof PsiClassType? ((PsiClassType)psiType).resolve() : null;
   }
 
