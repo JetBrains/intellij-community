@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 package org.jetbrains.jps.builders
+
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
-import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 /**
  * @author nik
  */
-public class ModuleClasspathTest extends JpsRebuildTestCase {
+public class ModuleClasspathTest extends JpsBuildTestCase {
   @Override
   protected void setUp() {
     super.setUp()
-    myModel.getGlobal().getLibraryCollection().findLibrary("1.6").delete()
     addJdk("1.6", "/jdk.jar")
     addJdk("1.5", "/jdk15.jar")
     loadProject("moduleClasspath/moduleClasspath.ipr")
@@ -35,6 +35,12 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
 
   private String getProjectPath() {
     return FileUtil.toSystemIndependentName(getTestDataRootPath()) + "/moduleClasspath/moduleClasspath.ipr"
+  }
+
+  @Override
+  protected String getTestDataRootPath() {
+    char s = '/'
+    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output").absolutePath, s)
   }
 
   public void testSimpleClasspath() {
