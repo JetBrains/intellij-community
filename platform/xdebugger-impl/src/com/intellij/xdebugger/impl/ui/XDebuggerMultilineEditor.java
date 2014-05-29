@@ -80,6 +80,12 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
     return editor != null ? editor.getContentComponent() : null;
   }
 
+  @Nullable
+  @Override
+  public Editor getEditor() {
+    return myEditorTextField.getEditor();
+  }
+
   @Override
   public void selectAll() {
     myEditorTextField.selectAll();

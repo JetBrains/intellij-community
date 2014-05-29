@@ -33,7 +33,6 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
@@ -193,13 +192,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private void evaluate() {
     final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
     int offset = -1;
-    Editor editor;
+
     //try to save caret position
-    if (inputEditor instanceof XDebuggerExpressionComboBox) {
-      editor = ((XDebuggerExpressionComboBox)inputEditor).getEditor();
-      if (editor != null) {
-        offset = editor.getCaretModel().getOffset();
-      }
+    Editor editor = inputEditor.getEditor();
+    if (editor != null) {
+      offset = editor.getCaretModel().getOffset();
     }
 
     final XDebuggerTree tree = myTreePanel.getTree();
@@ -213,12 +210,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myResultPanel.invalidate();
 
     //editor is already changed
-    editor = inputEditor instanceof XDebuggerExpressionComboBox ? ((XDebuggerExpressionComboBox)inputEditor).getEditor() : null;
+    editor = inputEditor.getEditor();
     //selectAll puts focus back
     inputEditor.selectAll();
 
     //try to restore caret position and clear selection
     if (offset >= 0 && editor != null) {
+      offset = Math.min(editor.getDocument().getTextLength(), offset);
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
     }
