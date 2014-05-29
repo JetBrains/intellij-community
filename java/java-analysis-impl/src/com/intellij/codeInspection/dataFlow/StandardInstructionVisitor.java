@@ -207,7 +207,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     for (int i = 0; i < args.length; i++) {
       final DfaValue arg = memState.pop();
       int paramIndex = args.length - i - 1;
-      if (argValues != null && (paramIndex < args.length - 1 || !varargCall)) {
+      if (argValues != null && (paramIndex < argValues.length - 1 || !varargCall)) {
         argValues[paramIndex] = arg;
       }
 
