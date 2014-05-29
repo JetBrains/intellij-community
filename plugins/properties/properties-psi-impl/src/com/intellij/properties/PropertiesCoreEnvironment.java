@@ -37,10 +37,8 @@ import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.structureView.PropertiesSeparatorManager;
 import com.intellij.lang.properties.xml.XmlPropertiesIconProvider;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
-import com.intellij.lang.properties.xml.XmlPropertiesReferenceContributor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer;
 import com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer;
@@ -73,8 +71,6 @@ public class PropertiesCoreEnvironment {
       appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesFoldingBuilder());
       appEnvironment.addExplicitExtension(ElementManipulators.INSTANCE, PropertyImpl.class, new PropertyManipulator());
       appEnvironment.addExplicitExtension(ElementManipulators.INSTANCE, PropertyValueImpl.class, new PropertyValueManipulator());
-
-      appEnvironment.addExtension(PsiReferenceContributor.EP_NAME, new XmlPropertiesReferenceContributor());
 
       final StubElementTypeHolderEP stubElementTypeHolderBean = new StubElementTypeHolderEP();
       stubElementTypeHolderBean.holderClass = PropertiesElementTypes.class.getName();
