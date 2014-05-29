@@ -67,6 +67,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
@@ -775,7 +776,8 @@ public class PyUtil {
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
-      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+      LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+      if (level == null) level = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
       if (level != null) return level;
     }
     else {
