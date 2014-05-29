@@ -965,7 +965,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               final int restrictedFileId = getFileId(restrictToFile);
               for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
                 final V value = valueIt.next();
-                if (container.isAssociated(value, restrictedFileId)) {
+                if (container.getValueAssociationPredicate(value).contains(restrictedFileId)) {
                   shouldContinue = processor.process(restrictToFile, value);
                   if (!shouldContinue) {
                     break;

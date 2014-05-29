@@ -19,7 +19,6 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.io.DataExternalizer;
@@ -30,7 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -90,7 +92,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     List<Value> toRemove = null;
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
-      if (isAssociated(value, inputId)) {
+      if (getValueAssociationPredicate(value).contains(inputId)) {
         if (toRemove == null) toRemove = new SmartList<Value>();
         else if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
           LOG.error("Expected only one value per-inputId", String.valueOf(toRemove.get(0)), String.valueOf(value));
@@ -211,21 +213,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  @Override
-  public boolean isAssociated(Value value, final int inputId) {
-    final Object input = getInput(value);
-    if (input instanceof TIntHashSet) {
-      return ((TIntHashSet)input).contains(inputId);
-    }
-    if (input instanceof Integer ){
-      return inputId == ((Integer)input).intValue();
-    }
-    if (input instanceof IdBitSet) {
-      return ((IdBitSet)input).get(inputId);
-    }
-    return false;
-  }
-
   @NotNull
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
@@ -244,7 +231,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return new IntPredicate() {
         final IdBitSet myIdBitSet = (IdBitSet)input;
         @Override
-        boolean contains(int id) {
+        public boolean contains(int id) {
           return myIdBitSet.get(id);
         }
       };
@@ -252,7 +239,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return new IntPredicate() {
       final TIntHashSet mySet = (TIntHashSet)input;
       @Override
-      boolean contains(int id) {
+      public boolean contains(int id) {
         return mySet.contains(id);
       }
     };
@@ -261,8 +248,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   @NotNull
   @Override
   public IntIterator getInputIdsIterator(Value value) {
-    final Object input = getInput(value);
-    final IntIterator it;
+    return getIntIteratorFromInput(getInput(value));
+  }
+
+  private IntIterator getIntIteratorFromInput(final Object input) {
+    IntIterator it;
     if (input instanceof TIntHashSet) {
       it = new IntSetIterator((TIntHashSet)input);
     }
@@ -288,6 +278,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         @Override
         public int size() {
           return myIdBitSet.numberOfBitsSet();
+        }
+
+        @Override
+        public boolean hasAscendingOrder() {
+          return true;
         }
       };
     }
@@ -344,6 +339,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     @Override
     public int size() {
       return 0;
+    }
+
+    @Override
+    public boolean hasAscendingOrder() {
+      return false;
     }
   };
 
@@ -454,38 +454,39 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       if (input instanceof Integer) {
         DataInputOutputUtil.writeINT(out, (Integer)input); // most common 90% case during index building
       } else {
-        // serialize positive file ids with delta encoding after sorting numbers via bitset
+        // serialize positive file ids with delta encoding
+        IntIterator inputIdIterator = getIntIteratorFromInput(input);
+        DataInputOutputUtil.writeINT(out, -inputIdIterator.size());
 
-        if (input instanceof TIntHashSet) {
-          TIntHashSet set = (TIntHashSet)input;
-          DataInputOutputUtil.writeINT(out, -set.size());
-          // todo it would be nice to have compressed random access serializable bitset or at least file ids sorted
-          final int[] max = {0}, min = {Integer.MAX_VALUE};
+        if (inputIdIterator.hasAscendingOrder()) {
+          int prev = 0;
+          while(inputIdIterator.hasNext()) {
+            int inputId = inputIdIterator.next();
+            DataInputOutputUtil.writeINT(out, inputId - prev);
+            prev = inputId;
+          }
+        } else {
+          // sorting numbers via bitset before writing deltas
+          int max = 0, min = Integer.MAX_VALUE;
 
-          set.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int value) {
-              max[0] = Math.max(max[0], value);
-              min[0] = Math.min(min[0], value);
-              return true;
-            }
-          });
+          while(inputIdIterator.hasNext()) {
+            int inputId = inputIdIterator.next();
+            max = Math.max(max, inputId);
+            min = Math.min(min, inputId);
+          }
 
-          assert min[0] > 0;
+          assert min > 0;
 
-          final int offset = (min[0] >> INT_BITS_SHIFT) << INT_BITS_SHIFT;
-          final int bitsLength = ((max[0] - offset) >> INT_BITS_SHIFT) + 1;
+          final int offset = (min >> INT_BITS_SHIFT) << INT_BITS_SHIFT;
+          final int bitsLength = ((max - offset) >> INT_BITS_SHIFT) + 1;
           final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
           for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
 
-          set.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int value) {
-              final int id = value - offset;
-              bits[id >> INT_BITS_SHIFT] |= (1 << (id));
-              return true;
-            }
-          });
+          inputIdIterator = getIntIteratorFromInput(input);
+          while(inputIdIterator.hasNext()) {
+            final int id = inputIdIterator.next() - offset;
+            bits[id >> INT_BITS_SHIFT] |= (1 << (id));
+          }
 
           int pos = nextSetBit(0, bits, bitsLength);
           int prev = 0;
@@ -495,35 +496,16 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
             prev = pos + offset;
             pos = nextSetBit(pos + 1, bits, bitsLength);
           }
-        } else if (input instanceof IdBitSet) {
-          IdBitSet idBitSet = (IdBitSet)input;
-
-          DataInputOutputUtil.writeINT(out, -idBitSet.numberOfBitsSet());
-
-          int pos = idBitSet.nextSetBit(0);
-          int prev = 0;
-
-          while (pos != -1) {
-            DataInputOutputUtil.writeINT(out, pos - prev);
-            prev = pos;
-            pos = idBitSet.nextSetBit(pos + 1);
-          }
-        } else {
-          throw new IncorrectOperationException("Unexpected else");
         }
       }
     }
-  }
-
-  static void saveInvalidateCommand(DataOutput out, int inputId) throws IOException {
-    DataInputOutputUtil.writeINT(out, -inputId);
   }
 
   public void readFrom(DataInputStream stream, DataExternalizer<Value> externalizer) throws IOException {
     while (stream.available() > 0) {
       final int valueCount = DataInputOutputUtil.readINT(stream);
       if (valueCount < 0) {
-        removeAssociatedValue(-valueCount);
+        removeAssociatedValue(-valueCount); // ChangeTrackingValueContainer marked inputId as invalidated, see ChangeTrackingValueContainer.saveTo
         setNeedsCompacting(true);
       }
       else {
@@ -571,6 +553,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     public int size() {
       return 1;
     }
+
+    @Override
+    public boolean hasAscendingOrder() {
+      return true;
+    }
   }
 
   private static class IntSetIterator implements IntIterator {
@@ -595,6 +582,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     @Override
     public int size() {
       return mySize;
+    }
+
+    @Override
+    public boolean hasAscendingOrder() {
+      return false;
     }
   }
 
