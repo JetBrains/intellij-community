@@ -34,10 +34,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -76,6 +73,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
+
+  private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
 
   private final static EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
@@ -841,9 +840,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           final FileEditorManagerImpl fileEditorManager = getManager();
           Element historyElement = file.getChild(HistoryEntry.TAG);
           VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
-          // This document reference is kept on stack to make sure document will be available for folding state deserialization
-          // and that document will be created only once during file opening
-          @SuppressWarnings("UnusedDeclaration") Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
           final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), historyElement);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           final int index = i;
@@ -856,6 +853,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
               }
             }
           });
+          if (document != null) {
+            // This is just to make sure document reference is kept on stack till this point
+            // so that document is available for folding state deserialization in HistoryEntry constructor
+            // and that document will be created only once during file opening
+            document.putUserData(DUMMY_KEY, null);
+          }
           updateProgress();
         }
         catch (InvalidDataException e) {
