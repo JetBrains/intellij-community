@@ -786,7 +786,7 @@ public class NestedClassProcessor {
 				if(both) {
 					second.set(0, null);
 				}
-			} else {
+			} else if(fobj != null) {
 				if(fobj.varpaar.var == -1) {
 					fobj.varpaar = sobj.varpaar;
 				} else {
