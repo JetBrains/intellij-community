@@ -138,6 +138,11 @@ public class JavaDebugProcess extends XDebugProcess {
       public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
+
+      @Override
+      public DebuggerTreeNodeImpl createMessageNode(String message) {
+        return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
+      }
     };
     session.addSessionListener(new XDebugSessionAdapter() {
       @Override
