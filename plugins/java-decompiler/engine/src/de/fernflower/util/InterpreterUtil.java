@@ -25,10 +25,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import de.fernflower.main.DecompilerContext;
+import de.fernflower.main.extern.IFernflowerPreferences;
+
 public class InterpreterUtil {
 	
-	public static final String INDENT_STRING = "   ";
-
 	public static void copyFile(File in, File out) throws IOException {
 		FileChannel inChannel = new FileInputStream(in).getChannel();
 		FileChannel outChannel = new FileOutputStream(out).getChannel();
@@ -65,9 +66,10 @@ public class InterpreterUtil {
 	}
 	
 	public static String getIndentString(int length) {
-		StringBuffer buf = new StringBuffer();
+    String indent = (String) DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
+    StringBuilder buf = new StringBuilder();
 		while(length-->0) {
-			buf.append(INDENT_STRING);
+			buf.append(indent);
 		}
 		return buf.toString(); 
 	}
