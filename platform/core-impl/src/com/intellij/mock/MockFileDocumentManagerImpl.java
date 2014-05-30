@@ -23,20 +23,17 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
-
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private static final Key<VirtualFile> MOCK_VIRTUAL_FILE_KEY = Key.create("MockVirtualFile");
   private final Function<CharSequence, Document> myFactory;
-  @Nullable private final Key<Reference<Document>> myCachedDocumentKey;
+  @Nullable private final Key<Document> myCachedDocumentKey;
 
-  public MockFileDocumentManagerImpl(Function<CharSequence, Document> factory, @Nullable Key<Reference<Document>> cachedDocumentKey) {
+  public MockFileDocumentManagerImpl(Function<CharSequence, Document> factory, @Nullable Key<Document> cachedDocumentKey) {
     myFactory = factory;
     myCachedDocumentKey = cachedDocumentKey;
   }
@@ -66,8 +63,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   @Override
   public Document getCachedDocument(@NotNull VirtualFile file) {
     if (myCachedDocumentKey != null) {
-      Reference<Document> reference = file.getUserData(myCachedDocumentKey);
-      return SoftReference.dereference(reference);
+      return file.getUserData(myCachedDocumentKey);
     }
     return null;
   }

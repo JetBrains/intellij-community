@@ -257,8 +257,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
     if (fileType instanceof InternalFileType) return true;
     VirtualFile parent = file.isDirectory() ? file: file.getParent();
-    while(parent instanceof VirtualFileSystemEntry) {
-      if (((VirtualFileSystemEntry)parent).compareNameTo(ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, !SystemInfoRt.isFileSystemCaseSensitive) == 0) return true;
+    while (parent != null) {
+      if (Comparing.equal(parent.getNameSequence(), ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, SystemInfoRt.isFileSystemCaseSensitive)) return true;
       parent = parent.getParent();
     }
     return false;
@@ -1310,7 +1310,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @NotNull
   private Set<Document> getUnsavedDocuments() {
-    return new THashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
+    Document[] documents = myFileDocumentManager.getUnsavedDocuments();
+    if (documents.length == 0) return Collections.emptySet();
+    if (documents.length == 1) return Collections.singleton(documents[0]);
+    return new THashSet<Document>(Arrays.asList(documents));
   }
 
   @NotNull

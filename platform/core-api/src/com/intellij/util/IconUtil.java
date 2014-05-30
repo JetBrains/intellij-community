@@ -380,6 +380,7 @@ public class IconUtil {
           AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
           transform.preConcatenate(g2d.getTransform());
           g2d.setTransform(transform);
+          g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
           source.paintIcon(c, g2d, x, y);
         } finally {
           g2d.dispose();

@@ -67,6 +67,8 @@ public class FindUsagesAction extends AnAction {
         if (element != null) {
           startFindUsages(element);
         }
+      } else {
+        target.findUsages();
       }
     }
   }

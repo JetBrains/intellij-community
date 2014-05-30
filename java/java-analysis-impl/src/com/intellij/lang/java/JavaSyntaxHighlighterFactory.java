@@ -20,12 +20,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterProvider;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory imple
   @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile file) {
-    return new JavaFileHighlighter(LanguageLevelUtil.getLanguageLevelForFile(file));
+    return new JavaFileHighlighter(project == null ? LanguageLevel.HIGHEST : JavaPsiImplementationHelper.getInstance(project).getEffectiveLanguageLevel(file));
   }
 
   /**

@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTestCase {
@@ -111,6 +113,10 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
 
   protected static def caseSensitiveNone() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+  }
+
+  LookupImpl getLookup() {
+    LookupManager.getActiveLookup(myFixture.editor)
   }
 
 }

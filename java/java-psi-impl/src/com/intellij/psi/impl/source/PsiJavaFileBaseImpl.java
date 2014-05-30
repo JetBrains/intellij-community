@@ -466,18 +466,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
     }
 
-    final VirtualFile folder = virtualFile.getParent();
-    if (folder != null) {
-      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
-      if (level != null) return level;
-    }
-
-    final LanguageLevel classesLanguageLevel = JavaPsiImplementationHelper.getInstance(project).getClassesLanguageLevel(virtualFile);
-    if (classesLanguageLevel != null) {
-      return classesLanguageLevel;
-    }
-
-    return PsiUtil.getLanguageLevel(project);
+    return JavaPsiImplementationHelper.getInstance(project).getEffectiveLanguageLevel(virtualFile);
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext>> {

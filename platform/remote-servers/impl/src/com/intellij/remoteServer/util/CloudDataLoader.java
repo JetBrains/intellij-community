@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diagnostic;
+package com.intellij.remoteServer.util;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
+public interface CloudDataLoader {
 
-@SuppressWarnings({"HardCodedStringLiteral"})
-public class DropAnOutOfPermGenMemoryErrorAction extends DumbAwareAction {
-  public DropAnOutOfPermGenMemoryErrorAction() {
-    super ("Drop an perm gen OutOfMemoryError");
-  }
+  void clearCloudData();
 
-  public void actionPerformed(AnActionEvent e) {
-    throw new OutOfMemoryError("foo PermGen foo");
-  }
+  void loadCloudData();
+
+  CloudDataLoader NULL = new CloudDataLoader() {
+
+    @Override
+    public void clearCloudData() {
+
+    }
+
+    @Override
+    public void loadCloudData() {
+
+    }
+  };
 }

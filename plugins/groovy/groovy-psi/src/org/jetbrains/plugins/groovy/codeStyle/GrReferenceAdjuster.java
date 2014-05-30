@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.codeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -43,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GrReferenceAdjuster implements ReferenceAdjuster {
   public GrReferenceAdjuster() {
-    int i = 0;
+    @SuppressWarnings("UnusedDeclaration") int i = 0;
   }
 
   public static void shortenAllReferencesIn(@Nullable GroovyPsiElement newTypeElement) {
@@ -155,7 +157,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
     if (ref.getManager().areElementsEquivalent(resolved, resolvedCopy)) {
       return true;
     }
-    else if (resolvedCopy != null && !(resolvedCopy instanceof GrBindingVariable)) {
+    else if (resolvedCopy != null && !(resolvedCopy instanceof GrBindingVariable) && !isFromDefaultPackage(resolvedCopy)) {
       return false;
     }
 
@@ -165,8 +167,27 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
       if (qName != null && addImports && checkIsInnerClass(clazz, ref) && mayInsertImport(ref)) {
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
         final GrImportStatement added = file.addImportForClass(clazz);
-        if (copy.isReferenceTo(resolved)) return true;
-        file.removeImport(added);
+        if (added != null) {
+          if (copy.isReferenceTo(resolved)) return true;
+          file.removeImport(added);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isFromDefaultPackage(@Nullable PsiElement element) {
+    if (element instanceof PsiClass) {
+      String qname = ((PsiClass)element).getQualifiedName();
+      if (qname != null) {
+        String packageName = StringUtil.getPackageName(qname);
+        if (ArrayUtil.contains(packageName, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES)) {
+          return true;
+        }
+        if (ArrayUtil.contains(qname, GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES)) {
+          return true;
+        }
       }
     }
 

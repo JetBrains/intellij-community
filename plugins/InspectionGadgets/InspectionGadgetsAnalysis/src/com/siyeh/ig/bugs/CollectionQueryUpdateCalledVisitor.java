@@ -124,10 +124,10 @@ class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementVisitor {
 
   @Override
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
+    super.visitForeachStatement(statement);
     if (myQueriedUpdated || !myCheckForQuery) {
       return;
     }
-    super.visitForeachStatement(statement);
     final PsiExpression qualifier = statement.getIteratedValue();
     checkExpression(qualifier);
   }

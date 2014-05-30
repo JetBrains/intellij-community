@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,12 +33,12 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
-import java.lang.ref.Reference;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
@@ -94,11 +93,10 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
     });
     //Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
 
-    Reference<Document> reference = vFile.getUserData(FileDocumentManagerImpl.DOCUMENT_KEY);
-    assertNotNull(reference);
     for (int i=0;i<1000;i++) {
+      PlatformTestUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
-      if (reference.get() == null) break;
+      if (documentManager.getCachedDocument(getPsiManager().findFile(vFile)) == null) break;
       System.gc();
     }
     assertNull(documentManager.getCachedDocument(getPsiManager().findFile(vFile)));

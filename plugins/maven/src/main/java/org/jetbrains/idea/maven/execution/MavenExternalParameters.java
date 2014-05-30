@@ -34,9 +34,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.io.FileUtil;
@@ -306,6 +308,13 @@ public class MavenExternalParameters {
         Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
         if (res != null) {
           return res;
+        }
+        Module[] modules = ModuleManager.getInstance(project).getModules();
+        for (Module module : modules) {
+          Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+            return sdk;
+          }
         }
       }
 
