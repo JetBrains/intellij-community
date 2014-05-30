@@ -15,9 +15,9 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,7 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
  * To change this template use Options | File Templates.
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class DropAnErrorAction extends AnAction {
+public class DropAnErrorAction extends DumbAwareAction {
   public DropAnErrorAction() {
     super ("Drop an error");
   }

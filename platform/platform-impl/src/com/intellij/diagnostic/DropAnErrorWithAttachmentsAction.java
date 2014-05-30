@@ -15,15 +15,15 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 
 import java.awt.event.InputEvent;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class DropAnErrorWithAttachmentsAction extends AnAction {
+public class DropAnErrorWithAttachmentsAction extends DumbAwareAction {
   public DropAnErrorWithAttachmentsAction() {
     super("Drop an error with attachments", "Hold down SHIFT for multiple attachments", null);
   }

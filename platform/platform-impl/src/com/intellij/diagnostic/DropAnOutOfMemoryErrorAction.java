@@ -17,9 +17,10 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class DropAnOutOfMemoryErrorAction extends AnAction {
+public class DropAnOutOfMemoryErrorAction extends DumbAwareAction {
   public DropAnOutOfMemoryErrorAction() {
     super ("Drop an OutOfMemoryError");
   }
