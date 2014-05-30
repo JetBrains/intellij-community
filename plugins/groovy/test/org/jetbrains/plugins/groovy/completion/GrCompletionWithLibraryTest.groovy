@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.completion
-
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -23,8 +26,10 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
@@ -232,5 +237,33 @@ use\
 
   public void testGStringConcatenationCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
+  }
+
+  void testCompleteClassClashingWithGroovyUtilTuple() {
+    myFixture.addClass('package p; public class Tuple {}')
+
+    def file = myFixture.configureByText('a.groovy', 'print new Tupl<caret>')
+    LookupElement[] elements = myFixture.completeBasic()
+    LookupElement tuple = elements.find { it.psiElement instanceof PsiClass && it.psiElement.qualifiedName == 'p.Tuple'}
+    assertNotNull(elements as String, tuple)
+
+    LookupElement groovyUtilTuple = elements.find { it.psiElement instanceof PsiClass && it.psiElement.qualifiedName == 'groovy.lang.Tuple'}
+    assertNotNull(elements as String, groovyUtilTuple)
+
+    LookupImpl lookup = getLookup()
+    lookup.setCurrentItem(tuple)
+
+    new WriteCommandAction(myFixture.project, file) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        lookup.finishLookup('\n' as char);
+      }
+    }.execute()
+
+    myFixture.checkResult('''\
+import p.Tuple
+
+print new Tuple()\
+''')
   }
 }
