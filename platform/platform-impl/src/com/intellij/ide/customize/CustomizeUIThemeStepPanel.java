@@ -53,6 +53,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     if (SystemInfo.isMac) {
       myLafNames.put(DEFAULT, IconLoader.getIcon("/lafs/OSXAqua.png"));
       myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/OSXDarcula.png"));
+      myLafNames.put(GTK, IconLoader.getIcon("/lafs/LinuxGTK.png"));
     }
     else if (SystemInfo.isWindows) {
       if (PlatformUtils.isIdeaCommunity()) {
@@ -90,7 +91,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       });
       panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
       panel.add(radioButton, myColumnMode ? BorderLayout.WEST : BorderLayout.NORTH);
-      final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(icon, .33) : icon);
+      final JLabel label = new JLabel(myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, icon.getIconWidth() * 2 / 3, icon.getIconHeight() * 2 / 3), .75) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
       label.setHorizontalAlignment(SwingConstants.RIGHT);
       panel.add(label, BorderLayout.CENTER);
