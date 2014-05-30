@@ -273,16 +273,16 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       return collectionQueriedByAssignment(variable, context);
     }
 
-   private boolean collectionQueryCalled(PsiVariable variable, PsiElement context) {
-      final CollectionQueryCalledVisitor visitor = new CollectionQueryCalledVisitor(variable, queryNames);
+    private boolean collectionQueryCalled(PsiVariable variable, PsiElement context) {
+      final CollectionQueryUpdateCalledVisitor visitor = new CollectionQueryUpdateCalledVisitor(variable, queryNames, true);
       context.accept(visitor);
-      return visitor.isQueried();
+      return visitor.isQueriedUpdated();
     }
 
     private boolean collectionUpdateCalled(@Nullable PsiVariable variable, PsiElement context) {
-      final CollectionUpdateCalledVisitor visitor = new CollectionUpdateCalledVisitor(variable, updateNames);
+      final CollectionQueryUpdateCalledVisitor visitor = new CollectionQueryUpdateCalledVisitor(variable, updateNames, false);
       context.accept(visitor);
-      return visitor.isUpdated();
+      return visitor.isQueriedUpdated();
     }
   }
 }
