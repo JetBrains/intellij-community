@@ -215,7 +215,7 @@ public class MessageBusTest extends TestCase {
       new MessageBusImpl(this, childBus);
     }
 
-    PlatformTestUtil.assertTiming("Too long", 2500, new Runnable() {
+    PlatformTestUtil.assertTiming("Too long", 3000, new Runnable() {
       @Override
       public void run() {
         T1Listener publisher = myBus.syncPublisher(TOPIC1);

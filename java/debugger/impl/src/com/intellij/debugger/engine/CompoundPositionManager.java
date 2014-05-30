@@ -63,6 +63,9 @@ public class CompoundPositionManager extends PositionManagerEx {
       catch (Exception e) {
         LOG.error(e);
       }
+      catch (AssertionError e) {
+        LOG.error(e);
+      }
     }
     return null;
   }
@@ -77,6 +80,9 @@ public class CompoundPositionManager extends PositionManagerEx {
       catch (NoDataException ignored) {
       }
       catch (Exception e) {
+        LOG.error(e);
+      }
+      catch (AssertionError e) {
         LOG.error(e);
       }
     }
@@ -95,6 +101,9 @@ public class CompoundPositionManager extends PositionManagerEx {
       catch (Exception e) {
         LOG.error(e);
       }
+      catch (AssertionError e) {
+        LOG.error(e);
+      }
     }
     return Collections.emptyList();
   }
@@ -108,6 +117,9 @@ public class CompoundPositionManager extends PositionManagerEx {
       catch (NoDataException ignored) {
       }
       catch (Exception e) {
+        LOG.error(e);
+      }
+      catch (AssertionError e) {
         LOG.error(e);
       }
     }

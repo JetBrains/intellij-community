@@ -90,11 +90,11 @@ public abstract class MembersGetter {
 
   public void processMembers(final Consumer<LookupElement> results, @Nullable final PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
-    if (where == null || CommonClassNames.JAVA_LANG_STRING.equals(where.getQualifiedName())) return;
+    if (where == null || isPrimitiveClass(where)) return;
 
     final boolean searchFactoryMethods = searchInheritors &&
                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName()) &&
-                                   !CommonClassNames.JAVA_LANG_STRING.equals(where.getQualifiedName());
+                                   !isPrimitiveClass(where);
 
     final Project project = myPlace.getProject();
     final GlobalSearchScope scope = myPlace.getResolveScope();
@@ -125,6 +125,12 @@ public abstract class MembersGetter {
     if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName())) {
       CodeInsightUtil.processSubTypes(baseType, myPlace, true, PrefixMatcher.ALWAYS_TRUE, consumer);
     }
+  }
+
+  private static boolean isPrimitiveClass(PsiClass where) {
+    String qname = where.getQualifiedName();
+    if (qname == null || !qname.startsWith("java.lang.")) return false;
+    return CommonClassNames.JAVA_LANG_STRING.equals(qname) || InheritanceUtil.isInheritor(where, CommonClassNames.JAVA_LANG_NUMBER);
   }
 
   private void doProcessMembers(boolean acceptMethods,

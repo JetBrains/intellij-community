@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -44,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
 
@@ -207,6 +210,13 @@ public abstract class GotoActionBase extends AnAction {
     popup.setFindUsagesTitle(findUsagesTitle);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
+    if (historyEnabled() && popup.getAdText() == null) {
+      popup.setAdText("Press " +
+                      KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_MASK)) + " or " +
+                      KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_MASK)) +
+                      " to navigate through the history");
+    }
+
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       @Override
       public void onClose() {
@@ -251,7 +261,7 @@ public abstract class GotoActionBase extends AnAction {
     abstract class HistoryAction extends DumbAwareAction {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(!ContainerUtil.isEmpty(ourHistory.get(myInAction)));
+        e.getPresentation().setEnabled(historyEnabled());
       }
 
       void setText(@NotNull List<String> strings) {
@@ -283,5 +293,9 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ctrl DOWN"), editor);
+  }
+
+  private static boolean historyEnabled() {
+    return !ContainerUtil.isEmpty(ourHistory.get(myInAction));
   }
 }

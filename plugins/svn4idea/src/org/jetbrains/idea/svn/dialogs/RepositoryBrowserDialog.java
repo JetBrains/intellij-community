@@ -348,10 +348,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
       String url = node.getURL().toDecodedString();
-      final SvnRepositoryLocation repositoryLocation = new SvnRepositoryLocation(node.getURL().toString());
 
       AbstractVcsHelper.getInstance(myProject)
-        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, repositoryLocation);
+        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, url);
       node.reload(false);
     }
   }

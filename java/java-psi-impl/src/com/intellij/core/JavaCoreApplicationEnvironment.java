@@ -15,6 +15,8 @@
  */
 package com.intellij.core;
 
+import com.intellij.codeInsight.ContainerProvider;
+import com.intellij.codeInsight.JavaContainerProvider;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsBase;
 import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
@@ -74,6 +76,9 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
     registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
     registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
+
+    registerExtensionPoint(Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
+    addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 

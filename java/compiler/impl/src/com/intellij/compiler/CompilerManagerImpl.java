@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -243,48 +242,6 @@ public class CompilerManagerImpl extends CompilerManager {
     final MessageBusConnection connection = myListenerAdapters.remove(listener);
     if (connection != null) {
       connection.disconnect();
-    }
-  }
-
-  // Compiler tests support
-
-  private static List<String> ourDeletedPaths;
-  private static List<String> ourRecompiledPaths;
-  private static List<String> ourCompiledPaths;
-
-  public static void testSetup() {
-    ourDeletedPaths = new ArrayList<String>();
-    ourRecompiledPaths = new ArrayList<String>();
-    ourCompiledPaths = new ArrayList<String>();
-  }
-
-  public static void addDeletedPath(String path) {
-    ourDeletedPaths.add(path);
-  }
-
-  public static void addRecompiledPath(String path) {
-    ourRecompiledPaths.add(path);
-  }
-
-  public static void addCompiledPath(String path) {
-    ourCompiledPaths.add(path);
-  }
-
-  public static String[] getPathsToDelete() {
-    return ArrayUtil.toStringArray(ourDeletedPaths);
-  }
-
-  public static String[] getPathsToRecompile() {
-    return ArrayUtil.toStringArray(ourRecompiledPaths);
-  }
-
-  public static String[] getPathsToCompile() {
-    return ArrayUtil.toStringArray(ourCompiledPaths);
-  }
-
-  public static void clearPathsToCompile() {
-    if (ourCompiledPaths != null) {
-      ourCompiledPaths.clear();
     }
   }
 

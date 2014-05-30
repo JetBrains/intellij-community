@@ -36,18 +36,23 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
 
   @Nullable
   protected Breakpoint createJavaBreakpoint(@NotNull XBreakpoint xBreakpoint) {
-    return BreakpointManager.getJavaBreakpoint(xBreakpoint);
+    return null;
   }
 
   @Override
   public void registerBreakpoint(@NotNull XBreakpoint breakpoint) {
-    final Breakpoint javaBreakpoint = createJavaBreakpoint(breakpoint);
+    Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
+    if (javaBreakpoint == null) {
+      javaBreakpoint = createJavaBreakpoint(breakpoint);
+      breakpoint.putUserData(Breakpoint.DATA_KEY, javaBreakpoint);
+    }
     if (javaBreakpoint != null) {
-      BreakpointManager.addBreakpointInt(javaBreakpoint);
+      final Breakpoint bpt = javaBreakpoint;
+      BreakpointManager.addBreakpoint(bpt);
       myProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
-          javaBreakpoint.createRequest(myProcess);
+          bpt.createRequest(myProcess);
         }
       });
     }

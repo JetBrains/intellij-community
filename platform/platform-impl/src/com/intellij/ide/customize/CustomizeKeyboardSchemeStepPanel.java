@@ -79,7 +79,7 @@ public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardSte
     ButtonGroup group = new ButtonGroup();
     group.add(macRadioButton);
     group.add(defaultRadioButton);
-    defaultRadioButton.setSelected(true);
+    macRadioButton.setSelected(true);
   }
 
   @Override

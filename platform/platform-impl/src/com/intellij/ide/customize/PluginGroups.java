@@ -83,9 +83,8 @@ class PluginGroups {
       "org.intellij.grails",
       "com.intellij.gwt",
       "com.intellij.vaadin",
-      "JBoss",
-      "Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
-      "JBPM",
+      "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
+      "JBoss jBPM:JBPM",
       "Struts:StrutsAssistant,com.intellij.struts2",
       "com.intellij.hibernate",
       "Spring:com.intellij.spring.batch," +

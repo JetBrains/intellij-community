@@ -246,7 +246,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       @Override
       public void run() {
 
-        CompilerManagerImpl.testSetup();
         final CompileStatusNotification callback = new CompileStatusNotification() {
           @Override
           public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
@@ -256,7 +255,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
               }
               ExitStatus status = CompileDriver.getExternalBuildExitStatus(compileContext);
               result.set(new CompilationLog(status == ExitStatus.UP_TO_DATE,
-                                            CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete(),
                                             generatedFilePaths,
                                             compileContext.getMessages(CompilerMessageCategory.ERROR),
                                             compileContext.getMessages(CompilerMessageCategory.WARNING)));
@@ -413,20 +411,16 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected class CompilationLog {
-    private final Set<String> myRecompiledPaths;
-    private final Set<String> myDeletedPaths;
     private final Set<String> myGeneratedPaths;
     private final boolean myExternalBuildUpToDate;
     private final CompilerMessage[] myErrors;
     private final CompilerMessage[] myWarnings;
 
-    public CompilationLog(boolean externalBuildUpToDate, String[] recompiledPaths, String[] deletedPaths, List<String> generatedFilePaths,
-                          CompilerMessage[] errors, CompilerMessage[] warnings) {
+    public CompilationLog(boolean externalBuildUpToDate, List<String> generatedFilePaths, CompilerMessage[] errors,
+                          CompilerMessage[] warnings) {
       myExternalBuildUpToDate = externalBuildUpToDate;
       myErrors = errors;
       myWarnings = warnings;
-      myRecompiledPaths = getRelativePaths(recompiledPaths);
-      myDeletedPaths = getRelativePaths(deletedPaths);
       myGeneratedPaths = new THashSet<String>(generatedFilePaths, FileUtil.PATH_HASHING_STRATEGY);
     }
 
@@ -434,29 +428,8 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       assertTrue(myExternalBuildUpToDate);
     }
 
-    public void assertRecompiled(String... expected) {
-      checkRecompiled(expected);
-      checkDeleted();
-    }
-
     public void assertGenerated(String... expected) {
       assertSet("generated", myGeneratedPaths, expected);
-    }
-
-    public void assertDeleted(String... expected) {
-      checkRecompiled();
-      checkDeleted(expected);
-    }
-
-    public void assertRecompiledAndDeleted(String[] recompiled, String... deleted) {
-      checkRecompiled(recompiled);
-      checkDeleted(deleted);
-    }
-
-    private void checkRecompiled(String... expected) {
-    }
-
-    private void checkDeleted(String... expected) {
     }
 
     public CompilerMessage[] getErrors() {
