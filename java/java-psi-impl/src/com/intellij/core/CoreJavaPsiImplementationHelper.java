@@ -16,16 +16,25 @@
 package com.intellij.core;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper {
+  private final Project myProject;
+
+  public CoreJavaPsiImplementationHelper(Project project) {
+    myProject = project;
+  }
+
   @Override
   public PsiClass getOriginalClass(PsiClass psiClass) {
     return psiClass;
@@ -37,9 +46,10 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     return clsFile;
   }
 
+  @NotNull
   @Override
-  public LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
-    return null;
+  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+    return PsiUtil.getLanguageLevel(myProject);
   }
 
   @Override
