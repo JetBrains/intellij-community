@@ -259,3 +259,20 @@ class CollectionsUser {
     Collections.addAll(list, "Hello");
   }
 }
+
+class SimpleAdd {
+  protected String[] doPerform() {
+    List<String> result = new ArrayList<String>();
+    for (String app : getApplications()) {
+      if (app.startsWith("")) {
+        result.add(app);
+      }
+    }
+    return result.toArray(new String[result.size()]);
+  }
+
+  public String[] getApplications() {
+    return null;
+  }
+
+}
