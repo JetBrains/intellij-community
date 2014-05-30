@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +178,9 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GrStatement anchor = findAnchor(context, settings.replaceAllOccurrences());
     PsiElement parent = anchor.getParent();
     assert parent instanceof GrStatementOwner;
-    GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generateDeclaration(context, settings), anchor);
+    GrVariableDeclaration generated = generateDeclaration(context, settings);
+    GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generated, anchor);
+    declaration = (GrStatement)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(declaration);
 
     return ((GrVariableDeclaration)declaration).getVariables()[0];
   }
