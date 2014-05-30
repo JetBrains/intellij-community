@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableAdapter;
 import org.jdom.Element;
 
@@ -30,8 +31,7 @@ import java.util.Map;
 * @author Dmitry Avdeev
 */
 @State(name = "ProjectResources", storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)})
-public class ProjectResources extends ExternalResourceManagerImpl implements PersistentStateComponent<Element> {
-
+public class ProjectResources extends ExternalResourceManagerExImpl implements PersistentStateComponent<Element>, JDOMExternalizable {
   private final JDOMExternalizableAdapter myAdapter;
 
   public ProjectResources(PathMacrosImpl pathMacros) {

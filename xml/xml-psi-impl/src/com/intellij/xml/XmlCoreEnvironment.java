@@ -15,6 +15,7 @@
  */
 package com.intellij.xml;
 
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.editor.XmlFoldingSettings;
 import com.intellij.codeInspection.XmlSuppressionProvider;
 import com.intellij.core.CoreApplicationEnvironment;
@@ -38,6 +39,7 @@ import com.intellij.lang.xhtml.XHTMLParserDefinition;
 import com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory;
 import com.intellij.lang.xml.*;
 import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
@@ -98,7 +100,8 @@ public class XmlCoreEnvironment {
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
       appEnvironment.addExtension(StandardResourceProvider.EP_NAME, new InternalResourceProvider());
 
-      appEnvironment.registerApplicationService(ExternalResourceManager.class, createExternalResourceManager());
+      appEnvironment.registerApplicationComponent(PathMacros.class, new PathMacrosImpl());
+      appEnvironment.registerApplicationService(ExternalResourceManager.class, new ExternalResourceManagerExImpl(PathMacrosImpl.getInstanceEx()));
       appEnvironment.registerApplicationService(XmlFoldingSettings.class, new XmlFoldingSettings());
       appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, XMLLanguage.INSTANCE, new XmlFoldingBuilder());
       appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, HTMLLanguage.INSTANCE, new XmlFoldingBuilder());

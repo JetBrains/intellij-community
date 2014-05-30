@@ -159,14 +159,14 @@
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
-                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerImpl"/>
+                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerExImpl"/>
 
     <applicationService serviceInterface="com.intellij.codeInspection.XmlQuickFixFactory"
                         serviceImplementation="com.intellij.codeInspection.XmlQuickFixFactoryImpl"/>
 
     <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
 
-    <projectService serviceInterface="com.intellij.javaee.ProjectResources"
+    <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExImpl"
                     serviceImplementation="com.intellij.javaee.ProjectResources"/>
 
     <roots.watchedRootsProvider implementation="com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction"/>
