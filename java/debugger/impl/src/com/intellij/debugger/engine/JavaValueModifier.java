@@ -59,7 +59,11 @@ public class JavaValueModifier extends XValueModifier {
   @Nullable
   @Override
   public String getInitialValueEditorText() {
-    return myJavaValue.getValueString();
+    Value value = myJavaValue.getDescriptor().getValue();
+    if (value instanceof PrimitiveValue || value instanceof StringReference) {
+      return myJavaValue.getValueString();
+    }
+    return null;
   }
 
   //public void update(AnActionEvent e) {
