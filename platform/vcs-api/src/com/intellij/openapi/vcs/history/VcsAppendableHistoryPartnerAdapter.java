@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
@@ -53,12 +51,6 @@ public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistoryS
 
   @Override
   public void beforeRefresh() {
-  }
-
-  @Nullable
-  @Override
-  public RepositoryLocation getRepositoryLocation() {
-    return null;
   }
 
   public void check() throws VcsException {

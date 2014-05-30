@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 /**
@@ -78,12 +77,6 @@ public class SvnHistoryTest extends Svn17TestCase {
       public void beforeRefresh() {
       }
 
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
-      }
-
       @Override
       public void forceRefresh() {
       }
@@ -134,12 +127,6 @@ public class SvnHistoryTest extends Svn17TestCase {
       public void beforeRefresh() {
       }
 
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
-      }
-
       @Override
       public void forceRefresh() {
       }
@@ -187,12 +174,6 @@ public class SvnHistoryTest extends Svn17TestCase {
 
       @Override
       public void beforeRefresh() {
-      }
-
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
       }
 
       @Override
@@ -246,12 +227,6 @@ public class SvnHistoryTest extends Svn17TestCase {
 
       @Override
       public void beforeRefresh() {
-      }
-
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
       }
 
       @Override
@@ -308,12 +283,6 @@ public class SvnHistoryTest extends Svn17TestCase {
       public void beforeRefresh() {
       }
 
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
-      }
-
       @Override
       public void forceRefresh() {
       }
@@ -348,12 +317,6 @@ public class SvnHistoryTest extends Svn17TestCase {
       public void beforeRefresh() {
       }
 
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
-      }
-
       @Override
       public void forceRefresh() {
       }
@@ -385,12 +348,6 @@ public class SvnHistoryTest extends Svn17TestCase {
 
       @Override
       public void beforeRefresh() {
-      }
-
-      @Nullable
-      @Override
-      public RepositoryLocation getRepositoryLocation() {
-        return null;
       }
 
       @Override

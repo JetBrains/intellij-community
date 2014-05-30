@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 
 /**
@@ -36,12 +35,12 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
                               final AnnotationProvider annotationProvider,
                               final FilePath path,
-                              final RepositoryLocation repositoryLocation,
+                              final String repositoryPath,
                               final AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
-    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryLocation, vcs, this);
+    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs, this);
     myCanUseCache = true;
   }
 

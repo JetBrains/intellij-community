@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -30,7 +33,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private final VcsHistoryProvider myVcsHistoryProvider;
   private final AnnotationProvider myAnnotationProvider;
   private final FilePath myPath;
-  private final RepositoryLocation myRepositoryLocation;
+  private final String myRepositoryPath;
   private final AbstractVcs myVcs;
   private final FileHistoryRefresherI myRefresherI;
   private volatile VcsAbstractHistorySession mySession;
@@ -51,14 +53,14 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
   public FileHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
                                    final FilePath path,
-                                   final RepositoryLocation repositoryLocation,
+                                   final String repositoryPath,
                                    final AbstractVcs vcs,
                                    final FileHistoryRefresherI refresherI) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myAnnotationProvider = annotationProvider;
     myPath = path;
     myLimitHistoryCheck = new LimitHistoryCheck(vcs.getProject(), path.getPath());
-    myRepositoryLocation = repositoryLocation;
+    myRepositoryPath = repositoryPath;
     myVcs = vcs;
     myRefresherI = refresherI;
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
@@ -72,12 +74,6 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         });
       }
     }, 1000);
-  }
-
-  @Nullable
-  @Override
-  public RepositoryLocation getRepositoryLocation() {
-    return myRepositoryLocation;
   }
 
   public void acceptRevision(VcsFileRevision revision) {
