@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
@@ -89,7 +90,11 @@ public abstract class CompiledPattern {
   }
 
   public String getTypedVarString(PsiElement element) {
-    return StructuralSearchUtil.getProfileByPsiElement(element).getTypedVarString(element);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+    if (profile == null) {
+      return element.getText();
+    }
+    return profile.getTypedVarString(element);
   }
 
   private final HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();
