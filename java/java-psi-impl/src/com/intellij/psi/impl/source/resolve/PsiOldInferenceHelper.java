@@ -744,7 +744,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         if (guess != null &&
             !guess.equals(PsiType.NULL) &&
             constraint.getSecond() == ConstraintType.SUPERTYPE &&
-            guess instanceof PsiIntersectionType) {
+            guess instanceof PsiIntersectionType &&
+            !JavaVersionService.getInstance().isAtLeast(parent, JavaSdkVersion.JDK_1_7)) {
           for (PsiType conjuct : ((PsiIntersectionType)guess).getConjuncts()) {
             if (!conjuct.isAssignableFrom(expectedType)) {
               return FAILED_INFERENCE;
