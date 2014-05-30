@@ -1569,33 +1569,17 @@ public abstract class DialogWrapper {
   }
 
   private void registerKeyboardShortcuts() {
-    ActionListener cancelKeyboardAction = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-        MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-        if (selectedPath.length > 0) { // hide popup menu if any
-          menuSelectionManager.clearSelectedPath();
-        }
-        else {
-          if (ApplicationManager.getApplication() == null) {
-            doCancelAction(e);
-            return;
-          }
-          final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
-          if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
-            doCancelAction(e);
-          }
-        }
-      }
-    };
 
     final JRootPane rootPane = getRootPane();
 
     if (rootPane == null) return;
 
-    rootPane.registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-    registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
+    ActionListener cancelKeyboardAction = createCancelAction();
+    if (cancelKeyboardAction != null) {
+      rootPane
+        .registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
+    }
 
     if (ApplicationInfo.contextHelpAvailable()) {
       ActionListener helpAction = new ActionListener() {
@@ -1631,6 +1615,34 @@ public abstract class DialogWrapper {
     if (myNoAction != null) {
       rootPane.registerKeyboardAction(myNoAction, KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
+  }
+
+  /**
+   *
+   * @return null if we should ignore <Esc> for window closing
+   */
+  @Nullable
+  protected ActionListener createCancelAction() {
+    return new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
+          MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
+          if (selectedPath.length > 0) { // hide popup menu if any
+            menuSelectionManager.clearSelectedPath();
+          }
+          else {
+            if (ApplicationManager.getApplication() == null) {
+              doCancelAction(e);
+              return;
+            }
+            final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
+            if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
+              doCancelAction(e);
+            }
+          }
+        }
+      };
   }
 
   private void registerForEveryKeyboardShortcut(ActionListener action, @NotNull ShortcutSet shortcuts) {
