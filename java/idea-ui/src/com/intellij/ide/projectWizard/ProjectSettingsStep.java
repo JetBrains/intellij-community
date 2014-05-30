@@ -88,6 +88,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
 
     myFormatPanel = new ProjectFormatPanel();
     myNamePathComponent = NamePathComponent.initNamePathComponent(context);
+    myNamePathComponent.setShouldBeAbsolute(true);
     if (context.isCreatingNewProject()) {
       mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
       addExpertPanel(myModulePanel);
