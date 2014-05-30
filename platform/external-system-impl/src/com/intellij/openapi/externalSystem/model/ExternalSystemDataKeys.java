@@ -40,6 +40,7 @@ public class ExternalSystemDataKeys {
     = DataKey.create("external.system.recent.tasks.list");
 
   @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<Boolean>("external.system.newly.imported");
+  @NotNull public static final Key<Boolean> NEWLY_CREATED_PROJECT = new Key<Boolean>("external.system.newly.created");
 
   private ExternalSystemDataKeys() {
   }

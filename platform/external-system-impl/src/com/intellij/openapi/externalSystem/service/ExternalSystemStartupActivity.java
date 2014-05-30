@@ -52,9 +52,16 @@ public class ExternalSystemStartupActivity implements StartupActivity {
         }
         if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
           for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-            ExternalSystemUtil.refreshProjects(
-              new ImportSpecBuilder(project, manager.getSystemId()).whenAutoImportEnabled()
-            );
+            if (project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE) {
+              ExternalSystemUtil.refreshProjects(
+                new ImportSpecBuilder(project, manager.getSystemId())
+              );
+            }
+            else {
+              ExternalSystemUtil.refreshProjects(
+                new ImportSpecBuilder(project, manager.getSystemId()).whenAutoImportEnabled()
+              );
+            }
           }
         }
         ExternalSystemAutoImporter.letTheMagicBegin(project);
