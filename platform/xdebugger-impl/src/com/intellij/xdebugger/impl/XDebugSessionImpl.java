@@ -345,6 +345,7 @@ public class XDebugSessionImpl implements XDebugSession {
       .showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
   }
 
+  @Nullable
   public synchronized XValueMarkers<?, ?> getValueMarkers() {
     if (myValueMarkers == null) {
       XValueMarkerProvider<?, ?> provider = myDebugProcess.createValueMarkerProvider();
