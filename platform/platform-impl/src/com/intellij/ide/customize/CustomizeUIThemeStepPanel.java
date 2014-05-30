@@ -53,7 +53,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     if (SystemInfo.isMac) {
       myLafNames.put(DEFAULT, IconLoader.getIcon("/lafs/OSXAqua.png"));
       myLafNames.put(DARCULA, IconLoader.getIcon("/lafs/OSXDarcula.png"));
-      myLafNames.put(GTK, IconLoader.getIcon("/lafs/LinuxGTK.png"));
     }
     else if (SystemInfo.isWindows) {
       if (PlatformUtils.isIdeaCommunity()) {
