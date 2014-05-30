@@ -286,7 +286,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         Pair<PsiType, ConstraintType> otherConstraint =
           inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
         if (otherConstraint != null) {
-          if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) {
+          if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE || 
+              compareSubtypes(constraint.getFirst(), otherConstraint.getFirst())) {
             constraint = otherConstraint;
           }
         }
@@ -305,6 +306,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
     }
     return partialSubstitutor;
+  }
+
+  private static boolean compareSubtypes(final PsiType type, final PsiType parentType) {
+    return type != null && parentType != null && TypeConversionUtil.isAssignable(type, parentType);
   }
 
   @Override
