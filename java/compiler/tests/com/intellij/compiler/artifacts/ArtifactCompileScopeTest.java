@@ -149,16 +149,16 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     compile(false, file1).assertUpToDate();
 
     ensureTimeChanged();
-    final String[] aPath = {"out/production/module/A.class"};
+    final String[] aPath = {"A.class"};
     //file should be deleted and recompiled by javac and recompiled by artifacts compiler
-    compile(true, file1).assertRecompiledAndDeleted(aPath, aPath);
+    compile(true, file1).assertGenerated(aPath);
 
     ensureTimeChanged();
     make(module);
 
     ensureTimeChanged();
-    final String[] bothPaths = {"out/production/module/A.class", "out/production/module/B.class"};
-    compile(true, file1, file2).assertRecompiledAndDeleted(bothPaths,bothPaths);
+    final String[] bothPaths = {"A.class", "B.class"};
+    compile(true, file1, file2).assertGenerated(bothPaths);
   }
 
   private static void ensureTimeChanged() {

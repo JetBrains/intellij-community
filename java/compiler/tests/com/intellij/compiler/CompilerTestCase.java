@@ -7,8 +7,10 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -46,7 +48,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected VirtualFile myOriginalSourceDir; // directory under testData/compiler/<group>/<testCase>/ where Java sources are located
   private CompilerTestData myData;
 
-  protected final Set<String> myDeletedPaths = new HashSet<String>();
   protected final Set<String> myRecompiledPaths = new HashSet<String>();
   protected VirtualFile myModuleRoot;
   private boolean myUsedMakeToCompile = false;
@@ -88,7 +89,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     if (ex[0] != null) {
       throw ex[0];
     }
-    CompilerTestUtil.disableExternalCompiler();
+    CompilerTestUtil.enableExternalCompiler();
     CompilerTestUtil.setupJavacForTests(myProject);
   }
 
@@ -96,6 +97,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
   protected void doTest() throws Exception {
     final String name = getTestName(true);
+    final Ref<Throwable> error = Ref.create();
 
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
@@ -118,6 +120,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
                   fail("Compiler errors occurred! " + errorBuilder.toString());
                 }
               }
+              catch (Throwable t) {
+                error.set(t);
+              }
               finally {
                 mySemaphore.up();
               }
@@ -135,6 +140,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }, ModalityState.NON_MODAL);
 
     waitFor();
+    if (!error.isNull()) {
+      throw new Exception(error.get());
+    }
     Thread.sleep(5);
 
     //System.out.println("\n\n=====================SECOND PASS===============================\n\n");
@@ -163,24 +171,25 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           mySemaphore.down();
 
           final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+          final List<String> generated = new ArrayList<String>();
+          final CompilationStatusAdapter listener = new CompilationStatusAdapter() {
+            @Override
+            public void fileGenerated(String outputRoot, String relativePath) {
+              generated.add(relativePath);
+            }
+          };
+          compilerManager.addCompilationStatusListener(listener);
           upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
           
           doCompile(new CompileStatusNotification() {
             @Override
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+              compilerManager.removeCompilationStatusListener(listener);
               try {
                 String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());
                 if (!StringUtil.endsWithChar(prefix, '/')) {
                   prefix += "/";
                 }
-                for (String p : CompilerManagerImpl.getPathsToDelete()) {
-                  String path = FileUtil.toSystemIndependentName(p);
-                  if (FileUtil.startsWith(path, prefix)) {
-                    path = path.substring(prefix.length());
-                  }
-                  myDeletedPaths.add(path);
-                }
-
                 for (String p : getCompiledPathsToCheck()) {
                   String path = FileUtil.toSystemIndependentName(p);
                   if (FileUtil.startsWith(path, prefix)) {
@@ -218,9 +227,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
 
-  protected String[] getCompiledPathsToCheck() {
-    return CompilerManagerImpl.getPathsToRecompile();
-  }
+  protected abstract String[] getCompiledPathsToCheck();
 
   // override this in order to change the compilation kind
   protected void doCompile(final CompileStatusNotification notification, int pass) {
@@ -237,12 +244,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       final boolean expectedUpToDate = deleted.length == 0 && recompiled.length == 0;
       assertEquals("Up-to-date check error: ", expectedUpToDate, upToDateStatus);
     }
-
-    final String deletedPathsString = buildPathsMessage(myDeletedPaths);
-    for (final String path : deleted) {
-      assertTrue("file \"" + path + "\" should be deleted. | Reported as deleted:" + deletedPathsString, isDeleted(path));
-    }
-    assertEquals(deleted.length, getDeletedCount());
 
     final String recompiledpathsString = buildPathsMessage(myRecompiledPaths);
     for (final String path : recompiled) {
@@ -268,16 +269,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     return message.toString();
   }
 
-  public int getDeletedCount() {
-    return myDeletedPaths.size();
-  }
-
   public int getRecompiledCount() {
     return myRecompiledPaths.size();
-  }
-
-  public boolean isDeleted(String path) {
-    return myDeletedPaths.contains(path);
   }
 
   public boolean isRecompiled(String path) {
@@ -286,8 +279,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
   protected void doSetup(final String testName) throws Exception {
     Logger.getInstance("#com.intellij.compiler").setLevel(Level.ERROR); // disable debug output from ordinary category
-
-    CompilerManagerImpl.testSetup();
 
     CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
 
@@ -305,6 +296,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           mySourceDir = createSourcesDir();
           myClassesDir = createOutputDir();
 
+          VirtualFile out = myModuleRoot.createChildDirectory(this, "out");
+          CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(out.getUrl());
           createTestProjectStructure(myModuleRoot);
           setupMainModuleRootModel();
 
@@ -481,13 +474,13 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         @Override
         public void run() {
           try {
-            myDeletedPaths.clear();
             myRecompiledPaths.clear();
             myData = null;
             myClassesDir = null;
             myDataDir = null;
             mySourceDir = null;
             myOriginalSourceDir = null;
+            CompilerTestUtil.disableExternalCompiler();
             CompilerTestCase.super.tearDown();
           }
           catch (Exception e) {

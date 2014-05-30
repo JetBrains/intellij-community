@@ -4,7 +4,6 @@ import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -13,9 +12,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.IOException;
-
-import static com.intellij.compiler.artifacts.ArtifactsTestCase.commitModel;
-import static com.intellij.compiler.artifacts.ArtifactsTestCase.renameFile;
 
 /**
  * @author nik
@@ -215,97 +211,8 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     CompilerTestUtil.setupJavacForTests(getProject());
   }
 
-  public void testOneFileInTwoArtifacts() throws Exception {
-    final VirtualFile file = createFile("file.txt");
-    final Artifact a1 = addArtifact("a1",
-                                    root().dir("dir").file(file));
-
-    final Artifact a2 = addArtifact("a2",
-                                    root().dir("dir2").file(file));
-
-    compileProject();
-    make(a1).assertUpToDate();
-    make(a2).assertUpToDate();
-    compileProject().assertUpToDate();
-
-    changeFile(file);
-    make(a1).assertRecompiled("file.txt");
-    make(a1).assertUpToDate();
-    make(a2).assertRecompiled("file.txt");
-    make(a2).assertUpToDate();
-    make(a1).assertUpToDate();
-    compileProject().assertUpToDate();
-  }
-
-  public void testDeleteFile() throws Exception {
-    final VirtualFile file = createFile("index.html");
-    addArtifact(root().file(file));
-
-    compileProject();
-    deleteFile(file);
-    compileProject().assertDeleted("out/artifacts/a/index.html");
-  }
-
-  //IDEADEV-40714
-  public void testOverwriteFileInArchive() throws Exception {
-    final VirtualFile file1 = createFile("a/a.txt", "a");
-    final VirtualFile file2 = createFile("b/a.txt", "b");
-    addArtifact(root()
-                 .archive("x.jar")
-                  .file(file1)
-                  .file(file2));
-    compileProject();
-    changeFile(file1);
-    compileProject().assertRecompiled("a/a.txt");
-  }
-
-
-  public void testRenameFile() throws Exception {
-    final VirtualFile file = createFile("a/a.txt");
-    final Artifact a = addArtifact(root().dirCopy(file.getParent()));
-    compileProject();
-
-    assertOutput(a, fs().file("a.txt"));
-    renameFile(file, "b.txt");
-    compileProject();
-    assertOutput(a, fs().file("b.txt"));
-  }
-
-  //IDEADEV-41556
-  public void testDeleteFilesFromSelectedArtifactsOnly() throws Exception {
-    final VirtualFile file = createFile("a/a.txt");
-    final Artifact a1 = addArtifact("a1", root().dirCopy(file.getParent()));
-    final Artifact a2 = addArtifact("a2", root().dirCopy(file.getParent()));
-
-    compileProject();
-    assertOutput(a1, fs().file("a.txt"));
-    assertOutput(a2, fs().file("a.txt"));
-
-    deleteFile(file);
-    make(a1).assertDeleted("out/artifacts/a1/a.txt");
-    assertEmptyOutput(a1);
-    assertOutput(a2, fs().file("a.txt"));
-
-    make(a2).assertDeleted("out/artifacts/a2/a.txt");
-    assertEmptyOutput(a1);
-    assertEmptyOutput(a2);
-  }
-
-  //todo[nik] uncomment when deleting obsolete directories will be supported
-  public void _testRenameDirectoryInLayout() throws Exception {
-    final VirtualFile file = createFile("a.txt");
-    final Artifact a = addArtifact("a", root().dir("d1").file(file));
-    compileProject();
-    assertOutput(a, fs().dir("d1").file("a.txt"));
-
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
-    model.getOrCreateModifiableArtifact(a).setRootElement(root().dir("d2").file(file).build());
-    commitModel(model);
-
-    compileProject();
-    assertOutput(a, fs().dir("d2").file("a.txt"));
-  }
-
+  /*
+  //todo[nik] move to IncrementalArtifactBuildingTest
   public void testDeleteOutputWhenOutputPathIsChanged() throws Exception {
     final VirtualFile file = createFile("a.txt");
     final Artifact a = addArtifact("a", root().file(file));
@@ -345,4 +252,5 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(b, fs().file("a.txt", "b"));
     make(b).assertUpToDate();
   }
+  */
 }
