@@ -465,8 +465,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
         result.addElement(createKeyword(position, PsiKeyword.NULL));
       }
-      result.addElement(createKeyword(position, PsiKeyword.TRUE));
-      result.addElement(createKeyword(position, PsiKeyword.FALSE));
+      if (mayExpectBoolean(parameters)) {
+        result.addElement(createKeyword(position, PsiKeyword.TRUE));
+        result.addElement(createKeyword(position, PsiKeyword.FALSE));
+      }
     }
 
     PsiFile file = position.getContainingFile();
@@ -525,6 +527,14 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.SUPER), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
+  }
+
+  private static boolean mayExpectBoolean(CompletionParameters parameters) {
+    for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+      PsiType type = info.getType();
+      if (type instanceof PsiClassType || type == PsiType.BOOLEAN) return true;
+    }
+    return false;
   }
 
   private static boolean isExpressionPosition(PsiElement position) {
