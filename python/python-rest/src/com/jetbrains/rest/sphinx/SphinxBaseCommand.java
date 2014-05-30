@@ -31,13 +31,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.rest.RestPythonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,17 +152,20 @@ public class SphinxBaseCommand {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert script_params != null;
 
-    String commandPath = getCommandPath(sdk);
+    String commandPath = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
     if (commandPath == null) {
       throw new ExecutionException("Cannot find sphinx-quickstart.");
     }
-    cmd.setExePath(commandPath);
-
+    final String sdkHomePath = sdk.getHomePath();
+    if (sdkHomePath != null)
+      cmd.setExePath(sdkHomePath);
+    cmd.addParameter(commandPath);
     if (params != null) {
       for (String p : params) {
         script_params.addParameter(p);
       }
     }
+    cmd.addParameters("Sphinx", "sphinx-quickstart");
 
     cmd.setPassParentEnvironment(true);
     setPythonIOEncoding(cmd.getEnvironment(), "utf-8");
@@ -171,9 +174,9 @@ public class SphinxBaseCommand {
     List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(sdk));
     pathList.addAll(PythonCommandLineState.collectPythonPath(module));
 
-    PythonCommandLineState.initPythonPath(cmd, true, pathList, sdk.getHomePath());
+    PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk.getHomePath(), true);
+    PythonSdkType.patchCommandLineForVirtualenv(cmd, sdkHomePath, true);
     BuildoutFacet facet = BuildoutFacet.getInstance(module);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);
@@ -182,8 +185,4 @@ public class SphinxBaseCommand {
     return cmd;
   }
 
-  @Nullable
-  private static String getCommandPath(Sdk sdk) {
-    return RestPythonUtil.findQuickStart(sdk);
-  }
 }

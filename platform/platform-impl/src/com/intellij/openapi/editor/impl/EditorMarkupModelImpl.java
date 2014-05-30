@@ -376,8 +376,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     repaintVerticalScrollBar();
   }
 
-  private void assertIsDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  private static void assertIsDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
 
   @Override

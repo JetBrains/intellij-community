@@ -111,7 +111,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private AttachmentsTabForm myAttachmentsTabForm;
 
   private ClearFatalsAction myClearAction = new ClearFatalsAction();
-  private BlameAction myBlameAction = new BlameAction();
+  private BlameAction myBlameAction;
   @Nullable
   private AnalyzeAction myAnalyzeAction;
   private boolean myMute;
@@ -219,7 +219,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
-    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+    myBlameAction = new BlameAction();
+    myBlameAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
   }
 
   private class ForwardAction extends AnAction implements DumbAware {
@@ -802,11 +803,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return ((PluginException)t).getPluginId();
     }
 
+    Set<String> visitedClassNames = ContainerUtil.newHashSet();
     for (StackTraceElement element : t.getStackTrace()) {
       if (element != null) {
         String className = element.getClassName();
-        if (PluginManager.isPluginClass(className)) {
-          return PluginManager.getPluginByClassName(className);
+        if (visitedClassNames.add(className) && PluginManagerCore.isPluginClass(className)) {
+          return PluginManagerCore.getPluginByClassName(className);
         }
       }
     }

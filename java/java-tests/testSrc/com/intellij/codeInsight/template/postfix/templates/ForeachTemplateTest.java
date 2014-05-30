@@ -15,9 +15,17 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeachTemplateTest extends PostfixTemplateTestCase {
+  @NotNull
+  @Override
+  protected String getSuffix() {
+    return "for";
+  }
+
   public void testInts() {
     doTest();
   }
@@ -26,9 +34,15 @@ public class ForeachTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "for";
+  public void testFinalLocals() {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
+    try {
+      settings.GENERATE_FINAL_LOCALS = true;
+      doTest();
+    }
+    finally {
+      settings.GENERATE_FINAL_LOCALS = oldGenerateFinalLocals;
+    }
   }
 }

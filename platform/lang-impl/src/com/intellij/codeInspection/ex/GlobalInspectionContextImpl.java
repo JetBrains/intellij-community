@@ -48,6 +48,7 @@ import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +56,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
@@ -610,47 +612,82 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   @Override
   public void codeCleanup(final Project project,
                           final AnalysisScope scope,
-                          final InspectionProfile profile, 
-                          final String commandName) {
+                          final InspectionProfile profile,
+                          final String commandName,
+                          final Runnable postRunnable, 
+                          final boolean modal) {
+    Task task;
+    if (modal) {
+      task = new Task.Modal(project, "Inspect code...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          cleanup(scope, profile, project, postRunnable, commandName);
+        }
+      };
+    } else {
+      task = new Task.Backgroundable(project, "Inspect code...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          cleanup(scope, profile, project, postRunnable, commandName);
+        }
+      }; 
+    }
+    ProgressManager.getInstance().run(task);
+  }
+
+  private void cleanup(final AnalysisScope scope,
+                       final InspectionProfile profile,
+                       final Project project,
+                       final Runnable postRunnable,
+                       final String commandName) {
     final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
 
     final LinkedHashMap<PsiFile, List<HighlightInfo>> results = new LinkedHashMap<PsiFile, List<HighlightInfo>>();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Inspect code...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        scope.accept(new PsiElementVisitor() {
-          @Override
-          public void visitFile(PsiFile file) {
-            final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile == null || virtualFile.getFileType().isBinary()) return;
-            for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
-              if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
-                final InspectionToolWrapper tool = tools.getEnabledTool(file);
-                if (tool instanceof LocalInspectionToolWrapper) {
-                  lTools.add((LocalInspectionToolWrapper)tool);
-                  tool.initialize(GlobalInspectionContextImpl.this);
-                }
-              }
-            }
 
-            if (!lTools.isEmpty()) {
-              final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(project).getDocument(file), 0,
-                                                                         file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                                         HighlightInfoProcessor.getEmpty());
-              Runnable runnable = new Runnable() {
-                public void run() {
-                  pass.doInspectInBatch(GlobalInspectionContextImpl.this, (InspectionManagerEx)InspectionManager.getInstance(project), lTools);
-                }
-              };
-              ApplicationManager.getApplication().runReadAction(runnable);
-              results.put(file, pass.getInfos());
+    final SearchScope searchScope = scope.toSearchScope();
+    scope.accept(new PsiElementVisitor() {
+      @Override
+      public void visitFile(PsiFile file) {
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null || virtualFile.getFileType().isBinary()) return;
+        for (final Tools tools : profile.getAllEnabledInspectionTools(project)) {
+          if (tools.getTool().getTool() instanceof CleanupLocalInspectionTool) {
+            final InspectionToolWrapper tool = tools.getEnabledTool(file);
+            if (tool instanceof LocalInspectionToolWrapper) {
+              lTools.add((LocalInspectionToolWrapper)tool);
+              tool.initialize(GlobalInspectionContextImpl.this);
             }
           }
-        });
-      }
+        }
 
+        if (!lTools.isEmpty()) {
+          final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(project).getDocument(file), 0,
+                                                                     file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+                                                                     HighlightInfoProcessor.getEmpty());
+          Runnable runnable = new Runnable() {
+            public void run() {
+              pass.doInspectInBatch(GlobalInspectionContextImpl.this, (InspectionManagerEx)InspectionManager.getInstance(project), lTools);
+            }
+          };
+          ApplicationManager.getApplication().runReadAction(runnable);
+          final List<HighlightInfo> infos = pass.getInfos();
+          if (searchScope instanceof LocalSearchScope) {
+            for (Iterator<HighlightInfo> iterator = infos.iterator(); iterator.hasNext(); ) {
+              final HighlightInfo info = iterator.next();
+              final TextRange infoRange = new TextRange(info.getStartOffset(), info.getEndOffset());
+              if (!((LocalSearchScope)searchScope).containsRange(file, infoRange)) {
+                iterator.remove();
+              }
+            }
+          }
+          results.put(file, infos);
+        }
+      }
+    });
+
+    Runnable runnable = new Runnable() {
       @Override
-      public void onSuccess() {
+      public void run() {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(results.keySet())) return;
 
         final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Code Cleanup", true);
@@ -666,9 +703,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                 ProgressManager.getInstance().run(progressTask);
               }
             });
+            if (postRunnable != null) {
+              ApplicationManager.getApplication().invokeLater(postRunnable);
+            }
           }
         }, commandName, null);
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
   }
 }

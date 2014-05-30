@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,7 +71,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     if (lastSelectedFileUrl != null) {
       VirtualFile lastFile = VirtualFileManager.getInstance().findFileByUrl(lastSelectedFileUrl);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
-      if (lastFile != null && ModuleUtil.findModuleForPsiElement(context) == fileIndex.getModuleForFile(lastFile)) {
+      if (lastFile != null && ModuleUtilCore.findModuleForPsiElement(context) == fileIndex.getModuleForFile(lastFile)) {
         return lastSelectedFileUrl;
       }
     }

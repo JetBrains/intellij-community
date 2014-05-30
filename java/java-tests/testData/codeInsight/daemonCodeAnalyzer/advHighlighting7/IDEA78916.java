@@ -37,12 +37,20 @@ abstract class EnumPrivateMethodTest2 {
     private void firstMethod() {}
 }
 
-class Test {
+class TestAnonymousContainer {
     private class Foo {
         private Foo() {}
 
         {
           new  Foo(){};
         }
+    }
+
+    class AB {
+      private void foo(){}
+    }
+  
+    {
+      new AB() {}.<error descr="'foo()' has private access in 'TestAnonymousContainer.AB'">foo</error>();
     }
 }

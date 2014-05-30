@@ -83,6 +83,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return element != null ? element.getName() : null;
   }
 
+  @Override
   @Nullable
   public String getVisibleName() {
     final PyImportElementStub stub = getStub();

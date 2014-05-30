@@ -937,13 +937,6 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
-  @Nullable
-  public static String getExecutablePath(@NotNull final Sdk sdk, @NotNull String name) {
-    final String homeDirectory = sdk.getHomePath();
-    if (homeDirectory == null) return null;
-    return getExecutablePath(homeDirectory, name);
-  }
-
   private static String[] getBinaryNames() {
     if (SystemInfo.isUnix) {
       return UNIX_BINARY_NAMES;

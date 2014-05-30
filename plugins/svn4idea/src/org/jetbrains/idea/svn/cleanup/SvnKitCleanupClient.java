@@ -18,7 +18,7 @@ public class SvnKitCleanupClient extends BaseSvnClient implements CleanupClient 
 
   @Override
   public void cleanup(@NotNull File path, @Nullable ISVNEventHandler handler) throws VcsException {
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
 
     client.setEventHandler(handler);
     try {

@@ -70,7 +70,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
     if (updateException != null) {
       updateException.printStackTrace();
     }
-    if (! SvnVcs.ourBusyExceptionProcessor.process(updateException)) {
+    if (! RepeatSvnActionThroughBusy.ourBusyExceptionProcessor.process(updateException)) {
       Assert.assertNull(updateException == null ? null : updateException.getMessage(), updateException);
     }
 

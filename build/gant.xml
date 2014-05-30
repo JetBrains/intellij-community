@@ -12,6 +12,9 @@
     <fileset dir="${project.home}/build/lib/jps">
       <include name="*.jar"/>
     </fileset>
+    <fileset dir="${project.home}/build/kotlinc/jps" erroronmissingdir="false">
+      <include name="*.jar"/>
+    </fileset>
     <fileset dir="${idea.lib}">
        <include name="jdom.jar"/>
        <include name="log4j.jar"/>
@@ -29,6 +32,7 @@
        <include name="oromatcher.jar"/>
        <include name="cli-parser-*.jar"/>
        <include name="nanoxml-*.jar"/>
+       <include name="jsr166e.jar"/>
     </fileset>
   </path>
 

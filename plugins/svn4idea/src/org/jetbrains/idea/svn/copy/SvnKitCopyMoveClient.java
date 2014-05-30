@@ -28,7 +28,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
     final SVNCopySource copySource = new SVNCopySource(isMove ? SVNRevision.UNDEFINED : SVNRevision.WORKING, SVNRevision.WORKING, src);
 
     try {
-      myVcs.createCopyClient().doCopy(new SVNCopySource[]{copySource}, dst, isMove, makeParents, true);
+      myVcs.getSvnKitManager().createCopyClient().doCopy(new SVNCopySource[]{copySource}, dst, isMove, makeParents, true);
     }
     catch (SVNException e) {
       throw new VcsException(e);
@@ -49,7 +49,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
     }
 
     final SVNCopySource copySource = createCopySource(source, revision);
-    SVNCopyClient client = myVcs.createCopyClient();
+    SVNCopyClient client = myVcs.getSvnKitManager().createCopyClient();
     client.setEventHandler(handler);
 
     SVNCommitInfo info;
@@ -70,7 +70,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
                    @Nullable SVNRevision revision,
                    boolean makeParents,
                    @Nullable ISVNEventHandler handler) throws VcsException {
-    SVNCopyClient client = myVcs.createCopyClient();
+    SVNCopyClient client = myVcs.getSvnKitManager().createCopyClient();
     client.setEventHandler(handler);
 
     try {

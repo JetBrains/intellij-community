@@ -18,15 +18,16 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
-  @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
+  @Nullable private Set<VirtualFile> myAnnotationsRoots = null;
 
   public ReadableExternalAnnotationsManager(PsiManager psiManager) {
     super(psiManager);
@@ -34,20 +35,24 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
 
   @Override
   protected boolean hasAnyAnnotationsRoots() {
-    if (myHasAnyAnnotationsRoots == ThreeState.UNSURE) {
+    return !initRoots().isEmpty();
+  }
+
+  @NotNull
+  private synchronized Set<VirtualFile> initRoots() {
+    if (myAnnotationsRoots == null) {
+      myAnnotationsRoots = new HashSet<VirtualFile>();
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
       for (Module module : modules) {
         for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-          final String[] urls = AnnotationOrderRootType.getUrls(entry);
-          if (urls.length > 0) {
-            myHasAnyAnnotationsRoots = ThreeState.YES;
-            return true;
+          final VirtualFile[] files = AnnotationOrderRootType.getFiles(entry);
+          if (files.length > 0) {
+            Collections.addAll(myAnnotationsRoots, files);
           }
         }
       }
-      myHasAnyAnnotationsRoots = ThreeState.NO;
     }
-    return myHasAnyAnnotationsRoots == ThreeState.YES;
+    return myAnnotationsRoots;
   }
 
   @Override
@@ -64,8 +69,12 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   }
 
   @Override
-  protected void dropCache() {
-    myHasAnyAnnotationsRoots = ThreeState.UNSURE;
+  protected synchronized void dropCache() {
+    myAnnotationsRoots = null;
     super.dropCache();
+  }
+
+  public boolean isUnderAnnotationRoot(VirtualFile file) {
+    return VfsUtilCore.isUnder(file, initRoots());
   }
 }

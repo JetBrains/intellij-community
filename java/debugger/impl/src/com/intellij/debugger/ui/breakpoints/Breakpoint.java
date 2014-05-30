@@ -47,6 +47,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.sun.jdi.*;
@@ -490,7 +491,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected boolean isLogExpressionEnabled() {
     XExpression expression = myXBreakpoint.getLogExpressionObject();
-    if (expression == null || expression.getExpression().isEmpty()) {
+    if (XDebuggerUtilImpl.isEmptyExpression(expression)) {
       return false;
     }
     return !getLogMessage().isEmpty();
@@ -608,7 +609,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected boolean isConditionEnabled() {
     XExpression condition = myXBreakpoint.getConditionExpression();
-    if (condition == null || condition.getExpression().isEmpty()) {
+    if (XDebuggerUtilImpl.isEmptyExpression(condition)) {
       return false;
     }
     return !getCondition().isEmpty();

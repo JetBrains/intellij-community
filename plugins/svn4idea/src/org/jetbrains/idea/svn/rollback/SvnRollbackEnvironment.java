@@ -311,7 +311,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
             doRevert(file, true);
           } else {
             // do update to restore missing directory.
-            mySvnVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+            mySvnVcs.getSvnKitManager().createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
           }
         }
       }

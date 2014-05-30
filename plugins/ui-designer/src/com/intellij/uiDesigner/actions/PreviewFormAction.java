@@ -54,7 +54,6 @@ import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
-import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
@@ -66,8 +65,11 @@ import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.StringTokenizer;
 
 /**
  * @author Anton Katilin
@@ -83,6 +85,21 @@ public final class PreviewFormAction extends AnAction{
   private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
   @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
+
+  @NotNull
+  public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
+    final ArrayList<URL> urls = new ArrayList<URL>();
+    for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
+      final String s = tokenizer.nextToken();
+      try {
+        urls.add(new File(s).toURI().toURL());
+      }
+      catch (Exception exc) {
+        throw new RuntimeException(exc);
+      }
+    }
+    return new InstrumentationClassFinder(urls.toArray(new URL[urls.size()]));
+  }
 
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
@@ -128,7 +145,7 @@ public final class PreviewFormAction extends AnAction{
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final InstrumentationClassFinder finder = Form2ByteCodeCompiler.createClassFinder(classPath);
+    final InstrumentationClassFinder finder = createClassFinder(classPath);
 
     try {
       final Document doc = FileDocumentManager.getInstance().getDocument(formFile);

@@ -714,6 +714,9 @@ public final class EditorUtil {
    * @param start     target start coordinate
    * @param end       target end coordinate
    * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
+   *
+   * @see #getNotFoldedLineStartOffset(com.intellij.openapi.editor.Editor, int)
+   * @see #getNotFoldedLineEndOffset(com.intellij.openapi.editor.Editor, int)
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static Couple<LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
@@ -765,6 +768,60 @@ public final class EditorUtil {
       second = editor.offsetToLogicalPosition(document.getTextLength());
     }
     return Couple.newOne(first, second);
+  }
+
+  /**
+   * Finds the start offset of visual line at which given offset is located, not taking soft wraps into account.
+   *
+   * @see #calcSurroundingRange(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.VisualPosition, com.intellij.openapi.editor.VisualPosition)
+   */
+  public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset) {
+    while(true) {
+      offset = getLineStartOffset(offset, editor.getDocument());
+      // this assumes that there cannot be two adjacent collapsed fold regions
+      // (such case is not properly handled currently by FoldingModelImpl/FoldRegionsTree anyway)
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
+        break;
+      }
+      offset = foldRegion.getStartOffset();
+    }
+    return offset;
+  }
+
+  /**
+   * Finds the end offset of visual line at which given offset is located, not taking soft wraps into account.
+   *
+   * @see #calcSurroundingRange(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.VisualPosition, com.intellij.openapi.editor.VisualPosition)
+   */
+  public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int offset) {
+    while(true) {
+      offset = getLineEndOffset(offset, editor.getDocument());
+      // this assumes that there cannot be two adjacent collapsed fold regions
+      // (such case is not properly handled currently by FoldingModelImpl/FoldRegionsTree anyway)
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null || foldRegion.getEndOffset() <= offset) {
+        break;
+      }
+      offset = foldRegion.getEndOffset();
+    }
+    return offset;
+  }
+
+  private static int getLineStartOffset(int offset, Document document) {
+    if (offset > document.getTextLength()) {
+      return offset;
+    }
+    int lineNumber = document.getLineNumber(offset);
+    return document.getLineStartOffset(lineNumber);
+  }
+
+  private static int getLineEndOffset(int offset, Document document) {
+    if (offset >= document.getTextLength()) {
+      return offset;
+    }
+    int lineNumber = document.getLineNumber(offset);
+    return document.getLineEndOffset(lineNumber);
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {

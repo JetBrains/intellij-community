@@ -16,10 +16,10 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,32 +53,31 @@ public class IncrementalCacheUpdateEvent {
    * 
    * @param event   object that describes document change that caused cache update
    */
-  public IncrementalCacheUpdateEvent(@NotNull DocumentEvent event, @NotNull FoldingModel foldingModel) {
-    this(event.getDocument(),
+  public IncrementalCacheUpdateEvent(@NotNull DocumentEvent event, @NotNull Editor editor) {
+    this(editor,
          event.getOffset(),
          event.getOffset() + event.getOldLength(),
-         event.getOffset() + event.getNewLength(),
-         foldingModel);
+         event.getOffset() + event.getNewLength());
   }
 
   /**
    * Creates new <code>IncrementalCacheUpdateEvent</code> object for the event not changing document length
    * (like expansion of folded region).
    */
-  public IncrementalCacheUpdateEvent(@NotNull Document document, int startOffset, int endOffset, @NotNull FoldingModel foldingModel) {
-    this(document, startOffset, endOffset, endOffset, foldingModel);
+  public IncrementalCacheUpdateEvent(@NotNull Editor editor, int startOffset, int endOffset) {
+    this(editor, startOffset, endOffset, endOffset);
   }
 
-  private IncrementalCacheUpdateEvent(@NotNull Document document, int startOffset, int oldEndOffset, int newEndOffset,
-                                      @NotNull FoldingModel foldingModel) {
+  private IncrementalCacheUpdateEvent(@NotNull Editor editor, int startOffset, int oldEndOffset, int newEndOffset) {
+    Document document = editor.getDocument();
     myExactStartOffset = startOffset;
     myOldExactEndOffset = oldEndOffset;
     myNewExactEndOffset = newEndOffset;
     myStartLogicalLine = getLine(myExactStartOffset, document);
     myOldLogicalLinesDiff = getLine(myOldExactEndOffset, document) - myStartLogicalLine;
 
-    myOldStartOffset = getNotFoldedLineStartOffset(myExactStartOffset, document, foldingModel);
-    myOldEndOffset = getNotFoldedLineEndOffset(myOldExactEndOffset, document, foldingModel);
+    myOldStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, myExactStartOffset);
+    myOldEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, myOldExactEndOffset);
   }
 
   /**
@@ -116,10 +115,11 @@ public class IncrementalCacheUpdateEvent {
    * @param document      document which change caused current cache update event construction
    * @param foldingModel  fold model to use
    */
-  public void updateNewOffsetsIfNecessary(@NotNull Document document, @NotNull FoldingModelEx foldingModel) {
+  public void updateNewOffsetsIfNecessary(@NotNull Editor editor) {
+    Document document = editor.getDocument();
     myNewLogicalLinesDiff = document.getLineNumber(myNewExactEndOffset) - document.getLineNumber(myExactStartOffset);
-    myNewStartOffset = getNotFoldedLineStartOffset(myExactStartOffset, document, foldingModel);
-    myNewEndOffset = getNotFoldedLineEndOffset(myNewExactEndOffset, document, foldingModel);
+    myNewStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, myExactStartOffset);
+    myNewEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, myNewExactEndOffset);
   }
 
   /**
@@ -216,46 +216,6 @@ public class IncrementalCacheUpdateEvent {
     return document.getLineNumber(offset);
   }
   
-  private static int getLineStartOffset(int offset, Document document) {
-    if (offset > document.getTextLength()) {
-      return offset;
-    }
-    int lineNumber = document.getLineNumber(offset);
-    return document.getLineStartOffset(lineNumber);
-  }
-
-  private static int getLineEndOffset(int offset, Document document) {
-    if (offset >= document.getTextLength()) {
-      return offset;
-    }
-    int lineNumber = document.getLineNumber(offset);
-    return document.getLineEndOffset(lineNumber);
-  }
-
-  private static int getNotFoldedLineStartOffset(int offset, Document document, FoldingModel foldingModel) {
-    while(true) {
-      offset = getLineStartOffset(offset, document);
-      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
-      if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
-        break;
-      }
-      offset = foldRegion.getStartOffset();
-    }
-    return offset;
-  }
-
-  private static int getNotFoldedLineEndOffset(int offset, Document document, FoldingModel foldingModel) {
-    while(true) {
-      offset = getLineEndOffset(offset, document);
-      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
-      if (foldRegion == null || foldRegion.getEndOffset() <= offset) {
-        break;
-      }
-      offset = foldRegion.getEndOffset();
-    }
-    return offset;
-  }
-
   @Override
   public String toString() {
     return String.format(

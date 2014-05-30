@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -40,6 +41,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -290,12 +292,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     final DefaultActionGroup actions = new DefaultActionGroup();
     final BackAction back = new BackAction();
     final ForwardAction forward = new ForwardAction();
+    EditDocumentationSourceAction edit = new EditDocumentationSourceAction();
     actions.add(back);
     actions.add(forward);
     actions.add(myExternalDocAction = new ExternalDocAction());
+    actions.add(edit);
+
     back.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), this);
     forward.registerCustomShortcutSet(CustomShortcutSet.fromString("RIGHT"), this);
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
+    edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     if (additionalActions != null) {
       for (final AnAction action : additionalActions) {
         actions.add(action);
@@ -618,6 +624,40 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       presentation.setEnabled(!myForwardStack.isEmpty());
     }
   }
+
+  private class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
+
+    protected EditDocumentationSourceAction() {
+      super(true);
+    }
+
+    @Override
+    public void update(AnActionEvent event) {
+      super.update(event);
+      event.getPresentation().setIcon(AllIcons.Actions.EditSource);
+      event.getPresentation().setText("Edit Source");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      super.actionPerformed(e);
+      if (myHint.isVisible()) {
+        myHint.cancel();
+      }
+    }
+
+    @Nullable
+    @Override
+    protected Navigatable[] getNavigatables(DataContext dataContext) {
+      SmartPsiElementPointer element = myElement;
+      if (element != null) {
+        PsiElement psiElement = element.getElement();
+        return psiElement instanceof Navigatable ? new Navigatable[] {(Navigatable)psiElement} : null;
+      }
+      return null;
+    }
+  }
+
 
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ExternalDocAction() {

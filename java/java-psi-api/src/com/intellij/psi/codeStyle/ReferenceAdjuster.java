@@ -32,7 +32,7 @@ public interface ReferenceAdjuster {
   void processRange(@NotNull ASTNode element, int startOffset, int endOffset, Project project);
 
   class Extension extends LanguageExtension<ReferenceAdjuster> {
-    private static final Extension INSTANCE = new Extension();
+    public static final Extension INSTANCE = new Extension();
 
     public Extension() {
       super("com.intellij.codeStyle.ReferenceAdjuster");

@@ -221,12 +221,6 @@ public class VcsHistoryProviderBackgroundableProxy {
       myPartner.beforeRefresh();
     }
 
-    @Nullable
-    @Override
-    public RepositoryLocation getRepositoryLocation() {
-      return myPartner.getRepositoryLocation();
-    }
-
     @Override
     public void forceRefresh() {
       myPartner.forceRefresh();

@@ -272,12 +272,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return true;
   }
 
-  @TestOnly
-  public void doCommitTransaction(@NotNull Document document){
-    doCommitTransaction(document, getTransaction(document));
-    myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, null);
-  }
-
   private static void doCommitTransaction(@NotNull Document document, @NotNull DocumentChangeTransaction documentChangeTransaction) {
     DocumentEx ex = (DocumentEx) document;
     ex.suppressGuardedExceptions();
@@ -316,8 +310,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private DocumentChangeTransaction removeTransaction(Document doc) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if(pair == null) return null;
-    if(pair.getSecond().intValue() > 0){
-      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() - 1);
+    int nestedCount = pair.getSecond().intValue();
+    if(nestedCount > 0){
+      pair = Pair.create(pair.getFirst(), nestedCount - 1);
       myTransactionsMap.put(doc, pair);
       return null;
     }

@@ -21,26 +21,48 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator;
 
 import java.util.Arrays;
-import java.util.HashSet;
 
 /**
  * @author ilyas
  */
 public class GroovyCompilerLoader extends AbstractProjectComponent {
 
+  public static final String GROOVY_STUBS = "groovyStubs";
+
   public GroovyCompilerLoader(Project project) {
     super(project);
+  }
+
+  @Nullable
+  public static PsiClass findClassByStub(Project project, VirtualFile stubFile) {
+    final String[] components = StringUtil.trimEnd(stubFile.getPath(), ".java").split("[\\\\/]");
+    final int stubs = Arrays.asList(components).indexOf(GROOVY_STUBS);
+    if (stubs < 0 || stubs >= components.length - 3) {
+      return null;
+    }
+
+    final String moduleName = components[stubs + 1];
+    final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+    if (module == null) {
+      return null;
+    }
+
+    final String fqn = StringUtil.join(Arrays.asList(components).subList(stubs + 3, components.length), ".");
+    return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 
   @Override
@@ -48,19 +70,11 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
-    compilerManager.addTranslatingCompiler(new GroovycStubGenerator(myProject),
-                                           new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA, GroovyFileType.GROOVY_FILE_TYPE)),
-                                           new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)));
-
-    compilerManager.addTranslatingCompiler(new GroovyCompiler(myProject),
-                                           new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE, StdFileTypes.CLASS)),
-                                           new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
-
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull final VirtualFile file) {
-        if (file.getName().endsWith(".java") && file.getPath().contains(GroovycStubGenerator.GROOVY_STUBS)) {
-          final PsiClass psiClass = GroovycStubGenerator.findClassByStub(myProject, file);
+        if (file.getName().endsWith(".java") && file.getPath().contains(GROOVY_STUBS)) {
+          final PsiClass psiClass = findClassByStub(myProject, file);
           if (psiClass != null) {
             final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
             final FileEditor[] editors = fileEditorManager.getEditors(file);
@@ -80,7 +94,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     panel.createActionLabel("Go to the Groovy class", new Runnable() {
       @Override
       public void run() {
-        final PsiClass original = GroovycStubGenerator.findClassByStub(myProject, file);
+        final PsiClass original = findClassByStub(myProject, file);
         if (original != null) {
           original.navigate(true);
         }
@@ -89,7 +103,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     panel.createActionLabel("Exclude from stub generation", new Runnable() {
       @Override
       public void run() {
-        final PsiClass psiClass = GroovycStubGenerator.findClassByStub(myProject, file);
+        final PsiClass psiClass = findClassByStub(myProject, file);
         if (psiClass != null) {
           ExcludeFromStubGenerationAction.doExcludeFromStubGeneration(psiClass.getContainingFile());
         }

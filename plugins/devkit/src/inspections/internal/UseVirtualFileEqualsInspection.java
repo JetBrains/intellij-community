@@ -38,7 +38,9 @@ public class UseVirtualFileEqualsInspection extends InternalInspection {
         }
         final PsiExpression lhs = expression.getLOperand();
         final PsiExpression rhs = expression.getROperand();
-        if (rhs == null || lhs.textMatches(PsiKeyword.NULL) || rhs.textMatches(PsiKeyword.NULL)) {
+        if (rhs == null ||
+            lhs.textMatches(PsiKeyword.NULL) || rhs.textMatches(PsiKeyword.NULL) ||
+            lhs.textMatches(PsiKeyword.THIS) || rhs.textMatches(PsiKeyword.THIS)) {
           return;
         }
         

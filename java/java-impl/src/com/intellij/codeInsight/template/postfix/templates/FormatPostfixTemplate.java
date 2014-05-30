@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 
-public class FormatPostfixTemplate extends JavaStatementWrapPostfixTemplate {
+public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> IS_STRING = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement expr) {
@@ -39,24 +39,13 @@ public class FormatPostfixTemplate extends JavaStatementWrapPostfixTemplate {
 
 
   public FormatPostfixTemplate() {
-    super("format", "String.format(expr);", JAVA_PSI_INFO, IS_STRING);
+    super("format", "String.format(expr)", JAVA_PSI_INFO, IS_STRING);
   }
 
-  @Override
-  protected void afterExpand(@NotNull PsiElement newElement, @NotNull Editor editor) {
-    editor.getCaretModel().moveToOffset(newElement.getTextRange().getEndOffset() - 2);
-    JavaPostfixTemplateProvider.doNotDeleteSemicolon(newElement.getContainingFile());
-  }
 
-  @NotNull
+  @Nullable
   @Override
-  protected String getHead() {
-    return "String.format(";
-  }
-
-  @NotNull
-  @Override
-  protected String getTail() {
-    return ", );";
+  public String getTemplateString(@NotNull PsiElement element) {
+    return "String.format($expr$, $END$);";
   }
 }

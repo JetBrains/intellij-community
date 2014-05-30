@@ -103,7 +103,7 @@ public class PluginDownloader {
       //store old plugins file
       descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
-      if (myPluginVersion != null && StringUtil.compareVersionNumbers(descriptor.getVersion(), myPluginVersion) >= 0) {
+      if (myPluginVersion != null && compareVersionsSkipBroken(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
@@ -140,7 +140,7 @@ public class PluginDownloader {
       }
 
       myPluginVersion = actualDescriptor.getVersion();
-      if (descriptor != null && StringUtil.compareVersionNumbers(descriptor.getVersion(), actualDescriptor.getVersion()) >= 0) {
+      if (descriptor != null && compareVersionsSkipBroken(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false; //was not updated
       }
@@ -153,6 +153,14 @@ public class PluginDownloader {
       }
     }
     return true;
+  }
+
+  public static int compareVersionsSkipBroken(IdeaPluginDescriptor descriptor, String newPluginVersion) {
+    int state = StringUtil.compareVersionNumbers(newPluginVersion, descriptor.getVersion());
+    if (PluginManagerCore.isBrokenPlugin(descriptor) && state < 0) {
+      state = 1;
+    }
+    return state;
   }
 
   @Nullable

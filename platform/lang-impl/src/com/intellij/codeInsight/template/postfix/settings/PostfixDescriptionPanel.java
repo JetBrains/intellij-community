@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.template.postfix.settings;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
+import com.intellij.codeInsight.intention.impl.config.PlainTextDescriptor;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,14 +48,20 @@ class PostfixDescriptionPanel implements Disposable {
 
 
   public void reset(@NotNull PostfixTemplateMetaData actionMetaData) {
+    boolean isEmpty = actionMetaData == PostfixTemplateMetaData.EMPTY_METADATA;
+    myDescriptionBrowser.setText(isEmpty ? CodeInsightBundle.message("templates.postfix.settings.category.text")
+                                         : getDescription(actionMetaData.getDescription()));
 
-    final TextDescriptor url = actionMetaData.getDescription();
-    final String description = getDescription(url);
-    myDescriptionBrowser.setText(description);
-
-    showUsages(myBeforePanel, ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesBefore()));
-    showUsages(myAfterPanel, ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesAfter()));
+    showUsages(myBeforePanel, isEmpty
+                              ? new PlainTextDescriptor(CodeInsightBundle.message("templates.postfix.settings.category.before"),
+                                                        "before.txt.template")
+                              : ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesBefore()));
+    showUsages(myAfterPanel, isEmpty
+                             ? new PlainTextDescriptor(CodeInsightBundle.message("templates.postfix.settings.category.after"),
+                                                       "after.txt.template")
+                             : ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesAfter()));
   }
+
 
   @NotNull
   private static String getDescription(TextDescriptor url) {
@@ -93,7 +101,7 @@ class PostfixDescriptionPanel implements Disposable {
     Disposer.register(this, actionUsagePanel);
   }
 
-  synchronized  JPanel getComponent() {
+  synchronized JPanel getComponent() {
     return myPanel;
   }
 

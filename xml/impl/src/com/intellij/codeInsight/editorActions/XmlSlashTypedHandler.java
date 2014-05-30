@@ -29,6 +29,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,13 +92,13 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
             if (element1 != null && element1.getText().startsWith("</")) {
               // case of top-level jsp tag
               XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
-              if (tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset()) {
+              if (shouldReplace(tag, tag1)) {
                 tag = tag1;
               }
               else {
                 // if we have enclosing jsp tag, actual tag to be completed will be previous sibling
                 tag1 = PsiTreeUtil.getPrevSiblingOfType(element1.getParent(), XmlTag.class);
-                if (tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset()) {
+                if (shouldReplace(tag, tag1)) {
                   tag = tag1;
                 }
               }
@@ -134,5 +135,10 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       return Result.STOP;
     }
     return Result.CONTINUE;
+  }
+
+  public boolean shouldReplace(XmlTag tag, XmlTag tag1) {
+    return tag1 != null && tag1 != tag && tag1.getTextOffset() > tag.getTextOffset() &&
+           XmlUtil.getTokenOfType(tag1, XmlTokenType.XML_EMPTY_ELEMENT_END) == null && XmlTagUtil.getEndTagNameElement(tag1) == null;
   }
 }

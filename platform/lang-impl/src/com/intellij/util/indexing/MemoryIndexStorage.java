@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
@@ -37,7 +36,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  private boolean myBufferingEnabled;
 
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
@@ -63,16 +62,17 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public void setBufferingEnabled(boolean enabled) {
-    final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
-    if (wasEnabled != enabled) {
-      for (BufferingStateListener listener : myListeners) {
-        listener.bufferingStateChanged(enabled);
-      }
+    final boolean wasEnabled = myBufferingEnabled;
+    assert wasEnabled != enabled;
+
+    myBufferingEnabled = enabled;
+    for (BufferingStateListener listener : myListeners) {
+      listener.bufferingStateChanged(enabled);
     }
   }
 
   public boolean isBufferingEnabled() {
-    return myBufferingEnabled.get();
+    return myBufferingEnabled;
   }
 
   public void clearMemoryMap() {
@@ -137,7 +137,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
 
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (myBufferingEnabled.get()) {
+    if (myBufferingEnabled) {
       getMemValueContainer(key).addValue(inputId, value);
       return;
     }
@@ -151,7 +151,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
 
   @Override
   public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
-    if (myBufferingEnabled.get()) {
+    if (myBufferingEnabled) {
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
     }
@@ -190,7 +190,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    if (myBufferingEnabled.get()) {
+    if (myBufferingEnabled) {
       final ValueContainer<Value> valueContainer = myMap.get(key);
       if (valueContainer != null) {
         return valueContainer;

@@ -70,22 +70,15 @@ public class GeeseUtil {
     return next;
   }
 
-  @Nullable
-  public static PsiElement getPreviousNonWhitespaceToken(PsiElement e) {
-    PsiElement next = PsiTreeUtil.prevLeaf(e);
-    while (next != null && next.getNode().getElementType() == TokenType.WHITE_SPACE) next = PsiTreeUtil.prevLeaf(next);
-    return next;
-  }
-
   static void calculateRBraceAlignment(PsiElement rBrace, AlignmentProvider alignments) {
     int leadingBraceCount = 0;
     PsiElement next;
 
     if (!isClosureContainLF(rBrace)) return;
 
-    for (next = getPreviousNonWhitespaceToken(rBrace);
+    for (next = PsiUtil.getPreviousNonWhitespaceToken(rBrace);
          isClosureRBrace(next) && isClosureContainLF(next);
-         next = getPreviousNonWhitespaceToken(next)) {
+         next = PsiUtil.getPreviousNonWhitespaceToken(next)) {
       leadingBraceCount++;
     }
 
@@ -95,7 +88,7 @@ public class GeeseUtil {
     }
 
     for (; leadingBraceCount > 0; leadingBraceCount--) {
-      cur = getPreviousNonWhitespaceToken(cur);
+      cur = PsiUtil.getPreviousNonWhitespaceToken(cur);
     }
 
     PsiElement parent = cur.getParent();

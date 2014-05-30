@@ -30,6 +30,7 @@ import java.util.List;
 public class RevisionsAndDiffsTest extends IntegrationTestCase {
   public void testRevisions() throws Exception {
     VirtualFile f = createFile("file.txt", "old");
+    loadContent(f);
     setContent(f, "new");
 
     List<Revision> rr = getRevisionsFor(f);
@@ -241,8 +242,10 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
 
   public void testRevisionsForFileCreatedInPlaceOfRenamedOne() throws IOException {
     VirtualFile f = createFile("file1.txt", "content1");
+    loadContent(f);
     f.rename("file1", "file2.txt");
     VirtualFile ff = createFile("file1.txt", "content2");
+    loadContent(ff);
 
     List<Revision> rr = getRevisionsFor(ff);
     assertEquals(2, rr.size());

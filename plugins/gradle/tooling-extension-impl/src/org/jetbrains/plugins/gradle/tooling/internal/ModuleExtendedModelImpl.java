@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.plugins.gradle.model.ExtIdeaCompilerOutput;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
 
@@ -33,13 +34,16 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   private final String myName;
   private final String myGroup;
   private final String myVersion;
+  private final File myBuildDir;
   private List<File> myArtifacts;
   private Set<ExtIdeaContentRoot> myContentRoots;
+  private ExtIdeaCompilerOutput myCompilerOutput;
 
-  public ModuleExtendedModelImpl(String name, String group, String version) {
+  public ModuleExtendedModelImpl(String name, String group, String version, File buildDir) {
     myName = name;
     myGroup = group;
     myVersion = version;
+    myBuildDir = buildDir;
     myArtifacts = Collections.emptyList();
     myContentRoots = Collections.emptySet();
   }
@@ -73,7 +77,21 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
     return ImmutableDomainObjectSet.of(myContentRoots);
   }
 
+  @Override
+  public File getBuildDir() {
+    return myBuildDir;
+  }
+
   public void setContentRoots(Set<ExtIdeaContentRoot> contentRoots) {
     myContentRoots = contentRoots == null ? Collections.<ExtIdeaContentRoot>emptySet() : contentRoots;
+  }
+
+  @Override
+  public ExtIdeaCompilerOutput getCompilerOutput() {
+    return myCompilerOutput;
+  }
+
+  public void setCompilerOutput(ExtIdeaCompilerOutput compilerOutput) {
+    myCompilerOutput = compilerOutput;
   }
 }

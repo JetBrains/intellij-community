@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * @author vlan
  */
-public class PyExternalProcessException extends Exception {
+public class PyExternalProcessException extends ExecutionException {
   private static final Pattern WITH_CR_DELIMITER_PATTERN = Pattern.compile("(?<=\r|\n|\r\n)");
 
   private final int myRetcode;

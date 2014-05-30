@@ -133,7 +133,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
-  public static final Key<Pair<String, String>> EDITABLE_AREA_MARKER = Key.create("editable.area.marker");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
@@ -812,9 +811,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-
     myScrollPane.setRowHeaderView(myGutterComponent);
-    stopOptimizedScrolling();
 
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(true);
@@ -1679,7 +1676,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     clearTextWidthCache();
 
-    stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
@@ -1714,7 +1710,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScrollPane == null || myDocument.isInBulkUpdate()) return;
 
     clearTextWidthCache();
-    stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
@@ -1810,7 +1805,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myPreferredSize = dim;
 
-      stopOptimizedScrolling();
       myGutterComponent.setLineNumberAreaWidth(new TIntFunction() {
         @Override
         public int execute(int lineNumber) {
@@ -1935,8 +1929,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
     }
-
-    startOptimizedScrolling();
 
     if (myUpdateCursor) {
       setCursorPosition();
@@ -4376,10 +4368,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void updateCaretCursor() {
-    if (!ourIsUnitTestMode && !IJSwingUtilities.hasFocus(getContentComponent())) {
-      stopOptimizedScrolling();
-    }
-
     myUpdateCursor = true;
   }
 
@@ -4466,11 +4454,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void stopOptimizedScrolling() {
-    //myEditorComponent.setOpaque(false);
-  }
-
-  private void startOptimizedScrolling() {
-    //myEditorComponent.setOpaque(true);
   }
 
   private static class CaretRectangle {
@@ -5015,7 +4998,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void assertIsDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditorComponent);
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
 
   private static void assertReadAccess() {

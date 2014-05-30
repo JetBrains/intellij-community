@@ -17,10 +17,13 @@ package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -39,7 +42,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
-import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,8 +92,7 @@ public class ShowByteCodeAction extends AnAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
-            TranslatingCompilerFilesMonitor.getInstance().isMarkedForCompilation(project, virtualFile)) {
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && isMarkedForCompilation(project, virtualFile)) {
           myErrorMessage = "Unable to show byte code for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.";
           myErrorTitle = "Class File Out-Of-Date";
         }
@@ -156,6 +157,11 @@ public class ShowByteCodeAction extends AnAction {
         }
       }
     });
+  }
+
+  private static boolean isMarkedForCompilation(Project project, VirtualFile virtualFile) {
+    final CompilerManager compilerManager = CompilerManager.getInstance(project);
+    return !compilerManager.isUpToDate(compilerManager.createFilesCompileScope(new VirtualFile[]{virtualFile}));
   }
 
   @Nullable

@@ -37,6 +37,11 @@ public class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFa
   }
 
   @Override
+  public boolean useFqClassNamesInJavadoc() {
+    return getSettings().USE_FQ_CLASS_NAMES_IN_JAVADOC;
+  }
+
+  @Override
   public int staticFieldsOrderWeight() {
     return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().STATIC_FIELDS_ORDER_WEIGHT;
   }
@@ -69,5 +74,10 @@ public class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFa
   @Override
   public int constructorsOrderWeight() {
     return CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().CONSTRUCTORS_ORDER_WEIGHT;
+  }
+
+  @Override
+  public boolean insertInnerClassImports() {
+    return getSettings().INSERT_INNER_CLASS_IMPORTS;
   }
 }

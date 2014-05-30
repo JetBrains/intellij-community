@@ -116,13 +116,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path, final AbstractVcs vcs,
-                              final RepositoryLocation repositoryLocation) {
-    showFileHistory(vcsHistoryProvider, null, path, repositoryLocation, vcs);
+                              final String repositoryPath) {
+    showFileHistory(vcsHistoryProvider, null, path, repositoryPath, vcs);
   }
 
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
-                              final RepositoryLocation repositoryLocation, final AbstractVcs vcs) {
-    final FileHistoryRefresherI refresherI = new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, repositoryLocation, vcs);
+                              final String repositoryPath, final AbstractVcs vcs) {
+    final FileHistoryRefresherI refresherI = new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs);
     refresherI.run(false, true);
   }
 

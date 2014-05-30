@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
+import com.intellij.lang.properties.editor.ResourceBundleEditorUtil;
 import com.intellij.lang.properties.editor.ResourceBundleUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -46,7 +47,7 @@ public class ResourceBundleKeyRenameHandler implements RenameHandler {
 
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    ResourceBundleEditor editor = ResourceBundleUtil.getEditor(dataContext);
+    ResourceBundleEditor editor = ResourceBundleEditorUtil.getEditor(dataContext);
     if (editor == null) {
       return false;
     }
@@ -60,7 +61,7 @@ public class ResourceBundleKeyRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    ResourceBundleEditor bundleEditor = ResourceBundleUtil.getEditor(dataContext);
+    ResourceBundleEditor bundleEditor = ResourceBundleEditorUtil.getEditor(dataContext);
     if (bundleEditor == null) {
       return;
     }

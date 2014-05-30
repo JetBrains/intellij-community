@@ -29,8 +29,13 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 
 public class MethodCallInstruction extends Instruction {
@@ -39,40 +44,92 @@ public class MethodCallInstruction extends Instruction {
   @NotNull private final PsiExpression[] myArgs;
   private final boolean myShouldFlushFields;
   @NotNull private final PsiExpression myContext;
+  @Nullable private final PsiMethod myTargetMethod;
+  private final List<MethodContract> myContracts;
   private final MethodType myMethodType;
   @Nullable private final DfaValue myPrecalculatedReturnValue;
+  private final boolean myVarArgCall;
+  private final Map<PsiExpression, Nullness> myArgRequiredNullability;
+
   public enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
   }
 
   public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType, @Nullable PsiType resultType) {
     myContext = context;
+    myContracts = Collections.emptyList();
     myMethodType = methodType;
     myCall = null;
     myArgs = PsiExpression.EMPTY_ARRAY;
     myType = resultType;
     myShouldFlushFields = false;
     myPrecalculatedReturnValue = null;
+    myTargetMethod = null;
+    myVarArgCall = false;
+    myArgRequiredNullability = Collections.emptyMap();
   }
 
-  public MethodCallInstruction(@NotNull PsiCallExpression call, @Nullable DfaValue precalculatedReturnValue) {
+  public MethodCallInstruction(@NotNull PsiCallExpression call, @Nullable DfaValue precalculatedReturnValue, List<MethodContract> contracts) {
     myContext = call;
+    myContracts = contracts;
     myMethodType = MethodType.REGULAR_METHOD_CALL;
     myCall = call;
     final PsiExpressionList argList = call.getArgumentList();
     myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
     myType = myCall.getType();
 
-    myShouldFlushFields = !(myCall instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall(call);
+    JavaResolveResult result = call.resolveMethodGenerics();
+    myTargetMethod = (PsiMethod)result.getElement();
+
+    PsiSubstitutor substitutor = result.getSubstitutor();
+    if (argList != null && myTargetMethod != null) {
+      PsiParameter[] parameters = myTargetMethod.getParameterList().getParameters();
+      myVarArgCall = isVarArgCall(myTargetMethod, substitutor, myArgs, parameters);
+      myArgRequiredNullability = calcArgRequiredNullability(substitutor, parameters);
+    } else {
+      myVarArgCall = false;
+      myArgRequiredNullability = Collections.emptyMap();
+    }
+
+    myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall();
     myPrecalculatedReturnValue = precalculatedReturnValue;
   }
 
-  private static boolean isPureCall(PsiCallExpression call) {
-    PsiMethod method = call.resolveMethod();
-    if (method == null) return false;
-    PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+  private Map<PsiExpression, Nullness> calcArgRequiredNullability(PsiSubstitutor substitutor, PsiParameter[] parameters) {
+    int checkedCount = Math.min(myArgs.length, parameters.length) - (myVarArgCall ? 1 : 0);
+
+    Map<PsiExpression, Nullness> map = ContainerUtil.newHashMap();
+    for (int i = 0; i < checkedCount; i++) {
+      map.put(myArgs[i], DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
+    }
+    return map;
+  }
+
+  private static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
+    if (!method.isVarArgs()) {
+      return false;
+    }
+
+    int argCount = args.length;
+    int paramCount = parameters.length;
+    if (argCount > paramCount) {
+      return true;
+    }
+
+    if (paramCount > 0 && argCount == paramCount) {
+      PsiType lastArgType = args[argCount - 1].getType();
+      if (lastArgType != null && !substitutor.substitute(parameters[paramCount - 1].getType()).isAssignableFrom(lastArgType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isPureCall() {
+    if (myTargetMethod == null) return false;
+    PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(myTargetMethod);
     if (anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) return true;
-    return PropertyUtil.isSimplePropertyGetter(method);
+    return PropertyUtil.isSimplePropertyGetter(myTargetMethod);
   }
 
   @Nullable
@@ -91,6 +148,24 @@ public class MethodCallInstruction extends Instruction {
 
   public boolean shouldFlushFields() {
     return myShouldFlushFields;
+  }
+
+  @Nullable
+  public PsiMethod getTargetMethod() {
+    return myTargetMethod;
+  }
+
+  public boolean isVarArgCall() {
+    return myVarArgCall;
+  }
+
+  @Nullable 
+  public Nullness getArgRequiredNullability(@NotNull PsiExpression arg) {
+    return myArgRequiredNullability.get(arg);
+  }
+
+  public List<MethodContract> getContracts() {
+    return myContracts;
   }
 
   @Override

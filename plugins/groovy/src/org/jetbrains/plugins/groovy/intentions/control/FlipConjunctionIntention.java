@@ -22,12 +22,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 public class FlipConjunctionIntention extends MutablyNamedIntention {
   @Override
@@ -58,7 +58,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
     final String conjunction = getConjunction(tokenType);
 
     final String newExpression = rhsText + conjunction + lhsText;
-    IntentionUtils.replaceExpression(newExpression, exp);
+    PsiImplUtil.replaceExpression(newExpression, exp);
   }
 
   private static String getConjunction(IElementType tokenType) {

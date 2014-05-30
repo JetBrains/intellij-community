@@ -154,7 +154,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSelectRevisionsWithQuickSelectCheckForLocalChanges() throws Exception {
     // get revision #
-    final SVNInfo info = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -220,7 +220,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.createWCClient()
+    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
       .doGetProperty(new File(myWorkingCopyDir.getPath()), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     System.out.println(data.getValue().getString());
     Assert.assertEquals("/branches/b1:" + (numberBefore + 1), data.getValue().getString());
@@ -231,7 +231,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSelectRevisionsWithQuickSelect() throws Exception {
     // get revision #
-    final SVNInfo info = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -246,7 +246,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     }
 
     // before copy
-    final SVNInfo info2 = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info2 = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info2);
     final long numberBeforeCopy = info2.getRevision().getNumber();
 
@@ -312,7 +312,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.createWCClient()
+    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
       .doGetProperty(new File(myWorkingCopyDir.getPath()), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     System.out.println(data.getValue().getString());
     Assert.assertEquals("/branches/b2:" + (numberBeforeCopy + 2), data.getValue().getString());
@@ -321,7 +321,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSelectRevisions() throws Exception {
     // get revision #
-    final SVNInfo info = myVcs.createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
+    final SVNInfo info = myVcs.getSvnKitManager().createWCClient().doInfo(new File(myBranchTree.myS1File.getPath()), SVNRevision.WORKING);
     Assert.assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -392,7 +392,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertNotNull(dirChange);
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
-    final SVNPropertyData data = myVcs.createWCClient()
+    final SVNPropertyData data = myVcs.getSvnKitManager().createWCClient()
       .doGetProperty(new File(myWorkingCopyDir.getPath()), "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     System.out.println(data.getValue().getString());
     Assert.assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), data.getValue().getString());

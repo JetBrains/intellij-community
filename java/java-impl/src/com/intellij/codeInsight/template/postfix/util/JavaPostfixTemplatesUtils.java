@@ -16,14 +16,10 @@
 package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfoBase;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -184,20 +180,7 @@ public abstract class JavaPostfixTemplatesUtils {
   @Nullable
   public static PsiExpression getTopmostExpression(PsiElement context) {
     PsiExpressionStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpressionStatement.class);
-    return statement != null ? PsiTreeUtil.getChildOfType(statement, PsiExpression.class) : null;
-  }
-
-  public static void formatPsiCodeBlock(PsiElement newStatement, Editor editor) {
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(newStatement.getProject());
-    PsiElement statement = newStatement.replace(codeStyleManager.reformat(newStatement));
-
-    PsiCodeBlock type = PsiTreeUtil.getChildOfType(statement, PsiCodeBlock.class);
-    assert type != null;
-    PsiCodeBlock block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(type);
-    TextRange range = block.getStatements()[0].getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-
-    editor.getCaretModel().moveToOffset(range.getStartOffset());
+    return statement != null ? statement.getExpression() : null;
   }
 }
 

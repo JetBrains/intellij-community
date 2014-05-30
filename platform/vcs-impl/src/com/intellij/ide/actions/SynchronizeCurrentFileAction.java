@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.DumbAware;
@@ -39,12 +38,12 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     VirtualFile[] files = getFiles(e);
 
     if (getEventProject(e) == null || files == null || files.length == 0) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     String message = getMessage(files);
-    e.getPresentation().setEnabled(true);
+    e.getPresentation().setEnabledAndVisible(true);
     e.getPresentation().setText(message.replace("_", "__").replace("&", "&&"));
   }
 

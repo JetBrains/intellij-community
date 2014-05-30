@@ -16,7 +16,6 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
@@ -153,8 +152,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       return;
     }
 
-    final boolean isOutOfProcessMode = CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild();
-    final boolean shouldPerformScan = !isOutOfProcessMode || generatedPaths == null;
+    final boolean shouldPerformScan = generatedPaths == null;
 
     final HotSwapProgressImpl findClassesProgress;
     if (shouldPerformScan) {
@@ -175,7 +173,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       public void run() {
         final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses;
         if (shouldPerformScan) {
-          modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode);
+          modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress, false);
         }
         else {
           final List<DebuggerSession> toScan = new ArrayList<DebuggerSession>();
@@ -189,7 +187,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
             modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
           }
           if (!toScan.isEmpty()) {
-            modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress, !isOutOfProcessMode));
+            modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress, !true));
           }
         }
 

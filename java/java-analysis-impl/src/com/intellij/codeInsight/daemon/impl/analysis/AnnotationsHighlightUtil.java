@@ -294,7 +294,12 @@ public class AnnotationsHighlightUtil {
         }
 
         String description = JavaErrorMessages.message("annotation.missing.attribute", buff);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
+        IntentionAction fix = QuickFixFactory.getInstance().createAddMissingRequiredAnnotationParametersFix(
+          annotation, annotationMethods, missed);
+        QuickFixAction.registerQuickFixAction(info, fix);
+        return info;
       }
     }
 
@@ -700,7 +705,7 @@ public class AnnotationsHighlightUtil {
         if (field instanceof PsiEnumConstant) {
           String name = ((PsiEnumConstant)field).getName();
           try {
-            return RetentionPolicy.valueOf(name);
+            return RetentionPolicy.valueOf(RetentionPolicy.class, name);
           }
           catch (Exception e) {
             LOG.warn("Unknown policy: " + name);

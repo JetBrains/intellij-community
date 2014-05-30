@@ -22,9 +22,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.math.BigInteger;
 
@@ -63,6 +63,6 @@ public class ConvertIntegerToDecimalIntention extends Intention {
     if (isLong) {
       decimalString += 'L';
     }
-    IntentionUtils.replaceExpression(decimalString, exp);
+    PsiImplUtil.replaceExpression(decimalString, exp);
   }
 }

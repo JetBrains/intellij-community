@@ -28,7 +28,8 @@ import javax.swing.*;
 
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
 
-  @SuppressWarnings("PublicField")
+  @Deprecated
+  @SuppressWarnings({"PublicField", "UnusedDeclaration"})
   public boolean ignoreWithoutParameters = false;
 
   @Nls
@@ -42,12 +43,6 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("new.exception.without.arguments.problem.descriptor");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("new.exception.without.arguments.ignore.option"), this,
-                                          "ignoreWithoutParameters");
   }
 
   @Override
@@ -80,10 +75,9 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
       if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
         return;
       }
-      if (ignoreWithoutParameters) {
-        if (!hasAccessibleConstructorWithParameters(aClass, expression)) return;
+      if (hasAccessibleConstructorWithParameters(aClass, expression)) {
+        registerNewExpressionError(expression);
       }
-      registerNewExpressionError(expression);
     }
 
     private boolean hasAccessibleConstructorWithParameters(PsiClass aClass, PsiElement context) {

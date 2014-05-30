@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="Groovy" implementationClass="org.jetbrains.plugins.groovy.copyright.UpdateGroovyCopyrightsProvider"/>
+  </extensions>
+</idea-plugin>

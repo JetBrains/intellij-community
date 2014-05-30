@@ -58,9 +58,6 @@ import com.intellij.util.concurrency.Semaphore
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
   @Override
-  protected boolean useJps() { true }
-
-  @Override
   protected void setUp() {
     edt {
       super.setUp()

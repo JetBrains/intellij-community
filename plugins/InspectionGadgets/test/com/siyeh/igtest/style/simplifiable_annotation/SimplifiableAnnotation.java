@@ -2,7 +2,7 @@ package com.siyeh.igtest.style.simplifiable_annotation;
 
 public class SimplifiableAnnotation {
 
-    <warning descr="Annotation '@ SuppressWarnings(value = &quot;blabla&quot;)' can be simplified">@ SuppressWarnings(value = "blabla")</warning>
+    <warning descr="Annotation '@ SuppressWarnings(value = \\"blabla\\")' can be simplified">@ SuppressWarnings(value = "blabla")</warning>
     <warning descr="Annotation '@ Deprecated()' can be simplified">@ Deprecated()</warning>
     Object foo() {
         return null;
@@ -14,8 +14,8 @@ public class SimplifiableAnnotation {
 @interface ArrayAnnotation {
   String[] array();
 }
-<warning descr="Annotation '@ValueAnnotation({&quot;the value&quot;})' can be simplified">@ValueAnnotation({"the value"})</warning>
-<warning descr="Annotation '@ArrayAnnotation(array = {&quot;first&quot;})' can be simplified">@ArrayAnnotation(array = {"first"})</warning>
+<warning descr="Annotation '@ValueAnnotation({\\"the value\\"})' can be simplified">@ValueAnnotation({"the value"})</warning>
+<warning descr="Annotation '@ArrayAnnotation(array = {\\"first\\"})' can be simplified">@ArrayAnnotation(array = {"first"})</warning>
 class MyClass {
 
   @ <error descr="'value' missing though required">ValueAnnotation</error>

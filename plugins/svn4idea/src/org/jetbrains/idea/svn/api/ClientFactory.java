@@ -62,6 +62,7 @@ public abstract class ClientFactory {
   protected BrowseClient myBrowseClient;
   protected DiffClient myDiffClient;
   protected CheckinClient myCheckinClient;
+  protected RepositoryFeaturesClient myRepositoryFeaturesClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -198,6 +199,11 @@ public abstract class ClientFactory {
   @NotNull
   public CheckinClient createCheckinClient() {
     return prepare(myCheckinClient);
+  }
+
+  @NotNull
+  public RepositoryFeaturesClient createRepositoryFeaturesClient() {
+    return prepare(myRepositoryFeaturesClient);
   }
 
   @NotNull

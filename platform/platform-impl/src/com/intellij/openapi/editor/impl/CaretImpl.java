@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -1158,46 +1157,18 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true);
   }
 
-  private void doSetSelection(@NotNull final VisualPosition _startPosition,
+  private void doSetSelection(@NotNull final VisualPosition startPosition,
                               final int _startOffset,
-                              @NotNull final VisualPosition _endPosition,
+                              @NotNull final VisualPosition endPosition,
                               final int _endOffset,
                               final boolean visualPositionAware)
   {
     myEditor.getCaretModel().doWithCaretMerging(new Runnable() {
       public void run() {
-        VisualPosition startPosition = _startPosition;
         int startOffset = _startOffset;
-        VisualPosition endPosition = _endPosition;
         int endOffset = _endOffset;
         myUnknownDirection = false;
         final Document doc = myEditor.getDocument();
-        final Pair<String, String> markers = myEditor.getUserData(EditorImpl.EDITABLE_AREA_MARKER);
-        if (markers != null) {
-          final String text = doc.getText();
-          final int start = text.indexOf(markers.first) + markers.first.length();
-          final int end = text.indexOf(markers.second);
-          if (startOffset < endOffset) {
-            if (startOffset < start) {
-              startOffset = start;
-              startPosition = myEditor.offsetToVisualPosition(startOffset);
-            }
-            if (endOffset > end) {
-              endOffset = end;
-              endPosition = myEditor.offsetToVisualPosition(endOffset);
-            }
-          }
-          else {
-            if (endOffset < start) {
-              endOffset = start;
-              endPosition = myEditor.offsetToVisualPosition(startOffset);
-            }
-            if (startOffset > end) {
-              startOffset = end;
-              startPosition = myEditor.offsetToVisualPosition(endOffset);
-            }
-          }
-        }
 
         validateContext(true);
 

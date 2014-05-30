@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  public static List<LocalQuickFix> registerFixes(@NotNull QuickFixActionRegistrar registrar, final PsiReference reference) {
+  public static List<LocalQuickFix> registerFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull final PsiReference reference) {
     final PsiElement psiElement = reference.getElement();
     @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -121,13 +121,13 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         @Override
         public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
           if (isJunit4) {
-            final VirtualFile location = PsiUtilCore.getVirtualFile(reference != null ? reference.getElement() : null);
+            final VirtualFile location = PsiUtilCore.getVirtualFile(reference.getElement());
             boolean inTests = location != null && ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(location);
             try {
               addJUnit4Library(inTests, currentModule);
               final GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
               final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-              if (aClass != null && editor != null && reference != null) {
+              if (aClass != null && editor != null) {
                 new AddImportAction(project, reference, editor, aClass).execute();
               }
             }

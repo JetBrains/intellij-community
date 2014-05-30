@@ -1,10 +1,11 @@
 package pkg;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
 
 class Bounds {
-  public static <T extends Object & Comparable<? super T>> T max(Collection<? extends T> coll) {
+  public static <T extends Object & Comparable<? super T> & Serializable> T max(Collection<? extends T> coll) {
     return null;
   }
 

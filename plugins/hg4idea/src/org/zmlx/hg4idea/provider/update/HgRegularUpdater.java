@@ -263,7 +263,8 @@ public class HgRegularUpdater implements HgUpdater {
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
     HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repo);
-    String warningMessages = ensureSuccess(hgUpdateCommand.execute()).getWarnings();
+    HgCommandResult updateResult = hgUpdateCommand.execute();
+    String warningMessages = ensureSuccess(updateResult).getRawError();
     handlePossibleWarning(warnings, warningMessages);
 
     HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);

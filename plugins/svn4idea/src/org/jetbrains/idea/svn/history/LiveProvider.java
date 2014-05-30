@@ -27,6 +27,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.Iterator;
@@ -35,15 +36,21 @@ import java.util.List;
 public class LiveProvider implements BunchProvider {
   private final SvnLogLoader myLoader;
   private final SvnRepositoryLocation myLocation;
+  private final SVNURL myRepositoryUrl;
   private boolean myEarliestRevisionWasAccessed;
   private final long myYoungestRevision;
   private final SvnVcs myVcs;
 
-  public LiveProvider(final SvnVcs vcs, final SvnRepositoryLocation location, final long latestRevision, final SvnLogLoader loader) {
+  public LiveProvider(final SvnVcs vcs,
+                      final SvnRepositoryLocation location,
+                      final long latestRevision,
+                      final SvnLogLoader loader,
+                      SVNURL repositoryUrl) {
     myVcs = vcs;
     myLoader = loader;
     myLocation = location;
     myYoungestRevision = latestRevision;
+    myRepositoryUrl = repositoryUrl;
   }
 
   public long getEarliestRevision() {
@@ -105,7 +112,7 @@ public class LiveProvider implements BunchProvider {
         // occurs when target URL is deleted in repository
         // try to find latest existent revision. expensive ...
         final LatestExistentSearcher searcher = new LatestExistentSearcher(oldestRevision, myYoungestRevision, (oldestRevision != 0),
-                                                                           myVcs, myLocation.toSvnUrl());
+                                                                           myVcs, myLocation.toSvnUrl(), myRepositoryUrl);
         final long existent = searcher.getLatestExistent();
         if ((existent == -1) || (existent == earliestRevision)) {
           myEarliestRevisionWasAccessed = true;

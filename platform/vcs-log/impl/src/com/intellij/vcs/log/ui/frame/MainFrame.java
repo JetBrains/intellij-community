@@ -18,13 +18,14 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
-import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
@@ -163,6 +164,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   private JComponent createActionsToolbar() {
+    AnAction bekAction = new BekAction();
+
     AnAction hideBranchesAction = new GraphAction("Collapse linear branches", "Collapse linear branches", VcsLogIcons.CollapseBranches) {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -194,7 +197,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     refreshAction.registerShortcutOn(this);
 
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup(hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup(bekAction, hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
                                                              showDetailsAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
@@ -273,6 +276,29 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
           myChangesLoadingPane.startLoading();
         }
       }
+    }
+  }
+
+  private class BekAction extends ToggleAction implements DumbAware {
+    public BekAction() {
+      super("BEK", "BEK", AllIcons.Actions.Lightning);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myUI.isBek();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myUI.setBek(state);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(BekSorter.isBekEnabled());
+      e.getPresentation().setEnabled(areGraphActionsEnabled());
     }
   }
 

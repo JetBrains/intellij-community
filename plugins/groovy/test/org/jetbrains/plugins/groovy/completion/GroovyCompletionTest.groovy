@@ -1894,4 +1894,33 @@ def foo() {
 }
 ''', '', CompletionType.BASIC, CompletionResult.notContain, 1, 'vaIntellijIdeaRulezzzr')
   }
+
+  void testTraitWithAsOperator1() {
+    doVariantableTest('''
+trait A {
+  def foo(){}
+}
+class B {
+  def bar() {}
+}
+
+def var = new B() as A
+var.<caret>
+''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'foo', 'bar')
+  }
+
+  void testTraitWithAsOperator2() {
+    doVariantableTest('''
+trait A {
+  public foo = 5
+}
+class B {
+  def bar() {}
+}
+
+def var = new B() as A
+var.<caret>
+''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'A__foo', 'bar')
+  }
+
 }

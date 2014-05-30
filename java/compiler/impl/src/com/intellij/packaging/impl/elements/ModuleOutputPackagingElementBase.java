@@ -68,22 +68,6 @@ public abstract class ModuleOutputPackagingElementBase extends PackagingElement<
 
   protected abstract String getModuleOutputAntProperty(ArtifactAntGenerationContext generationContext);
 
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    final Module module = findModule(resolvingContext);
-    if (module != null) {
-      final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-      if (extension != null) {
-        final VirtualFile output = getModuleOutputPath(extension);
-        if (output != null) {
-          creator.addDirectoryCopyInstructions(output, null);
-        }
-      }
-    }
-  }
-
   @Nullable
   protected abstract VirtualFile getModuleOutputPath(CompilerModuleExtension extension);
 

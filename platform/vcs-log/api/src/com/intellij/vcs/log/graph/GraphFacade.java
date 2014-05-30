@@ -78,8 +78,6 @@ public interface GraphFacade {
    */
   void setFilter(@Nullable Condition<Integer> visibilityPredicate);
 
-  void setSortType(@NotNull PermanentGraph.SortType sortType);
-
   /**
    * Returns the provider of some information about the graph.
    */

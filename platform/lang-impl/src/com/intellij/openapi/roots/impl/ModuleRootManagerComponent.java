@@ -42,10 +42,9 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
                                                                       PersistentStateComponent<ModuleRootManagerImpl.ModuleRootManagerState> {
   public ModuleRootManagerComponent(Module module,
-                                    DirectoryIndex directoryIndex,
                                     ProjectRootManagerImpl projectRootManager,
                                     VirtualFilePointerManager filePointerManager) {
-    super(module, directoryIndex, projectRootManager, filePointerManager);
+    super(module, projectRootManager, filePointerManager);
   }
 
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {

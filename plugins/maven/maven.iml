@@ -63,6 +63,15 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="properties-psi-api" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/plexus-archiver-2.4.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

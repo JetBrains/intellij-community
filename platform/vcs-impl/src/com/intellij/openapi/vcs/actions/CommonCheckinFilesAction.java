@@ -23,9 +23,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,6 +65,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   @Override
   protected LocalChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    LocalChangeList defaultChangeList = changeListManager.getDefaultChangeList();
 
     final FilePath[] roots = getRoots(context);
     for(final FilePath root: roots) {
@@ -74,9 +73,13 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
       if (file == null) continue;
       final Ref<Change> change = new Ref<Change>();
       if (!file.isDirectory()) {
-        change.set(changeListManager.getChange(file));
+        return changeListManager.getChangeList(file);
       }
       else {
+        if (hasChangesUnderDir(defaultChangeList, new FilePathImpl(file))) {
+          return defaultChangeList;
+        }
+
         final FileIndexFacade index = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
         final VirtualFileFilter filter = new VirtualFileFilter() {
           public boolean accept(final VirtualFile file) {
@@ -104,7 +107,21 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
       }
     }
 
-    return changeListManager.getDefaultChangeList();
+    return defaultChangeList;
+  }
+
+  private static boolean hasChangesUnderDir(final ChangeList changeList, final FilePath dirPath) {
+    for (Change change : changeList.getChanges()) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null && afterRevision.getFile().isUnder(dirPath, false)) {
+        return true;
+      }
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision != null && beforeRevision.getFile().isUnder(dirPath, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private String getCheckinActionName(final VcsContext dataContext) {

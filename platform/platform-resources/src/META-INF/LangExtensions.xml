@@ -332,6 +332,8 @@
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
+    <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
+                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.resolve.ResolveCache"
                     serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootModificationTracker"

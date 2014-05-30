@@ -16,12 +16,12 @@ class Foo {
     }
 
     @Contract("null,_->null;!null,_->!null")
-    String escapeStr(String s, Object o) {
-        return s;
+    String escapeStr(@Nullable String s, Object o) {
+        return <warning descr="Expression 's' might evaluate to null but is returned by the method which is not declared as @Nullable">s</warning>;
     }
 
     @Contract("null->null;!null->!null")
-    String escapeStr(String s) {
-        return s;
+    String escapeStr(@Nullable String s) {
+        return <warning descr="Expression 's' might evaluate to null but is returned by the method which is not declared as @Nullable">s</warning>;
     }
 }

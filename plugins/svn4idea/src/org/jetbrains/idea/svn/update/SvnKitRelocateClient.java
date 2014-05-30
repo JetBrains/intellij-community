@@ -17,7 +17,8 @@ public class SvnKitRelocateClient extends BaseSvnClient implements RelocateClien
   @Override
   public void relocate(@NotNull File copyRoot, @NotNull String fromPrefix, @NotNull String toPrefix) throws VcsException {
     try {
-      myVcs.createUpdateClient().doRelocate(copyRoot, SVNURL.parseURIEncoded(fromPrefix), SVNURL.parseURIEncoded(toPrefix), true);
+      myVcs.getSvnKitManager().createUpdateClient()
+        .doRelocate(copyRoot, SVNURL.parseURIEncoded(fromPrefix), SVNURL.parseURIEncoded(toPrefix), true);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

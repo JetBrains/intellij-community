@@ -61,8 +61,6 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     setTitle("Create New Project");
     init();
 
-    myLocationField = new TextFieldWithBrowseButton();
-    myLocationLabel = new JLabel();
     myLocationLabel.setLabelFor(myLocationField.getChildComponent());
 
     new LocationNameFieldsBinding(project, myLocationField, myProjectNameTextField, ProjectUtil.getBaseDir(), "Select Location for Project Directory");

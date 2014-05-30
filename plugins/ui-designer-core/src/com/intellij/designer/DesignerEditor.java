@@ -22,13 +22,11 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -43,17 +41,10 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     if (file instanceof LightVirtualFile) {
       file = ((LightVirtualFile)file).getOriginalFile();
     }
-    Module module = findModule(project, file);
-    if (module == null) {
-      throw new IllegalArgumentException("No module for file " + file + " in project " + project);
-    }
-    myDesignerPanel = createDesignerPanel(project, module, file);
+    myDesignerPanel = createDesignerPanel(project, findModule(project, file), file);
   }
 
-  @Nullable
-  protected Module findModule(Project project, VirtualFile file) {
-    return ModuleUtilCore.findModuleForFile(file, project);
-  }
+  protected abstract Module findModule(Project project, VirtualFile file);
 
   @NotNull
   protected abstract DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file);

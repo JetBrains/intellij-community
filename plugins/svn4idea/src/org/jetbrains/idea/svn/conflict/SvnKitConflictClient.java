@@ -21,7 +21,8 @@ public class SvnKitConflictClient extends BaseSvnClient implements ConflictClien
                       boolean resolveContent,
                       boolean resolveTree) throws VcsException {
     try {
-      myVcs.createWCClient().doResolve(path, depth, resolveContent, resolveProperty, resolveTree, SVNConflictChoice.MERGED);
+      myVcs.getSvnKitManager().createWCClient()
+        .doResolve(path, depth, resolveContent, resolveProperty, resolveTree, SVNConflictChoice.MERGED);
     }
     catch (SVNException e) {
       throw new VcsException(e);

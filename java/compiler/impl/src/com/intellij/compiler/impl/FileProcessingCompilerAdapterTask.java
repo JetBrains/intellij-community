@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,9 +52,6 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
   @Override
   public boolean execute(CompileContext context) {
     final Project project = context.getProject();
-    if (!CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
-      return true;
-    }
 
     try {
       final FileProcessingCompiler.ProcessingItem[] items = myCompiler.getProcessingItems(context);

@@ -31,7 +31,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
@@ -795,14 +794,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(providers));
           LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
           final FileEditor editor = provider.createEditor(myProject, file);
-          LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());
           editors[i] = editor;
           // Register PropertyChangeListener into editor
           editor.addPropertyChangeListener(myEditorPropertyChangeListener);
           editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
 
-          if (current && editor instanceof TextEditorImpl) {
+          if (editor instanceof TextEditorImpl) {
             ((TextEditorImpl)editor).initFolding();
           }
         }
@@ -823,17 +821,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
     }
 
-    window.setEditor(newSelectedComposite, focusEditor);
+    window.setEditor(newSelectedComposite, current, focusEditor);
 
     final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
     for (int i = 0; i < editors.length; i++) {
       final FileEditor editor = editors[i];
-      if (editor instanceof TextEditor) {
-        // hack!!!
-        // This code prevents "jumping" on next repaint.
-        ((EditorEx)((TextEditor)editor).getEditor()).stopOptimizedScrolling();
-      }
-
       final FileEditorProvider provider = providers[i];//getProvider(editor);
 
       // Restore editor state

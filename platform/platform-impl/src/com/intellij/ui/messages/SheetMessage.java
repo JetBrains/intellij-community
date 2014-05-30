@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -32,6 +33,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -53,6 +55,8 @@ public class SheetMessage {
   private int imageHeight;
   private boolean restoreFullscreenButton;
 
+  private final WeakReference<Component> beforeShowFocusOwner;
+
   public SheetMessage(final Window owner,
                       final String title,
                       final String message,
@@ -62,6 +66,10 @@ public class SheetMessage {
                       final String defaultButton,
                       final String focusedButton)
   {
+    beforeShowFocusOwner = new WeakReference<Component>(
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow().getMostRecentFocusOwner()
+    );
+
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
@@ -109,6 +117,19 @@ public class SheetMessage {
     LaterInvocator.enterModal(myWindow);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
+
+    Component focusCandidate = beforeShowFocusOwner.get();
+
+    if (focusCandidate == null) {
+      focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
+    }
+
+    LOG.assertTrue(focusCandidate != null, "The should return focus on closing the message");
+
+    if (focusCandidate != null) {
+      focusCandidate.requestFocus();
+    }
+
   }
 
   private void setWindowOpacity(float opacity) {

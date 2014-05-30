@@ -160,8 +160,7 @@
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="before" relative-to-action="Debugger.ViewAsGroup"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="before" relative-to-action="Debugger.CustomizeContextView"/>
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
       <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
       <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
@@ -177,7 +176,7 @@
       <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
       <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="AllIcons.Actions.Delete"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="before" relative-to-action="Debugger.CustomizeContextView"/>
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
       <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->

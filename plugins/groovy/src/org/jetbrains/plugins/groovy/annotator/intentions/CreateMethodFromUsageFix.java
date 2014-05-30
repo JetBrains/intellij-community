@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
@@ -100,7 +101,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
   }
 
   protected boolean shouldBeAbstract(PsiClass aClass) {
-    return aClass.isInterface();
+    return aClass.isInterface() && !GrTraitUtil.isTrait(aClass);
   }
 
   @Nullable

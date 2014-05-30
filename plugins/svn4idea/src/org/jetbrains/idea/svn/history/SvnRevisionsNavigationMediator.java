@@ -88,7 +88,8 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     myChunkFactory = new BunchFactory(myInternallyCached, myVisuallyCached, new LiveProvider(vcs, location, info.getRevision().getNumber(),
                                                                                              new SvnLogUtil(myProject, vcs, location,
-                                                                                                            info.getRepositoryRootURL())));
+                                                                                                            info.getRepositoryRootURL()),
+                                                                                             info.getRepositoryRootURL()));
 
     myCurrentIdx = -1;
 

@@ -27,7 +27,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -61,7 +61,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
     }
 
     Module module = LangDataKeys.MODULE.getData(dataContext);
-    return GroovyUtils.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
+    return GroovyFacetUtil.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
   }
 
   @Override

@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -401,7 +402,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
             PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
 
             Segment anchorSegment = anchorPointer.getRange();
-            PsiElement restoredAnchor = GroovyRefactoringUtil.findElementInRange(file, anchorSegment.getStartOffset(), anchorSegment.getEndOffset(), PsiElement.class);
+            PsiElement restoredAnchor = PsiImplUtil
+              .findElementInRange(file, anchorSegment.getStartOffset(), anchorSegment.getEndOffset(), PsiElement.class);
             GrCodeBlock block = (GrCodeBlock)restoredAnchor.getParent();
             CodeStyleManager.getInstance(context.getProject()).reformat(block.getRBrace());
             CodeStyleManager.getInstance(context.getProject()).reformat(block.getLBrace());
@@ -595,10 +597,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrVariable findVariable(@NotNull PsiFile file, int startOffset, int endOffset) {
-    GrVariable var = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
+    GrVariable var = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
     if (var == null) {
       final GrVariableDeclaration variableDeclaration =
-        GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrVariableDeclaration.class);
+        PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrVariableDeclaration.class);
       if (variableDeclaration == null) return null;
       final GrVariable[] variables = variableDeclaration.getVariables();
       if (variables.length == 1) {
@@ -630,7 +632,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrExpression findExpression(PsiFile file, int startOffset, int endOffset) {
-    GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
+    GrExpression selectedExpr = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     return findExpression(selectedExpr);
   }
 

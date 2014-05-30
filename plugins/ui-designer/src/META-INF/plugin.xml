@@ -125,7 +125,6 @@
 
     <fileBasedIndex implementation="com.intellij.uiDesigner.binding.FormClassIndex"/>
 
-    <compiler implementation="com.intellij.uiDesigner.make.Form2ByteCodeCompiler"/>
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
     <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
 

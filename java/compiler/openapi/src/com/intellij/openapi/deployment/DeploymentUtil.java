@@ -16,7 +16,6 @@
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,9 +39,6 @@ public abstract class DeploymentUtil {
                                 @NotNull CompileContext context,
                                 @Nullable Set<String> writtenPaths,
                                 @Nullable FileFilter fileFilter) throws IOException;
-
-  @Deprecated
-  public abstract boolean addItemsRecursively(@NotNull BuildRecipe items, @NotNull File root, String outputRelativePath);
 
   public static String trimForwardSlashes(@NotNull String path) {
     while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
@@ -82,9 +78,6 @@ public abstract class DeploymentUtil {
     }
     return basePath + tail;
   }
-
-  @Deprecated
-  public abstract BuildRecipe createBuildRecipe();
 
   @Nullable
   public abstract String getConfigFileErrorMessage(ConfigFile configFile);

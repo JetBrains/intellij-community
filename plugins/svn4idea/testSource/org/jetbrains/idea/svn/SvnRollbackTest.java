@@ -302,13 +302,13 @@ public class SvnRollbackTest extends Svn17TestCase {
   }
 
   private String getProperty(File file, String name) throws SVNException {
-    final SVNWCClient client = myVcs.createWCClient();
+    final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
     final SVNPropertyData data = client.doGetProperty(file, name, SVNRevision.UNDEFINED, SVNRevision.WORKING);
     return data == null ? null : new String(data.getValue().getBytes());
   }
 
   private void setProperty(final File file, final String name, final String value) throws SVNException {
-    final SVNWCClient client = myVcs.createWCClient();
+    final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
     client.doSetProperty(file, new ISVNPropertyValueProvider() {
       @Override
       public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {

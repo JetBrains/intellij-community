@@ -15,23 +15,19 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 
-public class SwitchStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
+public class SwitchStatementPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> SWITCH_TYPE = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement expression) {
-      if (!(expression instanceof PsiExpression)) {
-        return false;
-      }
+      if (!(expression instanceof PsiExpression)) return false;
 
       PsiType type = ((PsiExpression)expression).getType();
 
@@ -44,7 +40,6 @@ public class SwitchStatementPostfixTemplate extends JavaStatementWrapPostfixTemp
       }
 
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return true; // todo: mock jdk 6 and 7
         PsiFile containingFile = expression.getContainingFile();
         if (containingFile instanceof PsiJavaFile) {
           LanguageLevel level = ((PsiJavaFile)containingFile).getLanguageLevel();
@@ -60,20 +55,9 @@ public class SwitchStatementPostfixTemplate extends JavaStatementWrapPostfixTemp
     super("switch", "switch (expr)", JAVA_PSI_INFO, SWITCH_TYPE);
   }
 
+  @Nullable
   @Override
-  protected void afterExpand(@NotNull PsiElement newStatement, @NotNull Editor editor) {
-    JavaPostfixTemplatesUtils.formatPsiCodeBlock(newStatement, editor);
-  }
-
-  @NotNull
-  @Override
-  protected String getHead() {
-    return "switch (";
-  }
-
-  @NotNull
-  @Override
-  protected String getTail() {
-    return ") {\nst;\n}";
+  public String getTemplateString(@NotNull PsiElement element) {
+    return "switch ($expr$){\n$END$\n}";
   }
 }

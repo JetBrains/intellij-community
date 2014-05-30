@@ -184,6 +184,15 @@ public class GeneralCommandLineTest {
   }
 
   @Test
+  public void winShellQuotingWithExtraSwitch() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    String param = "a&b";
+    GeneralCommandLine commandLine = new GeneralCommandLine("cmd", "/D", "/C", "echo", param);
+    String output = execAndGetOutput(commandLine, null);
+    assertEquals(StringUtil.wrapWithDoubleQuote(param), output.trim());
+  }
+
+  @Test
   public void hackyEnvMap () throws Exception {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     //noinspection ConstantConditions

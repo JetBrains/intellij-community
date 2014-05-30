@@ -35,20 +35,11 @@
     <extensionPoint name="compiler.buildParticipantProvider"
                     interface="com.intellij.openapi.compiler.make.BuildParticipantProvider"/>
 
-    <extensionPoint name="compiler.additionalCompileScopeProvider"
-                    interface="com.intellij.compiler.impl.AdditionalCompileScopeProvider"/>
-
     <extensionPoint name="compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider"/>
 
-    <extensionPoint name="compiler.makeDependencyProcessor"
-                    interface="com.intellij.compiler.DependencyProcessor"/>
-
     <extensionPoint name="compiler.optionsManager"
                     interface="com.intellij.compiler.options.CompilerOptionsFilter"/>
-
-    <extensionPoint name="compiler.resourceCompilerExtension"
-                    interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
 
     <extensionPoint name="java.programPatcher"
                     interface="com.intellij.execution.runners.JavaProgramPatcher"/>
@@ -217,16 +208,10 @@
 
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"/>
     <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"

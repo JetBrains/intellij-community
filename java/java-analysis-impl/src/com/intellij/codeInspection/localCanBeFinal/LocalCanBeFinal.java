@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     try {
       ControlFlowPolicy policy = new ControlFlowPolicy() {
         @Override
-        public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
+        public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
           if (refExpr.isQualified()) return null;
 
           PsiElement refElement = refExpr.resolve();
@@ -107,12 +107,12 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
         }
 
         @Override
-        public boolean isParameterAccepted(PsiParameter psiParameter) {
+        public boolean isParameterAccepted(@NotNull PsiParameter psiParameter) {
           return isVariableDeclaredInMethod(psiParameter);
         }
 
         @Override
-        public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
+        public boolean isLocalVariableAccepted(@NotNull PsiLocalVariable psiVariable) {
           return isVariableDeclaredInMethod(psiVariable);
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.io.File;
 import java.net.URL;
@@ -76,7 +76,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
     return scriptFile instanceof GroovyFile &&
-           GroovyScriptTypeDetector.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
+           GroovyScriptUtil.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
   }
 
   @NotNull

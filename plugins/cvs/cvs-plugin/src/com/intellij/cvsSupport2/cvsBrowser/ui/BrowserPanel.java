@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsFilePath;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
@@ -165,7 +166,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
 
     public void actionPerformed(AnActionEvent e) {
-      CvsElement[] currentSelection = myTree.getCurrentSelection();
+      final CvsElement[] currentSelection = myTree.getCurrentSelection();
       if (currentSelection.length != 1) return;
       final CvsElement cvsElement = currentSelection[0];
       final VirtualFile virtualFile = cvsElement.getVirtualFile();
@@ -174,7 +175,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
       final String moduleName = cvsElement.getElementPath();
       final CvsRepositoryLocation location = new CvsRepositoryLocation(null, myCvsRootConfiguration, moduleName);
-      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, new FilePathImpl(virtualFile), vcs, location);
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(historyProvider, new CvsFilePath(virtualFile, location), vcs, null);
     }
   }
 

@@ -41,6 +41,7 @@ import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -589,6 +590,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     @Override
     public void setRemaining(int remaining) {}
+
+    @Override
+    public void initChildrenArrayRenderer(ArrayRenderer renderer) {}
 
     @Override
     public void setChildren(final List<DebuggerTreeNode> children) {

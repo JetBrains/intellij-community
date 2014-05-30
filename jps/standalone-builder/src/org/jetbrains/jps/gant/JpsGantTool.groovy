@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 /**
  * @author nik
@@ -105,7 +106,8 @@ final class JpsGantTool {
   }
 
   private void loadProject(String path, JpsModel model, JpsGantProjectBuilder builder) {
-    JpsProjectLoader.loadProject(model.project, [:], path)
+    def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+    JpsProjectLoader.loadProject(model.project, pathVariables, path)
     if (builder.getDataStorageRoot() == null) {
       builder.setDataStorageRoot(Utils.getDataStorageRoot(path))
     }

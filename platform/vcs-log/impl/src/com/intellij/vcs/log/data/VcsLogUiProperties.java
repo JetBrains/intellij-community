@@ -42,6 +42,7 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
   public static class State {
     public boolean SHOW_DETAILS = true;
     public boolean LONG_EDGES_VISIBLE = false;
+    public boolean BEK_SORT = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
   }
@@ -115,6 +116,14 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void setLongEdgesVisibility(boolean visible) {
     myState.LONG_EDGES_VISIBLE = visible;
+  }
+
+  public boolean isBek() {
+    return myState.BEK_SORT;
+  }
+
+  public void setBek(boolean isBek) {
+    myState.BEK_SORT = isBek;
   }
 
   public static class UserGroup {

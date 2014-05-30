@@ -72,6 +72,12 @@ public class DebugLogConfigureAction extends DumbAwareAction {
       return ScrollPaneFactory.createScrollPane(myTextArea);
     }
 
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myTextArea;
+    }
+
     @NotNull
     public List<String> getLogCategories() {
       return parseCategories(myTextArea.getText());

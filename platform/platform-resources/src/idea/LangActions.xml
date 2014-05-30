@@ -260,7 +260,7 @@
     </group>
 
     <!-- Refactor -->
-    <group id="RefactoringMenu" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true">
+    <group id="RefactoringMenu" popup="true">
       <action id="Refactorings.QuickListPopupAction"
               class = "com.intellij.refactoring.actions.RefactoringQuickListPopupAction"
               text = "Refactor This..." description="Context aware popup with list of refactoring actions"/>
@@ -397,7 +397,7 @@
 
     </group>
 
-    <group id="ProjectViewPopupMenuRefactoringGroup">
+    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <reference ref="RefactoringMenu"/>
     </group>
 
@@ -706,12 +706,19 @@
 
     <group id="XDebugger.ValueGroup" popup="false">
       <reference ref="XDebugger.Inspect"/>
+      <reference ref="Debugger.MarkObject"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
       <reference ref="XDebugger.CompareValueWithClipboard"/>
       <reference ref="XDebugger.CopyName"/>
-      <reference ref="Debugger.MarkObject"/>
+      <separator/>
       <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
+      <separator/>
+      <reference ref="XDebugger.JumpToSource"/>
+      <reference ref="XDebugger.JumpToTypeSource"/>
+      <separator/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
@@ -726,10 +733,6 @@
 
     <group id="XDebugger.Variables.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-      <reference ref="XDebugger.JumpToSource"/>
-      <reference ref="XDebugger.JumpToTypeSource"/>
-      <reference ref="Debugger.Tree.AddToWatches"/>
-      <reference ref="Debugger.Tree.EvaluateInConsole"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Toolbar">
@@ -740,6 +743,7 @@
       <reference ref="XDebugger.RemoveWatch"/>
       <reference ref="XDebugger.RemoveAllWatches"/>
       <reference ref="XDebugger.EditWatch"/>
+      <separator/>
       <reference ref="XDebugger.ValueGroup"/>
     </group>
 
@@ -750,8 +754,6 @@
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-      <reference ref="Debugger.Tree.AddToWatches"/>
-      <reference ref="Debugger.Tree.EvaluateInConsole"/>
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">

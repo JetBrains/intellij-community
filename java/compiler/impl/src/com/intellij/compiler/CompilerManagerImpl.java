@@ -16,10 +16,6 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
-import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
-import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
-import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
-import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
@@ -34,12 +30,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Chunk;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.CachingSemiGraph;
-import com.intellij.util.graph.Graph;
-import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -54,28 +44,20 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Project myProject;
 
   private final List<Compiler> myCompilers = new ArrayList<Compiler>();
-  private final List<TranslatingCompiler> myTranslators = new ArrayList<TranslatingCompiler>();
 
   private final List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
   private final List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
   private final Set<FileType> myCompilableTypes = new HashSet<FileType>();
   private final CompilationStatusListener myEventPublisher;
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
-  private final Map<Compiler, Set<FileType>> myCompilerToInputTypes = new HashMap<Compiler, Set<FileType>>();
-  private final Map<Compiler, Set<FileType>> myCompilerToOutputTypes = new HashMap<Compiler, Set<FileType>>();
   private final Set<ModuleType> myValidationDisabledModuleTypes = new HashSet<ModuleType>();
   private final Set<LocalFileSystem.WatchRequest> myWatchRoots;
 
-  public CompilerManagerImpl(final Project project, CompilerConfigurationImpl compilerConfiguration, MessageBus messageBus) {
+  public CompilerManagerImpl(final Project project, MessageBus messageBus) {
     myProject = project;
     myEventPublisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
 
     // predefined compilers
-    addTranslatingCompiler(new AnnotationProcessingCompiler(project), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA, StdFileTypes.CLASS)));
-    addTranslatingCompiler(new JavaCompiler(project), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
-    addCompiler(new ResourceCompiler(project, compilerConfiguration));
-    addCompiler(new RmicCompiler());
-
     for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
       addCompiler(compiler);
     }
@@ -87,7 +69,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     addCompilableFileType(StdFileTypes.JAVA);
-
+    
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -100,28 +82,6 @@ public class CompilerManagerImpl extends CompilerManager {
         }
       }
     });
-
-    //
-    //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
-    //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
-    /*
-    // for testing only
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            FileTypeManager.getInstance().registerFileType(DummyTranslatingCompiler.INPUT_FILE_TYPE, DummyTranslatingCompiler.FILETYPE_EXTENSION);
-            addTranslatingCompiler(
-              new DummyTranslatingCompiler(),
-              new HashSet<FileType>(Arrays.asList(DummyTranslatingCompiler.INPUT_FILE_TYPE)),
-              new HashSet<FileType>(Arrays.asList( StdFileTypes.JAVA))
-            );
-          }
-        });
-
-      }
-    });
-    */
   }
 
   public Semaphore getCompilationSemaphore() {
@@ -132,68 +92,32 @@ public class CompilerManagerImpl extends CompilerManager {
     return myCompilationSemaphore.availablePermits() == 0;
   }
 
-  public void addTranslatingCompiler(@NotNull final TranslatingCompiler compiler, final Set<FileType> inputTypes, final Set<FileType> outputTypes) {
-    myTranslators.add(compiler);
-    myCompilerToInputTypes.put(compiler, inputTypes);
-    myCompilerToOutputTypes.put(compiler, outputTypes);
-
-    final List<Chunk<Compiler>> chunks = ModuleCompilerUtil.getSortedChunks(createCompilerGraph((List<Compiler>)(List)myTranslators));
-
-    myTranslators.clear();
-    for (Chunk<Compiler> chunk : chunks) {
-      for (Compiler chunkCompiler : chunk.getNodes()) {
-        myTranslators.add((TranslatingCompiler)chunkCompiler);
-      }
-    }
-  }
-
-  @NotNull
-  public Set<FileType> getRegisteredInputTypes(@NotNull final TranslatingCompiler compiler) {
-    final Set<FileType> inputs = myCompilerToInputTypes.get(compiler);
-    return inputs != null? Collections.unmodifiableSet(inputs) : Collections.<FileType>emptySet();
-  }
-
-  @NotNull
-  public Set<FileType> getRegisteredOutputTypes(@NotNull final TranslatingCompiler compiler) {
-    final Set<FileType> outs = myCompilerToOutputTypes.get(compiler);
-    return outs != null? Collections.unmodifiableSet(outs) : Collections.<FileType>emptySet();
-  }
-
   public final void addCompiler(@NotNull Compiler compiler) {
-    if (compiler instanceof TranslatingCompiler) {
-      myTranslators.add((TranslatingCompiler)compiler);
+    myCompilers.add(compiler);
+    // supporting file instrumenting compilers and validators for external build
+    // Since these compilers are IDE-specific and use PSI, it is ok to run them before and after the build in the IDE
+    if (compiler instanceof SourceInstrumentingCompiler) {
+      addBeforeTask(new FileProcessingCompilerAdapterTask((FileProcessingCompiler)compiler));
     }
-    else {
-      myCompilers.add(compiler);
-      // supporting file instrumenting compilers and validators for external build
-      // Since these compilers are IDE-specific and use PSI, it is ok to run them before and after the build in the IDE
-      if (compiler instanceof SourceInstrumentingCompiler) {
-        addBeforeTask(new FileProcessingCompilerAdapterTask((FileProcessingCompiler)compiler));
-      }
-      else if (compiler instanceof Validator) {
-        addAfterTask(new FileProcessingCompilerAdapterTask((FileProcessingCompiler)compiler));
-      }
+    else if (compiler instanceof Validator) {
+      addAfterTask(new FileProcessingCompilerAdapterTask((FileProcessingCompiler)compiler));
     }
+  }
+
+  @Deprecated
+  public void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes) {
+    // empty
   }
 
   public final void removeCompiler(@NotNull Compiler compiler) {
-    if (compiler instanceof TranslatingCompiler) {
-      myTranslators.remove(compiler);
-    }
-    else {
-      if (myCompilers.remove(compiler)) {
-        for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
-          for (Iterator<CompileTask> iterator = tasks.iterator(); iterator.hasNext(); ) {
-            CompileTask task = iterator.next();
-            if (task instanceof FileProcessingCompilerAdapterTask && ((FileProcessingCompilerAdapterTask)task).getCompiler() == compiler) {
-              iterator.remove();
-            }
-          }
+    for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
+      for (Iterator<CompileTask> iterator = tasks.iterator(); iterator.hasNext(); ) {
+        CompileTask task = iterator.next();
+        if (task instanceof FileProcessingCompilerAdapterTask && ((FileProcessingCompilerAdapterTask)task).getCompiler() == compiler) {
+          iterator.remove();
         }
       }
     }
-    myCompilerToInputTypes.remove(compiler);
-    myCompilerToOutputTypes.remove(compiler);
   }
 
   @NotNull
@@ -205,11 +129,6 @@ public class CompilerManagerImpl extends CompilerManager {
   public <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<T>(myCompilers.size());
     for (final Compiler item : myCompilers) {
-      if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
-        compilers.add((T)item);
-      }
-    }
-    for (final Compiler item : myTranslators) {
       if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
         compilers.add((T)item);
       }
@@ -263,11 +182,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public void compile(@NotNull Module module, CompileStatusNotification callback) {
-    new CompileDriver(myProject).compile(createModuleCompileScope(module, false), new ListenerNotificator(callback), true);
+    new CompileDriver(myProject).compile(createModuleCompileScope(module, false), new ListenerNotificator(callback));
   }
 
   public void compile(@NotNull CompileScope scope, CompileStatusNotification callback) {
-    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), false);
+    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback));
   }
 
   public void make(CompileStatusNotification callback) {
@@ -326,64 +245,8 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  // Compiler tests support
-
-  private static List<String> ourDeletedPaths;
-  private static List<String> ourRecompiledPaths;
-  private static List<String> ourCompiledPaths;
-
-  public static void testSetup() {
-    ourDeletedPaths = new ArrayList<String>();
-    ourRecompiledPaths = new ArrayList<String>();
-    ourCompiledPaths = new ArrayList<String>();
-  }
-
-  public static void addDeletedPath(String path) {
-    ourDeletedPaths.add(path);
-  }
-
-  public static void addRecompiledPath(String path) {
-    ourRecompiledPaths.add(path);
-  }
-
-  public static void addCompiledPath(String path) {
-    ourCompiledPaths.add(path);
-  }
-
-  public static String[] getPathsToDelete() {
-    return ArrayUtil.toStringArray(ourDeletedPaths);
-  }
-
-  public static String[] getPathsToRecompile() {
-    return ArrayUtil.toStringArray(ourRecompiledPaths);
-  }
-
-  public static String[] getPathsToCompile() {
-    return ArrayUtil.toStringArray(ourCompiledPaths);
-  }
-
-  public static void clearPathsToCompile() {
-    if (ourCompiledPaths != null) {
-      ourCompiledPaths.clear();
-    }
-  }
-
   public boolean isExcludedFromCompilation(@NotNull VirtualFile file) {
     return CompilerConfiguration.getInstance(myProject).isExcludedFromCompilation(file);
-  }
-
-  private static final OutputToSourceMapping OUTPUT_TO_SOURCE_MAPPING = new OutputToSourceMapping() {
-    public String getSourcePath(final String outputPath) {
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final VirtualFile outputFile = lfs.findFileByPath(outputPath);
-
-      final VirtualFile sourceFile = outputFile != null ? TranslatingCompilerFilesMonitor.getSourceFileByOutput(outputFile) : null;
-      return sourceFile != null? sourceFile.getPath() : null;
-    }
-  };
-  @NotNull
-  public OutputToSourceMapping getJavaCompilerOutputMapping() {
-    return OUTPUT_TO_SOURCE_MAPPING;
   }
 
   @NotNull
@@ -438,32 +301,6 @@ public class CompilerManagerImpl extends CompilerManager {
     return !myValidationDisabledModuleTypes.contains(ModuleType.get(module));
   }
 
-  private Graph<Compiler> createCompilerGraph(final List<Compiler> compilers) {
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Compiler>() {
-      public Collection<Compiler> getNodes() {
-        return compilers;
-      }
-
-      public Iterator<Compiler> getIn(Compiler compiler) {
-        final Set<FileType> compilerInput = myCompilerToInputTypes.get(compiler);
-        if (compilerInput == null || compilerInput.isEmpty()) {
-          return Collections.<Compiler>emptySet().iterator();
-        }
-
-        final Set<Compiler> inCompilers = new HashSet<Compiler>();
-
-        for (Map.Entry<Compiler, Set<FileType>> entry : myCompilerToOutputTypes.entrySet()) {
-          final Set<FileType> outputs = entry.getValue();
-          Compiler comp = entry.getKey();
-          if (outputs != null && ContainerUtil.intersects(compilerInput, outputs)) {
-            inCompilers.add(comp);
-          }
-        }
-        return inCompilers.iterator();
-      }
-    }));
-  }
-  
   private class ListenerNotificator implements CompileStatusNotification {
     private final @Nullable CompileStatusNotification myDelegate;
 

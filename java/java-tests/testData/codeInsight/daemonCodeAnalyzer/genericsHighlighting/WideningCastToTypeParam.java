@@ -16,7 +16,7 @@ class Test {
   }
 
   public static <C extends String> IConverter<C> getConverter1(Class<C> type) {
-    return <error descr="Inconvertible types; cannot cast 'DoubleConverter' to 'IConverter<C>'">(IConverter<C>)new DoubleConverter() {
+    return <error descr="Inconvertible types; cannot cast 'anonymous DoubleConverter' to 'IConverter<C>'">(IConverter<C>)new DoubleConverter() {
     }</error>;
   }
 

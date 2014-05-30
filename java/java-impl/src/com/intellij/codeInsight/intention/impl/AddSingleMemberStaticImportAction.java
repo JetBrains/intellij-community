@@ -46,6 +46,16 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     return CodeInsightBundle.message("intention.add.single.member.static.import.family");
   }
 
+  public static class ImportAvailability {
+    private final String qName;
+    private final PsiMember resolved;
+
+    private ImportAvailability(String qName, PsiMember resolved) {
+      this.qName = qName;
+      this.resolved = resolved;
+    }
+  }
+
   /**
    * Allows to check if it's possible to perform static import for the target element.
    *
@@ -53,7 +63,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
    * @return            not-null qualified name of the class which method may be statically imported if any; <code>null</code> otherwise
    */
   @Nullable
-  public static String getStaticImportClass(@NotNull PsiElement element) {
+  public static ImportAvailability getStaticImportClass(@NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
@@ -87,8 +97,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
               }
               String qName = aClass.getQualifiedName();
               if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
-                return qName + "." +refExpr.getReferenceName();
-
+                return new ImportAvailability(qName + "." +refExpr.getReferenceName(), (PsiMember) resolved);
               }
             }
           }
@@ -112,7 +121,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
         }
 
         final PsiImportStatementBase importStatement = importList.findSingleImportStatement(refName);
-        if (importStatement instanceof PsiImportStaticStatement && 
+        if (importStatement instanceof PsiImportStaticStatement &&
             ((PsiImportStaticStatement)importStatement).resolveTargetClass() == aClass) {
           return importStatement;
         }
@@ -143,11 +152,15 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    String classQName = getStaticImportClass(element);
-    if (classQName != null) {
-      setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", classQName));
+    ImportAvailability availability = getStaticImportClass(element);
+    if (availability != null) {
+      if (availability.resolved instanceof PsiClass) {
+        setText(CodeInsightBundle.message("intention.add.single.member.import.text", availability.qName));
+      } else {
+        setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", availability.qName));
+      }
     }
-    return classQName != null;
+    return availability != null;
   }
 
   public static void invoke(PsiFile file, final PsiElement element) {
@@ -184,7 +197,11 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     });
 
     if (resolved != null && findExistingImport(file, resolvedClass, referenceName) == null) {
-      PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
+      if (resolved instanceof PsiClass) {
+        ((PsiJavaFile) file).importClass((PsiClass) resolved);
+      } else {
+        PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
+      }
     }
 
     file.accept(new JavaRecursiveElementVisitor() {

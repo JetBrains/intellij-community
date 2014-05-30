@@ -177,7 +177,16 @@ public class PositionManagerImpl implements PositionManager {
       return null;
     }
 
-    PsiClass psiClass = DebuggerUtils.findClass(refType.name(), project, myDebugProcess.getSearchScope());
+    final String originalQName = refType.name();
+    final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
+    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
+    if (psiClass == null) {
+      int dollar = originalQName.indexOf('$');
+      if (dollar > 0) {
+        final String qName = originalQName.substring(0, dollar);
+        psiClass = DebuggerUtils.findClass(qName, project, searchScope);
+      }
+    }
 
     if (psiClass != null) {
       final PsiElement element = psiClass.getNavigationElement();

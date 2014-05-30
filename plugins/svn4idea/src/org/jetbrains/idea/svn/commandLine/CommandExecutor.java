@@ -206,7 +206,8 @@ public class CommandExecutor {
   }
 
   protected boolean needsBinaryOutput() {
-    return SvnCommandName.cat.equals(myCommand.getName());
+    // TODO: Add ability so that command could indicate output type it needs by itself
+    return myCommand.is(SvnCommandName.cat) || (myCommand.is(SvnCommandName.diff) && !myCommand.getParameters().contains("--xml"));
   }
 
   protected boolean needsUtf8Output() {

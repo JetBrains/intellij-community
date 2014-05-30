@@ -26,13 +26,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -58,45 +58,47 @@ public class SelectLocationDialog extends DialogWrapper {
   // todo check that works when authenticated
   @Nullable
   public static String selectLocation(Project project, String url) {
-    try {
-      SVNURL.parseURIEncoded(url);
-      final SVNURL svnurl = initRoot(project, url);
-      if (svnurl == null) {
-        Messages.showErrorDialog(project, "Can not detect repository root for URL: " + url,
-                                 SvnBundle.message("dialog.title.select.repository.location"));
-        return null;
-      }
-      SelectLocationDialog dialog = new SelectLocationDialog(project, svnurl, null, null, true);
-      dialog.show();
-      if (!dialog.isOK()) return null;
-      return dialog.getSelectedURL();
-    } catch (SVNException e) {
-      Messages.showErrorDialog(project, e.getMessage(), SvnBundle.message("dialog.title.select.repository.location"));
-      return null;
-    }
+    SelectLocationDialog dialog = openDialog(project, url, null, null, true, null);
+
+    return dialog == null || !dialog.isOK() ? null : dialog.getSelectedURL();
   }
 
   @Nullable
   public static String selectCopyDestination(Project project, String url, String dstLabel, String dstName, boolean showFiles) {
-    try {
-      SVNURL.parseURIEncoded(url);
-      final SVNURL svnurl = initRoot(project, url);
-      SelectLocationDialog dialog = new SelectLocationDialog(project, svnurl, dstLabel, dstName, showFiles);
-      dialog.show();
-      if (!dialog.isOK()) return null;
+    SelectLocationDialog dialog =
+      openDialog(project, url, dstLabel, dstName, showFiles, SvnBundle.message("select.location.invalid.url.message", url));
 
-      final String result = dialog.getSelectedURL();
-      final String name = dialog.getDestinationName();
-      return SVNPathUtil.append(result, name);
-    } catch (SVNException e) {
-      Messages.showErrorDialog(project, SvnBundle.message("select.location.invalid.url.message", url),
+    return dialog == null || !dialog.isOK() ? null : SVNPathUtil.append(dialog.getSelectedURL(), dialog.getDestinationName());
+  }
+
+  @Nullable
+  private static SelectLocationDialog openDialog(Project project,
+                                                 String url,
+                                                 String dstLabel,
+                                                 String dstName,
+                                                 boolean showFiles,
+                                                 String errorMessage) {
+    try {
+      SVNURL svnUrl = SVNURL.parseURIEncoded(url);
+      final SVNURL repositoryUrl = initRoot(project, svnUrl);
+      if (repositoryUrl == null) {
+        Messages.showErrorDialog(project, "Can not detect repository root for URL: " + url,
+                                 SvnBundle.message("dialog.title.select.repository.location"));
+        return null;
+      }
+
+      SelectLocationDialog dialog = new SelectLocationDialog(project, repositoryUrl, dstLabel, dstName, showFiles);
+      dialog.show();
+      return dialog;
+    }
+    catch (SVNException e) {
+      Messages.showErrorDialog(project, errorMessage != null ? errorMessage : e.getMessage(),
                                SvnBundle.message("dialog.title.select.repository.location"));
       return null;
     }
   }
 
-  private SelectLocationDialog(Project project, SVNURL url,
-                              String dstLabel, String dstName, boolean showFiles) throws SVNException {
+  private SelectLocationDialog(Project project, SVNURL url, String dstLabel, String dstName, boolean showFiles) {
     super(project, true);
     myProject = project;
     myDstLabel = dstLabel;
@@ -122,22 +124,16 @@ public class SelectLocationDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static SVNURL initRoot(final Project project, final String urlString) throws SVNException {
+  private static SVNURL initRoot(final Project project, final SVNURL url) throws SVNException {
     final Ref<SVNURL> result = new Ref<SVNURL>();
     final Ref<SVNException> excRef = new Ref<SVNException>();
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        SVNRepository repos = null;
         try {
-          repos = SvnVcs.getInstance(project).createRepository(urlString);
-          result.set(repos.getRepositoryRoot(true));
+          result.set(SvnUtil.getRepositoryRoot(SvnVcs.getInstance(project), url));
         } catch (SVNException e) {
           excRef.set(e);
-        } finally {
-          if (repos != null) {
-            repos.closeSession();
-          }
         }
       }
     }, "Detecting repository root", true, project);
@@ -249,9 +245,5 @@ public class SelectLocationDialog extends DialogWrapper {
 
   public String getSelectedURL() {
     return myRepositoryBrowser.getSelectedURL();
-  }
-
-  public SVNURL getSelectedSVNURL() {
-    return myRepositoryBrowser.getSelectedSVNURL();
   }
 }

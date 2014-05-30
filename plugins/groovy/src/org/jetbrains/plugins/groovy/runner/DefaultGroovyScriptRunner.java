@@ -36,7 +36,7 @@ import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -89,7 +89,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   boolean tests) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
-      params.getClassPath().add(GroovyUtils.getBundledGroovyJar());
+      params.getClassPath().add(GroovyFacetUtil.getBundledGroovyJar());
     }
     else if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
@@ -99,7 +99,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     setToolsJar(params);
 
-    String groovyHome = useBundled ? FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
+    String groovyHome = useBundled ? FileUtil.toCanonicalPath(GroovyFacetUtil.getBundledGroovyJar().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
     String groovyHomeDependentName = groovyHome != null ? FileUtil.toSystemDependentName(groovyHome) : null;
 
     if (groovyHomeDependentName != null) {

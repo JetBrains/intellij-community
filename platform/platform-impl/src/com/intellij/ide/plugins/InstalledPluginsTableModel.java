@@ -269,7 +269,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
-    int state = StringUtil.compareVersionNumbers(descr.getVersion(), existing.getVersion());
+    int state = PluginDownloader.compareVersionsSkipBroken(existing, descr.getVersion());
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
     final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().getInstalledPlugins();

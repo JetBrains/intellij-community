@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -61,10 +62,18 @@ public class DarculaTextBorder implements Border, UIResource {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width-4, height-4);
     } else {
       boolean editable = !(c instanceof JTextComponent) || (((JTextComponent)c).isEditable());
-      g.setColor(c.isEnabled() && editable ? Gray._100 : Gray._83);
+      g.setColor(getBorderColor(c.isEnabled() && editable));
       g.drawRect(1, 1, width - 2, height - 2);
     }
     g.translate(-x, -y);
     config.restore();
+  }
+
+  private static Color getBorderColor(boolean enabled) {
+    if (UIUtil.isUnderDarcula()) {
+      return enabled ? Gray._100 : Gray._83;
+    }
+    // disabled color is the same as ComboBox's border has
+    return enabled ? Gray._100 : Gray._150;
   }
 }

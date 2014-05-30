@@ -20,6 +20,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
@@ -115,7 +116,7 @@ public class XBreakpointActionsPanel<B extends XBreakpointBase<?,?,?>> extends X
     if (myLogExpressionComboBox != null) {
       myBreakpoint.setLogExpressionEnabled(myLogExpressionCheckBox.isSelected());
       XExpression expression = myLogExpressionComboBox.getExpression();
-      myBreakpoint.setLogExpressionObject(expression != null && !expression.getExpression().isEmpty() ? expression : null);
+      myBreakpoint.setLogExpressionObject(!XDebuggerUtilImpl.isEmptyExpression(expression) ? expression : null);
       myLogExpressionComboBox.saveTextInHistory();
     }
   }

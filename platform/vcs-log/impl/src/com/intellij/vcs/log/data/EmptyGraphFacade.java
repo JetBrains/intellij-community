@@ -79,10 +79,6 @@ class EmptyGraphFacade implements GraphFacade {
   public void setFilter(@Nullable Condition<Integer> visibilityPredicate) {
   }
 
-  @Override
-  public void setSortType(@NotNull PermanentGraph.SortType sortType) {
-  }
-
   @NotNull
   @Override
   public GraphInfoProvider getInfoProvider() {

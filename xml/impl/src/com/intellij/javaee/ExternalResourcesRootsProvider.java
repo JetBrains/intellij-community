@@ -18,7 +18,7 @@ package com.intellij.javaee;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -63,7 +63,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
 
     HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
     for (String url : myStandardResources.getValue()) {
-      VirtualFile file = VfsUtil.findRelativeFile(url, null);
+      VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
       if (file != null) {
         roots.add(file);
       }

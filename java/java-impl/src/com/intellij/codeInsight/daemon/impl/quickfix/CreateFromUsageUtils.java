@@ -28,6 +28,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -135,7 +136,10 @@ public class CreateFromUsageUtils {
 
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
-    LOG.assertTrue(!aClass.isInterface() || method.hasModifierProperty(PsiModifier.DEFAULT) || method.hasModifierProperty(PsiModifier.STATIC), "Interface bodies should be already set up");
+    LOG.assertTrue(!aClass.isInterface() ||
+                   method.hasModifierProperty(PsiModifier.DEFAULT) ||
+                   method.hasModifierProperty(PsiModifier.STATIC) ||
+                   method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     Properties properties = new Properties();

@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.CvsFilePath;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
@@ -203,9 +204,9 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
-    final CvsRepositoryLocation location = (CvsRepositoryLocation)partner.getRepositoryLocation();
     final VcsHistorySession session;
-    if (location != null) {
+    if (path instanceof CvsFilePath) {
+      final CvsRepositoryLocation location = ((CvsFilePath)path).getRepositoryLocation();
       final List<VcsFileRevision> fileRevisionList = createRevisions(location.getEnvironment(), path.getIOFile());
       if (fileRevisionList == null) return;
       session = new MyHistorySession(fileRevisionList, path);

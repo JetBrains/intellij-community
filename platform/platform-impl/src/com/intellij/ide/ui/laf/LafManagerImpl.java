@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.idea.StartupUtil;
@@ -216,7 +217,16 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (myCurrentLaf != null) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
+        boolean needUninstall = UIUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
+        if (StartupUtil.getWizardLAF() != null) {
+          if (UIUtil.isUnderDarcula()) {
+            DarculaInstaller.install();
+          }
+          else if (needUninstall) {
+            DarculaInstaller.uninstall();
+          }
+        }
       }
     }
 

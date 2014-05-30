@@ -22,7 +22,6 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -112,10 +111,11 @@ public class BreakpointManager {
     });
   }
 
-  private boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
+  private static boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
     if (breakpoint.isEnabled() &&
         (breakpoint.getType() instanceof JavaMethodBreakpointType || breakpoint.getType() instanceof JavaWildcardMethodBreakpointType)) {
-      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
+      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING)
+        .notify(((XBreakpointBase)breakpoint).getProject());
       return true;
     }
     return false;
@@ -203,13 +203,12 @@ public class BreakpointManager {
       return null;
     }
     XLineBreakpoint xLineBreakpoint = addXLineBreakpoint(JavaLineBreakpointType.class, document, lineIndex);
-    LineBreakpoint breakpoint = LineBreakpoint.create(myProject, xLineBreakpoint);
-    if (breakpoint == null) {
-      return null;
+    Breakpoint breakpoint = getJavaBreakpoint(xLineBreakpoint);
+    if (breakpoint instanceof LineBreakpoint) {
+      addBreakpoint(breakpoint);
+      return ((LineBreakpoint)breakpoint);
     }
-
-    addBreakpoint(breakpoint);
-    return breakpoint;
+    return null;
   }
 
   @Nullable
@@ -232,11 +231,14 @@ public class BreakpointManager {
   public FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaFieldBreakpointType.class, document, lineIndex);
-    FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, fieldName, xBreakpoint);
-    if (fieldBreakpoint != null) {
-      addBreakpoint(fieldBreakpoint);
+    Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
+    if (javaBreakpoint instanceof FieldBreakpoint) {
+      FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)javaBreakpoint;
+      fieldBreakpoint.setFieldName(fieldName);
+      addBreakpoint(javaBreakpoint);
+      return fieldBreakpoint;
     }
-    return fieldBreakpoint;
+    return null;
   }
 
   @NotNull
@@ -248,12 +250,18 @@ public class BreakpointManager {
       public ExceptionBreakpoint compute() {
         XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
           .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
-        ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName, xBreakpoint);
-        addBreakpoint(breakpoint);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("ExceptionBreakpoint Added");
+        Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
+        if (javaBreakpoint instanceof ExceptionBreakpoint) {
+          ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)javaBreakpoint;
+          exceptionBreakpoint.setQualifiedName(exceptionClassName);
+          exceptionBreakpoint.setPackageName(packageName);
+          addBreakpoint(exceptionBreakpoint);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("ExceptionBreakpoint Added");
+          }
+          return exceptionBreakpoint;
         }
-        return breakpoint;
+        return null;
       }
     });
   }
@@ -263,13 +271,12 @@ public class BreakpointManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaMethodBreakpointType.class, document, lineIndex);
-    MethodBreakpoint breakpoint = MethodBreakpoint.create(myProject, xBreakpoint);
-    if (breakpoint == null) {
-      return null;
+    Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
+    if (javaBreakpoint instanceof MethodBreakpoint) {
+      addBreakpoint(javaBreakpoint);
+      return (MethodBreakpoint)javaBreakpoint;
     }
-
-    addBreakpoint(breakpoint);
-    return breakpoint;
+    return null;
   }
 
   private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B,?>> typeCls, Document document, final int lineIndex) {
@@ -496,14 +503,8 @@ public class BreakpointManager {
     return addXLineBreakpoint(typeCls, doc, line);
   }
 
-  public static void addBreakpointInt(@NotNull Breakpoint breakpoint) {
-    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(breakpoint.getProject()).getBreakpointManager();
-    breakpointManager.addBreakpoint(breakpoint);
-  }
-
-  //used in Fabrique
-  public void addBreakpoint(@NotNull Breakpoint breakpoint) {
-    breakpoint.myXBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
+  public static void addBreakpoint(@NotNull Breakpoint breakpoint) {
+    assert breakpoint.myXBreakpoint.getUserData(Breakpoint.DATA_KEY) == breakpoint;
     breakpoint.updateUI();
     checkAndNotifyPossiblySlowBreakpoint(breakpoint.myXBreakpoint);
   }
@@ -548,19 +549,17 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public static Breakpoint getJavaBreakpoint(@Nullable XBreakpoint xBreakpoint) {
+  public static Breakpoint getJavaBreakpoint(@Nullable final XBreakpoint xBreakpoint) {
     if (xBreakpoint == null) {
       return null;
     }
     Breakpoint breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
-    if (breakpoint != null) {
-      return breakpoint;
+    if (breakpoint == null && xBreakpoint.getType() instanceof JavaBreakpointType) {
+      Project project = ((XBreakpointBase)xBreakpoint).getProject();
+      breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
+      xBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
     }
-    Project project = ((XBreakpointBase)xBreakpoint).getProject();
-    if (xBreakpoint.getType() instanceof JavaBreakpointType) {
-      return ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
-    }
-    return null;
+    return breakpoint;
   }
 
   //interaction with RequestManagerImpl

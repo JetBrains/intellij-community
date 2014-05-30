@@ -111,7 +111,6 @@ public class DeleteAction extends EditorAction {
     int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
-    if (!EditorActionUtil.canEditAtOffset(editor, offset + 1)) return;
     if (afterLineEnd < 0
         // There is a possible case that caret is located right before the soft wrap position at the last logical line
         // (popular use case with the soft wraps at the commit message dialog).

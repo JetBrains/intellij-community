@@ -21,6 +21,7 @@
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
+    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
 
@@ -69,7 +70,6 @@
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
     <compileServer.plugin classpath="maven-jps-plugin.jar;maven3/plexus-utils-2.0.6.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>

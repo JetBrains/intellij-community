@@ -25,7 +25,7 @@ public class SvnKitAnnotateClient extends BaseSvnClient implements AnnotateClien
                        @Nullable SVNDiffOptions diffOptions,
                        @Nullable ISVNAnnotateHandler handler) throws VcsException {
     try {
-      SVNLogClient client = myVcs.createLogClient();
+      SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
 
       client.setDiffOptions(diffOptions);
       if (target.isFile()) {

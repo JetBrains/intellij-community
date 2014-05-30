@@ -658,6 +658,11 @@
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
                      displayName="Class may extend a commonly used base class instead of implementing interface"/>
+    <localInspection language="JAVA" shortName="BlockMarkerComments"
+                     groupBundle="messages.InspectionsBundle"
+                     groupName="Code style issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
+                     displayName="Block marker comment"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
@@ -730,6 +735,10 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.CreateTestAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.testIntegration.createTest.GenerateMissedTestsAction</className>
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
@@ -1491,6 +1500,8 @@
                                                   implementationClass="com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.ExternalAnnotationsLineMarkerProvider"/>
     <codeInsight.linkHandler prefix="#assignment/" handlerClass="com.intellij.codeInsight.intention.impl.config.AssignmentTooltipLinkHandler"/>
+    <nonProjectFileWritingAccessExtension
+        implementation="com.intellij.codeInsight.ExternalAnnotationsNonProjectFileWritingAccessExtension"/>
   </extensions>
 
   <actions>

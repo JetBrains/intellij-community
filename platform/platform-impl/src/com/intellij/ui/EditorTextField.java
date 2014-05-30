@@ -205,13 +205,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public void setDocument(Document document) {
     if (myDocument != null) {
-      /*
-      final UndoManager undoManager = myProject != null
-      ? UndoManager.getInstance(myProject)
-      : UndoManager.getGlobalInstance();
-      undoManager.clearUndoRedoQueue(myDocument);
-      */
-
       uninstallDocumentListener(true);
     }
 

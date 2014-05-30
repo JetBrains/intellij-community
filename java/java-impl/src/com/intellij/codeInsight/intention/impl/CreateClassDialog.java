@@ -17,7 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -88,7 +88,7 @@ public class CreateClassDialog extends DialogWrapper {
                            @NotNull String title,
                            @NotNull String targetClassName,
                            @NotNull String targetPackageName,
-                           @NotNull CreateClassKind kind,
+                           @NotNull ClassKind kind,
                            boolean classNameEditable,
                            @Nullable Module defaultModule) {
     super(project, true);

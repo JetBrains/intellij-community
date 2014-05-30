@@ -88,10 +88,8 @@ public class BackspaceAction extends EditorAction {
     int offset = editor.getCaretModel().getOffset();
     if(colNumber > 0) {
       if(EditorModificationUtil.calcAfterLineEnd(editor) > 0) {
-        if (EditorActionUtil.canEditAtOffset(editor, offset - 1)) {
-          int columnShift = -1;
-          editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
-        }
+        int columnShift = -1;
+        editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
       }
       else {
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -99,40 +97,32 @@ public class BackspaceAction extends EditorAction {
 
         FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
         if (region != null && region.shouldNeverExpand()) {
-          if (EditorActionUtil.canEditAtOffset(editor, region.getStartOffset())) {
-            document.deleteString(region.getStartOffset(), region.getEndOffset());
-            editor.getCaretModel().moveToOffset(region.getStartOffset());
-          }
+          document.deleteString(region.getStartOffset(), region.getEndOffset());
+          editor.getCaretModel().moveToOffset(region.getStartOffset());
         }
         else {
-          if (EditorActionUtil.canEditAtOffset(editor, offset - 1)) {
-           document.deleteString(offset - 1, offset);
-           editor.getCaretModel().moveToOffset(offset - 1, true);
-          }
+          document.deleteString(offset - 1, offset);
+          editor.getCaretModel().moveToOffset(offset - 1, true);
         }
       }
     }
     else if(lineNumber > 0) {
       int separatorLength = document.getLineSeparatorLength(lineNumber - 1);
       int lineEnd = document.getLineEndOffset(lineNumber - 1) + separatorLength;
-      if (EditorActionUtil.canEditAtOffset(editor, lineEnd - separatorLength)) {
-        document.deleteString(lineEnd - separatorLength, lineEnd);
-        editor.getCaretModel().moveToOffset(lineEnd - separatorLength);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().removeSelection();
-        // Do not group delete newline and other deletions.
-        CommandProcessor commandProcessor = CommandProcessor.getInstance();
-        commandProcessor.setCurrentCommandGroupId(null);
-      }
+      document.deleteString(lineEnd - separatorLength, lineEnd);
+      editor.getCaretModel().moveToOffset(lineEnd - separatorLength);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().removeSelection();
+      // Do not group delete newline and other deletions.
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      commandProcessor.setCurrentCommandGroupId(null);
     }
   }
 
   static void doBackspaceAction(@NotNull Editor editor) {
     int newOffset = editor.getSelectionModel().getSelectionStart();
-    if (EditorActionUtil.canEditAtOffset(editor, newOffset)) {
-      editor.getCaretModel().moveToOffset(newOffset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      EditorModificationUtil.deleteSelectedText(editor);
-    }
+    editor.getCaretModel().moveToOffset(newOffset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    EditorModificationUtil.deleteSelectedText(editor);
   }
 }

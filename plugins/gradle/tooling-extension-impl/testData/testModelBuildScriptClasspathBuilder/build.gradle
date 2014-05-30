@@ -15,3 +15,16 @@ project("baseModule") {
     }
   }
 }
+
+allprojects {
+  configurations.all {
+
+    // check for configuration which is not in unresolved state  - http://youtrack.jetbrains.com/issue/IDEA-124839
+    exclude group: 'some-group'
+
+    // check for usage of custom resolutionStrategy - http://youtrack.jetbrains.com/issue/IDEA-125592
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+      println details.target
+    }
+  }
+}

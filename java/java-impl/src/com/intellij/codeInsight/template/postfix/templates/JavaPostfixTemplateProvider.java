@@ -114,7 +114,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                addedSemicolon.delete();
+                  addedSemicolon.delete();
               }
             });
           }
@@ -143,10 +143,6 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     });
   }
 
-  public static void doNotDeleteSemicolon(@NotNull PsiFile file) {
-    file.putUserData(ADDED_SEMICOLON, null);
-  }
-  
   private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
     return JavaCompletionContributor.semicolonNeeded(editor, file, CompletionInitializationContext.calcStartOffset(editor));
   }

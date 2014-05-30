@@ -27,9 +27,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
-import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -77,7 +77,7 @@ public class MoveClassToNewFileIntention extends Intention {
       docComment.delete();
     }
     psiClass.delete();
-    CreateClassActionBase.putCursor(project, newClass.getContainingFile(), newClass.getNavigationElement());
+    IntentionUtils.positionCursor(project, newClass.getContainingFile(), newClass.getNavigationElement());
   }
 
 

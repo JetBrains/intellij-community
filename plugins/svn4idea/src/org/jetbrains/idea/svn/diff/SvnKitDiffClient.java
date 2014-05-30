@@ -17,10 +17,36 @@ package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNReporter;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,6 +56,182 @@ public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
 
   @Override
   public List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException {
-    throw new UnsupportedOperationException("Diff client is not implemented for SVNKit");
+    DiffExecutor executor = new DiffExecutor(target1, target2);
+
+    try {
+      executor.run();
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+
+    return executor.getChanges();
+  }
+
+  @Override
+  public void unifiedDiff(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull OutputStream output) throws VcsException {
+    assertUrl(target1);
+    assertUrl(target2);
+
+    try {
+      myVcs.getSvnKitManager().createDiffClient()
+        .doDiff(target1.getURL(), target1.getPegRevision(), target2.getURL(), target2.getPegRevision(), true, false, output);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  private class DiffExecutor {
+    @NotNull private final SvnTarget myTarget1;
+    @NotNull private final SvnTarget myTarget2;
+    @NotNull private final List<Change> myChanges;
+
+    private DiffExecutor(@NotNull SvnTarget target1, @NotNull SvnTarget target2) {
+      this.myTarget1 = target1;
+      this.myTarget2 = target2;
+      myChanges = ContainerUtil.newArrayList();
+    }
+
+    @NotNull
+    public List<Change> getChanges() {
+      return myChanges;
+    }
+
+    public void run() throws SVNException {
+      assertUrl(myTarget2);
+
+      if (myTarget1.isFile()) {
+        assertDirectory(myTarget1);
+
+        WorkingCopyFormat format = myVcs.getWorkingCopyFormat(myTarget1.getFile());
+        myChanges.addAll(WorkingCopyFormat.ONE_DOT_SIX.equals(format) ? run16Diff() : run17Diff());
+      }
+      else {
+        myChanges.addAll(runUrlDiff());
+      }
+    }
+
+    private Collection<Change> runUrlDiff() throws SVNException {
+      SVNRepository sourceRepository = myVcs.getSvnKitManager().createRepository(myTarget1.getURL());
+      sourceRepository.setCanceller(new SvnProgressCanceller());
+      SvnDiffEditor diffEditor;
+      final long rev;
+      SVNRepository targetRepository = null;
+      try {
+        rev = sourceRepository.getLatestRevision();
+        // generate Map of path->Change
+        targetRepository = myVcs.getSvnKitManager().createRepository(myTarget2.getURL());
+        diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
+        final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null);
+        sourceRepository.diff(myTarget2.getURL(), rev, rev, null, true, true, false, new ISVNReporterBaton() {
+          public void report(ISVNReporter reporter) throws SVNException {
+            reporter.setPath("", null, rev, false);
+            reporter.finishReport();
+          }
+        }, cancellableEditor);
+
+        return diffEditor.getChangesMap().values();
+      }
+      finally {
+        sourceRepository.closeSession();
+        if (targetRepository != null) {
+          targetRepository.closeSession();
+        }
+      }
+    }
+
+    private Collection<Change> run17Diff() throws SVNException {
+      final SVNInfo info1 = myVcs.getInfo(myTarget1.getFile(), SVNRevision.HEAD);
+
+      if (info1 == null) {
+        SVNErrorMessage err =
+          SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", myTarget1);
+        SVNErrorManager.error(err, SVNLogType.WC);
+      }
+      else if (info1.getURL() == null) {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", myTarget1);
+        SVNErrorManager.error(err, SVNLogType.WC);
+      }
+
+      final SVNReporter17 reporter17 =
+        new SVNReporter17(myTarget1.getFile(), new SVNWCContext(myVcs.getSvnKitManager().getSvnOptions(), new ISVNEventHandler() {
+          @Override
+          public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          }
+
+          @Override
+          public void checkCancelled() throws SVNCancelException {
+          }
+        }), false, true, SVNDepth.INFINITY, false, false, true, false, SVNDebugLog.getDefaultLog());
+      SVNRepository repository = null;
+      SVNRepository repository2 = null;
+      try {
+        repository = myVcs.getSvnKitManager().createRepository(info1.getURL());
+        long rev = repository.getLatestRevision();
+        repository2 = myVcs.getSvnKitManager().createRepository(myTarget2.getURL());
+        SvnDiffEditor diffEditor = new SvnDiffEditor(myTarget1.getFile(), repository2, rev, true);
+        repository.diff(myTarget2.getURL(), rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
+                        SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
+
+        return diffEditor.getChangesMap().values();
+      }
+      finally {
+        if (repository != null) {
+          repository.closeSession();
+        }
+        if (repository2 != null) {
+          repository2.closeSession();
+        }
+      }
+    }
+
+    private Collection<Change> run16Diff() throws SVNException {
+      // here there's 1.6 copy so ok to use SVNWCAccess
+      final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+      wcAccess.setOptions(myVcs.getSvnKitManager().getSvnOptions());
+      SVNRepository repository = null;
+      SVNRepository repository2 = null;
+      try {
+        SVNAdminAreaInfo info = wcAccess.openAnchor(myTarget1.getFile(), false, SVNWCAccess.INFINITE_DEPTH);
+        File anchorPath = info.getAnchor().getRoot();
+        String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
+
+        SVNEntry anchorEntry = info.getAnchor().getEntry("", false);
+        if (anchorEntry == null) {
+          SVNErrorMessage err =
+            SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        else if (anchorEntry.getURL() == null) {
+          SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNURL anchorURL = anchorEntry.getSVNURL();
+        SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY,
+                                               false, false, true, SVNDebugLog.getDefaultLog());
+
+        repository = myVcs.getSvnKitManager().createRepository(anchorURL.toString());
+        long rev = repository.getLatestRevision();
+        repository2 =
+          myVcs.getSvnKitManager().createRepository((target == null) ? myTarget2.getURL() : myTarget2.getURL().removePathTail());
+        SvnDiffEditor diffEditor =
+          new SvnDiffEditor(target == null ? myTarget1.getFile() : myTarget1.getFile().getParentFile(), repository2, rev, true);
+        repository.diff(myTarget2.getURL(), rev, rev, target, true, true, false, reporter,
+                        SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
+
+        return diffEditor.getChangesMap().values();
+      }
+      finally {
+        wcAccess.close();
+        if (repository != null) {
+          repository.closeSession();
+        }
+        if (repository2 != null) {
+          repository2.closeSession();
+        }
+      }
+    }
   }
 }

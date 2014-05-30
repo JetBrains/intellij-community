@@ -32,6 +32,10 @@ class Contracts {
     notBlank(message, "Message should not be blank", new Object(), new Object());
     log(message);
   }
+  public void vararg3(@Nullable String message) {
+    notBlank(message, "Message should not be blank", new Object(), new Object(), new Object(), new Object(), new Object());
+    log(message);
+  }
 
   public void log(@NotNull String message) {
     System.out.println(message);

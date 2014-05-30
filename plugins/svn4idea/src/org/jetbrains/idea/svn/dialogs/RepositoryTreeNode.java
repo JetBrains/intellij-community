@@ -235,7 +235,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myModel.reload(this);
   }
 
-  public void setErrorNode(final SVNErrorMessage text, final NodeLoadState state) {
+  public void setErrorNode(final String text, final NodeLoadState state) {
     if (myChildren == null) {
       myChildren = new ArrayList<TreeNode>();
     }

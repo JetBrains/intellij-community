@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -174,7 +175,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected boolean isMacOverlayScrollbar() {
-    return myMacScrollerStyle == NSScrollerHelper.Style.Overlay;
+    return myMacScrollerStyle == NSScrollerHelper.Style.Overlay && isMacOverlayScrollbarSupported();
+  }
+  
+  public static boolean isMacOverlayScrollbarSupported() {
+    return SystemInfo.isMac && !Registry.is("ide.mac.disableMacScrollbars");
   }
 
   private void updateMacScrollbarStyle() {

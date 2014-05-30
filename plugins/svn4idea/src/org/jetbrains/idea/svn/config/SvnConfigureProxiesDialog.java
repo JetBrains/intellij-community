@@ -23,12 +23,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBTabbedPane;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnServerFileManager;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -131,7 +129,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     if(! applyImpl()) {
       return;
     }
-    final Ref<SVNException> excRef = new Ref<SVNException>();
+    final Ref<Exception> excRef = new Ref<Exception>();
     final ProgressManager pm = ProgressManager.getInstance();
     pm.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -139,16 +137,14 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
         if (pi != null) {
           pi.setText("Connecting to " + url);
         }
-        SVNRepository repository = null;
         try {
-          repository = SvnVcs.getInstance(myProject).createRepository(url);
-          repository.testConnection();
-        } catch (SVNException exc) {
+          SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), SVNRevision.HEAD);
+        }
+        catch (SVNException exc) {
           excRef.set(exc);
-        } finally {
-          if (repository != null) {
-            repository.closeSession();
-          }
+        }
+        catch (SvnBindException e) {
+          excRef.set(e);
         }
       }
     }, "Test connection", true, myProject);

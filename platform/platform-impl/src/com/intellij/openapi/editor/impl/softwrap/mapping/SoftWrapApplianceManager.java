@@ -28,10 +28,12 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -210,7 +212,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   }
 
   private void recalculateSoftWraps(IncrementalCacheUpdateEvent event) {
-    event.updateNewOffsetsIfNecessary(myEditor.getDocument(), myEditor.getFoldingModel());
+    event.updateNewOffsetsIfNecessary(myEditor);
     
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxx Processing soft wraps for " + event + ". Document length: " + myEditor.getDocument().getTextLength() 
     //                              + ", document: " + System.identityHashCode(myEditor.getDocument()));
@@ -336,8 +338,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     
     notifyListenersOnVisualLineStart(myContext.lineStartPosition);
     
-    if (!myContext.exceedsVisualEdge(newX)
-        || (myContext.currentPosition.offset == myContext.lineStartPosition.offset) && !Registry.is("editor.wrap.collapsed.region.at.line.start")) {
+    if (!myContext.exceedsVisualEdge(newX) || myContext.currentPosition.offset == myContext.lineStartPosition.offset) {
       myContext.advance(foldRegion, placeholderWidthInPixels);
       return true;
     }
@@ -984,7 +985,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   public void onFoldRegionStateChange(int startOffset, int endOffset) {
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
-    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument(), startOffset, endOffset, myEditor.getFoldingModel()));
+    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor, startOffset, endOffset));
   }
 
   public void onFoldProcessingEnd() {
@@ -994,7 +995,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event, myEditor.getFoldingModel()));
+    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event, myEditor));
   }
 
   @Override
