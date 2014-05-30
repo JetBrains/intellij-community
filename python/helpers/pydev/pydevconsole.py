@@ -389,7 +389,7 @@ class ConsoleWriter(InteractiveInterpreter):
         list = traceback.format_exception_only(type, value)
         sys.stderr.write(''.join(list))
 
-    def showtraceback(self):
+    def showtraceback(self, full=False):
         """Display the exception that just occurred."""
         #Override for avoid using sys.excepthook PY-12600
         try:
@@ -399,6 +399,10 @@ class ConsoleWriter(InteractiveInterpreter):
             sys.last_traceback = tb
             tblist = traceback.extract_tb(tb)
             del tblist[:1]
+            if not full: #remove pydev calls from traceback
+                inner = [i for i, s in enumerate(tblist) if '\\python-helpers\\pydev\\pydevd_exec' in s[0]]
+                if inner:
+                    del tblist[:max(inner)+1]
             lines = traceback.format_list(tblist)
             if lines:
                 lines.insert(0, "Traceback (most recent call last):\n")

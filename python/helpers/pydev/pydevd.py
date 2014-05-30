@@ -1222,8 +1222,27 @@ class PyDB:
             while not self.readyToRun:
                 time.sleep(0.1)  # busy wait until we receive run command
 
-
-        pydev_imports.execfile(file, globals, locals)  # execute the script
+        try:
+            pydev_imports.execfile(file, globals, locals)  # execute the script
+        except:
+            try:
+                type, value, tb = sys.exc_info()
+                sys.last_type = type
+                sys.last_value = value
+                sys.last_traceback = tb
+                tblist = traceback.extract_tb(tb)
+                del tblist[:1]
+                #remove pydev calls from traceback
+                inner = [i for i, s in enumerate(tblist) if '\\python-helpers\\pydev\\' in s[0]]
+                if inner:
+                    del tblist[:max(inner)+1]
+                lines = traceback.format_list(tblist)
+                if lines:
+                    lines.insert(0, "Traceback (most recent call last):\n")
+                lines.extend(traceback.format_exception_only(type, value))
+            finally:
+                tblist = tb = None
+            sys.stderr.write(''.join(lines))
 
     def exiting(self):
         sys.stdout.flush()
