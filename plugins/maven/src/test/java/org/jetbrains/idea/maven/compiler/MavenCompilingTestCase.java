@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
@@ -76,7 +75,6 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     });
 
     CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
-    CompilerManagerImpl.testSetup();
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();

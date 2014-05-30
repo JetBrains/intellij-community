@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
@@ -62,7 +61,6 @@ public class CompilerTester {
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
 
-    CompilerManagerImpl.testSetup();
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
