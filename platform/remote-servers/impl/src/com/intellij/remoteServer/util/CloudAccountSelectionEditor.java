@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -57,12 +58,18 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
   private RemoteServer<SC> myNewServer;
   private RemoteServerConfigurable myServerConfigurable;
 
+
+  private DelayedRunner myRunner;
+
+  private CloudDataLoader myDataLoader = CloudDataLoader.NULL;
+
   public CloudAccountSelectionEditor(ST cloudType) {
     myCloudType = cloudType;
   }
 
   private void createUIComponents() {
     myServerConfigurablePanel = createServerConfigurablePanel();
+    myServerConfigurablePanel.setVisible(false);
   }
 
   public void initUI() {
@@ -78,6 +85,51 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
       myServerComboBox.addItem(new ServerItem(server));
     }
     myServerComboBox.addItem(new ServerItem(myNewServer));
+
+    myRunner= new DelayedRunner(myMainPanel) {
+
+      private ServerItem myPreviousServerItem;
+
+      @Override
+      protected boolean wasChanged() {
+        ServerItem currentServerItem = getSelectedServerItem();
+        boolean result = myPreviousServerItem != currentServerItem;
+        if (result) {
+          myPreviousServerItem = currentServerItem;
+          myDataLoader.clearCloudData();
+        }
+        return result;
+      }
+
+      @Override
+      protected void run() {
+        if (getSelectedServerItem().isNew()) {
+          myServerConfigurable.setDataLoader(new CloudDataLoader() {
+
+            @Override
+            public void clearCloudData() {
+              if (getSelectedServerItem().isNew()) {
+                myDataLoader.clearCloudData();
+              }
+            }
+
+            @Override
+            public void loadCloudData() {
+              if (getSelectedServerItem().isNew()) {
+                myDataLoader.loadCloudData();
+              }
+            }
+          });
+        }
+        else {
+          myDataLoader.loadCloudData();
+        }
+      }
+    };
+  }
+
+  public void setDataLoader(CloudDataLoader dataLoader) {
+    myDataLoader = dataLoader;
   }
 
   private void onAccountSelectionChanged() {
@@ -197,6 +249,7 @@ public class CloudAccountSelectionEditor<SC extends CloudConfigurationBase,
   @Override
   public void dispose() {
     myServerConfigurable.disposeUIResources();
+    Disposer.dispose(myRunner);
   }
 
   private class ServerItem {
