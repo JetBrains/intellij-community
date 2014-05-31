@@ -21,9 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.indexing.containers.ChangeBufferingList;
+import com.intellij.util.indexing.containers.IdSet;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -41,7 +44,7 @@ import java.util.List;
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ValueContainerImpl");
   private final static Object myNullValue = new Object();
-  private static final int MAX_FILES = 20000;
+
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
   // when there are several value mapped, myInputIdMapping is THashMap<Value, Data>, myInputIdMappingValue = null
@@ -55,24 +58,14 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     if (input == null) {
       attachFileSetForNewValue(value, inputId);
     }
+    else if (input instanceof Integer) {
+      ChangeBufferingList list = new ChangeBufferingList();
+      list.add(((Integer)input).intValue());
+      list.add(inputId);
+      resetFileSetForValue(value, list);
+    }
     else {
-      final TIntHashSet idSet;
-      if (input instanceof Integer) {
-        idSet = new IdSet(3);
-        idSet.add(((Integer)input).intValue());
-        idSet.add(inputId);
-        resetFileSetForValue(value, idSet);
-      }
-      else if (input instanceof TIntHashSet) {
-        idSet = (TIntHashSet)input;
-        idSet.add(inputId);
-
-        if (idSet.size() > MAX_FILES) {
-          resetFileSetForValue(value, new IdBitSet(idSet));
-        }
-      } else if (input instanceof IdBitSet) {
-        ((IdBitSet)input).set(inputId);
-      }
+      ((ChangeBufferingList)input).add(inputId);
     }
   }
 
@@ -110,30 +103,21 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  public boolean removeValue(int inputId, Value value) {
+  private void removeValue(int inputId, Value value) {
     final Object input = getInput(value);
     if (input == null) {
-      return false;
+      return;
     }
 
-    if (input instanceof TIntHashSet) {
-      final TIntHashSet idSet = (TIntHashSet)input;
-      final boolean reallyRemoved = idSet.remove(inputId);
-      if (reallyRemoved) {
-        idSet.compact();
-      }
-      if (!idSet.isEmpty()) {
-        return reallyRemoved;
-      }
+    if (input instanceof ChangeBufferingList) {
+      final ChangeBufferingList changesList = (ChangeBufferingList)input;
+      changesList.remove(inputId);
+      if (!changesList.isEmpty()) return;
     }
     else if (input instanceof Integer) {
       if (((Integer)input).intValue() != inputId) {
-        return false;
+        return;
       }
-    } else if (input instanceof IdBitSet) {
-      IdBitSet bitSet = (IdBitSet)input;
-      boolean removed = bitSet.remove(inputId);
-      if (bitSet.numberOfBitsSet() > 0) return removed;
     }
 
     if (!(myInputIdMapping instanceof THashMap)) {
@@ -147,8 +131,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         myInputIdMappingValue = mapping.get((Value)myInputIdMapping);
       }
     }
-
-    return true;
   }
 
   @NotNull
@@ -218,80 +200,32 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
   @NotNull
   @Override
   public IntPredicate getValueAssociationPredicate(Value value) {
-    final Object input = getInput(value);
+    Object input = getInput(value);
     if (input == null) return EMPTY_PREDICATE;
+
     if (input instanceof Integer) {
+      final int singleId = (Integer)input;
+
       return new IntPredicate() {
-        final int myId = (Integer)input;
         @Override
         public boolean contains(int id) {
-          return id == myId;
+          return id == singleId;
         }
       };
     }
-    if (input instanceof IdBitSet) {
-      return new IntPredicate() {
-        final IdBitSet myIdBitSet = (IdBitSet)input;
-        @Override
-        public boolean contains(int id) {
-          return myIdBitSet.get(id);
-        }
-      };
-    }
-    return new IntPredicate() {
-      final TIntHashSet mySet = (TIntHashSet)input;
-      @Override
-      public boolean contains(int id) {
-        return mySet.contains(id);
-      }
-    };
+    return ((ChangeBufferingList)input).intPredicate();
   }
 
   @NotNull
   @Override
   public IntIterator getInputIdsIterator(Value value) {
-    return getIntIteratorFromInput(getInput(value));
-  }
-
-  private IntIterator getIntIteratorFromInput(final Object input) {
-    IntIterator it;
-    if (input instanceof TIntHashSet) {
-      it = new IntSetIterator((TIntHashSet)input);
+    Object input = getInput(value);
+    if (input == null) return EMPTY_ITERATOR;
+    if (input instanceof Integer){
+      return new SingleValueIterator(((Integer)input).intValue());
+    } else {
+      return ((ChangeBufferingList)input).intIterator();
     }
-    else if (input instanceof Integer ){
-      it = new SingleValueIterator(((Integer)input).intValue());
-    } else if (input instanceof IdBitSet) {
-      it = new IntIterator() {
-        private final IdBitSet myIdBitSet = (IdBitSet)input;
-        private int nextSetBit = myIdBitSet.nextSetBit(0);
-
-        @Override
-        public boolean hasNext() {
-          return nextSetBit != -1;
-        }
-
-        @Override
-        public int next() {
-          int setBit = nextSetBit;
-          nextSetBit = myIdBitSet.nextSetBit(setBit + 1);
-          return setBit;
-        }
-
-        @Override
-        public int size() {
-          return myIdBitSet.numberOfBitsSet();
-        }
-
-        @Override
-        public boolean hasAscendingOrder() {
-          return true;
-        }
-      };
-    }
-    else {
-      it = EMPTY_ITERATOR;
-    }
-    return it;
   }
 
   private Object getInput(Value value) {
@@ -315,10 +249,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       final ValueContainerImpl clone = (ValueContainerImpl)super.clone();
       if (myInputIdMapping instanceof THashMap) {
         clone.myInputIdMapping = mapCopy((THashMap<Value, Object>)myInputIdMapping);
-      } else if (myInputIdMappingValue instanceof TIntHashSet) {
-        clone.myInputIdMappingValue = ((TIntHashSet)myInputIdMappingValue).clone();
-      } else if (myInputIdMappingValue instanceof IdBitSet) {
-        clone.myInputIdMappingValue = ((IdBitSet)myInputIdMappingValue).clone();
+      } else if (myInputIdMappingValue instanceof ChangeBufferingList) {
+        clone.myInputIdMappingValue = ((ChangeBufferingList)myInputIdMappingValue).clone();
       }
       return clone;
     }
@@ -327,7 +259,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  public static final IntIterator EMPTY_ITERATOR = new IntIterator() {
+  private static final IntIterator EMPTY_ITERATOR = new IntIterator() {
     @Override
     public boolean hasNext() {
       return false;
@@ -345,7 +277,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
     @Override
     public boolean hasAscendingOrder() {
-      return false;
+      return true;
     }
   };
 
@@ -361,12 +293,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       mapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
         @Override
         public boolean execute(Value key, Object val) {
-          if (val instanceof TIntHashSet) {
-            newMapping.put(key, ((TIntHashSet)val).clone());
-          } else if (val instanceof IdBitSet) {
-            newMapping.put(key, ((IdBitSet)val).clone());
-          }
-          else {
+          if (val instanceof ChangeBufferingList) {
+            newMapping.put(key, ((ChangeBufferingList)val).clone());
+          } else {
             newMapping.put(key, val);
           }
           return true;
@@ -374,35 +303,30 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       });
     } else {
       container.myInputIdMapping = myInputIdMapping;
-      container.myInputIdMappingValue = myInputIdMappingValue instanceof TIntHashSet ?
-                                        ((TIntHashSet)myInputIdMappingValue).clone():
-                                        myInputIdMappingValue instanceof IdBitSet ?
-                                        ((IdBitSet)myInputIdMappingValue).clone():myInputIdMappingValue;
+      container.myInputIdMappingValue = myInputIdMappingValue instanceof ChangeBufferingList ?
+                                        ((ChangeBufferingList)myInputIdMappingValue).clone():
+                                        myInputIdMappingValue;
     }
     return container;
   }
 
-  void ensureFileSetCapacityForValue(Value value, int count) {
+  private void ensureFileSetCapacityForValue(Value value, int count) {
     if (count <= 1) return;
     Object input = getInput(value);
 
     if (input != null) {
       if (input instanceof Integer) {
-        IdSet idSet = new IdSet(count + 1);
-        idSet.add(((Integer)input).intValue());
-        resetFileSetForValue(value, idSet);
-      } else if (input instanceof IdSet) {
-        IdSet idSet = (IdSet)input;
-        int nextSize = idSet.size() + count;
-        if (nextSize <= MAX_FILES) idSet.ensureCapacity(count);
-        else {
-          resetFileSetForValue(value, new IdBitSet(idSet));
-        }
+        ChangeBufferingList list = new ChangeBufferingList(count + 1);
+        list.add(((Integer)input).intValue());
+        resetFileSetForValue(value, list);
+      } else if (input instanceof ChangeBufferingList) {
+        ChangeBufferingList list = (ChangeBufferingList)input;
+        list.ensureCapacity(count);
       }
       return;
     }
 
-    final Object fileSet = count > MAX_FILES ? new IdBitSet(count): new IdSet(count);
+    final Object fileSet = new ChangeBufferingList(count);
     attachFileSetForNewValue(value, fileSet);
   }
 
@@ -457,24 +381,33 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         DataInputOutputUtil.writeINT(out, (Integer)input); // most common 90% case during index building
       } else {
         // serialize positive file ids with delta encoding
-        IntIterator inputIdIterator = getIntIteratorFromInput(input);
-        DataInputOutputUtil.writeINT(out, -inputIdIterator.size());
+        ChangeBufferingList originalInput = (ChangeBufferingList)input;
+        IntIterator intIterator = originalInput.intIterator();
+        DataInputOutputUtil.writeINT(out, -intIterator.size());
 
-        if (inputIdIterator.hasAscendingOrder()) {
+        if (intIterator.hasAscendingOrder()) {
+          IdSet checkSet = originalInput.getCheckSet();
+          if (checkSet != null && checkSet.size() != intIterator.size()) {  // debug code
+            int a = 1; assert false;
+          }
           int prev = 0;
-          while(inputIdIterator.hasNext()) {
-            int inputId = inputIdIterator.next();
-            DataInputOutputUtil.writeINT(out, inputId - prev);
-            prev = inputId;
+
+          while (intIterator.hasNext()) {
+            int fileId = intIterator.next();
+            if (checkSet != null && !checkSet.contains(fileId)) { // debug code
+              int a = 1; assert false;
+            }
+            DataInputOutputUtil.writeINT(out, fileId - prev);
+            prev = fileId;
           }
         } else {
           // sorting numbers via bitset before writing deltas
           int max = 0, min = Integer.MAX_VALUE;
 
-          while(inputIdIterator.hasNext()) {
-            int inputId = inputIdIterator.next();
-            max = Math.max(max, inputId);
-            min = Math.min(min, inputId);
+          while(intIterator.hasNext()) {
+            int nextInt = intIterator.next();
+            max = Math.max(max, nextInt);
+            min = Math.min(min, nextInt);
           }
 
           assert min > 0;
@@ -484,9 +417,9 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           final int[] bits = ourSpareBuffer.getBuffer(bitsLength);
           for(int i = 0; i < bitsLength; ++i) bits[i] = 0;
 
-          inputIdIterator = getIntIteratorFromInput(input);
-          while(inputIdIterator.hasNext()) {
-            final int id = inputIdIterator.next() - offset;
+          intIterator = originalInput.intIterator();
+          while(intIterator.hasNext()) {
+            final int id = intIterator.next() - offset;
             bits[id >> INT_BITS_SHIFT] |= (1 << (id));
           }
 
@@ -562,36 +495,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  private static class IntSetIterator implements IntIterator {
-    private final TIntIterator mySetIterator;
-    private final int mySize;
-
-    public IntSetIterator(final TIntHashSet set) {
-      mySetIterator = set.iterator();
-      mySize = set.size();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return mySetIterator.hasNext();
-    }
-
-    @Override
-    public int next() {
-      return mySetIterator.next();
-    }
-
-    @Override
-    public int size() {
-      return mySize;
-    }
-
-    @Override
-    public boolean hasAscendingOrder() {
-      return false;
-    }
-  }
-
   private THashMap<Value, Object> mapCopy(final THashMap<Value, Object> map) {
     if (map == null) {
       return null;
@@ -600,10 +503,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     cloned.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
       @Override
       public boolean execute(Value key, Object val) {
-        if (val instanceof TIntHashSet) {
-          cloned.put(key, ((TIntHashSet)val).clone());
-        } else if (val instanceof IdBitSet) {
-          cloned.put(key, ((IdBitSet)val).clone());
+        if (val instanceof ChangeBufferingList) {
+          cloned.put(key, ((ChangeBufferingList)val).clone());
         }
         return true;
       }
@@ -618,136 +519,4 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return false;
     }
   };
-
-  private static class IdSet extends TIntHashSet {
-
-    private IdSet(final int initialCapacity) {
-      super(initialCapacity, 0.98f);
-    }
-
-    @Override
-    public void compact() {
-      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
-        super.compact();
-      }
-    }
-  }
-
-  private static class IdBitSet implements Cloneable {
-    private static final int SHIFT = 6;
-    private static final int BITS_PER_WORD = 1 << SHIFT;
-    private static final int MASK = BITS_PER_WORD - 1;
-    private long[] myBitMask;
-    private int myBitsSet;
-    private int myLastUsedSlot;
-
-    public IdBitSet(TIntHashSet set) {
-      this(calcMax(set));
-      set.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          set(value);
-          return true;
-        }
-      });
-    }
-
-    private static int calcMax(TIntHashSet set) {
-      final int[] minMax = new int[2];
-      minMax[0] = set.iterator().next();
-      minMax[1] = minMax[0];
-      set.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          minMax[0] = Math.min(minMax[0], value);
-          minMax[1] = Math.max(minMax[1], value);
-          return true;
-        }
-      });
-      return minMax[1];
-    }
-
-    public IdBitSet(int max) {
-      myBitMask = new long[(calcCapacity(max) >> SHIFT) + 1];
-    }
-
-    public void set(int bitIndex) {
-      boolean set = get(bitIndex);
-      if (!set) {
-        ++myBitsSet;
-        int wordIndex = bitIndex >> SHIFT;
-        if (wordIndex >= myBitMask.length) {
-          long[] n = new long[Math.max(calcCapacity(myBitMask.length), wordIndex + 1)];
-          System.arraycopy(myBitMask, 0, n, 0, myBitMask.length);
-          myBitMask = n;
-        }
-        myBitMask[wordIndex] |= 1L << (bitIndex & MASK);
-        myLastUsedSlot = Math.max(myLastUsedSlot, wordIndex);
-      }
-    }
-
-    private static int calcCapacity(int length) {
-      return length + 3 * (length / 5);
-    }
-
-    int numberOfBitsSet() {
-      return myBitsSet;
-    }
-
-    boolean remove(int bitIndex) {
-      if (!get(bitIndex)) return false;
-      --myBitsSet;
-      int wordIndex = bitIndex >> SHIFT;
-      myBitMask[wordIndex] &= ~(1L << (bitIndex & MASK));
-      if (wordIndex == myLastUsedSlot) {
-        while(myLastUsedSlot >= 0 && myBitMask[myLastUsedSlot] == 0) --myLastUsedSlot;
-      }
-      return true;
-    }
-
-    boolean get(int bitIndex) {
-      int wordIndex = bitIndex >> SHIFT;
-      boolean result = false;
-      if (wordIndex < myBitMask.length) {
-        result = (myBitMask[wordIndex] & (1L << (bitIndex & MASK))) != 0;
-      }
-
-      return result;
-    }
-
-    public IdBitSet clone() {
-      try {
-        IdBitSet clone = (IdBitSet)super.clone();
-        if (myBitMask.length != myLastUsedSlot + 1) { // trim to size
-          long[] longs = new long[myLastUsedSlot + 1];
-          System.arraycopy(myBitMask, 0, longs, 0, longs.length);
-          myBitMask = longs;
-        }
-        clone.myBitMask = myBitMask.clone();
-        return clone;
-      } catch (CloneNotSupportedException ex) {
-        LOG.error(ex);
-        return null;
-      }
-    }
-
-    public int nextSetBit(int bitIndex) {
-      int wordIndex = bitIndex >> SHIFT;
-      if (wordIndex >= myBitMask.length) {
-        return -1;
-      }
-
-      long word = myBitMask[wordIndex] & (-1L << bitIndex);
-
-      while (true) {
-        if (word != 0) {
-          return (wordIndex * BITS_PER_WORD) + Long.numberOfTrailingZeros(word);
-        }
-        if (++wordIndex == myBitMask.length) {
-          return -1;
-        }
-        word = myBitMask[wordIndex];
-      }
-    }
-  }
 }
