@@ -20,21 +20,31 @@ import gnu.trove.TIntProcedure;
 
 import java.util.Arrays;
 
+/**
+ * Class buffers changes in 2 modes:
+ * - Accumulating up to MAX_FILES changes appending them *sequentially* to changes array
+ * - Adding changes to randomAccessContainer once it is available: later happens if we accumulated many changes or external client queried
+ * state of the changes: asked for predicate, iterator, isEmpty, etc. We are trying hard to delay transformation of state upon 2nd reason for
+ * performance reasons.
+ * It is assumed that add / remove operations as well as read only operations are externally synchronized, the only synchronization is
+ * performed upon transforming changes array into randomAccessContainer because it can be done during read only operations in several threads
+ */
 public class ChangeBufferingList implements Cloneable {
-  static final int MAX_FILES = 20000;
+  static final int MAX_FILES = 20000; // less than Short.MAX_VALUE
   //static final int MAX_FILES = 100;
+  private volatile int[] changes;
+  private short length;
+  private short removals;
+  private volatile RandomAccessIntContainer randomAccessContainer;
+
   private static final boolean DEBUG = false;
   //private static final boolean DEBUG = false;
-  private volatile int[] changes;
-  private int length;
-  private int removals;
   private IdSet checkSet;
-  private volatile RandomAccessIntContainer randomAccessContainer;
 
   public ChangeBufferingList() { this(3); }
   public ChangeBufferingList(int length) {
     if (length > MAX_FILES) {
-      randomAccessContainer = new IdBitSet(length );
+      randomAccessContainer = new IdBitSet(length);
     } else {
       changes = new int[length];
     }
@@ -52,13 +62,9 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public void add(int value) {
+    ensureCapacity(1);
     if (DEBUG) checkSet.add(value);
     RandomAccessIntContainer intContainer = randomAccessContainer;
-
-    if (intContainer == null && length >= MAX_FILES) {
-      intContainer = getRandomAccessContainer();
-    }
-
     if (intContainer == null) {
       addChange(value);
     } else {
@@ -67,12 +73,12 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   private void addChange(int value) {
-    ensureCapacity(1);
     changes[length++] = value;
     if (value < 0) ++removals;
   }
 
   public void remove(int value) {
+    ensureCapacity(1);
     if (DEBUG) checkSet.remove(value);
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
@@ -113,8 +119,11 @@ public class ChangeBufferingList implements Cloneable {
       if (randomAccessContainer == null) {
         int someElementsNumberEstimation = length - removals;
         int[] minMax = calcMinMax(changes, length);
+
+        // todo we can check these lengths instead of only relying upon reaching MAX_FILES
         int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
         int lengthOfIntSet = 4 * length;
+
         if (someElementsNumberEstimation < MAX_FILES) {
           if (removals == 0) {
             Arrays.sort(currentChanges, 0, length);
@@ -125,6 +134,9 @@ public class ChangeBufferingList implements Cloneable {
           }
         }
         else if (removals == 0) {
+          if (lengthOfBitSet > lengthOfIntSet) {
+            int a = 1;
+          }
           idSet = new IdBitSet(changes, length, 0);
           copyChanges = false;
         } else {
@@ -174,14 +186,21 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public void ensureCapacity(int diff) {
-    if (randomAccessContainer != null) {
-      randomAccessContainer = randomAccessContainer.ensureContainerCapacity(diff);
+    RandomAccessIntContainer intContainer = randomAccessContainer;
+    if (length == MAX_FILES) {
+      intContainer = getRandomAccessContainer(); // transform into more compact storage
+    }
+    if (intContainer != null) {
+      randomAccessContainer = intContainer.ensureContainerCapacity(diff);
       return;
     }
     if (changes == null) {
       changes = new int[Math.max(3, diff)];
     } else if (length + diff > changes.length) {
-      int nextArraySize = Math.max(changes.length < 1024 ? changes.length << 1 : changes.length + changes.length / 5, length + diff);
+      int nextArraySize = Math.min(
+        Math.max(changes.length < 1024 ? changes.length << 1 : changes.length + changes.length / 5, length + diff),
+        MAX_FILES
+      );
       int[] newChanges = new int[nextArraySize];
       System.arraycopy(changes, 0, newChanges, 0, length);
       changes = newChanges;
