@@ -406,13 +406,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           final TreeTableView treeView = myDualView.getTreeView();
           final int lastRow = treeView.getRowCount() - 1;
           if (lastRow >= 0) {
-            treeView.addRowSelectionInterval(lastRow, lastRow);
             treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
           }
-        }
-        final TableView flatView = myDualView.getFlatView();
-        if (flatView.getRowCount() > 0) {
-          flatView.addRowSelectionInterval(0, 0);
         }
         myInRefresh = false;
         myTargetSelection = null;
