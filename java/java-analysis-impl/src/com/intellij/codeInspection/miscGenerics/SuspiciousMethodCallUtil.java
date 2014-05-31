@@ -15,11 +15,14 @@
  */
 package com.intellij.codeInspection.miscGenerics;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.IntArrayList;
+import com.sun.corba.se.impl.corba.TCUtility;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +42,15 @@ public class SuspiciousMethodCallUtil {
     if (collectionClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(collectionClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
+
       MethodSignature containsSignature = MethodSignatureUtil.createMethodSignature("contains", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod contains = MethodSignatureUtil.findMethodBySignature(collectionClass, containsSignature, false);
       addMethod(contains, 0, patternMethods, indices);
+
+      PsiClassType wildcardCollection = javaPsiFacade.getElementFactory().createType(collectionClass, PsiWildcardType.createUnbounded(manager));
+      MethodSignature removeAllSignature = MethodSignatureUtil.createMethodSignature("removeAll", new PsiType[] {wildcardCollection}, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      PsiMethod removeAll = MethodSignatureUtil.findMethodBySignature(collectionClass, removeAllSignature, false);
+      addMethod(removeAll, 0, patternMethods, indices);
     }
 
     final PsiClass listClass = javaPsiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST, searchScope);
@@ -143,6 +152,22 @@ public class SuspiciousMethodCallUtil {
       final PsiTypeParameter typeParameter = typeParameters[index];
       PsiType typeParamMapping = substitutor.substitute(typeParameter);
       if (typeParamMapping == null) return null;
+
+      PsiParameter[] parameters = patternMethod.getParameterList().getParameters();
+      if (parameters.length == 1 && "removeAll".equals(patternMethod.getName())) {
+        PsiType paramType = parameters[0].getType();
+        if (InheritanceUtil.isInheritor(paramType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          PsiType qualifierType = qualifier.getType();
+          if (qualifierType != null && !qualifierType.isAssignableFrom(argType)) {
+            final PsiType itemType = JavaGenericsUtil.getCollectionItemType(argType, calleeMethod.getResolveScope());
+            return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
+                                                PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));
+          }
+          return null;
+        }
+      }
+
       String message = null;
       if (typeParamMapping instanceof PsiCapturedWildcardType) {
         typeParamMapping = ((PsiCapturedWildcardType)typeParamMapping).getWildcard();
