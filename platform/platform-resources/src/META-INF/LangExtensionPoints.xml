@@ -338,6 +338,8 @@
 
     <!-- File-Based Index-->
     <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
+    <extensionPoint name="fileContentIndexingVoter" interface="com.intellij.util.indexing.FileContentIndexingVoter"
+                    area="IDEA_PROJECT"/>
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexedRootsProvider"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>

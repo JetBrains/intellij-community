@@ -40,6 +40,12 @@ import java.util.Set;
  * Author: dmitrylomov
  */
 public abstract class FileBasedIndex implements BaseComponent {
+  public abstract boolean isFileContentIndexable(@NotNull VirtualFile file);
+
+  public abstract void registerFileContentIndexingVoter(@NotNull FileContentIndexingVoter voter);
+
+  public abstract void removeFileContentIndexingVoter(@NotNull FileContentIndexingVoter voter);
+
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);

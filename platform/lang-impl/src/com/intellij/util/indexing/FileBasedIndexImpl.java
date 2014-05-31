@@ -120,6 +120,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<IndexableFileSet, Project>();
 
+  private final List<FileContentIndexingVoter> myFileContentIndexingVoters = ContainerUtil.createLockFreeCopyOnWriteList();
+
   private static final int OK = 1;
   private static final int REQUIRES_REBUILD = 2;
   private static final int REBUILD_IN_PROGRESS = 3;
@@ -1337,7 +1339,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       else if (transactedDocuments.size() > 0) {
         documents = new THashSet<Document>(documents);
         documents.addAll(transactedDocuments);
-      }
+    }
     }
 
     if (!documents.isEmpty()) {
@@ -1471,6 +1473,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       FileTypeManagerImpl.cacheFileType(vFile, vFile.getFileType());
       try {
         if (!isTooLarge(vFile, contentText.length()) &&
+            isFileContentIndexable(vFile) &&
             getAffectedIndexCandidates(vFile).contains(requestedIndexId) &&
             getInputFilter(requestedIndexId).acceptInput(vFile)) {
           // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
@@ -1702,7 +1705,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public boolean isIndexingCandidate(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    return !isTooLarge(file) && getAffectedIndexCandidates(file).contains(indexId);
+    return !isTooLarge(file) && isFileContentIndexable(file) && getAffectedIndexCandidates(file).contains(indexId);
   }
 
   @NotNull
@@ -1941,7 +1944,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
           // can be client that used indices between before and after events, in such case indices are up to date due to force update
           // with old content)
-          if (!fileIsDirectory && !isTooLarge(file)) {
+          if (!fileIsDirectory && !isTooLarge(file) && isFileContentIndexable(file)) {
             FileTypeManagerImpl.cacheFileType(file, file.getFileType());
             try {
               final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
@@ -2052,7 +2055,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             }
           });
           // the file is for sure not a dir and it was previously indexed by at least one index
-          if (!isTooLarge(file)) scheduleForUpdate(file);
+          if (!isTooLarge(file) && isFileContentIndexable(file)) scheduleForUpdate(file);
         }
       }
       else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index
@@ -2237,7 +2240,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
         try {
-          if (isTooLarge(file)) {
+          if (isTooLarge(file) || !isFileContentIndexable(file)) {
             removeFileDataFromIndices(ContainerUtil.intersection(IndexingStamp.getNontrivialFileIndexedStates(file), myRequiringContentIndices), file);
           }
           else {
@@ -2312,7 +2315,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         FileTypeManagerImpl.cacheFileType(file, type);
 
         boolean oldStuff = true;
-        if (file.isDirectory() || !isTooLarge(file)) {
+        if (file.isDirectory() || (!isTooLarge(file) && isFileContentIndexable(file))) {
           final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
           //noinspection ForLoopReplaceableByForEach
           for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
@@ -2406,6 +2409,26 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @NotNull
   public CollectingContentIterator createContentIterator(@Nullable ProgressIndicator indicator) {
     return new UnindexedFilesFinder(indicator);
+  }
+
+  @Override
+  public boolean isFileContentIndexable(@NotNull VirtualFile file) {
+    for (FileContentIndexingVoter fileContentIndexingPolicy : myFileContentIndexingVoters) {
+      if (!fileContentIndexingPolicy.isIndexable(file)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void registerFileContentIndexingVoter(@NotNull FileContentIndexingVoter voter) {
+    myFileContentIndexingVoters.add(voter);
+  }
+
+  @Override
+  public void removeFileContentIndexingVoter(@NotNull FileContentIndexingVoter voter) {
+    myFileContentIndexingVoters.remove(voter);
   }
 
   @Override
