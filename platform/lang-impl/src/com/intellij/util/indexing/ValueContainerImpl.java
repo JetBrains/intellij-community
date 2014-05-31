@@ -86,6 +86,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
+  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<ID>();
+
   @Override
   public void removeAssociatedValue(int inputId) {
     if (myInputIdMapping == null) return;
@@ -95,7 +97,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       if (getValueAssociationPredicate(value).contains(inputId)) {
         if (toRemove == null) toRemove = new SmartList<Value>();
         else if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
-          LOG.error("Expected only one value per-inputId", String.valueOf(toRemove.get(0)), String.valueOf(value));
+          LOG.error("Expected only one value per-inputId for " + ourDebugIndexInfo.get(), String.valueOf(toRemove.get(0)), String.valueOf(value));
         }
         toRemove.add(value);
       }
