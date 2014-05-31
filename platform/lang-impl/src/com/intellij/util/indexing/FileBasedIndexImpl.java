@@ -1332,7 +1332,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     Set<Document> documents = getUnsavedDocuments();
     boolean psiBasedIndex = myPsiDependentIndices.contains(indexId);
     if(psiBasedIndex) {
-      documents.addAll(getTransactedDocuments());
+      Set<Document> transactedDocuments = getTransactedDocuments();
+      if (documents.size() == 0) documents = transactedDocuments;
+      else if (transactedDocuments.size() > 0) {
+        documents = new THashSet<Document>(documents);
+        documents.addAll(transactedDocuments);
+      }
     }
 
     if (!documents.isEmpty()) {
