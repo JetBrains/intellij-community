@@ -216,11 +216,11 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   }
 
   /**
-   * Checks if the folding ranges could be created in the Dumb Mode. In the most of
-   * language implementations the method returns true, but for strong context-dependant
+   * Checks if the folding ranges can be created in the Dumb Mode. In the most of
+   * language implementations the method returns true, but for strong context-dependent
    * languages (like ObjC/C++) overridden method returns false.
    *
-   * @return True if the folding ranges could be created in the Dumb Mode
+   * @return True if the folding ranges can be created in the Dumb Mode
    */
   @Override
   public boolean isDumbAware() {
