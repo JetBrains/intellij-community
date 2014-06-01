@@ -229,7 +229,7 @@ public class StackVarsProcessor {
 				if(nd.statement.type == Statement.TYPE_DO) {
 					DoStatement loop = (DoStatement)nd.statement;
 					
-					if(nd.type == DirectNode.NODE_INCREMENT && loop.getLooptype() == DoStatement.LOOP_FOR) { // "downgrade" loop to 'while'
+					if(loop.getLooptype() == DoStatement.LOOP_FOR && loop.getInitExprent() == null && loop.getIncExprent() == null) { // "downgrade" loop to 'while'
 						loop.setLooptype(DoStatement.LOOP_WHILE);
 					}
 				}

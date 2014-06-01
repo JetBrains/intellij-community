@@ -295,6 +295,7 @@ public class IdeaNotNullHelper {
 										}										
 										
 										sequence.getStats().removeWithKey(ifstat.id);
+										sequence.setFirst(sequence.getStats().get(0));
 										
 										return true;
 									}
