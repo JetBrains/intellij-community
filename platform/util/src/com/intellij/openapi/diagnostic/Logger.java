@@ -143,6 +143,7 @@ public abstract class Logger {
       error(resultMessage, new Throwable());
     }
 
+    //noinspection ConstantConditions
     return value;
   }
 
