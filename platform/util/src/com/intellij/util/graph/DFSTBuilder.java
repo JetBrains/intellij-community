@@ -99,7 +99,7 @@ public class DFSTBuilder<Node> {
           Node prev = it.next();
           Integer prevNumber = myNodeToNNumber.get(prev);
           if (prevNumber != null && prevNumber.intValue() > nNumber) {
-            myBackEdge = Couple.newOne(node, prev);
+            myBackEdge = Couple.of(node, prev);
             break;
           }
         }

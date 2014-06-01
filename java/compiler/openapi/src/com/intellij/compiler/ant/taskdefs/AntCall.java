@@ -27,6 +27,6 @@ import com.intellij.openapi.util.Couple;
 public class AntCall extends Tag{
 
   public AntCall(final String target) {
-    super("antcall", Couple.newOne("target", target));
+    super("antcall", Couple.of("target", target));
   }
 }

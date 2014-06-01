@@ -222,7 +222,7 @@ public class RemoteUtil {
         return method.invoke(myRemote, args);
       }
       else {
-        Method remoteMethod = ourRemoteToLocalMap.get(Couple.newOne(myRemote.getClass(), myClazz)).get(method);
+        Method remoteMethod = ourRemoteToLocalMap.get(Couple.of(myRemote.getClass(), myClazz)).get(method);
         if (remoteMethod == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
         return invokeRemote(method, remoteMethod, myRemote, args, myLoader, false);
       }

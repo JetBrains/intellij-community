@@ -837,7 +837,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       int row = (y - top - 2) / 31;
       row = row > 1 ? 1 : row;
 
-      return row >= 0 && col >= 0 ? Couple.newOne(row, col) : null;
+      return row >= 0 && col >= 0 ? Couple.of(row, col) : null;
     }
 
     @Override

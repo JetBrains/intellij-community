@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class PatternSetRef extends Tag{
   public PatternSetRef(@NonNls final String refid) {
     //noinspection HardCodedStringLiteral
-    super("patternset", Couple.newOne("refid", refid));
+    super("patternset", Couple.of("refid", refid));
   }
 }

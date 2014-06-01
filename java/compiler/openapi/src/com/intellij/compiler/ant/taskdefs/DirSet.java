@@ -28,6 +28,6 @@ public class DirSet extends Tag{
 
   public DirSet(@NonNls final String dir) {
     //noinspection HardCodedStringLiteral
-    super("dirset", Couple.newOne("dir", dir));
+    super("dirset", Couple.of("dir", dir));
   }
 }

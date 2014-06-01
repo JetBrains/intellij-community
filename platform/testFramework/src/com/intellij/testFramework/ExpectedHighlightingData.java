@@ -569,7 +569,7 @@ public class ExpectedHighlightingData {
       i++;
     }
 
-    return Couple.newOne(i, endPos);
+    return Couple.of(i, endPos);
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {

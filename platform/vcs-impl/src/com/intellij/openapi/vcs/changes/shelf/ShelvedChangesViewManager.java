@@ -278,7 +278,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private void putMovedMessage(final String beforeName, final String afterName) {
     final String movedMessage = RelativePathCalculator.getMovedString(beforeName, afterName);
     if (movedMessage != null) {
-      myMoveRenameInfo.put(Couple.newOne(beforeName, afterName), movedMessage);
+      myMoveRenameInfo.put(Couple.of(beforeName, afterName), movedMessage);
     }
   }
 
@@ -470,7 +470,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        final String movedMessage = myMoveRenameInfo.get(Couple.newOne(change.getBeforePath(), change.getAfterPath()));
+        final String movedMessage = myMoveRenameInfo.get(Couple.of(change.getBeforePath(), change.getAfterPath()));
         renderFileName(change.getBeforePath(), change.getFileStatus(), movedMessage);
       }
       else if (nodeValue instanceof ShelvedBinaryFile) {
@@ -479,7 +479,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         if (path == null) {
           path = binaryFile.AFTER_PATH;
         }
-        final String movedMessage = myMoveRenameInfo.get(Couple.newOne(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
+        final String movedMessage = myMoveRenameInfo.get(Couple.of(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
         renderFileName(path, binaryFile.getFileStatus(), movedMessage);
       }
     }

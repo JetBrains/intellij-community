@@ -56,12 +56,12 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
             if (file instanceof PropertiesFile) {
               List<String> modelImports = tokenize(((PropertiesFile)file).findPropertyByKey("models"));
               List<String> viewImports = tokenize(((PropertiesFile)file).findPropertyByKey("views"));
-              return Result.create(Couple.newOne(modelImports, viewImports), PsiModificationTracker.MODIFICATION_COUNT);
+              return Result.create(Couple.of(modelImports, viewImports), PsiModificationTracker.MODIFICATION_COUNT);
             }
           }
         }
 
-        return Result.create(Couple.<List<String>>newOne(new ArrayList<String>(), new ArrayList<String>()),
+        return Result.create(Couple.<List<String>>of(new ArrayList<String>(), new ArrayList<String>()),
                              PsiModificationTracker.MODIFICATION_COUNT);
       }
 

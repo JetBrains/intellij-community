@@ -85,7 +85,7 @@ public class PropertyFileGeneratorImpl extends PropertyFileGenerator {
   }
 
   public void addProperty(String name, String value) {
-    myProperties.add(Couple.newOne(name, value));
+    myProperties.add(Couple.of(name, value));
   }
 
   @Override

@@ -128,7 +128,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     String[] splitted = value.split("=");
 
     if (splitted.length == 2) {
-      return Couple.newOne(splitted[0].trim(), splitted[1].trim());
+      return Couple.of(splitted[0].trim(), splitted[1].trim());
     }
 
     return null;

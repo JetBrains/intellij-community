@@ -40,7 +40,7 @@ public class ProblemDescriptorUtil {
   @interface FlagConstant {
   }
 
-  public static Couple<String> XML_CODE_MARKER = Couple.newOne("<xml-code>", "</xml-code>");
+  public static Couple<String> XML_CODE_MARKER = Couple.of("<xml-code>", "</xml-code>");
 
   public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";

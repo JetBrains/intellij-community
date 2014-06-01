@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class AntProject extends Tag {
   public AntProject(@NonNls String name, @NonNls String defaultTarget) {
     //noinspection HardCodedStringLiteral
-    super("project", Couple.newOne("name", name), Couple.newOne("default", defaultTarget));
+    super("project", Couple.of("name", name), Couple.of("default", defaultTarget));
   }
 }

@@ -125,7 +125,7 @@ public class ActionMacro implements JDOMExternalizable {
         TypedDescriptor typedDescriptor = (TypedDescriptor)action;
         actionNode.setText(typedDescriptor.getText().replaceAll(" ", "&#x20;"));
         actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(
-          Couple.newOne(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
+          Couple.of(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
       }
       else if (action instanceof IdActionDescriptor) {
         actionNode = new Element(ELEMENT_ACTION);

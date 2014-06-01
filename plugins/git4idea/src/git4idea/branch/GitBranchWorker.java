@@ -152,7 +152,7 @@ public final class GitBranchWorker {
       // we treat it as critical and report an error
       throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + repository.getRoot() + "]", e);
     }
-    return Couple.newOne(headToBranch, branchToHead);
+    return Couple.of(headToBranch, branchToHead);
   }
   
   private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull GitCommitCompareInfo compareInfo,

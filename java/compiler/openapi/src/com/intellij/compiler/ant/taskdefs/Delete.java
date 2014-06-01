@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class Delete extends Tag{
   public Delete(@NonNls String dir) {
     //noinspection HardCodedStringLiteral
-    super("delete", Couple.newOne("dir", dir));
+    super("delete", Couple.of("dir", dir));
   }
 }

@@ -62,13 +62,13 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
                                     PatternSetRef compilerExcludes,
                                     Tag srcTag,
                                     String outputPathRef) {
-    Tag groovyc = new Tag("groovyc", Couple.newOne("destdir", outputPathRef), Couple.newOne("fork", "yes"));
+    Tag groovyc = new Tag("groovyc", Couple.of("destdir", outputPathRef), Couple.of("fork", "yes"));
     // note that boot classpath tag is ignored
     groovyc.add(srcTag);
     groovyc.add(classpathTag);
     groovyc.add(compilerExcludes);
     final Tag javac =
-      new Tag("javac", Couple.newOne("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
+      new Tag("javac", Couple.of("debug", BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_GENERATE_DEBUG_INFO)));
     javac.add(compilerArgs);
     groovyc.add(javac);
     generator.add(groovyc);
@@ -99,8 +99,8 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
     String groovySdkPathRef = BuildProperties.getLibraryPathId(sdkLib.getName());
     generator.add(new Property(GROOVYC_TASK_SDK_PROPERTY, groovySdkPathRef));
     //noinspection HardCodedStringLiteral
-    Tag taskdef = new Tag("taskdef", Couple.newOne("name", "groovyc"), Couple.newOne("classname", "org.codehaus.groovy.ant.Groovyc"),
-                          Couple.newOne("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
+    Tag taskdef = new Tag("taskdef", Couple.of("name", "groovyc"), Couple.of("classname", "org.codehaus.groovy.ant.Groovyc"),
+                          Couple.of("classpathref", "${" + GROOVYC_TASK_SDK_PROPERTY + "}"));
     generator.add(taskdef);
   }
 

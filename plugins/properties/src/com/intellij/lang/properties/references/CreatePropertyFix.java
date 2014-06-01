@@ -138,7 +138,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     final Collection<PropertiesFile> selectedPropertiesFiles = model.getAllPropertiesFiles();
     createProperty(project, psiElement, selectedPropertiesFiles, key, value);
 
-    return Couple.newOne(key, value);
+    return Couple.of(key, value);
   }
 
   public static void createProperty(@NotNull final Project project,

@@ -148,14 +148,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
       final String localPath = entry.getKey();
       final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-      states.put(Couple.newOne(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
+      states.put(Couple.of(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
     }
     createPanels(myLocation, new Runnable() {
       public void run() {
         for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
           final String localPath = entry.getKey();
           final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-          final Couple<String> key = Couple.newOne(localPath, wcInfo.getUrl().toString());
+          final Couple<String> key = Couple.of(localPath, wcInfo.getUrl().toString());
           final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
           if (infoHolder !=  null) {
             entry.getValue().initSelection(infoHolder);

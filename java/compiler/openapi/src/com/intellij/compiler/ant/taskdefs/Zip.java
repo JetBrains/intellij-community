@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class Zip extends Tag {
   public Zip(@NonNls final String destFile) {
     //noinspection HardCodedStringLiteral
-    super("zip", Couple.newOne("destfile", destFile));
+    super("zip", Couple.of("destfile", destFile));
   }
 }

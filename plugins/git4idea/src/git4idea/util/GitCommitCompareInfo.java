@@ -66,7 +66,7 @@ public class GitCommitCompareInfo {
     Couple<List<GitCommit>> pair = myInfo.get(repo);
     if (pair == null) {
       LOG.error("Compare info not found for repository " + repo);
-      return Couple.newOne(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
+      return Couple.of(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
     }
     return pair;
   }

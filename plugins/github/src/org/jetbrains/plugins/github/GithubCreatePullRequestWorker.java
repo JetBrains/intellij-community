@@ -451,7 +451,7 @@ public class GithubCreatePullRequestWorker {
       Collection<Change> diff = GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), targetBranch, currentBranch, null);
       GitCommitCompareInfo info = new GitCommitCompareInfo(GitCommitCompareInfo.InfoType.BRANCH_TO_HEAD);
       info.put(repository, diff);
-      info.put(repository, Couple.newOne(commits1, commits2));
+      info.put(repository, Couple.of(commits1, commits2));
       return new DiffInfo(info, currentBranch, targetBranch);
     }
     catch (VcsException e) {

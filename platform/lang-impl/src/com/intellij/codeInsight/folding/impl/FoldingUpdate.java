@@ -103,7 +103,7 @@ public class FoldingUpdate {
           PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
           return getUpdateResult(file, document, param.first, project, editor, param.second);
         }
-      }, false, Couple.newOne(quick, applyDefaultState));
+      }, false, Couple.of(quick, applyDefaultState));
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,

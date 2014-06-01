@@ -583,7 +583,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
     }
     final File tmpFile = FileUtil.findSequentNonexistentFile(myStorageForUndo, "tmp", "");
-    myUndoStorageContents.add(0, Couple.newOne(new File(file.getPath()), tmpFile));
+    myUndoStorageContents.add(0, Couple.of(new File(file.getPath()), tmpFile));
     new File(file.getPath()).renameTo(tmpFile);
   }
 

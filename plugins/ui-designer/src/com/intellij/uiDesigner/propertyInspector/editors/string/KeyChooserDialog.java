@@ -153,7 +153,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       final String key = property.getUnescapedKey();
       final String value = property.getValue();
       if (key != null) {
-        myPairs.add(Couple.newOne(key, value != null ? value : NULL));
+        myPairs.add(Couple.of(key, value != null ? value : NULL));
       }
     }
     Collections.sort(myPairs, new MyPairComparator());

@@ -152,8 +152,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private final static Couple<AtomicBoolean> ourPressed = Couple.newOne(new AtomicBoolean(false), new AtomicBoolean(false));
-  private final static Couple<AtomicBoolean> ourReleased = Couple.newOne(new AtomicBoolean(false), new AtomicBoolean(false));
+  private final static Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
+  private final static Couple<AtomicBoolean> ourReleased = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private static AtomicBoolean showAll = new AtomicBoolean(false);

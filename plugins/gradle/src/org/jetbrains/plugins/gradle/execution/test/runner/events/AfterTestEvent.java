@@ -119,7 +119,7 @@ public class AfterTestEvent extends AbstractTestEvent {
   private static Couple<String> parseComparisonMessage(String message, final String regex) {
     final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
     if (matcher.matches()) {
-      return Couple.newOne(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      return Couple.of(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
     }
     return null;
   }

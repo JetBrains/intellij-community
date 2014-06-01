@@ -128,7 +128,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       }
     }
 
-    return Couple.newOne(codes, modifiers);
+    return Couple.of(codes, modifiers);
   }
 
   public static String unparseKeyCodes(Couple<List<Integer>> pairs) {

@@ -1104,7 +1104,7 @@ public abstract class PropertyTable extends JBTable {
 
     int afterIcon = Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth());
 
-    return Couple.newOne(beforeIcon, afterIcon);
+    return Couple.of(beforeIcon, afterIcon);
   }
 
   private class PropertyCellEditorListener implements PropertyEditorListener {

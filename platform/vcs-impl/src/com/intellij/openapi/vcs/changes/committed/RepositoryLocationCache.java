@@ -46,7 +46,7 @@ public class RepositoryLocationCache {
   }
 
   public RepositoryLocation getLocation(final AbstractVcs vcs, final FilePath filePath, final boolean silent) {
-    final Couple<String> key = Couple.newOne(vcs.getName(), filePath.getIOFile().getAbsolutePath());
+    final Couple<String> key = Couple.of(vcs.getName(), filePath.getIOFile().getAbsolutePath());
     RepositoryLocation location = myMap.get(key);
     if (location != null) {
       return location;

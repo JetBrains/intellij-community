@@ -767,7 +767,7 @@ public final class EditorUtil {
     if (second.line >= document.getLineCount()) {
       second = editor.offsetToLogicalPosition(document.getTextLength());
     }
-    return Couple.newOne(first, second);
+    return Couple.of(first, second);
   }
 
   /**

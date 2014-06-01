@@ -50,7 +50,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
       return ContainerUtil.map(myOtherEntries, new Function<Couple<GrExpression>, Couple<PsiType>>() {
         @Override
         public Couple<PsiType> fun(Couple<GrExpression> pair) {
-          return Couple.newOne(pair.first.getType(), pair.second.getType());
+          return Couple.of(pair.first.getType(), pair.second.getType());
         }
       });
     }
@@ -90,7 +90,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
         myStringEntries.put(name, expression);
       }
       else if (label.getExpression() != null) {
-        myOtherEntries.add(Couple.newOne(label.getExpression(), expression));
+        myOtherEntries.add(Couple.of(label.getExpression(), expression));
       }
     }
   }

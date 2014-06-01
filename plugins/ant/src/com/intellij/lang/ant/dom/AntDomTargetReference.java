@@ -87,7 +87,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
                     if (prefixNamePairs == null) {
                       prefixNamePairs = new ArrayList<Couple<String>>(); // lazy init
                     }
-                    prefixNamePairs.add(Couple.newOne(prefix, candidateName));
+                    prefixNamePairs.add(Couple.of(prefix, candidateName));
                   }
                 }
               }

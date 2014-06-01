@@ -122,7 +122,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
       final String prefix = commenter.getBlockCommentPrefix();
       final String suffix = commenter.getBlockCommentSuffix();
       if (prefix != null || suffix != null) {
-        return Couple.newOne(StringUtil.notNullize(prefix), StringUtil.notNullize(suffix));
+        return Couple.of(StringUtil.notNullize(prefix), StringUtil.notNullize(suffix));
       }
     }
     return null;
