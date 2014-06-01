@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +103,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         if (dbOnly) {
           return file.isDirectory()? ((NewVirtualFile)file).iterInDbChildren() : null;
         }
-        return null;
+        if (file.equals(fromFile) || !file.isDirectory()) {
+          return null; // skipping additional checks for the initial file and non-directory files
+        }
+        // optimization: for all files that are not under content of currently opened projects iterate over DB children
+        return isInContentOfOpenedProject(file)? null : ((NewVirtualFile)file).iterInDbChildren();
       }
     });
   }
@@ -164,83 +169,80 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             }
             notifyFilesDeleted(toMark);
           }
-          markDirtyIfSource(eventFile, false);
+          collectPathsAndNotify(eventFile, NOTIFY_CHANGED);
         }
       }
     }
 
     public void contentsChanged(@NotNull final VirtualFileEvent event) {
-      markDirtyIfSource(event.getFile(), false);
+      collectPathsAndNotify(event.getFile(), NOTIFY_CHANGED);
     }
 
     public void fileCreated(@NotNull final VirtualFileEvent event) {
-      processNewFile(event.getFile());
+      collectPathsAndNotify(event.getFile(), NOTIFY_CHANGED);
     }
 
     public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
-      processNewFile(event.getFile());
+      collectPathsAndNotify(event.getFile(), NOTIFY_CHANGED);
     }
 
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      processNewFile(event.getFile());
+      collectPathsAndNotify(event.getFile(), NOTIFY_CHANGED);
     }
 
     public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-      final VirtualFile eventFile = event.getFile();
-      if (isInContentOfOpenedProject(eventFile)) {
-        if ((LOG.isDebugEnabled() && eventFile.isDirectory()) || ourDebugMode) {
-          final String message = "Processing file deletion: " + eventFile.getPresentableUrl();
-          LOG.debug(message);
-          if (ourDebugMode) {
-            System.out.println(message);
-          }
-        }
-
-        final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-
-        processRecursively(eventFile, true, new FileProcessor() {
-          public void execute(final VirtualFile file) {
-            pathsToMark.add(new File(file.getPath()));
-          }
-        });
-
-        notifyFilesDeleted(pathsToMark);
-      }
+      collectPathsAndNotify(event.getFile(), NOTIFY_DELETED);
     }
 
     public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-      markDirtyIfSource(event.getFile(), true);
-    }
-
-    private void markDirtyIfSource(final VirtualFile file, final boolean fromMove) {
-      if (isInContentOfOpenedProject(file)) {
-        final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-        processRecursively(file, false, new FileProcessor() {
-          public void execute(final VirtualFile file) {
-            pathsToMark.add(new File(file.getPath()));
-          }
-        });
-        if (fromMove) {
-          notifyFilesDeleted(pathsToMark);
-        }
-        else {
-          notifyFilesChanged(pathsToMark);
-        }
-      }
+      collectPathsAndNotify(event.getFile(), NOTIFY_DELETED);
     }
   }
 
-  private static void processNewFile(final VirtualFile file) {
-    if (isInContentOfOpenedProject(file)) {
-      final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      processRecursively(file, false, new FileProcessor() {
-        @Override
-        public void execute(VirtualFile file) {
+  
+  private static final Function<Collection<File>, Void> NOTIFY_CHANGED = new Function<Collection<File>, Void>() {
+    public Void fun(Collection<File> files) {
+      notifyFilesChanged(files);
+      return null;
+    }
+  };
+
+  private static final Function<Collection<File>, Void> NOTIFY_DELETED = new Function<Collection<File>, Void>() {
+    public Void fun(Collection<File> files) {
+      notifyFilesDeleted(files);
+      return null;
+    }
+  };
+  
+  private static void collectPathsAndNotify(final VirtualFile file, final Function<Collection<File>, Void> notification) {
+    final Set<File> pathsToMark = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final boolean inContent = isInContentOfOpenedProject(file);
+    if (inContent || !isIgnoredOrUnderIgnoredDirectory(file)) {
+      processRecursively(file, !inContent, new FileProcessor() {
+        public void execute(final VirtualFile file) {
           pathsToMark.add(new File(file.getPath()));
         }
       });
-      notifyFilesChanged(pathsToMark);
     }
+    if (!pathsToMark.isEmpty()) {
+      notification.fun(pathsToMark);
+    }
+  }
+
+  private static boolean isIgnoredOrUnderIgnoredDirectory(final VirtualFile file) {
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager.isFileIgnored(file)) {
+      return true;
+    }
+
+    VirtualFile current = file.getParent();
+    while (current != null) {
+      if (fileTypeManager.isFileIgnored(current)) {
+        return true;
+      }
+      current = current.getParent();
+    }
+    return false;
   }
 
   private static void notifyFilesChanged(Collection<File> paths) {
