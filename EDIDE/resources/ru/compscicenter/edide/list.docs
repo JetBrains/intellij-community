@@ -1,0 +1,8 @@
+<html>
+Вот список функций для работы со списками:<br>
+<b>list.append(x)</b> <br>
+Add an item to the end of the list; equivalent to a[len(a):] = [x]. <br>
+
+<b>list.extend(L)</b> <br>
+Extend the list by appending all the items in the given list; equivalent to a[len(a):] = L.
+</html>

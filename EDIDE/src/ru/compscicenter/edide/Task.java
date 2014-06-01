@@ -1,5 +1,7 @@
 package ru.compscicenter.edide;
 
+import com.intellij.openapi.editor.LogicalPosition;
+
 import java.util.ArrayList;
 
 /**
@@ -8,7 +10,7 @@ import java.util.ArrayList;
  * Time: 18:16
  */
 public class Task {
-    ArrayList<String> fileNames;
+    ArrayList<TaskFile> files;
     private StringBuilder taskText;
     private  String test;
 
@@ -21,14 +23,18 @@ public class Task {
     }
 
     public Task(int n) {
-        fileNames =  new ArrayList<String>(n);
+        files =  new ArrayList<TaskFile>(n);
         taskText = new StringBuilder();
     }
-    public void setFileName(String name) {
-        fileNames.add(name);
+    public void addTaskFile(TaskFile taskFile) {
+        files.add(taskFile);
     }
     public int getFileNum() {
-        return fileNames.size();
+        return files.size();
+    }
+
+    public TaskFile getTaskFile(int index) {
+        return files.get(index);
     }
     public void addTaskTextLine(String line) {
         taskText.append(line);
@@ -37,6 +43,20 @@ public class Task {
         return taskText.toString();
     }
     public boolean contains(String filename) {
-        return fileNames.contains(filename);
+        for (TaskFile f : files) {
+            if (f.getName().equals(filename)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public TaskFile getTaskFilebyName(String name) {
+        for (TaskFile f: files) {
+            if (f.getName().equals(name)) {
+                return f;
+            }
+        }
+        return null;
     }
 }

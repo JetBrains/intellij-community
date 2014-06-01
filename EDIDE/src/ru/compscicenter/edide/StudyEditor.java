@@ -35,10 +35,15 @@ public class StudyEditor implements FileEditor {
     public StudyEditor(Project project, VirtualFile file) {
         defaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
         comp = defaultEditor.getComponent();
-        JLabel taskText = new JLabel("<html>" + getTextForTask(file) + "<br>" + "some text </html>");
+        JLabel taskText = new JLabel(getTextForTask(file));
         taskText.setFont(new Font("Arial", Font.PLAIN, 16));
         comp.add(taskText, BorderLayout.NORTH);
     }
+
+    public FileEditor getDefaultEditor() {
+        return defaultEditor;
+    }
+
     @NotNull
     @Override
     public JComponent getComponent() {

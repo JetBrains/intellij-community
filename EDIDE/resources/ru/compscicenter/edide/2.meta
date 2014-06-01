@@ -1,1 +1,6 @@
-Write your second sample program.
+<html>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;Given a list of strings, return the count of the number of </p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;strings where the string length is 2 or more and the first </p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;and last chars of the string are the same.</p>
+<br><br>
+</html>

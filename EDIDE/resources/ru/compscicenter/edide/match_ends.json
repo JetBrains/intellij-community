@@ -1,9 +1,25 @@
 {
    "windows_num":4,
    "windows_description":[
-    {"line":2, "start":43, "text":"condition", "possible answer":">=2"},
-    {"line":2, "start":61, "text":"index", "possible answer":"0"},
-    {"line":2, "start":73, "text":"index", "possible answer":"-1"},
-    {"line":3, "start":11, "text":"function", "possible answer":"len"}
+    {"line":2,
+     "start":43,
+     "text":"condition",
+     "docs":"empty_study.docs",
+     "possible answer":">="},
+    {"line":2,
+     "start":61,
+     "text":"index",
+      "docs":"empty_study.docs",
+      "possible answer":"0"},
+    {"line":2,
+    "start":73,
+    "text":"index",
+    "docs":"empty_study.docs",
+    "possible answer":"-1"},
+    {"line":3,
+    "start":11,
+    "text":"function",
+    "docs":"list.docs",
+    "possible answer":"len"}
     ]
 }
