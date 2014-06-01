@@ -2,6 +2,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.RuntimeException;
+
 class Contracts {
 
   public void simpleFail(@Nullable String message) {
@@ -11,12 +13,12 @@ class Contracts {
 
   @Contract("_->fail")
   private void notBlank(@Nullable Object message) {
-
+    throw new RuntimeException();
   }
 
   @Contract("_,_,_->fail")
   private void notBlank(@Nullable Object o, String message, Object... args) {
-
+    throw new RuntimeException();
   }
 
   public void varargFail(@Nullable String message) {

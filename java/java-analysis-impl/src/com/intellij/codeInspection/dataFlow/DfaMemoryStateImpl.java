@@ -474,6 +474,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaVar instanceof DfaConstValue && ((DfaConstValue)dfaVar).getValue() != null) {
       return true;
     }
+    if (dfaVar instanceof DfaTypeValue && ((DfaTypeValue)dfaVar).isNotNull()) {
+      return true;
+    }
 
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
     int c1Index = getEqClassIndex(dfaVar);
