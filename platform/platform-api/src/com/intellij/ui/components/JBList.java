@@ -192,7 +192,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return myEmptyText;
   }
 
-  public void setEmptyText(String text) {
+  public void setEmptyText(@NotNull String text) {
     myEmptyText.setText(text);
   }
 
