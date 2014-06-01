@@ -43,7 +43,7 @@ public class UseCoupleQuickFix extends LocalQuickFixBase {
       final PsiTypeElement newType = factory.createTypeElementFromText(COUPLE_FQN + "<" + type + ">", element.getContext());
       newElement = element.replace(newType);
     } else {
-      final String text = COUPLE_FQN + ".newOne" + element.getText().substring("Pair.create".length());
+      final String text = COUPLE_FQN + ".of" + element.getText().substring("Pair.create".length());
       final PsiExpression expression = factory.createExpressionFromText(text, element.getContext());
       newElement = element.replace(expression);
     }
