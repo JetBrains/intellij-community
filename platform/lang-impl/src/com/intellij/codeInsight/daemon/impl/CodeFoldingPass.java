@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,16 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
+class CodeFoldingPass extends TextEditorHighlightingPass implements PossiblyDumbAware {
   private static final Key<Boolean> THE_FIRST_TIME = Key.create("FirstFoldingPass");
   private Runnable myRunnable;
   private final Editor myEditor;
@@ -75,5 +76,14 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
     if (InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile) == myFile) {
       clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME);
     }
+  }
+
+  /**
+   * Checks the ability to update folding in the Dumb Mode. True by default.
+   * @return true if the language implementation can update folding ranges
+   */
+  @Override
+  public boolean isDumbAware() {
+    return EditorUtil.supportsDumbModeFolding(myEditor);
   }
 }
