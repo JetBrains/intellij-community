@@ -26,7 +26,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +57,22 @@ public class PropertiesReferenceManager {
 
   @NotNull
   public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
-    return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName, BundleNameEvaluator.DEFAULT);
+    ConcurrentFactoryMap<String, List<PropertiesFile>> map =
+      CachedValuesManager.getManager(module.getProject()).getCachedValue(module, new CachedValueProvider<ConcurrentFactoryMap<String, List<PropertiesFile>>>() {
+        @Nullable
+        @Override
+        public Result<ConcurrentFactoryMap<String, List<PropertiesFile>>> compute() {
+          ConcurrentFactoryMap<String, List<PropertiesFile>> factoryMap = new ConcurrentFactoryMap<String, List<PropertiesFile>>() {
+            @Nullable
+            @Override
+            protected List<PropertiesFile> create(String bundleName) {
+              return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName, BundleNameEvaluator.DEFAULT);
+            }
+          };
+          return Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      });
+    return map.get(bundleName);
   }
 
   @NotNull
