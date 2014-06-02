@@ -48,7 +48,13 @@ public class GithubUrlUtil {
 
   @NotNull
   public static String getApiUrl(@NotNull String urlFromSettings) {
-    return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
+    return getApiProtocolFromUrl(urlFromSettings) + getApiUrlWithoutProtocol(urlFromSettings);
+  }
+
+  @NotNull
+  public static String getApiProtocolFromUrl(@NotNull String urlFromSettings) {
+    if (StringUtil.startsWithIgnoreCase(urlFromSettings.trim(), "http://")) return "http://";
+    return "https://";
   }
 
   /**
