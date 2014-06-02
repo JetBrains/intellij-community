@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 
@@ -132,8 +133,9 @@ public class IntentionUtils {
                   FileTemplateManager templateManager = FileTemplateManager.getInstance();
                   FileTemplate fileTemplate = templateManager.getCodeTemplate(GroovyTemplates.GROOVY_FROM_USAGE_METHOD_BODY);
 
-                  LOG.assertTrue(!method.getContainingClass().isInterface(), "Interface bodies should be already set up");
-                  CreateFromUsageUtils.setupMethodBody(method, method.getContainingClass(), fileTemplate);
+                  PsiClass containingClass = method.getContainingClass();
+                  LOG.assertTrue(!containingClass.isInterface() || GrTraitUtil.isTrait(containingClass), "Interface bodies should be already set up");
+                  CreateFromUsageUtils.setupMethodBody(method, containingClass, fileTemplate);
                 }
                 if (hasNoReturnType) {
                   ((GrMethod)method).setReturnType(null);
