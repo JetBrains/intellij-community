@@ -169,11 +169,11 @@ public class ClassProcessor extends VirtualFileVisitor {
   }
 
   // turns high-lever equation into low-level one
-  IntIdEquation<Value> enumerate(Equation<Key, Value> equation) throws IOException {
+  IntIdEquation enumerate(Equation<Key, Value> equation) throws IOException {
     com.intellij.codeInspection.bytecodeAnalysis.Result<Key, Value> rhs = equation.rhs;
-    IntIdResult<Value> result;
+    IntIdResult result;
     if (rhs instanceof Final) {
-      result = new IntIdFinal<Value>(((Final<Key, Value>)rhs).value);
+      result = new IntIdFinal(((Final<Key, Value>)rhs).value);
     } else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
       Set<Component<Key>> deltaOrig = pending.delta;
@@ -190,13 +190,14 @@ public class ClassProcessor extends VirtualFileVisitor {
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new IntIdPending<Value>(pending.infinum, components);
+      result = new IntIdPending(pending.infinum, components);
     }
     int key = myEnumerators.internalKeyEnumerator.enumerate(Util.internalKeyString(equation.id));
-    return new IntIdEquation<Value>(key, result);
+    return new IntIdEquation(key, result);
   }
 
   MostlySingularMultiMap<String, AnnotationData> annotations() {
+    myIntIdSolver.solve();
     Map<Key, Value> solutions = solver.solve();
     return Util.makeAnnotations(solutions);
   }

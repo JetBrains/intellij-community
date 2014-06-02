@@ -20,6 +20,7 @@ import com.intellij.util.containers.IntToIntSetMap;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.IdUtils.*;
 
 final class ELattice<T extends Enum<T>> {
   final T bot;
@@ -116,6 +117,66 @@ final class IntIdComponent {
     this.ids = ids;
   }
 
+  public void remove(int id) {
+    IdUtils.remove(ids, id);
+  }
+
+  public boolean isEmptyAndTouched() {
+    return touched && IdUtils.isEmpty(ids);
+  }
+
+  public boolean isEmpty() {
+    return IdUtils.isEmpty(ids);
+  }
+
+  public void removeAndTouch(int id) {
+    if (IdUtils.remove(ids, id)) {
+      touched = true;
+    }
+  }
+}
+
+class IdUtils {
+  // absent value
+  static final int nullId = -1;
+
+  static boolean contains(int[] ids, int id) {
+    for (int i : ids) {
+      if (i == id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static boolean isEmpty(int[] ids) {
+    for (int i : ids) {
+      if (i != nullId) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static IntIdComponent[] toArray(Collection<IntIdComponent> set) {
+    IntIdComponent[] result = new IntIdComponent[set.size()];
+    int i = 0;
+    for (IntIdComponent intIdComponent : set) {
+      result[i] = intIdComponent;
+      i++;
+    }
+    return result;
+  }
+
+  static boolean remove(int[] ids, int id) {
+    for (int i = 0; i < ids.length; i++) {
+      if (ids[i] == id) {
+        ids[i] = nullId;
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 class ResultUtil<Id, T extends Enum<T>> {
@@ -162,9 +223,7 @@ final class Final<Id, T> implements Result<Id, T> {
 
   @Override
   public String toString() {
-    return "Final{" +
-           "value=" + value +
-           '}';
+    return "Final{" + "value=" + value + '}';
   }
 }
 
@@ -183,28 +242,28 @@ final class Pending<Id, T> implements Result<Id, T> {
   }
 }
 
-interface IntIdResult<T> {}
+interface IntIdResult {}
 // this just wrapper, no need for this really
-final class IntIdFinal<T> implements IntIdResult<T> {
-  final T value;
-  public IntIdFinal(T value) {
+final class IntIdFinal implements IntIdResult {
+  final Value value;
+  public IntIdFinal(Value value) {
     this.value = value;
   }
 }
-final class IntIdPending<T> implements IntIdResult<T> {
-  final T infinum;
+final class IntIdPending implements IntIdResult {
+  final Value infinum;
   final IntIdComponent[] delta;
 
-  IntIdPending(T infinum, IntIdComponent[] delta) {
+  IntIdPending(Value infinum, IntIdComponent[] delta) {
     this.infinum = infinum;
     this.delta = delta;
   }
 }
-final class IntIdEquation<T> {
+final class IntIdEquation {
   final int id;
-  final IntIdResult<T> rhs;
+  final IntIdResult rhs;
 
-  IntIdEquation(int id, IntIdResult<T> rhs) {
+  IntIdEquation(int id, IntIdResult rhs) {
     this.id = id;
     this.rhs = rhs;
   }
@@ -297,7 +356,6 @@ final class Solver<Id, Val extends Enum<Val>> {
     return solved;
   }
 
-  // we can make it in place
   Result<Id, Val> substitute(Pending<Id, Val> pending, Id id, Val value) {
     if (value.equals(lattice.bot)) {
       HashSet<Component<Id>> delta = new HashSet<Component<Id>>();
@@ -356,11 +414,9 @@ final class Solver<Id, Val extends Enum<Val>> {
 
 final class IntIdSolver {
 
-  // absent value
-  static final int nullId = -1;
   private final ELattice<Value> lattice;
   private final IntToIntSetMap dependencies = new IntToIntSetMap(10000, 0.5f);
-  private final TIntObjectHashMap<IntIdPending<Value>> pending = new TIntObjectHashMap<IntIdPending<Value>>();
+  private final TIntObjectHashMap<IntIdPending> pending = new TIntObjectHashMap<IntIdPending>();
   private final TIntObjectHashMap<Value> solved = new TIntObjectHashMap<Value>();
   private final IntStack moving = new IntStack();
 
@@ -369,6 +425,105 @@ final class IntIdSolver {
   }
 
   void addEquation(IntIdEquation equation) {
-    //equations.add(equation);
+    IntIdResult rhs = equation.rhs;
+    if (rhs instanceof IntIdFinal) {
+      solved.put(equation.id, ((IntIdFinal) rhs).value);
+      moving.push(equation.id);
+    } else if (rhs instanceof IntIdPending) {
+      IntIdPending pendResult = (IntIdPending)rhs;
+      if (pendResult.infinum == lattice.top) {
+        solved.put(equation.id, lattice.top);
+        moving.push(equation.id);
+      } else {
+        for (IntIdComponent component : pendResult.delta) {
+          for (int trigger : component.ids) {
+            dependencies.addOccurence(trigger, equation.id);
+          }
+        }
+        pending.put(equation.id, pendResult);
+      }
+    }
+  }
+
+  void solve() {
+    while (!moving.empty()) {
+      int id = moving.pop();
+      Value value = solved.get(id);
+      int[] dIds = dependencies.get(id);
+
+      for (int dId : dIds) {
+        IntIdPending pend = pending.remove(dId);
+        if (pend != null) {
+          IntIdResult pend1 = substitute(pend, id, value);
+          if (pend1 instanceof IntIdFinal) {
+            IntIdFinal fi = (IntIdFinal)pend1;
+            solved.put(dId, fi.value);
+            moving.push(dId);
+          }
+          else {
+            pending.put(dId, (IntIdPending)pend1);
+          }
+        }
+      }
+    }
+    pending.clear();
+  }
+
+  // substitute id -> value into pending
+  IntIdResult substitute(IntIdPending pending, int id, Value value) {
+    if (value == lattice.bot) {
+      // remove components (products) with bottom
+      ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
+      for (IntIdComponent component : pending.delta) {
+        if (!contains(component.ids, id)) {
+          delta.add(component);
+        }
+      }
+      if (delta.isEmpty()) {
+        return new IntIdFinal(pending.infinum);
+      }
+      else {
+        return new IntIdPending(pending.infinum, toArray(delta));
+      }
+    }
+    else if (value.equals(lattice.top)) {
+      ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
+      // remove top from components
+      for (IntIdComponent component : pending.delta) {
+        component.remove(id);
+        if (!component.isEmptyAndTouched()) {
+          if (component.isEmpty()) {
+            return new IntIdFinal(lattice.top);
+          } else {
+            delta.add(component);
+          }
+        }
+      }
+      if (delta.isEmpty()) {
+        return new IntIdFinal(pending.infinum);
+      }
+      else {
+        return new IntIdPending(pending.infinum, toArray(delta));
+      }
+    }
+    else {
+      Value infinum = lattice.join(pending.infinum, value);
+      if (infinum == lattice.top) {
+        return new IntIdFinal(lattice.top);
+      }
+      ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
+      for (IntIdComponent component : pending.delta) {
+        component.removeAndTouch(id);
+        if (!component.isEmpty()) {
+          delta.add(component);
+        }
+      }
+      if (delta.isEmpty()) {
+        return new IntIdFinal(infinum);
+      }
+      else {
+        return new IntIdPending(infinum, toArray(delta));
+      }
+    }
   }
 }
