@@ -23,6 +23,16 @@ import java.util.Map;
 
 public class Util {
 
+  static class InternalKey {
+    final String annotationKey;
+    final Direction dir;
+
+    InternalKey(String annotationKey, Direction dir) {
+      this.annotationKey = annotationKey;
+      this.dir = dir;
+    }
+  }
+
   public static MostlySingularMultiMap<String, AnnotationData> makeAnnotations(Map<Key, Value> solutions) {
     MostlySingularMultiMap<String, AnnotationData> annotations = new MostlySingularMultiMap<String, AnnotationData>();
     HashMap<String, StringBuilder> contracts = new HashMap<String, StringBuilder>();
@@ -90,6 +100,34 @@ public class Util {
       return annPrefix + " " + ((In)dir).paramIndex;
     } else {
       return annPrefix;
+    }
+  }
+
+  public static String internalKeyString(Key key) {
+    return annotationKey(key.method) + ';' + direction2Key(key.direction);
+  }
+
+  public static String direction2Key(Direction dir) {
+    if (dir instanceof In) {
+      return "In:" + ((In)dir).paramIndex;
+    } else if (dir instanceof Out) {
+      return "Out";
+    } else {
+      InOut inOut = (InOut)dir;
+      return "InOut:" + inOut.paramIndex + ":" + inOut.inValue.name();
+    }
+  }
+
+  public static InternalKey readInternalKey(String s) {
+    String[] parts = s.split(";");
+    String annKey = parts[0];
+    String[] dirStrings = parts[1].split(":");
+    if ("In".equals(dirStrings[0])) {
+      return new InternalKey(annKey, new In(Integer.valueOf(dirStrings[1])));
+    } else if ("Out".equals(dirStrings[0])) {
+      return new InternalKey(annKey, new Out());
+    } else {
+      return new InternalKey(annKey, new InOut(Integer.valueOf(dirStrings[1]), Value.valueOf(dirStrings[2])));
     }
   }
 

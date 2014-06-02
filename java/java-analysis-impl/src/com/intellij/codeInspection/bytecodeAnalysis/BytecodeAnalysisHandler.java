@@ -89,7 +89,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     });
     Enumerators enumerators;
     try {
-      enumerators = new Enumerators(getEnumerator(project, "internalKeys"), getEnumerator(project, "signatures"));
+      enumerators = new Enumerators(getEnumerator(project, "internalKeys"), getEnumerator(project, "annotationKeys"));
     }
     catch (IOException e) {
       LOG.error("Cannot initialize enumerators", e);
@@ -172,7 +172,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
     String rawExternalName = PsiFormatUtil.getRawExternalName(listOwner, false, Integer.MAX_VALUE);
     if (rawExternalName != null) {
-      // TODO - varargs hack
       rawExternalName = rawExternalName.replace("...)", "[])");
     }
     return rawExternalName;
@@ -298,9 +297,9 @@ class BytecodeAnalysisTask extends DumbModeTask {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       OrderEntry[] entries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : entries) {
-        if (!(entry instanceof JdkOrderEntry)) {
+        //if (!(entry instanceof JdkOrderEntry)) {
           Collections.addAll(classRoots, entry.getFiles(OrderRootType.CLASSES));
-        }
+        //}
       }
     }
 
@@ -314,7 +313,7 @@ class BytecodeAnalysisTask extends DumbModeTask {
       VfsUtilCore.visitChildrenRecursively(classRoot, myClassProcessor);
     }
     handler.setAnnotations(myClassProcessor.annotations());
-    handler.setIntIdEquations(myClassProcessor.myIntIdSolver.equations);
+    //handler.setIntIdEquations(myClassProcessor.myIntIdSolver.equations);
   }
 
 

@@ -33,7 +33,7 @@ public class ClassProcessor extends VirtualFileVisitor {
 
   final static ELattice<Value> valueLattice = new ELattice<Value>(Value.Bot, Value.Top);
   final Solver<Key, Value> solver = new Solver<Key, Value>(valueLattice);
-  final IntIdSolver myIntIdSolver = new IntIdSolver();
+  final IntIdSolver myIntIdSolver;
 
   @NotNull
   final ProgressIndicator myProgressIndicator;
@@ -45,6 +45,7 @@ public class ClassProcessor extends VirtualFileVisitor {
     this.myProgressIndicator = indicator;
     this.totalClassFiles = totalClassFiles;
     this.myEnumerators = enumerators;
+    myIntIdSolver = new IntIdSolver(valueLattice);
   }
 
   @Override
@@ -159,14 +160,15 @@ public class ClassProcessor extends VirtualFileVisitor {
 
   void addEquation(Equation<Key, Value> equation) {
     try {
-      solver.addEquation(equation);
+      //solver.addEquation(equation);
       myIntIdSolver.addEquation(enumerate(equation));
     }
     catch (IOException e) {
-      e.printStackTrace();
+      // TODO
     }
   }
 
+  // turns high-lever equation into low-level one
   IntIdEquation<Value> enumerate(Equation<Key, Value> equation) throws IOException {
     com.intellij.codeInspection.bytecodeAnalysis.Result<Key, Value> rhs = equation.rhs;
     IntIdResult<Value> result;
@@ -181,7 +183,7 @@ public class ClassProcessor extends VirtualFileVisitor {
         int[] ids = new int[keyComponent.ids.size()];
         int idI = 0;
         for (Key id : keyComponent.ids) {
-          ids[idI] = myEnumerators.internalKeyEnumerator.enumerate(id.toString());
+          ids[idI] = myEnumerators.internalKeyEnumerator.enumerate(Util.internalKeyString(id));
           idI++;
         }
         IntIdComponent intIdComponent = new IntIdComponent(keyComponent.touched, ids);
@@ -190,7 +192,7 @@ public class ClassProcessor extends VirtualFileVisitor {
       }
       result = new IntIdPending<Value>(pending.infinum, components);
     }
-    int key = myEnumerators.internalKeyEnumerator.enumerate(equation.id.toString());
+    int key = myEnumerators.internalKeyEnumerator.enumerate(Util.internalKeyString(equation.id));
     return new IntIdEquation<Value>(key, result);
   }
 

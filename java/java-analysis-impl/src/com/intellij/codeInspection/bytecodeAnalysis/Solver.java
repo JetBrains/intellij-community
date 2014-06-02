@@ -15,6 +15,10 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.util.containers.IntStack;
+import com.intellij.util.containers.IntToIntSetMap;
+import gnu.trove.TIntObjectHashMap;
+
 import java.util.*;
 
 final class ELattice<T extends Enum<T>> {
@@ -98,10 +102,7 @@ final class Component<Id> {
 
   @Override
   public String toString() {
-    return "Component{" +
-           "touched=" + touched +
-           ", ids=" + ids +
-           '}';
+    return "Component{" + "touched=" + touched + ", ids=" + ids + '}';
   }
 }
 
@@ -178,10 +179,7 @@ final class Pending<Id, T> implements Result<Id, T> {
 
   @Override
   public String toString() {
-    return "Pending{" +
-           "infinum=" + infinum +
-           ", delta=" + delta +
-           '}';
+    return "Pending{" + "infinum=" + infinum + ", delta=" + delta + '}';
   }
 }
 
@@ -233,10 +231,7 @@ final class Equation<Id, T> {
 
   @Override
   public String toString() {
-    return "Equation{" +
-           "id=" + id +
-           ", rhs=" + rhs +
-           '}';
+    return "Equation{" + "id=" + id + ", rhs=" + rhs + '}';
   }
 }
 
@@ -360,8 +355,20 @@ final class Solver<Id, Val extends Enum<Val>> {
 }
 
 final class IntIdSolver {
-  ArrayList<IntIdEquation> equations = new ArrayList<IntIdEquation>();
+
+  // absent value
+  static final int nullId = -1;
+  private final ELattice<Value> lattice;
+  private final IntToIntSetMap dependencies = new IntToIntSetMap(10000, 0.5f);
+  private final TIntObjectHashMap<IntIdPending<Value>> pending = new TIntObjectHashMap<IntIdPending<Value>>();
+  private final TIntObjectHashMap<Value> solved = new TIntObjectHashMap<Value>();
+  private final IntStack moving = new IntStack();
+
+  IntIdSolver(ELattice<Value> lattice) {
+    this.lattice = lattice;
+  }
+
   void addEquation(IntIdEquation equation) {
-    equations.add(equation);
+    //equations.add(equation);
   }
 }
