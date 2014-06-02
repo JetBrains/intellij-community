@@ -1,30 +1,11 @@
 package ru.compscicenter.edide;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProviderEx;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.file.impl.FileManager;
-import com.jetbrains.python.documentation.PyTypeModelBuilder;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +40,8 @@ public class StudyDocumentationProvider extends DocumentationProviderEx {
     @Override
     public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
         String file = element.getContainingFile().getName();
-
-        FileEditor[] fe = FileEditorManager.getInstance(element.getProject()).getAllEditors();
-        LogicalPosition pos = ((PsiAwareTextEditorImpl)((StudyEditor) fe[0]).getDefaultEditor()).getEditor().getCaretModel().getLogicalPosition();
+        Editor editor = StudyEditor.getRecentOpenedEditor(element.getProject());
+        LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
         TaskManager tm =  TaskManager.getInstance();
         int taskNum = tm.getTaskNumForFile(file);
         String docsfile = tm.getDocFileForTask(taskNum, pos, file);

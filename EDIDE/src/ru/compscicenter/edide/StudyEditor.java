@@ -2,15 +2,13 @@ package ru.compscicenter.edide;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,5 +133,24 @@ public class StudyEditor implements FileEditor {
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
         defaultEditor.putUserData(key, value);
+    }
+
+
+    static public Editor getRecentOpenedEditor(Project project) {
+        FileEditor[] fes = FileEditorManager.getInstance(project).getAllEditors();
+        for (int i = fes.length-1; i>=0; i--) {
+            FileEditor fe = fes[i];
+            if (!(fe instanceof StudyEditor)) {
+                continue;
+            } else {
+                FileEditor defaultEditor = ((StudyEditor)fe).getDefaultEditor();
+                if (!(defaultEditor instanceof PsiAwareTextEditorImpl)) {
+                    continue;
+                } else {
+                    return ((PsiAwareTextEditorImpl) defaultEditor).getEditor();
+                }
+            }
+        }
+        return null;
     }
 }
