@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GenerateDTDAction extends BaseCodeInsightAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.GenerateDTDAction");
+  @Override
   @NotNull
   protected CodeInsightActionHandler getHandler(){
     return new CodeInsightActionHandler(){
+      @Override
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         final XmlDocument document = findSuitableXmlDocument(file);
         if (document != null) {
@@ -77,6 +79,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
         }
       }
 
+      @Override
       public boolean startInWriteAction(){
         return true;
       }
@@ -94,6 +97,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
     return null;
   }
 
+  @Override
   public void update(AnActionEvent event) {
     super.update(event);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
@@ -102,6 +106,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
     }
   }
 
+  @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file){
     return file.getLanguage() == XMLLanguage.INSTANCE && findSuitableXmlDocument(file) != null;
   }

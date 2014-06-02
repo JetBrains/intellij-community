@@ -58,12 +58,14 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   private final Collection<String> myTagNames = new ArrayList<String>();
   private boolean myElementStarted;
 
+  @Override
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
     myElementStarted = nsPrefix != null && nsURI.equals("http://www.w3.org/2001/XMLSchema") && name.equals("element");
   }
 
+  @Override
   public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
       throws Exception {
     if (myElementStarted && key.equals("name")) {

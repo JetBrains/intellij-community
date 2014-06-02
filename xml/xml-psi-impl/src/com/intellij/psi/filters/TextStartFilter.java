@@ -39,6 +39,7 @@ public class TextStartFilter extends XmlTextFilter{
 
   public TextStartFilter(){}
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element != null) {
       for (final String value : myValue) {

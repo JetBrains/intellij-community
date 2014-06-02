@@ -33,6 +33,7 @@ public class RootTagFilter extends PositionElementFilter{
   }
 
   public RootTagFilter(){}
+  @Override
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof XmlDocument)) return false;
     final XmlTag rootTag = ((XmlDocument)element).getRootTag();

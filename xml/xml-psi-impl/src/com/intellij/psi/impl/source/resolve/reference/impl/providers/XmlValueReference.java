@@ -36,14 +36,17 @@ public abstract class XmlValueReference implements PsiReference {
     myRange = ElementManipulators.getValueTextRange(tag);
   }
 
+  @Override
   public PsiElement getElement() {
     return myTag;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return myRange;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myRange.substring(myTag.getText());
@@ -55,10 +58,12 @@ public abstract class XmlValueReference implements PsiReference {
     myRange = manipulator.getRangeInElement(myTag);
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return myTag.getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }

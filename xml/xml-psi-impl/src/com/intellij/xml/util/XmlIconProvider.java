@@ -35,6 +35,7 @@ public class XmlIconProvider extends IconProvider implements DumbAware {
   @NonNls private static final String XSD_FILE_EXTENSION = "xsd";
   @NonNls private static final String WSDL_FILE_EXTENSION = "wsdl";
 
+  @Override
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int _flags) {
     if (element instanceof XmlFile) {

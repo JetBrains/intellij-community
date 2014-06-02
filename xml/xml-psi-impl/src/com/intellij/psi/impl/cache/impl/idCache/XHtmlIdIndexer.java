@@ -21,6 +21,7 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 
 public class XHtmlIdIndexer extends LexerBasedIdIndexer {
+  @Override
   public Lexer createLexer(final OccurrenceConsumer consumer) {
     return createIndexingLexer(consumer);
   }

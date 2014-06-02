@@ -34,6 +34,7 @@ import java.util.StringTokenizer;
 public class XmlElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider");
 
+  @Override
   public String getSignature(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;

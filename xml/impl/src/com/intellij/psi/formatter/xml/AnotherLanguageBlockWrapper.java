@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,36 +41,44 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
     myIndent = indent;
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent;
   }
 
+  @Override
   public boolean insertLineBreakBeforeTag() {
     return false;
   }
 
+  @Override
   public boolean removeLineBreakBeforeTag() {
     return false;
   }
 
+  @Override
   public boolean isTextElement() {
     return true;
   }
 
+  @Override
   protected List<Block> buildChildren() {
     return myInjectedBlock.getSubBlocks();
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myInjectedBlock.getTextRange();
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     return myInjectedBlock.getSpacing(child1,  child2);
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return myInjectedBlock.getChildAttributes(newChildIndex);

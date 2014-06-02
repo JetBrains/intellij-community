@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.CharTable;
 
 public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
+  @Override
   public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
     if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, text);
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, SharedImplUtil.findCharTableByTree(text.getNode())).getTreeElement();

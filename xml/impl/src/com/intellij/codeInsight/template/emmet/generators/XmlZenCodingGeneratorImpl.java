@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
+  @Override
   @NotNull
   public String toString(@NotNull XmlTag tag,
                          @NotNull List<Couple<String>> attribute2Value,
@@ -63,6 +64,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return tag.getContainingFile().getText();
   }
 
+  @Override
   @NotNull
   public String buildAttributesString(@NotNull List<Couple<String>> attribute2value,
                                       boolean hasChildren,
@@ -81,6 +83,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return result.toString();
   }
 
+  @Override
   public boolean isMyContext(@NotNull PsiElement context, boolean wrapping) {
     return isMyLanguage(context.getLanguage()) && (wrapping || HtmlTextContextType.isInContext(context));
   }
@@ -89,6 +92,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return language instanceof XMLLanguage;
   }
 
+  @Override
   public String getSuffix() {
     return "html";
   }
@@ -98,6 +102,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     return EmmetOptions.getInstance().isEmmetEnabled();
   }
 
+  @Override
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
     return true;
   }
@@ -131,6 +136,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
             final Document document = FileDocumentManager.getInstance().getDocument(file);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
                 documentManager.commitDocument(document);

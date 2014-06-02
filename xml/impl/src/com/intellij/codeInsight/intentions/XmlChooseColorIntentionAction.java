@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,13 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     final PsiElement parent = element.getParent();
     return parent instanceof XmlAttributeValue && ColorUtil.fromHex(((XmlAttributeValue)parent).getValue(), null) != null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -82,6 +84,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
       final PsiManager manager = literal.getManager();
       final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createXmlAttribute("name", newText);
       final Runnable replaceRunnable = new Runnable() {
+        @Override
         public void run() {
           final XmlAttributeValue valueElement = newAttribute.getValueElement();
           assert valueElement != null;

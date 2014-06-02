@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.util.Map;
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
   private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<Language, LineMarkerProvider>();
 
+  @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;
     final Language language = element.getLanguage();
@@ -62,6 +63,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
     return markerProvider;
   }
 
+  @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     Map<Language, LineMarkerProvider> localEmbeddedLanguagesLineMarkerProviders = null;
     Map<LineMarkerProvider, List<PsiElement>> embeddedLineMarkersWorkItems = null;

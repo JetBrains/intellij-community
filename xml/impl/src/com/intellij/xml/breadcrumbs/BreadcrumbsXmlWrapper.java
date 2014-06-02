@@ -86,10 +86,12 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
+      @Override
       public void fileStatusesChanged() {
         updateCrumbs();
       }
 
+      @Override
       public void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
       }
     }, this);
@@ -105,6 +107,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
 
     final CaretListener caretListener = new CaretAdapter() {
+      @Override
       public void caretPositionChanged(final CaretEvent e) {
         if (myUserCaretChange) {
           queueUpdate(editor);
@@ -116,6 +119,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     editor.getCaretModel().addCaretListener(caretListener);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         editor.getCaretModel().removeCaretListener(caretListener);
       }
@@ -163,6 +167,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
 
     final ComponentAdapter resizeListener = new ComponentAdapter() {
+      @Override
       public void componentResized(final ComponentEvent e) {
         queueUpdate(editor);
       }
@@ -170,6 +175,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     myComponent.addComponentListener(resizeListener);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         myComponent.removeComponentListener(resizeListener);
       }
@@ -299,6 +305,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     if (file == null || !file.isValid()) return null;
 
     PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, new Comparator<PsiElement>() {
+      @Override
       public int compare(final PsiElement o1, final PsiElement o2) {
         return o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset();
       }
@@ -365,6 +372,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return myWrapperPanel;
   }
 
+  @Override
   public void itemSelected(@NotNull final BreadcrumbsPsiItem item, final int modifiers) {
     final PsiElement psiElement = item.getPsiElement();
     moveEditorCaretTo(psiElement);
@@ -380,6 +388,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return editor.getUserData(BREADCRUMBS_COMPONENT_KEY);
   }
 
+  @Override
   public void dispose() {
     myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     myEditor = null;
@@ -409,10 +418,12 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       myEditor = editor;
     }
 
+    @Override
     public void run() {
       myBreadcrumbsComponent.updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
     }
 
+    @Override
     public boolean canEat(final Update update) {
       return true;
     }

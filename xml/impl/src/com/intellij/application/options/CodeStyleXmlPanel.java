@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
     xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
     xmlSettings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
-    xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
+    xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     xmlSettings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
     xmlSettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
@@ -155,7 +156,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   private boolean wrapText(final CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
-    return xmlSettings.XML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED;
+    return xmlSettings.XML_TEXT_WRAP == CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
   public JComponent getPanel() {

@@ -33,7 +33,8 @@ import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTokenType {
+public class XmlSlashTypedHandler extends TypedHandlerDelegate {
+  @Override
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
     if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -68,6 +69,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
     return Result.CONTINUE;
   }
 
+  @Override
   public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
     if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -83,7 +85,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       ASTNode prevLeaf = element.getNode();
       if (prevLeaf == null) return Result.CONTINUE;
       final String prevLeafText = prevLeaf.getText();
-      if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XML_END_TAG_START) {
+      if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XmlTokenType.XML_END_TAG_START) {
         XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
         if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
           // check for template language like JSP

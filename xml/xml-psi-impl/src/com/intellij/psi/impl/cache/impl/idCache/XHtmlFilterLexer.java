@@ -31,6 +31,7 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
     super(originalLexer, table);
   }
 
+  @Override
   public void advance() {
     final IElementType tokenType = myDelegate.getTokenType();
 

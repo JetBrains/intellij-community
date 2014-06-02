@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class XmlFormattingModelBuilder implements FormattingModelBuilder {
 
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode root = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
@@ -47,6 +48,7 @@ public class XmlFormattingModelBuilder implements FormattingModelBuilder {
     return new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null, false);
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;
   }

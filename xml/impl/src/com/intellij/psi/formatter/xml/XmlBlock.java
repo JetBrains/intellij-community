@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class XmlBlock extends AbstractXmlBlock {
     myTextRange = textRange;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     if (myTextRange != null && !(isCDATAStart() || isCDATAEnd())) {
@@ -75,6 +76,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
+  @Override
   protected List<Block> buildChildren() {
 
     //
@@ -237,6 +239,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
+  @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (!(child1 instanceof AbstractBlock) || !(child2 instanceof AbstractBlock)) {
       return null;
@@ -293,6 +296,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
+  @Override
   public Indent getIndent() {
     if (myNode.getElementType() == XmlElementType.XML_PROLOG || myNode.getElementType() == XmlElementType.XML_DOCTYPE ||
         SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
@@ -301,14 +305,17 @@ public class XmlBlock extends AbstractXmlBlock {
     return myIndent;
   }
 
+  @Override
   public boolean insertLineBreakBeforeTag() {
     return false;
   }
 
+  @Override
   public boolean removeLineBreakBeforeTag() {
     return false;
   }
 
+  @Override
   public boolean isTextElement() {
     return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;

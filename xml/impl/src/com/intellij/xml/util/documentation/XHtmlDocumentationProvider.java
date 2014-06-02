@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@ import com.intellij.psi.xml.XmlText;
  */
 public class XHtmlDocumentationProvider extends HtmlDocumentationProvider {
 
+  @Override
   protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
     return super.generateDocForHtml(element, true, context, originalElement);
   }
 
+  @Override
   protected XmlTag findTagContext(PsiElement context) {
     XmlTag tagBeforeWhiteSpace = findTagBeforeWhiteSpace(context);
     if (tagBeforeWhiteSpace != null) return tagBeforeWhiteSpace;
@@ -50,6 +52,7 @@ public class XHtmlDocumentationProvider extends HtmlDocumentationProvider {
     return null;
   }
 
+  @Override
   protected boolean isAttributeContext(PsiElement context) {
     if (findTagBeforeWhiteSpace(context) != null) return false;
 

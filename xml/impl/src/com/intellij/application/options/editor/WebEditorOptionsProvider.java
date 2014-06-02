@@ -35,18 +35,22 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JBCheckBox myAddQuotasForAttributeValue;
 
 
+  @Override
   public String getDisplayName() {
     return XmlBundle.message("web.editor.configuration.title");
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     return myWholePanel;
   }
 
+  @Override
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected() ||
@@ -57,6 +61,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
            xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
@@ -67,6 +72,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setInsertQuotesForAttributeValue(myAddQuotasForAttributeValue.isSelected());
   }
 
+  @Override
   public void reset() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     myAutomaticallyInsertClosingTagCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertClosingTag());
@@ -77,14 +83,17 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myAddQuotasForAttributeValue.setSelected(xmlEditorOptions.isInsertQuotesForAttributeValue());
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.webOptions";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
