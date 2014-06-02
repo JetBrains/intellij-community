@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
-public class CoreGroovyQuickFixFactory extends GroovyQuickFixFactory {
+public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types) {
     return QuickFixes.EMPTY_ACTION;

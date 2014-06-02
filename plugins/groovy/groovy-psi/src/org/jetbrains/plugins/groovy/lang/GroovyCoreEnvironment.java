@@ -301,7 +301,7 @@ public class GroovyCoreEnvironment {
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClassTypePointerFactory.EP_NAME, ClassTypePointerFactory.class);
       appEnvironment.addExtension(ClassTypePointerFactory.EP_NAME, new GrClassReferenceTypePointerFactory());
 
-      appEnvironment.registerApplicationService(GroovyQuickFixFactory.class, new CoreGroovyQuickFixFactory());
+      appEnvironment.registerApplicationService(GroovyQuickFixFactory.class, new EmptyGroovyQuickFixFactory());
       appEnvironment.registerApplicationComponent(DslActivationStatus.class, new DslActivationStatus());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ReadWriteAccessDetector.EP_NAME, ReadWriteAccessDetector.class);

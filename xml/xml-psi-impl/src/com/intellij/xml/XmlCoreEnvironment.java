@@ -55,6 +55,7 @@ import com.intellij.xml.util.XmlApplicationComponent;
 /**
  * @author yole
  */
+@SuppressWarnings("UnusedDeclaration") //upsource
 public class XmlCoreEnvironment {
   public static class ApplicationEnvironment {
     public ApplicationEnvironment(CoreApplicationEnvironment appEnvironment) {
