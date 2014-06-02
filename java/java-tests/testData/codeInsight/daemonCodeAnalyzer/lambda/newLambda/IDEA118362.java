@@ -1,4 +1,3 @@
-import java.awt.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +10,11 @@ class Test {
     Arrays.stream(decimalStrings).map(BigDecimal::new).reduce(BigDecimal::add).ifPresent(bd -> System.out.print("Sum is " + bd));
   }
 
-  void foo(final ArrayList<Point> points) {
+  void foo(final ArrayList<Pair> points) {
     points.stream().filter(p -> p.x > 0).collect(Collectors.toCollection(ArrayList::new));
   }
+}
+
+class Pair {
+  int x;
 }
