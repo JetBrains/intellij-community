@@ -79,6 +79,7 @@ import org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor;
 import org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor;
@@ -305,6 +306,7 @@ public class GroovyCoreEnvironment {
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ReadWriteAccessDetector.EP_NAME, ReadWriteAccessDetector.class);
       appEnvironment.addExtension(ReadWriteAccessDetector.EP_NAME, new GroovyReadWriteAccessDetector());
+      if (GroovyElementTypes.ADDITIVE_EXPRESSION == null) throw new IllegalStateException(); // initialize tokens
     }
 
     protected ExternalResourceManagerEx createExternalResourceManager() {
