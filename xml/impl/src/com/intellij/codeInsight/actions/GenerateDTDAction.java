@@ -54,7 +54,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         final XmlDocument document = findSuitableXmlDocument(file);
         if (document != null) {
-          final @NonNls StringBuffer buffer = new StringBuffer();
+          final @NonNls StringBuilder buffer = new StringBuilder();
           buffer.append("<!DOCTYPE " + document.getRootTag().getName() + " [\n");
           buffer.append(XmlUtil.generateDocumentDTD(document, true));
           buffer.append("]>\n");

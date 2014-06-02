@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
  * @author peter
 */
 public class HtmlQuoteHandler implements QuoteHandler {
-  private QuoteHandler myBaseQuoteHandler;
+  private final QuoteHandler myBaseQuoteHandler;
 
   public HtmlQuoteHandler() {
     this(new XmlQuoteHandler());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,56 +34,69 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     myCaseSensitive = caseSensitive;
   }
 
+  @Override
   public boolean isRequired() {
     return delegate.isRequired();
   }
 
+  @Override
   public boolean isFixed() {
     return delegate.isFixed();
   }
 
+  @Override
   public boolean hasIdType() {
     return delegate.hasIdType();
   }
 
+  @Override
   public boolean hasIdRefType() {
     return delegate.hasIdRefType();
   }
 
+  @Override
   public String getDefaultValue() {
     return delegate.getDefaultValue();
   }
 
   //todo: refactor to hierarchy of value descriptor?
+  @Override
   public boolean isEnumerated() {
     return delegate.isEnumerated();
   }
 
+  @Override
   public String[] getEnumeratedValues() {
     return delegate.getEnumeratedValues();
   }
 
+  @Override
   public String validateValue(XmlElement context, String value) {
     if (!myCaseSensitive) value = value.toLowerCase();
     return delegate.validateValue(context, value);
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return delegate.getDeclaration();
   }
 
+  @Override
   public String getName(PsiElement context) {
     return delegate.getName(context);
   }
 
+  @Override
   public String getName() {
     return delegate.getName();
   }
 
+  @Override
   public void init(PsiElement element) {
     delegate.init(element);
   }
 
+  @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

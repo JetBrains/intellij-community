@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
   private static final InitialPatternCondition<XmlAttributeValue> CONDITION = new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
+    @Override
     public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
       return o instanceof XmlAttributeValue;
     }
@@ -54,6 +55,7 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
 
   public XmlAttributeValuePattern withLocalName(ElementPattern<String> namePattern) {
     return with(new PsiNamePatternCondition<XmlAttributeValue>("withLocalName", namePattern) {
+      @Override
       public String getPropertyValue(@NotNull final Object o) {
         if (o instanceof XmlAttributeValue) {
           final XmlAttributeValue value = (XmlAttributeValue)o;

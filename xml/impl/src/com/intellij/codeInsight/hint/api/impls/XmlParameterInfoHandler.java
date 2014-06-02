@@ -165,7 +165,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
         @Override
         public Boolean fun(String s) {
-          return parameterOwner != null ? parameterOwner.getAttributeValue(s) != null:false;
+          return parameterOwner != null && parameterOwner.getAttributeValue(s) != null;
         }
       });
   }
@@ -174,7 +174,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
                                              Function<String, Boolean> attributePresentFun) {
     final XmlAttributeDescriptor[] attributes = descriptor != null ? getSortedDescriptors(descriptor) : XmlAttributeDescriptor.EMPTY;
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
 
@@ -182,9 +182,9 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
       buffer.append(CodeInsightBundle.message("xml.tag.info.no.attributes"));
     }
     else {
-      StringBuffer text1 = new StringBuffer(" ");
-      StringBuffer text2 = new StringBuffer(" ");
-      StringBuffer text3 = new StringBuffer(" ");
+      StringBuilder text1 = new StringBuilder(" ");
+      StringBuilder text2 = new StringBuilder(" ");
+      StringBuilder text3 = new StringBuilder(" ");
 
       for (XmlAttributeDescriptor attribute : attributes) {
         if (Boolean.TRUE.equals(attributePresentFun.fun(attribute.getName()))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,12 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class DTDParserDefinition extends XMLParserDefinition {
+  @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new DtdLexer(false));
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.DTD_FILE);
   }

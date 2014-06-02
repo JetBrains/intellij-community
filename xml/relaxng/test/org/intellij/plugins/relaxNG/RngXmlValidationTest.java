@@ -83,9 +83,11 @@ public class RngXmlValidationTest extends HighlightingTestBase {
     doExternalToolHighlighting(name);
   }
 
+  @Override
   protected void init() {
     super.init();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
         mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
@@ -95,6 +97,7 @@ public class RngXmlValidationTest extends HighlightingTestBase {
     });
   }
 
+  @Override
   public String getTestDataPath() {
     return "validation";
   }

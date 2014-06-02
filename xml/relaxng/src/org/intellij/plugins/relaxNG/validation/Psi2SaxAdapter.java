@@ -45,6 +45,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     myHandler = handler;
   }
 
+  @Override
   public void visitXmlElement(XmlElement element) {
     if (element instanceof XmlEntityRef) {
       XmlUtil.processXmlElements(element, this, false, true);
@@ -52,6 +53,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     super.visitXmlElement(element);
   }
 
+  @Override
   public void visitXmlToken(XmlToken token) {
     if (token.getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
       handleText(token, token.getText());
@@ -67,11 +69,13 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
+  @Override
   public boolean execute(@NotNull PsiElement element) {
     element.accept(this);
     return true;
   }
 
+  @Override
   public void visitXmlDocument(XmlDocument document) {
     try {
       myHandler.startDocument();
@@ -85,6 +89,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
+  @Override
   public void visitXmlTag(XmlTag tag) {
     try {
       setLocation(tag);
@@ -127,6 +132,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
+  @Override
   public void visitXmlText(XmlText text) {
     handleText(text, text.getValue());
   }

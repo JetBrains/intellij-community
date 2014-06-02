@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,19 @@ import org.jetbrains.annotations.Nullable;
 public class AddDomElementActionGroup extends ActionGroup {
 
   private final AddElementInCollectionAction myAction = new AddElementInCollectionAction() {
+    @Override
     protected boolean showAsPopup() {
       return false;
     }
   };
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myAction.getChildren(e);
   }
 
+  @Override
   public void update(AnActionEvent e) {
 //    myAction.getChildren(e).length
     getTemplatePresentation().setText(myAction.getTemplatePresentation().getText());

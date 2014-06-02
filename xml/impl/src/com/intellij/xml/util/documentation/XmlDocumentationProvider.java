@@ -375,7 +375,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
       if (object == null) return null;
       try {
-        @NonNls StringBuffer tagText = new StringBuffer(object.toString());
+        @NonNls StringBuilder tagText = new StringBuilder(object.toString());
         String namespacePrefix = XmlUtil.findPrefixByQualifiedName(object.toString());
         String namespace = xmlTag.getNamespaceByPrefix(namespacePrefix);
 

@@ -38,11 +38,13 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
 
   private static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
+  @Override
   @Nullable
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     return null;
   }
 
+  @Override
   @NotNull
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     final Document document = editor.getDocument();

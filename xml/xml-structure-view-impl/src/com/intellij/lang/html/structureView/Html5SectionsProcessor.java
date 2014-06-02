@@ -36,7 +36,7 @@ class Html5SectionsProcessor {
 
   private static class SectionHolder {
     private final XmlTag myTag;
-    private LinkedList<Section> myChildren = new LinkedList<Section>();
+    private final LinkedList<Section> myChildren = new LinkedList<Section>();
 
     private SectionHolder(final XmlTag tag) {
       myTag = tag;
@@ -63,6 +63,7 @@ class Html5SectionsProcessor {
       super(tag);
     }
 
+    @Override
     public void addChildSection(final Section section) {
       section.myParent = this;
       super.addChildSection(section);
@@ -87,6 +88,7 @@ class Html5SectionsProcessor {
   private static final String HGROUP_ELEMENT = "hgroup";
 
   private final Collection<SectionHolder> myRootSectionHolders = new SortedList<SectionHolder>(new Comparator<SectionHolder>() {
+    @Override
     public int compare(final SectionHolder first, final SectionHolder second) {
       return first.getTag().getTextRange().getStartOffset() - second.getTag().getTextRange().getStartOffset();
     }
@@ -216,6 +218,7 @@ class Html5SectionsProcessor {
 
   private static Computable<Collection<StructureViewTreeElement>> createChildrenComputable(final Collection<Section> children) {
     return new Computable<Collection<StructureViewTreeElement>>() {
+      @Override
       public Collection<StructureViewTreeElement> compute() {
         final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
         for (Section section : children) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     myRootDomElement = rootDomElement;
   }
 
+  @Override
   public SimpleNode[] getChildren() {
     if (!myParentElement.isValid()) return NO_CHILDREN;
 
@@ -61,11 +62,13 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     return simpleNodes.toArray(new SimpleNode[simpleNodes.size()]);
   }
 
+  @Override
   @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myParentElement, myChildrenTagName};
   }
 
+  @Override
   protected void doUpdate() {
     setUniformIcon(getNodeIcon());
 
@@ -100,16 +103,19 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     return false;
   }
 
+  @Override
   public String getNodeName() {
     if (!myParentElement.isValid()) return "";
 
     return myChildDescription.getCommonPresentableName(myParentElement);
   }
 
+  @Override
   public String getTagName() {
     return myChildrenTagName;
   }
 
+  @Override
   public DomElement getDomElement() {
     return myParentElement;
   }
@@ -120,6 +126,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
 
+  @Override
   public Icon getNodeIcon() {
     Class clazz = ReflectionUtil.getRawType(myChildDescription.getType());
 //        Class arrayClass = Array.newInstance(clazz, 0).getClass();

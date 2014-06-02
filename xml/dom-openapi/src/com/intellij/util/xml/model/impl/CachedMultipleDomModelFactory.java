@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
       super(aClass,modelMerger);
 
       myCombinedModelCache = new DomModelCache<M, Scope>(project, name + " combined model") {
+        @Override
         @NotNull
         protected CachedValueProvider.Result<M> computeValue(@NotNull final Scope scope) {
           final M combinedModel = computeCombinedModel(scope);
@@ -60,6 +61,7 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
       };
 
       myAllModelsCache = new DomModelCache<List<M>, Scope>(project, name + " models list") {
+        @Override
         @NotNull
         protected CachedValueProvider.Result<List<M>> computeValue(@NotNull final Scope scope) {
           final List<M> models = computeAllModels(scope);
@@ -71,6 +73,7 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
     @Nullable
     public abstract M getModel(@NotNull C context);
 
+    @Override
     @NotNull
     public List<M> getAllModels(@NotNull Scope scope) {
 
@@ -86,6 +89,7 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
     @Nullable
     protected abstract List<M> computeAllModels(@NotNull Scope scope);
 
+    @Override
     @Nullable
     public M getCombinedModel(@Nullable Scope scope) {
       if (scope == null) {
@@ -143,6 +147,7 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
       }
     }
 
+    @Override
     @NotNull
     public Set<XmlFile> getAllConfigFiles(@NotNull Scope scope) {
       final HashSet<XmlFile> xmlFiles = new HashSet<XmlFile>();

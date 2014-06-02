@@ -25,10 +25,12 @@ import org.intellij.plugins.testUtil.CopyFile;
  */
 public class RncExternalHighlightingTest extends HighlightingTestBase {
 
+  @Override
   public String getTestDataPath() {
     return "highlighting/rnc";
   }
 
+  @Override
   protected void init() {
 //    new ProjectLoader(myTestFixture.getProject()).initComponent();
 //    ExternalResourceManager.getInstance().addResource("http://relaxng.org/ns/structure/1.0", new File("highlighting/relaxng.rng").getAbsolutePath());

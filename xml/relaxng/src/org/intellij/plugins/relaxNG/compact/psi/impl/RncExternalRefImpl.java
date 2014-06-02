@@ -31,6 +31,7 @@ public class RncExternalRefImpl extends RncFileReferenceImpl implements RncExter
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitExternalRef(this);
   }

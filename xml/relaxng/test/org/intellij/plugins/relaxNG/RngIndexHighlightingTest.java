@@ -26,6 +26,7 @@ import org.intellij.plugins.testUtil.CopyFile;
 @CopyFile("*.rng")
 public class RngIndexHighlightingTest extends AbstractIndexTest {
 
+  @Override
   public String getTestDataPath() {
     return "highlighting/rng";
   }

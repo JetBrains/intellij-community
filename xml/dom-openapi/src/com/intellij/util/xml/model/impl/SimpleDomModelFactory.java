@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public abstract class SimpleDomModelFactory<T extends DomElement, M extends DomM
     super(aClass, modelMerger);
   }
 
+  @Override
   @Nullable
   public DomFileElement<T> createMergedModelRoot(Set<XmlFile> configFiles) {
     List<DomFileElement<T>> configs = new ArrayList<DomFileElement<T>>(configFiles.size());

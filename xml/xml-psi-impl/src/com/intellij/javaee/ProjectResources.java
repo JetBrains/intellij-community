@@ -44,10 +44,12 @@ public class ProjectResources extends ExternalResourceManagerExImpl implements P
     return Collections.emptyMap();   
   }
 
+  @Override
   public Element getState() {
     return myAdapter.getState();
   }
 
+  @Override
   public void loadState(Element state) {
     myAdapter.loadState(state);
   }

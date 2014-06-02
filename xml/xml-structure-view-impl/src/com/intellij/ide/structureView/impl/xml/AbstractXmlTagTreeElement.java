@@ -36,6 +36,7 @@ public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends Ps
       (XmlStructureViewElementProvider[])Extensions.getExtensions(XmlStructureViewElementProvider.EXTENSION_POINT_NAME);
 
     return ContainerUtil.map2List(subTags, new Function<XmlTag, StructureViewTreeElement>() {
+      @Override
       public StructureViewTreeElement fun(final XmlTag xmlTag) {
         for (final XmlStructureViewElementProvider provider : providers) {
           final StructureViewTreeElement element = provider.createCustomXmlTagTreeElement(xmlTag);

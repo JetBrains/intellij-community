@@ -50,10 +50,12 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
   }
 
+  @Override
   protected Type narrowType(@NotNull final Type nominalType) {
     return getStub() == null ? getManager().getTypeChooserManager().getTypeChooser(nominalType).chooseType(getXmlTag()) : nominalType;
   }
 
+  @Override
   protected final XmlTag setEmptyXmlTag() {
     throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called;" +
                                             "\nparent=" + getParent() + ";\n" +
@@ -74,6 +76,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     return null;
   }
 
+  @Override
   public final void undefineInternal() {
     final DomElement parent = getParent();
     final XmlTag tag = getXmlTag();
@@ -85,6 +88,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     getManager().fireEvent(new DomEvent(parent, false));
   }
 
+  @Override
   public DomElement createPathStableCopy() {
     final AbstractDomChildDescriptionImpl description = getChildDescription();
     final DomElement parent = getParent();
@@ -92,6 +96,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     final DomElement parentCopy = parent.createStableCopy();
     final int index = description.getValues(parent).indexOf(getProxy());
     return getManager().createStableValue(new Factory<DomElement>() {
+      @Override
       @Nullable
       public DomElement create() {
         if (parentCopy.isValid()) {

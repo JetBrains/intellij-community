@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     return DomModelTreeView.DATA_KEY.getData(e.getDataContext());
   }
 
+  @Override
   protected boolean isEnabled(final AnActionEvent e) {
     final DomModelTreeView treeView = getTreeView(e);
 
@@ -71,6 +72,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
 
+  @Override
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
     if (myTreeView == null) {
       if (e.getPlace().equals(DomModelTreeView.DOM_MODEL_TREE_VIEW_POPUP)) {
@@ -85,6 +87,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     }
   }
 
+  @Override
   @NotNull
   protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
     final DomModelTreeView view = getTreeView(e);
@@ -104,6 +107,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
            : new DomCollectionChildDescription[]{groupNode.getChildDescription()};
   }
 
+  @Override
   protected DomElement getParentDomElement(final AnActionEvent e) {
     final DomModelTreeView view = getTreeView(e);
     SimpleNode node = view.getTree().getSelectedNode();
@@ -117,14 +121,17 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     return groupNode == null ? null : groupNode.getDomElement();
   }
 
+  @Override
   protected JComponent getComponent(AnActionEvent e) {
     return getTreeView(e);
   }
 
+  @Override
   protected boolean showAsPopup() {
     return true;
   }
 
+  @Override
   protected String getActionText(final AnActionEvent e) {
     String text = ApplicationBundle.message("action.add");
     if (e.getPresentation().isEnabled()) {
@@ -150,6 +157,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
 
+  @Override
   protected AnAction createAddingAction(final AnActionEvent e,
                                                 final String name,
                                                 final Icon icon,
@@ -192,22 +200,27 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       myView = getTreeView(e);
     }
 
+    @Override
     protected Type getElementType() {
       return myType;
     }
 
+    @Override
     protected DomCollectionChildDescription getDomCollectionChildDescription() {
       return myDescription;
     }
 
+    @Override
     protected DomElement getParentDomElement() {
       return myParent;
     }
 
-    protected void afterAddition(final DomElement newElement) {
+    @Override
+    protected void afterAddition(@NotNull final DomElement newElement) {
       final DomElement copy = newElement.createStableCopy();
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           myView.setSelectedDomElement(copy);
         }

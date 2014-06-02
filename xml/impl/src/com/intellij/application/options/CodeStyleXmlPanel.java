@@ -58,14 +58,17 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     addPanelToWatch(myPanel);
   }
 
+  @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
+  @Override
   protected int getRightMargin() {
     return 60;
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
@@ -91,6 +94,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     myKeepBlankLines.setText(String.valueOf(xmlSettings.XML_KEEP_BLANK_LINES));
@@ -107,6 +111,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myKeepWhitespaceInsideCDATACheckBox.setSelected(xmlSettings.XML_KEEP_WHITE_SPACES_INSIDE_CDATA);
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     if (myWrapText.isSelected() != wrapText(settings)) {
@@ -159,19 +164,23 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     return xmlSettings.XML_TEXT_WRAP == CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected String getPreviewText() {
     return readFromFile(getClass(), "preview.xml.template");
   }
 
+  @Override
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.XML;
   }
 
+  @Override
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }

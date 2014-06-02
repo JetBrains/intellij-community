@@ -57,6 +57,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return super.hashCode() * 239 + myIndex;
   }
 
+  @Override
   protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parentHandler) {
     final XmlTag tag = parentHandler.getXmlTag();
     if (tag == null) return null;
@@ -67,6 +68,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return tags.get(myIndex);
   }
 
+  @Override
   protected XmlTag setEmptyXmlTag() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
@@ -80,6 +82,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
     final XmlTag[] newTag = new XmlTag[1];
     getManager().runChange(new Runnable() {
+      @Override
       public void run() {
         try {
           final XmlTag parentTag = parent.getXmlTag();
@@ -93,6 +96,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return newTag[0];
   }
 
+  @Override
   public void undefineInternal() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
@@ -134,6 +138,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     fireUndefinedEvent();
   }
 
+  @Override
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final T annotation = getChildDescription().getAnnotation(myIndex, annotationClass);
     if (annotation != null) return annotation;
@@ -141,10 +146,12 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     return getClassAnnotation(annotationClass);
   }
 
+  @Override
   public final DomElement createPathStableCopy() {
     final DomFixedChildDescription description = getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
     return getManager().createStableValue(new Factory<DomElement>() {
+      @Override
       public DomElement create() {
         return parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null;
       }

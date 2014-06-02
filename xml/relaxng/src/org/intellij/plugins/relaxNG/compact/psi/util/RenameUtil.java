@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class RenameUtil {
 
-  private static Set<String> ourRncKeywords = new HashSet<String>();
+  private static final Set<String> ourRncKeywords = new HashSet<String>();
 
   static {
     Collections.addAll(ourRncKeywords, "attribute", "default", "datatypes", "div", "element", "empty", "external",

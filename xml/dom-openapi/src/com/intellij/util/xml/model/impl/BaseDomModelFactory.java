@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,11 +74,13 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
+  @Override
   @NotNull
   public List<M> getAllModels(@NotNull S scope) {
     return myMultipleDomModelFactory.getAllModels(scope);
   }
 
+  @Override
   @Nullable
   public M getModelByConfigFile(@Nullable XmlFile psiFile) {
     return mySimpleDomModelFactory.getModelByConfigFile(psiFile);
@@ -110,16 +112,19 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
+  @Override
   @Nullable
   public M getCombinedModel(@Nullable S scope) {
     return myMultipleDomModelFactory.getCombinedModel(scope);
   }
 
+  @Override
   @NotNull
   public Set<XmlFile> getAllConfigFiles(@NotNull S scope) {
     return myMultipleDomModelFactory.getAllConfigFiles(scope);
   }
 
+  @Override
   @Nullable
   public DomFileElement<T> createMergedModelRoot(final Set<XmlFile> configFiles) {
     return mySimpleDomModelFactory.createMergedModelRoot(configFiles);
@@ -130,14 +135,17 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
                                                                                   final Project project,
                                                                                   final String name) {
     return new CachedMultipleDomModelFactory<S, T, M, C>(aClass, modelMerger, project, name) {
+      @Override
       public M getModel(@NotNull final C context) {
         return BaseDomModelFactory.this.getModel(context);
       }
 
+      @Override
       protected List<M> computeAllModels(@NotNull final S scope) {
         return BaseDomModelFactory.this.computeAllModels(scope);
       }
 
+      @Override
       protected M createCombinedModel(final Set<XmlFile> configFiles,
                                       final DomFileElement<T> mergedModel,
                                       final M firstModel,
@@ -145,11 +153,13 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
         return BaseDomModelFactory.this.createCombinedModel(configFiles, mergedModel, firstModel, scope);
       }
 
+      @Override
       @NotNull
       public Object[] computeDependencies(@Nullable final M model, @Nullable final S scope) {
         return BaseDomModelFactory.this.computeDependencies(model, scope);
       }
 
+      @Override
       public S getModelScope(@NotNull final XmlFile xmlFile) {
         return BaseDomModelFactory.this.getModelScope(xmlFile);
       }
@@ -162,15 +172,18 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
                                                                         final String name) {
     return new CachedSimpleDomModelFactory<T, M, S>(aClass, modelMerger, project, name) {
 
+      @Override
       protected M computeModel(@NotNull final XmlFile psiFile, @Nullable final S scope) {
         return BaseDomModelFactory.this.computeModel(psiFile, scope);
       }
 
+      @Override
       @NotNull
       public Object[] computeDependencies(@Nullable final M model, @Nullable final S scope) {
         return BaseDomModelFactory.this.computeDependencies(model, scope);
       }
 
+      @Override
       public S getModelScope(@NotNull XmlFile file) {
         return BaseDomModelFactory.this.getModelScope(file);
       }

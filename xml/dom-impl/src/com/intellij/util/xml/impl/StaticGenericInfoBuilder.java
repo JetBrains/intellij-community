@@ -52,6 +52,7 @@ public class StaticGenericInfoBuilder {
   private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new THashMap<JavaMethodSignature, String[]>();
   private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new THashMap<JavaMethodSignature, Pair<String,String[]>>();
   private final FactoryMap<XmlName, TIntObjectHashMap<Collection<JavaMethod>>> myFixedChildrenGetters = new FactoryMap<XmlName, TIntObjectHashMap<Collection<JavaMethod>>>() {
+    @Override
     protected TIntObjectHashMap<Collection<JavaMethod>> create(final XmlName key) {
       return new TIntObjectHashMap<Collection<JavaMethod>>();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,10 +59,12 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
 
   public XmlElementDescriptorImpl() {}
 
+  @Override
   public XmlTag getDeclaration(){
     return myDescriptorTag;
   }
 
+  @Override
   public String getName(PsiElement context){
     String value = myDescriptorTag.getAttributeValue("name");
 
@@ -93,6 +95,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
   }
 
   /** getter for _local_ name */
+  @Override
   public String getName() {
     return XmlUtil.findLocalNameByQualifiedName(getName(null));
   }
@@ -122,6 +125,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
            myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
   }
 
+  @Override
   public void init(PsiElement element){
     if (myDescriptorTag!=element && myDescriptorTag!=null) {
       NSDescriptor = null;
@@ -129,6 +133,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     myDescriptorTag = (XmlTag) element;
   }
 
+  @Override
   public Object[] getDependences(){
     return new Object[]{myDescriptorTag};
   }
@@ -151,6 +156,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return nsDescriptor;
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     XmlNSDescriptor nsDescriptor = NSDescriptor;
     if (nsDescriptor == null || !NSDescriptor.getDeclaration().isValid()) {
@@ -198,6 +204,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return type;
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     if (context != null) {
       final XmlElementDescriptor parentDescriptorByType = XmlUtil.findXmlDescriptorByType(context);
@@ -272,6 +279,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return EMPTY_ARRAY;
   }
 
+  @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
 
     TypeDescriptor type = getType(context);
@@ -318,6 +326,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return attributeDescriptors;
   }
 
+  @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context){
     return getAttributeDescriptorImpl(attributeName,context);
   }
@@ -355,6 +364,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return attribute;
   }
 
+  @Override
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute){
     return getAttributeDescriptorImpl(attribute.getName(),attribute.getParent());
   }
@@ -384,6 +394,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return null;
   }
 
+  @Override
   public int getContentType() {
     TypeDescriptor type = getType();
 
@@ -448,6 +459,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return null;
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag){
     final XmlElement context = (XmlElement)element.getParent();
 
@@ -475,6 +487,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return true;
   }
 
+  @Override
   public String getQualifiedName() {
     String ns = getNS();
     if (ns != null && !ns.isEmpty()) {
@@ -489,6 +502,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return XmlUtil.findNamespacePrefixByURI((XmlFile) myDescriptorTag.getContainingFile(), getNamespace());
   }
 
+  @Override
   public String getDefaultName() {
     final PsiFile psiFile = myDescriptorTag.getContainingFile();
     XmlTag rootTag = psiFile instanceof XmlFile ?((XmlFile)psiFile).getRootTag():null;
@@ -508,6 +522,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     return Boolean.valueOf(descriptorTag.getAttributeValue("abstract"));
   }
 
+  @Override
   public void setName(String name) throws IncorrectOperationException {
     NamedObjectDescriptor.setName(myDescriptorTag, name);
   }
@@ -516,6 +531,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     myValidator = validator;
   }
 
+  @Override
   public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
     Validator<XmlTag> validator = myValidator;
     if (validator != null) {
@@ -533,6 +549,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     };
   }
 
+  @Override
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
     final TypeDescriptor type = getType(context);
     

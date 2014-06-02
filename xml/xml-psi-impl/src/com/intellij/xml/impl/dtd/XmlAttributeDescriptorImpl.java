@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,14 +44,17 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     init(decl);
   }
 
+  @Override
   public boolean isRequired() {
     return myRequired;
   }
 
+  @Override
   public PsiElement getDeclaration(){
     return myDecl;
   }
 
+  @Override
   public String getName() {
     if (myName!=null) {
       return myName;
@@ -60,6 +63,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     return myName;
   }
 
+  @Override
   public void init(PsiElement element){
     myDecl = (XmlAttributeDecl) element;
     myRequired = myDecl.isAttributeRequired();
@@ -67,22 +71,27 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     myEnumerated = myDecl.isEnumerated();
   }
 
+  @Override
   public Object[] getDependences(){
     return new Object[]{myDecl};
   }
 
+  @Override
   public boolean isFixed() {
     return myFixed;
   }
 
+  @Override
   public boolean hasIdType() {
     return myDecl.isIdAttribute();
   }
 
+  @Override
   public boolean hasIdRefType() {
     return myDecl.isIdRefAttribute();
   }
 
+  @Override
   public String getDefaultValue() {
     String text = myDecl.getDefaultValueText();
     if (text != null) {
@@ -92,10 +101,12 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     return null;
   }
 
+  @Override
   public boolean isEnumerated() {
     return myEnumerated;
   }
 
+  @Override
   public String[] getEnumeratedValues() {
 
     XmlElement[] values = myDecl.getEnumeratedValues();
@@ -111,6 +122,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     return getName();
   }
 
+  @Override
   public void setName(String name) throws IncorrectOperationException {
     myName = name;
     ((PsiNamedElement)getDeclaration()).setName(name);

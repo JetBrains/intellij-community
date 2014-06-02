@@ -151,7 +151,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     doCustomHighlighting(name, true, true);
   }
 
-  protected void doCustomHighlighting(String name, final boolean checkWeakWarnings, final Boolean includeExternalToolPass) throws Throwable {
+  protected void doCustomHighlighting(String name, final boolean checkWeakWarnings, final Boolean includeExternalToolPass) {
     myTestFixture.configureByFile(name);
 
     doCustomHighlighting(checkWeakWarnings, includeExternalToolPass);
@@ -188,11 +188,11 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     return CodeInsightTestFixtureImpl.instantiateAndRun(myTestFixture.getFile(), editor, ignore, false);
   }
 
-  protected void doTestCompletion(String name, String ext) throws Throwable {
+  protected void doTestCompletion(String name, String ext) {
     myTestFixture.testCompletion(name + "." + ext, name + "_after." + ext);
   }
 
-  protected void doTestCompletion(String before, String... variants) throws Throwable {
+  protected void doTestCompletion(String before, String... variants) {
     myTestFixture.testCompletionVariants(before, variants);
   }
 
@@ -200,12 +200,12 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     doTestCompletion(before, "xml");
   }
 
-  protected void doTestRename(String name, String ext, String newName) throws Throwable {
+  protected void doTestRename(String name, String ext, String newName) {
     myTestFixture.testRename(name + "." + ext, name + "_after." + ext, newName);
   }
 
   @SuppressWarnings({ "deprecation", "unchecked" })
-  protected void doTestQuickFix(String file, String ext) throws Throwable {
+  protected void doTestQuickFix(String file, String ext) {
     final PsiReference psiReference = myTestFixture.getReferenceAtCaretPositionWithAssertion(file + "." + ext);
     assertNull("Reference", psiReference.resolve());
     assertTrue(psiReference.getClass().getName() + " is not a QuickFixProvider", psiReference instanceof LocalQuickFixProvider);

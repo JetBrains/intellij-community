@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ public class BooleanControl extends BaseModifiableControl<JCheckBox, Boolean> {
     super(domWrapper);
   }
 
+  @Override
   protected JCheckBox createMainComponent(JCheckBox boundComponent) {
     JCheckBox checkBox = boundComponent == null ? new JCheckBox() : boundComponent;
 
     checkBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myUndefined = false;
         setModified();
@@ -43,10 +45,12 @@ public class BooleanControl extends BaseModifiableControl<JCheckBox, Boolean> {
     return checkBox;
   }
 
+  @Override
   protected Boolean getValue() {
     return myUndefined ? null : getComponent().isSelected();
   }
 
+  @Override
   protected void setValue(final Boolean value) {
     myUndefined = value == null;
     getComponent().setSelected(value != null && value);

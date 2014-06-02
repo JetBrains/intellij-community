@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,21 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.util.xml.tree.DomModelTreeView;
-import com.intellij.util.xml.tree.BaseDomElementNode;
-import com.intellij.util.xml.DomElementsNavigationManager;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.idea.ActionsBundle;
+import com.intellij.util.xml.DomElementsNavigationManager;
+import com.intellij.util.xml.tree.BaseDomElementNode;
+import com.intellij.util.xml.tree.DomModelTreeView;
 
 /**
  * User: Sergey.Vasiliev
  */
 public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
 
+  @Override
   public void actionPerformed(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode simpleNode = treeView.getTree().getSelectedNode();
 
@@ -44,6 +44,7 @@ public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e, DomModelTreeView treeView) {
     e.getPresentation().setVisible(treeView.getTree().getSelectedNode() instanceof BaseDomElementNode);
     e.getPresentation().setText(ActionsBundle.message("action.EditSource.text"));

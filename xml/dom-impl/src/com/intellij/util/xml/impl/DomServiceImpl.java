@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,10 @@ import java.util.List;
 public class DomServiceImpl extends DomService {
   private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
+    @Override
     protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
       return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlFileHeader>() {
+        @Override
         public Result<XmlFileHeader> compute() {
           return new Result<XmlFileHeader>(calcXmlFileHeader(file), file);
         }
@@ -128,6 +130,7 @@ public class DomServiceImpl extends DomService {
     return XmlFileHeader.EMPTY;
   }
 
+  @Override
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
@@ -137,6 +140,7 @@ public class DomServiceImpl extends DomService {
     return DomAnchorImpl.createAnchor(domElement);
   }
 
+  @Override
   @NotNull
   public XmlFile getContainingFile(@NotNull DomElement domElement) {
     if (domElement instanceof DomFileElement) {
@@ -145,21 +149,25 @@ public class DomServiceImpl extends DomService {
     return DomManagerImpl.getNotNullHandler(domElement).getFile();
   }
 
+  @Override
   @NotNull
   public EvaluatedXmlName getEvaluatedXmlName(@NotNull final DomElement element) {
     return DomManagerImpl.getNotNullHandler(element).getXmlName();
   }
 
+  @Override
   @NotNull
   public XmlFileHeader getXmlFileHeader(XmlFile file) {
     return file.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, file, null).getValue() : XmlFileHeader.EMPTY;
   }
 
 
+  @Override
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {
     return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), GlobalSearchScope.allScope(project));
   }
 
+  @Override
   public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
     final Collection<VirtualFile> list = scope == null ? getDomFileCandidates(clazz, project) : getDomFileCandidates(clazz, project, scope);
     final ArrayList<DomFileElement<T>> result = new ArrayList<DomFileElement<T>>(list.size());
@@ -177,6 +185,7 @@ public class DomServiceImpl extends DomService {
   }
 
 
+  @Override
   public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
     return new DomStructureViewBuilder(file, modeProvider);
   }

@@ -35,10 +35,12 @@ public abstract class RngIncludeImpl extends RngDomElementBase implements RngInc
     visitor.visitInclude(this);
   }
 
+  @Override
   public PsiFile getInclude() {
     return getIncludedFile().getValue();
   }
 
+  @Override
   @NotNull
   public RngDefine[] getOverrides() {
     // TODO: include stuff inside DIVs - fix when this is actually used

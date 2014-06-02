@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,16 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
     super(condition);
   }
 
+  @Override
   protected DomElement getParent(@NotNull DomElement t) {
     return t.getParent();
   }
 
+  @Override
   protected DomElement[] getChildren(@NotNull final DomElement domElement) {
     final List<DomElement> children = new ArrayList<DomElement>();
     domElement.acceptChildren(new DomElementVisitor() {
+      @Override
       public void visitDomElement(final DomElement element) {
         children.add(element);
       }
@@ -61,6 +64,7 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
 
   public Self withChild(@NonNls @NotNull final String localName, final ElementPattern pattern) {
     return with(new PatternCondition<T>("withChild") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         for (final AbstractDomChildrenDescription description : t.getGenericInfo().getChildrenDescriptions()) {
           if (!(description instanceof DomChildrenDescription) || localName.equals(((DomChildrenDescription)description).getXmlElementName())) {

@@ -68,6 +68,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
     final GenerateInstanceDocumentFromSchemaDialog dialog = new GenerateInstanceDocumentFromSchemaDialog(project, file);
     dialog.setOkAction(new Runnable() {
+      @Override
       public void run() {
         doAction(project, dialog);
       }
@@ -121,6 +122,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
         (XmlFile) file,
         new THashMap<String, String>(),
         new Xsd2InstanceUtils.SchemaReferenceProcessor() {
+          @Override
           public void processSchema(String schemaFileName, byte[] schemaContent) {
             try {
               final String fullFileName = tempDir.getPath() + File.separatorChar + schemaFileName;
@@ -169,6 +171,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
       final File xmlFile = new File(xmlFileName);
       VirtualFile virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+        @Override
         @Nullable
         public VirtualFile compute() {
           return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xmlFile);

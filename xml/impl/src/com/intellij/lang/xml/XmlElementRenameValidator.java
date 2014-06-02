@@ -16,7 +16,6 @@
 package com.intellij.lang.xml;
 
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
@@ -47,6 +46,7 @@ public class XmlElementRenameValidator implements RenameInputValidator {
     );
   }
 
+  @Override
   public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
     return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
   }

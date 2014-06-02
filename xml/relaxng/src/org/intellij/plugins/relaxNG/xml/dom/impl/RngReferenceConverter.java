@@ -41,6 +41,7 @@ import java.util.Set;
  * Date: 18.08.2007
  */
 public class RngReferenceConverter implements CustomReferenceConverter {
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
     final GenericAttributeValue<String> e = (GenericAttributeValue<String>)genericDomValue;
@@ -53,6 +54,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
 
       return new PsiReference[]{
               new PsiReferenceBase<XmlAttributeValue>(value, true) {
+                @Override
                 public PsiElement resolve() {
 //                  final XmlTag tag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
 //                  final XmlTag include = getAncestorTag(tag, "include", ProjectLoader.RNG_NAMESPACE);
@@ -64,6 +66,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                   return myElement.getParent().getParent();
                 }
 
+                @Override
                 @NotNull
                 public Object[] getVariants() {
                   final RngInclude include = e.getParentOfType(RngInclude.class, true);

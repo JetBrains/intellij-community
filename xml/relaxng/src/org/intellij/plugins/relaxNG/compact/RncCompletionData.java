@@ -52,10 +52,12 @@ public class RncCompletionData extends CompletionData {
 
     final CompletionVariant variant = new CompletionVariant(new AndFilter(
             new ElementFilter() {
+              @Override
               public boolean isAcceptable(Object element, PsiElement context) {
                 return true;
               }
 
+              @Override
               public boolean isClassAcceptable(Class hintClass) {
                 return PsiElement.class.isAssignableFrom(hintClass);
               }
@@ -97,8 +99,10 @@ public class RncCompletionData extends CompletionData {
     private static final String[] PATTERN_KEYWORDS = new String[]{ "attribute", "element", "grammar",
             "notAllowed", "text", "empty", "external", "parent", "list", "mixed" };
 
+    @Override
     public Object[] get(PsiElement context, CompletionContext completionContext) {
       return ContainerUtil.map2Array(doGetKeywords(context), LookupElement.class, new Function<String, LookupElement>() {
+        @Override
         public LookupElement fun(String s) {
           return TailTypeDecorator.withTail(LookupElementBuilder.create(s).bold(), TailType.SPACE);
         }

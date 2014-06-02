@@ -42,10 +42,12 @@ public class AdvancedXsdOptions implements AdvancedOptions {
   private ComboBox myAnyProcessContents;
   private ComboBox myAnyAttributeProcessContents;
 
+  @Override
   public JComponent getRoot() {
     return myRoot;
   }
 
+  @Override
   public Map<String, ?> getOptions() {
     final Map<String, Object> strings = new HashMap<String, Object>();
     if (myDisableAbstractElements.isSelected()) {
@@ -56,6 +58,7 @@ public class AdvancedXsdOptions implements AdvancedOptions {
     return strings;
   }
 
+  @Override
   public void setOptions(Map<String, ?> inputOptions) {
     myDisableAbstractElements.setSelected(inputOptions.get(DISABLE_ABSTRACT_ELEMENTS) == Boolean.TRUE);
     final Object o = inputOptions.get(ANY_PROCESS_CONTENTS);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
     new Function<DomElement, List<DomElementProblemDescriptor>>() {
+      @Override
       public List<DomElementProblemDescriptor> fun(final DomElement s) {
         final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedErrors.get(s);
         return map != null ? ContainerUtil.concat(map.values()) : Collections.<DomElementProblemDescriptor>emptyList();
@@ -54,11 +55,13 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   private final DomFileElement myElement;
 
   private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY = new Factory<Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>() {
+    @Override
     public Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> create() {
       return new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
     }
   };
   private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = new Factory<List<DomElementProblemDescriptor>>() {
+    @Override
     public List<DomElementProblemDescriptor> create() {
       return new SmartList<DomElementProblemDescriptor>();
     }
@@ -79,6 +82,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     myPassedInspections.add(inspectionClass);
   }
 
+  @Override
   public final boolean isInspectionCompleted(@NotNull final DomElementsInspection inspection) {
     return isInspectionCompleted(inspection.getClass());
   }
@@ -99,16 +103,19 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     myCachedChildrenErrors.clear();
   }
 
+  @Override
   @NotNull
   public synchronized List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
     if (domElement == null || !domElement.isValid()) return Collections.emptyList();
     return myDomProblemsGetter.fun(domElement);
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
     return getProblems(domElement);
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren) {
@@ -119,6 +126,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return ContainerUtil.concat(getProblemsMap(domElement).values());
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren,
@@ -126,8 +134,10 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return getProblems(domElement, withChildren, minSeverity);
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
     return ContainerUtil.findAll(getProblems(domElement, true, withChildren), new Condition<DomElementProblemDescriptor>() {
+      @Override
       public boolean value(final DomElementProblemDescriptor object) {
         return SeverityRegistrar.getSeverityRegistrar(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
       }
@@ -151,6 +161,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       mergeMaps(problems, myCachedErrors.get(domElement));
       if (DomUtil.hasXml(domElement)) {
         domElement.acceptChildren(new DomElementVisitor() {
+          @Override
           public void visitDomElement(DomElement element) {
             mergeMaps(problems, getProblemsMap(element));
           }
@@ -169,10 +180,12 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     }
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getAllProblems() {
     return getProblems(myElement, false, true);
   }
 
+  @Override
   public List<DomElementProblemDescriptor> getAllProblems(@NotNull DomElementsInspection inspection) {
     if (!myElement.isValid()) {
       return Collections.emptyList();

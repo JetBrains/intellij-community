@@ -53,7 +53,7 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @NotNull
   public String getElementInfo(@NotNull final PsiElement e) {
     final XmlTag tag = (XmlTag)e;
-    final StringBuffer sb = new StringBuffer();
+    final StringBuilder sb = new StringBuilder();
 
     sb.append(tag.getName());
 
@@ -81,7 +81,7 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @Nullable
   public String getElementTooltip(@NotNull final PsiElement e) {
     final XmlTag tag = (XmlTag)e;
-    final StringBuffer result = new StringBuffer("&lt;");
+    final StringBuilder result = new StringBuilder("&lt;");
     result.append(tag.getName());
     final XmlAttribute[] attributes = tag.getAttributes();
     for (final XmlAttribute each : attributes) {

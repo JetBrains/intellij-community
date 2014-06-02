@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,14 +64,17 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     mySoft = soft;
   }
 
+  @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return myRange != null ? myRange : ElementManipulators.getValueTextRange(myElement);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     myIncorrectResourceMapped = false;
@@ -134,6 +137,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
 
       final PsiElement[] result = new PsiElement[1];
       processWsdlSchemas(rootTag,new Processor<XmlTag>() {
+        @Override
         public boolean process(final XmlTag t) {
           if (canonicalText.equals(t.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) {
             result[0] = t;
@@ -156,6 +160,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return null;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final String text = myElement.getText();
@@ -166,6 +171,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return "";
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final TextRange textRangeInElement = getRangeInElement();
     final PsiElement elementToChange = myElement.findElementAt(textRangeInElement.getStartOffset());
@@ -178,6 +184,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return myElement;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     assert element instanceof PsiFile;
 
@@ -190,10 +197,12 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return myElement;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return myElement.getManager().areElementsEquivalent(resolve(),element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
@@ -212,6 +221,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     XmlTag rootTag = document.getRootTag();
     final ArrayList<String> additionalNs = new ArrayList<String>();
     if (rootTag != null) processWsdlSchemas(rootTag, new Processor<XmlTag>() {
+      @Override
       public boolean process(final XmlTag xmlTag) {
         final String s = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME);
         if (s != null) { additionalNs.add(s); }
@@ -222,10 +232,12 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return resourceUrls;
   }
 
+  @Override
   public boolean isSoft() {
     return mySoft;
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return XmlErrorMessages.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized":"uri.is.not.registered");

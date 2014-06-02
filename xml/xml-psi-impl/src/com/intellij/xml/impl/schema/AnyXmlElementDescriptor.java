@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
     myXmlNSDescriptor = xmlNSDescriptor;
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     return myXmlNSDescriptor;
   }
@@ -51,53 +52,66 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
     return null;
   }
 
+  @Override
   public PsiElement getDeclaration(){
     return null;
   }
 
+  @Override
   public String getName(PsiElement context){
     return getName();
   }
 
+  @Override
   public String getName() {
     return myParentDescriptor.getName();
   }
 
+  @Override
   public void init(PsiElement element){
   }
 
+  @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public String getQualifiedName() {
     return myParentDescriptor.getQualifiedName();
   }
 
+  @Override
   public String getDefaultName() {
     return myParentDescriptor.getDefaultName();
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     return myParentDescriptor.getElementsDescriptors(context);
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag){
     return new AnyXmlElementDescriptor(this, myXmlNSDescriptor);
   }
 
+  @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return new XmlAttributeDescriptor[0];
   }
 
+  @Override
   public XmlAttributeDescriptor getAttributeDescriptor(final String attributeName, final XmlTag context) {
     return new AnyXmlAttributeDescriptor(attributeName);
   }
 
+  @Override
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr){
     return myParentDescriptor.getAttributeDescriptor(attr);
   }
 
+  @Override
   public int getContentType() {
     return CONTENT_TYPE_UNKNOWN;
   }

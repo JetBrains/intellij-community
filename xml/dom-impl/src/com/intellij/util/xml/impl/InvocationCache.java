@@ -83,11 +83,13 @@ public class InvocationCache {
     addCoreInvocations(AnnotatedElement.class);
     addCoreInvocations(Object.class);
     ourCoreInvocations.put(new JavaMethodSignature("getUserData", Key.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getUserData((Key<?>)args[0]);
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("putUserData", Key.class, Object.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         //noinspection unchecked
         handler.putUserData((Key)args[0], args[1]);
@@ -95,49 +97,58 @@ public class InvocationCache {
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlElement"), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getXmlElement();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlTag"), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getXmlTag();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getParent"), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         return handler.getParent();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("accept", DomElementVisitor.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         handler.accept((DomElementVisitor)args[0]);
         return null;
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("acceptChildren", DomElementVisitor.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         handler.acceptChildren((DomElementVisitor)args[0]);
         return null;
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getAnnotation", Class.class), new Invocation() {
+      @Override
       public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
         //noinspection unchecked
         return handler.getAnnotation((Class<Annotation>)args[0]);
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getRawText"), new Invocation() {
+      @Override
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         return handler.getValue();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlAttribute"), new Invocation() {
+      @Override
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         return handler.getXmlElement();
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getXmlAttributeValue"), new Invocation() {
+      @Override
       @Nullable
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         final XmlAttribute attribute = (XmlAttribute)handler.getXmlElement();
@@ -145,6 +156,7 @@ public class InvocationCache {
       }
     });
     ourCoreInvocations.put(new JavaMethodSignature("getConverter"), new Invocation() {
+      @Override
       public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
         try {
           return handler.getScalarConverter();
@@ -164,6 +176,7 @@ public class InvocationCache {
     for (final Method method : ReflectionUtil.getClassDeclaredMethods(aClass)) {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
+          @Override
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
             final DomElement proxy = handler.getProxy();
             final Object arg = args[0];
@@ -182,6 +195,7 @@ public class InvocationCache {
       }
       else if ("hashCode".equals(method.getName())) {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
+          @Override
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
             return handler.hashCode();
           }
@@ -189,6 +203,7 @@ public class InvocationCache {
       }
       else {
         ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
+          @Override
           public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) throws Throwable {
             return method.invoke(handler, args);
           }

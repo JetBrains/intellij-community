@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     myProviders.put(myTextEditorProvider.getProviderName(), myTextEditorProvider);
   }
 
+  @Override
   public Set<DomElementNavigationProvider> getDomElementsNavigateProviders(DomElement domElement) {
     Set<DomElementNavigationProvider> result = new HashSet<DomElementNavigationProvider>();
 
@@ -52,20 +53,24 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     return result;
   }
 
+  @Override
   public DomElementNavigationProvider getDomElementsNavigateProvider(String providerName) {
     return myProviders.get(providerName);
   }
 
+  @Override
   public void registerDomElementsNavigateProvider(DomElementNavigationProvider provider) {
     myProviders.put(provider.getProviderName(), provider);
   }
 
   private class MyDomElementNavigateProvider extends DomElementNavigationProvider {
 
+    @Override
     public String getProviderName() {
       return DEFAULT_PROVIDER_NAME;
     }
 
+    @Override
     public void navigate(DomElement domElement, boolean requestFocus) {
       if (!domElement.isValid()) return;
 
@@ -84,6 +89,7 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
       FileEditorManagerEx.getInstanceEx(myProject).openTextEditor(fileDescriptor, requestFocus);
     }
 
+    @Override
     public boolean canNavigate(DomElement domElement) {
       return domElement != null && domElement.isValid();
     }

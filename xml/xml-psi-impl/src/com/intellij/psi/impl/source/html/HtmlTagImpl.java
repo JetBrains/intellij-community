@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     super(XmlElementType.HTML_TAG);
   }
 
+  @Override
   @NotNull
   public XmlTag[] findSubTags(String name, String namespace) {
     final XmlTag[] subTags = getSubTags();
@@ -66,25 +67,30 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return result == null ? EMPTY : result.toArray(new XmlTag[result.size()]);
   }
 
+  @Override
   protected boolean isCaseSensitive() {
     return false;
   }
 
+  @Override
   public String getAttributeValue(String qname) {
     qname = qname.toLowerCase();
     return super.getAttributeValue(qname);
   }
 
+  @Override
   protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
     name = name.toLowerCase();
     super.cacheOneAttributeValue(name, value, attributesValueMap);
   }
 
+  @Override
   public String getAttributeValue(String name, String namespace) {
     name = name.toLowerCase();
     return super.getAttributeValue(name, namespace);
   }
 
+  @Override
   @NotNull
   public String getNamespace() {
     final String xmlNamespace = super.getNamespace();
@@ -101,6 +107,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return xmlNamespace;
   }
 
+  @Override
   protected String getRealNs(final String value) {
     if (XmlUtil.XHTML_URI.equals(value)) return XmlUtil.HTML_URI;
     return value;
@@ -110,6 +117,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return "HtmlTag:" + getName();
   }
 
+  @Override
   public String getPrefixByNamespace(String namespace) {
     if (XmlUtil.HTML_URI.equals(namespace)) namespace = XmlUtil.XHTML_URI;
     return super.getPrefixByNamespace(namespace);

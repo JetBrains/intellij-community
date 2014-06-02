@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
 */
 public abstract class XmlValueReference implements PsiReference {
-  protected XmlTag myTag;
+  protected final XmlTag myTag;
   protected TextRange myRange;
 
   protected XmlValueReference(XmlTag tag) {

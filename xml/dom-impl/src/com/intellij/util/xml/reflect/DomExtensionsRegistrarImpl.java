@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,27 +60,32 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
     return addExtension(myFixeds, name, type).setCount(count);
   }
 
+  @Override
   @NotNull
   public DomExtension registerFixedNumberChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
     return registerFixedNumberChildrenExtension(name, type, 1);
   }
 
+  @Override
   @NotNull
   public DomExtension registerCollectionChildrenExtension(@NotNull final XmlName name, @NotNull final Type type) {
     return addExtension(myCollections, name, type);
   }
 
+  @Override
   @NotNull
   public DomExtension registerGenericAttributeValueChildExtension(@NotNull final XmlName name, final Type parameterType) {
     return addExtension(myAttributes, name, new ParameterizedTypeImpl(GenericAttributeValue.class, parameterType));
   }
 
+  @Override
   @NotNull
   public DomExtension registerAttributeChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
     assert GenericAttributeValue.class.isAssignableFrom(ReflectionUtil.getRawType(type));
     return addExtension(myAttributes, name, type);
   }
 
+  @Override
   @NotNull
   public DomExtension registerCustomChildrenExtension(@NotNull final Type type) {
     return registerCustomChildrenExtension(type, CustomDomChildrenDescription.TagNameDescriptor.EMPTY);

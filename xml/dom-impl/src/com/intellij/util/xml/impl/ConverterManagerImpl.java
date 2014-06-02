@@ -52,10 +52,12 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(PathReference.class, PathReferenceConverter.INSTANCE);
   }
 
+  @Override
   public void addConverter(Class clazz, Converter converter) {
     mySimpleConverters.put(clazz, converter);
   }
 
+  @Override
   @NotNull
   public final Converter getConverterInstance(final Class<? extends Converter> converterClass) {
     Converter converter = getInstance(converterClass);
@@ -67,6 +69,7 @@ class ConverterManagerImpl implements ConverterManager {
     return (T)myConverterInstances.get(clazz);
   }
 
+  @Override
   @Nullable
   public final Converter getConverterByClass(final Class<?> convertingClass) {
     final Converter converter = mySimpleConverters.get(convertingClass);
@@ -83,6 +86,7 @@ class ConverterManagerImpl implements ConverterManager {
     return null;
   }
 
+  @Override
   public <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl) {
     myConverterInstances.put(converterInterface, converterImpl);
   }

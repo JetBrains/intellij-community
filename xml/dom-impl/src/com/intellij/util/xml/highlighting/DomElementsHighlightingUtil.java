@@ -43,6 +43,7 @@ public class DomElementsHighlightingUtil {
   public static ProblemDescriptor createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
+      @Override
       public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
         return manager
           .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, true, problemDescriptor.getFixes());
@@ -68,6 +69,7 @@ public class DomElementsHighlightingUtil {
   public static Annotation createAnnotation(final DomElementProblemDescriptor problemDescriptor) {
 
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, Annotation>() {
+      @Override
       public Annotation fun(final Pair<TextRange, PsiElement> s) {
         String text = problemDescriptor.getDescriptionTemplate();
         if (StringUtil.isEmpty(text)) text = null;

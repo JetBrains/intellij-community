@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Set;
 
 class AttributeValueFunction implements Function<XmlAttributeValue, String> {
+  @Override
   public String fun(XmlAttributeValue value) {
     return value.getValue();
   }

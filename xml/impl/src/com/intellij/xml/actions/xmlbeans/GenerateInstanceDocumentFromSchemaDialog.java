@@ -20,7 +20,6 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -89,14 +88,17 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
 
     if (component instanceof JTextField) {
       ((JTextField)component).getDocument().addDocumentListener(new DocumentListener() {
+        @Override
         public void insertUpdate(DocumentEvent e) {
           validateData();
         }
 
+        @Override
         public void removeUpdate(DocumentEvent e) {
           validateData();
         }
 
+        @Override
         public void changedUpdate(DocumentEvent e) {
           validateData();
         }
@@ -106,20 +108,24 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
       JComboBox jComboBox = ((JComboBox)component);
 
       jComboBox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           validateData();
         }
       });
 
       ((JTextField)jComboBox.getEditor().getEditorComponent()).getDocument().addDocumentListener(new DocumentListener() {
+        @Override
         public void insertUpdate(DocumentEvent e) {
           validateData();
         }
 
+        @Override
         public void removeUpdate(DocumentEvent e) {
           validateData();
         }
 
+        @Override
         public void changedUpdate(DocumentEvent e) {
           validateData();
         }
@@ -127,6 +133,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
 
       if (jComboBox.isEditable()) {
         jComboBox.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+          @Override
           public void keyTyped(KeyEvent e) {
             validateData();
           }
@@ -265,6 +272,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     return status;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return panel;
   }
@@ -293,6 +301,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected String getHelpId() {
     return "webservices.GenerateInstanceDocumentFromSchema";

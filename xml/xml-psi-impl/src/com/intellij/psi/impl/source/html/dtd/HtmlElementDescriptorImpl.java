@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,15 +42,18 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     myCaseSensitive = caseSensitive;
   }
 
+  @Override
   public String getQualifiedName() {
     return myDelegate.getQualifiedName();
   }
 
+  @Override
   public String getDefaultName() {
     return myDelegate.getDefaultName();
   }
 
   // Read-only calculation
+  @Override
   protected final XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context) {
     XmlElementDescriptor[] elementsDescriptors = myDelegate.getElementsDescriptors(context);
     XmlElementDescriptor[] temp = new XmlElementDescriptor[elementsDescriptors.length];
@@ -61,6 +64,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return temp;
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag) {
     String name = element.getName();
     if (!myCaseSensitive) name = name.toLowerCase();
@@ -74,6 +78,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   }
 
   // Read-only calculation
+  @Override
   protected HashMap<String, XmlElementDescriptor> collectElementDescriptorsMap(final XmlTag element) {
     final HashMap<String, XmlElementDescriptor> hashMap = new HashMap<String, XmlElementDescriptor>();
     final XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(element);
@@ -85,6 +90,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   }
 
   // Read-only calculation
+  @Override
   protected XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
     final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors(context);
     XmlAttributeDescriptor[] temp = new XmlAttributeDescriptor[attributesDescriptors.length];
@@ -95,6 +101,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return temp;
   }
 
+  @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
     String caseSensitiveAttributeName =  !myCaseSensitive ? attributeName.toLowerCase() : attributeName;
     XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(caseSensitiveAttributeName, context);
@@ -118,6 +125,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   }
 
   // Read-only calculation
+  @Override
   protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context) {
     final HashMap<String, XmlAttributeDescriptor> hashMap = new HashMap<String, XmlAttributeDescriptor>();
     XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors(context);
@@ -131,34 +139,42 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return hashMap;
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     return myDelegate.getNSDescriptor();
   }
 
+  @Override
   public int getContentType() {
     return myDelegate.getContentType();
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return myDelegate.getDeclaration();
   }
 
+  @Override
   public String getName(PsiElement context) {
     return myDelegate.getName(context);
   }
 
+  @Override
   public String getName() {
     return myDelegate.getName();
   }
 
+  @Override
   public void init(PsiElement element) {
     myDelegate.init(element);
   }
 
+  @Override
   public Object[] getDependences() {
     return myDelegate.getDependences();
   }
 
+  @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return RelaxedHtmlFromSchemaElementDescriptor.addAttrDescriptorsForFacelets(context, super.getAttributesDescriptors(context));
   }

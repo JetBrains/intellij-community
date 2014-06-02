@@ -48,10 +48,12 @@ public class RngHtml5MetaDataContributor implements MetaDataContributor {
       super(namespaces);
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return ReflectionUtil.isAssignable(RncDocument.class, hintClass);
     }
 
+    @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       if (!(element instanceof RncDocument)) {
         return false;

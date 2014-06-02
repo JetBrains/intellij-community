@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   public DomUIFactoryImpl() {
     final Function<DomElement, TableCellEditor> booleanCreator = new Function<DomElement, TableCellEditor>() {
+      @Override
       public TableCellEditor fun(final DomElement domElement) {
         return new BooleanTableCellEditor();
       }
@@ -67,6 +68,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
     registerCustomCellEditor(Boolean.class, booleanCreator);
     registerCustomCellEditor(boolean.class, booleanCreator);
     registerCustomCellEditor(String.class, new Function<DomElement, TableCellEditor>() {
+      @Override
       public TableCellEditor fun(final DomElement domElement) {
         return new DefaultCellEditor(removeBorder(new JTextField()));
       }
@@ -77,6 +79,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
     }
   }
 
+  @Override
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
     if (Enum.class.isAssignableFrom(type)) {
       return new ComboTableCellEditor((Class<? extends Enum>)type, false);
@@ -87,14 +90,17 @@ public class DomUIFactoryImpl extends DomUIFactory {
     return function.fun(element);
   }
 
+  @Override
   public final UserActivityWatcher createEditorAwareUserActivityWatcher() {
     return new UserActivityWatcher() {
       private final DocumentAdapter myListener = new DocumentAdapter() {
+        @Override
         public void documentChanged(DocumentEvent e) {
           fireUIChanged();
         }
       };
 
+      @Override
       protected void processComponent(final Component component) {
         super.processComponent(component);
         if (component instanceof EditorComponentImpl) {
@@ -102,6 +108,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
         }
       }
 
+      @Override
       protected void unprocessComponent(final Component component) {
         super.unprocessComponent(component);
         if (component instanceof EditorComponentImpl) {
@@ -111,11 +118,13 @@ public class DomUIFactoryImpl extends DomUIFactory {
     };
   }
 
+  @Override
   public void setupErrorOutdatingUserActivityWatcher(final CommittablePanel panel, final DomElement... elements) {
     final UserActivityWatcher userActivityWatcher = createEditorAwareUserActivityWatcher();
     userActivityWatcher.addUserActivityListener(new UserActivityListener() {
       private boolean isProcessingChange;
 
+      @Override
       public void stateChanged() {
         if (isProcessingChange) return;
         isProcessingChange = true;
@@ -133,19 +142,23 @@ public class DomUIFactoryImpl extends DomUIFactory {
     userActivityWatcher.register(panel.getComponent());
   }
 
+  @Override
   @Nullable
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ReflectionUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
   }
 
+  @Override
   public CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements) {
     captionComponent.initErrorPanel(new DomElementsErrorPanel(elements));
     return captionComponent;
   }
 
+  @Override
   public BackgroundEditorHighlighter createDomHighlighter(final Project project, final PerspectiveFileEditor editor, final DomElement element) {
     return new BackgroundEditorHighlighter() {
+      @Override
       @NotNull
       public HighlightingPass[] createPassesForEditor() {
         if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
@@ -168,6 +181,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
         return new HighlightingPass[]{ghp, lip};
       }
 
+      @Override
       @NotNull
       public HighlightingPass[] createPassesForVisibleArea() {
         return createPassesForEditor();
@@ -176,14 +190,17 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   }
 
+  @Override
   public BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     return new TextControl(wrapper, commitOnEveryChange);
   }
 
+  @Override
   public void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator) {
     myCustomControlCreators.put(aClass, creator);
   }
 
+  @Override
   public void registerCustomCellEditor(final Class aClass, final Function<DomElement, TableCellEditor> creator) {
     myCustomCellEditorCreators.put(aClass, creator);
   }

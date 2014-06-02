@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     private static final Pattern pattern = Pattern.compile("^(?:\\\\i|\\\\l)");
     private static final Pattern pattern2 = Pattern.compile("([^\\\\])(?:\\\\i|\\\\l)");
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       try {
@@ -90,15 +91,18 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       }
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
+    @Override
     public boolean isSoft() {
       return false;
     }
 
+    @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
       return message;
@@ -112,25 +116,30 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       myElement = element;
     }
 
+    @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @Override
     public TextRange getRangeInElement() {
       return ElementManipulators.getValueTextRange(myElement);
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       return myElement.getParent().getParent();
     }
 
+    @Override
     @NotNull
     public String getCanonicalText() {
       String text = myElement.getText();
       return text.substring(1,text.length()- 1);
     }
 
+    @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       return ElementManipulators.getManipulator(myElement).handleContentChange(
         myElement,
@@ -139,24 +148,29 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       );
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element) {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
+    @Override
     public boolean isSoft() {
       return true;
     }
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final PsiElement parent = element.getParent();

@@ -35,6 +35,7 @@ import java.util.TreeSet;
  */
 class ImplementationClassCache {
   private static final Comparator<Class> CLASS_COMPARATOR = new Comparator<Class>() {
+    @Override
     public int compare(final Class o1, final Class o2) {
       if (o1.isAssignableFrom(o2)) return 1;
       if (o2.isAssignableFrom(o1)) return -1;
@@ -98,6 +99,7 @@ class ImplementationClassCache {
     myImplementationClasses.putValue(domElementClass.getName(), ep);
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, new Disposable() {
+        @Override
         public void dispose() {
           myImplementationClasses.remove(domElementClass.getName());
         }

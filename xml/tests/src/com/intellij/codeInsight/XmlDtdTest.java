@@ -323,7 +323,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("date", elements[0].getName());
   }
 
-  private static XmlNSDescriptor createDescriptor(String dtdText) throws Exception {
+  private static XmlNSDescriptor createDescriptor(String dtdText) {
     PsiFile dtdFile = createLightFile("test.dtd", dtdText);
 
     XmlNSDescriptorImpl descriptor = new XmlNSDescriptorImpl();
@@ -331,7 +331,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     return descriptor;
   }
 
-  private static XmlTag tag(String tagName) throws Exception {
+  private static XmlTag tag(String tagName) {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("tag.xml", StdFileTypes.XML, "<" + tagName + "/>");
     return file.getDocument().getRootTag();
   }

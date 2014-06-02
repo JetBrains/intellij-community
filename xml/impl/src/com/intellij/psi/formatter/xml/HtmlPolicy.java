@@ -171,8 +171,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   private boolean hasInlineContentOnly(final XmlTag tag) {
     final XmlTag[] tags = tag.getSubTags();
-    for (int i = 0; i < tags.length; i++) {
-      XmlTag xmlTag = tags[i];
+    for (XmlTag xmlTag : tags) {
       if (!isInlineTag(xmlTag)) return false;
       if (!hasInlineContentOnly(xmlTag)) return false;
     }

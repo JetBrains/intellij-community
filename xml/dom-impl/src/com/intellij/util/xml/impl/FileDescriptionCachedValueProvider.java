@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,6 +202,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   private class MyCondition implements Condition<DomFileDescription> {
     public Module module;
 
+    @Override
     public boolean value(final DomFileDescription description) {
       return description.isMyFile(myXmlFile, module);
     }

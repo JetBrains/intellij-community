@@ -207,6 +207,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return createSyntheticBlock(localResult, null);
   }
 
+  @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (isPreserveSpace()) return Spacing.getReadOnlySpacing();
     if(child1 instanceof AbstractSyntheticBlock && child2 instanceof AbstractSyntheticBlock) {
@@ -295,14 +296,17 @@ public class XmlTagBlock extends AbstractXmlBlock{
     }
   }
 
+  @Override
   public boolean insertLineBreakBeforeTag() {
     return myXmlFormattingPolicy.insertLineBreakBeforeTag(getTag());
   }
 
+  @Override
   public boolean removeLineBreakBeforeTag() {
     return myXmlFormattingPolicy.removeLineBreakBeforeTag(getTag());
   }
 
+  @Override
   public boolean isTextElement() {
     return myXmlFormattingPolicy.isTextElement(getTag());
   }

@@ -36,6 +36,7 @@ public class RncRefImpl extends RncElementImpl implements RncRef {
     super(node);
   }
 
+  @Override
   @Nullable
   public RncDefine getPattern() {
     final PsiReference ref = getReference();
@@ -43,6 +44,7 @@ public class RncRefImpl extends RncElementImpl implements RncRef {
     return ref instanceof PatternReference ? (RncDefine)ref.resolve() : null;
   }
 
+  @Override
   public String getReferencedName() {
     final ASTNode node = findNameNode();
     assert node != null;
@@ -58,6 +60,7 @@ public class RncRefImpl extends RncElementImpl implements RncRef {
     visitor.visitRef(this);
   }
 
+  @Override
   public void accept(Visitor visitor) {
     visitor.visitRef(this);
   }

@@ -107,7 +107,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
     }
 
     Expression expression = new Expression() {
-      TextResult result = new TextResult("");
+      final TextResult result = new TextResult("");
 
       @Override
       public Result calculateResult(ExpressionContext context) {

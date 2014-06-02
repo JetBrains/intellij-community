@@ -66,7 +66,7 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
         assertEquals("a", element.getXxx().getValue());
       }
     };
-    assertOrderedCollection(children, new Consumer[] { consumer1, consumer2 });
+    assertOrderedCollection(children, consumer1, consumer2);
   }
 
   public void testNamespaces() throws Throwable {
@@ -127,6 +127,7 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
           try {
             for (int k = 0; k < iterationCount; k++) {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   final List<Boy> boys = rootElement.getBoys();
                   Thread.yield();
@@ -151,6 +152,7 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
 
     for (int i = 0; i < iterationCount; i++) {
       WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+        @Override
         public void run() {
           fileB.getViewProvider().getDocument().insertString(0, " ");
           fileD.getViewProvider().getDocument().insertString(0, " ");
@@ -158,14 +160,18 @@ public class DomIncludesTest extends CodeInsightFixtureTestCase {
         }
       });
       Thread.sleep(10);
-      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+        @Override
+        public void run() {
           fileC.getViewProvider().getDocument().insertString(0, " ");
           fileE.getViewProvider().getDocument().insertString(0, " ");
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
         }
       });
       Thread.sleep(10);
-      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+        @Override
+        public void run() {
 
           fileB.getViewProvider().getDocument().setText(textB);
           fileC.getViewProvider().getDocument().setText(textC);

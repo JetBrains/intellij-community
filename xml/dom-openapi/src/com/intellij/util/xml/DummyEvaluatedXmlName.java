@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,12 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
     myNamespace = namespace;
   }
 
+  @Override
   public XmlName getXmlName() {
     return myXmlName;
   }
 
+  @Override
   public EvaluatedXmlName evaluateChildName(@NotNull final XmlName name) {
     String namespaceKey = name.getNamespaceKey();
     if (namespaceKey == null) {
@@ -48,10 +50,12 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
     return EvaluatedXmlNameImpl.createEvaluatedXmlName(name, namespaceKey, false);
   }
 
+  @Override
   public boolean isNamespaceAllowed(final String namespace, final XmlFile file, boolean qualified) {
     return namespace.equals(myNamespace);
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getNamespace(@NotNull final XmlElement parentElement, final XmlFile file) {

@@ -91,6 +91,7 @@ public abstract class RncElementImpl extends ASTWrapperPsiElement implements Rnc
     }
   }
 
+  @Override
   public final void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof RncElementVisitor) {
       accept((RncElementVisitor)visitor);
@@ -116,10 +117,12 @@ public abstract class RncElementImpl extends ASTWrapperPsiElement implements Rnc
 
   public abstract void accept(@NotNull RncElementVisitor visitor);
 
+  @Override
   public void accept(Visitor visitor) {
     visitor.visitElement(this);
   }
 
+  @Override
   public void acceptChildren(Visitor visitor) {
     final PsiElement[] elements = getChildren();
     //noinspection ForLoopReplaceableByForEach
@@ -131,6 +134,7 @@ public abstract class RncElementImpl extends ASTWrapperPsiElement implements Rnc
     }
   }
 
+  @Override
   public RncElement getPsiElement() {
     return this;
   }

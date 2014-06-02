@@ -44,18 +44,21 @@ public class RngDomInspection extends BasicDomElementsInspection<RngDomElement> 
     return true;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return BaseInspection.getRngGroupDisplayName();
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unresolved References";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {

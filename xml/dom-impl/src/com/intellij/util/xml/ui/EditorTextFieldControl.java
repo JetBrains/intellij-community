@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,16 +47,19 @@ import java.util.List;
  */
 public abstract class EditorTextFieldControl<T extends JComponent> extends BaseModifiableControl<T, String> {
   private static final JTextField J_TEXT_FIELD = new JTextField() {
+    @Override
     public void addNotify() {
       throw new UnsupportedOperationException("Shouldn't be shown");
     }
 
+    @Override
     public void setVisible(boolean aFlag) {
       throw new UnsupportedOperationException("Shouldn't be shown");
     }
   };
   private final boolean myCommitOnEveryChange;
   private final DocumentListener myListener = new DocumentAdapter() {
+    @Override
     public void documentChanged(DocumentEvent e) {
       setModified();
       if (myCommitOnEveryChange) {
@@ -77,6 +80,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
   protected abstract EditorTextField getEditorTextField(@NotNull T component);
 
+  @Override
   protected void doReset() {
     final EditorTextField textField = getEditorTextField(getComponent());
     textField.getDocument().removeDocumentListener(myListener);
@@ -84,14 +88,17 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
     textField.getDocument().addDocumentListener(myListener);
   }
 
+  @Override
   protected JComponent getComponentToListenFocusLost(final T component) {
     return getEditorTextField(getComponent());
   }
 
+  @Override
   protected JComponent getHighlightedComponent(final T component) {
     return J_TEXT_FIELD;
   }
 
+  @Override
   protected T createMainComponent(T boundedComponent) {
     final Project project = getProject();
     boundedComponent = createMainComponent(boundedComponent, project);
@@ -104,15 +111,19 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
   protected abstract T createMainComponent(T boundedComponent, Project project);
 
+  @Override
   @NotNull
   protected String getValue() {
     return getEditorTextField(getComponent()).getText();
   }
 
+  @Override
   protected void setValue(final String value) {
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
       public void run() {
         new WriteAction() {
+          @Override
           protected void run(Result result) throws Throwable {
             final T component = getComponent();
             final Document document = getEditorTextField(component).getDocument();
@@ -123,6 +134,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
     });
   }
 
+  @Override
   protected void updateComponent() {
     final DomElement domElement = getDomElement();
     if (domElement == null || !domElement.isValid()) return;
@@ -130,6 +142,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
     final EditorTextField textField = getEditorTextField(getComponent());
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!project.isOpen()) return;
         if (!getDomWrapper().isValid()) return;
@@ -170,13 +183,16 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
   }
 
+  @Override
   public boolean canNavigate(final DomElement element) {
     return getDomElement().equals(element);
   }
 
+  @Override
   public void navigate(final DomElement element) {
     final EditorTextField field = getEditorTextField(getComponent());
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         field.requestFocus();
         field.selectAll();

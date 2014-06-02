@@ -152,6 +152,7 @@ public class DomImplUtil {
     }
 
     return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
+      @Override
       public boolean value(XmlTag childTag) {
         try {
           return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
@@ -176,6 +177,7 @@ public class DomImplUtil {
     }
 
     return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
+      @Override
       public boolean value(XmlTag childTag) {
         return isNameSuitable(name, childTag, file);
       }
@@ -272,6 +274,7 @@ public class DomImplUtil {
       usedNames.add(description.getXmlName());
     }
     return ContainerUtil.findAll(subTags, new Condition<XmlTag>() {
+      @Override
       public boolean value(final XmlTag tag) {
         if (StringUtil.isEmpty(tag.getName())) return false;
 

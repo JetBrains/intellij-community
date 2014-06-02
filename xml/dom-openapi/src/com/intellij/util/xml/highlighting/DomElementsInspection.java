@@ -65,6 +65,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
     final Consumer<DomElement> consumer = new Consumer<DomElement>() {
+      @Override
       public void consume(final DomElement element) {
         checkChildren(element, this);
         checkDomElement(element, holder, helper);
@@ -111,6 +112,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
    * Override {@link #checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
    * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof XmlFile && (file.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
@@ -125,11 +127,13 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     return null;
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -148,6 +152,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
 
     List<ProblemDescriptor> problems =
       ContainerUtil.concat(list, new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
+        @Override
         public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
           return annotationsManager.createProblemDescriptors(manager, s);
         }

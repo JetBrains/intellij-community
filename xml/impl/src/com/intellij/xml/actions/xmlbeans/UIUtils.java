@@ -46,10 +46,12 @@ public class UIUtils {
     wsdlUrl.getButton().setToolTipText(XmlBundle.message("browse.button.tooltip"));
     wsdlUrl.getButton().addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent actionEvent) {
           final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, multipleFileSelection) {
             private final List<String> extensions = Arrays.asList(_extensions);
 
+            @Override
             public boolean isFileSelectable(VirtualFile virtualFile) {
               return extensions.contains(virtualFile.getExtension());
             }

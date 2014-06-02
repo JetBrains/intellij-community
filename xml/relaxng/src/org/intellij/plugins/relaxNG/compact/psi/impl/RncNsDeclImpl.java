@@ -30,6 +30,7 @@ public class RncNsDeclImpl extends RncDeclImpl implements RncNsDecl {
     super(node);
   }
 
+  @Override
   public boolean isDefault() {
     return getNode().findChildByType(RncTokenTypes.KEYWORD_DEFAULT) != null;
   }

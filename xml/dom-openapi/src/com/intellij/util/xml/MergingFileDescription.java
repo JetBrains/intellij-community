@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   @NotNull
   protected abstract Set<XmlFile> getFilesToMerge(DomElement element);
 
+  @Override
   @NotNull
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
@@ -82,6 +83,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     return myMerger.mergeModels(getRootElementClass(), roots);
   }
 
+  @Override
   @NotNull
   public DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
@@ -98,6 +100,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     return (DomElement)o;
   }
 
+  @Override
   public boolean isAutomaticHighlightingEnabled() {
     return false;
   }

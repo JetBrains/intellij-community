@@ -251,6 +251,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return buf.toString();
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     PsiElement result = createNavigationElementHTML(psiManager, object.toString(),element);
 
@@ -266,6 +267,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     PsiElement result = createNavigationElementHTML(psiManager, link, context);
 

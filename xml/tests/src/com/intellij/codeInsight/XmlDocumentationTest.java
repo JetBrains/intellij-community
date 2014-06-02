@@ -128,7 +128,7 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     PsiElement element;
     final PsiFile psiFile;
 
-    DocumentationTestContext(String... fileNames) throws Exception {
+    DocumentationTestContext(String... fileNames) {
       copyAdditionalFiles(fileNames);
       psiFile = myFixture.configureByFile(fileNames[0]);
       originalElement = psiFile.findElementAt(myFixture.getEditor().getCaretModel().getOffset());

@@ -43,7 +43,7 @@ import java.util.List;
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected XmlFormattingPolicy myXmlFormattingPolicy;
-  protected XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
+  protected final XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
   private final boolean myPreserveSpace;
 
   protected AbstractXmlBlock(final ASTNode node,

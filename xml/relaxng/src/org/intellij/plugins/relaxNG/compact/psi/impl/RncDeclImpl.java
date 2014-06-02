@@ -37,11 +37,13 @@ public class RncDeclImpl extends RncElementImpl implements RncDecl {
     super(node);
   }
 
+  @Override
   public String getPrefix() {
     final ASTNode ns = findIdentifierNode();
     return ns != null ? EscapeUtil.unescapeText(ns) : null;
   }
 
+  @Override
   public String getDeclaredNamespace() {
     final ASTNode ns = getNode().findChildByType(RncTokenTypes.LITERAL);
     return ns != null ? EscapeUtil.parseLiteralValue(ns) : null;
@@ -74,6 +76,7 @@ public class RncDeclImpl extends RncElementImpl implements RncDecl {
     return s != null ? s : "";
   }
 
+  @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     final ASTNode node = findIdentifierNode();
     if (node == null) return this;
@@ -81,6 +84,7 @@ public class RncDeclImpl extends RncElementImpl implements RncDecl {
     return this;
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitElement(this);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,24 +138,29 @@ public class ValidateXmlActionHandler {
   public void doParse() {
     try {
       myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
+        @Override
         public void warning(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.WARNING);
         }
 
+        @Override
         public void error(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.ERROR);
         }
 
+        @Override
         public void fatalError(SAXParseException e) throws SAXException {
           if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.FATAL);
         }
 
+        @Override
         public InputSource resolveEntity(String publicId, String systemId) {
           final PsiFile psiFile = myXmlResourceResolver.resolve(null, systemId);
           if (psiFile == null) return null;
           return new InputSource(new StringReader(psiFile.getText()));
         }
 
+        @Override
         public void startDocument() throws SAXException {
           super.startDocument();
           myParser.setProperty(
@@ -173,7 +178,7 @@ public class ValidateXmlActionHandler {
         }
 
         myFile.putUserData(DEPENDENT_FILES_KEY, files);
-        myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files, myProject)));
+        myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, calculateTimeStamp(files, myProject));
       }
        myFile.putUserData(KNOWN_NAMESPACES_KEY, getNamespaces(myFile));
     }

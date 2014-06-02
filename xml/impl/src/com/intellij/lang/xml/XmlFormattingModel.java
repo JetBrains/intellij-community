@@ -32,7 +32,6 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -50,10 +49,12 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
     myProject = file.getProject();
   }
 
+  @Override
   public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
     return shiftIndentInsideWithPsi(textRange, shift);
   }
 
+  @Override
   public void commitChanges() {
   }
 
@@ -69,6 +70,7 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
     return textRange;
   }
 
+  @Override
   protected String replaceWithPsiInLeaf(final TextRange textRange, String whiteSpace, ASTNode leafElement) {
      if (!myCanModifyAllWhiteSpaces) {
        if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;

@@ -20,8 +20,8 @@ package com.intellij.javaee;
 *         Date: 7/18/12
 */
 public class NameLocationPair implements Comparable {
-  String myName;
-  String myLocation;
+  final String myName;
+  final String myLocation;
   boolean myShared;
 
   public NameLocationPair(String name, String location, boolean shared) {

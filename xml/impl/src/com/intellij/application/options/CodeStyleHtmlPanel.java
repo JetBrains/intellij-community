@@ -89,6 +89,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     addPanelToWatch(myPanel);
   }
 
+  @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
@@ -107,6 +108,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     uiField.getTextField().setEditable(false);
     uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final TagListDialog tagListDialog = new TagListDialog(title);
         tagListDialog.setData(createCollectionOn(uiField.getText()));
@@ -130,10 +132,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     });
   }
 
+  @Override
   protected int getRightMargin() {
     return 60;
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.HTML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
@@ -165,6 +169,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
@@ -187,6 +192,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
@@ -257,20 +263,24 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     return false;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected String getPreviewText() {
     return readFromFile(this.getClass(), "preview.html.template");
 
   }
 
+  @Override
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.HTML;
   }
 
+  @Override
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
