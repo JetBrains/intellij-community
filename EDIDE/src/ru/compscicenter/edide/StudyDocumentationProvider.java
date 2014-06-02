@@ -62,14 +62,8 @@ public class StudyDocumentationProvider extends DocumentationProviderEx {
 
         FileEditor[] fe = FileEditorManager.getInstance(element.getProject()).getAllEditors();
         LogicalPosition pos = ((PsiAwareTextEditorImpl)((StudyEditor) fe[0]).getDefaultEditor()).getEditor().getCaretModel().getLogicalPosition();
-        //((PsiAwareTextEditorImpl) ((StudyEditor) fe[0]).defaultEditor).a().getCaretModel().getLogicalPosition()
-        //Editor selectedTextEditor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
-        //Document curDoc = selectedTextEditor.getDocument();
-        //VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(curDoc);
-        //element.getProject().
         TaskManager tm =  TaskManager.getInstance();
         int taskNum = tm.getTaskNumForFile(file);
-        //LogicalPosition pos  =  selectedTextEditor.getCaretModel().getLogicalPosition();
         String docsfile = tm.getDocFileForTask(taskNum, pos, file);
         if (docsfile == null) {
             docsfile = "empty_study.docs";
