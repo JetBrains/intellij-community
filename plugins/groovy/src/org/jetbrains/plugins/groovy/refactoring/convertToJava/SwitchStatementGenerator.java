@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
  */
 public class SwitchStatementGenerator {
 
-  private static final boolean LANGUAGE_LEVEL_7_OR_HIGHER = false;
-
-  private SwitchStatementGenerator() {
-  }
+  private SwitchStatementGenerator() { }
 
   public static void generate(@NotNull StringBuilder builder,
                               @NotNull ExpressionContext context,
@@ -51,12 +50,25 @@ public class SwitchStatementGenerator {
     final GrCaseSection[] caseSections = switchStatement.getCaseSections();
 
     final PsiType type = condition == null ? null : TypesUtil.unboxPrimitiveTypeWrapper(condition.getType());
-    if (type == null || HighlightUtil.isValidTypeForSwitchSelector(type, LANGUAGE_LEVEL_7_OR_HIGHER)) {
+    if (type == null || isValidTypeForSwitchSelector(type)) {
       generateSwitch(builder, context, condition, caseSections);
     }
     else {
       generateIfs(builder, context, condition, caseSections);
     }
+  }
+
+  private static boolean isValidTypeForSwitchSelector(@NotNull PsiType type) {
+    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) {
+      return true;
+    }
+
+    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (aClass != null && aClass.isEnum()) {
+      return true;
+    }
+
+    return false;
   }
 
   private static void generateIfs(@NotNull StringBuilder builder,

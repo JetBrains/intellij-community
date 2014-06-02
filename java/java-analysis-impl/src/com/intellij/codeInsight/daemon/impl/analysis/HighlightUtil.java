@@ -1314,48 +1314,62 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  public static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchStatement statement) {
-    final PsiExpression expression = statement.getExpression();
-    PsiType type = expression == null ? null : expression.getType();
-    if (type == null) {
-      return null;
-    }
-    HighlightInfo errorResult = null;
-    final boolean atLeastJava7 = PsiUtil.isLanguageLevel7OrHigher(expression);
-    if (!isValidTypeForSwitchSelector(type, atLeastJava7)) {
-      final String switchSelectorMessage = atLeastJava7 ? JavaErrorMessages.message("valid.switch.17.selector.types") 
-                                                        : JavaErrorMessages.message("valid.switch.selector.types");
-      String message =
-        JavaErrorMessages.message("incompatible.types", switchSelectorMessage, JavaHighlightUtil.formatType(type));
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention(statement));
+  public static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchStatement statement, @NotNull LanguageLevel level) {
+    PsiExpression expression = statement.getExpression();
+    if (expression == null) return null;
+    PsiType type = expression.getType();
+    if (type == null) return null;
+
+    SelectorKind kind = getSwitchSelectorKind(type);
+    if (kind == SelectorKind.INT) return null;
+
+    LanguageLevel requiredLevel = null;
+    if (kind == SelectorKind.ENUM) requiredLevel = LanguageLevel.JDK_1_5;
+    if (kind == SelectorKind.STRING) requiredLevel = LanguageLevel.JDK_1_7;
+
+    if (kind == null || requiredLevel != null && !level.isAtLeast(requiredLevel)) {
+      boolean is7 = level.isAtLeast(LanguageLevel.JDK_1_7);
+      String expected = JavaErrorMessages.message(is7 ? "valid.switch.17.selector.types" : "valid.switch.selector.types");
+      String message = JavaErrorMessages.message("incompatible.types", expected, JavaHighlightUtil.formatType(type));
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention(statement));
       if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddTypeCastFix(PsiType.INT, expression));
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(PsiType.INT, expression));
       }
-    }
-    else {
-      final PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
-      if (member != null && !PsiUtil.isAccessible(member.getProject(), member, expression, null)) {
-        String message = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME) + " is inaccessible here";
-        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      if (requiredLevel != null) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(requiredLevel));
       }
+      return info;
     }
-    return errorResult;
+
+    PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (member != null && !PsiUtil.isAccessible(member.getProject(), member, expression, null)) {
+      String className = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
+      String message = JavaErrorMessages.message("inaccessible.type", className);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+    }
+
+    return null;
   }
 
-  public static boolean isValidTypeForSwitchSelector(@NotNull PsiType type, final boolean languageLevel7OrHigher) {
-    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return true;
-    if (type instanceof PsiClassType) {
-      PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass == null) return false;
+  private enum SelectorKind { INT, ENUM, STRING }
+
+  private static SelectorKind getSwitchSelectorKind(@NotNull PsiType type) {
+    if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) {
+      return SelectorKind.INT;
+    }
+
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (psiClass != null) {
       if (psiClass.isEnum()) {
-        return true;
+        return SelectorKind.ENUM;
       }
-      if (languageLevel7OrHigher) {
-        return Comparing.strEqual(psiClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING);
+      if (Comparing.strEqual(psiClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)) {
+        return SelectorKind.STRING;
       }
     }
-    return false;
+
+    return null;
   }
 
   @Nullable
