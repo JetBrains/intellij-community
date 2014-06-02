@@ -704,7 +704,8 @@ public class GenericsHighlightUtil {
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    final PsiClass aClass = constructorOrInitializer.getContainingClass();
+    final PsiClass aClass = constructorOrInitializer instanceof PsiEnumConstantInitializer ? 
+                            (PsiClass)constructorOrInitializer : constructorOrInitializer.getContainingClass();
     if (aClass == null || !(aClass.isEnum() || aClass instanceof PsiEnumConstantInitializer)) return null;
     final PsiField field = (PsiField)resolved;
     if (aClass instanceof PsiEnumConstantInitializer) {
