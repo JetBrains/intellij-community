@@ -1746,6 +1746,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myList.repaint();
 
           myRenderer.recalculateWidth();
+          if (myBalloon == null || myBalloon.isDisposed()) {
+            return;
+          }
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
