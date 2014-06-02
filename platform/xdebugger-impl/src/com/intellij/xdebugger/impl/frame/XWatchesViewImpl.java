@@ -44,7 +44,9 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -102,7 +104,7 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
                                                    SystemInfo.isMac ? 1 : 0, 0,
                                                    SystemInfo.isMac ? 0 : 1, 0);
     decorator.setToolbarBorder(border);
-    myDecoratedPanel = decorator.createPanel();
+    myDecoratedPanel = new MyPanel(decorator.createPanel());
     myDecoratedPanel.setBorder(null);
 
     myTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
@@ -336,5 +338,22 @@ public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugVi
 
   @Override
   public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
+  }
+
+  private class MyPanel extends JPanel implements DataProvider {
+    public MyPanel(JPanel panel) {
+      setLayout(new BorderLayout());
+      add(panel);
+      panel.setBorder(null);
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (XWatchesView.DATA_KEY.is(dataId)) {
+        return XWatchesViewImpl.this;
+      }
+      return null;
+    }
   }
 }
