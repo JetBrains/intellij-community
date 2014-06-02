@@ -31,6 +31,7 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
@@ -86,7 +87,7 @@ public class DfaVariableValue extends DfaValue {
   private final DfaTypeValue myTypeValue;
   private final List<DfaVariableValue> myDependents = new SmartList<DfaVariableValue>();
 
-  private DfaVariableValue(@NotNull PsiModifierListOwner variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
+  private DfaVariableValue(@NotNull PsiModifierListOwner variable, @Nullable PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
     super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
@@ -94,6 +95,9 @@ public class DfaVariableValue extends DfaValue {
     myVarType = varType;
     DfaValue typeValue = myFactory.createTypeValue(varType, Nullness.UNKNOWN);
     myTypeValue = typeValue instanceof DfaTypeValue ? (DfaTypeValue)typeValue : null;
+    if (varType != null && !varType.isValid()) {
+      PsiUtil.ensureValidType(varType, "Variable: " + variable + " of class " + variable.getClass());
+    }
   }
 
   @Nullable
