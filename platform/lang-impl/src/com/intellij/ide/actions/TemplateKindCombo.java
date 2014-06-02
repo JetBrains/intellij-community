@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SpeedSearchComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
         }
         return null;
       }
-    };
+    }.setComparator(new SpeedSearchComparator(true));
     setButtonListener(null);
   }
 
