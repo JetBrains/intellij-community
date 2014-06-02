@@ -20,13 +20,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class ClassProcessor extends VirtualFileVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ClassProcessor");
@@ -196,9 +199,9 @@ public class ClassProcessor extends VirtualFileVisitor {
     return new IntIdEquation(key, result);
   }
 
+  // nullity, contracts
   MostlySingularMultiMap<String, AnnotationData> annotations() {
-    myIntIdSolver.solve();
-    Map<Key, Value> solutions = solver.solve();
-    return Util.makeAnnotations(solutions);
+    TIntObjectHashMap<Value> internalIdSolutions = myIntIdSolver.solve();
+    return Util.makeAnnotations(internalIdSolutions, myEnumerators);
   }
 }

@@ -445,7 +445,8 @@ final class IntIdSolver {
     }
   }
 
-  void solve() {
+  // TODO - to int
+  TIntObjectHashMap<Value> solve() {
     while (!moving.empty()) {
       int id = moving.pop();
       Value value = solved.get(id);
@@ -467,6 +468,7 @@ final class IntIdSolver {
       }
     }
     pending.clear();
+    return solved;
   }
 
   // substitute id -> value into pending

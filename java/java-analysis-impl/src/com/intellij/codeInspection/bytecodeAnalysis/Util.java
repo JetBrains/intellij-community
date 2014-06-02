@@ -17,8 +17,11 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
 import org.jetbrains.org.objectweb.asm.Type;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class Util {
@@ -33,38 +36,61 @@ public class Util {
     }
   }
 
-  public static MostlySingularMultiMap<String, AnnotationData> makeAnnotations(Map<Key, Value> solutions) {
+  public static MostlySingularMultiMap<String, AnnotationData> makeAnnotations(TIntObjectHashMap<Value> internalIdSolutions,
+                                                                               Enumerators enumerators) {
     MostlySingularMultiMap<String, AnnotationData> annotations = new MostlySingularMultiMap<String, AnnotationData>();
     HashMap<String, StringBuilder> contracts = new HashMap<String, StringBuilder>();
-    for (Map.Entry<Key, Value> solution : solutions.entrySet()) {
-      Key key = solution.getKey();
-
-      Value value = solution.getValue();
+    TIntObjectIterator<Value> iterator = internalIdSolutions.iterator();
+    for (int i = internalIdSolutions.size(); i-- > 0;) {
+      iterator.advance();
+      int inKey = iterator.key();
+      Value value = iterator.value();
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
-
-      Direction direction = key.direction;
-
-      String annKey = annotationKey(key.method, direction);
-      if ((direction instanceof In || direction instanceof Out) && value == Value.NotNull) {
-        annotations.add(annKey, new AnnotationData("org.jetbrains.annotations.NotNull", ""));
+      InternalKey key = null;
+      try {
+        String s = enumerators.internalKeyEnumerator.valueOf(inKey);
+        key = readInternalKey(s);
       }
-      else if (direction instanceof InOut) {
-        StringBuilder sb = contracts.get(annKey);
-        if (sb == null) {
-          sb = new StringBuilder("\"");
-          contracts.put(annKey, sb);
-        } else {
-          sb.append(';');
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      if (key != null) {
+        Direction direction = key.dir;
+        String baseAnnKey = key.annotationKey;
+
+        if (direction instanceof In && value == Value.NotNull) {
+          String annKey = baseAnnKey + " " + ((In)direction).paramIndex;
+          annotations.add(annKey, new AnnotationData("org.jetbrains.annotations.NotNull", ""));
         }
-        contractElement(sb, key.method, (InOut)direction, value);
+        else if (direction instanceof Out && value == Value.NotNull) {
+          annotations.add(baseAnnKey, new AnnotationData("org.jetbrains.annotations.NotNull", ""));
+        }
+        else if (direction instanceof InOut) {
+          StringBuilder sb = contracts.get(baseAnnKey);
+          if (sb == null) {
+            sb = new StringBuilder("\"");
+            contracts.put(baseAnnKey, sb);
+          }
+          else {
+            sb.append(';');
+          }
+          contractElement(sb, calculateArity(baseAnnKey), (InOut)direction, value);
+        }
       }
     }
+
     for (Map.Entry<String, StringBuilder> contract : contracts.entrySet()) {
       annotations.add(contract.getKey(), new AnnotationData("org.jetbrains.annotations.Contract", contract.getValue().append('"').toString()));
     }
     return annotations;
+  }
+
+  // TODO - this is a hack for now
+  static int calculateArity(String annotationKey) {
+    return annotationKey.split(",").length;
   }
 
   static String contractValueString(Value v) {
@@ -77,8 +103,7 @@ public class Util {
     }
   }
 
-  static String contractElement(StringBuilder sb, Method method, InOut inOut, Value value) {
-    int arity = Type.getArgumentTypes(method.methodDesc).length;
+  static String contractElement(StringBuilder sb, int arity, InOut inOut, Value value) {
     for (int i = 0; i < arity; i++) {
       Value currentValue = Value.Top;
       if (i == inOut.paramIndex) {

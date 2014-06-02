@@ -64,7 +64,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
   private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
 
   private final PsiManager myPsiManager;
-  private ArrayList<IntIdEquation> myIntIdEquations;
 
   private final Enumerators myEnumerators;
 
@@ -98,7 +97,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     myEnumerators = enumerators;
   }
 
-  // TODO - key should be an int
   void setAnnotations(MostlySingularMultiMap<String, AnnotationData> annotations) {
     this.myAnnotations = annotations;
   }
@@ -107,11 +105,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     File dir = new File(PathManager.getIndexRoot(), "faba");
     File enumeratorFile = new File(dir, project.getLocationHash() + name);
     return new PersistentStringEnumerator(enumeratorFile);
-  }
-
-  // solutions
-  public void setIntIdEquations(ArrayList<IntIdEquation> equations) {
-    this.myIntIdEquations = equations;
   }
 
   // TODO: what follows was just copied/modified from BaseExternalAnnotationsManager
@@ -297,9 +290,7 @@ class BytecodeAnalysisTask extends DumbModeTask {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       OrderEntry[] entries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : entries) {
-        //if (!(entry instanceof JdkOrderEntry)) {
-          Collections.addAll(classRoots, entry.getFiles(OrderRootType.CLASSES));
-        //}
+        Collections.addAll(classRoots, entry.getFiles(OrderRootType.CLASSES));
       }
     }
 
@@ -313,7 +304,6 @@ class BytecodeAnalysisTask extends DumbModeTask {
       VfsUtilCore.visitChildrenRecursively(classRoot, myClassProcessor);
     }
     handler.setAnnotations(myClassProcessor.annotations());
-    //handler.setIntIdEquations(myClassProcessor.myIntIdSolver.equations);
   }
 
 
