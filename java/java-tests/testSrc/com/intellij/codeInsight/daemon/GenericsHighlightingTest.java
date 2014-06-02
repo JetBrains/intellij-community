@@ -364,6 +364,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA119757() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA67578() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA57388() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA125800() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   //jdk should propagate LL 1.4 but actually it provides LL 1.7?!
   public void testCastObjectToIntJdk14() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_4, false); }
 

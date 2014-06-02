@@ -286,6 +286,14 @@ public class JavaGenericsUtil {
       PsiType itemType = superClassSubstitutor.substitute(typeParameter);
       return itemType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : itemType;
     }
+    if (type instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
+        final PsiType itemType = getCollectionItemType(conjunct, scope);
+        if (itemType != null) {
+          return itemType;
+        }
+      }
+    }
     return null;
   }
 
