@@ -17,6 +17,8 @@ package com.intellij.xml;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.editor.XmlFoldingSettings;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.codeInsight.highlighting.XmlReadWriteAccessDetector;
 import com.intellij.codeInspection.XmlSuppressionProvider;
 import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreProjectEnvironment;
@@ -44,14 +46,22 @@ import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.XmlElementFactoryImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
+import com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer;
 import com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer;
+import com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.xml.index.SchemaTypeInheritanceIndex;
 import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.index.XmlTagNamesIndex;
+import com.intellij.xml.util.HtmlFileNSInfoProvider;
 import com.intellij.xml.util.XmlApplicationComponent;
 
 /**
@@ -79,10 +89,20 @@ public class XmlCoreEnvironment {
 
       appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlIdIndexer());
       appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlIdIndexer());
+      appEnvironment.addExplicitExtension(TodoIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlTodoIndexer());
+      appEnvironment.addExplicitExtension(TodoIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlTodoIndexer());
+      appEnvironment.addExplicitExtension(TodoIndexers.INSTANCE, XHtmlFileType.INSTANCE, new XHtmlTodoIndexer());
+
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ReadWriteAccessDetector.EP_NAME,
+                                                        ReadWriteAccessDetector.class);
+      appEnvironment.addExtension(ReadWriteAccessDetector.EP_NAME, new XmlReadWriteAccessDetector());
+
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlFileNSInfoProvider.EP_NAME, XmlFileNSInfoProvider.class);
+      appEnvironment.addExtension(XmlFileNSInfoProvider.EP_NAME, new HtmlFileNSInfoProvider());
+
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSuppressionProvider.EP_NAME, XmlSuppressionProvider.class);
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlFileNSInfoProvider.EP_NAME, XmlFileNSInfoProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSchemaProvider.EP_NAME, XmlSchemaProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitNamespaceDescriptorProvider.EP_NAME, ImplicitNamespaceDescriptorProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlElementDescriptorProvider.EP_NAME, XmlElementDescriptorProvider.class);
@@ -95,6 +115,8 @@ public class XmlCoreEnvironment {
 
       appEnvironment.addExtension(MetaDataContributor.EP_NAME, new XmlApplicationComponent());
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
+      appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new SchemaTypeInheritanceIndex());
+      appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlTagNamesIndex());
       appEnvironment.addExtension(StandardResourceProvider.EP_NAME, new InternalResourceProvider());
 
       appEnvironment.registerApplicationComponent(PathMacros.class, new PathMacrosImpl());
@@ -115,6 +137,7 @@ public class XmlCoreEnvironment {
 
   public static class ProjectEnvironment {
     public ProjectEnvironment(CoreProjectEnvironment projectEnvironment) {
+      projectEnvironment.getProject().registerService(XmlElementFactory.class, new XmlElementFactoryImpl(projectEnvironment.getProject()));
     }
   }
 }
