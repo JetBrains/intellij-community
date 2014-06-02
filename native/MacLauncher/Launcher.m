@@ -548,13 +548,11 @@ NSString *integratedGPUNames() {
  return _cachedIntegratedGPUName;
 }
 
-
 - (void)launch {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     JVMOptions = getJavaKey();
     NSBundle *vm = findMatchingVm();
     NSLog(@"--- launch");
-    // check if the macbook is working on battery
     if (! switcherOpen()) {
         NSLog(@"Can't open connection to AppleGraphicsControl. There is no a possibility to switch GPU.");
     } else {
@@ -562,8 +560,8 @@ NSString *integratedGPUNames() {
         CFDictionaryRef powerAdapter = IOPSCopyExternalPowerAdapterDetails();
         if (powerAdapter == NULL) {
            NSLog(@"Battery is used. ");
-            NSString *intCard = integratedGPUNames();
-            if (intCard != nil) {
+           NSString *intCard = integratedGPUNames();
+           if (intCard != nil) {
                 NSLog(@"Integrated GPU name: %@", intCard);
                 if (isUsingIntegratedGPU()){
                     NSLog(@"Integrated GPU is used.");
@@ -583,6 +581,15 @@ NSString *integratedGPUNames() {
                         NSLog(@"Discrete GPU is used.");
                         setMuxState(_switcherConnect, muxForceSwitch, 0);
                         NSLog(@"Try to switch to integrate card.");
+                        
+                        NSLog(@"Wait for 10 sec");
+                        sleep(10);
+                        NSLog(@"Dynamic mode is switching ON. 20 sec sleep");
+                        setMuxState(_switcherConnect, muxEnableFeature, 1<<Policy);
+                        setMuxState(_switcherConnect, muxSwitchPolicy, kNewStyleSwitchPolicyValue);
+                        setMuxState(_switcherConnect, muxGpuSelect, 1);
+                        sleep(20);
+                        NSLog(@"**** The GPU and mode of switching are restored. ****");
                     }
                 } else{
                     NSLog(@"Discrete GPU is used.");
@@ -597,6 +604,7 @@ NSString *integratedGPUNames() {
           NSLog(@"The power cable is switch ON. Battery is NOT used. ");
         }
     }
+    
     debugLog([vm bundlePath]);
     NSLog(@"vm == %@", vm);
     if (vm == nil) {
