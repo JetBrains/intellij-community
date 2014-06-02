@@ -15,14 +15,17 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,16 +50,22 @@ public abstract class CloudRuntimeTask<
   }
 
   public T performSync() {
-    return perform(true);
+    return perform(true, null);
   }
 
   public void performAsync() {
-    perform(false);
+    performAsync(null);
   }
 
-  private T perform(boolean modal) {
+  public void performAsync(Disposable disposable) {
+    perform(false, disposable);
+  }
+
+  private T perform(boolean modal, final Disposable disposable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
+
+    final AtomicReference<T> result = new AtomicReference<T>();
 
     final Progressive progressive = new Progressive() {
 
@@ -65,6 +74,17 @@ public abstract class CloudRuntimeTask<
         indicator.setIndeterminate(true);
         while (!indicator.isCanceled()) {
           if (semaphore.waitFor(500)) {
+            if (mySuccess.get()) {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+
+                @Override
+                public void run() {
+                  if (disposable == null || !Disposer.isDisposed(disposable)) {
+                    postPerform(result.get());
+                  }
+                }
+              });
+            }
             break;
           }
         }
@@ -95,12 +115,15 @@ public abstract class CloudRuntimeTask<
     mySuccess.set(false);
     myErrorMessage.set(null);
 
-    AtomicReference<T> result = new AtomicReference<T>();
     run(semaphore, result);
 
     task.queue();
 
     return result.get();
+  }
+
+  protected void postPerform(T result) {
+
   }
 
   protected boolean isCancellable(boolean modal) {
