@@ -18,10 +18,8 @@ package com.intellij.openapi.externalSystem.service.remote;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.util.Producer;
-import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,12 +53,8 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
       @Nullable
       @Override
       public Object produce() {
-        if(myDelegate instanceof AbstractExternalSystemTaskManager) {
-          ((AbstractExternalSystemTaskManager<S>)myDelegate)
-            .executeTasks(id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, getNotificationListener());
-        } else {
-          myDelegate.executeTasks(id, taskNames, projectPath, settings, ParametersListUtil.join(vmOptions), debuggerSetup, getNotificationListener());
-        }
+        myDelegate.executeTasks(
+          id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, getNotificationListener());
         return null;
       }
     });
