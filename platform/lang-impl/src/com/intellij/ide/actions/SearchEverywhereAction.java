@@ -346,7 +346,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public Dimension getPreferredSize() {
         final Dimension size = super.getPreferredSize();
-        return new Dimension(Math.min(size.width, 800), size.height);
+        return new Dimension(Math.min(size.width - 2, 800), size.height);
       }
     };
     myList.setCellRenderer(myRenderer);
@@ -711,7 +711,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
-   };
+
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(410, super.getPreferredSize().height);
+      }
+    };
     final JLabel title = new JLabel(" Search Everywhere:       ");
     final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     title.setForeground(new JBColor(Gray._240, Gray._200));
@@ -939,6 +944,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         setIcon(myLocationIcon);
       }
     };
+    GotoFileCellRenderer myFileRenderer = new GotoFileCellRenderer(400);
+
     private String myLocationString;
     private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
       {setFocusBorderEnabled(false);}
@@ -971,8 +978,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                  && myProject != null
                  && (((VirtualFile)value).isDirectory()
                      || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
-        cmp = new GotoFileCellRenderer(Math.min(800, list.getWidth()))
-          .getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
+        cmp = myFileRenderer.getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
         cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
       } else {
@@ -1903,8 +1909,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     final Container parent = getField().getParent();
     final Dimension size = myList.getParent().getParent().getPreferredSize();
-    size.width = myPopupActualWidth;
-    if (size.width < parent.getWidth()) {
+    size.width = myPopupActualWidth - 2;
+    if (size.width + 2 < parent.getWidth()) {
       size.width = parent.getWidth();
     }
     if (myList.getItemsCount() == 0) {
