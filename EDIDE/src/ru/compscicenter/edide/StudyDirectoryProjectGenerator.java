@@ -72,12 +72,15 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                                             final String curFileName = taskManager.getFileName(task, file);
                                             createFile(curFileName, taskDirectory);
                                         }
+                                        createFile(taskManager.getTest(task), baseDir.findChild(".idea"));
 
                                     }
-                                    createFile("task1_tests.py", baseDir.findChild(".idea"));
-                                    createFile("task2_tests.py", baseDir.findChild(".idea"));
-                                    createFile("study_utrunner.py", baseDir.findChild(".idea"));
-                                    createFile("study_tcunittest.py", baseDir.findChild(".idea"));
+                                    createFile("sum-input.txt", baseDir.findChild(".idea"));
+                                    createFile("sum-input2.txt", baseDir.findChild(".idea"));
+                                    createFile("sum-input3.txt", baseDir.findChild(".idea"));
+                                    //createFile("task2_tests.py", baseDir.findChild(".idea"));
+                                    //createFile("study_utrunner.py", baseDir.findChild(".idea"));
+                                    //createFile("study_tcunittest.py", baseDir.findChild(".idea"));
 
                                 } catch (IOException e) {
                                     Log.print("Problems with creating files");

@@ -1,0 +1,8 @@
+<html>
+<p><b>sys.argv<b><br></p>
+<p>The list of command line arguments passed to a Python script.</p>
+<p>argv[0] is the script name (it is operating system dependent whether this is a full pathname or not).</p>
+<p>If the command was executed using the -c command line option to the interpreter,</p>
+<p> argv[0] is set to the string '-c'.</p>
+<p>If no script name was passed to the Python interpreter, argv[0] is the empty string.</p>
+</html>

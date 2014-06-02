@@ -1,7 +1,8 @@
 {
-"tasks_num":2,
+"tasks_num":3,
 "tasks_list":[
     {"file_num":1, "file_names":["helloworld.py"], "test":"task1_tests.py"},
-    {"file_num":1, "file_names":["match_ends.py"], "test":"task2_tests.py"}
+    {"file_num":1, "file_names":["match_ends.py"], "test":"task2_tests.py"},
+    {"file_num":2, "file_names":["sum.py", "sum-input.txt"], "test":"sum_tests.py"}
  ]
 }

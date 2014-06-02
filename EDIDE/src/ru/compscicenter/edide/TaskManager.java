@@ -34,7 +34,9 @@ public class TaskManager {
     }
 
     private TaskFile getTaskFile(String fileName) {
-        String metaFileName = fileName.substring(0, fileName.length() - 2) + "json";
+        //String metaFileName = fileName.substring(0, fileName.length() - 2) + "json";
+        int of = fileName.indexOf(".");
+        String metaFileName = fileName.substring(0, of + 1) + "json";
         InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(metaFileName);
         BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
         com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
