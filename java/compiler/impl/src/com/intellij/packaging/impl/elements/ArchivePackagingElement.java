@@ -22,7 +22,10 @@ import com.intellij.compiler.ant.artifacts.ArchiveAntCopyInstructionCreator;
 import com.intellij.compiler.ant.taskdefs.Jar;
 import com.intellij.compiler.ant.taskdefs.Zip;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.AntCopyInstructionCreator;
+import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -72,13 +75,6 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     }
     generationContext.runBeforeCurrentArtifact(jar);
     return Collections.singletonList(creator.createFileCopyInstruction(jarPath, myArchiveFileName));
-  }
-
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    computeChildrenInstructions(creator.archive(myArchiveFileName), resolvingContext, compilerContext, artifactType);
   }
 
   @Attribute(NAME_ATTRIBUTE)

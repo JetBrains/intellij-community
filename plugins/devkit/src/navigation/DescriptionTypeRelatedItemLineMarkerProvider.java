@@ -15,10 +15,9 @@
  */
 package org.jetbrains.idea.devkit.navigation;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DefaultGutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
+import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -28,7 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ConstantFunction;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
@@ -36,13 +36,30 @@ import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
+
+  private static final NotNullFunction<PsiFile, Collection<? extends PsiElement>> CONVERTER =
+    new NotNullFunction<PsiFile, Collection<? extends PsiElement>>() {
+      @NotNull
+      @Override
+      public Collection<? extends PsiElement> fun(PsiFile psiFile) {
+        return ContainerUtil.createMaybeSingletonList(psiFile);
+      }
+    };
+
+  private static final NotNullFunction<PsiFile, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
+    new NotNullFunction<PsiFile, Collection<? extends GotoRelatedItem>>() {
+      @NotNull
+      @Override
+      public Collection<? extends GotoRelatedItem> fun(PsiFile psiFile) {
+        return GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
+      }
+    };
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
@@ -62,6 +79,9 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
       .findClass(DescriptionType.INSPECTION.getClassName(), scope);
     if (actionClass == null) return;
 
+    PsiElement highlightingElement = psiClass.getNameIdentifier();
+    if (highlightingElement == null) return;
+
     for (DescriptionType type : DescriptionType.values()) {
       if (!InheritanceUtil.isInheritor(psiClass, type.getClassName())) {
         continue;
@@ -75,7 +95,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
       if (type == DescriptionType.INSPECTION) {
         final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
         if (info.hasDescriptionFile()) {
-          addDescriptionFileGutterIcon(psiClass, info.getDescriptionFile(), result);
+          addDescriptionFileGutterIcon(highlightingElement, info.getDescriptionFile(), result);
         }
         return;
       }
@@ -85,9 +105,9 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
         if (dir == null) continue;
         final PsiFile descriptionFile = dir.findFile("description.html");
         if (descriptionFile != null) {
-          addDescriptionFileGutterIcon(psiClass, descriptionFile, result);
+          addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
 
-          addBeforeAfterTemplateFilesGutterIcon(psiClass, dir, result);
+          addBeforeAfterTemplateFilesGutterIcon(highlightingElement, dir, result);
           return;
         }
       }
@@ -95,15 +115,19 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
     }
   }
 
-  private static void addDescriptionFileGutterIcon(PsiClass psiClass,
+  private static void addDescriptionFileGutterIcon(PsiElement highlightingElement,
                                                    PsiFile descriptionFile,
                                                    Collection<? super RelatedItemLineMarkerInfo> result) {
-
-    result.add(create(psiClass.getNameIdentifier(), AllIcons.FileTypes.Html,
-                      "Description", "", Collections.singleton(descriptionFile)));
+    final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
+      .create(AllIcons.FileTypes.Html, CONVERTER, RELATED_ITEM_PROVIDER)
+      .setTarget(descriptionFile)
+      .setTooltipText("Description")
+      .setAlignment(GutterIconRenderer.Alignment.RIGHT)
+      .createLineMarkerInfo(highlightingElement);
+    result.add(info);
   }
 
-  private static void addBeforeAfterTemplateFilesGutterIcon(PsiClass psiClass,
+  private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
                                                             PsiDirectory descriptionDirectory,
                                                             Collection<? super RelatedItemLineMarkerInfo> result) {
     final List<PsiFile> templateFiles = new SortedList<PsiFile>(new Comparator<PsiFile>() {
@@ -123,22 +147,13 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends RelatedItemLin
     }
     if (templateFiles.isEmpty()) return;
 
-    result.add(create(psiClass.getNameIdentifier(), AllIcons.Actions.Diff,
-                      "Before/After Templates", "Select Template", templateFiles));
-  }
-
-  private static RelatedItemLineMarkerInfo<PsiElement> create(PsiElement element,
-                                                              Icon icon,
-                                                              String tooltip,
-                                                              String popupTitle,
-                                                              @NotNull Collection<? extends NavigatablePsiElement> targets) {
-    return new RelatedItemLineMarkerInfo<PsiElement>(element,
-                                                     element.getTextRange(),
-                                                     icon,
-                                                     Pass.UPDATE_OVERRIDEN_MARKERS,
-                                                     new ConstantFunction<PsiElement, String>(tooltip),
-                                                     new DefaultGutterIconNavigationHandler<PsiElement>(targets, popupTitle),
-                                                     GutterIconRenderer.Alignment.RIGHT,
-                                                     GotoRelatedItem.createItems(targets, "DevKit"));
+    final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
+      .create(AllIcons.Actions.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
+      .setTargets(templateFiles)
+      .setPopupTitle("Select Template")
+      .setTooltipText("Before/After Templates")
+      .setAlignment(GutterIconRenderer.Alignment.RIGHT)
+      .createLineMarkerInfo(highlightingElement);
+    result.add(info);
   }
 }

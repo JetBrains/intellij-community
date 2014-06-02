@@ -29,8 +29,10 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleExtension;
+import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -68,7 +70,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
     final ModuleRootManagerImpl moduleRootManager =
       new ModuleRootManagerImpl(this,
-                                DirectoryIndex.getInstance(project),
                                 ProjectRootManagerImpl.getInstanceImpl(project),
                                 VirtualFilePointerManager.getInstance()) {
         @Override
@@ -84,6 +85,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     });
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
+    getPicoContainer().registerComponentInstance(ModuleFileIndex.class, new ModuleFileIndexImpl(this, DirectoryIndex.getInstance(project)));
     myModuleScopeProvider = createModuleScopeProvider();
   }
 

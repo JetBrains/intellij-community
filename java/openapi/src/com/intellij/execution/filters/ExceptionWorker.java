@@ -194,13 +194,14 @@ public class ExceptionWorker {
       }
     }
 
-    final int lParenIdx = line.indexOf('(', startIdx);
+    final int rParenIdx = line.lastIndexOf(')');
+    if (rParenIdx < 0) return null;
+
+    final int lParenIdx = line.lastIndexOf('(', rParenIdx);
     if (lParenIdx < 0) return null;
+    
     final int dotIdx = line.lastIndexOf('.', lParenIdx);
     if (dotIdx < 0 || dotIdx < startIdx) return null;
-
-    final int rParenIdx = line.indexOf(')', lParenIdx);
-    if (rParenIdx < 0) return null;
 
     // class, method, link
     return Trinity.create(new TextRange(startIdx + 1 + (startIdx >= 0 ? AT.length() : 0), handleSpaces(line, dotIdx, -1, true)),

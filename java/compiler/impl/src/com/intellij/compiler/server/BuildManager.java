@@ -91,7 +91,6 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.io.ChannelRegistrar;
 import org.jetbrains.io.NettyUtil;
@@ -101,7 +100,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -382,12 +382,8 @@ public class BuildManager implements ApplicationComponent{
     scheduleAutoMake();
   }
 
-  public boolean rescanRequired(Project project) {
-    final String projectPath = getProjectPath(project);
-    synchronized (myProjectDataMap) {
-      final ProjectData data = myProjectDataMap.get(projectPath);
-      return data == null || data.myNeedRescan;
-    }
+  public boolean isProjectWatched(Project project) {
+    return myProjectDataMap.containsKey(getProjectPath(project));
   }
 
   @Nullable
@@ -457,7 +453,7 @@ public class BuildManager implements ApplicationComponent{
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
+    if (!config.MAKE_PROJECT_ON_SAVE) {
       return false;
     }
     if (!config.allowAutoMakeWhileRunningApplication() && hasRunningProcess(project)) {
@@ -914,6 +910,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
 
     final File workDirectory = getBuildSystemDirectory();
+    //noinspection ResultOfMethodCallIgnored
     workDirectory.mkdirs();
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
@@ -1031,11 +1028,6 @@ public class BuildManager implements ApplicationComponent{
     Channel serverChannel = bootstrap.bind(NetUtils.getLoopbackAddress(), 0).syncUninterruptibly().channel();
     myChannelRegistrar.add(serverChannel);
     return ((InetSocketAddress)serverChannel.localAddress()).getPort();
-  }
-
-  @TestOnly
-  public void stopWatchingProject(Project project) {
-    myProjectDataMap.remove(getProjectPath(project));
   }
 
   private static String classpathToString(List<String> cp) {

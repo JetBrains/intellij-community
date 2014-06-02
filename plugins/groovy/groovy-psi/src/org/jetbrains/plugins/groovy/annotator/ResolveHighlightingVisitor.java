@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -32,7 +33,7 @@ class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
   private final GrUnresolvedAccessChecker myReferenceChecker;
   private final List<HighlightInfo> myInfos;
 
-  public ResolveHighlightingVisitor(GroovyFileBase file, Project project, List<HighlightInfo> collector) {
+  public ResolveHighlightingVisitor(@NotNull GroovyFileBase file, @NotNull Project project, @NotNull List<HighlightInfo> collector) {
     myReferenceChecker = new GrUnresolvedAccessChecker(file, project);
     myInfos = collector;
   }
@@ -44,7 +45,6 @@ class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
     if (size == myInfos.size()) {
       List<HighlightInfo> infos = myReferenceChecker.checkReferenceExpression(referenceExpression);
       if (infos != null) {
-        assert myInfos != null;
         myInfos.addAll(infos);
       }
     }
@@ -57,7 +57,6 @@ class ResolveHighlightingVisitor extends GroovyRecursiveElementVisitor {
     if (size == myInfos.size()) {
       HighlightInfo info = myReferenceChecker.checkCodeReferenceElement(refElement);
       if (info != null) {
-        assert myInfos != null;
         myInfos.add(info);
       }
     }

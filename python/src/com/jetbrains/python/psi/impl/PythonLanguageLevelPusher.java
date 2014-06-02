@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -85,14 +85,19 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public LanguageLevel getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
+    return getFileLanguageLevel(project, file);
+  }
+
+  public static LanguageLevel getFileLanguageLevel(Project project, VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
     if (file == null) return null;
 
-    final Module module = ModuleUtil.findModuleForFile(file, project);
+    final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
-      return getImmediateValue(module);
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      return PythonSdkType.getLanguageLevelForSdk(sdk);
     }
     final Sdk sdk = findSdk(project, file);
     if (sdk != null) {

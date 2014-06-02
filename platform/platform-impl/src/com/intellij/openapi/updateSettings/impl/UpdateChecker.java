@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
@@ -25,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -250,7 +252,7 @@ public final class UpdateChecker {
             prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
           } else {
             final String newVersion = loadedPlugin.getVersion();
-            if (StringUtil.compareVersionNumbers(newVersion, installedPlugin.getVersion()) > 0) {
+            if (PluginDownloader.compareVersionsSkipBroken(installedPlugin, newVersion) > 0) {
               updateSettings.myOutdatedPlugins.add(idString);
               if (isReadyToUpdate(idString, newVersion) && !disabledPlugins.contains(idString)) {
                 prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
@@ -420,7 +422,7 @@ public final class UpdateChecker {
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
               final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
               if (loadedPlugin == null || pluginVersion == null ||
-                  StringUtil.compareVersionNumbers(pluginVersion, loadedPlugin.getVersion()) > 0) {
+                  PluginDownloader.compareVersionsSkipBroken(loadedPlugin, pluginVersion) > 0) {
                 if (isReadyToUpdate(pluginId, pluginVersion) && downloader.prepareToInstall(progressIndicator, buildNumber)) {
                   downloaded.put(PluginId.getId(pluginId), downloader);
                 }
@@ -838,6 +840,18 @@ public final class UpdateChecker {
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  private static boolean ourHasFailedPlugins = false;
+  public static void checkForUpdate(IdeaLoggingEvent event) {
+    if (!ourHasFailedPlugins && UpdateSettings.getInstance().CHECK_NEEDED) {
+      final Throwable throwable = event.getThrowable();
+      final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(throwable));
+      if (pluginDescriptor != null && !pluginDescriptor.isBundled()) {
+        ourHasFailedPlugins = true;
+        updateAndShowResult();
+      }
     }
   }
 }

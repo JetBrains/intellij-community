@@ -319,7 +319,8 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
             setModel(newModel, myDataPack, previouslySelected);
             myMainFrame.updateDataPack(myDataPack);
             setLongEdgeVisibility(myUiProperties.areLongEdgesVisible());
-            setBek(myUiProperties.isBek());
+            myDataPack.getGraphFacade().performAction(new BekGraphAction(myUiProperties.isBek() ?
+                                                                         PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal));
             fireFilterChangeEvent();
             repaintUI();
 

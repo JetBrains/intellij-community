@@ -18,16 +18,16 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class MergingLexerAdapterBase extends DelegateLexer {
+public abstract class MergingLexerAdapterBase extends DelegateLexer {
   private IElementType myTokenType;
   private int myState;
   private int myTokenStart;
-  private final MergeFunction myMergeFunction;
 
-  public MergingLexerAdapterBase(final Lexer original, final MergeFunction mergeFunction){
+  public MergingLexerAdapterBase(final Lexer original){
     super(original);
-    myMergeFunction = mergeFunction;
   }
+
+  public abstract MergeFunction getMergeFunction();
 
   @Override
   public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
@@ -73,7 +73,7 @@ public class MergingLexerAdapterBase extends DelegateLexer {
       myState = orig.getState();
       if (myTokenType == null) return;
       orig.advance();
-      myTokenType = myMergeFunction.merge(myTokenType, orig);
+      myTokenType = getMergeFunction().merge(myTokenType, orig);
     }
   }
 
@@ -133,7 +133,4 @@ public class MergingLexerAdapterBase extends DelegateLexer {
     }
   }
 
-  protected interface MergeFunction {
-    IElementType merge(IElementType type, Lexer originalLexer);
-  }
 }

@@ -16,16 +16,18 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ThrowExceptionPostfixTemplate extends JavaStatementWrapPostfixTemplate {
+public class ThrowExceptionPostfixTemplate extends StringBasedPostfixTemplate {
   public ThrowExceptionPostfixTemplate() {
-    super("throw", "throw expr;", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, JavaPostfixTemplatesUtils.IS_THROWABLE);
+    super("throw", "throw expr", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, JavaPostfixTemplatesUtils.IS_THROWABLE);
   }
 
-  @NotNull
+  @Nullable
   @Override
-  protected String getHead() {
-    return "throw ";
+  public String getTemplateString(@NotNull PsiElement element) {
+    return "throw $expr$;$END$";
   }
 }

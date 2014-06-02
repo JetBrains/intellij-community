@@ -24,8 +24,13 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class LanguageLevelUtil extends EffectiveLanguageLevelUtil {
-  private LanguageLevelUtil() { }
 
+  /**
+   * @deprecated use {@link com.intellij.psi.impl.JavaPsiImplementationHelper#getEffectiveLanguageLevel(com.intellij.openapi.vfs.VirtualFile)}
+   * todo remove in IDEA 15
+   * @param file
+   * @return
+   */
   @NotNull
   public static LanguageLevel getLanguageLevelForFile(@Nullable VirtualFile file) {
     if (file == null) return LanguageLevel.HIGHEST;

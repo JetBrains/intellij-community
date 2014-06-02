@@ -18,8 +18,10 @@ package com.intellij.util;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiNavigateUtil {
@@ -27,9 +29,13 @@ public class PsiNavigateUtil {
     if (psiElement != null && psiElement.isValid()) {
       final PsiElement navigationElement = psiElement.getNavigationElement();
       final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
-      final VirtualFile virtualFile = navigationElement.getContainingFile().getVirtualFile();
+
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
       if (virtualFile != null && virtualFile.isValid()) {
         new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset).navigate(true);
+      }
+      else if (navigationElement instanceof Navigatable) {
+        ((Navigatable)navigationElement).navigate(true);
       }
     }
   }

@@ -48,6 +48,7 @@ import com.intellij.util.text.CharArrayUtil;
 import groovy.lang.GroovyObject;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
@@ -218,23 +219,40 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public void populateModuleCompileOutputSettings(@NotNull IdeaModule gradleModule,
                                                   @NotNull DataNode<ModuleData> ideModule) {
     IdeaCompilerOutput moduleCompilerOutput = gradleModule.getCompilerOutput();
-    if (moduleCompilerOutput == null) {
-      return;
+
+    File sourceCompileOutputPath = null;
+    File testCompileOutputPath = null;
+    boolean inheritOutputDirs = false;
+
+    ModuleData moduleData = ideModule.getData();
+    if (moduleCompilerOutput != null) {
+      sourceCompileOutputPath = moduleCompilerOutput.getOutputDir();
+      testCompileOutputPath = moduleCompilerOutput.getTestOutputDir();
+      inheritOutputDirs = moduleCompilerOutput.getInheritOutputDirs();
     }
 
-    File sourceCompileOutputPath = moduleCompilerOutput.getOutputDir();
-    ModuleData moduleData = ideModule.getData();
+    if (!inheritOutputDirs && (sourceCompileOutputPath == null || testCompileOutputPath == null)) {
+      ModuleExtendedModel moduleExtendedModel = resolverCtx.getExtraProject(gradleModule, ModuleExtendedModel.class);
+      if (moduleExtendedModel != null) {
+        ExtIdeaCompilerOutput output = moduleExtendedModel.getCompilerOutput();
+        if (output != null) {
+          if (sourceCompileOutputPath == null) {
+            sourceCompileOutputPath = output.getMainClassesDir();
+          }
+          if (testCompileOutputPath == null) {
+            testCompileOutputPath = output.getTestClassesDir();
+          }
+        }
+      }
+    }
+
     if (sourceCompileOutputPath != null) {
       moduleData.setCompileOutputPath(ExternalSystemSourceType.SOURCE, sourceCompileOutputPath.getAbsolutePath());
     }
-
-    File testCompileOutputPath = moduleCompilerOutput.getTestOutputDir();
     if (testCompileOutputPath != null) {
       moduleData.setCompileOutputPath(ExternalSystemSourceType.TEST, testCompileOutputPath.getAbsolutePath());
     }
-    moduleData.setInheritProjectCompileOutputPath(
-      moduleCompilerOutput.getInheritOutputDirs() || sourceCompileOutputPath == null || testCompileOutputPath == null
-    );
+    moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs || sourceCompileOutputPath == null);
   }
 
   @Override
@@ -516,33 +534,45 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ));
     }
 
-    // Gradle API doesn't provide library name at the moment.
     String libraryName;
-    if (binaryPath.isFile()) {
-      libraryName = FileUtil.getNameWithoutExtension(binaryPath);
-    }
-    else {
-      libraryName = FileUtil.sanitizeFileName(binaryPath.getPath());
-    }
+    final GradleModuleVersion moduleVersion = dependency.getGradleModuleVersion();
+    final LibraryLevel level;
 
     // Gradle API doesn't explicitly provide information about unresolved libraries (http://issues.gradle.org/browse/GRADLE-1995).
     // That's why we use this dirty hack here.
-    boolean unresolved = libraryName.startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
-    if (unresolved) {
-      // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
-      libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
-      int i = libraryName.indexOf(' ');
-      if (i >= 0) {
-        i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
+    boolean unresolved = binaryPath.getPath().startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
+
+    if (moduleVersion == null) {
+      // use module library level if the dependency does not originate from a remote repository.
+      level = LibraryLevel.MODULE;
+
+      if (binaryPath.isFile()) {
+        libraryName = FileUtil.getNameWithoutExtension(binaryPath);
+      }
+      else {
+        libraryName = FileUtil.sanitizeFileName(binaryPath.getPath());
       }
 
-      if (i >= 0 && i < libraryName.length()) {
-        int dependencyNameIndex = i;
-        i = libraryName.indexOf(' ', dependencyNameIndex);
-        if (i > 0) {
-          libraryName = String.format("%s-%s", libraryName.substring(dependencyNameIndex, i), libraryName.substring(i + 1));
+      if (unresolved) {
+        // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
+        libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+        int i = libraryName.indexOf(' ');
+        if (i >= 0) {
+          i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
+        }
+
+        if (i >= 0 && i < libraryName.length()) {
+          int dependencyNameIndex = i;
+          i = libraryName.indexOf(' ', dependencyNameIndex);
+          if (i > 0) {
+            libraryName = String.format("%s-%s", libraryName.substring(dependencyNameIndex, i), libraryName.substring(i + 1));
+          }
         }
       }
+    }
+    else {
+      level = LibraryLevel.PROJECT;
+      libraryName = String.format("%s:%s:%s", moduleVersion.getGroup(), moduleVersion.getName(), moduleVersion.getVersion());
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
@@ -564,18 +594,20 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
     }
 
-    DataNode<LibraryData> libraryData =
-      ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
-        @Override
-        public boolean fun(DataNode<LibraryData> node) {
-          return library.equals(node.getData());
-        }
-      });
-    if (libraryData == null) {
-      libraryData = ideProject.createChild(ProjectKeys.LIBRARY, library);
+    if(level == LibraryLevel.PROJECT) {
+      DataNode<LibraryData> libraryData =
+        ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
+          @Override
+          public boolean fun(DataNode<LibraryData> node) {
+            return library.equals(node.getData());
+          }
+        });
+      if (libraryData == null) {
+        ideProject.createChild(ProjectKeys.LIBRARY, library);
+      }
     }
 
-    return new LibraryDependencyData(ownerModule.getData(), libraryData.getData(), LibraryLevel.PROJECT);
+    return new LibraryDependencyData(ownerModule.getData(), library, level);
   }
 
   private void attachGradleSdkSources(@NotNull IdeaModule gradleModule,

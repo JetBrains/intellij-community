@@ -320,9 +320,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         editor.getSelectionModel().setSelection(startOffset, endOffset);
       }
     }
-    if (editorEx != null && !preciselyScrollVertically) {
-      ((EditorEx) editor).stopOptimizedScrolling();
-    }
     if (!preciselyScrollVertically) {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }

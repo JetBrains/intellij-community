@@ -15,21 +15,18 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.containers.HashSet;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   protected String getActionName(final VcsContext dataContext) {
@@ -67,44 +64,30 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   @Override
   protected LocalChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    LocalChangeList defaultChangeList = changeListManager.getDefaultChangeList();
 
     final FilePath[] roots = getRoots(context);
-    for(final FilePath root: roots) {
+    LocalChangeList changeList = null;
+    for (final FilePath root : roots) {
       final VirtualFile file = root.getVirtualFile();
       if (file == null) continue;
-      final Ref<Change> change = new Ref<Change>();
-      if (!file.isDirectory()) {
-        change.set(changeListManager.getChange(file));
+      Collection<LocalChangeList> lists = getChangeListsForRoot(changeListManager, root);
+      if (lists.contains(defaultChangeList)) {
+        return defaultChangeList;
       }
-      else {
-        final FileIndexFacade index = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
-        final VirtualFileFilter filter = new VirtualFileFilter() {
-          public boolean accept(final VirtualFile file) {
-            return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return (! index.isExcludedFile(file));
-              }
-            });
-          }
-        };
-        VfsUtilCore.iterateChildrenRecursively(file, filter, new ContentIterator() {
-          public boolean processFile(final VirtualFile fileOrDir) {
-            final Change c = changeListManager.getChange(fileOrDir);
-            if (c != null) {
-              change.set(c);
-              return false;
-            }
-            return true;
-          }
-        });
-      }
-      if (!change.isNull()) {
-        return changeListManager.getChangeList(change.get());
-      }
+      Iterator<LocalChangeList> it = lists.iterator();
+      changeList = it.hasNext() ? it.next() : null;
     }
+    return changeList == null ? defaultChangeList : changeList;
+  }
 
-    return changeListManager.getDefaultChangeList();
+  private static Collection<LocalChangeList> getChangeListsForRoot(ChangeListManager changeListManager, final FilePath dirPath) {
+    Collection<Change> changes = changeListManager.getChangesIn(dirPath);
+    Set<LocalChangeList> changeLists = new HashSet<LocalChangeList>();
+    for (Change change : changes) {
+      changeLists.add(changeListManager.getChangeList(change));
+    }
+    return changeLists;
   }
 
   private String getCheckinActionName(final VcsContext dataContext) {

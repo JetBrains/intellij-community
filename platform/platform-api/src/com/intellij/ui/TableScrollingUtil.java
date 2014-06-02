@@ -92,7 +92,7 @@ public class TableScrollingUtil {
 
   public static Couple<Integer> getVisibleRows(JTable list) {
     Rectangle visibleRect = list.getVisibleRect();
-    return Couple.newOne(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
+    return Couple.of(getLeadingRow(list, visibleRect) + 1, getTrailingRow(list, visibleRect));
   }
 
   private static int getLeadingRow(JTable table,Rectangle visibleRect) {

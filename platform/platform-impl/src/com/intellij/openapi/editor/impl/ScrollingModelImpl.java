@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,8 +155,8 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     scrollToOffsets(p.x, p.y);
   }
 
-  private void assertIsDispatchThread() {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditor.getComponent());
+  private static void assertIsDispatchThread() {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
   }
 
   @Override
@@ -294,13 +294,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
 
-    if (scrollbar.getVisibleAmount() < Math.abs(scrollOffset - scrollbar.getValue()) + 50) {
-      myEditor.stopOptimizedScrolling();
-    }
-
     scrollbar.setValue(scrollOffset);
-
-    //System.out.println("scrolled vertically to: " + scrollOffset);
   }
 
   @Override

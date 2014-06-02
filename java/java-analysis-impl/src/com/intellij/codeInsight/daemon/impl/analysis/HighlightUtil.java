@@ -347,7 +347,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType operandType = operand.getType();
 
     if (operandType != null &&
-        !TypeConversionUtil.areTypesConvertible(operandType, castType) &&
+        !TypeConversionUtil.areTypesConvertible(operandType, castType, PsiUtil.getLanguageLevel(expression)) &&
         !RedundantCastUtil.isInPolymorphicCall(expression)) {
       String message = JavaErrorMessages.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(castType));

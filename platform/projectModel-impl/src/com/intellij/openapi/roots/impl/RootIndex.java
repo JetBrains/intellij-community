@@ -68,7 +68,7 @@ public class RootIndex extends DirectoryIndex {
   private volatile Map<VirtualFile, OrderEntry[]> myOrderEntries;
 
   // made public for Upsource
-  public RootIndex(@NotNull Project project, InfoCache cache) {
+  public RootIndex(@NotNull Project project, @NotNull InfoCache cache) {
     myProject = project;
     myInfoCache = cache;
     final RootInfo info = buildRootInfo(project);
@@ -100,8 +100,10 @@ public class RootIndex extends DirectoryIndex {
       }
 
       for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
-        for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
-          info.excludedFromModule.put(excludeRoot, module);
+        if (!(contentEntry instanceof ContentEntryImpl) || !((ContentEntryImpl)contentEntry).isDisposed()) {
+          for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
+            info.excludedFromModule.put(excludeRoot, module);
+          }
         }
 
         // Init module sources

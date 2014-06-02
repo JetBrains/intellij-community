@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -86,11 +87,6 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   @Override
   public List<Value> toValueList() {
     return getMergedData().toValueList();
-  }
-
-  @Override
-  public boolean isAssociated(final Value value, final int inputId) {
-    return getMergedData().isAssociated(value, inputId);
   }
 
   @NotNull
@@ -168,10 +164,6 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     return myAdded;
   }
 
-  public @Nullable TIntHashSet getInvalidated() {
-    return myInvalidated;
-  }
-
   @Override
   public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
     if (needsCompacting()) {
@@ -180,7 +172,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       final TIntHashSet set = myInvalidated;
       if (set != null && set.size() > 0) {
         for (int inputId : set.toArray()) {
-          ValueContainerImpl.saveInvalidateCommand(out, inputId);
+          DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
         }
       }
 

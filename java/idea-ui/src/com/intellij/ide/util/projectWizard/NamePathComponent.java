@@ -59,6 +59,7 @@ public class NamePathComponent extends JPanel{
   private JLabel myNameLabel;
   private JLabel myPathLabel;
   private boolean myForceSync;
+  private boolean myShouldBeAbsolute;
 
   public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, true);
@@ -159,7 +160,9 @@ public class NamePathComponent extends JPanel{
     if (projectFileDirectory.length() == 0) {
       throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
     }
-
+    if (myShouldBeAbsolute && !new File(projectFileDirectory).isAbsolute()) {
+      throw new ConfigurationException(StringUtil.capitalize(IdeBundle.message("file.location.should.be.absolute", context.getPresentationName())));
+    }
     final boolean shouldPromptCreation = isPathChangedByUser();
     if (!ProjectWizardUtil
       .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", context.getPresentationName()),
@@ -295,6 +298,10 @@ public class NamePathComponent extends JPanel{
     };
     myTfName.getDocument().addDocumentListener(adapter);
     myTfPath.getDocument().addDocumentListener(adapter);
+  }
+
+  public void setShouldBeAbsolute(boolean shouldBeAbsolute) {
+    myShouldBeAbsolute = shouldBeAbsolute;
   }
 
   private class NameFieldDocument extends PlainDocument {

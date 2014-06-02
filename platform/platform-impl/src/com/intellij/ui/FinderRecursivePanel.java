@@ -325,7 +325,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
 
   protected boolean performEditAction() {
     Navigatable data = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(myList));
-    if (data != null) {
+    if (data != null && data.canNavigate()) {
       data.navigate(true);
     }
     return false;

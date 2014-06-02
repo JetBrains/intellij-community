@@ -16,7 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.mock.MockDumbService;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +30,7 @@ public class CompositeFilterTest {
   @Before
   public void setUp() throws Exception {
     myCompositeFilter = new CompositeFilter(new MockDumbService(null));
+    myCompositeFilter.setForceUseAllFilters(false);
   }
 
   @Test
@@ -55,6 +56,9 @@ public class CompositeFilterTest {
     myCompositeFilter.addFilter(returnResultFilter());
     notNullResultOfSize(applyFilter(), 3);
 
+    myCompositeFilter.setForceUseAllFilters(true);
+    notNullResultOfSize(applyFilter(), 4);
+
   }
 
   @Test
@@ -73,7 +77,7 @@ public class CompositeFilterTest {
     return myCompositeFilter.applyFilter("foo\n", 10);
   }
 
-  private void notNullResultOfSize(Filter.Result object, int expected) {
+  private static void notNullResultOfSize(Filter.Result object, int expected) {
     Assert.assertNotNull(object);
     List<Filter.ResultItem> resultItems = object.getResultItems();
     Assert.assertEquals(expected, resultItems.size());
@@ -83,7 +87,8 @@ public class CompositeFilterTest {
     }
   }
 
-  private Filter throwSOEFilter() {
+  private static Filter throwSOEFilter() {
+    //noinspection InfiniteRecursion
     return new Filter() {
       @Nullable
       @Override
@@ -93,7 +98,7 @@ public class CompositeFilterTest {
     };
   }
 
-  private Filter returnNullFilter() {
+  private static Filter returnNullFilter() {
     return new Filter() {
       @Nullable
       @Override
@@ -103,7 +108,7 @@ public class CompositeFilterTest {
     };
   }
 
-  private Filter returnResultFilter() {
+  private static Filter returnResultFilter() {
     return new Filter() {
       @Nullable
       @Override
@@ -113,7 +118,7 @@ public class CompositeFilterTest {
     };
   }
 
-  private Filter returnContinuingResultFilter() {
+  private static Filter returnContinuingResultFilter() {
     return new Filter() {
       @Nullable
       @Override
@@ -125,7 +130,7 @@ public class CompositeFilterTest {
     };
   }
 
-  private Filter.Result createResult() {
+  private static Filter.Result createResult() {
     return new Filter.Result(1, 1, null, null);
   }
 }

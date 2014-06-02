@@ -197,9 +197,17 @@ class MethReference<E> {
         return list.toString();
     }
 
+  void copyStuff(List other) {
+    List <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList();
+    J j = list::add;
+  }
+
     private void forEach(I<E> ei) {}
     interface I<E> {
         boolean _(E e);
+    }
+    interface J<E> {
+      void m(E e);
     }
 
     void qTest() {
@@ -207,4 +215,64 @@ class MethReference<E> {
         map.put(1, true);
         I<Integer> mapper = map::get;
     }
+
+  void foo(int a,Collection b) {
+    final ArrayList x = new ArrayList();
+    x.add("1");
+
+    for (Object o : a>0? b : x)
+    {
+      System.out.println(o);
+    }
+  }
+}
+class CollectionsUser {
+  void a(List<String> list) {
+    List<String> l = new ArrayList();
+    Collections.addAll(l, "1", "2", "4");
+    Collections.copy(list, l);
+  }
+
+  int b(List<String> list) {
+    List<String> l = new ArrayList();
+    Collections.addAll(l, "1", "2", "4");
+    return Collections.indexOfSubList(list, l);
+  }
+
+  void c() {
+    List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList();
+    final int frequency = Collections.frequency(l, "one");
+  }
+
+  List<String> d() {
+    List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList();
+    return Collections.unmodifiableList(l);
+  }
+
+  List<String> e() {
+    List<String> l = new ArrayList<String>();
+    return Collections.checkedList(l, String.class);
+  }
+
+  private final List<Object> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<Object>();
+  public void add() {
+    Collections.addAll(list, "Hello");
+  }
+}
+
+class SimpleAdd {
+  protected String[] doPerform() {
+    List<String> result = new ArrayList<String>();
+    for (String app : getApplications()) {
+      if (app.startsWith("")) {
+        result.add(app);
+      }
+    }
+    return result.toArray(new String[result.size()]);
+  }
+
+  public String[] getApplications() {
+    return null;
+  }
+
 }

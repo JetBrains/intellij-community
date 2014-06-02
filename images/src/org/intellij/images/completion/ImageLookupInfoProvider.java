@@ -40,7 +40,7 @@ public class ImageLookupInfoProvider extends FileLookupInfoProvider {
       }
     }, project);
 
-    return s[0] == null ? null : Couple.newOne(file.getName(), s[0]);
+    return s[0] == null ? null : Couple.of(file.getName(), s[0]);
   }
 
   @NotNull

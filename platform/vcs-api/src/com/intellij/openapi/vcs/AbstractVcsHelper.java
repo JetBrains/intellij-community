@@ -144,10 +144,10 @@ public abstract class AbstractVcsHelper {
   }
 
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, final AbstractVcs vcs,
-                                       final RepositoryLocation repositoryLocation);
+                                       final String repositoryPath);
 
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path,
-                                       final RepositoryLocation repositoryLocation, final AbstractVcs vcs);
+                                       final String repositoryPath, final AbstractVcs vcs);
 
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.

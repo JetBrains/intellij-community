@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -34,6 +35,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
@@ -136,6 +138,11 @@ public class JavaDebugProcess extends XDebugProcess {
       public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
+
+      @Override
+      public DebuggerTreeNodeImpl createMessageNode(String message) {
+        return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
+      }
     };
     session.addSessionListener(new XDebugSessionAdapter() {
       @Override
@@ -210,7 +217,8 @@ public class JavaDebugProcess extends XDebugProcess {
 
   @Override
   public void stop() {
-    myJavaSession.getProcess().dispose();
+    myJavaSession.dispose();
+    myNodeManager.dispose();
   }
 
   @Override
@@ -283,6 +291,20 @@ public class JavaDebugProcess extends XDebugProcess {
             }
           }
         }, threadsContent);
+      }
+
+      @NotNull
+      @Override
+      public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+        Content content = null;
+        if (console instanceof ExecutionConsoleEx) {
+          ((ExecutionConsoleEx)console).buildUi(ui);
+          content = ui.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
+        }
+        if (content == null) {
+          content = super.registerConsoleContent(ui, console);
+        }
+        return content;
       }
     };
   }

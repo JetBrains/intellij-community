@@ -1,6 +1,5 @@
 import foo.*;
-
-import static foo.Class1.Inner2;
+import foo.Class1.Inner2;
 
 class Class2 {
   public static void main(String[] args) {

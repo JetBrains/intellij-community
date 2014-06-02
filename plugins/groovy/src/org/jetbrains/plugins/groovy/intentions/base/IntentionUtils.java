@@ -131,6 +131,8 @@ public class IntentionUtils {
                 if (method.getBody() != null) {
                   FileTemplateManager templateManager = FileTemplateManager.getInstance();
                   FileTemplate fileTemplate = templateManager.getCodeTemplate(GroovyTemplates.GROOVY_FROM_USAGE_METHOD_BODY);
+
+                  LOG.assertTrue(!method.getContainingClass().isInterface(), "Interface bodies should be already set up");
                   CreateFromUsageUtils.setupMethodBody(method, method.getContainingClass(), fileTemplate);
                 }
                 if (hasNoReturnType) {

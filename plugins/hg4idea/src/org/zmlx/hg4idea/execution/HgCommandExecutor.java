@@ -147,14 +147,15 @@ public class HgCommandExecutor {
       cmdLine.add(HgEncodingUtil.getNameFor(myCharset));
     }
 
-    HgCommandResult result;
     try {
       String workingDir = repo != null ? repo.getPath() : null;
       ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
       long startTime = System.currentTimeMillis();
       LOG.debug(String.format("hg %s started", operation));
-      result = shellCommand.execute(myShowOutput);
+      HgCommandResult result = shellCommand.execute(myShowOutput);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
+      logResult(result);
+      return result;
     }
     catch (ShellCommandException e) {
       if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
@@ -168,9 +169,6 @@ public class HgCommandExecutor {
       LOG.info(e.getMessage(), e);
       return null;
     }
-
-    logResult(result);
-    return result;
   }
 
   // logging to the Version Control console (without extensions and configs)

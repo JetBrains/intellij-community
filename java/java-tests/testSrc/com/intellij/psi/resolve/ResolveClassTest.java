@@ -200,7 +200,6 @@ public class ResolveClassTest extends ResolveTestCase {
 
 
   public void testStaticImportInTheSameClass() throws Exception {
-    System.gc();
     PsiReference ref = configure();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
@@ -210,7 +209,7 @@ public class ResolveClassTest extends ResolveTestCase {
 
   public void testStaticImportNetwork() throws Exception {
     PsiReference ref = configure();
-    int count = 20;
+    int count = 15;
 
     String imports = "";
     for (int i = 0; i < count; i++) {

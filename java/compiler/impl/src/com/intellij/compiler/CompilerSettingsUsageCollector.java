@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,12 +37,8 @@ public class CompilerSettingsUsageCollector extends UsagesCollector{
   @Override
   public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
     final CompilerWorkspaceConfiguration wsConfig = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!wsConfig.useOutOfProcessBuild()) {
-      return Collections.emptySet();
-    }
     
     final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
-    result.add(new UsageDescriptor("external_build", 1));
     if (wsConfig.MAKE_PROJECT_ON_SAVE) {
       result.add(new UsageDescriptor("auto_make", 1));
     }

@@ -68,6 +68,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
+  private final XDebuggerWatchesManager myWatchesManager;
   private final Map<RunContentDescriptor, XDebugSessionData> mySessionData;
   private final Map<RunContentDescriptor, XDebugSessionTab> mySessionTabs;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
@@ -77,6 +78,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
+    myWatchesManager = new XDebuggerWatchesManager();
     mySessionData = new THashMap<RunContentDescriptor, XDebugSessionData>();
     mySessionTabs = new THashMap<RunContentDescriptor, XDebugSessionTab>();
     mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
@@ -144,6 +146,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return myBreakpointManager;
   }
 
+  public XDebuggerWatchesManager getWatchesManager() {
+    return myWatchesManager;
+  }
+
   public Project getProject() {
     return myProject;
   }
@@ -199,9 +205,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
     XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.get(contentToReuse) : null;
     if (oldSessionData == null) {
-      oldSessionData = new XDebugSessionData();
+      oldSessionData = new XDebugSessionData(myWatchesManager.getWatches(session.getSessionName()));
     }
+
+    // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
+    if (processStarter instanceof XDebugProcessConfiguratorStarter) {
+      session.activateSession();
+      ((XDebugProcessConfiguratorStarter)processStarter).configure(oldSessionData);
+    }
+
     session.init(process, oldSessionData);
+
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
     return session;
@@ -302,12 +316,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @Override
   public XDebuggerState getState() {
-    return new XDebuggerState(myBreakpointManager.getState());
+    return new XDebuggerState(myBreakpointManager.getState(), myWatchesManager.getState());
   }
 
   @Override
   public void loadState(final XDebuggerState state) {
     myBreakpointManager.loadState(state.myBreakpointManagerState);
+    myWatchesManager.loadState(state.myWatchesManagerState);
   }
 
   public void showExecutionPosition() {
@@ -317,12 +332,14 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   @SuppressWarnings("UnusedDeclaration")
   public static class XDebuggerState {
     private XBreakpointManagerImpl.BreakpointManagerState myBreakpointManagerState;
+    private XDebuggerWatchesManager.WatchesManagerState myWatchesManagerState;
 
     public XDebuggerState() {
     }
 
-    public XDebuggerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
+    public XDebuggerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState, XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
       myBreakpointManagerState = breakpointManagerState;
+      myWatchesManagerState = watchesManagerState;
     }
 
     @Property(surroundWithTag = false)
@@ -332,6 +349,15 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
     public void setBreakpointManagerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
       myBreakpointManagerState = breakpointManagerState;
+    }
+
+    @Property(surroundWithTag = false)
+    public XDebuggerWatchesManager.WatchesManagerState getWatchesManagerState() {
+      return myWatchesManagerState;
+    }
+
+    public void setWatchesManagerState(XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
+      myWatchesManagerState = watchesManagerState;
     }
   }
 }

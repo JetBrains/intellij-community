@@ -1,6 +1,5 @@
 package com.intellij.remoteServer.impl.configuration;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -14,8 +13,9 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.remoteServer.util.CloudDataLoader;
+import com.intellij.remoteServer.util.DelayedRunner;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -34,9 +34,8 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
   private static final Logger LOG = Logger.getInstance("#" + RemoteServerConfigurable.class.getName());
 
-  private static final int CHANGES_CHECK_TIME = 500;
-  private static final int CONNECTION_CHECK_TIME = 2000;
-  private static final int NO_CHANGES = -1;
+  private static final String HELP_TOPIC_ID = "reference.settings.clouds";
+
 
   private final UnnamedConfigurable myConfigurable;
   private final RemoteServer<?> myServer;
@@ -46,13 +45,16 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
   private JPanel mySettingsPanel;
   private JBLabel myConnectionStatusLabel;
 
-  private final Alarm myAlarm;
-  private int myChangesPastTime = NO_CHANGES;
+  private final DelayedRunner myRunner;
   private ConnectionTester myConnectionTester;
 
   private final RemoteServer<?> myInnerServer;
   private boolean myInnerApplied;
   private boolean myUncheckedApply;
+
+  private boolean myConnected;
+
+  private CloudDataLoader myDataLoader = CloudDataLoader.NULL;
 
   public <C extends ServerConfiguration> RemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
     super(true, treeUpdater);
@@ -67,62 +69,67 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
     myConfigurable = server.getType().createConfigurable(innerConfiguration);
 
-    myAlarm = new Alarm().setActivationComponent(myMainPanel);
-    queueChangesCheck();
-  }
-
-  private void queueChangesCheck() {
-    if (myAlarm.isDisposed()) {
-      return;
-    }
-    myAlarm.addRequest(new Runnable() {
+    myConnected = false;
+    myRunner = new DelayedRunner(myMainPanel) {
 
       @Override
-      public void run() {
-        checkChanges();
-        queueChangesCheck();
+      protected boolean wasChanged() {
+        boolean modified = myConfigurable.isModified();
+        boolean result = modified || myUncheckedApply;
+        if (result) {
+          myUncheckedApply = false;
+
+          setConnectionStatus("");
+          myConnectionTester = null;
+
+          if (modified) {
+            try {
+              myConfigurable.apply();
+              myInnerApplied = true;
+            }
+            catch (ConfigurationException e) {
+              setConnectionStatus(e.getMessage());
+            }
+          }
+        }
+        return result;
       }
-    }, CHANGES_CHECK_TIME, ModalityState.any());
+
+      @Override
+      protected void run() {
+        setConnectionStatus("Connecting...");
+
+        myConnectionTester = new ConnectionTester();
+        myConnectionTester.testConnection();
+      }
+    };
   }
 
-  private void checkChanges() {
-    boolean modified = myConfigurable.isModified();
-    if (modified || myUncheckedApply) {
-      myUncheckedApply = false;
+  private void setConnectionStatus(String text) {
+    setConnectionStatus(false, text);
+  }
 
-      setConnectionStatusText("");
-      myConnectionTester = null;
+  private void setConnectionStatus(boolean connected, String text) {
+    boolean changed = myConnected != connected;
+    myConnected = connected;
+    myConnectionStatusLabel.setText(UIUtil.toHtml(text));
+    if (changed) {
+      notifyDataLoader();
+    }
+  }
 
-      if (modified) {
-        try {
-          myConfigurable.apply();
-          myInnerApplied = true;
-        }
-        catch (ConfigurationException e) {
-          LOG.debug(e);
-          return;
-        }
-      }
+  public void setDataLoader(CloudDataLoader dataLoader) {
+    myDataLoader = dataLoader;
+    notifyDataLoader();
+  }
 
-      myChangesPastTime = 0;
+  private void notifyDataLoader() {
+    if (myConnected) {
+      myDataLoader.loadCloudData();
     }
     else {
-      if (myChangesPastTime != NO_CHANGES) {
-        myChangesPastTime += CHANGES_CHECK_TIME;
-        if (myChangesPastTime >= CONNECTION_CHECK_TIME) {
-          myChangesPastTime = NO_CHANGES;
-
-          setConnectionStatusText("Connecting...");
-
-          myConnectionTester = new ConnectionTester();
-          myConnectionTester.testConnection();
-        }
-      }
+      myDataLoader.clearCloudData();
     }
-  }
-
-  private void setConnectionStatusText(String text) {
-    myConnectionStatusLabel.setText(UIUtil.toHtml(text));
   }
 
   @Override
@@ -150,7 +157,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return HELP_TOPIC_ID;
   }
 
   @Override
@@ -181,7 +188,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
   @Override
   public void disposeUIResources() {
     myConfigurable.disposeUIResources();
-    Disposer.dispose(myAlarm);
+    Disposer.dispose(myRunner);
   }
 
   @Nullable
@@ -230,17 +237,13 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
 
             @Override
             public void run() {
-              showConnectionStatus(connected, connection.getStatusText());
+              if (myConnectionTester == ConnectionTester.this) {
+                setConnectionStatus(connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
+              }
             }
           });
         }
       }.queue();
-    }
-
-    private void showConnectionStatus(boolean connected, String statusText) {
-      if (myConnectionTester == this) {
-        setConnectionStatusText(connected ? "Connection successful" : "Cannot connect: " + statusText);
-      }
     }
   }
 }

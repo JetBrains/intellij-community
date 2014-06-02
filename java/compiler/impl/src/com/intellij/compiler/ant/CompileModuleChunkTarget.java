@@ -42,14 +42,14 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
                                   GenerationOptions genOptions) {
     final String moduleChunkName = moduleChunk.getName();
     //noinspection HardCodedStringLiteral
-    final Tag compilerArgs = new Tag("compilerarg", Couple.newOne("line", BuildProperties.propertyRef(
+    final Tag compilerArgs = new Tag("compilerarg", Couple.of("line", BuildProperties.propertyRef(
       BuildProperties.getModuleChunkCompilerArgsProperty(moduleChunkName))));
     //noinspection HardCodedStringLiteral
-    final Couple<String> classpathRef = Couple.newOne("refid", BuildProperties.getClasspathProperty(moduleChunkName));
+    final Couple<String> classpathRef = Couple.of("refid", BuildProperties.getClasspathProperty(moduleChunkName));
     final Tag classpathTag = new Tag("classpath", classpathRef);
     //noinspection HardCodedStringLiteral
     final Tag bootclasspathTag =
-      new Tag("bootclasspath", Couple.newOne("refid", BuildProperties.getBootClasspathProperty(moduleChunkName)));
+      new Tag("bootclasspath", Couple.of("refid", BuildProperties.getBootClasspathProperty(moduleChunkName)));
     final PatternSetRef compilerExcludes = new PatternSetRef(BuildProperties.getExcludedFromCompilationProperty(moduleChunkName));
 
     final String mainTargetName = BuildProperties.getCompileTargetName(moduleChunkName);
@@ -82,7 +82,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
 
     if (sourceRoots.length > 0) {
       final String outputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName));
-      final Tag srcTag = new Tag("src", Couple.newOne("refid", BuildProperties.getSourcepathProperty(moduleChunkName)));
+      final Tag srcTag = new Tag("src", Couple.of("refid", BuildProperties.getSourcepathProperty(moduleChunkName)));
       productionTarget.add(new Mkdir(outputPathRef));
       createCustomCompilerTasks(project, moduleChunk, genOptions, false, customCompilers, compilerArgs, bootclasspathTag,
                                 classpathTag, compilerExcludes, srcTag, outputPathRef, productionTarget);
@@ -101,8 +101,8 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
     if (testSourceRoots.length > 0) {
 
       final String testOutputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathForTestsProperty(moduleChunkName));
-      final Tag srcTag = new Tag("src", Couple.newOne("refid", BuildProperties.getTestSourcepathProperty(moduleChunkName)));
-      final Couple<String> testClasspathRef = Couple.newOne("refid", BuildProperties.getTestClasspathProperty(moduleChunkName));
+      final Tag srcTag = new Tag("src", Couple.of("refid", BuildProperties.getTestSourcepathProperty(moduleChunkName)));
+      final Couple<String> testClasspathRef = Couple.of("refid", BuildProperties.getTestClasspathProperty(moduleChunkName));
       final Tag testClassPath = new Tag("classpath", testClasspathRef);
       testsTarget.add(new Mkdir(testOutputPathRef));
       createCustomCompilerTasks(project, moduleChunk, genOptions, true, customCompilers, compilerArgs, bootclasspathTag,
@@ -153,7 +153,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
                                                 String outputPathRef,
                                                 Target target) {
     if (customCompilers.length > 1) {
-      target.add(new Tag("fail", Couple.newOne("message", CompilerBundle.message(
+      target.add(new Tag("fail", Couple.of("message", CompilerBundle.message(
         "generated.ant.build.compile.modules.fail.custom.compilers"))));
     }
     for (ChunkCustomCompilerExtension ext : customCompilers) {
@@ -182,7 +182,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
                                           File baseDir,
                                           final GenerationOptions genOptions) {
     //noinspection HardCodedStringLiteral
-    final Tag filesSelector = new Tag("type", Couple.newOne("type", "file"));
+    final Tag filesSelector = new Tag("type", Couple.of("type", "file"));
     final PatternSetRef excludes = CompilerExcludes.isAvailable(project) ? new PatternSetRef(
       BuildProperties.getExcludedFromCompilationProperty(chunk.getName())) : null;
     final PatternSetRef resourcePatternsPatternSet = new PatternSetRef(BuildProperties.PROPERTY_COMPILER_RESOURCE_PATTERNS);

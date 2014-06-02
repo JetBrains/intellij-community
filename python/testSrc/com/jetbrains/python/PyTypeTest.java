@@ -805,6 +805,20 @@ public class PyTypeTest extends PyTestCase {
            "expr = iter(xs).next()\n");
   }
 
+  // PY-10967
+  public void testDefaultTupleParameterMember() {
+    doTest("int",
+           "def foo(xs=(1, 2)):\n" +
+           "  expr, foo = xs\n");
+  }
+
+  public void testTupleIterationType() {
+    doTest("int | str",
+           "xs = (1, 'a')\n" +
+           "for expr in xs:\n" +
+           "    pass\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

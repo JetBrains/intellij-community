@@ -334,9 +334,6 @@
   <action id="Compile">
     <keyboard-shortcut first-keystroke="control shift F9"/>
   </action>
-  <action id="RunAPT">
-    <keyboard-shortcut first-keystroke="control alt shift F9"/>
-  </action>
   <action id="$Cut">
     <keyboard-shortcut first-keystroke="control X"/>
     <keyboard-shortcut first-keystroke="shift DELETE"/>

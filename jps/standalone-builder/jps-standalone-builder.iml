@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module" module-name="jps-model-serialization" exported="" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>

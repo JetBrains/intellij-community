@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.*;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -34,7 +35,9 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -125,6 +128,7 @@ public class CoreApplicationEnvironment {
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
+    myApplication.registerService(CodeFoldingSettings.class, new CodeFoldingSettings());
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
@@ -274,13 +278,7 @@ public class CoreApplicationEnvironment {
   }
 
   public <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
-    instance.addExplicitExtension(language, object);
-    Disposer.register(myParentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        instance.removeExplicitExtension(language, object);
-      }
-    });
+    doAddExplicitExtension(instance, language, object);
   }
 
   public void registerParserDefinition(Language language, ParserDefinition parserDefinition) {
@@ -288,13 +286,21 @@ public class CoreApplicationEnvironment {
   }
 
   public <T> void addExplicitExtension(@NotNull final FileTypeExtension<T> instance, @NotNull final FileType fileType, @NotNull final T object) {
-    instance.addExplicitExtension(fileType, object);
+    doAddExplicitExtension(instance, fileType, object);
+  }
+
+  private <T,U> void doAddExplicitExtension(@NotNull final KeyedExtensionCollector<T,U> instance, @NotNull final U key, @NotNull final T object) {
+    instance.addExplicitExtension(key, object);
     Disposer.register(myParentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        instance.removeExplicitExtension(fileType, object);
+        instance.removeExplicitExtension(key, object);
       }
     });
+  }
+
+  public <T> void addExplicitExtension(@NotNull final ClassExtension<T> instance, @NotNull final Class aClass, @NotNull final T object) {
+    doAddExplicitExtension(instance, aClass, object);
   }
 
   public <T> void addExtension(ExtensionPointName<T> name, final T extension) {

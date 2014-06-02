@@ -65,7 +65,7 @@ public class UseCoupleInspection extends InternalInspection {
               if (psiClass != null && PAIR_FQN.equals(psiClass.getQualifiedName())) {
                 final PsiType[] types = expression.getArgumentList().getExpressionTypes();
                 if (types.length == 2 && types[0].equals(types[1])) {
-                  final String name = "Change to Couple.newOne";
+                  final String name = "Change to Couple.of";
                   holder.registerProblem(expression, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
                 }
               }

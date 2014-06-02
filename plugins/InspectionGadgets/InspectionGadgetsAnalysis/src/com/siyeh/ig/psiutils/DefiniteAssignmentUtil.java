@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,8 +130,8 @@ public final class DefiniteAssignmentUtil {
     }
     final boolean da = definiteAssignment.isDefinitelyAssigned();
     final boolean du = definiteAssignment.isDefinitelyUnassigned();
-    definiteAssignment.set(true, false);
     for (PsiMethod method : anonymousClass.getMethods()) {
+      definiteAssignment.set(true, false);
       checkCodeBlock(method.getBody(), definiteAssignment);
     }
     definiteAssignment.set(da, du);

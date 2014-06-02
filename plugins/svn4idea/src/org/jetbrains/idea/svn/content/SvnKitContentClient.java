@@ -43,7 +43,7 @@ public class SvnKitContentClient extends BaseSvnClient implements ContentClient 
         super.writeTo(out);
       }
     };
-    SVNWCClient wcClient = myVcs.createWCClient();
+    SVNWCClient wcClient = myVcs.getSvnKitManager().createWCClient();
     try {
       if (target.isURL()) {
         wcClient.doGetFileContents(target.getURL(), pegRevision, revision, true, buffer);

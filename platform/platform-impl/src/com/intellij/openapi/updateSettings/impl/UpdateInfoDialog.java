@@ -57,6 +57,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myPatch = myLatestBuild != null ? myLatestBuild.findPatchForCurrentBuild() : null;
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+    if (myLatestBuild != null) {
+      initLicensingInfo(myUpdatedChannel, myLatestBuild);
+    }
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
@@ -184,6 +187,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JBLabel myPatchLabel;
     private JBLabel myPatchInfo;
     private JEditorPane myMessageArea;
+    private JEditorPane myLicenseArea;
 
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -212,6 +216,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       else {
         configureMessageArea(myMessageArea);
+      }
+
+      if (mySubscribtionLicense && myLicenseInfo != null) {
+        configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }
 

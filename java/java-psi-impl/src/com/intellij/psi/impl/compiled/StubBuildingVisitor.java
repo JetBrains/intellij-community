@@ -95,7 +95,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       shortName = PsiNameHelper.getShortClassName(fqn);
     }
 
-    int flags = myAccess == 0 ? access : myAccess;
+    int flags = myAccess | access;
     boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
     boolean isInterface = (flags & Opcodes.ACC_INTERFACE) != 0;
     boolean isEnum = (flags & Opcodes.ACC_ENUM) != 0;
@@ -408,6 +408,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
 
+    // skip semi-synthetic enum methods
+    if (myResult.isEnum()) {
+      if ("values".equals(name) && desc.startsWith("()")) return null;
+      if ("valueOf".equals(name) && desc.startsWith("(Ljava/lang/String;)")) return null;
+    }
+
     boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
     boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
@@ -425,19 +431,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
 
+    String returnType = null;
     boolean parsedViaGenericSignature = false;
-    String returnType;
-    if (signature == null) {
-      returnType = parseMethodViaDescription(desc, stub, args);
-    }
-    else {
+    if (signature != null) {
       try {
         returnType = parseMethodViaGenericSignature(signature, stub, args, throwables);
         parsedViaGenericSignature = true;
       }
-      catch (ClsFormatException e) {
-        returnType = parseMethodViaDescription(desc, stub, args);
-      }
+      catch (ClsFormatException ignored) { }
+    }
+    if (returnType == null) {
+      returnType = parseMethodViaDescription(desc, stub, args);
     }
 
     stub.setReturnType(TypeInfo.fromString(returnType));
@@ -505,8 +509,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static String parseMethodViaGenericSignature(final String signature,
                                                        final PsiMethodStubImpl stub,
                                                        final List<String> args,
-                                                       final List<String> throwables)
-    throws ClsFormatException {
+                                                       final List<String> throwables) throws ClsFormatException {
     StringCharacterIterator iterator = new StringCharacterIterator(signature);
     SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
 

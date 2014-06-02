@@ -32,8 +32,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -96,6 +95,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder, isOnTheFly);
+
+        for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, IGNORE_ASSERT_STATEMENTS, isOnTheFly);
+          for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
+            holder.registerProblem(entry.getKey(), entry.getValue());
+          }
+        }
       }
 
       @Override
@@ -145,9 +151,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public static String checkContract(PsiMethod method, String text) {
     List<MethodContract> contracts;
     try {
-      contracts = ControlFlowAnalyzer.parseContract(text);
+      contracts = MethodContract.parseContract(text);
     }
-    catch (ControlFlowAnalyzer.ParseException e) {
+    catch (MethodContract.ParseException e) {
       return e.getMessage();
     }
     int paramCount = method.getParameterList().getParametersCount();

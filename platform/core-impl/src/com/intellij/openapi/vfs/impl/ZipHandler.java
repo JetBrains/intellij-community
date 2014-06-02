@@ -16,7 +16,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,7 +79,7 @@ public class ZipHandler extends ArchiveHandler {
     EntryInfo info = map.get(entryName);
     if (info != null) return info;
 
-    Couple<String> path = splitPath(entryName);
+    Pair<String, String> path = splitPath(entryName);
     EntryInfo parentInfo = getOrCreate(path.first, map, zip);
     if (".".equals(path.second)) {
       return parentInfo;
@@ -99,7 +99,7 @@ public class ZipHandler extends ArchiveHandler {
         return getOrCreate(entry, map, zip);
       }
 
-      Couple<String> path = splitPath(entryName);
+      Pair<String, String> path = splitPath(entryName);
       EntryInfo parentInfo = getOrCreate(path.first, map, zip);
       info = new EntryInfo(parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP);
       map.put(entryName, info);

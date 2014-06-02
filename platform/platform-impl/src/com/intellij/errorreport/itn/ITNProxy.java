@@ -116,48 +116,48 @@ public class ITNProxy {
                                                                 UpdateSettings updateSettings) {
     @NonNls List<Couple<String>> params = new ArrayList<Couple<String>>();
 
-    params.add(Couple.newOne("protocol.version", "1"));
+    params.add(Couple.of("protocol.version", "1"));
 
-    params.add(Couple.newOne("user.login", login));
-    params.add(Couple.newOne("user.password", password));
+    params.add(Couple.of("user.login", login));
+    params.add(Couple.of("user.password", password));
 
-    params.add(Couple.newOne("os.name", SystemProperties.getOsName()));
+    params.add(Couple.of("os.name", SystemProperties.getOsName()));
 
-    params.add(Couple.newOne("java.version", SystemProperties.getJavaVersion()));
-    params.add(Couple.newOne("java.vm.vendor", SystemProperties.getJavaVmVendor()));
+    params.add(Couple.of("java.version", SystemProperties.getJavaVersion()));
+    params.add(Couple.of("java.vm.vendor", SystemProperties.getJavaVmVendor()));
 
-    params.add(Couple.newOne("app.name", namesInfo.getProductName()));
-    params.add(Couple.newOne("app.name.full", namesInfo.getFullProductName()));
-    params.add(Couple.newOne("app.name.version", appInfo.getVersionName()));
-    params.add(Couple.newOne("app.eap", Boolean.toString(appInfo.isEAP())));
-    params.add(Couple.newOne("app.internal", Boolean.toString(application.isInternal())));
-    params.add(Couple.newOne("app.build", appInfo.getBuild().asString()));
-    params.add(Couple.newOne("app.version.major", appInfo.getMajorVersion()));
-    params.add(Couple.newOne("app.version.minor", appInfo.getMinorVersion()));
-    params.add(Couple.newOne("app.build.date", format(appInfo.getBuildDate())));
-    params.add(Couple.newOne("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
-    params.add(Couple.newOne("app.compilation.timestamp", compilationTimestamp));
+    params.add(Couple.of("app.name", namesInfo.getProductName()));
+    params.add(Couple.of("app.name.full", namesInfo.getFullProductName()));
+    params.add(Couple.of("app.name.version", appInfo.getVersionName()));
+    params.add(Couple.of("app.eap", Boolean.toString(appInfo.isEAP())));
+    params.add(Couple.of("app.internal", Boolean.toString(application.isInternal())));
+    params.add(Couple.of("app.build", appInfo.getBuild().asString()));
+    params.add(Couple.of("app.version.major", appInfo.getMajorVersion()));
+    params.add(Couple.of("app.version.minor", appInfo.getMinorVersion()));
+    params.add(Couple.of("app.build.date", format(appInfo.getBuildDate())));
+    params.add(Couple.of("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
+    params.add(Couple.of("app.compilation.timestamp", compilationTimestamp));
 
-    params.add(Couple.newOne("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));
-    params.add(Couple.newOne("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ",")));
+    params.add(Couple.of("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));
+    params.add(Couple.of("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ",")));
 
-    params.add(Couple.newOne("plugin.name", error.getPluginName()));
-    params.add(Couple.newOne("plugin.version", error.getPluginVersion()));
+    params.add(Couple.of("plugin.name", error.getPluginName()));
+    params.add(Couple.of("plugin.version", error.getPluginVersion()));
 
-    params.add(Couple.newOne("last.action", error.getLastAction()));
-    params.add(Couple.newOne("previous.exception",
-                             error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException())));
+    params.add(Couple.of("last.action", error.getLastAction()));
+    params.add(Couple.of("previous.exception",
+                         error.getPreviousException() == null ? null : Integer.toString(error.getPreviousException())));
 
-    params.add(Couple.newOne("error.message", error.getMessage()));
-    params.add(Couple.newOne("error.stacktrace", error.getStackTrace()));
+    params.add(Couple.of("error.message", error.getMessage()));
+    params.add(Couple.of("error.stacktrace", error.getStackTrace()));
 
-    params.add(Couple.newOne("error.description", error.getDescription()));
+    params.add(Couple.of("error.description", error.getDescription()));
 
-    params.add(Couple.newOne("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId())));
+    params.add(Couple.of("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId())));
 
     for (Attachment attachment : error.getAttachments()) {
-      params.add(Couple.newOne("attachment.name", attachment.getName()));
-      params.add(Couple.newOne("attachment.value", attachment.getEncodedBytes()));
+      params.add(Couple.of("attachment.name", attachment.getName()));
+      params.add(Couple.of("attachment.value", attachment.getEncodedBytes()));
     }
 
     return params;

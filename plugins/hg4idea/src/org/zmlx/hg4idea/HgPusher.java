@@ -64,7 +64,6 @@ public class HgPusher {
     final HgPushDialog dialog = new HgPushDialog(myProject, repositories, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
-      dialog.rememberSettings();
       pushCommand.set(preparePushCommand(myProject, dialog));
       new Task.Backgroundable(myProject, "Pushing...", false) {
         @Override

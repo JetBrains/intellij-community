@@ -191,7 +191,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
     public void ensureLastX(final int x) {
       if (myPoints.isEmpty() || myPoints.get(myPoints.size() - 1).getFirst() < x) {
         if (myPoints.isEmpty()) {
-          myPoints.add(Couple.newOne(0, 0));
+          myPoints.add(Couple.of(0, 0));
           myPoints.addAll(generateLine(0,0,x,0,myYDiff,0));
         } else {
           final Couple<Integer> lastPoint = myPoints.get(myPoints.size() - 1);
@@ -229,7 +229,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
       int newX = xCurrent + 4 + xRnd.nextInt(xVariation);
       newX = Math.min(newX, finalX);
       
-      result.add(Couple.newOne(newX, newY));
+      result.add(Couple.of(newX, newY));
       xCurrent = newX;
     }
 

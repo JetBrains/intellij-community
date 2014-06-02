@@ -311,7 +311,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
             doRevert(file, true);
           } else {
             // do update to restore missing directory.
-            mySvnVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+            mySvnVcs.getSvnKitManager().createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
           }
         }
       }
@@ -355,7 +355,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
 
     private void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
-      myToBeDeleted.add(Couple.newOne(beforeFile, afterFile));
+      myToBeDeleted.add(Couple.of(beforeFile, afterFile));
     }
 
     public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {

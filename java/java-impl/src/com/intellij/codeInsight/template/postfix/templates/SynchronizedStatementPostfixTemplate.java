@@ -15,34 +15,22 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NOT_PRIMITIVE;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 
-public class SynchronizedStatementPostfixTemplate extends JavaStatementWrapPostfixTemplate {
+public class SynchronizedStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public SynchronizedStatementPostfixTemplate() {
     super("synchronized", "synchronized (expr)", JAVA_PSI_INFO, IS_NOT_PRIMITIVE);
   }
 
-  @Override
-  protected void afterExpand(@NotNull PsiElement newStatement, @NotNull Editor editor) {
-    JavaPostfixTemplatesUtils.formatPsiCodeBlock(newStatement, editor);
-  }
 
-  @NotNull
+  @Nullable
   @Override
-  protected String getHead() {
-    return "synchronized (";
+  public String getTemplateString(@NotNull PsiElement element) {
+    return "synchronized ($expr$) {\n$END$\n}";
   }
-
-  @NotNull
-  @Override
-  protected String getTail() {
-    return ") {\nst;\n}";
-  }
-
 }

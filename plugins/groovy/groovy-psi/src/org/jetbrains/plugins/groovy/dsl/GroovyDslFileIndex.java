@@ -318,12 +318,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             return;
           }
 
-          Set<Class> classes = ContainerUtil.map2Set(extensions, new Function<GroovyFrameworkConfigNotification, Class>() {
+          Set<Class> classes = new HashSet<Class>(ContainerUtil.map2Set(extensions, new Function<GroovyFrameworkConfigNotification, Class>() {
             @Override
             public Class fun(GroovyFrameworkConfigNotification notification) {
               return notification.getClass();
             }
-          });
+          }));
           classes.add(GroovyFrameworkConfigNotification.class); // for default extension
 
           // perhaps a separate extension for that?
@@ -349,7 +349,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                       executors.add(Pair.create(child, new GroovyDslExecutor(text, fileName)));
                     }
                     catch (IOException e) {
-                      LOG.error(e);
+                      LOG.error("Error while parsing gdsl file " + fileName, e);
                     }
                   }
                 }

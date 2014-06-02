@@ -18,6 +18,13 @@ package com.intellij.codeInsight.template.postfix.templates;
 import org.jetbrains.annotations.NotNull;
 
 public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
+
+  @NotNull
+  @Override
+  protected String getSuffix() {
+    return "if";
+  }
+
   public void testBooleanVariableBeforeAssignment() {
     doTest();
   }
@@ -54,9 +61,13 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
-  @NotNull
-  @Override
-  protected String getSuffix() {
-    return "if";
+  public void testSimpleWithSemicolon() {
+    doTest();
   }
+
+  public void testBeforeAssignment() {
+    doTest();
+  }
+
+
 }

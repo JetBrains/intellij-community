@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.AccessToken;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -59,7 +59,7 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 public abstract class CreateClassFix {
 
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
-    return new CreateClassActionBase(CreateClassKind.CLASS, expression.getReferenceElement()) {
+    return new CreateClassActionBase(GrCreateClassKind.CLASS, expression.getReferenceElement()) {
 
       @Override
       protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -144,7 +144,7 @@ public abstract class CreateClassFix {
     }
   }
 
-  public static IntentionAction createClassFixAction(final GrReferenceElement refElement, CreateClassKind type) {
+  public static IntentionAction createClassFixAction(final GrReferenceElement refElement, GrCreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
       @Override
       protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -228,6 +228,13 @@ public abstract class CreateClassFix {
         switch (getType()) {
           case ENUM:
             return factory.createEnum(name);
+          case TRAIT:
+            if (factory instanceof GroovyPsiElementFactory) {
+              return ((GroovyPsiElementFactory)factory).createTrait(name);
+            }
+            else {
+              return null;
+            }
           case CLASS:
             return factory.createClass(name);
           case INTERFACE:
@@ -292,8 +299,10 @@ public abstract class CreateClassFix {
     });
   }
 
-  private static String getTemplateName(CreateClassKind createClassKind) {
+  private static String getTemplateName(GrCreateClassKind createClassKind) {
     switch (createClassKind) {
+      case TRAIT:
+        return GroovyTemplates.GROOVY_TRAIT;
       case ENUM:
         return GroovyTemplates.GROOVY_ENUM;
       case CLASS:

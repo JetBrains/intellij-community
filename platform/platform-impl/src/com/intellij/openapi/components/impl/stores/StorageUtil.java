@@ -174,14 +174,14 @@ public class StorageUtil {
    */
   private static Couple<String> loadFile(@Nullable final VirtualFile file) throws IOException {
     if (file == null || !file.exists()) {
-      return Couple.newOne(null, SystemProperties.getLineSeparator());
+      return Couple.of(null, SystemProperties.getLineSeparator());
     }
 
     String fileText = new String(file.contentsToByteArray(), CharsetToolkit.UTF8);
     final int index = fileText.indexOf('\n');
-    return Couple.newOne(fileText, index == -1
-                                   ? SystemProperties.getLineSeparator()
-                                   : index - 1 >= 0 ? fileText.charAt(index - 1) == '\r' ? "\r\n" : "\n" : "\n");
+    return Couple.of(fileText, index == -1
+                               ? SystemProperties.getLineSeparator()
+                               : index - 1 >= 0 ? fileText.charAt(index - 1) == '\r' ? "\r\n" : "\n" : "\n");
   }
 
   public static boolean contentEquals(@NotNull final Document document, @NotNull final VirtualFile file) {

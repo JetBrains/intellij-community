@@ -25,12 +25,21 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 public class ReturnInstruction extends Instruction {
   private final boolean isViaException;
+  private final PsiElement myAnchor;
 
-  public ReturnInstruction(boolean isViaException) {
+  public ReturnInstruction(boolean isViaException, @Nullable PsiElement anchor) {
     this.isViaException = isViaException;
+    myAnchor = anchor;
+  }
+
+  @Nullable
+  public PsiElement getAnchor() {
+    return myAnchor;
   }
 
   public boolean isViaException() {

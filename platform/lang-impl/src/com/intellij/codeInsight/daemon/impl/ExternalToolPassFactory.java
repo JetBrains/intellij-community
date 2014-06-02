@@ -23,6 +23,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -49,6 +50,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
 
     myExternalActivitiesQueue = new MergingUpdateQueue("ExternalActivitiesQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, project,
                                                        null, false);
+    myExternalActivitiesQueue.setPassThrough(ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override

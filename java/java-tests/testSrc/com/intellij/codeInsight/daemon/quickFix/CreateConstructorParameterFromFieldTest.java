@@ -2,6 +2,8 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.siyeh.ig.style.MissortedModifiersInspection;
+import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,7 +13,7 @@ public class CreateConstructorParameterFromFieldTest extends LightQuickFixParame
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{ new UnusedSymbolLocalInspection()};
+    return new LocalInspectionTool[]{ new UnusedSymbolLocalInspection(), new MissortedModifiersInspection(), new UnqualifiedFieldAccessInspection()};
   }
 
 

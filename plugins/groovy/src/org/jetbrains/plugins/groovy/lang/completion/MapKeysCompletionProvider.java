@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyMapCompletionUtil;
 import org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -68,7 +69,7 @@ class MapKeysCompletionProvider extends CompletionProvider<CompletionParameters>
     }
 
     for (GroovyMapContentProvider provider : GroovyMapContentProvider.EP_NAME.getExtensions()) {
-      provider.addKeyVariants(qualifierExpression, resolve, result);
+      GroovyMapCompletionUtil.addKeyVariants(provider, qualifierExpression, resolve, result);
     }
 
     if (mapType instanceof GrMapType) {

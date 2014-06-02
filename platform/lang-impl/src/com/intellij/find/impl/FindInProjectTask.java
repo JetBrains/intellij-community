@@ -238,6 +238,8 @@ class FindInProjectTask {
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
+
           @Override
           public void run() {
             ProgressManager.checkCanceled();
@@ -247,7 +249,10 @@ class FindInProjectTask {
               return;
             }
 
-            if (skipIndexed && isCoveredByIdIndex(virtualFile) && 
+            if (virtualFile.getFileType().isBinary()) {
+              return;
+            }
+            if (skipIndexed && isCoveredByIndex(virtualFile) &&
                 (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
               return;
             }
@@ -258,6 +263,16 @@ class FindInProjectTask {
               if (sourceFile != null) psiFile = sourceFile;
               myFiles.add(psiFile);
             }
+          }
+
+          final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+          private boolean isCoveredByIndex(VirtualFile file) {
+            FileType fileType = file.getFileType();
+            if (hasTrigrams) {
+              return TrigramIndex.isIndexable(fileType) && fileBasedIndex.isIndexingCandidate(file, TrigramIndex.INDEX_ID);
+            }
+            return IdIndex.isIndexable(fileType) && fileBasedIndex.isIndexingCandidate(file, IdIndex.NAME);
           }
         });
         return true;
@@ -302,12 +317,6 @@ class FindInProjectTask {
       }
     }
     return iterator.getFiles();
-  }
-
-  private static boolean isCoveredByIdIndex(VirtualFile file) {
-    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    FileType fileType = file.getFileType();
-    return IdIndex.isIndexable(fileType) && fileBasedIndex.isIndexingCandidate(file, IdIndex.NAME);
   }
 
   private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
@@ -361,6 +370,15 @@ class FindInProjectTask {
     String text = myFindModel.getStringToFind();
     if (StringUtil.isEmptyOrSpaces(text)) return false;
 
+    if (hasTrigrams(text)) return true;
+
+    // $ is used to separate words when indexing plain-text files but not when indexing
+    // Java identifiers, so we can't consistently break a string containing $ characters into words
+
+    return myFindModel.isWholeWordsOnly() && text.indexOf('$') < 0 && !StringUtil.getWordsInStringLongestFirst(text).isEmpty();
+  }
+
+  private static boolean hasTrigrams(String text) {
     if (TrigramIndex.ENABLED) {
       return !TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
         @Override
@@ -369,11 +387,7 @@ class FindInProjectTask {
         }
       });
     }
-
-    // $ is used to separate words when indexing plain-text files but not when indexing
-    // Java identifiers, so we can't consistently break a string containing $ characters into words
-
-    return myFindModel.isWholeWordsOnly() && text.indexOf('$') < 0 && !StringUtil.getWordsInStringLongestFirst(text).isEmpty();
+    return false;
   }
 
 

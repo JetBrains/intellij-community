@@ -69,7 +69,7 @@ public abstract class GenericCompiler<Key, SourceState, OutputState> implements 
     return myOrderPlace;
   }
 
-  public static enum CompileOrderPlace {
+  public enum CompileOrderPlace {
     CLASS_INSTRUMENTING, CLASS_POST_PROCESSING, PACKAGING, VALIDATING
   }
 

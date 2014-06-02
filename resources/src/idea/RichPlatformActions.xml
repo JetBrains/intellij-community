@@ -98,7 +98,6 @@
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile"/>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
-      <action id="RunAPT" class="com.intellij.compiler.actions.ProcessAnnotationsAction"/>
       <separator/>
       <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
       <separator/>
@@ -149,9 +148,6 @@
 
       <separator/>
 
-      <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction"
-              text="Test Rebuild Performance"/>
-
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
@@ -177,13 +173,9 @@
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
     </reference>
 
-    <reference ref="RunAPT">
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
-    </reference>
 
     <group id="EditorTabCompileGroup">
       <reference ref="Compile"/>
-      <reference ref="RunAPT"/>
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="before" relative-to-action="RunContextPopupGroup"/>
     </group>
 
@@ -209,7 +201,6 @@
     <group id="ProjectViewCompileGroup">
       <reference ref="MakeModule"/>
       <reference ref="Compile"/>
-      <reference ref="RunAPT"/>
 
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </group>
@@ -232,7 +223,6 @@
     <group id="StructureViewCompileGroup">
       <separator/>
       <reference ref="Compile"/>
-      <reference ref="RunAPT"/>
 
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
@@ -256,7 +246,6 @@
       <reference ref="$Delete"/>
       <separator/>
       <reference ref="Compile"/>
-      <reference ref="RunAPT"/>
       <reference ref="VersionControlsGroup"/>
 
       <separator/>
@@ -297,7 +286,6 @@
       <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="Compile"/>
-      <reference ref="RunAPT"/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
 
@@ -337,7 +325,6 @@
       <reference ref="$Delete"/>
       <separator/>
       <reference ref="Compile"/>
-      <reference ref="RunAPT"/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>

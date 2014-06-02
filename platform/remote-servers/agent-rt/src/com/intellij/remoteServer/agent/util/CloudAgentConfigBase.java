@@ -18,7 +18,7 @@ package com.intellij.remoteServer.agent.util;
 /**
  * @author michael.golubev
  */
-public interface CloudAgentConfigBase extends CloudAgentConfig {
+public interface CloudAgentConfigBase extends CloudAgentConfig, CloudAgentProxyConfig {
 
   String getEmail();
 

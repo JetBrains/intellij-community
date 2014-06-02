@@ -125,7 +125,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
 
   private void testBrowseRepositoryImpl(final String url) throws SVNException {
     final List<SVNDirEntry> list = new ArrayList<SVNDirEntry>();
-    final SVNRepository repository = myVcs.createRepository(url);
+    final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
     repository.getDir(".", -1, null, new ISVNDirEntryHandler() {
       @Override
       public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {

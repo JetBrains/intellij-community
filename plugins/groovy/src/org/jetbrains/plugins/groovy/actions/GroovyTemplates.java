@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 public interface GroovyTemplates {
   @NonNls String GROOVY_CLASS = "GroovyClass.groovy";
   @NonNls String GROOVY_INTERFACE = "GroovyInterface.groovy";
+  @NonNls String GROOVY_TRAIT = "GroovyTrait.groovy";
   @NonNls String GROOVY_ENUM = "GroovyEnum.groovy";
   @NonNls String GROOVY_ANNOTATION = "GroovyAnnotation.groovy";
   @NonNls String GROOVY_SCRIPT = "GroovyScript.groovy";

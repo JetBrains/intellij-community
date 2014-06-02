@@ -97,7 +97,7 @@ public class GitConfigUtil {
     while ((pos = output.indexOf('\u0000', start)) != -1) {
       String value = output.substring(start, pos);
       start = pos + 1;
-      result.add(Couple.newOne(key, value));
+      result.add(Couple.of(key, value));
     }
     return result;
   }

@@ -27,6 +27,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -165,6 +166,10 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
       myCustomRightPropertiesPanelWrapper.add(customRightConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customRightConditionPanel);
     }
+    else {
+      // see IDEA-125745
+      myCustomRightPropertiesPanelWrapper.getParent().remove(myCustomRightPropertiesPanelWrapper);
+    }
 
     XBreakpointCustomPropertiesPanel<B> customTopPropertiesPanel = breakpointType.createCustomTopPropertiesPanel(project);
     if (customTopPropertiesPanel != null) {
@@ -203,7 +208,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
     if (myConditionComboBox != null) {
       myBreakpoint.setConditionEnabled(myConditionEnabledCheckbox.isSelected());
       XExpression expression = myConditionComboBox.getExpression();
-      myBreakpoint.setConditionExpression(expression != null && !expression.getExpression().isEmpty() ? expression : null);
+      myBreakpoint.setConditionExpression(!XDebuggerUtilImpl.isEmptyExpression(expression) ? expression : null);
       myConditionComboBox.saveTextInHistory();
     }
 

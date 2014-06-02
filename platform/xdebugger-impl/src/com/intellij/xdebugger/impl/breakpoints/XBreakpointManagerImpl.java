@@ -417,7 +417,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
     for (BreakpointState defaults : state.getBreakpointsDefaults()) {
       XBreakpointType<?,?> type = XBreakpointUtil.findType(defaults.getTypeId());
-      myBreakpointsDefaults.put(type, defaults);
+      if (type != null) {
+        myBreakpointsDefaults.put(type, defaults);
+      }
+      else {
+        LOG.warn("Unknown breakpoint type " + defaults.getTypeId());
+      }
     }
 
     myDependentBreakpointManager.loadState();
@@ -482,12 +487,16 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @Nullable
   private XBreakpointBase<?,?,?> createBreakpoint(final BreakpointState breakpointState) {
     XBreakpointType<?,?> type = XBreakpointUtil.findType(breakpointState.getTypeId());
-    if (type == null) return null;
+    if (type == null) {
+      LOG.warn("Unknown breakpoint type " + breakpointState.getTypeId());
+      return null;
+    }
     //noinspection unchecked
     return breakpointState.createBreakpoint(type, this);
   }
 
-  public BreakpointState getBreakpointDefaults(XBreakpointType type) {
+  @NotNull
+  public BreakpointState getBreakpointDefaults(@NotNull XBreakpointType type) {
     BreakpointState defaultState = myBreakpointsDefaults.get(type);
     if (defaultState == null) {
       defaultState = createBreakpointDefaults(type);
@@ -496,7 +505,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     return defaultState;
   }
 
-  private static BreakpointState createBreakpointDefaults(XBreakpointType type) {
+  @NotNull
+  private static BreakpointState createBreakpointDefaults(@NotNull XBreakpointType type) {
     BreakpointState state = new BreakpointState();
     state.setTypeId(type.getId());
     return state;

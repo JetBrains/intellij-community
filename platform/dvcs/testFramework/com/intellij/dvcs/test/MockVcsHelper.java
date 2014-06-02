@@ -145,7 +145,7 @@ public class MockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, AbstractVcs vcs, RepositoryLocation repositoryLocation) {
+  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, AbstractVcs vcs, String repositoryPath) {
     throw new UnsupportedOperationException();
   }
 
@@ -153,7 +153,7 @@ public class MockVcsHelper extends AbstractVcsHelper {
   public void showFileHistory(VcsHistoryProvider vcsHistoryProvider,
                               AnnotationProvider annotationProvider,
                               FilePath path,
-                              RepositoryLocation repositoryLocation,
+                              String repositoryPath,
                               AbstractVcs vcs) {
     throw new UnsupportedOperationException();
   }

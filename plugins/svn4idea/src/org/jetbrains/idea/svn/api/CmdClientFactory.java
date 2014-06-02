@@ -63,6 +63,7 @@ public class CmdClientFactory extends ClientFactory {
     myCheckinClient = new CmdCheckinClient();
     statusClient = new CmdStatusClient();
     infoClient = new CmdInfoClient();
+    myRepositoryFeaturesClient = new CmdRepositoryFeaturesClient();
   }
 
   @NotNull

@@ -6,7 +6,6 @@ public class NewExceptionWithoutArgumentsInspectionTest extends IGInspectionTest
 
   public void test() throws Exception {
     final NewExceptionWithoutArgumentsInspection tool = new NewExceptionWithoutArgumentsInspection();
-    tool.ignoreWithoutParameters = true;
     doTest("com/siyeh/igtest/errorhandling/new_exception_without_arguments", tool);
   }
 

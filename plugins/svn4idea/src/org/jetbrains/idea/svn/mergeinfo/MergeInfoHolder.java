@@ -86,7 +86,7 @@ public class MergeInfoHolder {
   }
 
   private static Couple<String> createKey(final WCPaths root, final WCInfoWithBranches.Branch branch) {
-    return Couple.newOne(root.getPath(), branch.getUrl());
+    return Couple.of(root.getPath(), branch.getUrl());
   }
 
   public void refresh(final boolean ignoreEnabled) {

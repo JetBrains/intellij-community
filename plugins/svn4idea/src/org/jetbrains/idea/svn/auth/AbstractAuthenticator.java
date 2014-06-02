@@ -108,7 +108,7 @@ abstract class AbstractAuthenticator {
   }
 
   protected void makeAuthCall(@NotNull SvnAuthenticationManager manager) throws SVNException {
-    myVcs.createWCClient(manager).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    myVcs.getSvnKitManager().createWCClient(manager).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
   }
 
   protected void acceptServerAuthentication(SVNURL url, String realm, Object certificate, @MagicConstant int acceptResult) {

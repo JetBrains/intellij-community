@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -44,7 +44,7 @@ public abstract class GroovyQuickFixFactory {
 
   public abstract IntentionAction createClassFromNewAction(GrNewExpression parent);
 
-  public abstract IntentionAction createClassFixAction(GrReferenceElement element, CreateClassKind anInterface);
+  public abstract IntentionAction createClassFixAction(GrReferenceElement element, GrCreateClassKind anInterface);
 
   public abstract IntentionAction createCreateFieldFromUsageFix(GrReferenceExpression expr);
 
@@ -77,4 +77,6 @@ public abstract class GroovyQuickFixFactory {
   public abstract IntentionAction createOptimizeImportsFix(boolean onTheFly);
 
   public abstract IntentionAction createRemoveUnusedGrParameterFix(GrParameter parameter);
+
+  public abstract IntentionAction createInvestigateFix(String reason);
 }

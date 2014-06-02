@@ -44,6 +44,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -61,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -333,8 +335,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element) {
+  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element) {
     return new ShowModulePropertiesFix(element);
+  }
+  @NotNull
+  @Override
+  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module) {
+    return new ShowModulePropertiesFix(module);
   }
 
   @NotNull
@@ -738,6 +745,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
         }
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull final PsiAnnotation annotation,
+                                                                         @NotNull final PsiMethod[] annotationMethods,
+                                                                         @NotNull final Collection<String> missedElements) {
+    return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements);
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 /**
  * @author Max Medvedev
  */
-public class CreateGetterFromUsageFix extends CreateMethodFromUsageFix {
+public class CreateGetterFromUsageFix extends CreateMethodFromUsageFix implements LowPriorityAction {
   public CreateGetterFromUsageFix(@NotNull GrReferenceExpression refExpression, @NotNull PsiClass targetClass) {
     super(refExpression);
   }

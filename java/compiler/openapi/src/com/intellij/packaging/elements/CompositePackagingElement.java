@@ -116,14 +116,6 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     return generators;
   }
 
-  protected void computeChildrenInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                             @NotNull PackagingElementResolvingContext resolvingContext,
-                                             @NotNull ArtifactIncrementalCompilerContext compilerContext, ArtifactType artifactType) {
-    for (PackagingElement<?> child : myChildren) {
-      child.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext, artifactType);
-    }
-  }
-
   public void removeAllChildren() {
     myChildren.clear();
   }

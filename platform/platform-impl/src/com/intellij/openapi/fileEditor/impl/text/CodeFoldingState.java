@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.fileEditor.impl.text;
 
+import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
  */
 public interface CodeFoldingState {
+  void setToEditor(@NotNull Editor editor);
 }

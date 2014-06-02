@@ -29,22 +29,22 @@ import java.util.List;
  *         Date: Dec 14, 2007
  */
 public abstract class ValueContainer<Value> {
-  interface IntIterator {
+  public interface IntIterator {
     boolean hasNext();
     
     int next();
 
     int size();
+
+    boolean hasAscendingOrder();
   }
 
-  abstract static class IntPredicate {
-    abstract boolean contains(int id);
+  public interface IntPredicate {
+    boolean contains(int id);
   }
 
   @NotNull
   public abstract IntIterator getInputIdsIterator(Value value);
-
-  public abstract boolean isAssociated(Value value, int inputId);
 
   @NotNull
   public abstract IntPredicate getValueAssociationPredicate(Value value);

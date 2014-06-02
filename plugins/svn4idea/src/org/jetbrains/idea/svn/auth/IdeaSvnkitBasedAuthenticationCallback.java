@@ -34,8 +34,9 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,13 +113,18 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Nullable
   private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<Pair<T, Boolean>> fromUserProvider) {
     T result;
-    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
+    // Search for stored credentials not only by key but also by "parent" keys. This is useful when we work just with URLs
+    // (not working copy) and can't detect repository url beforehand because authentication is required. If found credentials of "parent"
+    // are not correct then current key will already be stored in myRequestedCredentials - thus user will be asked for credentials and
+    // provided result will be stored in cache (with necessary key).
+    Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(type, realm);
+    String key = SvnConfiguration.AuthStorage.getKey(type, realm);
 
     // we return credentials from cache if they are asked for the first time during command execution, otherwise - user is asked
-    if (data != null && !myRequestedCredentials.contains(getKey(realm, type))) {
+    if (data != null && !myRequestedCredentials.contains(key)) {
       // we already have credentials in memory cache
       result = (T)data;
-      myRequestedCredentials.add(getKey(realm, type));
+      myRequestedCredentials.add(key);
     }
     else {
       // ask user for credentials
@@ -128,16 +134,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       if (result != null && userData.second) {
         // save user credentials to memory cache
         myVcs.getSvnConfiguration().acknowledge(type, realm, result);
-        myRequestedCredentials.add(getKey(realm, type));
+        myRequestedCredentials.add(key);
       }
     }
 
     return result;
-  }
-
-  @NotNull
-  private static String getKey(@NotNull String realm, @NotNull String type) {
-    return type + "$" + realm;
   }
 
   @Override

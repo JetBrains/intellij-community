@@ -129,7 +129,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       myVariablesSet = set2 = localsSet.isEmpty() ? Collections.<String>emptySet() : localsSet;
       myConflict = wasConflict = conflict.get();
     }
-    return wasConflict ? null : Couple.newOne(set1, set2);
+    return wasConflict ? null : Couple.of(set1, set2);
   }
 
   @Override

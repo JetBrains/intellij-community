@@ -1,15 +1,18 @@
 package org.jetbrains.idea.svn.properties;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
@@ -206,7 +209,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
       if (properties != null) {
         for (Target childInfo : properties.targets) {
-          SvnTarget childTarget = append(target, childInfo.path);
+          SvnTarget childTarget = SvnUtil.append(target, childInfo.path);
           for (Property property : childInfo.properties) {
             invokeHandler(childTarget, create(property.name, property.value), handler);
           }
@@ -225,19 +228,6 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     catch (SVNException e) {
       throw new VcsException(e);
     }
-  }
-
-  // TODO: Create custom Target class and implement append there
-  private static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SVNException {
-    SvnTarget result;
-
-    if (target.isFile()) {
-      result = SvnTarget.fromFile(FileUtil.isAbsolute(path) ? new File(path) : new File(target.getFile(), path));
-    } else {
-      result = SvnTarget.fromURL(target.getURL().appendPath(path, false));
-    }
-
-    return result;
   }
 
   private static void invokeHandler(@NotNull SvnTarget target, @Nullable SVNPropertyData data, @Nullable ISVNPropertyHandler handler)

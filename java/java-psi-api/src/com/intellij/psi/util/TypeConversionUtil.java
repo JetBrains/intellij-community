@@ -96,6 +96,13 @@ public class TypeConversionUtil {
    * @return true if fromType can be casted to toType
    */
   public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType) {
+    return areTypesConvertible(fromType, toType, null);
+  }
+
+  /**
+   * @return true if fromType can be casted to toType
+   */
+  public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType, @Nullable LanguageLevel languageLevel) {
     if (fromType == toType) return true;
     final boolean fromIsPrimitive = isPrimitiveAndNotNull(fromType);
     final boolean toIsPrimitive = isPrimitiveAndNotNull(toType);
@@ -119,13 +126,19 @@ public class TypeConversionUtil {
         return boxedType != null && areTypesConvertible(boxedType, toType);
       }
       if (!fromIsPrimitive) {
-        if (fromType instanceof PsiClassType && ((PsiClassType)fromType).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
-          final PsiClassType classType = (PsiClassType)fromType;
-          final PsiClass psiClass = classType.resolve();
-          if (psiClass == null || psiClass instanceof PsiTypeParameter) return false;
-          final PsiClassType boxedType = ((PsiPrimitiveType)toType).getBoxedType(psiClass.getManager(), psiClass.getResolveScope());
-          if (boxedType != null && isAssignable(fromType, boxedType)) {
-            return true;
+        if (fromType instanceof PsiClassType) {
+          if (languageLevel == null) {
+            languageLevel = ((PsiClassType)fromType).getLanguageLevel();
+          }
+
+          if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+            final PsiClassType classType = (PsiClassType)fromType;
+            final PsiClass psiClass = classType.resolve();
+            if (psiClass == null || psiClass instanceof PsiTypeParameter) return false;
+            final PsiClassType boxedType = ((PsiPrimitiveType)toType).getBoxedType(psiClass.getManager(), psiClass.getResolveScope());
+            if (boxedType != null && isAssignable(fromType, boxedType)) {
+              return true;
+            }
           }
         }
         return fromTypeRank == toTypeRank ||

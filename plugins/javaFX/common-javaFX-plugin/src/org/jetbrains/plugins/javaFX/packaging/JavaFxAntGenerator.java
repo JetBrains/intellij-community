@@ -47,41 +47,41 @@ public class JavaFxAntGenerator {
     if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
       preloaderFiles = artifactFileNameWithoutExtension + "_preloader_files";
       topLevelTagsCollector.add(new SimpleTag("fx:fileset",
-                                              Couple.newOne("id", preloaderFiles),
-                                              Couple.newOne("requiredFor", "preloader"),
-                                              Couple.newOne("dir", tempDirPath),
-                                              Couple.newOne("includes", preloaderJar)));
+                                              Couple.of("id", preloaderFiles),
+                                              Couple.of("requiredFor", "preloader"),
+                                              Couple.of("dir", tempDirPath),
+                                              Couple.of("includes", preloaderJar)));
 
       allButPreloader = "all_but_preloader_" + artifactFileNameWithoutExtension;
-      topLevelTagsCollector.add(new SimpleTag("fx:fileset", Couple.newOne("id", allButPreloader),
-                                              Couple.newOne("dir", tempDirPath),
-                                              Couple.newOne("excludes", preloaderJar),
-                                              Couple.newOne("includes", "**/*.jar")));
+      topLevelTagsCollector.add(new SimpleTag("fx:fileset", Couple.of("id", allButPreloader),
+                                              Couple.of("dir", tempDirPath),
+                                              Couple.of("excludes", preloaderJar),
+                                              Couple.of("includes", "**/*.jar")));
     }
 
     final String allButSelf = "all_but_" + artifactFileNameWithoutExtension;
-    final SimpleTag allButSelfAndPreloader = new SimpleTag("fx:fileset", Couple.newOne("id", allButSelf),
-                                                           Couple.newOne("dir", tempDirPath),
-                                                           Couple.newOne("includes", "**/*.jar"));
-    allButSelfAndPreloader.add(new SimpleTag("exclude", Couple.newOne("name", artifactFileName)));
+    final SimpleTag allButSelfAndPreloader = new SimpleTag("fx:fileset", Couple.of("id", allButSelf),
+                                                           Couple.of("dir", tempDirPath),
+                                                           Couple.of("includes", "**/*.jar"));
+    allButSelfAndPreloader.add(new SimpleTag("exclude", Couple.of("name", artifactFileName)));
     if (preloaderJar != null) {
-      allButSelfAndPreloader.add(new SimpleTag("exclude", Couple.newOne("name", preloaderJar)));
+      allButSelfAndPreloader.add(new SimpleTag("exclude", Couple.of("name", preloaderJar)));
     }
     topLevelTagsCollector.add(allButSelfAndPreloader);
 
     final String all = "all_" + artifactFileNameWithoutExtension;
-    final SimpleTag allIncluded = new SimpleTag("fx:fileset", Couple.newOne("id", all),
-                                                Couple.newOne("dir", tempDirPath),
-                                                Couple.newOne("includes", "**/*.jar"));
+    final SimpleTag allIncluded = new SimpleTag("fx:fileset", Couple.of("id", all),
+                                                Couple.of("dir", tempDirPath),
+                                                Couple.of("includes", "**/*.jar"));
     topLevelTagsCollector.add(allIncluded);
 
     //register application
     final String appId = artifactFileNameWithoutExtension + "_id";
-    final SimpleTag applicationTag = new SimpleTag("fx:application", Couple.newOne("id", appId),
-                                                   Couple.newOne("name", artifactName),
-                                                   Couple.newOne("mainClass", packager.getAppClass()));
+    final SimpleTag applicationTag = new SimpleTag("fx:application", Couple.of("id", appId),
+                                                   Couple.of("name", artifactName),
+                                                   Couple.of("mainClass", packager.getAppClass()));
     if (preloaderFiles != null) {
-      applicationTag.addAttribute(Couple.newOne("preloaderClass", preloaderClass));
+      applicationTag.addAttribute(Couple.of("preloaderClass", preloaderClass));
     }
 
     appendValuesFromPropertiesFile(applicationTag, packager.getHtmlParamFile(), "fx:htmlParam", false);
@@ -91,19 +91,19 @@ public class JavaFxAntGenerator {
     topLevelTagsCollector.add(applicationTag);
 
     if (packager.convertCss2Bin()) {
-      final SimpleTag css2binTag = new SimpleTag("fx:csstobin", Couple.newOne("outdir", tempDirPath));
-      css2binTag.add(new SimpleTag("fileset", Couple.newOne("dir", tempDirPath), Couple.newOne("includes", "**/*.css")));
+      final SimpleTag css2binTag = new SimpleTag("fx:csstobin", Couple.of("outdir", tempDirPath));
+      css2binTag.add(new SimpleTag("fileset", Couple.of("dir", tempDirPath), Couple.of("includes", "**/*.css")));
       topLevelTagsCollector.add(css2binTag);
     }
 
     //create jar task
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
-                                                 Couple.newOne("destfile", tempDirPath + File.separator + artifactFileName));
-    createJarTag.add(new SimpleTag("fx:application", Couple.newOne("refid", appId)));
+                                                 Couple.of("destfile", tempDirPath + File.separator + artifactFileName));
+    createJarTag.add(new SimpleTag("fx:application", Couple.of("refid", appId)));
 
     final List<Pair> fileset2Jar = new ArrayList<Pair>();
-    fileset2Jar.add(Couple.newOne("dir", tempDirPath));
-    fileset2Jar.add(Couple.newOne("excludes", "**/*.jar"));
+    fileset2Jar.add(Couple.of("dir", tempDirPath));
+    fileset2Jar.add(Couple.of("excludes", "**/*.jar"));
     createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
 
     createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
@@ -113,8 +113,8 @@ public class JavaFxAntGenerator {
       final SimpleTag manifestTag = new SimpleTag("manifest");
       for (JavaFxManifestAttribute pair : manifestAttributes) {
         manifestTag.add(new SimpleTag("attribute",
-                                      Couple.newOne("name", pair.getName()),
-                                      Couple.newOne("value", pair.getValue())));
+                                      Couple.of("name", pair.getName()),
+                                      Couple.of("value", pair.getValue())));
       }
       createJarTag.add(manifestTag);
     }
@@ -123,21 +123,21 @@ public class JavaFxAntGenerator {
 
     //deploy task
     final SimpleTag deployTag = new SimpleTag("fx:deploy",
-                                              Couple.newOne("width", packager.getWidth()),
-                                              Couple.newOne("height", packager.getHeight()),
-                                              Couple.newOne("updatemode", packager.getUpdateMode()),
-                                              Couple.newOne("outdir", tempDirPath + File.separator + "deploy"),
-                                              Couple.newOne("outfile", artifactFileNameWithoutExtension));
+                                              Couple.of("width", packager.getWidth()),
+                                              Couple.of("height", packager.getHeight()),
+                                              Couple.of("updatemode", packager.getUpdateMode()),
+                                              Couple.of("outdir", tempDirPath + File.separator + "deploy"),
+                                              Couple.of("outfile", artifactFileNameWithoutExtension));
     final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
     if (bundle != JavaFxPackagerConstants.NativeBundles.none) {
-      deployTag.addAttribute(Couple.newOne("nativeBundles", bundle.name()));
+      deployTag.addAttribute(Couple.of("nativeBundles", bundle.name()));
     }
 
     if (packager.isEnabledSigning()) {
-      deployTag.add(new SimpleTag("fx:permissions", Couple.newOne("elevated", "true")));
+      deployTag.add(new SimpleTag("fx:permissions", Couple.of("elevated", "true")));
     }
 
-    deployTag.add(new SimpleTag("fx:application", Couple.newOne("refid", appId)));
+    deployTag.add(new SimpleTag("fx:application", Couple.of("refid", appId)));
 
     final List<Pair> infoPairs = new ArrayList<Pair>();
     appendIfNotEmpty(infoPairs, "title", packager.getTitle());
@@ -158,17 +158,17 @@ public class JavaFxAntGenerator {
                                               String all) {
     final SimpleTag resourcesTag = new SimpleTag("fx:resources");
     if (preloaderFiles != null) {
-      resourcesTag.add(new SimpleTag("fx:fileset", Couple.newOne("refid", preloaderFiles)));
-      resourcesTag.add(new SimpleTag("fx:fileset", Couple.newOne("refid", includeSelf ? allButPreloader : allButSelf)));
+      resourcesTag.add(new SimpleTag("fx:fileset", Couple.of("refid", preloaderFiles)));
+      resourcesTag.add(new SimpleTag("fx:fileset", Couple.of("refid", includeSelf ? allButPreloader : allButSelf)));
     } else {
-      resourcesTag.add(new SimpleTag("fx:fileset", Couple.newOne("refid", includeSelf ? all : allButSelf)));
+      resourcesTag.add(new SimpleTag("fx:fileset", Couple.of("refid", includeSelf ? all : allButSelf)));
     }
     return resourcesTag;
   }
 
   private static void appendIfNotEmpty(final List<Pair> pairs, final String propertyName, final String propValue) {
     if (!StringUtil.isEmptyOrSpaces(propValue)) {
-      pairs.add(Couple.newOne(propertyName, propValue));
+      pairs.add(Couple.of(propertyName, propValue));
     }
   }
 
@@ -187,7 +187,7 @@ public class JavaFxAntGenerator {
             final String propValue = properties.getProperty(propName);
             if (!StringUtil.isEmptyOrSpaces(propValue)) {
               applicationTag
-                .add(new SimpleTag(paramTagName, Couple.newOne("name", propName), Couple.newOne("value", propValue)));
+                .add(new SimpleTag(paramTagName, Couple.of("name", propName), Couple.of("value", propValue)));
             }
             else if (allowNoNamed) {
               applicationTag.add(new SimpleTag("fx:argument", propName) {

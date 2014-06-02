@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -29,13 +26,16 @@ import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -76,9 +76,11 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   private PsiElement wrapContext(Project project, final PsiElement originalContext) {
     if (project.isDefault()) return originalContext;
     PsiElement context = originalContext;
-    final DebugProcessImpl process = DebuggerManagerEx.getInstanceEx(project).getContext().getDebugProcess();
-    if (process != null) {
-      final Map<ObjectReference, ValueMarkup> markupMap = ValueDescriptorImpl.getMarkupMap(process);
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    if (session != null) {
+      XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
+      Map<?, ValueMarkup> markupMap = markers != null ? markers.getAllMarkers() : null;
+      //final Map<ObjectReference, ValueMarkup> markupMap = ValueDescriptorImpl.getMarkupMap(process);
       if (markupMap != null && markupMap.size() > 0) {
         final Pair<String, Map<String, ObjectReference>> markupVariables = createMarkupVariablesText(markupMap);
         int offset = markupVariables.getFirst().length() - 1;
@@ -99,13 +101,12 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     return context;
   }
   
-  private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<ObjectReference, ValueMarkup> markupMap) {
+  private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
     final Map<String, ObjectReference> reverseMap = new HashMap<String, ObjectReference>();
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
-      for (Iterator<Map.Entry<ObjectReference, ValueMarkup>> it = markupMap.entrySet().iterator(); it.hasNext();) {
-        Map.Entry<ObjectReference, ValueMarkup> entry = it.next();
-        final ObjectReference objectRef = entry.getKey();
+      for (Map.Entry<?, ValueMarkup> entry : markupMap.entrySet()) {
+        ObjectReference objectRef = (ObjectReference)entry.getKey();
         final ValueMarkup markup = entry.getValue();
         String labelName = markup.getText();
         if (!StringUtil.isJavaIdentifier(labelName)) {
@@ -121,7 +122,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
           reverseMap.put(labelName, objectRef);
         }
         catch (ObjectCollectedException e) {
-          it.remove();
+          //it.remove();
         }
       }
       buffer.append(" ");

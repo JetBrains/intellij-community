@@ -67,7 +67,7 @@ public class UpdateFilesHelper {
 
   private static void iterateGroup(final FileGroup group, final Consumer<Couple<String>> callback) {
     for (FileGroup.UpdatedFile updatedFile : group.getUpdatedFiles()) {
-      callback.consume(Couple.newOne(updatedFile.getPath(), updatedFile.getVcsName()));
+      callback.consume(Couple.of(updatedFile.getPath(), updatedFile.getVcsName()));
     }
   }
 

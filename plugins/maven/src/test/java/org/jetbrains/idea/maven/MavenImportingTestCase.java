@@ -16,7 +16,6 @@
 
 package org.jetbrains.idea.maven;
 
-import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,21 +60,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsTree myProjectsTree;
   protected MavenProjectsManager myProjectsManager;
 
-  protected boolean useJps() {
-    return false;
-  }
-
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     removeFromLocalRepository("test");
-    if (useJps()) {
-      CompilerTestUtil.enableExternalCompiler(myProject);
-    }
-    else {
-      CompilerTestUtil.disableExternalCompiler(myProject);
-    }
   }
 
   @Override
@@ -84,10 +73,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       Messages.setTestDialog(TestDialog.DEFAULT);
       myProjectsManager.projectClosed();
       removeFromLocalRepository("test");
-      if (useJps()) {
-        CompilerTestUtil.disableExternalCompiler(myProject);
-        FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
-      }
+      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     finally {
       super.tearDown();
@@ -197,7 +183,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertTrue(getCompilerExtension(module).isCompilerOutputPathInherited());
   }
 
-  private CompilerModuleExtension getCompilerExtension(String module) {
+  protected CompilerModuleExtension getCompilerExtension(String module) {
     ModuleRootManager m = getRootManager(module);
     return CompilerModuleExtension.getInstance(m.getModule());
   }
@@ -534,7 +520,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Sdk setupJdkForModule(final String moduleName) {
-    final Sdk sdk = useJps()? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
+    final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
     return sdk;
   }

@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 /**
  * @author ven
 */
-public enum CreateClassKind {
+public enum CreateClassKind implements ClassKind {
   CLASS     (QuickFixBundle.message("create.class")),
   INTERFACE (QuickFixBundle.message("create.interface")),
   ENUM      (QuickFixBundle.message("create.enum")),
@@ -32,6 +32,7 @@ public enum CreateClassKind {
     myDescription = description;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }

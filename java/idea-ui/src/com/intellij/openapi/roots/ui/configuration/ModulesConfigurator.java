@@ -116,7 +116,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
         myModuleModel.dispose();
 
-        myFacetsConfigurator.disposeEditors();
+        if (myFacetsConfigurator != null) {
+          myFacetsConfigurator.disposeEditors();
+        }
       }
     });
 

@@ -336,10 +336,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     getProcess().dispose();
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_DISPOSED, EVENT_DISPOSE, null);
     Disposer.dispose(myUpdateAlarm);
+    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_DISPOSED, EVENT_DISPOSE, null);
+      }
+    });
   }
 
   // ManagerCommands

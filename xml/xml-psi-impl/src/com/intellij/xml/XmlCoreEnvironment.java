@@ -1,5 +1,22 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.xml;
 
+import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.application.options.editor.XmlFoldingSettings;
 import com.intellij.codeInspection.XmlSuppressionProvider;
 import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreProjectEnvironment;
@@ -13,17 +30,16 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.dtd.DTDParserDefinition;
 import com.intellij.lang.dtd.DtdSyntaxHighlighterFactory;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.html.HtmlSyntaxHighlighterFactory;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLParserDefinition;
 import com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.lang.xml.XMLParserDefinition;
-import com.intellij.lang.xml.XmlASTFactory;
-import com.intellij.lang.xml.XmlSyntaxHighlighterFactory;
+import com.intellij.lang.xml.*;
 import com.intellij.lexer.HtmlEmbeddedTokenTypesProvider;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
@@ -84,7 +100,13 @@ public class XmlCoreEnvironment {
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlNamespaceIndex());
       appEnvironment.addExtension(StandardResourceProvider.EP_NAME, new InternalResourceProvider());
 
-      appEnvironment.registerApplicationService(ExternalResourceManager.class, createExternalResourceManager());
+      appEnvironment.registerApplicationComponent(PathMacros.class, new PathMacrosImpl());
+      appEnvironment.registerApplicationService(ExternalResourceManager.class, new ExternalResourceManagerExImpl(PathMacrosImpl.getInstanceEx()));
+      appEnvironment.registerApplicationService(XmlFoldingSettings.class, new XmlFoldingSettings());
+      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, XMLLanguage.INSTANCE, new XmlFoldingBuilder());
+      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, HTMLLanguage.INSTANCE, new XmlFoldingBuilder());
+      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, XHTMLLanguage.INSTANCE, new XmlFoldingBuilder());
+      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, DTDLanguage.INSTANCE, new XmlFoldingBuilder());
     }
 
     protected ExternalResourceManagerEx createExternalResourceManager() {

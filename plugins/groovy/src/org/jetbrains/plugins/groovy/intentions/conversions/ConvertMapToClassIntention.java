@@ -15,12 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -41,6 +40,7 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -82,8 +82,8 @@ public class ConvertMapToClassIntention extends Intention {
     final String packageName = file instanceof GroovyFileBase ? ((GroovyFileBase)file).getPackageName() : "";
 
     final CreateClassDialog dialog =
-      new CreateClassDialog(project, GroovyBundle.message("create.class.family.name"), "", packageName, CreateClassKind.CLASS, true,
-                            ModuleUtil.findModuleForPsiElement(element));
+      new CreateClassDialog(project, GroovyBundle.message("create.class.family.name"), "", packageName, GrCreateClassKind.CLASS, true,
+                            ModuleUtilCore.findModuleForPsiElement(element));
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 

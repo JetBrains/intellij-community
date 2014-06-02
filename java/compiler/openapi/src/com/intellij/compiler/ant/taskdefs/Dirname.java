@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class Dirname extends Tag{
   public Dirname(@NonNls String property, @NonNls String file) {
     //noinspection HardCodedStringLiteral
-    super("dirname", Couple.newOne("property", property), Couple.newOne("file", file));
+    super("dirname", Couple.of("property", property), Couple.of("file", file));
   }
 }

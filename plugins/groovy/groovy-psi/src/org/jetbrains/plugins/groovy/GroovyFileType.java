@@ -40,10 +40,9 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyFileType extends LanguageFileType {
-
+  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<FileType>();
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "groovy";
-  public static final List<FileType> GROOVY_FILE_TYPES = new ArrayList<FileType>();
 
   private GroovyFileType() {
     super(GroovyLanguage.INSTANCE);
@@ -55,8 +54,10 @@ public class GroovyFileType extends LanguageFileType {
         return new GroovyEditorHighlighter(colors);
       }
     });
+    GROOVY_FILE_TYPES.add(this);
   }
 
+  @NotNull
   public static FileType[] getGroovyEnabledFileTypes() {
     return GROOVY_FILE_TYPES.toArray(new FileType[GROOVY_FILE_TYPES.size()]);
   }

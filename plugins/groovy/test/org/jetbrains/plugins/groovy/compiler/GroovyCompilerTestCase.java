@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -37,6 +38,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -64,13 +66,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
   @SuppressWarnings("AbstractMethodCallInConstructor") private CompilerTester myCompilerTester;
 
-  protected abstract boolean useJps();
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     getProject().getComponent(GroovyCompilerLoader.class).projectOpened();
-    myCompilerTester = new CompilerTester(useJps(), myModule);
+    myCompilerTester = new CompilerTester(myModule);
   }
 
   @Override
@@ -87,18 +87,25 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Override
   protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myCompilerTester.tearDown();
-          GroovyCompilerTestCase.super.tearDown();
+    final File systemRoot = BuildManager.getInstance().getBuildSystemDirectory();
+    try {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myCompilerTester.tearDown();
+            myCompilerTester = null;
+            GroovyCompilerTestCase.super.tearDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+      });
+    }
+    finally {
+      FileUtil.delete(systemRoot);
+    }
   }
 
   protected void setupTestSources() {

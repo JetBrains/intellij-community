@@ -15,9 +15,9 @@
  */
 
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -25,16 +25,15 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
-import org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
 /**
  * @author peter
  */
-public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+public class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
     addGroovyLibrary(myModule);
@@ -543,9 +542,6 @@ class Indirect {
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
 
     assertEmpty compileModule(myModule)
-    if (!useJps()) {
-      assertEmpty compileFiles(used.virtualFile, main)
-    }
 
     touch(used.virtualFile)
     touch(main)
@@ -727,7 +723,7 @@ public class Main {
     assert messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
-    assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
+    assert groovyFile.classes[0] == GroovyCompilerLoader.findClassByStub(project, error.virtualFile)
 
   }
 
@@ -819,30 +815,11 @@ class AppTest {
     assertOutput 'AppTest', 'b'
   }
 
-  public static class IdeaModeTest extends GroovyCompilerTest {
-    @Override protected boolean useJps() { false }
-  }
+  public void "test no groovy library"() {
+    myFixture.addFileToProject("dependent/a.groovy", "");
+    addModule("dependent", true)
 
-  public static class JpsModeTest extends GroovyCompilerTest {
-    @Override protected boolean useJps() { true }
-
-    @Override
-    protected void tearDown() {
-      File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
-      try {
-        super.tearDown()
-      }
-      finally {
-        FileUtil.delete(systemRoot);
-      }
-    }
-
-    public void "test no groovy library"() {
-      myFixture.addFileToProject("dependent/a.groovy", "");
-      addModule("dependent", true)
-
-      def messages = make()
-      assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
-    }
+    def messages = make()
+    assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
   }
 }

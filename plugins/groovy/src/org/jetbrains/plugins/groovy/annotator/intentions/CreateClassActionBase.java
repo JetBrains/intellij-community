@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +35,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -43,12 +43,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @author ilyas
  */
 public abstract class CreateClassActionBase extends Intention {
-  private final CreateClassKind myType;
+  private final GrCreateClassKind myType;
 
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
 
-  public CreateClassActionBase(CreateClassKind type, GrReferenceElement refElement) {
+  public CreateClassActionBase(GrCreateClassKind type, GrReferenceElement refElement) {
     myType = type;
     myRefElement = refElement;
   }
@@ -58,6 +58,8 @@ public abstract class CreateClassActionBase extends Intention {
   public String getText() {
     String referenceName = myRefElement.getReferenceName();
     switch (getType()) {
+      case TRAIT:
+        return GroovyBundle.message("create.trait", referenceName);
       case ENUM:
         return GroovyBundle.message("create.enum", referenceName);
       case CLASS:
@@ -88,7 +90,7 @@ public abstract class CreateClassActionBase extends Intention {
   }
 
 
-  protected CreateClassKind getType() {
+  protected GrCreateClassKind getType() {
     return myType;
   }
 

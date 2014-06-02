@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -888,7 +888,7 @@ public class SvnInfoHandler extends DefaultHandler {
       if (myBase != null) {
         final String path = attributes.getValue("path");
         assertSAX(!StringUtil.isEmptyOrSpaces(path));
-        structure.myFile = CommandUtil.resolvePath(myBase, path);
+        structure.myFile = SvnUtil.resolvePath(myBase, path);
       }
 
       final String revision = attributes.getValue("revision");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -55,27 +54,8 @@ final class HistoryEntry{
   }
 
   public HistoryEntry(Project project, Element e) throws InvalidDataException {
-    this(project, e, false);
-  }
-  
-  public HistoryEntry(Project project, Element e, boolean ensureDocumentCreated) throws InvalidDataException{
-    if (!e.getName().equals(TAG)) {
-      throw new IllegalArgumentException("unexpected tag: " + e);
-    }
-
-    String url = e.getAttributeValue(FILE_ATTR);
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (file == null){
-      throw new InvalidDataException("No file exists: " + url);
-    }
-
-    myFile = file;
+    myFile = getVirtualFile(e);
     myProvider2State = new HashMap<FileEditorProvider, FileEditorState>();
-    if (ensureDocumentCreated) {
-      // May be necessary for correct initialisation. For example, stored fold regions info is not applied if target document
-      // hasn't been initialised yet.
-      FileDocumentManager.getInstance().getDocument(myFile);
-    } 
 
     List providers = e.getChildren(PROVIDER_ELEMENT);
     for (final Object provider1 : providers) {
@@ -95,7 +75,7 @@ final class HistoryEntry{
         throw new InvalidDataException();
       }
 
-      FileEditorState state = provider.readState(stateElement, project, file);
+      FileEditorState state = provider.readState(stateElement, project, myFile);
       putState(provider, state);
     }
   }
@@ -133,5 +113,19 @@ final class HistoryEntry{
     }
 
     return e;
+  }
+
+  @NotNull
+  public static VirtualFile getVirtualFile(Element historyElement) throws InvalidDataException {
+    if (!historyElement.getName().equals(TAG)) {
+      throw new IllegalArgumentException("unexpected tag: " + historyElement);
+    }
+
+    String url = historyElement.getAttributeValue(FILE_ATTR);
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (file == null){
+      throw new InvalidDataException("No file exists: " + url);
+    }
+    return file;
   }
 }

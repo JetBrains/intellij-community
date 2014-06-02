@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * @author Max Medvedev
  */
 public class GrKeywordAndDeclarationHighlightFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  protected GrKeywordAndDeclarationHighlightFactory(Project project) {
+  public GrKeywordAndDeclarationHighlightFactory(Project project) {
     super(project);
 
     TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, false, -1);

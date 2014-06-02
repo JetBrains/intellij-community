@@ -27,6 +27,6 @@ import org.jetbrains.annotations.NonNls;
 public class Mkdir extends Tag {
   public Mkdir(@NonNls String directory) {
     //noinspection HardCodedStringLiteral
-    super("mkdir", Couple.newOne("dir", directory));
+    super("mkdir", Couple.of("dir", directory));
   }
 }

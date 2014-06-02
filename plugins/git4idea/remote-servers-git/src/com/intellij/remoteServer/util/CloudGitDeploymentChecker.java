@@ -15,9 +15,9 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,7 +29,6 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 
 import java.io.File;
 import java.util.List;
@@ -42,57 +41,44 @@ public class CloudGitDeploymentChecker<
   SC extends ServerConfigurationBase,
   SR extends CloudMultiSourceServerRuntimeInstance<T, ?, ?, ?>> {
 
-  private GitRepositoryManager myGitRepositoryManager;
-
-  private final DeploymentSource myDeploymentSource;
-  private final RemoteServer<SC> myServer;
-  private final CloudDeploymentNameEditor<T> mySettingsEditor;
   private final CloudGitDeploymentDetector myDetector;
 
-  public CloudGitDeploymentChecker(DeploymentSource deploymentSource,
-                                   RemoteServer<SC> server,
-                                   CloudDeploymentNameEditor<T> settingsEditor,
-                                   CloudGitDeploymentDetector detector) {
-    myDeploymentSource = deploymentSource;
-    myServer = server;
-    mySettingsEditor = settingsEditor;
+  public CloudGitDeploymentChecker(CloudGitDeploymentDetector detector) {
     myDetector = detector;
   }
 
-  public void checkGitUrl(final T settings) throws ConfigurationException {
-    if (!(myDeploymentSource instanceof ModuleDeploymentSource)) {
+  public void checkGitUrl(final RemoteServer<SC> server,
+                          final DeploymentSource deploymentSource,
+                          final T settings) throws RuntimeConfigurationException {
+    if (!(deploymentSource instanceof ModuleDeploymentSource)) {
       return;
     }
 
-    ModuleDeploymentSource moduleSource = (ModuleDeploymentSource)myDeploymentSource;
+    ModuleDeploymentSource moduleSource = (ModuleDeploymentSource)deploymentSource;
     Module module = moduleSource.getModule();
     if (module == null) {
       return;
     }
 
-    File contentRootFile = myDeploymentSource.getFile();
+    File contentRootFile = deploymentSource.getFile();
     if (contentRootFile == null) {
       return;
     }
 
     final Project project = module.getProject();
 
-    if (myGitRepositoryManager == null) {
-      myGitRepositoryManager = GitUtil.getRepositoryManager(project);
-    }
-
     VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRootFile);
     if (contentRoot == null) {
       return;
     }
 
-    GitRepository repository = myGitRepositoryManager.getRepositoryForRoot(contentRoot);
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(contentRoot);
     if (repository == null) {
       return;
     }
 
 
-    String expectedName = settings.getDeploymentSourceName(myDeploymentSource);
+    String expectedName = settings.getDeploymentSourceName(deploymentSource);
 
     List<String> appNames = myDetector.collectApplicationNames(repository);
     if (appNames.isEmpty() || appNames.contains(expectedName)) {
@@ -107,24 +93,22 @@ public class CloudGitDeploymentChecker<
       @Override
       public void run() {
         CloudGitApplication application
-          = new CloudConnectionTask<CloudGitApplication, SC, T, SR>(project, "Searching for application", myServer) {
+          = new CloudConnectionTask<CloudGitApplication, SC, T, SR>(project, "Searching for application", server) {
 
           @Override
           protected CloudGitApplication run(SR serverRuntime) throws ServerRuntimeException {
             CloudGitDeploymentRuntime deploymentRuntime
-              = (CloudGitDeploymentRuntime)serverRuntime.createDeploymentRuntime(myDeploymentSource, settings, project);
+              = (CloudGitDeploymentRuntime)serverRuntime.createDeploymentRuntime(deploymentSource, settings, project);
             return deploymentRuntime.findApplication4Repository();
           }
         }.performSync();
 
         if (application == null) {
-          Messages.showErrorDialog(mySettingsEditor.getComponent(), "No application matching repository URL(s) found in account");
+          Messages.showErrorDialog(project, "No application matching repository URL(s) found in account", server.getName());
         }
         else {
-          T fixedSettings = mySettingsEditor.getFactory().create();
-          fixedSettings.setDefaultDeploymentName(false);
-          fixedSettings.setDeploymentName(application.getName());
-          mySettingsEditor.resetFrom(fixedSettings);
+          settings.setDefaultDeploymentName(false);
+          settings.setDeploymentName(application.getName());
         }
       }
     });

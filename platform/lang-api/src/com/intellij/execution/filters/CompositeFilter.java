@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,11 +27,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public class CompositeFilter implements Filter, FilterMixin {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
   private final List<Filter> myFilters = new ArrayList<Filter>();
   private boolean myIsAnyHeavy;
+  private boolean forceUseAllFilters = false;
   private final DumbService myDumbService;
 
   public CompositeFilter(@NotNull Project project) {
@@ -47,53 +50,83 @@ public class CompositeFilter implements Filter, FilterMixin {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
-    //noinspection ForLoopReplaceableByForEach
-    Result finalResult = null;
+
+    List<ResultItem> resultItems = null;
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {
         long t0 = System.currentTimeMillis();
-        Result result = null;
+
+        Result result;
         try {
           result = filter.applyFilter(line, entireLength);
         }
         catch (Throwable t) {
-          throw new RuntimeException("Error while applying " + filter + " to '"+line+"'", t);
+          throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
         }
-        finalResult = merge(finalResult, result);
+        resultItems = merge(resultItems, result);
+
         t0 = System.currentTimeMillis() - t0;
         if (t0 > 1000) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + line + "'''");
         }
-        if (finalResult != null && finalResult.getNextAction() == NextAction.EXIT) {
-          return finalResult;
+        if (shouldStopFiltering(result)) {
+          break;
         }
       }
     }
-    return finalResult;
+    return createFinalResult(resultItems);
   }
 
-  protected Result merge(@Nullable Result finalResult, @Nullable Result result) {
-    if (result != null) {
-      if (finalResult == null) {
-        finalResult = result;
+  @Nullable
+  private static Result createFinalResult(@Nullable List<ResultItem> resultItems) {
+    if (resultItems == null) {
+      return null;
+    }
+    if (resultItems.size() == 1) {
+      ResultItem resultItem = resultItems.get(0);
+      return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
+                        resultItem.getHighlightAttributes());
+    }
+    return new Result(resultItems);
+  }
+
+  private boolean shouldStopFiltering(@Nullable Result result) {
+    return result != null && result.getNextAction() == NextAction.EXIT && !forceUseAllFilters;
+  }
+
+  @Nullable
+  protected List<ResultItem> merge(@Nullable List<ResultItem> resultItems, @Nullable Result newResult) {
+    if (newResult != null) {
+      if (resultItems == null) {
+        resultItems = new ArrayList<ResultItem>();
       }
-      else {
-        finalResult = new Result(mergeResultItems(finalResult, result));
-        finalResult.setNextAction(result.getNextAction());
+      List<ResultItem> newItems = newResult.getResultItems();
+      for (int i = 0; i < newItems.size(); i++) {
+        ResultItem item = newItems.get(i);
+        if (item.getHyperlinkInfo() == null || !intersects(resultItems, item)) {
+          resultItems.add(item);
+        }
       }
     }
-    return finalResult;
+    return resultItems;
   }
 
-  private List<ResultItem> mergeResultItems(Result finalResult, Result result) {
-    List<ResultItem> finalResultResultItems = finalResult.getResultItems();
-    List<ResultItem> resultItems = result.getResultItems();
+  protected boolean intersects(List<ResultItem> items, ResultItem newItem) {
+    TextRange newItemTextRange = null;
 
-    List<ResultItem> mergedList = new ArrayList<ResultItem>(finalResultResultItems.size() + resultItems.size());
-    mergedList.addAll(finalResultResultItems);
-    mergedList.addAll(resultItems);
-    return mergedList;
+    for (int i = 0; i < items.size(); i++) {
+      ResultItem item = items.get(i);
+      if (item.getHyperlinkInfo() != null) {
+        if (newItemTextRange == null) {
+          newItemTextRange = new TextRange(newItem.highlightStartOffset, newItem.highlightEndOffset);
+        }
+        if (newItemTextRange.intersectsStrict(item.highlightStartOffset, item.highlightEndOffset)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -109,12 +142,12 @@ public class CompositeFilter implements Filter, FilterMixin {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
-    //noinspection ForLoopReplaceableByForEach
+
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
-      if (! (filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
+      if (!(filter instanceof FilterMixin) || !((FilterMixin)filter).shouldRunHeavy()) continue;
       if (!dumb || DumbService.isDumbAware(filter)) {
-        ((FilterMixin) filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
+        ((FilterMixin)filter).applyHeavyFilter(copiedFragment, startOffset, startLineNumber, consumer);
       }
     }
   }
@@ -125,7 +158,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     List<Filter> filters = myFilters;
     final List<String> updateMessage = new ArrayList<String>();
     int count = filters.size();
-    //noinspection ForLoopReplaceableByForEach
+
     for (int i = 0; i < count; i++) {
       Filter filter = filters.get(i);
 
@@ -149,4 +182,9 @@ public class CompositeFilter implements Filter, FilterMixin {
     myFilters.add(filter);
     myIsAnyHeavy |= filter instanceof FilterMixin;
   }
+
+  public void setForceUseAllFilters(boolean forceUseAllFilters) {
+    this.forceUseAllFilters = forceUseAllFilters;
+  }
+
 }

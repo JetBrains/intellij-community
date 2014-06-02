@@ -196,7 +196,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     myToolBar = createRevisionsToolbar(actions);
     myRevisionsList = new RevisionsList(new RevisionsList.SelectionListener() {
       public void revisionsSelected(final int first, final int last) {
-        scheduleDiffUpdate(Couple.newOne(first, last));
+        scheduleDiffUpdate(Couple.of(first, last));
       }
     });
     addPopupMenuToComponent(myRevisionsList.getComponent(), actions);

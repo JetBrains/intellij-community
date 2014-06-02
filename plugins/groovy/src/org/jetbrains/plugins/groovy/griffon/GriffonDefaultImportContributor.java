@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.griffon;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -56,12 +56,12 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
             if (file instanceof PropertiesFile) {
               List<String> modelImports = tokenize(((PropertiesFile)file).findPropertyByKey("models"));
               List<String> viewImports = tokenize(((PropertiesFile)file).findPropertyByKey("views"));
-              return Result.create(Couple.newOne(modelImports, viewImports), PsiModificationTracker.MODIFICATION_COUNT);
+              return Result.create(Couple.of(modelImports, viewImports), PsiModificationTracker.MODIFICATION_COUNT);
             }
           }
         }
 
-        return Result.create(Couple.<List<String>>newOne(new ArrayList<String>(), new ArrayList<String>()),
+        return Result.create(Couple.<List<String>>of(new ArrayList<String>(), new ArrayList<String>()),
                              PsiModificationTracker.MODIFICATION_COUNT);
       }
 
@@ -83,7 +83,7 @@ public class GriffonDefaultImportContributor extends DefaultImportContributor {
 
   @Override
   public List<String> appendImplicitlyImportedPackages(@NotNull GroovyFile file) {
-    Module module = ModuleUtil.findModuleForPsiElement(file);
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
     MvcFramework framework = MvcFramework.getInstance(module);
     if (framework instanceof GriffonFramework) {
       ArrayList<String> result = new ArrayList<String>();

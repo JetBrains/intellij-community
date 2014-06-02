@@ -59,11 +59,13 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
           myTree.addTreeListener(EvaluatingResultContainer.this);
           String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
           node.addChildren(XValueChildrenList.singleton(name, result), true);
+          myDialog.finishEvaluation();
         }
 
         @Override
         public void errorOccurred(@NotNull final String errorMessage) {
           node.setErrorMessage(errorMessage);
+          myDialog.finishEvaluation();
         }
       });
     }

@@ -707,6 +707,6 @@ public abstract class HgUtil {
       userName = authorString.trim();
       email = "";
     }
-    return Couple.newOne(userName, email);
+    return Couple.of(userName, email);
   }
 }

@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -169,7 +169,7 @@ public class UpdateOutputLineConverter {
   }
 
   private File createFile(String path) {
-    return CommandUtil.resolvePath(myBase, path);
+    return SvnUtil.resolvePath(myBase, path);
   }
 
   @Nullable

@@ -52,7 +52,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     }
     String localPath = path.substring(0, separator);
     String pathInJar = path.substring(separator + 2);
-    return Couple.newOne(localPath, pathInJar);
+    return Couple.of(localPath, pathInJar);
   }
 
   @NotNull

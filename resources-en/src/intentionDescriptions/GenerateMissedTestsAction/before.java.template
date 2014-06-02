@@ -1,0 +1,10 @@
+<spot>public class Foo</spot> {
+  public void doSomething() {
+  }
+
+  public void doSomethingElse(){
+  }
+}
+public class FooTest extends TestCase {
+  public void testDoSomething() {}
+}

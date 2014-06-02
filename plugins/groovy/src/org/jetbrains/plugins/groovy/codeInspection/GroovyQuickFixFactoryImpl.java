@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
@@ -27,6 +26,8 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
 import org.jetbrains.plugins.groovy.codeInspection.local.RemoveUnusedGrParameterFix;
+import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
+import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -59,7 +60,7 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   }
 
   @Override
-  public IntentionAction createClassFixAction(GrReferenceElement element, CreateClassKind anInterface) {
+  public IntentionAction createClassFixAction(GrReferenceElement element, GrCreateClassKind anInterface) {
     return CreateClassFix.createClassFixAction(element, anInterface);
   }
 
@@ -141,5 +142,10 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createRemoveUnusedGrParameterFix(GrParameter parameter) {
     return new RemoveUnusedGrParameterFix(parameter);
+  }
+
+  @Override
+  public IntentionAction createInvestigateFix(String reason) {
+    return new InvestigateFix(reason);
   }
 }

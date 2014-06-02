@@ -1323,12 +1323,20 @@ public abstract class ChooseByNameBase {
         }
         return;
       }
+      int position = myTextField.getCaretPosition();
+      int code = keyStroke.getKeyCode();
+      int modifiers = keyStroke.getModifiers();
       try {
         super.processKeyEvent(e);
       }
       catch (NullPointerException e1) {
         if (!Patches.SUN_BUG_ID_6322854) {
           throw e1;
+        }
+      }
+      finally {
+        if ((code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) && modifiers == 0) {
+          myTextField.setCaretPosition(position);
         }
       }
     }
@@ -1789,5 +1797,9 @@ public abstract class ChooseByNameBase {
     }
 
     public abstract Object[][] getElements();
+  }
+
+  public JTextField getTextField() {
+    return myTextField;
   }
 }

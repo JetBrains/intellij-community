@@ -189,7 +189,7 @@ public class MacUtil {
     } else if (documentRoot instanceof Dialog) {
       windowTitle = ((Dialog)documentRoot).getTitle();
     } else {
-      throw new RuntimeException("The window is not a frame and not a dialog!");
+      throw new RuntimeException("The window " + documentRoot.getClass() + " is not a frame and not a dialog!");
     }
     return windowTitle;
   }

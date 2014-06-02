@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -47,7 +48,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
           }
         }
         if (remainsNothing) {
-          for (PsiReference reference : ReferencesSearch.search(aPackage)) {
+          for (PsiReference reference : ReferencesSearch.search(aPackage, GlobalSearchScope.projectScope(project))) {
             final PsiElement element = reference.getElement();
             final PsiImportStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
             if (statementBase != null && statementBase.isOnDemand()) {

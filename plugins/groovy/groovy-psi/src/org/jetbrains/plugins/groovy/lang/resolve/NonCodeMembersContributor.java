@@ -37,7 +37,7 @@ import java.util.Collection;
  * @author peter
  */
 public abstract class NonCodeMembersContributor {
-  private static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
+  public static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
   private static volatile MultiMap<String, NonCodeMembersContributor> ourClassSpecifiedContributors;
   private static NonCodeMembersContributor[] ourAllTypeContributors;

@@ -86,7 +86,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
             worker.execute(text, lineEndOffset);
             Result result = worker.getResult();
             if (result == null) continue;
-            HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
+            HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
             if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) continue;
 
             OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();

@@ -76,16 +76,6 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     return myRenamedOutputFileName != null ? myRenamedOutputFileName : PathUtil.getFileName(myFilePath);
   }
 
-  @Override
-  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
-                                                     @NotNull PackagingElementResolvingContext resolvingContext,
-                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
-    final VirtualFile file = findFile();
-    if (file != null && file.isValid() && !file.isDirectory()) {
-      creator.addFileCopyInstruction(file, getOutputFileName());
-    }
-  }
-
   @NonNls @Override
   public String toString() {
     return "file:" + myFilePath + (myRenamedOutputFileName != null ? ",rename to:" + myRenamedOutputFileName : "");

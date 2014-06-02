@@ -356,11 +356,11 @@ public class GitHistoryUtils {
             revisionPath = currentPath.get();
           }
 
-          final Couple<String> authorPair = Couple.newOne(record.getAuthorName(), record.getAuthorEmail());
+          final Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
           final Couple<String> committerPair =
-            record.getCommitterName() == null ? null : Couple.newOne(record.getCommitterName(), record.getCommitterEmail());
+            record.getCommitterName() == null ? null : Couple.of(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Couple.newOne(authorPair, committerPair), message, null,
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Couple.of(authorPair, committerPair), message, null,
                                                new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
@@ -1026,7 +1026,7 @@ public class GitHistoryUtils {
           indexCommit = parentsShortHashes[0];
         }
       }
-      return Couple.newOne(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
+      return Couple.of(AbstractHash.create(gitLogRecord.getHash()), indexCommit == null ? null : AbstractHash.create(indexCommit));
     }
     return null;
   }

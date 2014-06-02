@@ -90,7 +90,7 @@ public class PathMacroTable extends Table {
     macroEditor.show();
     if (macroEditor.isOK()) {
       final String name = macroEditor.getName();
-      myMacros.add(Couple.newOne(name, macroEditor.getValue()));
+      myMacros.add(Couple.of(name, macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);
       final int index = indexOfMacroWithName(name);
       LOG.assertTrue(index >= 0);
@@ -171,12 +171,12 @@ public class PathMacroTable extends Table {
     macros.clear();
     final Set<String> macroNames = myPathMacros.getUserMacroNames();
     for (String name : macroNames) {
-      macros.add(Couple.newOne(name, myPathMacros.getValue(name).replace('/', File.separatorChar)));
+      macros.add(Couple.of(name, myPathMacros.getValue(name).replace('/', File.separatorChar)));
     }
 
     if (myUndefinedMacroNames != null) {
       for (String undefinedMacroName : myUndefinedMacroNames) {
-        macros.add(Couple.newOne(undefinedMacroName, ""));
+        macros.add(Couple.of(undefinedMacroName, ""));
       }
     }
     Collections.sort(macros, MACRO_COMPARATOR);
@@ -194,7 +194,7 @@ public class PathMacroTable extends Table {
     macroEditor.show();
     if (macroEditor.isOK()) {
       myMacros.remove(selectedRow);
-      myMacros.add(Couple.newOne(macroEditor.getName(), macroEditor.getValue()));
+      myMacros.add(Couple.of(macroEditor.getName(), macroEditor.getValue()));
       Collections.sort(myMacros, MACRO_COMPARATOR);
       myTableModel.fireTableDataChanged();
     }

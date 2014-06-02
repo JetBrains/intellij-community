@@ -32,7 +32,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.TextTransferable;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
@@ -146,9 +148,15 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   @Nullable
   public ValueMarkup getValueMarkup() {
     if (myThisObject != null) {
-      final Map<ObjectReference, ValueMarkup> markupMap = getMarkupMap(myFrame.getVirtualMachine().getDebugProcess());
-      if (markupMap != null) {
-        return markupMap.get(myThisObject);
+      DebugProcess process = myFrame.getVirtualMachine().getDebugProcess();
+      if (process instanceof DebugProcessImpl) {
+        XDebugSession session = ((DebugProcessImpl)process).getSession().getXDebugSession();
+        if (session instanceof XDebugSessionImpl) {
+          XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
+          if (markers != null) {
+            return markers.getAllMarkers().get(myThisObject);
+          }
+        }
       }
     }
     return null;

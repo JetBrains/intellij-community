@@ -67,7 +67,7 @@ public class GitTableScrollChangeListener implements ChangeListener {
             // todo check
             // we cut the table, so leading/trailing compare number of rows, returned by model, with point and get incorrect results
             if (visibleRows.getFirst() < 0) return; // nothing to do
-            visibleRows = Couple.newOne(visibleRows.getFirst(), myTableModel.getRowCount() - 1);
+            visibleRows = Couple.of(visibleRows.getFirst(), myTableModel.getRowCount() - 1);
           }
           int difference = visibleRows.getSecond() - visibleRows.getFirst();
           int start = Math.max(0, visibleRows.getFirst() - difference);

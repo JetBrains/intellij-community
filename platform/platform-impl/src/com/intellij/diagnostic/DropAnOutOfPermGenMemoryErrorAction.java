@@ -15,11 +15,11 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class DropAnOutOfPermGenMemoryErrorAction extends AnAction {
+public class DropAnOutOfPermGenMemoryErrorAction extends DumbAwareAction {
   public DropAnOutOfPermGenMemoryErrorAction() {
     super ("Drop an perm gen OutOfMemoryError");
   }

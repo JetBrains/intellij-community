@@ -15,35 +15,28 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 
-public class WhileStatementPostfixTemplate extends TypedPostfixTemplate {
+public class WhileStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public WhileStatementPostfixTemplate() {
     super("while", "while (expr)", JAVA_PSI_INFO, IS_BOOLEAN);
   }
 
-  @Override
-  public void expand(@NotNull PsiElement context, @NotNull Editor editor) {
-    PsiElement expression = myPsiInfo.getTopmostExpression(context);
-    assert expression != null;
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText("while(expr)", context);
-    PsiExpression condition = whileStatement.getCondition();
-    assert condition != null;
-    condition.replace(expression);
-    PsiElement replacedWhileStatement = expression.replace(whileStatement);
-    if (replacedWhileStatement instanceof PsiWhileStatement) {
-      PsiJavaToken parenth = ((PsiWhileStatement)replacedWhileStatement).getRParenth();
-      if (parenth != null) {
-        editor.getCaretModel().moveToOffset(parenth.getTextRange().getEndOffset());
-      }
-    }
+  @Nullable
+  @Override
+  public String getTemplateString(@NotNull PsiElement element) {
+    return "while ($expr$)$END$";
+  }
+
+  @Override
+  protected boolean shouldReformat() {
+    return false;
   }
 }
 

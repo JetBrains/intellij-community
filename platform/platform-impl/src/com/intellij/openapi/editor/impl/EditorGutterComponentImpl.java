@@ -584,6 +584,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         if (renderer == null) {
           return;
         }
+        if (myEditor.getFoldingModel().isOffsetCollapsed(highlighter.getStartOffset())) {
+          return;
+        }
         VisualPosition visualPosition = myEditor.offsetToVisualPosition(highlighter.getStartOffset());
         int line = EditorUtil.calcSurroundingRange(myEditor, visualPosition, visualPosition).getFirst().line;
         List<GutterMark> renderers = myLineToGutterRenderers.get(line);

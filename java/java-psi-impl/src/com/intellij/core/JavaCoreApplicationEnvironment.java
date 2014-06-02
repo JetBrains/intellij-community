@@ -15,12 +15,18 @@
  */
 package com.intellij.core;
 
+import com.intellij.codeInsight.ContainerProvider;
+import com.intellij.codeInsight.JavaContainerProvider;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
+import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsBase;
+import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.navigation.ItemPresentationProviders;
@@ -29,9 +35,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.ClassExtension;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
@@ -72,6 +77,9 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
     registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
 
+    registerExtensionPoint(Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
+    addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
+
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
@@ -84,19 +92,22 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiField.class, new FieldPresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiLocalVariable.class, new VariablePresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiParameter.class, new VariablePresentationProvider());
+
+    registerApplicationService(JavaCodeFoldingSettings.class, new JavaCodeFoldingSettingsBase());
+    addExplicitExtension(LanguageFolding.INSTANCE, JavaLanguage.INSTANCE, new JavaFoldingBuilderBase() {
+      @Override
+      protected boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
+        return false;
+      }
+
+      @Override
+      protected boolean isBelowRightMargin(Project project, int lineLength) {
+        return false;
+      }
+    });
   }
 
   protected CoreJavaDirectoryService createJavaDirectoryService() {
     return new CoreJavaDirectoryService();
-  }
-
-  public <T> void addExplicitExtension(final ClassExtension<T> instance, final Class clazz, final T object) {
-    instance.addExplicitExtension(clazz, object);
-    Disposer.register(getParentDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        instance.removeExplicitExtension(clazz, object);
-      }
-    });
   }
 }

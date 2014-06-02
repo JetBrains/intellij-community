@@ -44,7 +44,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean DISPLAY_NOTIFICATION_POPUP = true;
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
-  public boolean USE_OUT_OF_PROCESS_BUILD = true;
   public boolean MAKE_PROJECT_ON_SAVE = false; // until we fix problems with several open projects (IDEA-104064), daemon slowness (IDEA-104666)
   public boolean PARALLEL_COMPILATION = false;
   public int COMPILER_PROCESS_HEAP_SIZE = DEFAULT_COMPILE_PROCESS_HEAP_SIZE;
@@ -61,10 +60,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
 
   public void loadState(CompilerWorkspaceConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
-  }
-
-  public boolean useOutOfProcessBuild() {
-    return USE_OUT_OF_PROCESS_BUILD;
   }
 
   public boolean allowAutoMakeWhileRunningApplication() {

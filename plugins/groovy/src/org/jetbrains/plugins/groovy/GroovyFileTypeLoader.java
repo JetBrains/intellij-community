@@ -50,6 +50,5 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
     consumer.consume(GroovyFileType.GROOVY_FILE_TYPE, StringUtil.join(getAllGroovyExtensions(), ";"));
-    GroovyFileType.GROOVY_FILE_TYPES.add(GroovyFileType.GROOVY_FILE_TYPE);
   }
 }

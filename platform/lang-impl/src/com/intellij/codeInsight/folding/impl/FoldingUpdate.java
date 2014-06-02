@@ -103,7 +103,7 @@ public class FoldingUpdate {
           PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
           return getUpdateResult(file, document, param.first, project, editor, param.second);
         }
-      }, false, Couple.newOne(quick, applyDefaultState));
+      }, false, Couple.of(quick, applyDefaultState));
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,
@@ -113,11 +113,7 @@ public class FoldingUpdate {
                                                                       final Editor editor,
                                                                       final boolean applyDefaultState) {
 
-    final FoldingMap elementsToFoldMap = new FoldingMap();
-    if (!isContentSubstituted(file, project)) {
-      getFoldingsFor(file instanceof PsiCompiledFile ? ((PsiCompiledFile)file).getDecompiledPsiFile() : file, document, elementsToFoldMap, quick);
-    }
-
+    final FoldingMap elementsToFoldMap = getFoldingsFor(project, file, document, quick);
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap, applyDefaultState, false);
     Runnable runnable = new Runnable() {
       @Override
@@ -190,6 +186,14 @@ public class FoldingUpdate {
         editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
       }
     };
+  }
+
+  static FoldingMap getFoldingsFor(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, boolean quick) {
+    FoldingMap foldingMap = new FoldingMap();
+    if (!isContentSubstituted(file, project)) {
+      getFoldingsFor(file instanceof PsiCompiledFile ? ((PsiCompiledFile)file).getDecompiledPsiFile() : file, document, foldingMap, quick);
+    }
+    return foldingMap;
   }
 
   private static void getFoldingsFor(@NotNull PsiFile file,

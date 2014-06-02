@@ -50,47 +50,45 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    return null;
-  }
+    if (element instanceof PsiParameter) return null;
 
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-    final Set<PsiModifierListOwner> owners = new HashSet<PsiModifierListOwner>();
-    for (PsiElement element : elements) {
-      if (element instanceof PsiParameter) continue;
-
-      if (element instanceof PsiModifierListOwner) {
-        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-        final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(modifierListOwner.getProject());
-        PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(modifierListOwner);
-        if (externalAnnotations != null && externalAnnotations.length > 0) {
-          owners.add((PsiModifierListOwner)element);
-        } else if (element instanceof PsiMethod) {
-          final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
-          for (PsiParameter parameter : parameters) {
-            externalAnnotations = annotationsManager.findExternalAnnotations(parameter);
-            if (externalAnnotations != null && externalAnnotations.length > 0) {
-              owners.add((PsiMethod)element);
-              break;
-            }
+    PsiModifierListOwner owner = null;
+    if (element instanceof PsiModifierListOwner) {
+      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+      final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(modifierListOwner.getProject());
+      PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(modifierListOwner);
+      if (externalAnnotations != null && externalAnnotations.length > 0) {
+        owner = (PsiModifierListOwner)element;
+      } else if (element instanceof PsiMethod) {
+        final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
+        for (PsiParameter parameter : parameters) {
+          externalAnnotations = annotationsManager.findExternalAnnotations(parameter);
+          if (externalAnnotations != null && externalAnnotations.length > 0) {
+            owner = (PsiMethod)element;
+            break;
           }
         }
       }
     }
 
-    for (PsiModifierListOwner modifierListOwner : owners) {
-      final Function<PsiModifierListOwner, String> annotationsCollector = new Function<PsiModifierListOwner, String>() {
-        @Override
-        public String fun(PsiModifierListOwner owner) {
-          return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(owner));
-        }
-      };
-      result.add(new LineMarkerInfo<PsiModifierListOwner>(modifierListOwner, modifierListOwner.getTextOffset(), AllIcons.Nodes.Annotationtype, 
-                                                          Pass.UPDATE_OVERRIDEN_MARKERS,
-                                                          annotationsCollector, new MyIconGutterHandler(),
-                                                          GutterIconRenderer.Alignment.LEFT));
+    if (owner == null) {
+      return null;
     }
+
+    final Function<PsiModifierListOwner, String> annotationsCollector = new Function<PsiModifierListOwner, String>() {
+      @Override
+      public String fun(PsiModifierListOwner owner) {
+        return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(owner));
+      }
+    };
+    return new LineMarkerInfo<PsiModifierListOwner>(owner, owner.getTextOffset(), AllIcons.Nodes.Annotationtype,
+                                                    Pass.UPDATE_ALL,
+                                                    annotationsCollector, new MyIconGutterHandler(),
+                                                    GutterIconRenderer.Alignment.LEFT);
   }
+
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {}
 
   private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiModifierListOwner> {
     @Override

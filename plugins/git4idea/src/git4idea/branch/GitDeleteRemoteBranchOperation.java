@@ -149,7 +149,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     int firstSlash = branchName.indexOf('/');
     String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
     String remoteBranchName = branchName.substring(firstSlash + 1);
-    return Couple.newOne(remoteName, remoteBranchName);
+    return Couple.of(remoteName, remoteBranchName);
   }
 
   @NotNull

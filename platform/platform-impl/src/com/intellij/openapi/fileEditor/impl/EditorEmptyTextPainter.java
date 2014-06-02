@@ -62,7 +62,7 @@ public class EditorEmptyTextPainter {
       @Override
       public Couple<Integer> fun(Integer width, Integer height) {
         Dimension s = splitters.getSize();
-        return Couple.newOne((s.width - width) / 2, (s.height - height) / 2);
+        return Couple.of((s.width - width) / 2, (s.height - height) / 2);
       }
     });
   }

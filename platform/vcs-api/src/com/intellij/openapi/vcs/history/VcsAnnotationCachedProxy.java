@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -198,12 +197,6 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
 
         @Override
         public void beforeRefresh() {
-        }
-
-        @Nullable
-        @Override
-        public RepositoryLocation getRepositoryLocation() {
-          return null;
         }
 
         @Override

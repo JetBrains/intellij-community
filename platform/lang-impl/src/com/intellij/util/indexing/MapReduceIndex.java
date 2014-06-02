@@ -268,9 +268,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final Lock lock = getReadLock();
     try {
       lock.lock();
+      ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
       return myStorage.read(key);
     }
     finally {
+      ValueContainerImpl.ourDebugIndexInfo.set(null);
       lock.unlock();
     }
   }
@@ -301,6 +303,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
+
   @NotNull
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable Input content) {
@@ -317,7 +320,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       try {
         hashId = getHashOfContent((FileContent)content);
         if (doReadSavedPersistentData) {
-          if (!myContents.isBusyReading()) {
+          if (!myContents.isBusyReading()) { // avoid blocking read, we can calculate index value
             ByteSequence bytes = myContents.get(hashId);
             if (bytes != null) {
               data = deserializeSavedPersistentData(bytes);
@@ -500,12 +503,15 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     getWriteLock().lock();
     try {
       try {
+        ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
         for (Key key : oldKeysGetter.compute()) {
           myStorage.removeAllValues(key, inputId);
         }
       }
       catch (Exception e) {
         throw new StorageException(e);
+      } finally {
+        ValueContainerImpl.ourDebugIndexInfo.set(null);
       }
       // add new values
       if (newData instanceof THashMap) {

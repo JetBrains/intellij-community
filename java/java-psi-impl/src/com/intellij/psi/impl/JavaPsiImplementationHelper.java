@@ -37,14 +37,8 @@ public abstract class JavaPsiImplementationHelper {
   @NotNull
   public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
 
-  /**
-   * For files under a library source root, returns the language level configured for the corresponding classes root.
-   *
-   * @param virtualFile virtual file for which language level is requested.
-   * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
-   */
-  @Nullable
-  public abstract LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile);
+  @NotNull
+  public abstract LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
 
   public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
 

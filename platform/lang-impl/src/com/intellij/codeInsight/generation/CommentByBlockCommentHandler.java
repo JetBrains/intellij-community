@@ -639,7 +639,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       end = new TextRange(range.getEndOffset(), range.getEndOffset());
     }
 
-    return Couple.newOne(start, end);
+    return Couple.of(start, end);
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix, Commenter commenter) {

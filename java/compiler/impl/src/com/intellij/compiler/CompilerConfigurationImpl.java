@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2014 JetBrains s.r.o.
  *
@@ -23,17 +22,11 @@ package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
-import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
-import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.options.ExternalBuildOptionListener;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
@@ -80,7 +73,6 @@ import java.util.*;
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
-  public static final int DEPENDENCY_FORMAT_VERSION = 55;
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -126,33 +118,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
       public void moduleAdded(Project project, Module module) {
         myProcessorsProfilesMap = null; // clear cache
-      }
-    });
-
-    connection.subscribe(ExternalBuildOptionListener.TOPIC, new ExternalBuildOptionListener() {
-      @Override
-      public void externalBuildOptionChanged(boolean externalBuildEnabled) {
-    // this will schedule for compilation all files that might become compilable after resource patterns' changing
-        final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
-        if (externalBuildEnabled) {
-          monitor.suspendProject(myProject);
-        }
-        else {
-          monitor.watchProject(myProject);
-          monitor.scanSourcesForCompilableFiles(myProject);
-          if (!myProject.isDefault()) {
-            final File buildSystem = BuildManager.getInstance().getBuildSystemDirectory();
-            final File[] subdirs = buildSystem.listFiles();
-            if (subdirs != null) {
-              final String prefix = myProject.getName().toLowerCase(Locale.US) + "_";
-              for (File subdir : subdirs) {
-                if (subdir.getName().startsWith(prefix)) {
-                  FileUtil.asyncDelete(subdir);
-                }
-              }
-            }
-          }
-        }
       }
     });
   }
@@ -290,35 +255,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      //final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
-      //myRegisteredCompilers.add(JIKES_BACKEND);
-
       if (EclipseCompiler.isInitialized()) {
         final EclipseCompiler eclipse = new EclipseCompiler(myProject);
         myRegisteredCompilers.add(eclipse);
       }
-
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        try {
-          final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
-          myRegisteredCompilers.add(eclipseEmbedded);
-        }
-        catch (NoClassDefFoundError e) {
-          // eclipse jar must be not in the classpath
-        }
-        try {
-          CompilerAPICompiler inProcessJavaCompiler = new CompilerAPICompiler(myProject);
-          myRegisteredCompilers.add(inProcessJavaCompiler);
-        }
-        catch (NoClassDefFoundError e) {
-          // wrong JDK
-        }
-      }
     }
 
-    final BackendCompiler[] compilers = Extensions.getExtensions(BackendCompiler.EP_NAME, myProject);
     final Set<FileType> types = new HashSet<FileType>();
-    for (BackendCompiler compiler : compilers) {
+    for (BackendCompiler compiler : Extensions.getExtensions(BackendCompiler.EP_NAME, myProject)) {
       myRegisteredCompilers.add(compiler);
       types.addAll(compiler.getCompilableFileTypes());
     }
@@ -327,7 +271,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     for (FileType type : types) {
       compilerManager.addCompilableFileType(type);
     }
-
+    
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : myRegisteredCompilers) {
       if (compiler.getId().equals(DEFAULT_COMPILER)) {
@@ -757,7 +701,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         continue;
       }
       final String dir = moduleElement.getAttributeValue("generatedDirName", (String)null);
-      modulesToProcess.add(Couple.newOne(name, dir));
+      modulesToProcess.add(Couple.of(name, dir));
     }
 
     myDefaultProcessorsProfile.setEnabled(false);

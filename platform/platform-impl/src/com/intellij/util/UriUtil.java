@@ -55,8 +55,8 @@ public final class UriUtil {
   public static Couple<String> splitScheme(@NotNull String url) {
     ArrayList<String> list = Lists.newArrayList(Splitter.on(URLUtil.SCHEME_SEPARATOR).limit(2).split(url));
     if (list.size() == 1) {
-      return Couple.newOne("", list.get(0));
+      return Couple.of("", list.get(0));
     }
-    return Couple.newOne(list.get(0), list.get(1));
+    return Couple.of(list.get(0), list.get(1));
   }
 }

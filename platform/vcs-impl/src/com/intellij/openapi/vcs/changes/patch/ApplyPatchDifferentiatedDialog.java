@@ -132,7 +132,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           final Set<Couple<String>> set = new HashSet<Couple<String>>();
           for (FilePatchInProgress.PatchChange change : includedChanges) {
             final TextFilePatch patch = change.getPatchInProgress().getPatch();
-            final Couple<String> pair = Couple.newOne(patch.getBeforeName(), patch.getAfterName());
+            final Couple<String> pair = Couple.of(patch.getBeforeName(), patch.getAfterName());
             if (set.contains(pair)) continue;
             set.add(pair);
             acceptChange(includedTrinity, change);

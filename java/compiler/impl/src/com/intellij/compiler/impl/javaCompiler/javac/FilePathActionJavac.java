@@ -16,14 +16,12 @@
 package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.OutputParser;
-import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 
-import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,7 +57,7 @@ public class FilePathActionJavac extends JavacParserAction {
       callback.setProgressText(CompilerBundle.message("progress.parsing.file", name));
     }
     else if (StdFileTypes.CLASS.equals(fileType)) {
-      callback.fileGenerated(new FileObject(new File(filePath)));
+      callback.fileGenerated(filePath);
     }
   }
 }

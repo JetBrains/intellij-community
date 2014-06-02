@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EditorPopupHandler;
@@ -680,7 +679,6 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretPageUp(@NotNull Editor editor, boolean isWithSelection) {
-    ((EditorEx)editor).stopOptimizedScrolling();
     int lineHeight = editor.getLineHeight();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int linesIncrement = visibleArea.height / lineHeight;
@@ -690,7 +688,6 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretPageDown(@NotNull Editor editor, boolean isWithSelection) {
-    ((EditorEx)editor).stopOptimizedScrolling();
     int lineHeight = editor.getLineHeight();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int linesIncrement = visibleArea.height / lineHeight;
@@ -749,17 +746,6 @@ public class EditorActionUtil {
         }
       }
     };
-  }
-
-  public static boolean canEditAtOffset(@NotNull Editor editor, int offset) {
-    final Pair<String,String> markers = editor.getUserData(EditorImpl.EDITABLE_AREA_MARKER);
-    if (markers != null) {
-      final String text = editor.getDocument().getText();
-      final int start = text.indexOf(markers.first) + markers.first.length();
-      final int end = text.indexOf(markers.second);
-      return start <= offset && offset < end;
-    }
-    return true;
   }
 
   public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {

@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,28 +28,31 @@ public class CustomisedActionGroup extends ActionGroup {
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
+  private final String myRootGroupName;
 
   public CustomisedActionGroup(String shortName,
                                boolean popup,
                                final ActionGroup group,
                                CustomActionsSchema schema,
-                               String defaultGroupName) {
+                               String defaultGroupName, 
+                               String name) {
     super(shortName, popup);
     myGroup = group;
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;
+    myRootGroupName = name;
     myForceUpdate = true;
   }
 
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (myForceUpdate){
-      myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
+      myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
       myForceUpdate = false;
       return myChildren;
     } else {
       if (!(myGroup instanceof DefaultActionGroup) || myChildren == null){
-        myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
+        myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
       }
       return myChildren;
     }
@@ -65,6 +65,16 @@ public class CustomisedActionGroup extends ActionGroup {
   @Override
   public boolean isDumbAware() {
     return myGroup.isDumbAware();
+  }
+
+  @Override
+  public boolean canBePerformed(DataContext context) {
+    return myGroup.canBePerformed(context);
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    myGroup.actionPerformed(e);
   }
 
   @Nullable

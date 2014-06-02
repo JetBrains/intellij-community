@@ -20,38 +20,22 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.status.SvnDiffEditor;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
-* @author Konstantin Kolosovsky.
-*/
+ * @author Konstantin Kolosovsky.
+ */
 public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final StringBuilder titleBuilder = new StringBuilder();
@@ -69,120 +53,19 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
     titleBuilder.append(SvnBundle.message("repository.browser.compare.title", myElementUrl,
                                           FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
-    final File ioFile = new File(myVirtualFile.getPath());
-    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(ioFile);
-
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
-      // svn 1.7 command line "--summarize" option for "diff" command does not support comparing working copy directories with repository
-      // directories - that is why command line is only used explicitly for svn 1.8
-      compareWithCommandLine();
-    }
-    else if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
-      report17DirDiff();
-    }
-    else {
-      report16DirDiff();
-    }
-  }
-
-  private void compareWithCommandLine() throws VcsException {
     SvnTarget target1 = SvnTarget.fromFile(new File(myVirtualFile.getPath()));
     SvnTarget target2 = SvnTarget.fromURL(myElementUrl);
 
-    changes.addAll(myVcs.getFactory(target1).createDiffClient().compare(target1, target2));
+    changes.addAll(getClientFactory().createDiffClient().compare(target1, target2));
   }
 
-  private void report17DirDiff() throws SVNException {
-    final File ioFile = new File(myVirtualFile.getPath());
-    final SVNInfo info1 = myVcs.getInfo(ioFile, SVNRevision.HEAD);
+  @NotNull
+  private ClientFactory getClientFactory() {
+    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(VfsUtilCore.virtualToIoFile(myVirtualFile));
 
-    if (info1 == null) {
-      SVNErrorMessage err =
-        SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", myVirtualFile.getPath());
-      SVNErrorManager.error(err, SVNLogType.WC);
-    }
-    else if (info1.getURL() == null) {
-      SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", myVirtualFile.getPath());
-      SVNErrorManager.error(err, SVNLogType.WC);
-    }
-
-    final SVNReporter17 reporter17 =
-      new SVNReporter17(ioFile, new SVNWCContext(SvnConfiguration.getInstance(myProject).getOptions(myProject), new ISVNEventHandler() {
-        @Override
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        }
-
-        @Override
-        public void checkCancelled() throws SVNCancelException {
-        }
-      }),
-                        false, true, SVNDepth.INFINITY, false, false, true, false,
-                        SVNDebugLog.getDefaultLog());
-    SVNRepository repository = null;
-    SVNRepository repository2 = null;
-    try {
-      repository = myVcs.createRepository(info1.getURL());
-      long rev = repository.getLatestRevision();
-      repository2 = myVcs.createRepository(myElementUrl.toString());
-      SvnDiffEditor diffEditor = new SvnDiffEditor(myVirtualFile, repository2, rev, true);
-      repository.diff(myElementUrl, rev, rev, null, true, SVNDepth.INFINITY, false, reporter17,
-                      SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
-      changes.addAll(diffEditor.getChangesMap().values());
-    }
-    finally {
-      if (repository != null) {
-        repository.closeSession();
-      }
-      if (repository2 != null) {
-        repository2.closeSession();
-      }
-    }
-  }
-
-  private void report16DirDiff() throws SVNException {
-    // here there's 1.6 copy so ok to use SVNWCAccess
-    final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-    wcAccess.setOptions(myVcs.getSvnOptions());
-    SVNRepository repository = null;
-    SVNRepository repository2 = null;
-    try {
-      SVNAdminAreaInfo info = wcAccess.openAnchor(new File(myVirtualFile.getPath()), false, SVNWCAccess.INFINITE_DEPTH);
-      File anchorPath = info.getAnchor().getRoot();
-      String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-
-      SVNEntry anchorEntry = info.getAnchor().getEntry("", false);
-      if (anchorEntry == null) {
-        SVNErrorMessage err =
-          SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", anchorPath);
-        SVNErrorManager.error(err, SVNLogType.WC);
-      }
-      else if (anchorEntry.getURL() == null) {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-        SVNErrorManager.error(err, SVNLogType.WC);
-      }
-
-      SVNURL anchorURL = anchorEntry.getSVNURL();
-      SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, true, SVNDepth.INFINITY,
-                                             false, false, true, SVNDebugLog.getDefaultLog());
-
-      repository = myVcs.createRepository(anchorURL.toString());
-      long rev = repository.getLatestRevision();
-      repository2 = myVcs.createRepository((target == null) ? myElementUrl.toString() : myElementUrl.removePathTail().toString());
-      SvnDiffEditor diffEditor = new SvnDiffEditor((target == null) ? myVirtualFile : myVirtualFile.getParent(),
-                                                   repository2, rev, true);
-      repository.diff(myElementUrl, rev, rev, target, true, true, false, reporter,
-                      SVNCancellableEditor.newInstance(diffEditor, new SvnProgressCanceller(), null));
-      changes.addAll(diffEditor.getChangesMap().values());
-    }
-    finally {
-      wcAccess.close();
-      if (repository != null) {
-        repository.closeSession();
-      }
-      if (repository2 != null) {
-        repository2.closeSession();
-      }
-    }
+    // svn 1.7 command line "--summarize" option for "diff" command does not support comparing working copy directories with repository
+    // directories - that is why command line is only used explicitly for svn 1.8
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? myVcs.getCommandLineFactory() : myVcs.getSvnKitFactory();
   }
 
   @Override
@@ -192,9 +75,7 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @Override
   protected void showResult() {
-    if (!changes.isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
-    }
+    AbstractVcsHelper.getInstance(myProject).showWhatDiffersBrowser(null, changes, titleBuilder.toString());
   }
 
   @Override

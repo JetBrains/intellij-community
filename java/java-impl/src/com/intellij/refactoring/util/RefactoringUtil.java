@@ -1049,8 +1049,15 @@ public class RefactoringUtil {
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
+                                        Set<PsiParameter> newParameters,
+                                        Condition<Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
+    fixJavadocsForParams(method, newParameters, eqCondition, Condition.TRUE);
+  }
+
+  public static void fixJavadocsForParams(PsiMethod method,
                                           Set<PsiParameter> newParameters,
-                                          Condition<Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
+                                          Condition<Pair<PsiParameter, String>> eqCondition,
+                                          Condition<String> matchedToOldParam) throws IncorrectOperationException {
     final PsiDocComment docComment = method.getDocComment();
     if (docComment == null) return;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -1082,6 +1089,14 @@ public class RefactoringUtil {
     }
 
     List<PsiDocTag> newTags = new ArrayList<PsiDocTag>();
+
+    for (PsiDocTag paramTag : paramTags) {
+      final String paramName = getNameOfReferencedParameter(paramTag);
+      if (!tagForParam.containsValue(paramTag) && !matchedToOldParam.value(paramName)) {
+        newTags.add((PsiDocTag)paramTag.copy());
+      }
+    }
+
     for (PsiParameter parameter : parameters) {
       if (tagForParam.containsKey(parameter)) {
         final PsiDocTag psiDocTag = tagForParam.get(parameter);

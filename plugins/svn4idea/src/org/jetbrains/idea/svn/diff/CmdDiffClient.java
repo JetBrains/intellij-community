@@ -27,12 +27,16 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnStatusConvertor;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -41,7 +45,8 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlValue;
-import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,11 +57,17 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
   @Override
   public List<Change> compare(@NotNull SvnTarget target1, @NotNull SvnTarget target2) throws VcsException {
-    // TODO: Currently implemented only for "Compare with Branch" action - target1 is assumed to be file, target2 - repository url
-    // Such combination (file and url) with "--summarize" option is supported only in svn 1.8.
-    // For svn 1.7 "--summarize" is only supported when both targets are repository urls.
-    assertDirectory(target1);
     assertUrl(target2);
+    if (target1.isFile()) {
+      // Such combination (file and url) with "--summarize" option is supported only in svn 1.8.
+      // For svn 1.7 "--summarize" is only supported when both targets are repository urls.
+      assertDirectory(target1);
+
+      WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
+      if (!format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT)) {
+        throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format);
+      }
+    }
 
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target1);
@@ -66,6 +77,25 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
     CommandExecutor executor = execute(myVcs, target1, SvnCommandName.diff, parameters, null);
     return parseOutput(target1, target2, executor);
+  }
+
+  @Override
+  public void unifiedDiff(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull OutputStream output) throws VcsException {
+    assertUrl(target1);
+    assertUrl(target2);
+
+    List<String> parameters = ContainerUtil.newArrayList();
+    CommandUtil.put(parameters, target1);
+    CommandUtil.put(parameters, target2);
+
+    CommandExecutor executor = execute(myVcs, target1, SvnCommandName.diff, parameters, null);
+
+    try {
+      executor.getBinaryOutput().writeTo(output);
+    }
+    catch (IOException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   private List<Change> parseOutput(@NotNull SvnTarget target1, @NotNull SvnTarget target2, @NotNull CommandExecutor executor)
@@ -106,23 +136,38 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     // TODO: to branch files by content - possibly add separate processing of all switched files
     // TODO: 3) Properties change is currently not added as part of result change like in SvnChangeProviderContext.patchWithPropertyChange
 
-    File oldTarget = CommandUtil.resolvePath(target1.getFile(), diffPath.path);
-    String relativePath = FileUtil.getRelativePath(target1.getFile(), oldTarget);
+    SvnTarget subTarget1 = SvnUtil.append(target1, diffPath.path, true);
+    String relativePath = target1.isFile()
+                          ? FileUtil.getRelativePath(target1.getFile(), subTarget1.getFile())
+                          : SvnUtil.getRelativeUrl(SvnUtil.toDecodedString(target1), SvnUtil.toDecodedString(subTarget1));
 
     if (relativePath == null) {
-      throw new SvnBindException("Could not get relative path for " + target1.getFile() + " and " + oldTarget);
+      throw new SvnBindException("Could not get relative path for " + target1 + " and " + subTarget1);
     }
 
-    FilePath localPath = VcsUtil.getFilePath(oldTarget, diffPath.isDirectory());
-    FilePath remotePath = VcsUtil
-      .getFilePathOnNonLocal(SVNPathUtil.append(target2.getPathOrUrlDecodedString(), FileUtil.toSystemIndependentName(relativePath)),
-                             diffPath.isDirectory());
+    SvnTarget subTarget2 = SvnUtil.append(target2, FileUtil.toSystemIndependentName(relativePath));
+
+    FilePath target1Path = target1.isFile()
+                           ? VcsUtil.getFilePath(subTarget1.getFile(), diffPath.isDirectory())
+                           : VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(subTarget1), diffPath.isDirectory());
+    FilePath target2Path = VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(subTarget2), diffPath.isDirectory());
 
     FileStatus status = SvnStatusConvertor
       .convertStatus(SvnStatusHandler.getStatus(diffPath.itemStatus), SvnStatusHandler.getStatus(diffPath.propertiesStatus));
 
-    ContentRevision beforeRevision = status == FileStatus.ADDED ? null : createRemoteRevision(remotePath, localPath, status);
-    ContentRevision afterRevision = status == FileStatus.DELETED ? null : createLocalRevision(localPath);
+    // for "file + url" pair - statuses determine changes needs to be done to "url" to get "file" state
+    // for "url1 + url2" pair - statuses determine changes needs to be done to "url1" to get "url2" state
+    ContentRevision beforeRevision = status == FileStatus.ADDED
+                                     ? null
+                                     : target1.isFile()
+                                       ? createRemoteRevision(target2Path, target1Path, status)
+                                       : createRemoteRevision(target1Path, target2Path, status);
+    ContentRevision afterRevision = status == FileStatus.DELETED
+                                    ? null
+                                    : target1.isFile()
+                                      ? createLocalRevision(target1Path)
+                                      : createRemoteRevision(target2Path, target1Path, status);
+
 
     return createChange(status, beforeRevision, afterRevision);
   }

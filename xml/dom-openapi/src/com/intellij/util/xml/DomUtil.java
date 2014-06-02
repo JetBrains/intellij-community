@@ -160,7 +160,7 @@ public class DomUtil {
   }
 
   public static Class<?> substituteGenericType(Type genericType, Type classType) {
-    return ourVariableSubstitutions.get(Couple.newOne(genericType, classType));
+    return ourVariableSubstitutions.get(Couple.of(genericType, classType));
   }
 
   @Nullable

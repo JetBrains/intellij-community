@@ -277,7 +277,4 @@ public class JavacOutputParser extends OutputParser {
     return Pattern.compile(regexp, Pattern.CASE_INSENSITIVE).matcher("");
   }
 
-  public boolean isTrimLines() {
-    return false;
-  }
 }

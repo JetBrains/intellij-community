@@ -378,7 +378,8 @@ public class ControlFlowUtil {
     return PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
   }
 
-  public static PsiElement findCodeFragment(PsiElement element) {
+  @NotNull
+  public static PsiElement findCodeFragment(@NotNull PsiElement element) {
     PsiElement codeFragment = element;
     PsiElement parent = codeFragment.getParent();
     while (parent != null) {

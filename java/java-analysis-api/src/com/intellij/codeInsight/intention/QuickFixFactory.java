@@ -16,10 +16,12 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -28,6 +30,7 @@ import com.intellij.psi.util.PropertyMemberType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -131,7 +134,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createRemoveParameterListFix(@NotNull PsiMethod parent);
 
-  @NotNull public abstract IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element);
+  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element);
+  @NotNull public abstract IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module);
 
   @NotNull public abstract IntentionAction createIncreaseLanguageLevelFix(@NotNull LanguageLevel level);
 
@@ -251,4 +255,9 @@ public abstract class QuickFixFactory {
   @Nullable
   public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar,
                                                                                           @NotNull PsiReference reference);
+
+  @NotNull
+  public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
+                                                                                  @NotNull PsiMethod[] annotationMethods,
+                                                                                  @NotNull Collection<String> missedElements);
 }

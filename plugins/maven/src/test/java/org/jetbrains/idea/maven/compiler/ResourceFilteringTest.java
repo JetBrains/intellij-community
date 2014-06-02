@@ -22,21 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Arrays;
 
-public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
-
-  public static class IdeaModeTest extends ResourceFilteringTest {
-    @Override
-    protected boolean useJps() {
-      return false;
-    }
-  }
-
-  public static class JpsModeTest extends ResourceFilteringTest {
-    @Override
-    protected boolean useJps() {
-      return true;
-    }
-  }
+public class ResourceFilteringTest extends MavenCompilingTestCase {
 
   @Override
   protected boolean runInWriteAction() {
@@ -905,7 +891,7 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testEscapingFiltering() throws Exception {
-    if (!useJps()) return;
+    if (!true) return;
 
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
@@ -1067,7 +1053,7 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testResourcesOrdering2() throws Exception {
-    if (!useJps()) return;
+    if (!true) return;
 
     createProjectSubFile("resources/file.properties", "value=${project.version}\n");
 
@@ -1095,7 +1081,7 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testResourcesOrdering3() throws Exception {
-    if (!useJps()) return;
+    if (!true) return;
 
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");
@@ -1149,7 +1135,7 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testOverwriteParameter1() throws Exception {
-    if (!useJps()) return;
+    if (!true) return;
 
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");
@@ -1185,7 +1171,7 @@ public abstract class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testOverwriteParameter2() throws Exception {
-    if (!useJps()) return;
+    if (!true) return;
 
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");

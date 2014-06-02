@@ -19,6 +19,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
@@ -70,7 +71,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     myExpressionEditor.saveTextInHistory();
     super.doOKAction();
     int index = myRootNode.removeChildNode(getNode());
-    if (!expression.getExpression().isEmpty() && index != -1) {
+    if (!XDebuggerUtilImpl.isEmptyExpression(expression) && index != -1) {
       myWatchesView.addWatchExpression(expression, index, false);
     }
   }

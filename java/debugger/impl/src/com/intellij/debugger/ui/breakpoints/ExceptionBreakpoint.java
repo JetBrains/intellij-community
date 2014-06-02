@@ -264,11 +264,11 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return getProperties().myQualifiedName;
   }
 
-  private void setQualifiedName(String qualifiedName) {
+  void setQualifiedName(String qualifiedName) {
     getProperties().myQualifiedName = qualifiedName;
   }
 
-  private void setPackageName(String packageName) {
+  void setPackageName(String packageName) {
     getProperties().myPackageName = packageName;
   }
 }

@@ -159,7 +159,7 @@ public final class ModuleCompilerUtil {
       for (Chunk<ModifiableRootModel> chunk : nodesAfter) {
         if (chunk.containsNode(toDependOnModel) && chunk.containsNode(currentModel)) {
           Iterator<ModifiableRootModel> nodes = chunk.getNodes().iterator();
-          return Couple.newOne(nodes.next().getModule(), nodes.next().getModule());
+          return Couple.of(nodes.next().getModule(), nodes.next().getModule());
         }
       }
     }

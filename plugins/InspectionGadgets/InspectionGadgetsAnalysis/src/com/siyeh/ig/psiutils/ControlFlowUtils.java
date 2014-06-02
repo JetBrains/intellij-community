@@ -321,7 +321,7 @@ public class ControlFlowUtils {
   public static boolean isInFinallyBlock(@NotNull PsiElement element) {
     PsiElement currentElement = element;
     while (true) {
-      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class);
+      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (tryStatement == null) {
         return false;
       }

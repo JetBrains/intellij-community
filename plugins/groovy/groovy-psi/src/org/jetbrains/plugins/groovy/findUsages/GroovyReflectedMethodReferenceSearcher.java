@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
  * @author Max Medvedev
  */
 public class GroovyReflectedMethodReferenceSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
-  protected GroovyReflectedMethodReferenceSearcher() {
+  public GroovyReflectedMethodReferenceSearcher() {
     super(true);
   }
 

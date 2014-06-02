@@ -320,7 +320,7 @@ public class GridBuildUtil {
     }
 
 
-    return Couple.newOne(
+    return Couple.of(
       new Integer(Util.eliminate(y, rowSpans, null)),
       new Integer(Util.eliminate(x, colSpans, null))
     );

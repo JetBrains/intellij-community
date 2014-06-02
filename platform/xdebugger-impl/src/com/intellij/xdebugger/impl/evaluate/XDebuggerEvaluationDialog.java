@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.evaluate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +31,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -121,6 +123,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    setOKActionEnabled(false);
     evaluate();
   }
 
@@ -187,16 +190,36 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private void evaluate() {
+    final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
+    int offset = -1;
+
+    //try to save caret position
+    Editor editor = inputEditor.getEditor();
+    if (editor != null) {
+      offset = editor.getCaretModel().getOffset();
+    }
+
     final XDebuggerTree tree = myTreePanel.getTree();
     XDebuggerTreeNode root = tree.getRoot();
     if (root instanceof EvaluatingExpressionRootNode) {
       root.clearChildren();
-    }
-    else {
+    } else {
       tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
     }
+
     myResultPanel.invalidate();
-    myInputComponent.getInputEditor().selectAll();
+
+    //editor is already changed
+    editor = inputEditor.getEditor();
+    //selectAll puts focus back
+    inputEditor.selectAll();
+
+    //try to restore caret position and clear selection
+    if (offset >= 0 && editor != null) {
+      offset = Math.min(editor.getDocument().getTextLength(), offset);
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getSelectionModel().setSelection(offset, offset);
+    }
   }
 
   @Override
@@ -221,6 +244,15 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     else {
       evaluator.evaluate(expression, evaluationCallback, null, inputEditor.getMode());
     }
+  }
+
+  public void finishEvaluation() {
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        setOKActionEnabled(true);
+      }
+    });
   }
 
   @Override

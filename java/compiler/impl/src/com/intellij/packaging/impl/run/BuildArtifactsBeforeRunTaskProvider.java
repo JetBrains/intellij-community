@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.run;
 
+import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
@@ -30,25 +31,24 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.impl.compiler.ArtifactAwareCompiler;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -185,20 +185,15 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
         finished.up();
       }
     };
-    final CompilerFilter compilerFilter = new CompilerFilter() {
-      public boolean acceptCompiler(Compiler compiler) {
-        return compiler instanceof ArtifactsCompiler
-               || compiler instanceof ArtifactAwareCompiler && ((ArtifactAwareCompiler)compiler).shouldRun(artifacts);
-      }
-    };
 
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
         final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+        CompileScopeUtil.setBaseScopeForExternalBuild(scope, Collections.<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>emptyList());
         ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
-        manager.make(scope, compilerFilter, callback);
+        manager.make(scope, CompilerFilter.ALL, callback);
       }
     }, ModalityState.NON_MODAL);
 

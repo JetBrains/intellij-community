@@ -23,6 +23,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -137,9 +139,35 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return clsFile;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
+  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+    if (virtualFile == null) return PsiUtil.getLanguageLevel(myProject);
+
+    final VirtualFile folder = virtualFile.getParent();
+    if (folder != null) {
+      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+      if (level != null) return level;
+    }
+
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    Module module = index.getModuleForFile(virtualFile);
+    if (module != null && index.isInSourceContent(virtualFile)) {
+      return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+    }
+
+    LanguageLevel classesLanguageLevel = getClassesLanguageLevel(virtualFile);
+    return classesLanguageLevel != null ? classesLanguageLevel : PsiUtil.getLanguageLevel(myProject);
+  }
+
+  /**
+   * For files under a library source root, returns the language level configured for the corresponding classes root.
+   *
+   * @param virtualFile virtual file for which language level is requested.
+   * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
+   */
+  @Nullable
+  private LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     final VirtualFile folder = virtualFile.getParent();

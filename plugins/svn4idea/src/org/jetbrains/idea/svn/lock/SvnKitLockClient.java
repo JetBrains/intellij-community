@@ -38,7 +38,7 @@ public class SvnKitLockClient extends BaseSvnClient implements LockClient {
 
   @NotNull
   private SVNWCClient getClient(@Nullable ISVNEventHandler handler) {
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
 
     client.setEventHandler(handler);
 

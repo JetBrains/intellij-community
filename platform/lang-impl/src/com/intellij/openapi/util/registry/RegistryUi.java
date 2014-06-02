@@ -43,6 +43,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
@@ -131,9 +133,24 @@ public class RegistryUi implements Disposable {
     tb.setTargetComponent(myTable);
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);
-    new TableSpeedSearch(myTable).setComparator(new SpeedSearchComparator(false));
+    final TableSpeedSearch search = new TableSpeedSearch(myTable);
+    search.setComparator(new SpeedSearchComparator(false));
+    myTable.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+          int row = myTable.getSelectedRow();
+          RegistryValue rv = myModel.getRegistryValue(row);
+          if (rv.isBoolean()) {
+            rv.setValue(!rv.asBoolean());
+            for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
+            revaliateActions();
+            if (search.isPopupActive()) search.hidePopup();
+          }
+        }
+      }
+    });
   }
-
 
   private class RevertAction extends AnAction {
 
@@ -256,6 +273,8 @@ public class RegistryUi implements Disposable {
         revaliateActions();
       }
 
+      private AbstractAction myCloseAction;
+
       @Override
       protected JComponent createCenterPanel() {
         return myContent;
@@ -281,13 +300,20 @@ public class RegistryUi implements Disposable {
       @NotNull
       @Override
       protected Action[] createActions() {
-        return new Action[]{myRestoreDefaultsAction, new AbstractAction("Close") {
+        return new Action[]{myRestoreDefaultsAction, myCloseAction};
+      }
+
+      @Override
+      protected void createDefaultActions() {
+        super.createDefaultActions();
+        myCloseAction = new AbstractAction("Close") {
           @Override
           public void actionPerformed(ActionEvent e) {
             processClose();
             doOKAction();
           }
-        }};
+        };
+        myCloseAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
       }
 
       @Override

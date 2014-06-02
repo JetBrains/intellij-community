@@ -90,8 +90,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  private Content createWatchesContent(final XDebugSession session, final XDebugSessionData sessionData) {
-    myWatchesView = new XWatchesViewImpl(session, sessionData);
+  private Content createWatchesContent(final XDebugSessionImpl session, final XDebugSessionData sessionData) {
+    myWatchesView = new XWatchesViewImpl(session);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
@@ -177,9 +177,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       List<AnAction> additionalRestartActions = session.getRestartActions();
       leftToolbar.addAll(additionalRestartActions);
       if (!additionalRestartActions.isEmpty()) leftToolbar.addSeparator();
+      leftToolbar.addAll(session.getExtraActions());
     }
 
     leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+
+    for (AnAction action : session.getExtraStopActions()) {
+      leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
+    }
 
     //group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);

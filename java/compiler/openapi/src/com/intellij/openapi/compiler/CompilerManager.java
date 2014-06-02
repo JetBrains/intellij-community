@@ -56,7 +56,7 @@ public abstract class CompilerManager {
    * @param compiler the compiler to register.
    */
   public abstract void addCompiler(@NotNull Compiler compiler);
-
+  
   /**
    * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
    * to sort translating compilers so that output of one compiler will be used as input for another one
@@ -71,12 +71,6 @@ public abstract class CompilerManager {
    */
   public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
-  @NotNull
-  public abstract Set<FileType> getRegisteredInputTypes(@NotNull TranslatingCompiler compiler);
-  
-  @NotNull
-  public abstract Set<FileType> getRegisteredOutputTypes(@NotNull TranslatingCompiler compiler);
-  
   /**
    * Unregisters a custom compiler.
    *
@@ -275,9 +269,6 @@ public abstract class CompilerManager {
    * @return true if the file is excluded from compilation, false otherwise
    */
   public abstract boolean isExcludedFromCompilation(@NotNull VirtualFile file);
-
-  @NotNull
-  public abstract OutputToSourceMapping getJavaCompilerOutputMapping();
 
   /*
    * Convetience methods for creating frequently-used compile scopes

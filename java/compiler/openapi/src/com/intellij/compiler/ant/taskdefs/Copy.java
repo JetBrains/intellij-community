@@ -27,10 +27,10 @@ import org.jetbrains.annotations.NonNls;
 public class Copy extends Tag {
   public Copy(@NonNls String toDir) {
     //noinspection HardCodedStringLiteral
-    super("copy", Couple.newOne("todir", toDir));
+    super("copy", Couple.of("todir", toDir));
   }
   public Copy(@NonNls String file, @NonNls String toFile) {
     //noinspection HardCodedStringLiteral
-    super("copy", Couple.newOne("file", file), Couple.newOne("tofile", toFile));
+    super("copy", Couple.of("file", file), Couple.of("tofile", toFile));
   }
 }

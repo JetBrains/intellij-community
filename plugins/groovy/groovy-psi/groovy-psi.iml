@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="junit" scope="TEST" />
     <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="properties-psi-api" />
     <orderEntry type="module" module-name="java-psi-impl" />
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="extensions" />
@@ -24,6 +23,8 @@
     <orderEntry type="module" module-name="editor-ui-ex" />
     <orderEntry type="module" module-name="java-analysis-impl" />
     <orderEntry type="module" module-name="java-structure-view" />
+    <orderEntry type="module" module-name="properties-psi-impl" />
+    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
 </module>
 

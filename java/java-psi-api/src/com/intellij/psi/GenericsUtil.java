@@ -155,7 +155,7 @@ public class GenericsUtil {
                                                         PsiManager manager,
                                                         PsiClass nestedLayer, 
                                                         PsiTypeParameter parameter) {
-    Couple<PsiType> types = Couple.newOne(type1, type2);
+    Couple<PsiType> types = Couple.of(type1, type2);
     if (compared.contains(types)) {
       if (nestedLayer != null) {
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;

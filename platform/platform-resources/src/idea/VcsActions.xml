@@ -213,6 +213,7 @@
       icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoClass"/>
 
     <group id="EditorGutterVcsPopupMenu">
+      <separator/>
       <reference ref="Annotate"/>
       <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
     </group>

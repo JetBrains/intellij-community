@@ -18,7 +18,7 @@ public class SvnKitRevertClient extends BaseSvnClient implements RevertClient {
 
   @Override
   public void revert(@NotNull File[] paths, @Nullable SVNDepth depth, @Nullable ISVNEventHandler handler) throws VcsException {
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
 
     client.setEventHandler(handler);
     try {

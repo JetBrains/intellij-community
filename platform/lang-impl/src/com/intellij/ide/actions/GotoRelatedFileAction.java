@@ -18,8 +18,10 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -36,6 +38,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,24 +55,27 @@ import java.util.List;
 public class GotoRelatedFileAction extends AnAction {
 
   @Override
+  public void update(AnActionEvent e) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    e.getPresentation().setEnabled(element != null || file != null);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null && file == null) return;
 
-    DataContext context = e.getDataContext();
-    Editor editor = CommonDataKeys.EDITOR.getData(context);
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
-    if (psiFile == null) return;
-
-    List<GotoRelatedItem> items = getItems(psiFile, editor, context);
+    List<GotoRelatedItem> items = element == null? getItems(file, editor, dataContext) : getItems(element, dataContext);
     if (items.isEmpty()) return;
     if (items.size() == 1 && items.get(0).getElement() != null) {
       items.get(0).navigate();
       return;
     }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(items);
-    }
-    createPopup(items, "Go to Related Files").showInBestPositionFor(context);
+    createPopup(items, "Choose Target").showInBestPositionFor(dataContext);
   }
 
   public static JBPopup createPopup(final List<? extends GotoRelatedItem> items, final String title) {
@@ -102,8 +108,6 @@ public class GotoRelatedFileAction extends AnAction {
                                            final String title, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
-    final Ref<ListCellRenderer> rendererRef = Ref.create(null);
-
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
       {
         setFocusBorderEnabled(false);
@@ -273,9 +277,12 @@ public class GotoRelatedFileAction extends AnAction {
         contextElement = element;
       }
     }
+    return getItems(contextElement, dataContext);
+  }
 
-    Set<GotoRelatedItem> items = new LinkedHashSet<GotoRelatedItem>();
-
+  @NotNull
+  public static List<GotoRelatedItem> getItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
+    Set<GotoRelatedItem> items = ContainerUtil.newLinkedHashSet();
     for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
@@ -306,11 +313,6 @@ public class GotoRelatedFileAction extends AnAction {
     for (String key : keys) {
       items.addAll(map.get(key));
     }
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(CommonDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
   }
 
   private static Action createNumberAction(final int mnemonic,

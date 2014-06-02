@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,9 @@ public interface EditorEx extends Editor {
 
   int getMaxWidthInRange(int startOffset, int endOffset);
 
+  /**
+   * @deprecated Does nothing currently. To be removed in IDEA 15.
+   */
   void stopOptimizedScrolling();
 
   boolean setCaretVisible(boolean b);

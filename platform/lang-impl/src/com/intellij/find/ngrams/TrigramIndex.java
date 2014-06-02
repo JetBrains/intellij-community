@@ -19,6 +19,7 @@
  */
 package com.intellij.find.ngrams;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,15 +49,13 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull VirtualFile file) {
-      return !file.getFileType().isBinary();
+      return isIndexable(file.getFileType());
     }
   };
-  private static final FileBasedIndex.InputFilter NO_FILES = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(@NotNull VirtualFile file) {
-      return false;
-    }
-  };
+
+  public static boolean isIndexable(FileType fileType) {
+    return ENABLED && !fileType.isBinary();
+  }
 
   @NotNull
   @Override
@@ -88,12 +87,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    if (ENABLED) {
-      return INPUT_FILTER;
-    }
-    else {
-      return NO_FILES;
-    }
+    return INPUT_FILTER;
   }
 
   @Override

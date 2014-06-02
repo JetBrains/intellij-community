@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -26,20 +26,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ShowModulePropertiesFix implements IntentionAction {
+public class ShowModulePropertiesFix extends IntentionAndQuickFixAction {
   private final String myModuleName;
 
   public ShowModulePropertiesFix(@NotNull PsiElement context) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(context);
+    this(ModuleUtilCore.findModuleForPsiElement(context));
+  }
+
+  public ShowModulePropertiesFix(@Nullable Module module) {
     myModuleName = module == null ? null : module.getName();
   }
 
-  @Override
   @NotNull
-  public String getText() {
+  @Override
+  public String getName() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS);
     return action.getTemplatePresentation().getText();
   }
@@ -56,7 +59,7 @@ public class ShowModulePropertiesFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
     ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModuleName, null);
   }
 

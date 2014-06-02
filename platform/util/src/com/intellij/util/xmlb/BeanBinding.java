@@ -229,7 +229,7 @@ class BeanBinding implements Binding {
       Couple<Method> candidate = candidates.get(propertyData.first);
       if (candidate == null) candidate = Couple.getEmpty();
       if ((propertyData.second ? candidate.second : candidate.first) != null) continue;
-      candidate = Couple.newOne(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
+      candidate = Couple.of(propertyData.second ? candidate.first : method, propertyData.second ? method : candidate.second);
       candidates.put(propertyData.first, candidate);
     }
     for (Map.Entry<String, Couple<Method>> candidate: candidates.entrySet()) {
