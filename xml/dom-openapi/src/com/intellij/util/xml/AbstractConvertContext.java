@@ -54,7 +54,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
       final XmlElement xmlElement = getInvocationElement().getXmlElement();
       return xmlElement == null ? null : ModuleUtilCore.findModuleForPsiElement(xmlElement);
     }
-    return fileElement.getRootElement().getModule();
+    return fileElement.isValid() ? fileElement.getRootElement().getModule() : null;
   }
 
   public PsiManager getPsiManager() {
