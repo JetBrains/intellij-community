@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
-import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public class XmlFindUsagesProvider implements FindUsagesProvider {
-
+  @Override
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     return element instanceof XmlElementDecl ||
            element instanceof XmlAttributeDecl ||
@@ -42,6 +41,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
            element instanceof XmlComment;
   }
 
+  @Override
   @NotNull
   public String getType(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
@@ -71,10 +71,12 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
     throw new IllegalArgumentException("Cannot get type for " + element);
   }
 
+  @Override
   public String getHelpId(@NotNull PsiElement element) {
     return com.intellij.lang.HelpID.FIND_OTHER_USAGES;
   }
 
+  @Override
   @NotNull
   public String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
@@ -87,29 +89,31 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
 
     if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
-    } else {
-      return element.getText();
     }
+    return element.getText();
   }
 
+  @Override
   @NotNull
   public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
       final PsiMetaData metaData = xmlTag.getMetaData();
       final String name = metaData != null ? DescriptiveNameUtil.getMetaDataName(metaData) : xmlTag.getName();
-      return UsageViewBundle.message("usage.target.xml.tag.of.file", metaData == null ? "<" + name + ">" : name, xmlTag.getContainingFile().getName());
+
+      String presentableName = metaData == null ? "<" + name + ">" : name;
+      return presentableName+" of file "+xmlTag.getContainingFile().getName();
     }
-    else if (element instanceof XmlAttributeValue) {
+    if (element instanceof XmlAttributeValue) {
       return ((XmlAttributeValue)element).getValue();
     }
     if (element instanceof PsiNamedElement) {
       return ((PsiNamedElement)element).getName();
-    } else {
-      return element.getText();
     }
+    return element.getText();
   }
 
+  @Override
   public WordsScanner getWordsScanner() {
     return null;
   }
