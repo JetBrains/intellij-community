@@ -41,6 +41,7 @@ public class FrameworksTree extends CheckboxTree {
     super(new FrameworksTreeRenderer(model), new CheckedTreeNode(), new CheckPolicy(false, true, true, false));
     setRootVisible(false);
     setShowsRootHandles(false);
+    setRowHeight(0);
     putClientProperty("JTree.lineStyle", "None");
   }
 
