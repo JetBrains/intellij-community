@@ -337,9 +337,7 @@ public class AnnotationsHighlightUtil {
   );
 
   @Nullable
-  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation,
-                                                 @NotNull LanguageLevel languageLevel,
-                                                 @NotNull PsiFile containingFile) {
+  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel level, @NotNull PsiFile file) {
     if (ANY_ANNOTATION_ALLOWED.accepts(annotation)) {
       return null;
     }
@@ -355,7 +353,7 @@ public class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo info = HighlightUtil.checkTypeAnnotationFeature(annotation, languageLevel,containingFile);
+      HighlightInfo info = HighlightUtil.checkFeature(annotation, HighlightUtil.Feature.TYPE_ANNOTATIONS, level, file);
       if (info != null) return info;
     }
 

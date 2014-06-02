@@ -915,8 +915,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  public static HighlightInfo checkLiteralExpressionParsingError(@NotNull final PsiLiteralExpression expression,
-                                                                 @NotNull LanguageLevel languageLevel, @NotNull PsiFile containingFile) {
+  public static HighlightInfo checkLiteralExpressionParsingError(@NotNull PsiLiteralExpression expression, LanguageLevel level, PsiFile file) {
     PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
     IElementType type = ((PsiJavaToken)literal).getTokenType();
@@ -929,24 +928,26 @@ public class HighlightUtil extends HighlightUtilBase {
     String text = isInt || isFP ? literal.getText().toLowerCase() : literal.getText();
     Object value = expression.getValue();
 
-    if (isFP) {
-      if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
-        final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS, languageLevel, containingFile);
-        if (info != null) return info;
+    if (level != null && file != null) {
+      if (isFP) {
+        if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+          final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS, level, file);
+          if (info != null) return info;
+        }
       }
-    }
-    if (isInt) {
-      if (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) {
-        final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS, languageLevel, containingFile);
-        if (info != null) return info;
+      if (isInt) {
+        if (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+          final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS, level, file);
+          if (info != null) return info;
+        }
       }
-    }
-    if (isInt || isFP) {
-      if (text.contains("_")) {
-        HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES, languageLevel, containingFile);
-        if (info != null) return info;
-        info = checkUnderscores(expression, text, isInt);
-        if (info != null) return info;
+      if (isInt || isFP) {
+        if (text.contains("_")) {
+          HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES, level, file);
+          if (info != null) return info;
+          info = checkUnderscores(expression, text, isInt);
+          if (info != null) return info;
+        }
       }
     }
 
@@ -2764,7 +2765,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
   }
 
-  private enum Feature {
+  public enum Feature {
     GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
     ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
     STATIC_IMPORTS(LanguageLevel.JDK_1_5, "feature.static.imports"),
@@ -2781,9 +2782,7 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations");
 
-    @NotNull
     private final LanguageLevel level;
-    @NotNull
     private final String key;
 
     Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
@@ -2793,11 +2792,8 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  private static HighlightInfo checkFeature(@NotNull final PsiElement element,
-                                            @NotNull Feature feature,
-                                            @NotNull LanguageLevel languageLevel,
-                                            @NotNull PsiFile containingFile) {
-    if (containingFile.getManager().isInProject(containingFile) && !languageLevel.isAtLeast(feature.level)) {
+  public static HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature, @NotNull LanguageLevel level, @NotNull PsiFile file) {
+    if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
       String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
@@ -2806,77 +2802,5 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
-  }
-
-  @Nullable
-  public static HighlightInfo checkGenericsFeature(@NotNull PsiElement parameterList,
-                                                   int listSize,
-                                                   @NotNull LanguageLevel languageLevel,
-                                                   @NotNull PsiFile containingFile) {
-    return listSize > 0 ? checkFeature(parameterList, Feature.GENERICS, languageLevel, containingFile) : null;
-  }
-
-  @Nullable
-  public static HighlightInfo checkAnnotationFeature(@NotNull PsiElement element,
-                                                     @NotNull LanguageLevel languageLevel,
-                                                     @NotNull PsiFile containingFile) {
-    return checkFeature(element, Feature.ANNOTATIONS, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkForEachFeature(@NotNull PsiForeachStatement statement, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(statement, Feature.FOR_EACH, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkStaticImportFeature(@NotNull PsiImportStaticStatement statement, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(statement, Feature.STATIC_IMPORTS, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkVarargFeature(@NotNull PsiParameter parameter, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(parameter, Feature.VARARGS, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkDiamondFeature(@NotNull PsiType type,
-                                                  @NotNull PsiElement toHighlight,
-                                                  @NotNull LanguageLevel languageLevel,
-                                                  @NotNull PsiFile containingFile) {
-    if (type instanceof PsiDiamondType) {
-      return checkFeature(toHighlight, Feature.DIAMOND_TYPES, languageLevel, containingFile);
-    }
-    return null;
-  }
-
-  @Nullable
-  public static HighlightInfo checkMultiCatchFeature(@NotNull PsiParameter parameter, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return parameter.getType() instanceof PsiDisjunctionType ? checkFeature(parameter, Feature.MULTI_CATCH,
-                                                                            languageLevel, containingFile) : null;
-  }
-
-  @Nullable
-  public static HighlightInfo checkTryWithResourcesFeature(@NotNull PsiElement toHighlight, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(toHighlight, Feature.TRY_WITH_RESOURCES, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkExtensionMethodsFeature(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(method, Feature.EXTENSION_METHODS, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkMethodReferencesFeature(@NotNull PsiMethodReferenceExpression expression, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(expression, Feature.METHOD_REFERENCES, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkLambdaFeature(@NotNull PsiLambdaExpression expression, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(expression, Feature.LAMBDA_EXPRESSIONS, languageLevel, containingFile);
-  }
-
-  @Nullable
-  public static HighlightInfo checkTypeAnnotationFeature(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    return checkFeature(annotation, Feature.TYPE_ANNOTATIONS, languageLevel, containingFile);
   }
 }

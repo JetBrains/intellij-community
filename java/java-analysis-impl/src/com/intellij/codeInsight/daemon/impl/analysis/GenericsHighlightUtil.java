@@ -764,43 +764,38 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkTypeParametersList(PsiTypeParameterList parameterList, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    PsiTypeParameter[] typeParameters = parameterList.getTypeParameters();
-    if (typeParameters.length == 0) return null;
-    HighlightInfo info = HighlightUtil.checkGenericsFeature(parameterList, typeParameters.length, languageLevel, containingFile);
-    if (info != null) return info;
-
-    final PsiElement parent = parameterList.getParent();
+  public static HighlightInfo checkTypeParametersList(PsiTypeParameterList list, PsiTypeParameter[] parameters, @NotNull LanguageLevel level) {
+    final PsiElement parent = list.getParent();
     if (parent instanceof PsiClass && ((PsiClass)parent).isEnum()) {
       String description = JavaErrorMessages.message("generics.enum.may.not.have.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(description).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
     }
     if (PsiUtil.isAnnotationMethod(parent)) {
       String description = JavaErrorMessages.message("generics.annotation.members.may.not.have.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(description).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
     }
     if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {
       String description = JavaErrorMessages.message("annotation.may.not.have.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(description).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
     }
 
-    for (int i = 0; i < typeParameters.length; i++) {
-      final PsiTypeParameter typeParameter1 = typeParameters[i];
+    for (int i = 0; i < parameters.length; i++) {
+      final PsiTypeParameter typeParameter1 = parameters[i];
       final HighlightInfo cyclicInheritance = HighlightClassUtil.checkCyclicInheritance(typeParameter1);
       if (cyclicInheritance != null) return cyclicInheritance;
       String name1 = typeParameter1.getName();
-      for (int j = i + 1; j < typeParameters.length; j++) {
-        final PsiTypeParameter typeParameter2 = typeParameters[j];
+      for (int j = i + 1; j < parameters.length; j++) {
+        final PsiTypeParameter typeParameter2 = parameters[j];
         String name2 = typeParameter2.getName();
         if (Comparing.strEqual(name1, name2)) {
           String message = JavaErrorMessages.message("generics.duplicate.type.parameter", name1);
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameter2).descriptionAndTooltip(message).create();
         }
       }
-      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+      if (!level.isAtLeast(LanguageLevel.JDK_1_7)) {
         for (PsiJavaCodeReferenceElement referenceElement : typeParameter1.getExtendsList().getReferenceElements()) {
           final PsiElement resolve = referenceElement.resolve();
-          if (resolve instanceof PsiTypeParameter && ArrayUtilRt.find(typeParameters, resolve) > i) {
+          if (resolve instanceof PsiTypeParameter && ArrayUtilRt.find(parameters, resolve) > i) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceElement.getTextRange()).descriptionAndTooltip("Illegal forward reference").create();
           }
         }
@@ -1020,20 +1015,15 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkVarArgParameterIsLast(@NotNull PsiParameter parameter, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+  public static HighlightInfo checkVarArgParameterIsLast(@NotNull PsiParameter parameter) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiParameter[] params = ((PsiMethod)declarationScope).getParameterList().getParameters();
-      if (parameter.isVarArgs()) {
-        HighlightInfo info = HighlightUtil.checkVarargFeature(parameter, languageLevel,containingFile);
-        if (info != null) return info;
-
-        if (params[params.length - 1] != parameter) {
-          String description = JavaErrorMessages.message("vararg.not.last.parameter");
-          info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter).descriptionAndTooltip(description).create();
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMakeVarargParameterLastFix(parameter));
-          return info;
-        }
+      if (params[params.length - 1] != parameter) {
+        String description = JavaErrorMessages.message("vararg.not.last.parameter");
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMakeVarargParameterLastFix(parameter));
+        return info;
       }
     }
     return null;
@@ -1056,19 +1046,13 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkParametersAllowed(PsiReferenceParameterList refParamList, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
-    HighlightInfo info = HighlightUtil.checkGenericsFeature(refParamList, refParamList.getTypeParameterElements().length,
-                                                            languageLevel, containingFile);
-    if (info != null) return info;
-
-    if (refParamList.getTextLength() != 0) {
-      final PsiElement parent = refParamList.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        final PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression) && !(parent instanceof PsiMethodReferenceExpression)) {
-          final String message = JavaErrorMessages.message("generics.reference.parameters.not.allowed");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refParamList).descriptionAndTooltip(message).create();
-        }
+  public static HighlightInfo checkParametersAllowed(PsiReferenceParameterList refParamList) {
+    final PsiElement parent = refParamList.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression) && !(parent instanceof PsiMethodReferenceExpression)) {
+        final String message = JavaErrorMessages.message("generics.reference.parameters.not.allowed");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refParamList).descriptionAndTooltip(message).create();
       }
     }
 
@@ -1077,7 +1061,6 @@ public class GenericsHighlightUtil {
 
   @Nullable
   public static HighlightInfo checkParametersOnRaw(PsiReferenceParameterList refParamList) {
-    if (refParamList.getTypeArguments().length == 0) return null;
     JavaResolveResult resolveResult = null;
     PsiElement parent = refParamList.getParent();
     PsiElement qualifier = null;
