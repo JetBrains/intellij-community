@@ -25,11 +25,13 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.*;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.dtd.DTDParserDefinition;
 import com.intellij.lang.dtd.DtdSyntaxHighlighterFactory;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.html.HTMLParserDefinition;
@@ -75,12 +77,6 @@ public class XmlCoreEnvironment {
       appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, HTMLLanguage.INSTANCE, new HTMLParserDefinition());
       appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, XHTMLLanguage.INSTANCE, new XHTMLParserDefinition());
 
-      XmlASTFactory astFactory = new XmlASTFactory();
-      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, astFactory);
-      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, HTMLLanguage.INSTANCE, astFactory);
-      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, XHTMLLanguage.INSTANCE, astFactory);
-      appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, astFactory);
-
       appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, XmlFileType.INSTANCE, new XmlIdIndexer());
       appEnvironment.addExplicitExtension(IdIndexers.INSTANCE, DTDFileType.INSTANCE, new XmlIdIndexer());
 
@@ -104,10 +100,12 @@ public class XmlCoreEnvironment {
       appEnvironment.registerApplicationComponent(PathMacros.class, new PathMacrosImpl());
       appEnvironment.registerApplicationService(ExternalResourceManager.class, new ExternalResourceManagerExImpl(PathMacrosImpl.getInstanceEx()));
       appEnvironment.registerApplicationService(XmlFoldingSettings.class, new XmlFoldingSettings());
-      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, XMLLanguage.INSTANCE, new XmlFoldingBuilder());
-      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, HTMLLanguage.INSTANCE, new XmlFoldingBuilder());
-      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, XHTMLLanguage.INSTANCE, new XmlFoldingBuilder());
-      appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, DTDLanguage.INSTANCE, new XmlFoldingBuilder());
+      Language[] myLanguages = new Language[]{XMLLanguage.INSTANCE, HTMLLanguage.INSTANCE, XHTMLLanguage.INSTANCE, DTDLanguage.INSTANCE};
+      for (Language myLanguage : myLanguages) {
+        appEnvironment.addExplicitExtension(LanguageFolding.INSTANCE, myLanguage, new XmlFoldingBuilder());
+        appEnvironment.addExplicitExtension(LanguageFindUsages.INSTANCE, myLanguage, new XmlFindUsagesProvider());
+        appEnvironment.addExplicitExtension(LanguageASTFactory.INSTANCE, myLanguage, new XmlASTFactory());
+      }
     }
 
     protected ExternalResourceManagerEx createExternalResourceManager() {
