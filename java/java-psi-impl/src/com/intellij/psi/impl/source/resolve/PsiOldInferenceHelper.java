@@ -249,14 +249,6 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                 }
                 break OtherParameters;
               }
-              else if (currentConstraintType == ConstraintType.SUPERTYPE) {
-                if (PsiType.NULL.equals(substitutionFromBounds)) {
-                  substitutionFromBounds = currentSubstitution;
-                }
-                else {
-                  substitutionFromBounds = GenericsUtil.getLeastUpperBound(substitutionFromBounds, currentSubstitution, myManager);
-                }
-              }
             }
           }
         }
