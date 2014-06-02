@@ -2,10 +2,12 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.UpdateInfoDialog.UpdateInfoPanel">
   <grid id="27dc6" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="20" width="500" height="140"/>
+      <xy x="20" y="20" width="500" height="172"/>
     </constraints>
     <properties/>
-    <border type="none"/>
+    <border type="empty">
+      <size top="0" left="5" bottom="0" right="5"/>
+    </border>
     <children>
       <component id="f7184" class="javax.swing.JEditorPane" binding="myUpdateMessage">
         <constraints>
@@ -16,10 +18,11 @@
         </constraints>
         <properties>
           <contentType value="text/html"/>
+          <margin top="0" left="0" bottom="0" right="0"/>
         </properties>
       </component>
       <grid id="d6625" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="10" left="5" bottom="10" right="5"/>
+        <margin top="10" left="0" bottom="10" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="0.0"/>
@@ -95,10 +98,29 @@
       </component>
       <vspacer id="c963e">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
       </vspacer>
+      <vspacer id="d89a6">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+        </constraints>
+      </vspacer>
+      <component id="f5ccc" class="javax.swing.JEditorPane" binding="myLicenseArea">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="50"/>
+          </grid>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <contentType value="text/html"/>
+          <editable value="false"/>
+          <opaque value="false"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>
