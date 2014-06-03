@@ -137,6 +137,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   @Override
+  protected String getHelpId() {
+    return "debugging.debugMenu.evaluate";
+  }
+
+  @Override
   protected JButton createJButtonForAction(Action action) {
     final JButton button = super.createJButtonForAction(action);
     if (action == mySwitchModeAction) {
