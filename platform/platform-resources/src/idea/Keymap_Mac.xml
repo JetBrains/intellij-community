@@ -434,6 +434,10 @@
     <action id="MinimizeCurrentWindow">
       <keyboard-shortcut first-keystroke="meta M"/>
     </action>
+    
+    <action id="ZoomCurrentWindow">
+      <keyboard-shortcut first-keystroke="meta control EQUALS"/>
+    </action>
 
     <action id="ToggleFullScreen">
       <keyboard-shortcut first-keystroke="meta control F"/>

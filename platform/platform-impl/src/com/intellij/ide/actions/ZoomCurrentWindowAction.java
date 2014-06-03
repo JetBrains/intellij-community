@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,22 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * User: spLeaner
+ * @author ignatov
  */
-public class MinimizeCurrentWindowAction extends MacWindowActionBase {
+public class ZoomCurrentWindowAction extends MacWindowActionBase {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
-      final Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (window instanceof JFrame && !(((JFrame)window).getState() == Frame.ICONIFIED)) {
-        ((JFrame)window).setState(Frame.ICONIFIED);
+      final Window window = focusOwner instanceof JFrame ? (Window)focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
+      if (window instanceof JFrame) {
+        JFrame frame = (JFrame)window;
+        if (frame.getExtendedState() == Frame.NORMAL) {
+          frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+        }
+        else if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH) {
+          frame.setExtendedState(Frame.NORMAL);
+        }
       }
     }
   }
