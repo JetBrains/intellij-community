@@ -307,6 +307,11 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return "Master Key PasswordSafe";
   }
 
+
+  public boolean isMasterPasswordEnabled() {
+    return setMasterPassword("");
+  }
+
   /**
    * @return true, if OS protected passwords are supported for the current platform
    */
