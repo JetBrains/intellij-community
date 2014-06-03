@@ -33,9 +33,12 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +47,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * @author nik
@@ -107,6 +111,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
+
+    myTreePanel.getTree().addTreeListener(new MyTreeListener());
 
     EvaluationMode mode = XDebuggerSettingsManager.getInstance().getDataViewSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
@@ -203,12 +209,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
 
     final XDebuggerTree tree = myTreePanel.getTree();
-    XDebuggerTreeNode root = tree.getRoot();
-    if (root instanceof EvaluatingExpressionRootNode) {
-      root.clearChildren();
-    } else {
-      tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
-    }
+    tree.markNodesObsolete();
+    tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
 
     myResultPanel.invalidate();
 
@@ -222,6 +224,25 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       offset = Math.min(editor.getDocument().getTextLength(), offset);
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
+    }
+  }
+
+  private class MyTreeListener implements XDebuggerTreeListener {
+    @Override
+    public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      if (node.getParent() instanceof EvaluatingExpressionRootNode) {
+        if (!node.isLeaf()) {
+          // cause children computing
+          node.getChildCount();
+        }
+      }
+    }
+
+    @Override
+    public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+      if (node.getParent() instanceof EvaluatingExpressionRootNode) {
+        myTreePanel.getTree().expandPath(node.getPath());
+      }
     }
   }
 
