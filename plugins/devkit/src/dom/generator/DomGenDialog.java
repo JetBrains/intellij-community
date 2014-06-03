@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,9 @@ public class DomGenDialog extends DialogWrapper{
     final MergingFileManager fileManager = new MergingFileManager();
     if (panel.getAuthor().trim().length() > 0) {
       emitter.setAuthor(panel.getAuthor());
+    }
+    if (panel.isUseQualifiedClassNames()) {
+      emitter.enableQualifiedClassNames();
     }
     final ModelGen modelGen = new ModelGen(loader, emitter, fileManager);
     final NamespaceDesc desc = panel.getNamespaceDescriptor();

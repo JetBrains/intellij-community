@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ public class DomGenPanel {
   private TextFieldWithBrowseButton myOutputDir;
   private JTextArea mySkipSchemas;
   private JTextField myAuthor;
+  private JBCheckBox myUseQualifiedClassNames;
   private final Project myProject;
 
   public DomGenPanel(Project project) {
@@ -127,6 +129,7 @@ public class DomGenPanel {
     myOutputDir.setText(getValue("output", ""));
     mySkipSchemas.setText(getValue("skipSchemas", "http://www.w3.org/2001/XMLSchema\nhttp://www.w3.org/2001/XMLSchema-instance"));
     myAuthor.setText(getValue("author", ""));
+    myUseQualifiedClassNames.setSelected(getValue("useFQNs", "false").equals("true"));
   }
 
   private static String getValue(String name, String defaultValue) {
@@ -145,6 +148,7 @@ public class DomGenPanel {
     setValue("output", myOutputDir.getText());
     setValue("skipSchemas", mySkipSchemas.getText());
     setValue("author", myAuthor.getText());
+    setValue("useFQNs", myUseQualifiedClassNames.isSelected() ? "true" : "false");
   }
 
   public boolean validate() {
@@ -173,5 +177,9 @@ public class DomGenPanel {
 
   public String getAuthor() {
     return myAuthor.getText();
+  }
+
+  public boolean isUseQualifiedClassNames() {
+    return myUseQualifiedClassNames.isSelected();
   }
 }
