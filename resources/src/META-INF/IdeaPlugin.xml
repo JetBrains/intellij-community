@@ -860,6 +860,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
+      <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <category>Other</category>
     </intentionAction>
@@ -876,11 +881,6 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
-      <category>Other</category>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
       <category>Other</category>
     </intentionAction>
 
