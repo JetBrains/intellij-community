@@ -31,7 +31,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -123,7 +122,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    setOKActionEnabled(false);
     evaluate();
   }
 
@@ -249,15 +247,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     else {
       evaluator.evaluate(expression, evaluationCallback, null, inputEditor.getMode());
     }
-  }
-
-  public void finishEvaluation() {
-    DebuggerUIUtil.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        setOKActionEnabled(true);
-      }
-    });
   }
 
   @Override
