@@ -155,7 +155,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     if (StringUtil.startsWithChar(value, '{')) {
       int end = value.indexOf('}');
       if (end > 0) {
-        return new String[]{value.substring(1, end-1), value.substring(end+1)};
+        return new String[]{value.substring(1, end), value.substring(end+1)};
       }
     }
     return new String[]{null, value};
