@@ -18,12 +18,19 @@ package org.jetbrains.plugins.groovy.intentions.declaration;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +60,10 @@ import java.util.ArrayList;
  */
 public class GrSetStrongTypeIntention extends Intention {
 
+  private static final Logger LOG = Logger.getInstance(GrSetStrongTypeIntention.class);
+
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, final Editor editor) throws IncorrectOperationException {
     PsiElement parent = element.getParent();
 
     PsiElement elementToBuildTemplate;
@@ -107,25 +116,46 @@ public class GrSetStrongTypeIntention extends Intention {
       }
     }
 
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(elementToBuildTemplate);
-    PsiManager manager = element.getManager();
+    final String originalText = elementToBuildTemplate.getText();
 
-    PsiElement replaceElement = setType(element, parent, elementToBuildTemplate);
-    assert replaceElement != null;
+    final TypeInfo typeInfo = getOrCreateTypeElement(parent, elementToBuildTemplate);
+    final PsiElement replaceElement = typeInfo.elementToReplace;
 
     TypeConstraint[] constraints = types.toArray(new TypeConstraint[types.size()]);
-    ChooseTypeExpression chooseTypeExpression = new ChooseTypeExpression(constraints, manager, replaceElement.getResolveScope());
+    ChooseTypeExpression chooseTypeExpression = new ChooseTypeExpression(constraints, element.getManager(), replaceElement.getResolveScope());
+
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(elementToBuildTemplate);
     builder.replaceElement(replaceElement, chooseTypeExpression);
 
+    final Document document = editor.getDocument();
+    final RangeMarker rangeMarker = document.createRangeMarker(elementToBuildTemplate.getTextRange());
+    rangeMarker.setGreedyToRight(true);
+    rangeMarker.setGreedyToLeft(true);
 
     final PsiElement afterPostprocess = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(elementToBuildTemplate);
     final Template template = builder.buildTemplate();
+
     TextRange range = afterPostprocess.getTextRange();
-    Document document = editor.getDocument();
     document.deleteString(range.getStartOffset(), range.getEndOffset());
 
     TemplateManager templateManager = TemplateManager.getInstance(project);
-    templateManager.startTemplate(editor, template);
+    templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        if (brokenOff) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              if (rangeMarker.isValid()) {
+                document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), originalText);
+                editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset() + typeInfo.originalOffset);
+              }
+            }
+          });
+        }
+      }
+    });
+
   }
 
   @Nullable
@@ -141,23 +171,44 @@ public class GrSetStrongTypeIntention extends Intention {
     return type;
   }
 
-  @Nullable
-  private static PsiElement setType(PsiElement element, PsiElement parent, PsiElement elementToBuildTemplate) {
+  private static class TypeInfo {
+    final PsiElement elementToReplace;
+    final int originalOffset;
+
+    TypeInfo(PsiElement element, int offset) {
+      originalOffset = offset;
+      elementToReplace = element;
+    }
+  }
+
+  @NotNull
+  private static TypeInfo getOrCreateTypeElement(@NotNull PsiElement parent,
+                                                 @NotNull PsiElement elementToBuildTemplateOn) {
     GrModifierList modifierList = getModifierList(parent);
 
     if (modifierList != null && modifierList.hasModifierProperty(GrModifier.DEF) && modifierList.getModifiers().length == 1) {
-      return PsiUtil.findModifierInList(modifierList, GrModifier.DEF);
+      PsiElement modifier = PsiUtil.findModifierInList(modifierList, GrModifier.DEF);
+      LOG.assertTrue(modifier != null);
+      int modifierOffset = modifier.getTextRange().getEndOffset() - elementToBuildTemplateOn.getTextRange().getStartOffset();
+      return new TypeInfo(modifier, modifierOffset);
     }
     else {
-      final PsiClassType typeToUse = TypesUtil.createType("Abc", element);
-      if (elementToBuildTemplate instanceof GrVariableDeclaration) {
-        ((GrVariableDeclaration)elementToBuildTemplate).setType(typeToUse);
+      int nameElementOffset;
+
+      final PsiClassType typeToUse = TypesUtil.createType("Abc", parent);
+      if (elementToBuildTemplateOn instanceof GrVariableDeclaration) {
+        GrVariableDeclaration decl = (GrVariableDeclaration)elementToBuildTemplateOn;
+        decl.setType(typeToUse);
+        nameElementOffset = decl.getModifierList().getTextRange().getEndOffset() - elementToBuildTemplateOn.getTextRange().getStartOffset();
       }
       else {
-        ((GrVariable)parent).setType(typeToUse);
+        GrVariable var = (GrVariable)parent;
+        var.setType(typeToUse);
+        nameElementOffset = var.getNameIdentifierGroovy().getTextRange().getStartOffset() -
+                            elementToBuildTemplateOn.getTextRange().getStartOffset();
       }
 
-      return getTypeElement(parent);
+      return new TypeInfo(getTypeElement(parent), nameElementOffset);
     }
   }
 
