@@ -153,7 +153,9 @@ public class TaskManager {
         }
         return -1;
     }
-
+    public TaskFile getTaskFile(int index, String fileName) {
+        return tasks.get(index).getTaskFilebyName(fileName);
+    }
     public String getDocFileForTask(int taskNum, LogicalPosition pos, String name) {
         Task task = tasks.get(taskNum);
         TaskFile file = task.getTaskFilebyName(name);

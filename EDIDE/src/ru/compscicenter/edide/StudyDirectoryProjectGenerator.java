@@ -32,6 +32,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
         return null;
     }
 
+    //should be invoked in invokeLater method
     public void createFile(String name, VirtualFile directory) throws IOException {
         VirtualFile currentFile = directory.createChildData(this, name);
         currentFile.setWritable(true);
@@ -78,10 +79,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                                     createFile("sum-input.txt", baseDir.findChild(".idea"));
                                     createFile("sum-input2.txt", baseDir.findChild(".idea"));
                                     createFile("sum-input3.txt", baseDir.findChild(".idea"));
-                                    //createFile("task2_tests.py", baseDir.findChild(".idea"));
-                                    //createFile("study_utrunner.py", baseDir.findChild(".idea"));
-                                    //createFile("study_tcunittest.py", baseDir.findChild(".idea"));
-
                                 } catch (IOException e) {
                                     Log.print("Problems with creating files");
                                     Log.print(e.toString());
@@ -93,8 +90,6 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
                     }
                 }
         );
-        //makeRunConfiguration(project, baseDir);
-
     }
 
     @NotNull

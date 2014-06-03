@@ -38,4 +38,12 @@ public class TaskFile {
         }
         return taskWindows.get(i - 1);
     }
+
+    public int getTaskWindowNum() {
+        return taskWindows.size();
+    }
+
+    public TaskWindow getTaskWindowByIndex(int index) {
+        return taskWindows.get(index);
+    }
 }
