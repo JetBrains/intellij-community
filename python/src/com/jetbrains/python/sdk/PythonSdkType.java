@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.facet.Facet;
@@ -22,6 +23,7 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -56,6 +58,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkCredentialsHolder;
+import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -79,6 +82,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -555,7 +559,12 @@ public class PythonSdkType extends SdkType {
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
                 if (isRemote(sdk)) {
-                  notifyRemoteSdkSkeletonsFail(e);
+                  notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+                    @Override
+                    public void run() {
+                      setupSdkPaths(project, ownerComponent, sdk, sdkModificator);
+                    }
+                  });
                 }
                 else if (!isInvalid(sdk)) {
                   LOG.error(e);
@@ -569,19 +578,38 @@ public class PythonSdkType extends SdkType {
     return sdkPathsUpdated;
   }
 
-  public static void notifyRemoteSdkSkeletonsFail(InvalidSdkException e) {
+  public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, @Nullable final Runnable restartAction) {
+    NotificationListener notificationListener;
+
+    if (e.getCause() instanceof VagrantNotStartedException) {
+      notificationListener =
+        new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+            if (manager != null) {
+              try {
+                manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+              }
+              catch (ExecutionException e1) {
+                throw new RuntimeException(e1);
+              }
+            }
+            if (restartAction != null) {
+              restartAction.run();
+            }
+          }
+        };
+    }
+    else {
+      notificationListener = null;
+    }
+
     Notifications.Bus.notify(
       new Notification(
-        SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter", e.getMessage(),
+        SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter", e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>",
         NotificationType.WARNING,
-        null
-        //TODO: implement launch vagrant and restart skeleton generation
-        //new NotificationListener() {
-        //  @Override
-        //  public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        //
-        //  }
-        //}
+        notificationListener
       )
     );
   }
