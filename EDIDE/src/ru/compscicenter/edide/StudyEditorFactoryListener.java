@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -47,7 +48,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                             @Override
                             public void run() {
                                 try {
-                                    Editor editor = event.getEditor();
+                                    final Editor editor = event.getEditor();
                                     VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
                                     if (vfOpenedFile != null) {
                                         if (fileChanged(vfOpenedFile)) {
@@ -59,52 +60,49 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                                         if (currentTask < finishedTask) {
                                             return;
                                         }
-                                        String fileName = vfOpenedFile.getNameWithoutExtension() + ".json";
-                                        InputStream metaIS = StudyEditorFactoryListener.class.getResourceAsStream(fileName);
-                                        if (metaIS == null) {
+                                        int startOffset0 = 0;
+                                        final Project project = editor.getProject();
+                                        if (project == null) {
                                             return;
                                         }
-                                        BufferedReader metaReader = new BufferedReader(new InputStreamReader(metaIS));
-                                        JsonReader reader = new JsonReader(metaReader);
-                                        JsonParser parser = new JsonParser();
-                                        com.google.gson.JsonObject obj = parser.parse(reader).getAsJsonObject();
-                                        int replaceNum = obj.get("windows_num").getAsInt();
-                                        int startOffset0 = 0;
-                                        Project project = editor.getProject();
                                         PsiFile psiOpenFile = PsiManager.getInstance(project).findFile(vfOpenedFile);
-                                        TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
-                                        JsonArray replaceList = obj.get("windows_description").getAsJsonArray();
-                                        int i = 0;
-                                        for (com.google.gson.JsonElement replacement : replaceList) {
-                                            int line = replacement.getAsJsonObject().get("line").getAsInt() - 1;
+                                        final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
+                                        for (int i = 0; i < taskManager.getTaskFile(currentTask, vfOpenedFile.getName()).getTaskWindowNum(); i++) {
+                                            TaskWindow tw = taskManager.getTaskFile(currentTask, vfOpenedFile.getName()).getTaskWindowByIndex(i);
+                                            int line = tw.getLine() - 1;
                                             int lineOffset = editor.getDocument().getLineStartOffset(line);
-                                            int startOffset = lineOffset + replacement.getAsJsonObject().get("start").getAsInt();
+                                            int startOffset = lineOffset + tw.getStartOffset();
                                             if (i == 0) {
                                                 startOffset0 = startOffset;
                                             }
-                                            String textToWrite = replacement.getAsJsonObject().get("text").getAsString();
-                                            String answer = replacement.getAsJsonObject().get("possible answer").getAsString();
+                                            String textToWrite = tw.getText();
                                             editor.getDocument().createRangeMarker(startOffset, startOffset + textToWrite.length());
                                             int endOffset = startOffset + textToWrite.length();
                                             TextRange range = new TextRange(startOffset, endOffset);
                                             builder.replaceRange(range, textToWrite);
-                                            i++;
                                         }
-                                        Template template = ((TemplateBuilderImpl) builder).buildInlineTemplate();
-                                        TemplateManager.getInstance(project).startTemplate(editor, template);
-                                        editor.getCaretModel().moveToOffset(startOffset0);
+                                        final int finalStartOffset = startOffset0;
+                                        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Template template = ((TemplateBuilderImpl) builder).buildInlineTemplate();
+                                                TemplateManager.getInstance(project).startTemplate(editor, template);
+                                                editor.getCaretModel().moveToOffset(finalStartOffset);
+                                            }
+                                        }, null, null);
+
                                     }
                                 } catch (Exception e) {
                                     Log.print("Something wrong with meta file:" + e.getCause());
+                                    Log.print(String.valueOf(e.getStackTrace()));
+                                    Log.print(e.getMessage());
                                     Log.flush();
                                 }
-
                             }
                         });
                     }
                 }
         );
-
     }
 
     @Override
