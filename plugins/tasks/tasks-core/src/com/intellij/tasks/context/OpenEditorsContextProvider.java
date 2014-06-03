@@ -17,14 +17,13 @@
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -76,9 +75,10 @@ public class OpenEditorsContextProvider extends WorkingContextProvider {
       myFileEditorManager.closeAllFiles();
       myFileEditorManager.getMainSplitters().clear();
     }
-    Set<DockContainer> containers = myDockManager.getContainers();
-    for (DockContainer container : containers) {
-      container.closeAll();
+    for (DockContainer container : myDockManager.getContainers()) {
+      if (container instanceof DockableEditorTabbedContainer) {
+        container.closeAll();
+      }
     }
   }
 }
