@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.apple.eawt.AppEvent;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -43,6 +42,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -65,10 +65,6 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Anton Katilin
@@ -316,9 +312,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
       final String applicationName = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName();
       final Builder builder = new Builder();
       if (SystemInfo.isMac) {
-        builder.append(fileTitle).append(title)
-          .append(ProjectManager.getInstance().getOpenProjects().length == 0
-                  || ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT") ? applicationName : null);
+        boolean addAppName = StringUtil.isEmpty(title) ||
+                             ProjectManager.getInstance().getOpenProjects().length == 0 ||
+                             ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT");
+        builder.append(fileTitle).append(title).append(addAppName ? applicationName : null);
       } else {
         builder.append(title).append(fileTitle).append(applicationName);
       }

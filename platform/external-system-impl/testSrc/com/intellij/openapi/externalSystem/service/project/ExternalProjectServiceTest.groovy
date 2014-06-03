@@ -21,10 +21,12 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.io.FileUtil
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 /**
@@ -102,15 +104,28 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
   }
 
   void 'test library dependency with sources path added on subsequent refresh'() {
+
+    def libBinPath = new File(projectDir, "bin_path");
+    def libSrcPath = new File(projectDir, "source_path");
+    def libDocPath = new File(projectDir, "doc_path");
+
+    FileUtil.createDirectory(libBinPath);
+    FileUtil.createDirectory(libSrcPath);
+    FileUtil.createDirectory(libDocPath);
+
     applyProjectState([
       buildExternalProjectInfo {
         project {
           module('module') {
-            lib('lib1', level: 'module', bin: ["bin_path"]) } } },
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath]) } } },
       buildExternalProjectInfo {
         project {
           module('module') {
-            lib('lib1', level: 'module', bin: ["bin_path"], src: ["source_path"]) } } }
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath]) } } },
+      buildExternalProjectInfo {
+        project {
+          module('module') {
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
     ])
 
     def helper = ServiceManager.getService(ProjectStructureHelper.class)
@@ -131,6 +146,9 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
           def sourceUrls = entry.getUrls(OrderRootType.SOURCES)
           assertEquals(1, sourceUrls.length)
           assertTrue(sourceUrls[0].endsWith("source_path"))
+          def docUrls = entry.getUrls(JavadocOrderRootType.instance)
+          assertEquals(1, docUrls.length)
+          assertTrue(docUrls[0].endsWith("doc_path"))
         }
         else {
           fail()

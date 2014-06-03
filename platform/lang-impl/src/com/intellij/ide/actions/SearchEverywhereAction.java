@@ -126,6 +126,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_ACTIONS = 5;
   private static final int MAX_RECENT_FILES = 10;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
+  private static final int POPUP_MAX_WIDTH = 600;
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -346,7 +347,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public Dimension getPreferredSize() {
         final Dimension size = super.getPreferredSize();
-        return new Dimension(Math.min(size.width - 2, 800), size.height);
+        return new Dimension(Math.min(size.width - 2, POPUP_MAX_WIDTH), size.height);
       }
     };
     myList.setCellRenderer(myRenderer);
@@ -1746,6 +1747,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myList.repaint();
 
           myRenderer.recalculateWidth();
+          if (myBalloon == null || myBalloon.isDisposed()) {
+            return;
+          }
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
@@ -1917,17 +1921,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       size.height = 70;
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
-    if (sz.width > 800 || sz.height > 800) {
+    if (sz.width > POPUP_MAX_WIDTH || sz.height > POPUP_MAX_WIDTH) {
       final JBScrollPane pane = new JBScrollPane();
       final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
       final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
-      sz = new Dimension(Math.min(800, Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(800, sz.height + extraHeight));
+      sz = new Dimension(Math.min(POPUP_MAX_WIDTH, Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(POPUP_MAX_WIDTH, sz.height + extraHeight));
       sz.width += 20;
       sz.height+=2;
     } else {
       sz.width+=2;
       sz.height+=2;
     }
+    sz.width = Math.max(sz.width, myPopup.getSize().width);
     myPopup.setSize(sz);
     if (myActionEvent != null && myActionEvent.getInputEvent() == null) {
       final Point p = parent.getLocationOnScreen();

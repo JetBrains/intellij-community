@@ -17,6 +17,7 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -27,11 +28,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testIntegration.JavaTestFinder;
 import com.intellij.testIntegration.TestFinderHelper;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +56,12 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiMethod)) return false;
 
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    return psiClass != null && JavaTestFinder.hasTestsForClass(psiClass);
+    if (!((PsiMethod)parent).hasModifierProperty(PsiModifier.PUBLIC) || 
+        ((PsiMethod)parent).hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+
+    return PsiTreeUtil.getParentOfType(element, PsiClass.class) != null;
   }
 
   @Override
@@ -67,6 +71,12 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     if (srcClass == null) return;
 
     final List<PsiElement> testClasses = TestFinderHelper.findTestsForClass(srcClass);
+    
+    if (testClasses.isEmpty()) {
+      HintManager.getInstance().showErrorHint(editor, "No tests found.");
+      return;
+    }
+    
     if (testClasses.size() == 1) {
       generateMissedTests((PsiClass)testClasses.get(0), srcClass);
       return;

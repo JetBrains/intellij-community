@@ -880,6 +880,11 @@
           <option name="ERROR_STRIPE_COLOR" value="ff" />
         </value>
       </option>
+      <option name="BOOKMARKS_ATTRIBUTES">
+        <value>
+          <option name="ERROR_STRIPE_COLOR" value="0" />
+        </value>
+      </option>
         <option name="CONSOLE_BLACK_OUTPUT">
           <value>
             <option name="FOREGROUND" value="000000" />

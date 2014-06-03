@@ -49,20 +49,6 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
 
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
-  /**
-   * TODO: remove the method in 13.1
-   */
-  @Override
-  public void executeTasks(@NotNull ExternalSystemTaskId id,
-                           @NotNull List<String> taskNames,
-                           @NotNull String projectPath,
-                           @Nullable GradleExecutionSettings settings,
-                           @Nullable String vmOptions,
-                           @Nullable String debuggerSetup,
-                           @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
                            @NotNull final List<String> taskNames,

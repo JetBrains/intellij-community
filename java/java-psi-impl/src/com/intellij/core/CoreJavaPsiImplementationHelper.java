@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper {
   private final Project myProject;
 
-  public CoreJavaPsiImplementationHelper(Project project) {
+  public CoreJavaPsiImplementationHelper(@NotNull Project project) {
     myProject = project;
   }
 
@@ -65,5 +65,10 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection element) {
     throw new UnsupportedOperationException("TODO");
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 }

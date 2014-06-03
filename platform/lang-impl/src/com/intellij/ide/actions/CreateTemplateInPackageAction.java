@@ -20,7 +20,6 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -83,12 +82,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   @Nullable
   private T checkOrCreate(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
     PsiDirectory dir = directory;
-    String className = newName;
-
-    final String extension = StringUtil.getShortName(templateName);
-    if (StringUtil.isNotEmpty(extension)) {
-      className = StringUtil.trimEnd(className, "." + extension);
-    }
+    String className = removeExtension(templateName, newName);
 
     if (className.contains(".")) {
       String[] names = className.split("\\.");
@@ -108,6 +102,14 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     }
 
     return doCreate(dir, className, templateName);
+  }
+
+  protected String removeExtension(String templateName, String className) {
+    final String extension = StringUtil.getShortName(templateName);
+    if (StringUtil.isNotEmpty(extension)) {
+      className = StringUtil.trimEnd(className, "." + extension);
+    }
+    return className;
   }
 
   @Nullable

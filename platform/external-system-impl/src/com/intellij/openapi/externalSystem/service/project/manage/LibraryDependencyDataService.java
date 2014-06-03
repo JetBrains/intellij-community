@@ -142,7 +142,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
         try {
-          filterUpToDateAndRemoveObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel, hasUnresolved);
+          syncExistingAndRemoveObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel, hasUnresolved);
 
           // Import missing library dependencies.
           if (!toImport.isEmpty()) {
@@ -168,17 +168,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       switch (dependencyData.getLevel()) {
         case MODULE:
           final Library moduleLib = moduleLibraryTable.createLibrary(libraryName);
-          final Library.ModifiableModel libModel = moduleLib.getModifiableModel();
-          try {
-            Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryData);
-            myLibraryManager.registerPaths(files, libModel, libraryName);
-            LibraryOrderEntry orderEntry = moduleRootModel.findLibraryOrderEntry(moduleLib);
-            assert orderEntry != null;
-            setLibraryScope(orderEntry, moduleLib, module, dependencyData);
-          }
-          finally {
-            libModel.commit();
-          }
+          syncExistingLibraryDependency(dependencyData, moduleLib, moduleRootModel, module);
           break;
         case PROJECT:
           final Library projectLib = libraryTable.getLibraryByName(libraryName);
@@ -205,11 +195,11 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     ));
   }
 
-  private static void filterUpToDateAndRemoveObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
-                                                      @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
-                                                      @NotNull Set<LibraryDependencyData> toImport,
-                                                      @NotNull ModifiableRootModel moduleRootModel,
-                                                      boolean hasUnresolvedLibraries)
+  private void syncExistingAndRemoveObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
+                                             @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
+                                             @NotNull Set<LibraryDependencyData> toImport,
+                                             @NotNull ModifiableRootModel moduleRootModel,
+                                             boolean hasUnresolvedLibraries)
   {
     Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet();
     for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
@@ -229,7 +219,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           moduleRootModel.removeOrderEntry(entry);
         }
         else {
-
+          syncExistingLibraryDependency(existing, library, moduleRootModel, moduleLibraryOrderEntry.getOwnerModule());
           toImport.remove(existing);
         }
       }
@@ -246,6 +236,24 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           moduleRootModel.removeOrderEntry(entry);
         }
       }
+    }
+  }
+
+  private void syncExistingLibraryDependency(@NotNull LibraryDependencyData libraryDependencyData,
+                                             @NotNull Library library,
+                                             @NotNull ModifiableRootModel moduleRootModel,
+                                             @NotNull Module module) {
+    final Library.ModifiableModel libModel = library.getModifiableModel();
+    try {
+      final String libraryName = libraryDependencyData.getInternalName();
+      Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryDependencyData.getTarget());
+      myLibraryManager.registerPaths(files, libModel, libraryName);
+      LibraryOrderEntry orderEntry = moduleRootModel.findLibraryOrderEntry(library);
+      assert orderEntry != null;
+      setLibraryScope(orderEntry, library, module, libraryDependencyData);
+    }
+    finally {
+      libModel.commit();
     }
   }
 

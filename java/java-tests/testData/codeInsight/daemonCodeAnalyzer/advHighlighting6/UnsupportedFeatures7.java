@@ -41,6 +41,10 @@ class UnsupportedFeatures {
 
     I i1 = <error descr="Method references are not supported at this language level">UnsupportedFeatures::m</error>;
     I i2 = <error descr="Lambda expressions are not supported at this language level">() -> { }</error>;
+
+    switch (<error descr="Incompatible types. Found: 'java.lang.String', required: 'byte, char, short or int'">list.get(0)</error>) {
+      case "foo": break;
+    }
   }
 
   interface I {
