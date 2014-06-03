@@ -142,7 +142,6 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       if (context != null && !context.isValid()) {
         return "invalid context: " + reason(context);
       }
-      return "non-physical provider: " + provider; // "dummy" file?
     }
     PsiManager manager = file.getManager();
     if (manager.getProject().isDisposed()) return "project is disposed";
@@ -151,6 +150,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
     FileViewProvider provider1 = manager.findViewProvider(vFile);
     if (provider != provider1) return "different providers: "+provider+"("+Integer.toHexString(System.identityHashCode(provider))+"); "+provider1+"("+Integer.toHexString(System.identityHashCode(provider1))+")";
+    if (!provider.isPhysical()) {
+      return "non-physical provider: " + provider; // "dummy" file?
+    }
     return "psi is outdated";
   }
 
