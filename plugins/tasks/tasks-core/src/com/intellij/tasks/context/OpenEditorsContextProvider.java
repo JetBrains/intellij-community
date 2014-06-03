@@ -18,8 +18,13 @@ package com.intellij.tasks.context;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.impl.DockManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -27,8 +32,10 @@ import org.jetbrains.annotations.NotNull;
 public class OpenEditorsContextProvider extends WorkingContextProvider {
 
   private final FileEditorManagerImpl myFileEditorManager;
+  private final DockManagerImpl myDockManager;
 
-  public OpenEditorsContextProvider(FileEditorManager fileEditorManager) {
+  public OpenEditorsContextProvider(FileEditorManager fileEditorManager, DockManager dockManager) {
+    myDockManager = (DockManagerImpl)dockManager;
     myFileEditorManager = fileEditorManager instanceof FileEditorManagerImpl ? (FileEditorManagerImpl)fileEditorManager : null;
   }
 
@@ -48,6 +55,8 @@ public class OpenEditorsContextProvider extends WorkingContextProvider {
     if (myFileEditorManager != null) {
       myFileEditorManager.writeExternal(element);
     }
+    Element state = myDockManager.getState();
+    element.addContent(state);
   }
 
   public void loadContext(Element element) {
@@ -55,12 +64,21 @@ public class OpenEditorsContextProvider extends WorkingContextProvider {
       myFileEditorManager.readExternal(element);
       myFileEditorManager.getMainSplitters().openFiles();
     }
+    Element dockState = element.getChild("DockManager");
+    if (dockState != null) {
+      myDockManager.loadState(dockState);
+      myDockManager.readState();
+    }
   }
 
   public void clearContext() {
     if (myFileEditorManager != null) {
       myFileEditorManager.closeAllFiles();
       myFileEditorManager.getMainSplitters().clear();
+    }
+    Set<DockContainer> containers = myDockManager.getContainers();
+    for (DockContainer container : containers) {
+      container.closeAll();
     }
   }
 }
