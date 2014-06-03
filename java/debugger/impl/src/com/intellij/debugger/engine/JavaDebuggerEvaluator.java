@@ -69,8 +69,6 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
           callback.errorOccurred("Context is not available");
           return;
         }
-        descriptor.setContext(evalContext);
-        descriptor.updateRepresentation(evalContext, DescriptorLabelListener.DUMMY_LISTENER);
         JavaDebugProcess process = myDebugProcess.getXdebugProcess();
         if (process != null) {
           callback.evaluated(JavaValue.create(descriptor, evalContext, process.getNodeManager()));
