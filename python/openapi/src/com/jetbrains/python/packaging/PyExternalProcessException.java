@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,8 @@ public class PyExternalProcessException extends ExecutionException {
   @NotNull private String myName;
   @NotNull private List<String> myArgs;
   @NotNull private String myMessage;
+
+  private Pair<String, Runnable> myHandler = null;
 
   public PyExternalProcessException(int retcode, @NotNull String name, @NotNull List<String> args, @NotNull String message) {
     super(String.format("External process error '%s %s':\n%s", name, StringUtil.join(args, " "), message));
@@ -91,5 +94,19 @@ public class PyExternalProcessException extends ExecutionException {
       }
     }
     return StringUtil.join(result, "");
+  }
+
+  public PyExternalProcessException withHandler(@NotNull String name, @NotNull Runnable handler) {
+    myHandler = Pair.create(name, handler);
+    return this;
+  }
+
+
+  public boolean hasHandler() {
+    return myHandler != null;
+  }
+
+  public Pair<String, Runnable> getHandler() {
+    return myHandler;
   }
 }
