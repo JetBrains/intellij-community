@@ -27,7 +27,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
@@ -178,13 +181,14 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
     appendIdeaLibrary(plugins + "Spring", result,
-                      "spring-el.jar", "spring-jsf.jar", "spring-persistence-integration.jar", "spring-web.jar");
+                      "spring.jar", "spring-el.jar", "spring-jsf.jar", "spring-persistence-integration.jar");
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
   private static void appendIdeaLibrary(final String libDirPath,
                                         final ArrayList<VirtualFile> result,
                                         @NonNls final String... forbidden) {
+    Arrays.sort(forbidden);
     final String path = libDirPath + File.separator + LIB_DIR_NAME;
     final JarFileSystem jfs = JarFileSystem.getInstance();
     final File lib = new File(path);
@@ -204,7 +208,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   public boolean setupSdkPaths(final Sdk sdk, SdkModel sdkModel) {
     final Sandbox additionalData = (Sandbox)sdk.getSdkAdditionalData();
-    if (additionalData != null) {    
+    if (additionalData != null) {
       additionalData.cleanupWatchedRoots();
     }
 
