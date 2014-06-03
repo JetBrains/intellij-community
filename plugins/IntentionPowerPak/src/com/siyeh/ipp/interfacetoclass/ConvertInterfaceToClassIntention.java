@@ -106,7 +106,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
     final PsiClass anInterface = (PsiClass)element.getParent();
     final SearchScope searchScope = anInterface.getUseScope();
     final Query<PsiClass> query = ClassInheritorsSearch.search(anInterface, searchScope, false);
-    final MultiMap<PsiElement, String> conflicts = new MultiMap();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     query.forEach(new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass aClass) {
@@ -180,11 +180,14 @@ public class ConvertInterfaceToClassIntention extends Intention {
     final PsiReferenceList extendsList = anInterface.getExtendsList();
     final PsiReferenceList implementsList = anInterface.getImplementsList();
     assert extendsList != null;
-    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+    final PsiJavaCodeReferenceElement[] extendsRefElements = extendsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement referenceElement : extendsRefElements) {
       assert implementsList != null;
-      implementsList.add(referenceElement);
-      referenceElement.delete();
+      final PsiElement resolved = referenceElement.resolve();
+      if (resolved instanceof PsiClass && ((PsiClass)resolved).isInterface()) {
+        implementsList.add(referenceElement);
+        referenceElement.delete();
+      }
     }
   }
 
