@@ -5,25 +5,37 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class RedundantTypeArgsInspectionTest extends JavaCodeInsightFixtureTestCase {
+public class RedundantTypeArgsInspectionTest extends LightDaemonAnalyzerTestCase {
+
+  @NotNull
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] { new RedundantTypeArgsInspection()};
   }
 
   @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_6;
+  }
+
+  @NotNull
+  @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantTypeArgs/";
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   private void doTest() throws Throwable {
-    final RedundantTypeArgsInspection inspection = new RedundantTypeArgsInspection();
-    myFixture.enableInspections(inspection);
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
+    doTest("/inspection/redundantTypeArgs/" + getTestName(false) + ".java", true, false);
   }
 
   public void testReturnPrimitiveTypes() throws Throwable { // javac non-boxing: IDEA-53984

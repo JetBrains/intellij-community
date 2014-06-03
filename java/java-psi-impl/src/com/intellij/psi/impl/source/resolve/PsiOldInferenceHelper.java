@@ -249,6 +249,14 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                 }
                 break OtherParameters;
               }
+              else if (currentConstraintType == ConstraintType.SUPERTYPE && !JavaVersionService.getInstance().isAtLeast(parent, JavaSdkVersion.JDK_1_7)) {
+                if (PsiType.NULL.equals(substitutionFromBounds)) {
+                  substitutionFromBounds = currentSubstitution;
+                }
+                else {
+                  substitutionFromBounds = GenericsUtil.getLeastUpperBound(substitutionFromBounds, currentSubstitution, myManager);
+                }
+              }
             }
           }
         }
