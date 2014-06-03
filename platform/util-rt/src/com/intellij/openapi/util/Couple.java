@@ -23,7 +23,11 @@ public class Couple<T> extends Pair<T, T> {
     super(first, second);
   }
 
+  @Deprecated
   public static <T> Couple<T> newOne(T first, T second) {
+    return new Couple<T>(first, second);
+  }
+  public static <T> Couple<T> of(T first, T second) {
     return new Couple<T>(first, second);
   }
 }
