@@ -34,7 +34,7 @@ public class SuspendContextImpl extends XSuspendContext {
     return executionStack;
   }
 
-  public AsyncResult<String> evaluateLogExpression(@NotNull String expression) {
+  public AsyncResult<String> evaluateExpression(@NotNull String expression) {
     CallFrameView frame = executionStack.getTopFrame();
     if (frame == null) {
       return new AsyncResult.Rejected<String>("Top frame is null");
