@@ -521,9 +521,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (Content content : contents) {
       getStateFor(content).setWindow(0);
     }
-    for (Content content : contents) {
-      myOriginal.myManager.addContent(content);
-      myOriginal.findCellFor(content).minimize(content);
+    if (myOriginal != null) {
+      for (Content content : contents) {
+        myOriginal.myManager.addContent(content);
+        myOriginal.findCellFor(content).minimize(content);
+      }
     }
     myManager.removeAllContents(false);
   }

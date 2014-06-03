@@ -44,10 +44,12 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private static final QName UNKNOWN = new QName("", "#unknown");
 
   private static final TObjectHashingStrategy<Locator> HASHING_STRATEGY = new TObjectHashingStrategy<Locator>() {
+    @Override
     public int computeHashCode(Locator o) {
       final String s = o.getSystemId();
       return o.getLineNumber() * 31 + o.getColumnNumber() * 23 + (s != null ? s.hashCode() * 11 : 0);
     }
+    @Override
     public boolean equals(Locator o, Locator o1) {
       if ((o.getLineNumber() == o1.getLineNumber() && o.getColumnNumber() == o1.getColumnNumber())) {
         if (Comparing.equal(o.getSystemId(), o1.getSystemId())) {
@@ -93,31 +95,38 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
     return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[locations.size()]));
   }
 
+  @Override
   public boolean isRequired() {
     return !myOptional;
   }
 
+  @Override
   public boolean isFixed() {
     return isEnumerated() && myValues.size() == 1;
   }
 
+  @Override
   public boolean hasIdType() {
     return myValues.values().contains("ID");
   }
 
+  @Override
   public boolean hasIdRefType() {
     return myValues.values().contains("IDREF");
   }
 
+  @Override
   @Nullable
   public String getDefaultValue() {
     return isEnumerated() ? myValues.keySet().iterator().next() : null;
   }
 
+  @Override
   public boolean isEnumerated() {
     return myValues.size() > 0 && myValues.get(null) == null;
   }
 
+  @Override
   public String[] getEnumeratedValues() {
     if (myValues.size() > 0) {
       final Map<String, String> copy;
@@ -133,6 +142,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
     }
   }
 
+  @Override
   public PsiElement getDeclaration() {
     final Iterator<Locator> it = myDeclarations.iterator();
     if (!it.hasNext()) return null;
@@ -142,6 +152,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   public Collection<PsiElement> getDeclarations() {
     return ContainerUtil.map2List(myDeclarations, new Function<Locator, PsiElement>() {
+      @Override
       public PsiElement fun(Locator locator) {
         return myElementDescriptor.getDeclaration(locator);
       }
@@ -171,15 +182,18 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
     return myName.getLocalPart();
   }
 
+  @Override
   @NonNls
   public String getName() {
     return myName.getLocalPart();
   }
 
+  @Override
   public void init(PsiElement element) {
 
   }
 
+  @Override
   public Object[] getDependences() {
     return myElementDescriptor.getDependences();
   }

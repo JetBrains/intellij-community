@@ -21,6 +21,7 @@ import com.intellij.util.xml.DomElement;
 public class ConvertContextFactory {
    public static ConvertContext createConvertContext(final DomElement element) {
       return new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)) {
+        @Override
         public DomElement getInvocationElement() {
            return element;
         }

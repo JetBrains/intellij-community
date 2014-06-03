@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,21 @@ public class MockDomFileDescription<T> extends DomFileDescription<T> {
     myFile = file;
   }
 
+  @Override
   public boolean isMyFile(@NotNull final XmlFile xmlFile, final Module module) {
     return myFile == xmlFile;
   }
 
+  @Override
   public boolean acceptsOtherRootTagNames() {
     return true;
   }
 
+  @Override
   protected void initializeFileDescription() {
   }
 
+  @Override
   public boolean isAutomaticHighlightingEnabled() {
     return false;
   }

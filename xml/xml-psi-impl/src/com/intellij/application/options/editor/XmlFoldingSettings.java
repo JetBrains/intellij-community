@@ -60,20 +60,24 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return XmlBundle.message("xml.folding.settings");
   }
 
+  @Override
   public XmlFoldingSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final XmlFoldingSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,25 +30,30 @@ public class RootDomParentStrategy implements DomParentStrategy {
     myFileElement = fileElement;
   }
 
+  @Override
   @NotNull
   public DomInvocationHandler getParentHandler() {
     throw new UnsupportedOperationException("Method getParentHandler is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public XmlTag getXmlElement() {
     return myFileElement.getRootTag();
   }
 
+  @Override
   @NotNull
   public DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
     return this;
   }
 
+  @Override
   @NotNull
   public DomParentStrategy setXmlElement(@NotNull final XmlElement element) {
     return this;
   }
 
+  @Override
   @NotNull
   public DomParentStrategy clearXmlElement() {
     return this;

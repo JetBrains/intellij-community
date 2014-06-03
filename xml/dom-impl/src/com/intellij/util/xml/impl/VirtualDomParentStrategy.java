@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,18 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
     return myModificationTracker.getModificationStamp();
   }
 
+  @Override
   @NotNull
   public DomInvocationHandler getParentHandler() {
     return myParentHandler;
   }
 
+  @Override
   public XmlElement getXmlElement() {
     return null;
   }
 
+  @Override
   @NotNull
   public synchronized DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
     if (!myParentHandler.isValid()) return this;
@@ -62,11 +65,13 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
     return this;
   }
 
+  @Override
   @NotNull
   public DomParentStrategy setXmlElement(@NotNull final XmlElement element) {
     return new PhysicalDomParentStrategy(element, DomManagerImpl.getDomManager(element.getProject()));
   }
 
+  @Override
   @NotNull
   public synchronized DomParentStrategy clearXmlElement() {
     myModCount = getModCount();

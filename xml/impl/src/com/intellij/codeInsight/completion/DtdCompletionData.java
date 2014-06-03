@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class DtdCompletionData extends CompletionData {
         new AndFilter(
           new LeftNeighbour(
             new OrFilter(
-              new XmlTextFilter(new String[] {"#", "!", "(", ",", "|", "["}),
+              new XmlTextFilter("#", "!", "(", ",", "|", "["),
               new XmlTokenTypeFilter(XmlTokenType.XML_NAME)
             )
           ),
@@ -89,6 +89,7 @@ public class DtdCompletionData extends CompletionData {
     }
   }
 
+  @Override
   public String findPrefix(PsiElement insertedElement, int offset) {
     final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(insertedElement);
     final PsiElement prevPrevLeaf = prevLeaf != null ? PsiTreeUtil.prevLeaf(prevLeaf):null;
@@ -109,10 +110,12 @@ public class DtdCompletionData extends CompletionData {
 
   static class DtdEntityGetter implements ContextGetter {
 
+    @Override
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       final List<String> results = new LinkedList<String>();
 
       final PsiElementProcessor processor = new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
@@ -130,6 +133,7 @@ public class DtdCompletionData extends CompletionData {
   }
   static class MyInsertHandler extends BasicInsertHandler {
 
+    @Override
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
 

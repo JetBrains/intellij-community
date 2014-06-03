@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ class PropertyAccessorInvocation implements Invocation {
     myLastElement = myMethods.length - 1;
   }
 
+  @Override
   public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     return invoke(0, handler.getProxy());
   }

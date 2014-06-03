@@ -49,6 +49,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     myManager = manager;
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
     final DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return EMPTY_ARRAY;
@@ -104,6 +105,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return null;
   }
 
+  @Override
   @Nullable
   public XmlElementDescriptor getElementDescriptor(@NotNull final XmlTag childTag, @Nullable XmlTag contextTag) {
     DomElement domElement = myManager.getDomElement(childTag);
@@ -147,6 +149,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return new DomElementXmlDescriptor((DomChildrenDescription)description, myManager);
   }
 
+  @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context) {
     if (context == null) return XmlAttributeDescriptor.EMPTY;
 
@@ -172,6 +175,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
   }
 
+  @Override
   @Nullable
   public XmlAttributeDescriptor getAttributeDescriptor(final String attributeName, final @Nullable XmlTag context) {
     DomElement domElement = myManager.getDomElement(context);
@@ -185,57 +189,69 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return null;
   }
 
+  @Override
   @Nullable
   public XmlAttributeDescriptor getAttributeDescriptor(final XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     return new XmlNSDescriptor() {
+      @Override
       @Nullable
       public XmlElementDescriptor getElementDescriptor(@NotNull final XmlTag tag) {
         throw new UnsupportedOperationException("Method getElementDescriptor not implemented in " + getClass());
       }
 
+      @Override
       @NotNull
       public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
         throw new UnsupportedOperationException("Method getRootElementsDescriptors not implemented in " + getClass());
       }
 
+      @Override
       @Nullable
       public XmlFile getDescriptorFile() {
         return null;
       }
 
+      @Override
       public boolean isHierarhyEnabled() {
         throw new UnsupportedOperationException("Method isHierarhyEnabled not implemented in " + getClass());
       }
 
+      @Override
       @Nullable
       public PsiElement getDeclaration() {
         throw new UnsupportedOperationException("Method getDeclaration not implemented in " + getClass());
       }
 
+      @Override
       @NonNls
       public String getName(final PsiElement context) {
         throw new UnsupportedOperationException("Method getName not implemented in " + getClass());
       }
 
+      @Override
       @NonNls
       public String getName() {
         throw new UnsupportedOperationException("Method getName not implemented in " + getClass());
       }
 
+      @Override
       public void init(final PsiElement element) {
         throw new UnsupportedOperationException("Method init not implemented in " + getClass());
       }
 
+      @Override
       public Object[] getDependences() {
         throw new UnsupportedOperationException("Method getDependences not implemented in " + getClass());
       }
     };
   }
 
+  @Override
   public int getContentType() {
     return CONTENT_TYPE_UNKNOWN;
   }
@@ -245,19 +261,23 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     return null;
   }
 
+  @Override
   public void init(final PsiElement element) {
     throw new UnsupportedOperationException("Method init not implemented in " + getClass());
   }
 
+  @Override
   public Object[] getDependences() {
     throw new UnsupportedOperationException("Method getDependences not implemented in " + getClass());
   }
 
+  @Override
   @NonNls
   public String getName() {
     return getDefaultName();
   }
 
+  @Override
   public String getQualifiedName() {
     return getDefaultName();
   }

@@ -24,11 +24,13 @@ import com.intellij.util.ReflectionUtil;
  */
 public class NamedEnumUtil {
   private static final Function<Enum, String> NAMED_SHOW = new Function<Enum, String>() {
+    @Override
     public String fun(final Enum s) {
       return ((NamedEnum) s).getValue();
     }
   };
   private static final Function<Enum, String> SIMPLE_SHOW = new Function<Enum, String>() {
+    @Override
     public String fun(final Enum s) {
       return s.name();
     }

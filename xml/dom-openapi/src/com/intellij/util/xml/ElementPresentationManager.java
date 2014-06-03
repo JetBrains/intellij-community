@@ -43,6 +43,7 @@ import java.util.List;
  */
 public abstract class ElementPresentationManager {
   private static final ConcurrentFactoryMap<Class,Method> ourNameValueMethods = new ConcurrentFactoryMap<Class, Method>() {
+    @Override
     @Nullable
     protected Method create(final Class key) {
       for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
@@ -55,6 +56,7 @@ public abstract class ElementPresentationManager {
   };
 
   private final static Function<Object, String> DEFAULT_NAMER = new Function<Object, String>() {
+    @Override
     @Nullable
     public String fun(final Object element) {
       return getElementName(element);
@@ -96,6 +98,7 @@ public abstract class ElementPresentationManager {
 
   static {
     ourIconProviders.add(new NullableFunction<Object, Icon>() {
+      @Override
       public Icon fun(final Object o) {
         return o instanceof Iconable ? ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS) : null;
       }
@@ -115,8 +118,9 @@ public abstract class ElementPresentationManager {
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
 
 
-  public static final <T>NullableFunction<T, String> NAMER() {
+  public static <T>NullableFunction<T, String> NAMER() {
     return new NullableFunction<T, String>() {
+      @Override
       public String fun(final T o) {
         return getElementName(o);
       }
@@ -124,6 +128,7 @@ public abstract class ElementPresentationManager {
   }
 
   public static final NullableFunction<Object, String> NAMER = new NullableFunction<Object, String>() {
+    @Override
     public String fun(final Object o) {
       return getElementName(o);
     }
@@ -259,7 +264,7 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
-  public static Method findNameValueMethod(final Class<? extends Object> aClass) {
+  public static Method findNameValueMethod(final Class<?> aClass) {
     synchronized (ourNameValueMethods) {
       return ourNameValueMethods.get(aClass);
     }
@@ -268,6 +273,7 @@ public abstract class ElementPresentationManager {
   @Nullable
   public static <T> T findByName(Collection<T> collection, final String name) {
     return ContainerUtil.find(collection, new Condition<T>() {
+      @Override
       public boolean value(final T object) {
         return Comparing.equal(name, getElementName(object), true);
       }

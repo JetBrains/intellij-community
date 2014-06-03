@@ -20,8 +20,6 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -73,12 +71,14 @@ public class ValidateAction extends AnAction {
     setEnabledInModalContext(origAction.isEnabledInModalContext());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     if (!actionPerformedImpl(e)) {
       myOrigAction.actionPerformed(e);
     }
   }
 
+  @Override
   public final void update(AnActionEvent e) {
     super.update(e);
     myOrigAction.update(e);
@@ -125,14 +125,17 @@ public class ValidateAction extends AnAction {
     final MessageViewHelper helper = new MessageViewHelper(project, CONTENT_NAME, KEY);
 
     helper.openMessageView(new Runnable() {
+      @Override
       public void run() {
         doRun(project, instanceFile, schemaFile);
       }
     });
 
     final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
 
@@ -145,10 +148,12 @@ public class ValidateAction extends AnAction {
 
             SwingUtilities.invokeLater(
               new Runnable() {
+                  @Override
                   public void run() {
                     if (!eh.hadErrorOrWarning()) {
                       SwingUtilities.invokeLater(
                           new Runnable() {
+                            @Override
                             public void run() {
                               helper.close();
                               WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
@@ -165,10 +170,12 @@ public class ValidateAction extends AnAction {
     });
 
     helper.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
+      @Override
       public void stopProcess() {
         future.cancel(true);
       }
 
+      @Override
       public boolean isProcessStopped() {
         return future.isDone();
       }
@@ -229,22 +236,27 @@ public class ValidateAction extends AnAction {
     return null;
   }
 
+  @Override
   public boolean displayTextInToolbar() {
     return myOrigAction.displayTextInToolbar();
   }
 
+  @Override
   public void setDefaultIcon(boolean b) {
     myOrigAction.setDefaultIcon(b);
   }
 
+  @Override
   public boolean isDefaultIcon() {
     return myOrigAction.isDefaultIcon();
   }
 
+  @Override
   public void setInjectedContext(boolean worksInInjected) {
     myOrigAction.setInjectedContext(worksInInjected);
   }
 
+  @Override
   public boolean isInInjectedContext() {
     return myOrigAction.isInInjectedContext();
   }

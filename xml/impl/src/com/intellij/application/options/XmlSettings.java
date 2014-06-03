@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,19 +42,23 @@ public class XmlSettings implements PersistentStateComponent<XmlSettings>, Expor
     return ServiceManager.getService(XmlSettings.class);
   }
 
+  @Override
   public XmlSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final XmlSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("editor.codeinsight")};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return XmlBundle.message("xml.settings");

@@ -25,9 +25,11 @@ import org.jetbrains.annotations.Nullable;
  * Date: 11.08.2007
  */
 public interface RncRef extends RncPattern, Ref<RncDefine, RncElement> {
+  @Override
   @Nullable
   RncDefine getPattern();
 
+  @Override
   @Nullable
   String getReferencedName();
 }

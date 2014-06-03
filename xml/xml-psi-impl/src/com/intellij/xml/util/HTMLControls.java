@@ -39,7 +39,7 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class HTMLControls {
-  private static Logger LOG = Logger.getInstance(HTMLControls.class);
+  private static final Logger LOG = Logger.getInstance(HTMLControls.class);
   private static Control[] ourControls;
 
   public static Control[] getControls() {
@@ -85,7 +85,7 @@ public class HTMLControls {
     @Attribute("emptyAllowed")
     public boolean emptyAllowed;
     @Attribute(value = "autoClosedBy", converter = AutoCloseConverter.class)
-    public Set<String> autoClosedBy = Collections.emptySet();
+    public final Set<String> autoClosedBy = Collections.emptySet();
   }
 
   private static class TagStateConverter extends Converter<TagState> {

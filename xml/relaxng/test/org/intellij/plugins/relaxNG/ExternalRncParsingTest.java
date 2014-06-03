@@ -22,6 +22,7 @@ package org.intellij.plugins.relaxNG;
 * Date: 07.08.2007
 */
 public class ExternalRncParsingTest extends HighlightingTestBase {
+  @Override
   public String getTestDataPath() {
     return "parsing";
   }

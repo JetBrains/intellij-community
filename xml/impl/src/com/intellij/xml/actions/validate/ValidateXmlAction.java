@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class ValidateXmlAction extends AnAction {
     handler.setErrorReporter(
       new StdErrorReporter(handler, file.getProject(),
         new Runnable() {
+          @Override
           public void run() {
             doRunAction(file);
           }
@@ -49,6 +50,7 @@ public class ValidateXmlAction extends AnAction {
     return handler;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile != null) {
@@ -59,8 +61,10 @@ public class ValidateXmlAction extends AnAction {
   private void doRunAction(final @NotNull PsiFile psiFile) {
 
     CommandProcessor.getInstance().executeCommand(psiFile.getProject(), new Runnable(){
+        @Override
         public void run(){
           final Runnable action = new Runnable() {
+            @Override
             public void run() {
               try {
                 psiFile.putUserData(runningValidationKey, "");
@@ -86,6 +90,7 @@ public class ValidateXmlAction extends AnAction {
     return text != null ? text : "";
   }
 
+  @Override
   public void update(AnActionEvent event) {
     super.update(event);
 

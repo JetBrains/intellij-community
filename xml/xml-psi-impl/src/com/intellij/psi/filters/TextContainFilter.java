@@ -35,6 +35,7 @@ public class TextContainFilter extends XmlTextFilter {
 
   public TextContainFilter(){}
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element != null) {
       for (final String value : myValue) {

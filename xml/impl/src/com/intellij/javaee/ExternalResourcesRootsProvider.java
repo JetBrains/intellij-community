@@ -59,6 +59,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
     }
   };
 
+  @Override
   public Set<VirtualFile> getAdditionalRootsToIndex() {
 
     HashSet<VirtualFile> roots = new HashSet<VirtualFile>();

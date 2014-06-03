@@ -27,10 +27,12 @@ public class XmlTagChildRemovedImpl implements XmlTagChildRemoved {
     myChild = treeElement;
   }
 
+  @Override
   public XmlTag getTag() {
     return myTag;
   }
 
+  @Override
   public XmlTagChild getChild() {
     return myChild;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     super(XML_ATTRIBUTE_DECL);
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -71,26 +72,32 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     }
   }
 
+  @Override
   public XmlElement getNameElement() {
     return findElementByTokenType(XML_NAME);
   }
 
+  @Override
   public boolean isAttributeRequired() {
     return findElementByTokenType(XML_ATT_REQUIRED) != null;
   }
 
+  @Override
   public boolean isAttributeFixed() {
     return findElementByTokenType(XML_ATT_FIXED) != null;
   }
 
+  @Override
   public boolean isAttributeImplied() {
     return findElementByTokenType(XML_ATT_IMPLIED) != null;
   }
 
+  @Override
   public XmlAttributeValue getDefaultValue() {
     return (XmlAttributeValue)findElementByTokenType(XML_ATTRIBUTE_VALUE);
   }
 
+  @Override
   public String getDefaultValueText() {
     XmlAttributeValue value = getDefaultValue();
     if (value == null) return null;
@@ -99,6 +106,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
     final StringBuilder builder = new StringBuilder();
     value.processElements(new PsiElementProcessor() {
+      @Override
       public boolean execute(@NotNull PsiElement element) {
         builder.append(element.getText());
         return true;
@@ -107,10 +115,12 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     return builder.toString();
   }
 
+  @Override
   public boolean isEnumerated() {
     return findElementByTokenType(XML_ENUMERATED_TYPE) != null;
   }
 
+  @Override
   public XmlElement[] getEnumeratedValues() {
     XmlEnumeratedType enumeratedType = (XmlEnumeratedType)findElementByTokenType(XML_ENUMERATED_TYPE);
     if (enumeratedType != null) {
@@ -121,6 +131,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     }
   }
 
+  @Override
   public boolean isIdAttribute() {
     final PsiElement elementType = findElementType();
 
@@ -135,32 +146,38 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     return elementType;
   }
 
+  @Override
   public boolean isIdRefAttribute() {
     final PsiElement elementType = findElementType();
 
     return elementType != null && elementType.getText().equals(IDREF_ATT);
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     XmlElementChangeUtil.doNameReplacement(this, getNameElement(), name);
     return null;
   }
 
+  @Override
   public String getName() {
     XmlElement name = getNameElement();
     return (name != null) ? name.getText() : null;
   }
 
+  @Override
   public boolean canNavigate() {
     if (isPhysical()) return super.canNavigate();
     final PsiNamedElement psiNamedElement = XmlUtil.findRealNamedElement(this);
     return psiNamedElement != null && psiNamedElement != this && ((Navigatable)psiNamedElement).canNavigate();
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     if (isPhysical()) {
       super.navigate(requestFocus);
@@ -181,6 +198,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     }
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     return this;

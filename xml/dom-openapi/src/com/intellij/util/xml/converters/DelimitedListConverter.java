@@ -60,6 +60,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
   protected abstract String getUnresolvedMessage(String value);
 
+  @Override
   @NotNull
   public Collection<? extends List<T>> getVariants(final ConvertContext context) {
     return Collections.emptyList();
@@ -84,6 +85,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return myDelimiters.charAt(0);
   }
 
+  @Override
   public List<T> fromString(@Nullable final String str, final ConvertContext context) {
     if (str == null) {
       return null;
@@ -99,6 +101,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return values;
   }
 
+  @Override
   public String toString(final List<T> ts, final ConvertContext context) {
     final StringBuilder buffer = new StringBuilder();
     final char delimiter = getDefaultDelimiter();
@@ -114,6 +117,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return buffer.toString();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<List<T>> genericDomValue,
                                          final PsiElement element,
@@ -126,6 +130,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     final ArrayList<PsiReference> references = new ArrayList<PsiReference>();
     new DelimitedListProcessor(myDelimiters) {
+      @Override
       protected void processToken(final int start, final int end, final boolean delimitersOnly) {
         references.add(createPsiReference(element, start + 1, end + 1, context, genericDomValue, delimitersOnly));
       }
@@ -182,6 +187,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       myDelimitersOnly = delimitersOnly;
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       if (myDelimitersOnly) {
@@ -191,6 +197,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       return resolveReference(convertString(value, myContext), myContext);
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       return getReferenceVariants(myContext, myGenericDomValue);
@@ -226,6 +233,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     private Function<PsiElement, PsiElement> getSuperBindToElementFunction(final Ref<IncorrectOperationException> ref) {
       return new Function<PsiElement, PsiElement>() {
+        @Override
         public PsiElement fun(final PsiElement s) {
           try {
             return MyPsiReference.super.bindToElement(s);
@@ -240,6 +248,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     private Function<String, PsiElement> getSuperElementRenameFunction(final Ref<IncorrectOperationException> ref) {
       return new Function<String, PsiElement>() {
+        @Override
         public PsiElement fun(final String s) {
           try {
             return MyPsiReference.super.handleElementRename(s);
@@ -253,6 +262,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     }
 
 
+    @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
       return getUnresolvedMessage(getValue());

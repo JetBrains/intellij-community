@@ -30,6 +30,7 @@ public abstract class RngGrammarImpl extends RngDomElementBase implements RngGra
     visitor.visitGrammar(this);
   }
 
+  @Override
   public Pattern getStart() {
     return getPatternFrom(getStartElement());
   }

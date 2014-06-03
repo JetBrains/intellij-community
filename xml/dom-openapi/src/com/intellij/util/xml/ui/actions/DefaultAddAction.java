@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
   protected void afterAddition(@NotNull T newElement) {
   }
 
+  @Override
   public final void actionPerformed(final AnActionEvent e) {
     final T result = performElementAddition();
     if (result != null) {
@@ -80,6 +81,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final TypeChooser[] oldChoosers = new TypeChooser[]{null};
     final Type[] aClass = new Type[]{null};
     final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), DomUtil.getFile(parent)) {
+      @Override
       protected void run(Result<StableElement<T>> result) throws Throwable {
         final DomElement parentDomElement = getParentDomElement();
         final T t = (T)getDomCollectionChildDescription().addValue(parentDomElement, getElementType());
@@ -89,6 +91,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
         final SmartPsiElementPointer pointer =
           SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(t.getXmlTag());
         domManager.getTypeChooserManager().registerTypeChooser(aClass[0], new TypeChooser() {
+          @Override
           public Type chooseType(final XmlTag tag) {
             if (tag == pointer.getElement()) {
               return getElementType();
@@ -96,10 +99,12 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
             return oldChoosers[0].chooseType(tag);
           }
 
+          @Override
           public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
             oldChoosers[0].distinguishTag(tag, aClass);
           }
 
+          @Override
           public Type[] getChooserTypes() {
             return oldChoosers[0].getChooserTypes();
           }

@@ -41,6 +41,7 @@ import java.util.List;
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription, AbstractCollectionChildDescription {
   private final Collection<JavaMethod> myGetterMethods;
   private final NotNullFunction<DomInvocationHandler, List<XmlTag>> myTagsGetter = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
+    @Override
     @NotNull
     public List<XmlTag> fun(final DomInvocationHandler handler) {
       XmlTag tag = handler.getXmlTag();
@@ -65,6 +66,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return myTagsGetter;
   }
 
+  @Override
   public DomElement addValue(@NotNull DomElement element) {
     assert element.getGenericInfo().getCollectionChildrenDescriptions().contains(this);
     return addChild(element, getType(), Integer.MAX_VALUE);
@@ -81,24 +83,29 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     }
   }
 
+  @Override
   public DomElement addValue(@NotNull DomElement element, int index) {
     return addChild(element, getType(), index);
   }
 
+  @Override
   public DomElement addValue(@NotNull DomElement parent, Type type) {
     return addValue(parent, type, Integer.MAX_VALUE);
   }
 
+  @Override
   public final DomElement addValue(@NotNull DomElement parent, Type type, int index) {
     return addChild(parent, type, index);
   }
 
+  @Override
   @Nullable
   public final JavaMethod getGetterMethod() {
     final Collection<JavaMethod> methods = myGetterMethods;
     return methods.isEmpty() ? null : methods.iterator().next();
   }
 
+  @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
@@ -109,6 +116,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     if (getterMethod == null) {
       final Collection<DomElement> collection = ModelMergerUtil.getFilteredImplementations(element);
       return ContainerUtil.concat(collection, new Function<DomElement, Collection<? extends DomElement>>() {
+        @Override
         public Collection<? extends DomElement> fun(final DomElement domElement) {
           final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
           assert handler != null : domElement;
@@ -119,12 +127,14 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return (List<? extends DomElement>)getterMethod.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
+  @Override
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     String words = strategy.splitIntoWords(getXmlElementName());
     return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true);
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
@@ -137,10 +147,12 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return elemType instanceof AnnotatedElement ? ((AnnotatedElement)elemType).getAnnotation(annotationClass) : super.getAnnotation(annotationClass);
   }
 
+  @Override
   public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     return DomImplUtil.findSubTags(subTags, handler.createEvaluatedXmlName(getXmlName()), file);
   }
 
+  @Override
   public EvaluatedXmlName createEvaluatedXmlName(final DomInvocationHandler parent, final XmlTag childTag) {
     return parent.createEvaluatedXmlName(getXmlName());
   }

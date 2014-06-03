@@ -43,6 +43,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     myProviders.put(clazz, provider);
   }
 
+  @Override
   @NotNull
   public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
     final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
@@ -147,6 +148,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
     if (ReflectionUtil.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
+        @Override
         @NotNull
         public Object[] getVariants() {
           return new Object[]{"0"};

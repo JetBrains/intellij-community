@@ -25,6 +25,7 @@ public class GetCollectionChildInvocation implements Invocation {
     myDescription = qname;
   }
 
+  @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     return handler.getCollectionChildren(myDescription, myDescription.getTagsGetter());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XHTMLParserDefinition extends XMLParserDefinition {
 
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new XHtmlLexer();
   }
 
+  @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
     return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.XHTML_FILE);
   }

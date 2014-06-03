@@ -146,7 +146,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myQueue.setTrackUiActivity(true);
   }
 
-  void initDockableContentFactory() {
+  public void initDockableContentFactory() {
     if (myContentFactory != null) return;
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this, myDockManager);
@@ -653,7 +653,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return openFileImpl2(wndToOpenIn, file, focusEditor);
   }
 
-  public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(VirtualFile file) {
+  public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
 

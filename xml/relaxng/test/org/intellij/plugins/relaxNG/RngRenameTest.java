@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
  * Date: 22.08.2007
  */
 public class RngRenameTest extends HighlightingTestBase {
+  @Override
   protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
     return createContentFixture(factory);
   }
 
+  @Override
   public String getTestDataPath() {
     return "rename/rng";
   }

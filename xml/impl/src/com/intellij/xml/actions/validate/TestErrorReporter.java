@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,18 @@ public class TestErrorReporter extends ErrorReporter {
     super(handler);
   }
 
+  @Override
   public boolean isStopOnUndeclaredResource() {
     return true;
   }
 
+  @Override
   public boolean filterValidationException(final Exception ex) {
     if (ex instanceof XmlResourceResolver.IgnoredResourceException) throw (XmlResourceResolver.IgnoredResourceException)ex;
     return errors.add(ex.getMessage());
   }
 
+  @Override
   public void processError(SAXParseException ex, ValidateXmlActionHandler.ProblemType warning) {
     errors.add(myHandler.buildMessageString(ex));
   }

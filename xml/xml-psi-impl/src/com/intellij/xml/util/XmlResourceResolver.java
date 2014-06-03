@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   @Nullable
   public PsiFile resolve(@Nullable final String baseSystemId, final String _systemId) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + _systemId + "," + super.toString() + "')");
+      LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + _systemId + "," + toString() + "')");
     }
 
     if (_systemId == null) return null;
@@ -95,6 +95,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
     final PsiFile[] result = new PsiFile[] { null };
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         PsiFile baseFile = null;
         VirtualFile vFile = null;
@@ -213,7 +214,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       if (file != null) {
         final String url = file.getUrl();
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Adding external resource ref:"+systemId+","+url+","+super.toString());
+          LOG.debug("Adding external resource ref:"+systemId+","+url+","+ toString());
         }
         myExternalResourcesMap.put(systemId,url);
       }
@@ -221,6 +222,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return psiFile;
   }
 
+  @Override
   @Nullable
   public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException, IOException {
     String publicId  = xmlResourceIdentifier.getLiteralSystemId() != null ?

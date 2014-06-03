@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
     super(XmlElementType.XML_CONDITIONAL_SECTION);
   }
 
+  @Override
   public boolean isIncluded(PsiFile targetFile) {
     ASTNode child = findChildByType(XmlTokenType.XML_CONDITIONAL_SECTION_START);
 
@@ -72,6 +73,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
     return false;
   }
 
+  @Override
   public PsiElement getBodyStart() {
     ASTNode child = findChildByType(XmlTokenType.XML_MARKUP_START);
     if (child != null) child = child.getTreeNext();

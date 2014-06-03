@@ -104,6 +104,7 @@ public class RngParser {
   static final Key<CachedValue<DPattern>> PATTERN_KEY = Key.create("PATTERN");
 
   public static final DefaultHandler DEFAULT_HANDLER = new DefaultHandler() {
+    @Override
     public void error(SAXParseException e) throws SAXException {
       LOG.info("e.getMessage() = " + e.getMessage() + " [" + e.getSystemId() + "]");
       LOG.info(e);
@@ -116,6 +117,7 @@ public class RngParser {
     final CachedValuesManager mgr = CachedValuesManager.getManager(descriptorFile.getProject());
 
     return mgr.getCachedValue(descriptorFile, PATTERN_KEY, new CachedValueProvider<DPattern>() {
+      @Override
       public Result<DPattern> compute() {
         return Result.create(parsePattern(descriptorFile, eh, false), descriptorFile);
       }
@@ -150,6 +152,7 @@ public class RngParser {
 
     if (file.getFileType() == RncFileType.getInstance()) {
       return new CompactParseable(source, eh) {
+        @Override
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
@@ -158,6 +161,7 @@ public class RngParser {
       };
     } else {
       return new SAXParseable(source, eh) {
+        @Override
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
@@ -204,6 +208,7 @@ public class RngParser {
     CachedValue<Schema> value = descriptorFile.getUserData(SCHEMA_KEY);
     if (value == null) {
       final CachedValueProvider<Schema> provider = new CachedValueProvider<Schema>() {
+        @Override
         public Result<Schema> compute() {
           final InputSource inputSource = makeInputSource(descriptorFile);
 
@@ -246,6 +251,7 @@ public class RngParser {
       myDescriptorFile = descriptorFile;
     }
 
+    @Override
     protected com.thaiopensource.relaxng.parse.Parseable createParseable(XMLReaderCreator xmlReaderCreator, InputSource inputSource, ErrorHandler errorHandler) {
       if (myDescriptorFile.getFileType() == RncFileType.getInstance()) {
         return new com.thaiopensource.relaxng.parse.compact.CompactParseable(inputSource, errorHandler);

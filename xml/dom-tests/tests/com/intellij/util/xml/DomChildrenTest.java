@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,6 +207,7 @@ public class DomChildrenTest extends DomTestCase {
     assertEquals(element, child2.getParent());
 
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
       public void run() {
         child2.undefine();
         assertFalse(child2.isValid());
@@ -409,6 +410,7 @@ public class DomChildrenTest extends DomTestCase {
     final MyElement element = createElement("<a><child/></a>");
     final MyElement child = element.getChild();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         element.undefine();
       }

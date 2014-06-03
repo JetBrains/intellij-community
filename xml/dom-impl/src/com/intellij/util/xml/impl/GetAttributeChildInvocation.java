@@ -25,6 +25,7 @@ public class GetAttributeChildInvocation implements Invocation {
     myDescription = description;
   }
 
+  @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     return handler.getAttributeChild(myDescription).getProxy();
   }

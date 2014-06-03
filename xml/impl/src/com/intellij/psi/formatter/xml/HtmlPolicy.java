@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 
@@ -41,6 +40,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     mySettings = settings;
   }
 
+  @Override
   public boolean indentChildrenOf(final XmlTag parentTag) {
     if (parentTag == null) {
       return true;
@@ -77,6 +77,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return myDocumentModel.getLineNumber(textRange.getEndOffset()) - myDocumentModel.getLineNumber(textRange.getStartOffset());
   }
 
+  @Override
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {
     PsiElement prev = xmlTag.getPrevSibling();
     if (prev == null) return false;
@@ -116,6 +117,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return true;
   }
 
+  @Override
   public boolean removeLineBreakBeforeTag(final XmlTag xmlTag) {
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
   }
@@ -139,14 +141,17 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return splits;
   }
 
+  @Override
   public boolean keepWhiteSpacesInsideTag(final XmlTag tag) {
     return checkName(tag, mySettings.HTML_KEEP_WHITESPACES_INSIDE) || "jsp:attribute".equals(tag.getName());
   }
 
+  @Override
   public WrapType getWrappingTypeForTagEnd(final XmlTag xmlTag) {
     return shouldBeWrapped(xmlTag) ? WrapType.ALWAYS : WrapType.NORMAL;
   }
 
+  @Override
   public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
     if (shouldBeWrapped(tag)) {
       return WrapType.ALWAYS;
@@ -166,8 +171,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   private boolean hasInlineContentOnly(final XmlTag tag) {
     final XmlTag[] tags = tag.getSubTags();
-    for (int i = 0; i < tags.length; i++) {
-      XmlTag xmlTag = tags[i];
+    for (XmlTag xmlTag : tags) {
       if (!isInlineTag(xmlTag)) return false;
       if (!hasInlineContentOnly(xmlTag)) return false;
     }
@@ -183,46 +187,57 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return false;
   }
 
+  @Override
   public boolean isTextElement(XmlTag tag) {
     return isInlineTag(tag);
   }
 
+  @Override
   public int getTextWrap(final XmlTag tag) {
     return mySettings.HTML_TEXT_WRAP;
   }
 
+  @Override
   public int getAttributesWrap() {
     return mySettings.HTML_ATTRIBUTE_WRAP;
   }
 
+  @Override
   public boolean getShouldAlignAttributes() {
     return mySettings.HTML_ALIGN_ATTRIBUTES;
   }
 
+  @Override
   public boolean getShouldAlignText() {
     return mySettings.HTML_ALIGN_TEXT;
   }
 
+  @Override
   public boolean getShouldKeepWhiteSpaces() {
     return mySettings.HTML_KEEP_WHITESPACES;
   }
 
+  @Override
   public boolean getShouldAddSpaceAroundEqualityInAttribute() {
     return mySettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
   }
 
+  @Override
   public boolean getShouldAddSpaceAroundTagName() {
     return mySettings.HTML_SPACE_AFTER_TAG_NAME;
   }
 
+  @Override
   public int getKeepBlankLines() {
     return mySettings.HTML_KEEP_BLANK_LINES;
   }
 
+  @Override
   public boolean getShouldKeepLineBreaks() {
     return mySettings.HTML_KEEP_LINE_BREAKS;
   }
 
+  @Override
   public boolean getShouldKeepLineBreaksInText() {
     return mySettings.HTML_KEEP_LINE_BREAKS_IN_TEXT;
   }
@@ -237,14 +252,17 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE;
   }
 
+  @Override
   public CodeStyleSettings getSettings() {
     return mySettings;
   }
 
+  @Override
   public boolean addSpaceIntoEmptyTag() {
     return mySettings.HTML_SPACE_INSIDE_EMPTY_TAG;
   }
 
+  @Override
   public boolean shouldSaveSpacesBetweenTagAndText() {
     return true;
   }

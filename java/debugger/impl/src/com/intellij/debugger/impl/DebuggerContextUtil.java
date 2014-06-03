@@ -16,6 +16,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +31,8 @@ public class DebuggerContextUtil {
     }
 
     final DebuggerSession session = context.getDebuggerSession();
-    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, context.getSuspendContext(), stackFrame.threadProxy(), stackFrame);
+    SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), stackFrame.threadProxy());
+    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
 
     manager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_REFRESH, null);
   }

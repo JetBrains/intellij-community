@@ -58,6 +58,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     super(ref);
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final ASTNode node = findNameNode();
     if (node == null) return TextRange.from(0, 0);
@@ -71,12 +72,14 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return node.findChildByType(RncTokenTypes.IDENTIFIERS);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
     return results.length == 1 ? results[0].getElement() : null;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final RncGrammar scope = getScope();
@@ -90,13 +93,16 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return ContainerUtil.map2Array(set, ResolveResult.class, this);
   }
 
+  @Override
   public ResolveResult fun(Define rncDefine) {
     final PsiElement element = rncDefine.getPsiElement();
     return element != null ? new PsiElementResolveResult(element) : new ResolveResult() {
+      @Override
       @Nullable
       public PsiElement getElement() {
         return null;
       }
+      @Override
       public boolean isValidResult() {
         return false;
       }
@@ -108,12 +114,14 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return PsiTreeUtil.getParentOfType(myElement, RncGrammar.class, true, PsiFile.class);
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final ASTNode node = findNameNode();
     return node != null ? EscapeUtil.unescapeText(node) : "";
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final ASTNode newNode = RenameUtil.createIdentifierNode(getElement().getManager(), newElementName);
 
@@ -122,10 +130,12 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return getElement();
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final RncGrammar scope = getScope();
@@ -137,16 +147,19 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
     return ContainerUtil.mapNotNull(map.values(), new Function<Set<Define>, Object>() {
+      @Override
       public Object fun(Set<Define> defines) {
         return defines.size() == 0 ? null : defines.iterator().next().getPsiElement();
       }
     }).toArray();
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved pattern reference ''{0}''";
@@ -174,6 +187,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
       return "Create Pattern '" + myReference.getCanonicalText() + "'";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return "Create Pattern";

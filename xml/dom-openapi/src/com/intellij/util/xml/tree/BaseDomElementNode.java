@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,10 +65,12 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     folder = isMarkedType(modelElement.getDomElementType(), FOLDER_NODES_KEY);
   }
 
+  @Override
   public SimpleNode[] getChildren() {
     return doGetChildren(myDomElement);
   }
 
+  @Override
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     if (inputEvent instanceof MouseEvent) {
       inputEvent.consume();
@@ -146,6 +148,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         final XmlElementDescriptor[] childDescriptors = descriptor.getElementsDescriptors(tag);
         if (childDescriptors != null && childDescriptors.length > 1) {
           return new Comparator<AbstractDomElementNode>() {
+            @Override
             public int compare(final AbstractDomElementNode o1, final AbstractDomElementNode o2) {
               return findDescriptor(childDescriptors, o1.getTagName()) - findDescriptor(childDescriptors, o2.getTagName());
             }
@@ -178,11 +181,13 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return consolidated;
   }
 
+  @Override
   @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myDomElement};
   }
 
+  @Override
   protected void doUpdate() {
     if (!myDomElement.isValid()) return;
     final Project project = myDomElement.getManager().getProject();
@@ -236,6 +241,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return true;
   }
 
+  @Override
   public String getNodeName() {
     if (!myDomElement.isValid()) return "";
 
@@ -243,18 +249,22 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return name != null && name.trim().length() > 0 ? name : getPropertyName();
   }
 
+  @Override
   public String getTagName() {
     return myTagName;
   }
 
+  @Override
   public DomElement getDomElement() {
     return myDomElement;
   }
 
+  @Override
   public boolean isAutoExpandNode() {
     return getParent() == null;
   }
 
+  @Override
   public boolean expandOnDoubleClick() {
     return true;
   }

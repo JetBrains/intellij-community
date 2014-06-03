@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     myMappingId = mappingId;
   }
 
+  @Override
   public T generate(final Project project, final Editor editor, final PsiFile file) {
     DomElement parentDomElement = getParentDomElement(project, editor, file);
 
@@ -87,8 +88,10 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor, predefinedVars);
   }
 
+  @Override
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
+  @Override
   @SuppressWarnings({"unchecked"})
   protected void doNavigate(final DomElementNavigationProvider navigateProvider, final DomElement copy) {
     final DomElement element = getElementToNavigate((T)copy);

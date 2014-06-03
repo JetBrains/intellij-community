@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
  */
 public class DomApplicationComponent {
   private final FactoryMap<String,Set<DomFileDescription>> myRootTagName2FileDescription = new FactoryMap<String, Set<DomFileDescription>>() {
+    @Override
     protected Set<DomFileDescription> create(final String key) {
       return new THashSet<DomFileDescription>();
     }
@@ -76,6 +77,7 @@ public class DomApplicationComponent {
   });
   private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
     new ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
+      @Override
       @NotNull
       protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
         return new VisitorDescription(key);

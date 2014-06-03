@@ -46,26 +46,31 @@ class OverridingDefineRenderer extends GutterIconRenderer {
     myMessage = message;
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return AllIcons.Gutter.OverridingMethod;
   }
 
+  @Override
   public boolean isNavigateAction() {
     return true;
   }
 
+  @Override
   @Nullable
   public AnAction getClickAction() {
     return new MyClickAction();
   }
 
+  @Override
   @Nullable
   public String getTooltipText() {
     return myMessage;
   }
 
   private class MyClickAction extends AnAction {
+    @Override
     public void actionPerformed(AnActionEvent e) {
       doClickAction(e, mySet, "Go to overridden define");
     }
@@ -78,6 +83,7 @@ class OverridingDefineRenderer extends GutterIconRenderer {
     } else {
       final Define[] array = set.toArray(new Define[set.size()]);
       NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, new Function<Define, PsiElement>() {
+        @Override
         public PsiElement fun(Define define) {
           return define.getPsiElement();
         }

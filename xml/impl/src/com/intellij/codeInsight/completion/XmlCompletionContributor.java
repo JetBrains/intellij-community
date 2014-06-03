@@ -56,6 +56,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
   private static final InsertHandlerDecorator<LookupElement> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
+    @Override
     public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
       final char completionChar = context.getCompletionChar();
       if (completionChar == '\'' || completionChar == '\"') {
@@ -95,6 +96,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                final Set<String> usedWords = new THashSet<String>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
                result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+                 @Override
                  public void consume(CompletionResult r) {
                    if (r.getLookupElement().getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
                      addWordVariants.set(false);
@@ -119,6 +121,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     return node != null && node.getElementType() == XmlTokenType.XML_NAME;
   }
 
+  @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
     if (result.isStopped()) {
@@ -195,6 +198,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     return super.advertise(parameters);
   }
 
+  @Override
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final int offset = context.getStartOffset();
     final PsiFile file = context.getFile();

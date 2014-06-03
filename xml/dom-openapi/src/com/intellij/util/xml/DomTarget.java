@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,19 +81,23 @@ public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, P
     return new DomTarget(element, tag, XmlTagUtil.getTrimmedValueRange(tag), nameElement);
   }
 
+  @Override
   public TextRange getNameIdentifierRange() {
     return myRange;
   }
 
+  @Override
   public boolean isWritable() {
     return getNavigationElement().isWritable();
   }
 
+  @Override
   public Object setName(@NotNull String newName) {
     myNameDomElement.setStringValue(newName);
     return myDomElement;
   }
 
+  @Override
   @Nullable
   public String getName() {
     return myNameDomElement.getStringValue();

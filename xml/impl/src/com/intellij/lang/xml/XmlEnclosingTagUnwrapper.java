@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,21 +30,26 @@ import java.util.List;
 import java.util.Collections;
 
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
+  @Override
   public boolean isApplicableTo(PsiElement e) {
     return true;
   }
 
+  @Override
   public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
   }
 
+  @Override
   public String getDescription(PsiElement e) {
     return XmlBundle.message("unwrap.enclosing.tag.name.action.name", ((XmlTag)e).getName());
   }
 
+  @Override
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
     return e;
   }
 
+  @Override
   public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
     final TextRange range = element.getTextRange();
     final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());

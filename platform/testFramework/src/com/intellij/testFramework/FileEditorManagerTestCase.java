@@ -69,7 +69,10 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   }
 
   protected VirtualFile getFile(String path) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + path);
+    String fullPath = getTestDataPath() + path;
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
+    assertNotNull("Can't find " + fullPath, file);
+    return file;
   }
 
   protected void openFiles(String s) throws IOException, JDOMException, InterruptedException, ExecutionException {

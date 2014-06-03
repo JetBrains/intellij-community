@@ -102,6 +102,7 @@ public class MessageViewHelper {
     final VirtualFile file1 = file;
     ApplicationManager.getApplication().invokeLater(
       new Runnable() {
+        @Override
         public void run() {
           myErrorsView.addMessage(
             warning ? MessageCategory.WARNING : MessageCategory.ERROR,
@@ -137,6 +138,7 @@ public class MessageViewHelper {
   private void openMessageViewImpl() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         MessageView messageView = MessageView.SERVICE.getInstance(myProject);
         Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
@@ -155,9 +157,11 @@ public class MessageViewHelper {
   private static class MyProcessController implements NewErrorTreeViewPanel.ProcessController {
     public static final MyProcessController INSTANCE = new MyProcessController();
 
+    @Override
     public void stopProcess() {
     }
 
+    @Override
     public boolean isProcessStopped() {
       return true;
     }
@@ -175,6 +179,7 @@ public class MessageViewHelper {
       myErrorsView = errorsView;
     }
 
+    @Override
     public void contentRemoved(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (myErrorsView.canControlProcess()) {
@@ -188,6 +193,7 @@ public class MessageViewHelper {
       }
     }
 
+    @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
@@ -215,6 +221,7 @@ public class MessageViewHelper {
       myKey = key;
     }
 
+    @Override
     public void contentRemoved(ContentManagerEvent event) {
       final Content eventContent = event.getContent();
       if (!eventContent.equals(myContent)) {

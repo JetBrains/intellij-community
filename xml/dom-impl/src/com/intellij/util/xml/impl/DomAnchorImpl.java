@@ -140,9 +140,11 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     return t == null ? null : t.getXmlElement();
   }
 
+  @Override
   @Nullable
   public abstract T retrieveDomElement();
 
+  @Override
   @NotNull
   public abstract XmlFile getContainingFile();
 
@@ -184,6 +186,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return result;
     }
 
+    @Override
     public T retrieveDomElement() {
       final DomElement parent = myParent.retrieveDomElement();
       if (parent == null) return null;
@@ -203,6 +206,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return null;
     }
 
+    @Override
     @NotNull
     public XmlFile getContainingFile() {
       return myParent.getContainingFile();
@@ -243,6 +247,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return result;
     }
 
+    @Override
     public T retrieveDomElement() {
       final DomElement parent = myParent.retrieveDomElement();
       if (parent == null) return null;
@@ -254,6 +259,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return (T)list.get(myIndex);
     }
 
+    @Override
     @NotNull
     public XmlFile getContainingFile() {
       return myParent.getContainingFile();
@@ -290,11 +296,13 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return result;
     }
 
+    @Override
     public T retrieveDomElement() {
       final DomFileElement<T> fileElement = DomManager.getDomManager(myFile.getProject()).getFileElement(myFile, myClass);
       return fileElement == null ? null : fileElement.getRootElement();
     }
 
+    @Override
     @NotNull
     public XmlFile getContainingFile() {
       return myFile;

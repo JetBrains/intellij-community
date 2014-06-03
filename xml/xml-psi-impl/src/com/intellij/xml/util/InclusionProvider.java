@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     return CachedValuesManager.getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
   }
 
+  @Override
   public Result<PsiElement[]> compute() {
     PsiElement[] result = RecursionManager.doPreventingRecursion(myXincludeTag, true, new NullableComputable<PsiElement[]>() {
       @Override

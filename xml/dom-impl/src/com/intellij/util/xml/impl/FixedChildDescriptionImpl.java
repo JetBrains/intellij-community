@@ -48,6 +48,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     myGetterMethods = getterMethods;
   }
 
+  @Override
   public JavaMethod getGetterMethod(int index) {
     if (myGetterMethods.length == 0) return null;
 
@@ -55,6 +56,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return methods == null || methods.isEmpty() ? null : methods.iterator().next();
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
     final JavaMethod method = getGetterMethod(index);
@@ -72,10 +74,12 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return super.getAnnotation(annotationClass);
   }
 
+  @Override
   public int getCount() {
     return myCount;
   }
 
+  @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
     final List<DomElement> result = new SmartList<DomElement>();
@@ -95,11 +99,13 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return result;
   }
 
+  @Override
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
   }
 
+  @Override
   @Nullable
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return getAnnotation(0, annotationClass);

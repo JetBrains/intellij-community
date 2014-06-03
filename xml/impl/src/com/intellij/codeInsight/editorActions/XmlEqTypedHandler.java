@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
-  private List<Caret> caretsForInsertingQuotes = ContainerUtil.newSmartList();
+  private final List<Caret> caretsForInsertingQuotes = ContainerUtil.newSmartList();
 
   @Override
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {

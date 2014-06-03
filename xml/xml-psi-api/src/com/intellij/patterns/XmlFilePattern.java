@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
 
   public Self withRootTag(final ElementPattern<XmlTag> rootTag) {
     return with(new PatternCondition<XmlFile>("withRootTag") {
+      @Override
       public boolean accepts(@NotNull final XmlFile xmlFile, final ProcessingContext context) {
         XmlDocument document = xmlFile.getDocument();
         return document != null && rootTag.getCondition().accepts(document.getRootTag(), context);

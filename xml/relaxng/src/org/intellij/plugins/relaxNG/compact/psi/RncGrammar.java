@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 13.08.2007
  */
 public interface RncGrammar extends RncElement, Grammar<RncPattern, RncElement> {
+  @Override
   @Nullable
   RncPattern getStart();
 }

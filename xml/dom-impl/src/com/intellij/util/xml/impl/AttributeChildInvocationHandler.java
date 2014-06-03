@@ -48,17 +48,21 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     super(description.getType(), strategy, attributeName, description, manager, false, stub);
   }
 
+  @Override
   public void acceptChildren(DomElementVisitor visitor) {
   }
 
+  @Override
   protected final XmlTag setEmptyXmlTag() {
     return ensureTagExists();
   }
 
+  @Override
   protected boolean isAttribute() {
     return true;
   }
 
+  @Override
   protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parent) {
     if (!parent.isValid()) return null;
 
@@ -80,6 +84,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     return tag.getNamespace().equals(ns) ? null : ns;
   }
 
+  @Override
   public final XmlAttribute ensureXmlElementExists() {
     XmlAttribute attribute = (XmlAttribute)getXmlElement();
     if (attribute != null) return attribute;
@@ -103,19 +108,23 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     }
   }
 
+  @Override
   public <T extends DomElement> T createStableCopy() {
     final DomElement parentCopy = getParent().createStableCopy();
     return getManager().createStableValue(new Factory<T>() {
+      @Override
       public T create() {
         return parentCopy.isValid() ? (T) getChildDescription().getValues(parentCopy).get(0) : null;
       }
     });
   }
 
+  @Override
   public final void undefineInternal() {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
       getManager().runChange(new Runnable() {
+        @Override
         public void run() {
           try {
             setXmlElement(null);
@@ -130,18 +139,21 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     }
   }
 
+  @Override
   @Nullable
   public final XmlTag getXmlTag() {
     final DomInvocationHandler handler = getParentHandler();
     return handler == null ? null : handler.getXmlTag();
   }
 
+  @Override
   public final XmlTag ensureTagExists() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
     return parent.ensureTagExists();
   }
 
+  @Override
   @Nullable
   protected String getValue() {
     if (myStub != null) {
@@ -157,10 +169,12 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     return null;
   }
 
+  @Override
   public void copyFrom(final DomElement other) {
     setValue(((GenericAttributeValue) other).getStringValue());
   }
 
+  @Override
   protected void setValue(@Nullable final String value) {
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
@@ -170,6 +184,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     if (Comparing.equal(oldValue, newValue, true)) return;
 
     getManager().runChange(new Runnable() {
+      @Override
       public void run() {
         try {
           XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);

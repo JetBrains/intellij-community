@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.List;
  */
 public abstract class WrappingConverter extends Converter<Object> {
 
+  @Override
   public Object fromString(@Nullable @NonNls String s, final ConvertContext context) {
     final List<Converter> converters = getConverters((GenericDomValue)context.getInvocationElement());
     if (converters.isEmpty()) return s;
@@ -42,6 +43,7 @@ public abstract class WrappingConverter extends Converter<Object> {
     return null;
   }
 
+  @Override
   public String toString(@Nullable Object t, final ConvertContext context) {
     final List<Converter> converters = getConverters((GenericDomValue)context.getInvocationElement());
     if (converters.isEmpty()) return String.valueOf(t);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,34 +51,42 @@ public class IncludedXmlText extends IncludedXmlElement<XmlText> implements XmlT
     return getOriginal().getText();
   }
 
+  @Override
   public String getValue() {
     return getOriginal().getValue();
   }
 
+  @Override
   public void setValue(String s) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Can't modify included elements");
   }
 
+  @Override
   public XmlElement insertAtOffset(XmlElement element, int displayOffset) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Can't modify included elements");
   }
 
+  @Override
   public void insertText(String text, int displayOffset) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Can't modify included elements");
   }
 
+  @Override
   public void removeText(int displayStart, int displayEnd) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Can't modify included elements");
   }
 
+  @Override
   public int physicalToDisplay(int offset) {
     return getOriginal().physicalToDisplay(offset);
   }
 
+  @Override
   public int displayToPhysical(int offset) {
     return getOriginal().displayToPhysical(offset);
   }
 
+  @Override
   @Nullable
   public XmlText split(int displayIndex) {
     throw new UnsupportedOperationException("Can't modify included elements");

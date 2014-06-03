@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     ourStyleProvider = documentationProvider;
   }
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
@@ -60,6 +61,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement,XmlTag.class,false));
 
@@ -148,6 +150,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return attributeDescriptor;
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false);
     String result = generateDocForHtml(element, false, tag, originalElement);
@@ -222,15 +225,15 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
 
     char dtdId = descriptor.getDtd();
-    boolean deprecated = dtdId == HtmlTagDescriptor.LOOSE_DTD;
+    boolean deprecated = dtdId == EntityDescriptor.LOOSE_DTD;
     if (deprecated) {
       buf.append(XmlBundle.message("xml.javadoc.deprecated.message", deprecated)).append(BR);
     }
 
-    if (dtdId == HtmlTagDescriptor.LOOSE_DTD) {
+    if (dtdId == EntityDescriptor.LOOSE_DTD) {
       buf.append(XmlBundle.message("xml.javadoc.defined.in.loose.dtd.message"));
     }
-    else if (dtdId == HtmlTagDescriptor.FRAME_DTD) {
+    else if (dtdId == EntityDescriptor.FRAME_DTD) {
       buf.append(XmlBundle.message("xml.javadoc.defined.in.frameset.dtd.message"));
     }
     else {
@@ -248,6 +251,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return buf.toString();
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     PsiElement result = createNavigationElementHTML(psiManager, object.toString(),element);
 
@@ -263,6 +267,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     PsiElement result = createNavigationElementHTML(psiManager, link, context);
 

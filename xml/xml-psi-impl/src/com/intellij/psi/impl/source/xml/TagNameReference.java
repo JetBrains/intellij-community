@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class TagNameReference implements PsiReference {
     myNameElement = nameElement;
   }
 
+  @Override
   public PsiElement getElement() {
     PsiElement element = myNameElement.getPsi();
     final PsiElement parent = element.getParent();
@@ -58,6 +59,7 @@ public class TagNameReference implements PsiReference {
     return (XmlTag)element;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final ASTNode nameElement = getNameElement();
     if (nameElement == null){
@@ -89,6 +91,7 @@ public class TagNameReference implements PsiReference {
     return myNameElement;
   }
 
+  @Override
   public PsiElement resolve() {
     final XmlTag tag = getTagElement();
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor():null;
@@ -104,11 +107,13 @@ public class TagNameReference implements PsiReference {
     return null;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return getNameElement().getText();
   }
 
+  @Override
   @Nullable
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
@@ -136,6 +141,7 @@ public class TagNameReference implements PsiReference {
     return newElementName;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiMetaData metaData = null;
 
@@ -162,15 +168,18 @@ public class TagNameReference implements PsiReference {
     throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData + "," + tag + "," + (tag != null ? tag.getDescriptor() : "unknown descriptor"));
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return getElement().getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Override
   @NotNull
   public Object[] getVariants(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
       public void run() {
         for (int i = 0; i < ITERATIONS; i++) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run() {
               final DomFileElementImpl<DomElement> element = getDomManager().getFileElement(file);
               assertNotNull(element);
@@ -197,6 +198,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
         final Random random = new Random();
         for (int i = 0; i < ITERATIONS; i++) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run() {
               int offset = random.nextInt(file.getTextLength() - 10);
               XmlTag tag = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlTag.class, false);

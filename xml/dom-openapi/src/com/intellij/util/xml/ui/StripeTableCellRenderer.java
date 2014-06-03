@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class StripeTableCellRenderer implements TableCellRenderer {
                      Math.max((int)(color.getBlue() *FACTOR), 0));
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     final JComponent component = (JComponent)getRenderer(row, column).getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     if (row % 2 != 0 && !isSelected) {

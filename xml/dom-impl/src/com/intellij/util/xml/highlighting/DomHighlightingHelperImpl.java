@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
   private final DomApplicationComponent myDomApplicationComponent = DomApplicationComponent.getInstance();
 
+  @Override
   public void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass) {
     final DomElementsAnnotator annotator = myDomApplicationComponent.getAnnotator(rootClass);
     if (annotator != null) {
@@ -63,6 +64,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     }
   }
 
+  @Override
   @NotNull
   public List<DomElementProblemDescriptor> checkRequired(final DomElement element, final DomElementAnnotationHolder holder) {
     final Required required = element.getAnnotation(Required.class);
@@ -105,6 +107,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     return Collections.emptyList();
   }
 
+  @Override
   @NotNull
   public List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, final DomElementAnnotationHolder holder) {
     if (StringUtil.isEmpty(element.getStringValue())) {
@@ -156,6 +159,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
            converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
   }
 
+  @Override
   @NotNull
   public List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, final DomElementAnnotationHolder holder) {
     final String elementName = ElementPresentationManager.getElementName(element);
@@ -243,33 +247,40 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       parentTag = _parentTag;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return XmlBundle.message("insert.required.tag.fix", tagName);
     }
 
+    @Override
     @NotNull
     public String getText() {
       return getName();
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
       return true;
     }
 
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
       doFix();
     }
 
+    @Override
     public boolean startInWriteAction() {
       return true;
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       doFix();
     }

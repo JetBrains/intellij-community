@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,14 +108,17 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return null;
   }
 
+  @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return myRange;
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final PsiElement psiElement = ResolveCache
@@ -216,6 +219,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
       URLReference.processWsdlSchemas(
         document.getRootTag(),
         new Processor<XmlTag>() {
+          @Override
           public boolean process(final XmlTag xmlTag) {
             if (namespace.equals(xmlTag.getAttributeValue(TARGET_NAMESPACE))) {
               descrs[0] = (XmlNSDescriptor)xmlTag.getMetaData();
@@ -255,6 +259,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return namespaceByPrefix;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     final String text = myElement.getText();
@@ -265,6 +270,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return name;
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final String canonicalText = getCanonicalText();
 
@@ -274,14 +280,17 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return element;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return myElement.getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final XmlTag tag = PsiTreeUtil.getContextOfType(myElement, XmlTag.class, true);
@@ -356,19 +365,21 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     );
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
-    static MyResolver INSTANCE = new MyResolver();
+    static final MyResolver INSTANCE = new MyResolver();
+    @Override
     public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
       return ((TypeOrElementOrAttributeReference)ref).resolveInner();
     }
   }
 
   private static class CompletionProcessor implements PsiElementProcessor<XmlTag> {
-    List<String> myElements = new ArrayList<String>(1);
+    final List<String> myElements = new ArrayList<String>(1);
     String namespace;
     final XmlTag tag;
     private final String prefix;
@@ -378,6 +389,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
       this.prefix = prefix;
     }
 
+    @Override
     public boolean execute(@NotNull final XmlTag element) {
       String name = element.getAttributeValue(SchemaReferencesProvider.NAME_ATTR_NAME);
       final String prefixByNamespace = tag.getPrefixByNamespace(namespace);

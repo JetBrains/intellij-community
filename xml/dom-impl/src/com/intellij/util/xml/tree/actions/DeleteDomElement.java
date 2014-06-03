@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     super(treeView);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode selectedNode = treeView.getTree().getSelectedNode();
 
@@ -59,6 +60,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
                                                   Messages.getQuestionIcon());
       if (ret == Messages.OK) {
       new WriteCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)) {
+        @Override
         protected void run(final Result result) throws Throwable {
           domElement.undefine();
         }
@@ -67,6 +69,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e, DomModelTreeView treeView) {
     final SimpleNode selectedNode = treeView.getTree().getSelectedNode();
 

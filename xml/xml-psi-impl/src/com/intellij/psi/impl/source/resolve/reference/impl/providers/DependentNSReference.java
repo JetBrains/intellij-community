@@ -40,6 +40,7 @@ public class DependentNSReference extends BasicAttributeValueReference {
     myForceFetchResultValid = valid;
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final String canonicalText = getCanonicalText();
@@ -48,11 +49,13 @@ public class DependentNSReference extends BasicAttributeValueReference {
     return myReference.resolve();
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }

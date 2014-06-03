@@ -26,6 +26,7 @@ import org.intellij.plugins.testUtil.CopyFile;
 @CopyFile("*.rnc")
 public class RncIndexHighlightingTest extends AbstractIndexTest {
 
+  @Override
   public String getTestDataPath() {
     return "highlighting/rnc";
   }

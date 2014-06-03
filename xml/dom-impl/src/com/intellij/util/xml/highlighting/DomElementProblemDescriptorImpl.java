@@ -92,26 +92,31 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     myHighlightType = highlightType;
   }
 
+  @Override
   @NotNull
   public DomElement getDomElement() {
     return myDomElement;
   }
 
+  @Override
   @NotNull
   public HighlightSeverity getHighlightSeverity() {
     return mySeverity;
   }
 
+  @Override
   @NotNull
   public String getDescriptionTemplate() {
     return myMessage == null ? "" : myMessage;
   }
 
+  @Override
   @NotNull
   public LocalQuickFix[] getFixes() {
     return myFixes;
   }
 
+  @Override
   @NotNull
   public final List<Annotation> getAnnotations() {
     if (myAnnotations == null) {
@@ -120,6 +125,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return myAnnotations;
   }
 
+  @Override
   public void highlightWholeElement() {
     final PsiElement psiElement = getPsiElement();
     if (psiElement instanceof XmlAttributeValue) {
@@ -230,6 +236,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return null;
   }
 
+  @Override
   @Nullable
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;

@@ -133,8 +133,9 @@ public class IdeaDriver {
                 length > 0 ? length : DEFAULT_LINE_LENGTH, 
                 indent > 0 ? indent : DEFAULT_INDENT)
         {
+          @Override
           public Stream open(String sourceUri, String encoding) throws IOException {
-            final String s = super.reference(null, sourceUri);
+            final String s = reference(null, sourceUri);
             final File file = new File(outputFile.getParentFile(), s);
             if (file.exists()) {
               final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";

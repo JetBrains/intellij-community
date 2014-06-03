@@ -45,6 +45,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     mySettings.addPropertyChangeListener(ConvertSchemaSettingsImpl.OUTPUT_PATH, this);
 
     myAdvancedAction = new AbstractAction("Advanced...") {
+      @Override
       public void actionPerformed(ActionEvent e) {
         mySettings.showAdvancedSettings();
       }
@@ -69,6 +70,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     return mySettings.getPreferredFocusedComponent();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return mySettings.getRoot();
@@ -78,6 +80,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
     return mySettings;
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (ConvertSchemaSettingsImpl.OUTPUT_TYPE.equals(evt.getPropertyName())) {
       myAdvancedAction.setEnabled(mySettings.hasAdvancedSettings());

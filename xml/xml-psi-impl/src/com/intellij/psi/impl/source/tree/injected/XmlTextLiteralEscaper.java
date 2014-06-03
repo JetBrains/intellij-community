@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
     super(xmlText);
   }
 
+  @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     ProperTextRange.assertProperRange(rangeInsideHost);
     int startInDecoded = myHost.physicalToDisplay(rangeInsideHost.getStartOffset());
@@ -37,6 +38,7 @@ public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
     return true;
   }
 
+  @Override
   public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     final int rangeInsideHostStartOffset = rangeInsideHost.getStartOffset();
     int displayStart = myHost.physicalToDisplay(rangeInsideHostStartOffset);
@@ -48,11 +50,13 @@ public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
     return i;
   }
 
+  @Override
   @NotNull
   public TextRange getRelevantTextRange() {
     return myHost.getCDATAInterior();
   }
 
+  @Override
   public boolean isOneLine() {
     return false;
   }

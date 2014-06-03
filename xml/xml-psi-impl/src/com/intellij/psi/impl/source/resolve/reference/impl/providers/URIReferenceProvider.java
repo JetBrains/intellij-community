@@ -38,6 +38,7 @@ import java.util.StringTokenizer;
 public class URIReferenceProvider extends PsiReferenceProvider {
 
   public static final ElementFilter ELEMENT_FILTER = new ElementFilter() {
+    @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       final PsiElement parent = context.getParent();
       if (parent instanceof XmlAttribute) {
@@ -47,6 +48,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return false;
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return true;
     }
@@ -54,6 +56,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
   @NonNls
   private static final String NAMESPACE_ATTR_NAME = "namespace";
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final String text = element.getText();

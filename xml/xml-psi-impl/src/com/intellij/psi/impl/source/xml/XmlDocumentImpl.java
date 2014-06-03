@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     super(type);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlDocument(this);
@@ -91,6 +92,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
@@ -105,6 +107,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
   }
 
+  @Override
   public XmlProlog getProlog() {
     XmlProlog prolog = myProlog;
 
@@ -121,6 +124,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return myProlog;
   }
 
+  @Override
   public XmlTag getRootTag() {
     XmlTag rootTag = myRootTag;
 
@@ -137,6 +141,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return myRootTag;
   }
 
+  @Override
   @SuppressWarnings("ConstantConditions")
   public XmlNSDescriptor getRootTagNSDescriptor() {
     XmlTag rootTag = getRootTag();
@@ -146,6 +151,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
   private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
 
+  @Override
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
     myDefaultDescriptorsCacheNotStrict.clear();
@@ -154,6 +160,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     super.clearCaches();
   }
 
+  @Override
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
     long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
     if (myExtResourcesModCount != curExtResourcesModCount) {
@@ -173,6 +180,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
     if (cachedValue == null) {
       defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
+        @Override
         public Result<XmlNSDescriptor> compute() {
           final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
@@ -339,6 +347,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descriptor;
   }
 
+  @Override
   public CompositePsiElement clone() {
     HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
       myDefaultDescriptorsCacheStrict
@@ -351,6 +360,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return copy;
   }
 
+  @Override
   public PsiElement copy() {
     HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
       myDefaultDescriptorsCacheStrict
@@ -383,6 +393,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
   }
@@ -418,12 +429,14 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
   }
 
+  @Override
   public TreeElement addInternal(final TreeElement first, final ASTNode last, final ASTNode anchor, final Boolean before) {
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final TreeElement[] holder = new TreeElement[1];
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
+        @Override
         public PomModelEvent runInner() {
           holder[0] = XmlDocumentImpl.super.addInternal(first, last, anchor, before);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
@@ -434,11 +447,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return holder[0];
   }
 
+  @Override
   public void deleteChildInternal(@NotNull final ASTNode child) {
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
+        @Override
         public PomModelEvent runInner() {
           XmlDocumentImpl.super.deleteChildInternal(child);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
@@ -448,11 +463,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     catch(IncorrectOperationException ignored){}
   }
 
+  @Override
   public void replaceChildInternal(@NotNull final ASTNode child, @NotNull final TreeElement newElement) {
     final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
+        @Override
         public PomModelEvent runInner() {
           XmlDocumentImpl.super.replaceChildInternal(child, newElement);
           return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);

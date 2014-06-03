@@ -42,6 +42,7 @@ abstract class CommonAnnotationHolder<C> {
       myHolder = holder;
     }
 
+    @Override
     public Annotation createAnnotation(DomElement element, @NotNull HighlightSeverity severity, String message) {
       final Annotation annotation = myHolder.createAnnotation(element, severity, message);
       annotation.setTooltip(message);  // no tooltip by default??
@@ -56,6 +57,7 @@ abstract class CommonAnnotationHolder<C> {
       myHolder = holder;
     }
 
+    @Override
     public Annotation createAnnotation(T element, @NotNull HighlightSeverity severity, String message) {
       if (severity == HighlightSeverity.ERROR) {
         return myHolder.createErrorAnnotation(element, message);

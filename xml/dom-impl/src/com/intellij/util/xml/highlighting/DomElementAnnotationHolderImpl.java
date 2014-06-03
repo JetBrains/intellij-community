@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,13 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return myOnTheFly;
   }
 
+  @Override
   @NotNull
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, @Nullable String message, LocalQuickFix... fixes) {
     return createProblem(domElement, HighlightSeverity.ERROR, message, fixes);
   }
 
+  @Override
   @NotNull
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                                    DomCollectionChildDescription childDescription,
@@ -61,11 +63,13 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, childDescription));
   }
 
+  @Override
   @NotNull
   public final DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message) {
     return createProblem(domElement, highlightType, message, LocalQuickFix.EMPTY_ARRAY);
   }
 
+  @Override
   public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    final String message,
@@ -73,6 +77,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return createProblem(domElement, highlightType, message, null, fixes);
   }
 
+  @Override
   public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    final String message,
@@ -81,6 +86,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, textRange, null, fixes));
   }
 
+  @Override
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                                    ProblemHighlightType highlightType,
                                                    String message,
@@ -89,11 +95,13 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return addProblem(new DomElementProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, textRange, highlightType, fixes));
   }
 
+  @Override
   @NotNull
   public DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference) {
     return addProblem(new DomElementResolveProblemDescriptorImpl(element, reference, getQuickFixes(element, reference)));
   }
 
+  @Override
   @NotNull
   public Annotation createAnnotation(@NotNull DomElement element, HighlightSeverity severity, @Nullable String message) {
     final XmlElement xmlElement = element.getXmlElement();
@@ -110,6 +118,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return myAnnotations;
   }
 
+  @Override
   public int getSize() {
     return size();
   }

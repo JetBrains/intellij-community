@@ -35,6 +35,7 @@ import java.util.Map;
  * Date: 04.08.2007
  */
 public class RncHighlighter extends SyntaxHighlighterBase {
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new CompactSyntaxLexerAdapter();
@@ -69,6 +70,7 @@ public class RncHighlighter extends SyntaxHighlighterBase {
     ourMap1.put(RncTokenTypes.ILLEGAL_CHAR, HighlighterColors.BAD_CHARACTER);
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(ourMap1.get(tokenType));

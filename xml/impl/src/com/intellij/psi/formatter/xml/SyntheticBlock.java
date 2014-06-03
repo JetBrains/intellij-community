@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,19 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     myChildIndent = childIndent;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return calculateTextRange(mySubBlocks);
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     return mySubBlocks;
   }
 
+  @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ReadOnlyBlock || child2 instanceof ReadOnlyBlock) {
       return Spacing.getReadOnlySpacing();
@@ -213,6 +216,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       ;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isOuterLanguageBlock()) return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
@@ -234,6 +238,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     return false;
   }
 
+  @Override
   public boolean isIncomplete() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }

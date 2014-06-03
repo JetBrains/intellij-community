@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,10 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
     if (domElement == null) return;
 
     DomElementAnnotationsManager.getInstance(domElement.getManager().getProject()).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
+      @Override
       public void highlightingFinished(@NotNull final DomFileElement element) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (getComponent().isShowing() && element.isValid()) {
               updateHighlighting();
@@ -79,6 +81,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
         if (description instanceof DomFixedChildDescription && DomUtil.isGenericValueType(description.getType())) {
           if ((description.getValues(domElement)).size() == 1) {
             final GenericDomValue element = domElement.getManager().createStableValue(new Factory<GenericDomValue>() {
+              @Override
               public GenericDomValue create() {
                 return domElement.isValid() ? (GenericDomValue)description.getValues(domElement).get(0) : null;
               }
