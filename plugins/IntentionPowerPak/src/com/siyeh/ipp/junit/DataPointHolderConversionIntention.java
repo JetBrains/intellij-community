@@ -92,24 +92,17 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
     final PsiMethod method =
       elementFactory.createMethod(codeStyleManager.variableNameToPropertyName(field.getName(), VariableKind.STATIC_FIELD), field.getType());
     PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      body = elementFactory.createCodeBlock();
-      method.add(body);
-    }
+    assert body != null;
 
-    if (!(field.getType() instanceof PsiPrimitiveType) || fieldInitializer != null) {
-      final PsiStatement methodCode = elementFactory
-        .createStatementFromText(PsiKeyword.RETURN + " " + (fieldInitializer == null ? PsiKeyword.NULL : fieldInitializer.getText()) + ";",
-                                 null);
-      body.add(methodCode);
-    }
+    final PsiStatement methodCode = elementFactory.createStatementFromText(PsiKeyword.RETURN + " " + fieldInitializer.getText() + ";", null);
+    body.add(methodCode);
     return method;
   }
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     final Pair<PsiMember, PsiAnnotation> dataPointsHolder = extractDataPointsHolder(element);
-    if (dataPointsHolder != null && isConvertibleIfMethod(dataPointsHolder.getFirst())) {
+    if (dataPointsHolder != null && isConvertible(dataPointsHolder.getFirst())) {
       final String replaceType = dataPointsHolder.getFirst() instanceof PsiMethod ? "field" : "method";
       final String annotation = StringUtil.getShortName(dataPointsHolder.getSecond().getQualifiedName());
       setText(String.format(REPLACE_BY_TEMPLATE, annotation, replaceType));
@@ -131,11 +124,11 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
     return annotation == null ? null : Pair.create(holder, annotation);
   }
 
-  private static boolean isConvertibleIfMethod(@NotNull final PsiMember maybeMethod) {
-    if (!(maybeMethod instanceof PsiMethod)) {
-      return true;
+  private static boolean isConvertible(@NotNull final PsiMember member) {
+    if (!(member instanceof PsiMethod)) {
+      return ((PsiField)member).getInitializer() != null;
     }
-    final PsiMethod method = (PsiMethod)maybeMethod;
+    final PsiMethod method = (PsiMethod)member;
     final PsiType returnType = method.getReturnType();
     if (returnType == null || returnType.equals(PsiType.VOID) || method.getParameterList().getParametersCount() != 0) {
       return false;
