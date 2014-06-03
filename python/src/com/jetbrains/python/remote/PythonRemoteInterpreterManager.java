@@ -91,7 +91,7 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
                                                                     @Nullable Component ownerComponent,
                                                                     @NotNull Sdk sdk,
-                                                                    String path);
+                                                                    String path) throws ExecutionException;
 
   public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkCredentials data, String path);
 
@@ -169,6 +169,8 @@ public abstract class PythonRemoteInterpreterManager {
 
   @Nullable
   public abstract RemoteCredentials getVagrantRemoteCredentials(VagrantBasedCredentialsHolder data) throws IOException;
+
+  public abstract boolean checkVagrantStatus(VagrantBasedCredentialsHolder data, boolean runIfDown);
 
   public abstract void checkVagrantStatus(VagrantBasedCredentialsHolder data);
 

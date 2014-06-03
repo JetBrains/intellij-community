@@ -21,6 +21,9 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.DataManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -551,7 +554,10 @@ public class PythonSdkType extends SdkType {
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
-                if (!isInvalid(sdk)) {
+                if (isRemote(sdk)) {
+                  notifyRemoteSdkSkeletonsFail(e);
+                }
+                else if (!isInvalid(sdk)) {
                   LOG.error(e);
                 }
               }
@@ -561,6 +567,23 @@ public class PythonSdkType extends SdkType {
       });
     }
     return sdkPathsUpdated;
+  }
+
+  public static void notifyRemoteSdkSkeletonsFail(InvalidSdkException e) {
+    Notifications.Bus.notify(
+      new Notification(
+        SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter", e.getMessage(),
+        NotificationType.WARNING,
+        null
+        //TODO: implement launch vagrant and restart skeleton generation
+        //new NotificationListener() {
+        //  @Override
+        //  public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        //
+        //  }
+        //}
+      )
+    );
   }
 
   /**
@@ -595,7 +618,8 @@ public class PythonSdkType extends SdkType {
           addSdkRoot(sdkModificator, path);
         }
       }
-    } else {
+    }
+    else {
       addRemoteLibrariesRoot(sdkModificator, sdkHome);
     }
 

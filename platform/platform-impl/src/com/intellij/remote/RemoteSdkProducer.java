@@ -15,14 +15,29 @@
  */
 package com.intellij.remote;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.util.Consumer;
 
 /**
  * @author traff
  */
 public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
+  /**
+   * Synchronously returns remote sdk credentials
+   * @return
+   * @throws InterruptedException
+   * @deprecated
+   */
   T getRemoteSdkCredentials() throws InterruptedException;
-  
+
+  T getRemoteSdkCredentials(boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
+
+  void produceRemoteSdkCredentials(boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
+
+  /**
+   * @param remoteSdkCredentialsConsumer
+   * @deprecated
+   */
   void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
 
   Object getRemoteSdkDataKey();
