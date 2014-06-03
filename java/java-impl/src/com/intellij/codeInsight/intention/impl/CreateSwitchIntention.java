@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class CreateSwitchIntention extends PsiElementBaseIntentionAction {
+public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
   public static final String TEXT = "Create switch statement";
 
   @Override
@@ -60,9 +61,6 @@ public class CreateSwitchIntention extends PsiElementBaseIntentionAction {
   private static PsiExpressionStatement resolveExpressionStatement(final PsiElement element) {
     if (element instanceof PsiExpressionStatement) {
       return (PsiExpressionStatement)element;
-    } else if (element instanceof PsiWhiteSpace) {
-      final PsiElement prevSibling = element.getPrevSibling();
-      return prevSibling instanceof PsiExpressionStatement ? (PsiExpressionStatement)prevSibling : null;
     } else {
       final PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
       return psiStatement instanceof PsiExpressionStatement ? (PsiExpressionStatement)psiStatement : null;
