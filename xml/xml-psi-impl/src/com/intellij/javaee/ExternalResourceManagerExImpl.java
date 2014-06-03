@@ -101,7 +101,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
   private static final String DEFAULT_VERSION = null;
 
-  public ExternalResourceManagerExImpl(PathMacrosImpl pathMacros) {
+  public ExternalResourceManagerExImpl(@NotNull PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
   }
 

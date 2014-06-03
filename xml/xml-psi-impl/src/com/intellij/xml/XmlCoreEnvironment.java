@@ -100,7 +100,6 @@ public class XmlCoreEnvironment {
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlFileNSInfoProvider.EP_NAME, XmlFileNSInfoProvider.class);
       appEnvironment.addExtension(XmlFileNSInfoProvider.EP_NAME, new HtmlFileNSInfoProvider());
 
-
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSuppressionProvider.EP_NAME, XmlSuppressionProvider.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), XmlSchemaProvider.EP_NAME, XmlSchemaProvider.class);
@@ -138,6 +137,8 @@ public class XmlCoreEnvironment {
   public static class ProjectEnvironment {
     public ProjectEnvironment(CoreProjectEnvironment projectEnvironment) {
       projectEnvironment.getProject().registerService(XmlElementFactory.class, new XmlElementFactoryImpl(projectEnvironment.getProject()));
+      projectEnvironment.getProject().registerService(ExternalResourceManagerExImpl.class,
+                                                      new ProjectResources(PathMacrosImpl.getInstanceEx()));
     }
   }
 }
