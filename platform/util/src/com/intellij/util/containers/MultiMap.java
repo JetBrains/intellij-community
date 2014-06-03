@@ -148,7 +148,7 @@ public class MultiMap<K, V> implements Serializable {
     return myMap.size();
   }
 
-  public void put(final K key, @NotNull Collection<V> values) {
+  public void put(final K key, Collection<V> values) {
     myMap.put(key, values);
   }
 
