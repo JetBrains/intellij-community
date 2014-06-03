@@ -158,7 +158,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   private static String getIncorrectTemplateMessage(String templateName) {
-    return PsiBundle.message("psi.error.incorroect.class.template.message",
+    return PsiBundle.message("psi.error.incorrect.class.template.message",
                              FileTemplateManager.getInstance().internalTemplateToSubject(templateName), templateName);
   }
 
