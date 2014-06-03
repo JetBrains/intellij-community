@@ -331,7 +331,7 @@ public final class IconLoader {
 
     @NotNull
     private synchronized Icon getRealIcon() {
-      if (isLoaderDisabled()) return EMPTY_ICON;
+      if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS)) return EMPTY_ICON;
 
       if (dark != USE_DARK_ICONS) {
         myRealIcon = null;
