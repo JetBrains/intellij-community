@@ -125,7 +125,22 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                   }
                   final boolean hasPackagingTools = myHasPip && myHasSetuptools;
                   allowCreateVirtualEnv &= !hasPackagingTools;
+
+                  if (externalProcessException.hasHandler()) {
+                    final String key = externalProcessException.getHandler().first;
+                    myNotificationArea.addLinkHandler(key,
+                                                      new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                          externalProcessException.getHandler().second.run();
+                                                          myNotificationArea.removeLinkHandler(key);
+                                                          updateNotifications(selectedSdk);
+                                                        }
+                                                      }
+                    );
+                  }
                 }
+
                 if (text == null) {
                   if (!myHasSetuptools) {
                     text = "Python package management tools not found. <a href=\"" + INSTALL_SETUPTOOLS + "\">Install 'setuptools'</a>";
@@ -186,7 +201,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasPip) return false;
     if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
-      final String location = ((PyPackage) pkg).getLocation();
+      final String location = ((PyPackage)pkg).getLocation();
       if (location != null && location.startsWith(PyPackageManagerImpl.getUserSite())) {
         return false;
       }
