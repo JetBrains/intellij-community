@@ -748,6 +748,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
+    settings.setVirtualSpace(false);
 
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);
