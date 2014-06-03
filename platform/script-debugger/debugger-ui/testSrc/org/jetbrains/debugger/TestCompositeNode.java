@@ -6,11 +6,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.SmartList;
-import com.intellij.xdebugger.XTestValueNode;
 import com.intellij.xdebugger.frame.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.ObjectValue;
 
 import javax.swing.*;
 import java.util.List;
@@ -54,7 +53,7 @@ public class TestCompositeNode implements XCompositeNode {
 
   @Override
   public void tooManyChildren(int remaining) {
-    result.setDone();
+    result.setDone(children);
   }
 
   @Override
@@ -86,7 +85,7 @@ public class TestCompositeNode implements XCompositeNode {
   }
 
   @NotNull
-  public AsyncResult<Content> getContent(final @NotNull Condition<XValueGroup> nestedChildrenResolveCondition) {
+  public AsyncResult<Content> loadContent(@NotNull final Condition<XValueGroup> groupContentResolveCondition, @NotNull final Condition<VariableView> valueSubContentResolveCondition) {
     assert content == null;
 
     final AsyncResult<Content> compoundResult = new AsyncResult<Content>();
@@ -96,14 +95,21 @@ public class TestCompositeNode implements XCompositeNode {
       public void consume(XValueChildrenList children) {
         ActionCallback.Chunk chunk = new ActionCallback.Chunk();
         resolveGroups(children.getTopGroups(), content.topGroups, chunk);
+
         for (int i = 0; i < children.size(); i++) {
           XValue value = children.getValue(i);
-          XTestValueNode node = new XTestValueNode();
+          TestValueNode node = new TestValueNode();
           node.myName = children.getName(i);
           value.computePresentation(node, XValuePlace.TREE);
           content.values.add(node);
           chunk.add(node.getResult());
+
+          // myHasChildren could be not computed yet
+          if (value instanceof VariableView && ((VariableView)value).getValue() instanceof ObjectValue && valueSubContentResolveCondition.value((VariableView)value)) {
+            chunk.add(node.loadChildren(value));
+          }
         }
+
         resolveGroups(children.getBottomGroups(), content.bottomGroups, chunk);
 
         chunk.create().doWhenDone(new Runnable() {
@@ -117,23 +123,17 @@ public class TestCompositeNode implements XCompositeNode {
       private void resolveGroups(@NotNull List<XValueGroup> valueGroups, @NotNull List<TestCompositeNode> resultNodes, @NotNull ActionCallback.Chunk chunk) {
         for (XValueGroup group : valueGroups) {
           TestCompositeNode node = new TestCompositeNode(group);
-          boolean computeChildren = nestedChildrenResolveCondition.value(group);
+          boolean computeChildren = groupContentResolveCondition.value(group);
           if (computeChildren) {
             group.computeChildren(node);
           }
           resultNodes.add(node);
           if (computeChildren) {
-            chunk.add(node.getContent(Conditions.<XValueGroup>alwaysFalse()));
+            chunk.add(node.loadContent(Conditions.<XValueGroup>alwaysFalse(), valueSubContentResolveCondition));
           }
         }
       }
     }).notifyWhenRejected(compoundResult);
     return compoundResult;
-  }
-
-  public static final class Content {
-    public final List<TestCompositeNode> topGroups = new SmartList<TestCompositeNode>();
-    public final List<XTestValueNode> values = new SmartList<XTestValueNode>();
-    public final List<TestCompositeNode> bottomGroups = new SmartList<TestCompositeNode>();
   }
 }

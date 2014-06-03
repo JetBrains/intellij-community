@@ -1,6 +1,5 @@
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -21,8 +20,6 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
 
   private final Semaphore myFinished = new Semaphore(0);
 
-  private final AsyncResult<XTestValueNode> result = new AsyncResult<XTestValueNode>();
-
   @Override
   public void applyPresentation(@Nullable Icon icon,
                                 @NotNull XValuePresentation valuePresentation,
@@ -32,7 +29,6 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
     myHasChildren = hasChildren;
 
     myFinished.release();
-    result.setDone(this);
   }
 
   @Override
@@ -43,11 +39,6 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   @Override
   public boolean isObsolete() {
     return false;
-  }
-
-  @NotNull
-  public AsyncResult<XTestValueNode> getResult() {
-    return result;
   }
 
   public void waitFor(long timeoutInMillis) throws InterruptedException {
