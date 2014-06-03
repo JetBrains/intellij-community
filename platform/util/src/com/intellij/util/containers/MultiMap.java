@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class MultiMap<K, V> implements Serializable {
     myMap = createMap();
   }
 
-  public MultiMap(MultiMap<? extends K, ? extends V> toCopy) {
+  public MultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
     this();
     putAllValues(toCopy);
   }
@@ -51,29 +51,33 @@ public class MultiMap<K, V> implements Serializable {
     myMap = createMap(i, v);
   }
 
+  @NotNull
   protected Map<K, Collection<V>> createMap() {
     return new HashMap<K, Collection<V>>();
   }
 
+  @NotNull
   protected Map<K, Collection<V>>  createMap(int initialCapacity, float loadFactor) {
     return new HashMap<K, Collection<V>>(initialCapacity, loadFactor);
   }
 
+  @NotNull
   protected Collection<V> createCollection() {
     return new ArrayList<V>();
   }
 
+  @NotNull
   protected Collection<V> createEmptyCollection() {
     return Collections.emptyList();
   }
 
-  public <Kk extends K, Vv extends V> void putAllValues(MultiMap<Kk, Vv> from) {
+  public <Kk extends K, Vv extends V> void putAllValues(@NotNull MultiMap<Kk, Vv> from) {
     for (Map.Entry<Kk, Collection<Vv>> entry : from.entrySet()) {
       putValues(entry.getKey(), entry.getValue());
     }
   }
 
-  public void putValues(K key, Collection<? extends V> values) {
+  public void putValues(K key, @NotNull Collection<? extends V> values) {
     Collection<V> list = myMap.get(key);
     if (list == null) {
       list = createCollection();
@@ -91,6 +95,7 @@ public class MultiMap<K, V> implements Serializable {
     list.add(value);
   }
 
+  @NotNull
   public Set<Map.Entry<K, Collection<V>>> entrySet() {
     return myMap.entrySet();
   }
@@ -134,6 +139,7 @@ public class MultiMap<K, V> implements Serializable {
     return collection;
   }
 
+  @NotNull
   public Set<K> keySet() {
     return myMap.keySet();
   }
@@ -142,7 +148,7 @@ public class MultiMap<K, V> implements Serializable {
     return myMap.size();
   }
 
-  public void put(final K key, final Collection<V> values) {
+  public void put(final K key, Collection<V> values) {
     myMap.put(key, values);
   }
 
@@ -165,6 +171,7 @@ public class MultiMap<K, V> implements Serializable {
     return false;
   }
 
+  @NotNull
   public Collection<? extends V> values() {
     if (values == null) {
       values = new AbstractCollection<V>() {
@@ -249,11 +256,13 @@ public class MultiMap<K, V> implements Serializable {
   @NotNull
   public static <K, V> MultiMap<K, V> create(@NotNull final TObjectHashingStrategy<K> strategy) {
     return new MultiMap<K, V>() {
+      @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {
         return new THashMap<K, Collection<V>>(strategy);
       }
 
+      @NotNull
       @Override
       protected Collection<V> createCollection() {
         return new SmartList<V>();
@@ -269,11 +278,13 @@ public class MultiMap<K, V> implements Serializable {
   @NotNull
   public static <K, V> MultiMap<K, V> createSmartList() {
     return new MultiMap<K, V>() {
+      @NotNull
       @Override
       protected Collection<V> createCollection() {
         return new SmartList<V>();
       }
 
+      @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {
         return new THashMap<K, Collection<V>>();
@@ -284,16 +295,19 @@ public class MultiMap<K, V> implements Serializable {
   @NotNull
   public static <K, V> MultiMap<K, V> createSet() {
     return new MultiMap<K, V>() {
+      @NotNull
       @Override
       protected Collection<V> createCollection() {
         return new SmartHashSet<V>();
       }
 
+      @NotNull
       @Override
       protected Collection<V> createEmptyCollection() {
         return Collections.emptySet();
       }
 
+      @NotNull
       @Override
       protected Map<K, Collection<V>> createMap() {
         return new THashMap<K, Collection<V>>();
@@ -324,6 +338,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   private static class EmptyMap extends MultiMap {
+    @NotNull
     @Override
     protected Map createMap() {
       return Collections.emptyMap();

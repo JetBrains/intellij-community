@@ -85,7 +85,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
   @Override
   protected String removeExtension(String templateName, String className) {
-    return super.removeExtension(templateName, StringUtil.trimEnd(className, ".java"));
+    return StringUtil.trimEnd(className, ".java");
   }
 
   @Override

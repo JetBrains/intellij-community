@@ -225,11 +225,13 @@ public class FoldingUpdate {
   }
 
   public static class FoldingMap extends MultiMap<PsiElement, FoldingDescriptor>{
+    @NotNull
     @Override
     protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {
       return new TreeMap<PsiElement, Collection<FoldingDescriptor>>(COMPARE_BY_OFFSET);
     }
 
+    @NotNull
     @Override
     protected Collection<FoldingDescriptor> createCollection() {
       return new ArrayList<FoldingDescriptor>(1);

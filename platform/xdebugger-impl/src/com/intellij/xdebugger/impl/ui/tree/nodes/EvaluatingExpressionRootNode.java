@@ -23,17 +23,14 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author nik
  */
 public class EvaluatingExpressionRootNode extends XValueContainerNode<EvaluatingExpressionRootNode.EvaluatingResultContainer> {
   public EvaluatingExpressionRootNode(XDebuggerEvaluationDialog evaluationDialog, final XDebuggerTree tree) {
-    super(tree, null, new EvaluatingResultContainer(evaluationDialog, tree));
+    super(tree, null, new EvaluatingResultContainer(evaluationDialog));
     setLeaf(false);
   }
 
@@ -42,13 +39,11 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     return MessageTreeNode.createEvaluatingMessage(myTree, this);
   }
 
-  public static class EvaluatingResultContainer extends XValueContainer implements XDebuggerTreeListener {
+  public static class EvaluatingResultContainer extends XValueContainer {
     private final XDebuggerEvaluationDialog myDialog;
-    private final XDebuggerTree myTree;
 
-    public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog, XDebuggerTree tree) {
+    public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog) {
       myDialog = dialog;
-      myTree = tree;
     }
 
     @Override
@@ -56,39 +51,15 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
       myDialog.startEvaluation(new XEvaluationCallbackBase() {
         @Override
         public void evaluated(@NotNull final XValue result) {
-          myTree.addTreeListener(EvaluatingResultContainer.this);
           String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
           node.addChildren(XValueChildrenList.singleton(name, result), true);
-          myDialog.finishEvaluation();
         }
 
         @Override
         public void errorOccurred(@NotNull final String errorMessage) {
           node.setErrorMessage(errorMessage);
-          myDialog.finishEvaluation();
         }
       });
-    }
-
-    @Override
-    public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
-      if (node.getParent() instanceof EvaluatingExpressionRootNode) {
-        if (node.isLeaf()) {
-          myTree.removeTreeListener(this);
-        }
-        else {
-          // cause children computing
-          node.getChildCount();
-        }
-      }
-    }
-
-    @Override
-    public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
-      if (node.getParent() instanceof EvaluatingExpressionRootNode) {
-        myTree.removeTreeListener(this);
-        myTree.expandPath(node.getPath());
-      }
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -25,11 +26,13 @@ import java.util.Map;
  * @author Evgeny Gerashchenko
  */
 public class LinkedMultiMap<K, V> extends MultiMap<K, V> {
+    @NotNull
     @Override
     protected Map<K, Collection<V>> createMap() {
         return new LinkedHashMap<K, Collection<V>>();
     }
 
+    @NotNull
     @Override
     protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
         return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor);
