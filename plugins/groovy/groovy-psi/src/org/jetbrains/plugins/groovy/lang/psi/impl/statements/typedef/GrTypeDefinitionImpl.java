@@ -512,6 +512,13 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Override
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
+    if (isTrait() && baseClass.isInterface() && !checkDeep) {
+      for (PsiClassType superType : getImplementsListTypes()) {
+        if (getManager().areElementsEquivalent(superType.resolve(), baseClass)) {
+          return true;
+        }
+      }
+    }
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
