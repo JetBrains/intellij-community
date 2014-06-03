@@ -203,7 +203,7 @@ public class PySkeletonRefresher {
         mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
       }
       catch (ExecutionException e) {
-        throw new InvalidSdkException(e.getMessage());
+        throw new InvalidSdkException(e.getMessage(), e.getCause());
       }
     }
     else {

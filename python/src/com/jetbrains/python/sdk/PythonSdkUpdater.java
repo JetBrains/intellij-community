@@ -114,7 +114,12 @@ public class PythonSdkUpdater implements StartupActivity {
                     }
                     catch (InvalidSdkException e) {
                       if (PythonSdkType.isRemote(sdk)) {
-                        PythonSdkType.notifyRemoteSdkSkeletonsFail(e);
+                        PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+                          @Override
+                          public void run() {
+                            updateActiveSdks(project, delay);
+                          }
+                        });
                       }
                       else if (!PythonSdkType.isInvalid(sdk)) {
                         LOG.error(e);
