@@ -65,7 +65,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
@@ -234,7 +233,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     if (stub != null) {
       return stub.getName();
     }
-    return PsiImplUtil.getName(this);
+    return org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getName(this);
   }
 
   @Override
@@ -546,7 +545,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     boolean renameFile = isRenameFileOnClassRenaming();
 
     final String oldName = getName();
-    PsiImplUtil.setName(name, getNameIdentifierGroovy());
+    org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.setName(name, getNameIdentifierGroovy());
 
     final GrTypeDefinitionBody body = getBody();
     if (body != null) {
@@ -592,9 +591,9 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   public boolean isDeprecated() {
     final GrTypeDefinitionStub stub = getStub();
     if (stub != null) {
-      return stub.isDeprecatedByDoc() || com.intellij.psi.impl.PsiImplUtil.isDeprecatedByAnnotation(this);
+      return stub.isDeprecatedByDoc() || PsiImplUtil.isDeprecatedByAnnotation(this);
     }
-    return com.intellij.psi.impl.PsiImplUtil.isDeprecatedByDocTag(this) || com.intellij.psi.impl.PsiImplUtil.isDeprecatedByAnnotation(this);
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override
@@ -668,7 +667,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   @Nullable
   @Override
   public PsiElement getOriginalElement() {
-    return PsiImplUtil.getOriginalElement(this, getContainingFile());
+    return org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getOriginalElement(this, getContainingFile());
   }
 
   @Override
