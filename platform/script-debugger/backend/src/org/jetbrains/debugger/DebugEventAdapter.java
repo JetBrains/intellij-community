@@ -40,4 +40,8 @@ public abstract class DebugEventAdapter implements DebugEventListener {
   @Override
   public void navigated(String newUrl) {
   }
+
+  @Override
+  public void errorOccurred(@NotNull String errorMessage) {
+  }
 }
