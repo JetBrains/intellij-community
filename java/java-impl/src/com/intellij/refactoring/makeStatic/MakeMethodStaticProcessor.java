@@ -112,6 +112,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     final PsiModifierList modifierList = myMember.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, true);
     modifierList.setModifierProperty(PsiModifier.FINAL, false);
+    modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
   }
 
   protected void changeInternalUsage(InternalUsageInfo usage, PsiElementFactory factory)

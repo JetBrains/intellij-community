@@ -16,11 +16,16 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
+import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -42,6 +47,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
   private static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
   private static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
   private static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
+  private static final String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
   /**
    * @noinspection PublicField
    */
@@ -51,6 +57,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
    */
   public boolean m_ignoreEmptyMethods = true;
   public boolean m_ignoreDefaultMethods = true;
+  public boolean m_replaceQualifier = true;
 
   @Override
   @NotNull
@@ -66,7 +73,25 @@ public class MethodMayBeStaticInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ChangeModifierFix(PsiModifier.STATIC, PsiModifier.DEFAULT);
+    return new InspectionGadgetsFix() {
+      @Override
+      public void doFix(Project project, ProblemDescriptor descriptor) {
+        final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
+        new MakeMethodStaticProcessor(element.getProject(), element, new Settings(m_replaceQualifier, null, null)).run();
+      }
+
+      @Override
+      @NotNull
+      public String getName() {
+        return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.STATIC);
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return ChangeModifierFix.FAMILY_NAME;
+      }
+    };
   }
 
   @Override
@@ -75,6 +100,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), ONLY_PRIVATE_OR_FINAL_ATTR_NAME);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), IGNORE_EMPTY_METHODS_ATTR_NAME);
     optionsPanel.addCheckbox("Ignore default methods", IGNORE_DEFAULT_METHODS_ATTR_NAME);
+    optionsPanel.addCheckbox("Replace qualifier by class name", REPLACE_QUALIFIER_ATTR_NAME);
     return optionsPanel;
   }
 
@@ -90,6 +116,9 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       m_ignoreEmptyMethods)));
     if (!m_ignoreDefaultMethods) {
       node.addContent(new Element("option").setAttribute("name", IGNORE_DEFAULT_METHODS_ATTR_NAME).setAttribute("value", "false"));
+    }
+    if (!m_replaceQualifier) {
+      node.addContent(new Element("option").setAttribute("name", REPLACE_QUALIFIER_ATTR_NAME).setAttribute("value", "false"));
     }
   }
 
