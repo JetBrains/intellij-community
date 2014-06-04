@@ -72,7 +72,7 @@ public class ModuleClasspathTest(): JpsBuildTestCase() {
     }
 
     private fun createChunk(moduleName: String): ModuleChunk {
-        val module = myProject!!.getModules().firstOrNull { it.getName() == moduleName }
+        val module = myProject.getModules().firstOrNull { it.getName() == moduleName }
         return ModuleChunk(setOf(ModuleBuildTarget(module!!, JavaModuleBuildTargetType.PRODUCTION)))
     }
 

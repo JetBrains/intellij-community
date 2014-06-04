@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.TestFileSystemBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
@@ -67,7 +68,7 @@ import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
  */
 public abstract class JpsBuildTestCase extends UsefulTestCase {
   private File myProjectDir;
-  protected JpsProject myProject;
+  @NotNull protected JpsProject myProject;
   protected JpsModel myModel;
   private JpsSdk<JpsDummyElement> myJdk;
   protected File myDataStorageRoot;
