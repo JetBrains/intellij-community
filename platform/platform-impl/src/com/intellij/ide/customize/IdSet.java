@@ -16,7 +16,6 @@
 package com.intellij.ide.customize;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +35,6 @@ class IdSet {
       description = description.substring(i + 1, description.length());
     }
     myIds = description.split(",");
-    for (String id : myIds) {
-      if (PluginGroups.getInstance().findPlugin(id) == null) {
-        myIds = ArrayUtil.remove(myIds, id);
-      }
-    }
     myIds = ContainerUtil.filter(myIds, new Condition<String>() {
       @Override
       public boolean value(String id) {
@@ -65,7 +59,7 @@ class IdSet {
 
   @Override
   public String toString() {
-    return String.valueOf(myTitle) + ": " + myIds.length;
+    return String.valueOf(myTitle) + ": " + (myIds != null ? myIds.length : 0);
   }
 
   @Nullable

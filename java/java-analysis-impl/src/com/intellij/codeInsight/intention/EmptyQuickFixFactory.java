@@ -595,4 +595,11 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod[] psiMethods, @NotNull Collection<String> strings) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createSurroundWithQuotesAnnotationParameterValueFix(@NotNull PsiAnnotationMemberValue value,
+                                                                             @NotNull PsiType expectedType) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

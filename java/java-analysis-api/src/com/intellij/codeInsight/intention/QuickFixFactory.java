@@ -260,4 +260,6 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
                                                                                   @NotNull PsiMethod[] annotationMethods,
                                                                                   @NotNull Collection<String> missedElements);
+  @NotNull
+  public abstract IntentionAction createSurroundWithQuotesAnnotationParameterValueFix(@NotNull PsiAnnotationMemberValue value, @NotNull PsiType expectedType);
 }

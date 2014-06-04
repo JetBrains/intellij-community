@@ -32,10 +32,11 @@ public class SaveSchemeDialog extends DialogWrapper {
   private final JTextField mySchemeName = new JTextField();
   private final ArrayList myInvalidNames;
 
-  public SaveSchemeDialog(Component parent, String title, ArrayList invalidNames){
+  public SaveSchemeDialog(Component parent, String title, ArrayList invalidNames, String selectedName){
     super(parent, false);
     myInvalidNames = invalidNames;
     setTitle(title);
+    mySchemeName.setText(selectedName);
     init();
   }
 
