@@ -42,20 +42,12 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
     final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory
-      .createStatementFromText(String.format("switch (%s) {\n$MARKER$\n}", expressionStatement.getExpression().getText()), null);
+      .createStatementFromText(String.format("switch (%s) {}", expressionStatement.getExpression().getText()), null);
     switchStatement = (PsiSwitchStatement)expressionStatement.replace(switchStatement);
     CodeStyleManager.getInstance(project).reformat(switchStatement);
 
-    for (final PsiStatement psiStatement : switchStatement.getBody().getStatements()) {
-      if (psiStatement.getText().equals("$MARKER$")) {
-        final Document document = editor.getDocument();
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-        final int textOffset = psiStatement.getTextOffset();
-        editor.getCaretModel().moveToOffset(textOffset);
-        document.deleteString(textOffset, textOffset + psiStatement.getTextLength());
-        return;
-      }
-    }
+    final PsiJavaToken lBrace = switchStatement.getBody().getLBrace();
+    editor.getCaretModel().moveToOffset(lBrace.getTextOffset() + lBrace.getTextLength());
   }
 
   @Override

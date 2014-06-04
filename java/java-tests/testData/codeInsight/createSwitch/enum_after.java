@@ -5,8 +5,7 @@ class X {
   }
 
   void m(MyEnum e) {
-      switch (e) {
-          <caret>
+      switch (e) {<caret>
       }
   }
 
