@@ -215,7 +215,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
               String exceptionMessage = ExceptionUtil.getMessage(e);
               String text = exceptionMessage == null ? e.toString() : exceptionMessage;
               processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
-              processHandler.notifyProcessTerminated(0);
+              processHandler.notifyProcessTerminated(1);
             }
 
             @Override
