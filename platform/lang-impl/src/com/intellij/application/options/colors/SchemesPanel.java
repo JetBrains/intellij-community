@@ -30,14 +30,13 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
@@ -206,10 +205,9 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   }
 
   private void showSaveAsDialog() {
-    ArrayList<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
+    List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
     String selectedName = myOptions.getSelectedScheme().getName();
-    String defaultName = UniqueNameGenerator.generateUniqueName(selectedName + " copy", names);
-    SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, defaultName);
+    SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     dialog.show();
     if (dialog.isOK()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());

@@ -23,20 +23,21 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.text.UniqueNameGenerator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SaveSchemeDialog extends DialogWrapper {
   private final JTextField mySchemeName = new JTextField();
-  private final ArrayList myInvalidNames;
+  private final List<String> myInvalidNames;
 
-  public SaveSchemeDialog(Component parent, String title, ArrayList invalidNames, String selectedName){
+  public SaveSchemeDialog(Component parent, String title, List<String> names, String selectedName){
     super(parent, false);
-    myInvalidNames = invalidNames;
+    myInvalidNames = names;
     setTitle(title);
-    mySchemeName.setText(selectedName);
+    mySchemeName.setText(UniqueNameGenerator.generateUniqueName(selectedName + " copy", names));
     init();
   }
 
