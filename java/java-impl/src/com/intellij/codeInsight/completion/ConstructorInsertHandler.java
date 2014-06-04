@@ -247,97 +247,98 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
 
+    final PsiReferenceParameterList parameterList = parent.getBaseClassReference().getParameterList();
+    final PsiTypeElement[] parameters = parameterList != null ? parameterList.getTypeParameterElements() : null;
+    if (shouldStartTypeTemplate(parameters)) {
+      startTemplate(parent, editor, createOverrideRunnable(editor, file, project), parameters);
+      return null;
+    }
+
+    return createOverrideRunnable(editor, file, project);
+  }
+
+  private static Runnable createOverrideRunnable(final Editor editor, final PsiFile file, final Project project) {
     return new Runnable() {
       @Override
       public void run() {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-        final PsiAnonymousClass aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
+        final PsiAnonymousClass
+          aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
         if (aClass == null) return;
-        final Runnable runnable = new Runnable() {
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
-            CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-              @Override
-              public void run() {
-                final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
-                for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
-                  final CandidateInfo candidate = iterator.next();
-                  final PsiElement element = candidate.getElement();
-                  if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
-                    iterator.remove();
+            final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+            for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
+              final CandidateInfo candidate = iterator.next();
+              final PsiElement element = candidate.getElement();
+              if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+                iterator.remove();
+              }
+            }
+            boolean invokeOverride = candidatesToImplement.isEmpty();
+            if (invokeOverride) {
+              OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
+            }
+            else {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
+                    List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+                    List<PsiGenerationInfo<PsiMethod>> resultMembers =
+                      GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+                    resultMembers.get(0).positionCaret(editor, true);
+                  }
+                  catch (IncorrectOperationException ioe) {
+                    LOG.error(ioe);
                   }
                 }
-                boolean invokeOverride = candidatesToImplement.isEmpty();
-                if (invokeOverride) {
-                  OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
-                }
-                else {
-                  ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    @Override
-                    public void run() {
-                      try {
-                        List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-                        List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-                        List<PsiGenerationInfo<PsiMethod>> resultMembers =
-                          GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                        resultMembers.get(0).positionCaret(editor, true);
-                      }
-                      catch (IncorrectOperationException ioe) {
-                        LOG.error(ioe);
-                      }
-                    }
-                  });
-                }
-              }
-            }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
-          }
-        };
-
-        final PsiReferenceParameterList parameterList = aClass.getBaseClassReference().getParameterList();
-        final PsiTypeElement[] parameters = parameterList != null ? parameterList.getTypeParameterElements() : null;
-        if (startTypeTemplate(parameters)) {
-          startTemplate(aClass, runnable, parameters);
-        }
-        else {
-          runnable.run();
-        }
-      }
-
-      @Contract("null -> false")
-      private boolean startTypeTemplate(PsiTypeElement[] parameters) {
-        if (parameters != null && parameters.length > 0) {
-          for (PsiTypeElement parameter : parameters) {
-            if (!parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-              return false;
+              });
             }
           }
-          return true;
-        }
-        return false;
-      }
-
-      private void startTemplate(final PsiAnonymousClass aClass, final Runnable runnable, @NotNull final PsiTypeElement[] parameters) {
-        new WriteCommandAction(aClass.getProject(), getCommandName(), getCommandName()) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            editor.getCaretModel().moveToOffset(aClass.getTextOffset());
-            final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
-            for (int i = 0; i < parameters.length; i++) {
-              PsiTypeElement parameter = parameters[i];
-              templateBuilder.replaceElement(parameter, "param" + i, new TypeExpression(project, new PsiType[]{parameter.getType()}), true);
-            }
-            Template template = templateBuilder.buildInlineTemplate();
-            TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
-              @Override
-              public void templateFinished(Template template, boolean brokenOff) {
-                if (!brokenOff) {
-                  runnable.run();
-                }
-              }
-            });
-          }
-        }.execute();
+        }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
       }
     };
+  }
+
+  @Contract("null -> false")
+  private static boolean shouldStartTypeTemplate(PsiTypeElement[] parameters) {
+    if (parameters != null && parameters.length > 0) {
+      for (PsiTypeElement parameter : parameters) {
+        if (!parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private static void startTemplate(final PsiAnonymousClass aClass, final Editor editor, final Runnable runnable, @NotNull final PsiTypeElement[] parameters) {
+    final Project project = aClass.getProject();
+    new WriteCommandAction(project, getCommandName(), getCommandName()) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+        editor.getCaretModel().moveToOffset(aClass.getTextOffset());
+        final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
+        for (int i = 0; i < parameters.length; i++) {
+          PsiTypeElement parameter = parameters[i];
+          templateBuilder.replaceElement(parameter, "param" + i, new TypeExpression(project, new PsiType[]{parameter.getType()}), true);
+        }
+        Template template = templateBuilder.buildInlineTemplate();
+        TemplateManager.getInstance(project).startTemplate(editor, template, false, null, new TemplateEditingAdapter() {
+          @Override
+          public void templateFinished(Template template, boolean brokenOff) {
+            if (!brokenOff) {
+              runnable.run();
+            }
+          }
+        });
+      }
+    }.execute();
   }
 
   private static String getCommandName() {
