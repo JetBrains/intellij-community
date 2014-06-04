@@ -206,15 +206,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   }
 
   private void showSaveAsDialog() {
-    ComboBoxModel model = mySchemeComboBox.getModel();
-
-    int size = model.getSize();
-    ArrayList<String> names = ContainerUtil.newArrayListWithCapacity(size);
-    for (int i = 0; i < size; i++) {
-      Object at = model.getElementAt(i);
-      if (at instanceof String) names.add((String)at);
-    }
-
+    ArrayList<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
     String selectedName = myOptions.getSelectedScheme().getName();
     String defaultName = UniqueNameGenerator.generateUniqueName(selectedName + " copy", names);
     SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, defaultName);
