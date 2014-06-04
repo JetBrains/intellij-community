@@ -25,13 +25,14 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 
 /**
  * @author yole
  */
 public class TreeLinkMouseListener extends LinkMouseListenerBase {
   private final ColoredTreeCellRenderer myRenderer;
-  protected TreeNode myLastHitNode;
+  protected WeakReference<TreeNode> myLastHitNode;
 
   public TreeLinkMouseListener(final ColoredTreeCellRenderer renderer) {
     myRenderer = renderer;
@@ -57,8 +58,8 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
       assert rectangle != null;
       int dx = e.getX() - rectangle.x;
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
-      if (myLastHitNode != treeNode) {
-        myLastHitNode = treeNode;
+      if (myLastHitNode == null || myLastHitNode.get() != treeNode) {
+        myLastHitNode = new WeakReference<TreeNode>(treeNode);
         myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), -1, false);
       }
       tag = myRenderer.getFragmentTagAt(dx);
