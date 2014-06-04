@@ -23,12 +23,14 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,7 +91,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
         continue;
       }
 
-      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), file);
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes());
       ProblemDescriptor descriptor = manager.createProblemDescriptor(startElement,
                                                                      endElement,
                                                                      annotation.getMessage(),
@@ -102,7 +104,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
   @NotNull
-  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos, @NotNull PsiFile file) {
+  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
@@ -115,7 +117,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
         fix = (LocalQuickFix) intentionAction;
       }
       else {
-        fix = new LocalQuickFixBackedByIntentionAction(intentionAction, file);
+        fix = new LocalQuickFixBackedByIntentionAction(intentionAction);
       }
       result[i++] = fix;
     }
@@ -138,13 +140,11 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     }
   }
 
-  public static class LocalQuickFixBackedByIntentionAction implements LocalQuickFix {
+  public static class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Iconable {
     private final IntentionAction myAction;
-    private final PsiFile myFile;
 
-    public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action, @NotNull PsiFile file) {
+    public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
       myAction = action;
-      myFile = file;
     }
 
     @NotNull
@@ -161,7 +161,28 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myAction.invoke(project, null, myFile);
+      myAction.invoke(project, null, getPsiFile(descriptor));
+    }
+
+    @Nullable
+    private static PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
+      PsiElement startElement = descriptor.getStartElement();
+      if (startElement != null) {
+        return startElement.getContainingFile();
+      }
+      PsiElement endElement = descriptor.getEndElement();
+      if (endElement != null) {
+        return endElement.getContainingFile();
+      }
+      return null;
+    }
+
+    @Override
+    public Icon getIcon(@IconFlags int flags) {
+      if (myAction instanceof Iconable) {
+        return ((Iconable) myAction).getIcon(flags);
+      }
+      return null;
     }
   }
 }
