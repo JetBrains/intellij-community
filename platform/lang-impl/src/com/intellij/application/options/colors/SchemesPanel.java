@@ -29,7 +29,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +61,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     mySchemeComboBox.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
           if (ColorAndFontOptions.isReadOnly(selected)) {
@@ -97,16 +97,6 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     return myListLoaded;
   }
 
-  public void clearSearch() {
-  }
-
-  @Nullable
-  @SuppressWarnings({"unchecked"})
-  public static <T> T safeCast(final Object obj, final Class<T> expectedClass) {
-    if (expectedClass.isInstance(obj)) return (T)obj;
-    return null;
-  }
-
   private JPanel createSchemePanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -124,7 +114,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
     saveAsButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         showSaveAsDialog();
       }
     });
@@ -135,7 +125,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
     myDeleteButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           myOptions.removeScheme((String)mySchemeComboBox.getSelectedItem());
         }
@@ -151,7 +141,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       myExportButton = new JButton("Share...");
       myExportButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        public void actionPerformed(@NotNull final ActionEvent e) {
           EditorColorsScheme selected = myOptions.getOriginalSelectedScheme();
           ExportSchemeAction
             .doExport((EditorColorsSchemeImpl)selected, ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemesManager());
@@ -170,7 +160,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       myImportButton.setMnemonic('I');
       myImportButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        public void actionPerformed(@NotNull final ActionEvent e) {
           SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl> popup =
             new SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl>(SchemesPanel.this) {
               @Override
@@ -196,7 +186,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       final JButton button = new JButton(importHandler.getTitle());
       button.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           importHandler.performImport(button, new Consumer<EditorColorsScheme>() {
             @Override
             public void consume(EditorColorsScheme scheme) {
