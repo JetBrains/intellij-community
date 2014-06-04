@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.NonProjectScopeDisablerEP;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
@@ -80,6 +81,9 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
 
   @Override
   public String getCheckBoxName() {
+    if (NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+      return null;
+    }
     return IdeBundle.message("checkbox.include.non.project.files");
   }
 
