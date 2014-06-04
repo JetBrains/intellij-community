@@ -25,6 +25,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
@@ -87,6 +88,11 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
             }
           });
 
+          final FileContentIndexingVoter[] extensions = Extensions.getExtensions(FileContentIndexingVoter.EP_NAME, project);
+          for (FileContentIndexingVoter voter : extensions) {
+            myIndex.registerFileContentIndexingVoter(voter);
+          }
+
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             private boolean removed = false;
@@ -95,6 +101,10 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
               if (!removed) {
                 removed = true;
                 myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
+
+                for (FileContentIndexingVoter voter : extensions) {
+                  myIndex.removeFileContentIndexingVoter(voter);
+                }
               }
             }
           });
