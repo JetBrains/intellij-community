@@ -184,5 +184,20 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       }
       return null;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LocalQuickFixBackedByIntentionAction action = (LocalQuickFixBackedByIntentionAction)o;
+
+      return myAction.equals(action.myAction);
+    }
+
+    @Override
+    public int hashCode() {
+      return myAction.hashCode();
+    }
   }
 }
