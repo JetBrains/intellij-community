@@ -98,7 +98,6 @@ import java.util.List;
  */
 public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
-  private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
@@ -551,13 +550,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       public void run() {
         if (window.isFileOpen(file)) {
           window.closeFile(file, true, transferFocus);
-          final List<EditorWindow> windows = window.getOwner().findWindows(file);
-          if (windows.isEmpty()) { // no more windows containing this file left
-            final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
-            if (request != null) {
-              LocalFileSystem.getInstance().removeWatchedRoot(request);
-            }
-          }
         }
       }
     }, IdeBundle.message("command.close.active.editor"), null);
@@ -579,11 +571,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void closeFile(@NotNull final VirtualFile file, final boolean moveFocus, final boolean closeAllCopies) {
     assertDispatchThread();
 
-    final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
-    if (request != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(request);
-    }
-
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
@@ -591,8 +578,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
     }, "", null);
   }
-
-
 
   private void closeFileImpl(@NotNull final VirtualFile file, final boolean moveFocus, boolean closeAllCopies) {
     assertDispatchThread();
@@ -879,13 +864,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
               }
             }
           });
-
-          //Add request to watch this editor's virtual file
-          final VirtualFile parentDir = file.getParent();
-          if (parentDir != null) {
-            final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir.getPath(), false);
-            file.putUserData(WATCH_REQUEST_KEY, request);
-          }
         }
 
         //[jeka] this is a hack to support back-forward navigation
