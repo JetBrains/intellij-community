@@ -30,6 +30,10 @@
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
       <category>Concurrency</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ChangeClassParametersIntention</className>
+      <category>Declaration</category>
+    </intentionAction>
   </extensions>
   <depends>Structural Search</depends>
 </idea-plugin>
