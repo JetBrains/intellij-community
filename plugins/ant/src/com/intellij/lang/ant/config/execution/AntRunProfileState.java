@@ -48,12 +48,13 @@ public class AntRunProfileState implements RunProfileState {
       AntBuildTarget target = antRunConfiguration.getTarget();
       if (target == null) return null;
       ProcessHandler processHandler = ExecutionHandler
-        .runTarget(antRunConfiguration, myEnvironment.getDataContext(), new ArrayList<BuildFileProperty>(), new AntBuildListener() {
-          @Override
-          public void buildFinished(int state, int errorCount) {
+        .executeRunConfiguration(antRunConfiguration, myEnvironment.getDataContext(), new ArrayList<BuildFileProperty>(),
+                                 new AntBuildListener() {
+                                   @Override
+                                   public void buildFinished(int state, int errorCount) {
 
-          }
-        });
+                                   }
+                                 });
       if (processHandler == null) return null;
       return new DefaultExecutionResult(null, processHandler);
     }
