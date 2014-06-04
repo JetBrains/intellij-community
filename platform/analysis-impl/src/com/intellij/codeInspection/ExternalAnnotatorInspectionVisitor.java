@@ -16,15 +16,18 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +51,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
                                                                                  boolean isOnTheFly,
                                                                                  @NotNull ExternalAnnotator<Init,Result> annotator) {
     if (isOnTheFly) {
-      // concrete JSLinterExternalAnnotator implementation does this work
+      // ExternalAnnotator does this work
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
@@ -86,10 +89,37 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
         continue;
       }
 
-      problems.add(manager.createProblemDescriptor(startElement, endElement, annotation.getMessage(),
-                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), file);
+      ProblemDescriptor descriptor = manager.createProblemDescriptor(startElement,
+                                                                     endElement,
+                                                                     annotation.getMessage(),
+                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                     false,
+                                                                     quickFixes);
+      problems.add(descriptor);
     }
     return problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  @NotNull
+  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos, @NotNull PsiFile file) {
+    if (fixInfos == null || fixInfos.isEmpty()) {
+      return LocalQuickFix.EMPTY_ARRAY;
+    }
+    LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
+    int i = 0;
+    for (Annotation.QuickFixInfo fixInfo : fixInfos) {
+      IntentionAction intentionAction = fixInfo.quickFix;
+      final LocalQuickFix fix;
+      if (intentionAction instanceof LocalQuickFix) {
+        fix = (LocalQuickFix) intentionAction;
+      }
+      else {
+        fix = new LocalQuickFixBackedByIntentionAction(intentionAction, file);
+      }
+      result[i++] = fix;
+    }
+    return result;
   }
 
   @Override
@@ -105,6 +135,33 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     for (ProblemDescriptor descriptor : descriptors) {
       LOG.assertTrue(descriptor != null, getClass().getName());
       myHolder.registerProblem(descriptor);
+    }
+  }
+
+  public static class LocalQuickFixBackedByIntentionAction implements LocalQuickFix {
+    private final IntentionAction myAction;
+    private final PsiFile myFile;
+
+    public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action, @NotNull PsiFile file) {
+      myAction = action;
+      myFile = file;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myAction.getText();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return myAction.getFamilyName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      myAction.invoke(project, null, myFile);
     }
   }
 }
