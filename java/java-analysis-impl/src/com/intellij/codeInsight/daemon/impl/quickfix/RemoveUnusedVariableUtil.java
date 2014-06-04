@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -221,7 +220,12 @@ public class RemoveUnusedVariableUtil {
         }
       }
       else if (element instanceof PsiExpressionStatement && deleteMode != CANCEL) {
-        element.delete();
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement && ((PsiLoopStatement)parent).getBody() == element) {
+          element.replace(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(";", element));
+        } else {
+          element.delete();
+        }
         break;
       }
       else if (element instanceof PsiVariable && element == variable) {
