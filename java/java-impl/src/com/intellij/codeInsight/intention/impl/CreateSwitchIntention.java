@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory
       .createStatementFromText(String.format("switch (%s) {\n$MARKER$\n}", expressionStatement.getExpression().getText()), null);
     switchStatement = (PsiSwitchStatement)expressionStatement.replace(switchStatement);
+    CodeStyleManager.getInstance(project).reformat(switchStatement);
 
     for (final PsiStatement psiStatement : switchStatement.getBody().getStatements()) {
       if (psiStatement.getText().equals("$MARKER$")) {
@@ -54,8 +56,11 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+    if (!element.isWritable()) {
+      return false;
+    }
     final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
-    return expressionStatement != null && isValidTypeForSwitch(expressionStatement.getExpression().getType());
+    return expressionStatement != null && isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
 
   private static PsiExpressionStatement resolveExpressionStatement(final PsiElement element) {
@@ -67,7 +72,7 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
     }
   }
 
-  private static boolean isValidTypeForSwitch(@Nullable final PsiType type) {
+  private static boolean isValidTypeForSwitch(@Nullable final PsiType type, final PsiElement context) {
     if (type == null) {
       return false;
     }
@@ -77,7 +82,8 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
       if (resolvedClass == null) {
         return false;
       }
-      return resolvedClass.isEnum() || (CommonClassNames.JAVA_LANG_STRING.equals(resolvedClass.getQualifiedName()));
+      return (PsiUtil.isLanguageLevel5OrHigher(context) && resolvedClass.isEnum())
+             || (PsiUtil.isLanguageLevel7OrHigher(context) && CommonClassNames.JAVA_LANG_STRING.equals(resolvedClass.getQualifiedName()));
     }
     return type.equals(PsiType.INT) || type.equals(PsiType.BYTE) || type.equals(PsiType.SHORT) || type.equals(PsiType.CHAR);
   }
