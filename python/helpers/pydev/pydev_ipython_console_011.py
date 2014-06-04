@@ -8,6 +8,7 @@ import codeop, re
 original_stdout = sys.stdout
 original_stderr = sys.stderr
 from IPython.core import release
+import traceback
 
 
 #=======================================================================================================================
@@ -38,6 +39,27 @@ class PyDevFrontEnd:
             '''Override ask_exit() method for correct exit, exit(), etc. handling.'''
             def ask_exit(self):
                 sys.exit()
+
+            def showsyntaxerror(self, filename=None):
+                """Display the syntax error that just occurred."""
+                #Override for uniform SyntaxError view in ipython and regular pydev
+                type, value, tb = sys.exc_info()
+                sys.last_type = type
+                sys.last_value = value
+                sys.last_traceback = tb
+                if filename and type is SyntaxError:
+                    # Work hard to stuff the correct filename in the exception
+                    try:
+                        msg, (dummy_filename, lineno, offset, line) = value.args
+                    except ValueError:
+                        # Not the format we expect; leave it alone
+                        pass
+                    else:
+                        # Stuff in the right filename
+                        value = SyntaxError(msg, (filename, lineno, offset, line))
+                        sys.last_value = value
+                list = traceback.format_exception_only(type, value)
+                sys.stderr.write(''.join(list))
 
         # Create and initialize our IPython instance.
         shell = ClosablePyDevTerminalInteractiveShell.instance()
