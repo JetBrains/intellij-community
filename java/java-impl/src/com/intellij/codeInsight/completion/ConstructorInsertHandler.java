@@ -307,11 +307,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   private static boolean shouldStartTypeTemplate(PsiTypeElement[] parameters) {
     if (parameters != null && parameters.length > 0) {
       for (PsiTypeElement parameter : parameters) {
-        if (!parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return false;
+        if (parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return true;
         }
       }
-      return true;
     }
     return false;
   }
