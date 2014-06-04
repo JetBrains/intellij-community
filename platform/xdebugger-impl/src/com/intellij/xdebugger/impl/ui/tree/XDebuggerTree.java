@@ -63,10 +63,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       String text = null;
       if (o != null) {
         final Object node = o.getLastPathComponent();
-        if (node instanceof RestorableStateNode) {
-          text = ((RestorableStateNode)node).getName();
-        }
-        else if (node instanceof XDebuggerTreeNode) {
+        if (node instanceof XDebuggerTreeNode) {
           text = ((XDebuggerTreeNode)node).getText().toString();
         }
       }
