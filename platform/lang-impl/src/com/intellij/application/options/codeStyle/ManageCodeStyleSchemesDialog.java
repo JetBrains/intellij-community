@@ -82,7 +82,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     mySchemesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     mySchemesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(@NotNull ListSelectionEvent e) {
         updateActions();
       }
     });
@@ -91,25 +91,25 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
     myDeleteButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         deleteSelected();
       }
     });
     mySaveAsButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         onSaveAs();
       }
     });
     myCopyToProjectButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         onCopyToProject();
       }
     });
     myCloseButton.addActionListener(new ActionListener(){
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         doCancelAction();
       }
     });
@@ -120,7 +120,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       myExportButton.setVisible(true);
       myExportButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        public void actionPerformed(@NotNull final ActionEvent e) {
           CodeStyleScheme selected = getSelectedScheme();
           ExportSchemeAction.doExport((CodeStyleSchemeImpl)selected, mySchemesManager);
         }
@@ -135,7 +135,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       myImportButton.setVisible(true);
       myImportButton.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        public void actionPerformed(@NotNull final ActionEvent e) {
           chooseAndImport();
         }
       });
@@ -326,8 +326,9 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
     private MySchemesTable() {
       myFixedItemsRenderer = new DefaultTableCellRenderer() {
+        @NotNull
         @Override
-        public Component getTableCellRendererComponent(JTable table,
+        public Component getTableCellRendererComponent(@NotNull JTable table,
                                                        Object value,
                                                        boolean isSelected,
                                                        boolean hasFocus,
@@ -361,6 +362,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       updateSchemes();
     }
 
+    @NotNull
     @Override
     public String getColumnName(int column) {
       assert column == 0;
