@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,6 +36,9 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
+      return;
+    }
     final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory
@@ -56,9 +60,6 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    if (!element.isWritable()) {
-      return false;
-    }
     final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
     return expressionStatement != null && isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
