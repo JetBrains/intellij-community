@@ -1384,16 +1384,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       public void run() {
         try {
-          copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()), 0, 0, null);
+          copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
         myFile = copy;
         myEditor = createEditor(copy);
-        assert myEditor != null : "Editor couldn't be created for file: " +
-                                  copy.getPath() +
-                                  ", use copyFileToProject(..) method for this file instead of configureByFile(..)";
+        assert myEditor != null : "editor couldn't be created for: " + copy.getPath() + ", use copyFileToProject() instead of configureByFile()";
 
         EditorTestUtil.setCaretsAndSelection(myEditor, loader.caretState);
 
