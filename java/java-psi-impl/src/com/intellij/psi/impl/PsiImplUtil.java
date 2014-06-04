@@ -80,14 +80,14 @@ public class PsiImplUtil {
 
   @NotNull
   public static PsiMethod[] getConstructors(@NotNull PsiClass aClass) {
-    final List<PsiMethod> constructorsList = new SmartList<PsiMethod>();
-
-    final PsiMethod[] methods = aClass.getMethods();
-    for (final PsiMethod method : methods) {
-      if (method.isConstructor()) constructorsList.add(method);
+    List<PsiMethod> result = null;
+    for (PsiMethod method : aClass.getMethods()) {
+      if (method.isConstructor()) {
+        if (result == null) result = ContainerUtil.newSmartList();
+        result.add(method);
+      }
     }
-
-    return constructorsList.toArray(new PsiMethod[constructorsList.size()]);
+    return result == null ? PsiMethod.EMPTY_ARRAY : result.toArray(new PsiMethod[result.size()]);
   }
 
   @Nullable
