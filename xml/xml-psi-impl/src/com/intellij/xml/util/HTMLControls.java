@@ -85,7 +85,7 @@ public class HTMLControls {
     @Attribute("emptyAllowed")
     public boolean emptyAllowed;
     @Attribute(value = "autoClosedBy", converter = AutoCloseConverter.class)
-    public final Set<String> autoClosedBy = Collections.emptySet();
+    public Set<String> autoClosedBy = Collections.emptySet();
   }
 
   private static class TagStateConverter extends Converter<TagState> {
