@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -448,14 +447,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
           public void run() {
             //todo
             final DiffLog diffLog = BlockSupportImpl.mergeTrees(oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator());
-            CodeStyleManager.getInstance(hostPsiFile.getProject()).performActionWithFormatterDisabled(new Runnable() {
-              @Override
-              public void run() {
-                synchronized (PsiLock.LOCK) {
-                  DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
-                }
-              }
-            });
+            DocumentCommitProcessor.doActualPsiChange(oldFile, diffLog);
           }
         });
         assert shreds.isValid();
