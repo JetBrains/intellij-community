@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,20 +35,6 @@ public final class FileAttributes {
   @MagicConstant(flags = {SYM_LINK, HIDDEN, READ_ONLY})
   public @interface Flags { }
 
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OWNER_READ = 0400;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OWNER_WRITE = 0200;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OWNER_EXECUTE = 0100;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int GROUP_READ = 0040;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int GROUP_WRITE = 0020;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int GROUP_EXECUTE = 0010;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OTHERS_READ = 0004;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OTHERS_WRITE = 0002;
-  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OTHERS_EXECUTE = 0001;
-
-  /** @deprecated (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public @interface Permissions { }
-
   public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(null, SYM_LINK, 0, 0);
 
   /**
@@ -72,27 +58,16 @@ public final class FileAttributes {
    */
   public final long lastModified;
 
-  /** @deprecated use {@linkplain #isWritable()} (to remove in IDEA 14) */
-  @SuppressWarnings("unused") public final int permissions;
-
 
   public FileAttributes(boolean directory, boolean special, boolean symlink, boolean hidden, long length, long lastModified, boolean writable) {
     this(type(directory, special), flags(symlink, hidden, !writable), length, lastModified);
   }
 
-  /** @deprecated use {@linkplain #FileAttributes(boolean, boolean, boolean, boolean, long, long, boolean)} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public FileAttributes(boolean directory, boolean special, boolean symlink, long length, long lastModified, int permissions) {
-    this(type(directory, special), flags(symlink, false, true), length, lastModified);
-  }
-
-  @SuppressWarnings("deprecation")
   private FileAttributes(@Nullable Type type, @Flags byte flags, long length, long lastModified) {
     this.type = type;
     this.flags = flags;
     this.length = length;
     this.lastModified = lastModified;
-    this.permissions = -1;
   }
 
   private static Type type(boolean isDirectory, boolean isSpecial) {
