@@ -782,15 +782,11 @@ public final class EditorUtil {
 
   /**
    * Finds the start offset of visual line at which given offset is located, not taking soft wraps into account.
-   *
-   * @see #calcSurroundingRange(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.VisualPosition, com.intellij.openapi.editor.VisualPosition)
    */
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset) {
     while(true) {
       offset = getLineStartOffset(offset, editor.getDocument());
-      // this assumes that there cannot be two adjacent collapsed fold regions
-      // (such case is not properly handled currently by FoldingModelImpl/FoldRegionsTree anyway)
-      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
       if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
         break;
       }
@@ -801,14 +797,10 @@ public final class EditorUtil {
 
   /**
    * Finds the end offset of visual line at which given offset is located, not taking soft wraps into account.
-   *
-   * @see #calcSurroundingRange(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.VisualPosition, com.intellij.openapi.editor.VisualPosition)
    */
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int offset) {
     while(true) {
       offset = getLineEndOffset(offset, editor.getDocument());
-      // this assumes that there cannot be two adjacent collapsed fold regions
-      // (such case is not properly handled currently by FoldingModelImpl/FoldRegionsTree anyway)
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
       if (foldRegion == null || foldRegion.getEndOffset() <= offset) {
         break;

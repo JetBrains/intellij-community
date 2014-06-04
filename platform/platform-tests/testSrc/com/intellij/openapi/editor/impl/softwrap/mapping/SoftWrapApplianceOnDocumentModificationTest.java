@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1039,6 +1039,17 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     assertFalse(foldRegion.isExpanded());
     assertEquals(foldStart, myEditor.getCaretModel().getOffset());
+  }
+
+  public void testFoldRegionEndingAtLineStart() throws IOException {
+    init(100, "aaa\nbbb\nccc\nddd");
+    addCollapsedFoldRegion(4, 8, "...");
+    addCollapsedFoldRegion(13, 15, "...");
+
+    myEditor.getDocument().insertString(10, "C");
+
+    // verify that cached layout data is intact after document change and position recalculation is done correctly
+    assertEquals(new LogicalPosition(0, 0), myEditor.visualToLogicalPosition(new VisualPosition(0, 0)));
   }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
