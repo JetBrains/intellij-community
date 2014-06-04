@@ -76,7 +76,7 @@ public class JobUtilTest extends PlatformLangTestCase {
     return COUNT.incrementAndGet();
   }
 
-  public void testJobUtilCorrectlySplitsUpHugeWorkAndFinishes() throws Exception {
+  public void testJobUtilCorrectlySplitsUpHugeWorkAndFinishes_Performance() throws Exception {
     COUNT.set(0);
     int N = 100000;
     List<String> list = Collections.nCopies(N, null);
@@ -110,7 +110,7 @@ public class JobUtilTest extends PlatformLangTestCase {
     assertEquals(N, COUNT.get());
   }
 
-  public void testJobUtilProcessesAllItems() throws Exception {
+  public void testJobUtilProcessesAllItems_Performance() throws Exception {
     List<String> list = Collections.nCopies(10000, null);
     final AtomicReference<Exception> exception = new AtomicReference<Exception>();
     for (int i=0; i<10; i++) {
@@ -130,7 +130,7 @@ public class JobUtilTest extends PlatformLangTestCase {
     }
   }
 
-  public void testJobUtilRecursive() throws Exception {
+  public void testJobUtilRecursive_Performance() throws Exception {
     final List<String> list = Collections.nCopies(100, null);
     for (int i=0; i<10; i++) {
       COUNT.set(0);
