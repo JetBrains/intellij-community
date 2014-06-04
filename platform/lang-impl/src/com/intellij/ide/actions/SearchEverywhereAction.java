@@ -729,7 +729,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
     myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")");
-    topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
+    if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+      topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
+    }
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
