@@ -479,7 +479,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       for (CodeStyleScheme scheme : schemes) {
         names.add(scheme.getName());
       }
-      SaveSchemeDialog saveDialog = new SaveSchemeDialog(myParent, ApplicationBundle.message("title.save.code.style.scheme.as"), names);
+      SaveSchemeDialog saveDialog = new SaveSchemeDialog(myParent, ApplicationBundle.message("title.save.code.style.scheme.as"), names, "");
       saveDialog.show();
       if (saveDialog.isOK()) {
         int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), saveDialog.getSchemeName());

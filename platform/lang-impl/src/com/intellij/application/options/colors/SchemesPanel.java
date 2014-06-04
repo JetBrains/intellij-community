@@ -29,6 +29,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -204,14 +206,18 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   }
 
   private void showSaveAsDialog() {
-    ArrayList<String> names = new ArrayList<String>();
-    EditorColorsScheme[] allSchemes = EditorColorsManager.getInstance().getAllSchemes();
+    ComboBoxModel model = mySchemeComboBox.getModel();
 
-    for (EditorColorsScheme scheme : allSchemes) {
-      names.add(scheme.getName());
+    int size = model.getSize();
+    ArrayList<String> names = ContainerUtil.newArrayListWithCapacity(size);
+    for (int i = 0; i < size; i++) {
+      Object at = model.getElementAt(i);
+      if (at instanceof String) names.add((String)at);
     }
 
-    SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names);
+    String selectedName = myOptions.getSelectedScheme().getName();
+    String defaultName = UniqueNameGenerator.generateUniqueName(selectedName + " copy", names);
+    SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, defaultName);
     dialog.show();
     if (dialog.isOK()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());
