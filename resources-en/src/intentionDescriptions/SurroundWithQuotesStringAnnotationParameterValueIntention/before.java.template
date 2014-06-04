@@ -1,0 +1,10 @@
+class X {
+
+  @interface Foo {
+    String value();
+  }
+
+  @Foo(<spot>123</spot>)
+  void m() {
+  }
+}
