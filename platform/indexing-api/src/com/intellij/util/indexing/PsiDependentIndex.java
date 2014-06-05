@@ -16,7 +16,7 @@
 package com.intellij.util.indexing;
 
 /**
- * Created by Maxim.Mossienko on 1/4/14.
+ * Marker interface of index that is built from PSI, meaning its invalidation will happen upon producing new PSI.
  */
 public interface PsiDependentIndex {
 }
