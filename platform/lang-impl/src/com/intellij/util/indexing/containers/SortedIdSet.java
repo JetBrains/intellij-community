@@ -200,16 +200,19 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   }
 
   public RandomAccessIntContainer ensureContainerCapacity(int count) {
-    if (mySize + count > ChangeBufferingList.MAX_FILES) {
+    int newSize = mySetLength + count;
+    if (newSize < mySet.length) return this;
+    if (newSize > ChangeBufferingList.MAX_FILES) {
       return new IdBitSet(this, count);
     }
-    int newSize = mySetLength + count;
+
+    newSize = ChangeBufferingList.calcNextArraySize(mySet.length, newSize);
     assert newSize < Short.MAX_VALUE;
-    if (newSize >= mySet.length) {
-      int[] newSet = new int[newSize]; // todo slightly increase size and compact
-      System.arraycopy(mySet, 0, newSet, 0, mySetLength);
-      mySet = newSet;
-    }
+
+    int[] newSet = new int[newSize]; // todo slightly increase size and compact
+    System.arraycopy(mySet, 0, newSet, 0, mySetLength);
+    mySet = newSet;
+
     return this;
   }
 
