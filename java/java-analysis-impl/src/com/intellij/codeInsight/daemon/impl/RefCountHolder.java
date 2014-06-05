@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
@@ -204,8 +205,8 @@ public class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  public boolean isReferencedByMethodReference(@NotNull PsiMethod method) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(method)) return false;
+  public boolean isReferencedByMethodReference(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
 
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
