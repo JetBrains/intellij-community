@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  * @by Maxim.Mossienko on 12/11/13.
  */
-public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> {
+public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayList> implements PsiDependentIndex {
   static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.duplicates.online.calculation",
                                                                   isEnabledByDefault());
 
