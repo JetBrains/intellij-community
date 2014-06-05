@@ -834,7 +834,9 @@ public class XDebugSessionImpl implements XDebugSession {
         breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
       }
     }
-    myValueMarkers.clear();
+    if (myValueMarkers != null) {
+      myValueMarkers.clear();
+    }
     myStopped = true;
     myDebuggerManager.removeSession(this);
     myDispatcher.getMulticaster().sessionStopped();
