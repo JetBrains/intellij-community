@@ -16,13 +16,11 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.psi.ExternallyDefinedPsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
@@ -137,6 +135,36 @@ public class ClassInnerStuffCache {
         }
       }).get(name);
     }
+  }
+
+  @Nullable
+  public PsiMethod getValuesMethod() {
+    return !myClass.isEnum() || myClass.getName() == null ? null : CachedValuesManager.getCachedValue(myClass, new CachedValueProvider<PsiMethod>() {
+      @Nullable
+      @Override
+      public Result<PsiMethod> compute() {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+        String text = "public static " + myClass.getName() + "[] values() { }";
+        PsiMethod physicalMethod = factory.createMethodFromText(text, myClass);
+        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, myClass);
+        return new Result<PsiMethod>(method, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+      }
+    });
+  }
+
+  @Nullable
+  public PsiMethod getValueOfMethod() {
+    return !myClass.isEnum() || myClass.getName() == null ? null : CachedValuesManager.getCachedValue(myClass, new CachedValueProvider<PsiMethod>() {
+      @Nullable
+      @Override
+      public Result<PsiMethod> compute() {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+        String text = "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }";
+        PsiMethod physicalMethod = factory.createMethodFromText(text, myClass);
+        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, myClass);
+        return new Result<PsiMethod>(method, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+      }
+    });
   }
 
   private PsiField[] getAllFields() {
