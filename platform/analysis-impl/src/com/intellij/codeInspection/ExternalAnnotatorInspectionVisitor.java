@@ -27,11 +27,12 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
@@ -39,12 +40,18 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
 
   private final ProblemsHolder myHolder;
   private final ExternalAnnotator myAnnotator;
-  private final boolean myOnTheFly;
+  private final boolean myIsOnTheFly;
 
-  public ExternalAnnotatorInspectionVisitor(ProblemsHolder holder, ExternalAnnotator annotator, boolean onTheFly) {
+  public ExternalAnnotatorInspectionVisitor(ProblemsHolder holder, ExternalAnnotator annotator, boolean isOnTheFly) {
     myHolder = holder;
     myAnnotator = annotator;
-    myOnTheFly = onTheFly;
+    myIsOnTheFly = isOnTheFly;
+  }
+
+  @Override
+  public void visitFile(PsiFile file) {
+    ProblemDescriptor[] descriptors = checkFileWithExternalAnnotator(file, myHolder.getManager(), myIsOnTheFly, myAnnotator);
+    addDescriptors(descriptors);
   }
 
   @NotNull
@@ -78,8 +85,9 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    for (final Annotation annotation : annotations) {
+    List<ProblemDescriptor> problems = ContainerUtil.newArrayListWithCapacity(annotations.size());
+    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
+    for (Annotation annotation : annotations) {
       if (annotation.getSeverity() == HighlightSeverity.INFORMATION ||
           annotation.getStartOffset() == annotation.getEndOffset()) {
         continue;
@@ -91,7 +99,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
         continue;
       }
 
-      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes());
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
       ProblemDescriptor descriptor = manager.createProblemDescriptor(startElement,
                                                                      endElement,
                                                                      annotation.getMessage(),
@@ -104,7 +112,8 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
   @NotNull
-  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos) {
+  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos,
+                                                   @NotNull IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
@@ -117,20 +126,16 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
         fix = (LocalQuickFix) intentionAction;
       }
       else {
-        fix = new LocalQuickFixBackedByIntentionAction(intentionAction);
+        LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
+        if (lqf == null) {
+          lqf = new LocalQuickFixBackedByIntentionAction(intentionAction);
+          quickFixMappingCache.put(intentionAction, lqf);
+        }
+        fix = lqf;
       }
       result[i++] = fix;
     }
     return result;
-  }
-
-  @Override
-  public void visitFile(PsiFile file) {
-    if (!myOnTheFly) {
-      ProblemDescriptor[] descriptors = checkFileWithExternalAnnotator(file, myHolder.getManager(),
-                                                                       false, myAnnotator);
-      addDescriptors(descriptors);
-    }
   }
 
   private void addDescriptors(@NotNull ProblemDescriptor[] descriptors) {
