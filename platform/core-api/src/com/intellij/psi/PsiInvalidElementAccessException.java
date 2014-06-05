@@ -62,6 +62,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     if (element == null) {
       myMessage = message;
       myDiagnostic = Attachment.EMPTY_ARRAY;
+    } else if (element == PsiUtilCore.NULL_PSI_ELEMENT) {
+      myMessage = "NULL_PSI_ELEMENT ;" + message;
+      myDiagnostic = Attachment.EMPTY_ARRAY;
     } else {
       boolean recursiveInvocation = Boolean.TRUE.equals(element.getUserData(REPORTING_EXCEPTION));
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
