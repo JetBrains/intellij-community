@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,16 @@
  */
 package com.intellij.codeInsight.actions;
 
-import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-public interface ReformatFilesOptions {
+public interface FileFilter {
+  boolean accept(@NotNull VirtualFile file);
 
-  boolean isOptimizeImports();
-
-  boolean isProcessOnlyChangedText();
-
-  boolean isRearrangeEntries();
-
-  @Nullable
-  String getFileTypeMask();
-
-  @Nullable
-  SearchScope getSearchScope();
-
+  @NotNull FileFilter ACCEPT_ALL = new FileFilter() {
+    @Override
+    public boolean accept(@NotNull VirtualFile file) {
+      return true;
+    }
+  };
 }

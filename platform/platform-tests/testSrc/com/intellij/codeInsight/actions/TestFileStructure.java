@@ -67,11 +67,11 @@ public class TestFileStructure {
   }
 
   @NotNull
-  public TestFileStructure createDirectoryAndMakeItCurrent(String name) throws IOException {
+  public PsiDirectory createDirectoryAndMakeItCurrent(String name) throws IOException {
     myLevel++;
     myFilesForLevel.add(new ArrayList<PsiFile>());
     myCurrentLevelDirectory = createDirectory(myProject, myCurrentLevelDirectory.getVirtualFile(), name);
-    return this;
+    return myCurrentLevelDirectory;
   }
 
   public List<PsiFile> getFilesAtLevel(int level) {
