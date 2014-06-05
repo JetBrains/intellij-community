@@ -39,6 +39,7 @@ import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -107,9 +108,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
-    //if (file != null) {
-    //  PsiUtilCore.ensureValid(file);
-    //}
     document.putUserData(HARD_REF_TO_PSI, file);
   }
 
@@ -148,6 +146,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     Document document = getCachedDocument(file);
     if (document != null) {
       if (!file.getViewProvider().isPhysical() && document.getUserData(HARD_REF_TO_PSI) == null) {
+        PsiUtilCore.ensureValid(file);
         cachePsi(document, file);
       }
       return document;
@@ -167,6 +166,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
 
       if (!viewProvider.isPhysical()) {
+        PsiUtilCore.ensureValid(file);
         cachePsi(document, file);
         file.putUserData(HARD_REF_TO_DOCUMENT, document);
       }
