@@ -67,7 +67,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
   @Override
   public void doMove(final Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
 
-    elements = adjustForMove(project, elements, targetContainer);
+    elements = super.adjustForMove(project, elements, targetContainer);
     if (elements == null) {
       return;
     }
