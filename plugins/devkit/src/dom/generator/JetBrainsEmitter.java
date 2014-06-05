@@ -22,6 +22,9 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -67,7 +70,7 @@ public class JetBrainsEmitter implements Emitter {
     final String typeName = td.name;
     final String typeQName = model.getNSDPrefix(td) + typeName;
     final String pkgName = typeQName.lastIndexOf('.') > -1 ? typeQName.substring(0, typeQName.lastIndexOf('.')) : "";
-    final String stringClass = myUseQualifiedClassNames ? "java.lang.String" : "String";
+    final String stringClass = getStringClassName();
 
     final File outFile = fileManager.getOutputFile(new File(outDir, toJavaFileName(typeQName)));
     PrintWriter out = null;
@@ -528,7 +531,7 @@ public class JetBrainsEmitter implements Emitter {
     }
     if (jtList.size() == 0) return;
 
-    final String stringClass = myUseQualifiedClassNames ? "java.lang.String" : "String";
+    final String stringClass = getStringClassName();
     String typeName = nsd.helperClass.substring(nsd.helperClass.lastIndexOf(".") + 1);
     final String typeQName = model.toJavaQualifiedTypeName("", nsd.helperClass, false);
     String pkgName = typeQName.substring(0, typeQName.lastIndexOf('.'));
@@ -666,6 +669,10 @@ public class JetBrainsEmitter implements Emitter {
 
   private static String toJavaFileName(String typeName) {
     return typeName.replace('.', File.separatorChar) + ".java";
+  }
+
+  private String getStringClassName() {
+    return myUseQualifiedClassNames ? CommonClassNames.JAVA_LANG_STRING : StringUtil.getShortName(CommonClassNames.JAVA_LANG_STRING);
   }
 
   public static String toJavaIdName(String javaFieldName) {
