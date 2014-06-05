@@ -254,11 +254,10 @@ public class RefCountHolder {
     return true;
   }
 
-  public boolean isReferencedForRead(@NotNull PsiElement element) {
-    LOG.assertTrue(element instanceof PsiVariable);
+  public boolean isReferencedForRead(@NotNull PsiVariable variable) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(element);
+      array = myLocalRefsMap.getKeysByValue(variable);
     }
     if (array == null) return false;
     for (PsiReference ref : array) {
@@ -278,11 +277,10 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean isReferencedForWrite(@NotNull PsiElement element) {
-    LOG.assertTrue(element instanceof PsiVariable);
+  public boolean isReferencedForWrite(@NotNull PsiVariable variable) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
-      array = myLocalRefsMap.getKeysByValue(element);
+      array = myLocalRefsMap.getKeysByValue(variable);
     }
     if (array == null) return false;
     for (PsiReference ref : array) {

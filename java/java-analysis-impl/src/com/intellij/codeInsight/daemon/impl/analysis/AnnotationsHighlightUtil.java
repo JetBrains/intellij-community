@@ -163,7 +163,7 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkDuplicateAnnotations(@NotNull PsiAnnotation annotationToCheck) {
+  static HighlightInfo checkDuplicateAnnotations(@NotNull PsiAnnotation annotationToCheck, @NotNull LanguageLevel languageLevel) {
     PsiAnnotationOwner owner = annotationToCheck.getOwner();
     if (owner == null) return null;
 
@@ -186,7 +186,7 @@ public class AnnotationsHighlightUtil {
       }
     }
     else if (isAnnotationRepeatedTwice(owner, annotationType.getQualifiedName())) {
-      if (!PsiUtil.isLanguageLevel8OrHigher(annotationToCheck)) {
+      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         String description = JavaErrorMessages.message("annotation.duplicate.annotation");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
