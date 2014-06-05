@@ -480,7 +480,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
             myDataDir = null;
             mySourceDir = null;
             myOriginalSourceDir = null;
-            CompilerTestUtil.disableExternalCompiler();
+            CompilerTestUtil.disableExternalCompiler(myProject);
             CompilerTestCase.super.tearDown();
           }
           catch (Exception e) {
