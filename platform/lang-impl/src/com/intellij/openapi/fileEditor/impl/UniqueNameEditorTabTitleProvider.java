@@ -30,7 +30,7 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
     if (!UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project)) {
       return null;
     }
-    final String uniqueName = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file);
+    final String uniqueName = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
     return uniqueName.equals(file.getName()) ? null : uniqueName;
   }
 }
