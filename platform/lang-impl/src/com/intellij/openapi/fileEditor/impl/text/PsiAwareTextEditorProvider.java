@@ -22,7 +22,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -70,12 +69,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider implements As
       public FileEditor build() {
         final PsiAwareTextEditorImpl editor = new PsiAwareTextEditorImpl(project, file, PsiAwareTextEditorProvider.this);
         if (finalState != null) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              finalState.setToEditor(editor.getEditor());
-            }
-          });
+          finalState.setToEditor(editor.getEditor());
         }
         return editor;
       }

@@ -207,7 +207,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
     if (!EditorUtil.supportsDumbModeFolding(editor)) return;
 
-    CodeFoldingState foldingState = buildInitialFoldings(editor.getDocument());
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
+    CodeFoldingState foldingState = buildInitialFoldings(document);
     if (foldingState != null) {
       foldingState.setToEditor(editor);
     }
@@ -220,13 +222,17 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       return null;
     }
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
+    if (psiDocumentManager.isUncommited(document)) {
+      // skip building foldings for uncommitted document, CodeFoldingPass invoked by daemon will do it later
+      return null;
+    }
     //Do not save/restore folding for code fragments
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    final PsiFile file = psiDocumentManager.getPsiFile(document);
     if (file == null || !file.isValid() || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
     }
 
-    PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
     final FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(myProject, file, document, true);
 

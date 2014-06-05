@@ -733,6 +733,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          @Nullable final HistoryEntry entry,
                                                          final boolean current, final boolean focusEditor, final Boolean pin,
                                                          final int index) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<EditorWithProviderComposite>();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -777,6 +779,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (myProject.isDisposed() || !file.isValid()) {
+          return;
+        }
         compositeRef.set(window.findFileComposite(file));
         boolean newEditor = compositeRef.isNull();
         if (newEditor) {
