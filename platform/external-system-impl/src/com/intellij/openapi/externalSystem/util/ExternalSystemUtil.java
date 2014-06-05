@@ -67,6 +67,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -537,40 +538,50 @@ public class ExternalSystemUtil {
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              @NotNull String executorId,
                              @NotNull Project project,
-                             @NotNull ProjectSystemId externalSystemId)
-  {
+                             @NotNull ProjectSystemId externalSystemId) {
+    runTask(taskSettings, executorId, project, externalSystemId, null);
+  }
+
+  public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                             @NotNull String executorId,
+                             @NotNull Project project,
+                             @NotNull ProjectSystemId externalSystemId,
+                             @Nullable ProgramRunner.Callback callback) {
+    final Pair<ProgramRunner, ExecutionEnvironment> pair = createRunner(taskSettings, executorId, project, externalSystemId);
+    if (pair == null) return;
+
+    try {
+      pair.first.execute(pair.second, callback);
+    }
+    catch (ExecutionException e) {
+      LOG.warn("Can't execute task " + taskSettings, e);
+    }
+  }
+
+  @Nullable
+  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                       @NotNull String executorId,
+                                                                       @NotNull Project project,
+                                                                       @NotNull ProjectSystemId externalSystemId) {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
-    if (executor == null) {
-      return;
-    }
+    if (executor == null) return null;
+
     String runnerId = getRunnerId(executorId);
-    if (runnerId == null) {
-      return;
-    }
+    if (runnerId == null) return null;
+
     ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(runnerId);
-    if (runner == null) {
-      return;
-    }
+    if (runner == null) return null;
+
     AbstractExternalSystemTaskConfigurationType configurationType = findConfigurationType(externalSystemId);
-    if (configurationType == null) {
-      return;
-    }
+    if (configurationType == null) return null;
 
     String name = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
     ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     runConfiguration.getSettings().setExternalProjectPath(taskSettings.getExternalProjectPath());
     runConfiguration.getSettings().setTaskNames(taskSettings.getTaskNames());
-    
-    
-    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
-    
-    try {
-      runner.execute(env, null);
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Can't execute task " + taskSettings, e);
-    }
+
+    return Pair.create(runner, new ExecutionEnvironment(executor, runner, settings, project));
   }
 
   @Nullable
