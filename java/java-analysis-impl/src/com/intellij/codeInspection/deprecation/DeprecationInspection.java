@@ -24,12 +24,10 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,18 +61,6 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
-
-  @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    node.addContent(new Element("option").setAttribute("name", "IGNORE_INSIDE_DEPRECATED").setAttribute("value", String.valueOf(IGNORE_INSIDE_DEPRECATED)));
-    node.addContent(new Element("option").setAttribute("name", "IGNORE_ABSTRACT_DEPRECATED_OVERRIDES").setAttribute("value", String.valueOf(IGNORE_ABSTRACT_DEPRECATED_OVERRIDES)));
-    node.addContent(new Element("option").setAttribute("name", "IGNORE_IMPORT_STATEMENTS").setAttribute("value", String.valueOf(IGNORE_IMPORT_STATEMENTS)));
-
-    if (!IGNORE_METHODS_OF_DEPRECATED) {
-      node.addContent(new Element("option").setAttribute("name", "IGNORE_METHODS_OF_DEPRECATED").setAttribute("value", String.valueOf(IGNORE_METHODS_OF_DEPRECATED)));
-    }
-  }
-
 
   @Override
   @NotNull
