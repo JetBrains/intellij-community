@@ -45,9 +45,6 @@ import java.util.List;
 public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
-  @NonNls private static final String INSPECTION = "Inspection";
-  @NonNls private static final String INSPECTION_BASE = "InspectionBase";
-
   private String m_shortName = null;
   private long timestamp = -1L;
 

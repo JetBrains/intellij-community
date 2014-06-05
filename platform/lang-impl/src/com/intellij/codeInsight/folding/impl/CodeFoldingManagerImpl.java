@@ -266,7 +266,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         documentFoldingInfo.setToEditor(editor);
         documentFoldingInfo.clear();
 
-        editor.getDocument().putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
+        document.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
         editor.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
       }
     });
