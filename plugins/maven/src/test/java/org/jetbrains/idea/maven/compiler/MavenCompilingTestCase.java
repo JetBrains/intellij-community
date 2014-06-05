@@ -48,7 +48,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
 
   protected void tearDown() throws Exception {
     try {
-      CompilerTestUtil.disableExternalCompiler();
+      CompilerTestUtil.disableExternalCompiler(myProject);
     }
     finally {
       super.tearDown();

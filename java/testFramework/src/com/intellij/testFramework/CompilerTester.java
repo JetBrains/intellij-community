@@ -74,7 +74,7 @@ public class CompilerTester {
   }
 
   public void tearDown() {
-    CompilerTestUtil.disableExternalCompiler();
+    CompilerTestUtil.disableExternalCompiler(getProject());
 
     try {
       myMainOutput.tearDown();

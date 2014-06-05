@@ -81,7 +81,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
       }
     }
-    CompilerTestUtil.disableExternalCompiler();
+    CompilerTestUtil.disableExternalCompiler(getProject());
 
     super.tearDown();
   }
