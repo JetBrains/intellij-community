@@ -52,7 +52,7 @@ import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
-import org.jetbrains.jps.incremental.storage.OutputToSourceRegistry;
+import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
@@ -975,7 +975,7 @@ public class IncProjectBuilder {
         if (isTargetOutputCleared(context, target)) {
           continue;
         }
-
+        final int buildTargetId = context.getProjectDescriptor().getTargetsState().getBuildTargetId(target);
         final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
         final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
@@ -994,8 +994,8 @@ public class IncProjectBuilder {
           final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
           if (outputs != null && !outputs.isEmpty()) {
             List<String> deletedOutputPaths = new ArrayList<String>();
-            final OutputToSourceRegistry outputToSourceRegistry = context.getProjectDescriptor().dataManager.getOutputToSourceRegistry();
-            for (String output : outputToSourceRegistry.getSafeToDeleteOutputs(outputs, deletedSource)) {
+            final OutputToTargetRegistry outputToSourceRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
+            for (String output : outputToSourceRegistry.getSafeToDeleteOutputs(outputs, buildTargetId)) {
               final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
               if (deleted) {
                 doneSomething = true;
