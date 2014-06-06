@@ -123,11 +123,11 @@ public class SourceResolver {
   }
 
   public interface Resolver {
-    int resolve(@NotNull VirtualFile sourceFile, @NotNull ObjectIntHashMap<Url> map);
+    int resolve(@Nullable VirtualFile sourceFile, @NotNull ObjectIntHashMap<Url> map);
   }
 
   @Nullable
-  public MappingList findMappings(@NotNull VirtualFile sourceFile, @NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
+  public MappingList findMappings(@Nullable VirtualFile sourceFile, @NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
     int index = resolver.resolve(sourceFile, canonicalizedSourcesMap);
     return index < 0 ? null : sourceMap.sourceIndexToMappings[index];
   }
