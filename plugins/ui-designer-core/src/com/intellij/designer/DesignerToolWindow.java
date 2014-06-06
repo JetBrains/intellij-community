@@ -54,7 +54,29 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
 
     myPropertyTablePanel = new PropertyTablePanel(project);
 
-    myToolWindowPanel = new Splitter(true, 0.42f);
+    myToolWindowPanel = new Splitter(true, 0.42f) {
+      @Override
+      public void doLayout() {
+        super.doLayout();
+
+        JComponent firstComponent = getFirstComponent();
+        JComponent secondComponent = getSecondComponent();
+        if (firstComponent == null || secondComponent == null) {
+          return;
+        }
+
+        int firstHeight = firstComponent.getHeight();
+        int dividerHeight = getDivider().getHeight();
+        int height = getSize().height;
+
+        if (firstHeight + dividerHeight + secondComponent.getHeight() != height) {
+          Rectangle bounds = secondComponent.getBounds();
+          bounds.height = height - firstHeight - dividerHeight;
+          secondComponent.setBounds(bounds);
+        }
+      }
+    };
+
     myToolWindowPanel.setDividerWidth(3);
     myToolWindowPanel.setShowDividerControls(false);
     myToolWindowPanel.setShowDividerIcon(false);
@@ -113,7 +135,7 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myTreeBuilder != null) {
-          myTreeBuilder.expandAll(null);
+          TreeUtil.expandAll(myComponentTree);
         }
       }
     };

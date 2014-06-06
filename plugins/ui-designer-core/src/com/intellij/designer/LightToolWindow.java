@@ -193,7 +193,7 @@ public class LightToolWindow extends JPanel {
 
   private void configureBorder() {
     int borderStyle = isLeft() ? SideBorder.RIGHT : SideBorder.LEFT;
-    setBorder(IdeBorderFactory.createBorder(borderStyle | SideBorder.BOTTOM));
+    setBorder(IdeBorderFactory.createBorder(borderStyle));
     myMinimizeComponent.setBorder(IdeBorderFactory.createBorder(borderStyle));
   }
 
