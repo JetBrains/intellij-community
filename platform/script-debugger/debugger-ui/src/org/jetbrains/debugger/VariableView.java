@@ -137,7 +137,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
   @NotNull
   @Override
   public MemberFilter createMemberFilter() {
-    return context.getViewSupport().createMemberFilter(context);
+    return context.getViewSupport().createMemberFilter(this);
   }
 
   @Override

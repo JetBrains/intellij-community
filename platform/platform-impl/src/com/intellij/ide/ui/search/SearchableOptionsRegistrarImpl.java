@@ -152,7 +152,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
               for (String word : words) {
                 putOptionWithHelpId(word, id, groupName, synonym, null);
               }
-              final Couple<String> key = Couple.newOne(option, id);
+              final Couple<String> key = Couple.of(option, id);
               Set<String> foundSynonyms = myHighlightOption2Synonym.get(key);
               if (foundSynonyms == null) {
                 foundSynonyms = new THashSet<String>();
@@ -370,7 +370,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @Override
   public Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable) {
     loadHugeFilesIfNecessary();
-    return myHighlightOption2Synonym.get(Couple.newOne(option, configurable.getId()));
+    return myHighlightOption2Synonym.get(Couple.of(option, configurable.getId()));
   }
 
   @Override

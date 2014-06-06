@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,14 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     myPointers = pointers;
   }
 
+  @Override
   public boolean isNavigateAction() {
     return true;
   }
 
   public List<PsiElement> getTargetElements() {
     return ContainerUtil.mapNotNull(myPointers.getValue(), new NullableFunction<SmartPsiElementPointer, PsiElement>() {
+      @Override
       public PsiElement fun(final SmartPsiElementPointer smartPsiElementPointer) {
         return smartPsiElementPointer.getElement();
       }
@@ -91,15 +93,18 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     return result;
   }
 
+  @Override
   @Nullable
   public AnAction getClickAction() {
     return new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         navigate(e == null ? null : (MouseEvent)e.getInputEvent(), null);
       }
     };
   }
 
+  @Override
   public void navigate(@Nullable final MouseEvent event, @Nullable final PsiElement elt) {
     final List<PsiElement> list = getTargetElements();
     if (list.isEmpty()) {

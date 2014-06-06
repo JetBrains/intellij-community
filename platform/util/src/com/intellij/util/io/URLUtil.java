@@ -137,7 +137,7 @@ public class URLUtil {
       }
     }
 
-    return Couple.newOne(jarPath, resourcePath);
+    return Couple.of(jarPath, resourcePath);
   }
 
   @NotNull

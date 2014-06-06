@@ -50,6 +50,7 @@ import java.util.Collection;
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
+  @Override
   public Result beforeCharTyped(final char c, final Project project, Editor editor, PsiFile editedFile, final FileType fileType) {
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {

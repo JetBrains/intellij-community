@@ -122,6 +122,12 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   @Nullable
   public abstract Pair <FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file);
 
+  /**
+   * Closes all files IN ACTIVE SPLITTER (window).
+   *
+   * @see com.intellij.ui.docking.DockManager#getContainers()
+   * @see com.intellij.ui.docking.DockContainer#closeAll()
+   */
   public abstract void closeAllFiles();
 
   @NotNull

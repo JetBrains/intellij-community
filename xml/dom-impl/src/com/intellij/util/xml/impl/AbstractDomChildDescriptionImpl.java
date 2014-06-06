@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.xml.Stubbed;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -100,15 +99,18 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     myUserMap = userMap;
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
     return myCustomAnnotations == null ? null : (T)myCustomAnnotations.get(annotationClass);
   }
 
+  @Override
   public <T> T getUserData(final Key<T> key) {
     return myUserMap == null ? null : (T)myUserMap.get(key);
   }
 
+  @Override
   @NotNull
   public final List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
@@ -117,6 +119,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     for (int i = 0; i < list.size(); i++) {
       final int i1 = i;
       result.add(domManager.createStableValue(new Factory<DomElement>() {
+        @Override
         @Nullable
         public DomElement create() {
           if (!parent.isValid()) return null;
@@ -130,11 +133,13 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   }
 
 
+  @Override
   @NotNull
   public final Type getType() {
     return myType;
   }
 
+  @Override
   @NotNull
   public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), false);
@@ -166,6 +171,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     return myPresentationTemplate.getValue();
   }
 
+  @Override
   @Nullable
   public PsiElement getDeclaration(final Project project) {
     DomElement domDeclaration = getDomDeclaration();

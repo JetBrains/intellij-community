@@ -61,6 +61,7 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -345,7 +346,8 @@ public class XDebugSessionImpl implements XDebugSession {
       .showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
   }
 
-  public synchronized XValueMarkers<?, ?> getValueMarkers() {
+  @Nullable
+  public XValueMarkers<?, ?> getValueMarkers() {
     if (myValueMarkers == null) {
       XValueMarkerProvider<?, ?> provider = myDebugProcess.createValueMarkerProvider();
       if (provider != null) {
@@ -832,6 +834,12 @@ public class XDebugSessionImpl implements XDebugSession {
       if (myDependentBreakpointListener != null) {
         breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
       }
+    }
+    if (myValueMarkers != null) {
+      myValueMarkers.clear();
+    }
+    if (XDebuggerSettingsManager.getInstance().getGeneralSettings().isUnmuteOnStop()) {
+      mySessionData.setBreakpointsMuted(false);
     }
     myStopped = true;
     myDebuggerManager.removeSession(this);

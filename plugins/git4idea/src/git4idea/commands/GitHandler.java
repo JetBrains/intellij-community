@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -436,6 +437,22 @@ public abstract class GitHandler {
         int port = ssh.getXmlRcpPort();
         myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
+
+        final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+        boolean useHttpProxy = httpConfigurable.USE_HTTP_PROXY;
+        myEnv.put(GitSSHHandler.SSH_USE_PROXY_ENV, String.valueOf(useHttpProxy));
+
+        if (useHttpProxy) {
+          myEnv.put(GitSSHHandler.SSH_PROXY_HOST_ENV, httpConfigurable.PROXY_HOST);
+          myEnv.put(GitSSHHandler.SSH_PROXY_PORT_ENV, String.valueOf(httpConfigurable.PROXY_PORT));
+          boolean proxyAuthentication = httpConfigurable.PROXY_AUTHENTICATION;
+          myEnv.put(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
+
+          if (proxyAuthentication) {
+            myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, httpConfigurable.PROXY_LOGIN);
+            myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, httpConfigurable.getPlainProxyPassword());
+          }
+        }
       }
       else if (remoteProtocol == GitRemoteProtocol.HTTP) {
         GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);

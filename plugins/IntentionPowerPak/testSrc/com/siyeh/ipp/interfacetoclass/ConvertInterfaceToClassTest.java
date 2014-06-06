@@ -24,6 +24,7 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testExtensionMethods() { doTest(); }
   public void testInnerInterface() { doTest(); }
   public void testStaticMethods() { doTest(); }
+  public void testInterfaceExtendsClass() { doTest(); }
   public void testFunctionalExpressions() {
     try {
       doTest();

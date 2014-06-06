@@ -28,12 +28,14 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 public class MockCodeStyleManager extends CodeStyleManager {
   private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<PsiFile, ChangedLines[]>();
@@ -42,6 +44,15 @@ public class MockCodeStyleManager extends CodeStyleManager {
   public ChangedLines[] getFormattedLinesFor(@NotNull PsiFile file) {
     ChangedLines[] changedLines = myFormattedLinesForFile.get(file);
     return changedLines != null ? changedLines : new ChangedLines[0];
+  }
+
+  @NotNull
+  public Set<PsiFile> getFormattedFiles() {
+    return myFormattedLinesForFile.keySet();
+  }
+
+  public void clearFormattedFiles() {
+    myFormattedLinesForFile = ContainerUtil.newHashMap();
   }
 
   @Override

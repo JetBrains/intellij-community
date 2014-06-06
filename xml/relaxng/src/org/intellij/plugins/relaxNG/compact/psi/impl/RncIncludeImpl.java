@@ -47,6 +47,7 @@ public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
     return super.processDeclarations(processor, substitutor, lastParent, place);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitInclude(this);
   }
@@ -56,10 +57,12 @@ public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
     visitor.visitInclude(this);
   }
 
+  @Override
   public PsiFile getInclude() {
     return getReferencedFile();
   }
 
+  @Override
   @NotNull
   public RncDefine[] getOverrides() {
     // TODO: DIVs?

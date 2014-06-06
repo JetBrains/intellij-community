@@ -258,7 +258,7 @@ public class FilePatchInProgress implements Strippable {
   }
 
   public Couple<String> getKey() {
-    return Couple.newOne(myPatch.getBeforeName(), myPatch.getAfterName());
+    return Couple.of(myPatch.getBeforeName(), myPatch.getAfterName());
   }
 
   private void refresh() {

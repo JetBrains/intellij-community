@@ -81,4 +81,8 @@ public class XValueMarkers<V extends XValue, M> {
   public Map<M, ValueMarkup> getAllMarkers() {
     return Collections.unmodifiableMap(myMarkers);
   }
+
+  public void clear() {
+    myMarkers.clear();
+  }
 }

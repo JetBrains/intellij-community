@@ -126,6 +126,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_ACTIONS = 5;
   private static final int MAX_RECENT_FILES = 10;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
+  private static final int POPUP_MAX_WIDTH = 600;
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -152,8 +153,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private final static Couple<AtomicBoolean> ourPressed = Couple.newOne(new AtomicBoolean(false), new AtomicBoolean(false));
-  private final static Couple<AtomicBoolean> ourReleased = Couple.newOne(new AtomicBoolean(false), new AtomicBoolean(false));
+  private final static Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
+  private final static Couple<AtomicBoolean> ourReleased = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private static AtomicBoolean showAll = new AtomicBoolean(false);
@@ -346,7 +347,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public Dimension getPreferredSize() {
         final Dimension size = super.getPreferredSize();
-        return new Dimension(Math.min(size.width, 800), size.height);
+        return new Dimension(Math.min(size.width - 2, POPUP_MAX_WIDTH), size.height);
       }
     };
     myList.setCellRenderer(myRenderer);
@@ -711,7 +712,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, gradient.getStartColor(), 0, getHeight(), gradient.getEndColor()));
         g.fillRect(0, 0, getWidth(), getHeight());
       }
-   };
+
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(410, super.getPreferredSize().height);
+      }
+    };
     final JLabel title = new JLabel(" Search Everywhere:       ");
     final JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     title.setForeground(new JBColor(Gray._240, Gray._200));
@@ -723,7 +729,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(title, BorderLayout.WEST);
     myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
     myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")");
-    topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
+    if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+      topPanel.add(myNonProjectCheckBox, BorderLayout.EAST);
+    }
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
@@ -939,6 +947,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         setIcon(myLocationIcon);
       }
     };
+    GotoFileCellRenderer myFileRenderer = new GotoFileCellRenderer(400);
+
     private String myLocationString;
     private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
       {setFocusBorderEnabled(false);}
@@ -971,8 +981,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                  && myProject != null
                  && (((VirtualFile)value).isDirectory()
                      || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
-        cmp = new GotoFileCellRenderer(Math.min(800, list.getWidth()))
-          .getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
+        cmp = myFileRenderer.getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
         cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
       } else {
@@ -1251,6 +1260,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       finally {
         if (!myProgressIndicator.isCanceled()) {
           myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          updatePopup();
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -1740,6 +1750,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myList.repaint();
 
           myRenderer.recalculateWidth();
+          if (myBalloon == null || myBalloon.isDisposed()) {
+            return;
+          }
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
@@ -1903,25 +1916,26 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     final Container parent = getField().getParent();
     final Dimension size = myList.getParent().getParent().getPreferredSize();
-    size.width = myPopupActualWidth;
-    if (size.width < parent.getWidth()) {
+    size.width = myPopupActualWidth - 2;
+    if (size.width + 2 < parent.getWidth()) {
       size.width = parent.getWidth();
     }
     if (myList.getItemsCount() == 0) {
       size.height = 70;
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
-    if (sz.width > 800 || sz.height > 800) {
+    if (sz.width > POPUP_MAX_WIDTH || sz.height > POPUP_MAX_WIDTH) {
       final JBScrollPane pane = new JBScrollPane();
       final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
       final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
-      sz = new Dimension(Math.min(800, Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(800, sz.height + extraHeight));
+      sz = new Dimension(Math.min(POPUP_MAX_WIDTH, Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(POPUP_MAX_WIDTH, sz.height + extraHeight));
       sz.width += 20;
       sz.height+=2;
     } else {
       sz.width+=2;
       sz.height+=2;
     }
+    sz.width = Math.max(sz.width, myPopup.getSize().width);
     myPopup.setSize(sz);
     if (myActionEvent != null && myActionEvent.getInputEvent() == null) {
       final Point p = parent.getLocationOnScreen();

@@ -51,7 +51,7 @@ public class GroovyExtensionProvider {
   public Couple<List<String>> collectExtensions(GlobalSearchScope resolveScope) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("META-INF.services");
     if (aPackage == null) {
-      return Couple.newOne(Collections.<String>emptyList(), Collections.<String>emptyList());
+      return Couple.of(Collections.<String>emptyList(), Collections.<String>emptyList());
     }
 
 
@@ -68,7 +68,7 @@ public class GroovyExtensionProvider {
       }
     }
 
-    return Couple.newOne(instanceClasses, staticClasses);
+    return Couple.of(instanceClasses, staticClasses);
   }
 
   private static void collectClasses(IProperty pr, List<String> classes) {

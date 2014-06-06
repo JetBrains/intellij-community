@@ -57,6 +57,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myPatch = myLatestBuild != null ? myLatestBuild.findPatchForCurrentBuild() : null;
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
+    if (myLatestBuild != null) {
+      initLicensingInfo(myUpdatedChannel, myLatestBuild);
+    }
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
@@ -184,14 +187,24 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JBLabel myPatchLabel;
     private JBLabel myPatchInfo;
     private JEditorPane myMessageArea;
+    private JEditorPane myLicenseArea;
 
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
       String message = myLatestBuild.getMessage();
+      final String fullProductName = appNames.getFullProductName();
       if (message == null) {
-        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName());
+        message = IdeBundle.message("updates.new.version.available", fullProductName);
+      }
+      final String homePageUrl = myUpdatedChannel.getHomePageUrl();
+      if (!StringUtil.isEmptyOrSpaces(homePageUrl)) {
+        final int idx = message.indexOf(fullProductName);
+        if (idx >= 0) {
+          message = message.substring(0, idx) + 
+                    "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
+        }
       }
       configureMessageArea(myUpdateMessage, message, null, new BrowserHyperlinkListener());
 
@@ -212,6 +225,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       else {
         configureMessageArea(myMessageArea);
+      }
+
+      if (mySubscribtionLicense && myLicenseInfo != null) {
+        configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }
 

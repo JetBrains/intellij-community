@@ -106,7 +106,7 @@ public class KnownRepositoryLocations {
 
   public long getLocationId(final String key, final String path) {
     synchronized (myMap) {
-      final Long id = myLocations.get(Couple.newOne(key, path));
+      final Long id = myLocations.get(Couple.of(key, path));
       assert  id != null;
       return id;
     }
@@ -115,7 +115,7 @@ public class KnownRepositoryLocations {
   public void add(final String key, final String path, final long id) {
     synchronized (myMap) {
       myMap.putValue(key, path);
-      myLocations.put(Couple.newOne(key, path), id);
+      myLocations.put(Couple.of(key, path), id);
     }
   }
 

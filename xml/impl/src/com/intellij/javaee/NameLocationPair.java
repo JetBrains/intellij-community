@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ package com.intellij.javaee;
 *         Date: 7/18/12
 */
 public class NameLocationPair implements Comparable {
-  String myName;
-  String myLocation;
+  final String myName;
+  final String myLocation;
   boolean myShared;
 
   public NameLocationPair(String name, String location, boolean shared) {
@@ -30,6 +30,7 @@ public class NameLocationPair implements Comparable {
     myShared = shared;
   }
 
+  @Override
   public int compareTo(Object o) {
     return myName.compareTo(((NameLocationPair)o).myName);
   }

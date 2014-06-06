@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,27 +64,33 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     myNewPairs = newResources;
   }
 
+  @Override
   public String getDisplayName() {
     return XmlBundle.message("display.name.edit.external.resource");
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new JPanel(new GridBagLayout()) {
+      @Override
       public Dimension getPreferredSize() {
         return new Dimension(-1, 400);
       }
     };
 
     myExtPanel = new AddEditRemovePanel<NameLocationPair>(new ExtUrlsTableModel(), myPairs, XmlBundle.message("label.edit.external.resource.configure.external.resources")) {
+      @Override
       protected NameLocationPair addItem() {
         return addExtLocation();
       }
 
+      @Override
       protected boolean removeItem(NameLocationPair o) {
         setModified(true);
         return true;
       }
 
+      @Override
       protected NameLocationPair editItem(NameLocationPair o) {
         return editExtLocation(o);
       }
@@ -100,20 +106,24 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     }
 
     table.getModel().addTableModelListener(new TableModelListener() {
+      @Override
       public void tableChanged(TableModelEvent e) {
         setModified(true);
       }
     });
     myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, XmlBundle.message("label.edit.external.resource.configure.ignored.resources")) {
+      @Override
       protected String addItem() {
         return addIgnoreLocation();
       }
 
+      @Override
       protected boolean removeItem(String o) {
         setModified(true);
         return true;
       }
 
+      @Override
       protected String editItem(String o) {
         return editIgnoreLocation(o);
       }
@@ -149,8 +159,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     return myPanel;
   }
 
+  @Override
   public void apply() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
@@ -183,6 +195,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     setModified(false);
   }
 
+  @Override
   public void reset() {
 
     myPairs = new ArrayList<NameLocationPair>(myNewPairs);
@@ -230,6 +243,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     setModified(!myNewPairs.isEmpty());
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
     myExtPanel = null;
@@ -237,6 +251,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     myHtmlLanguageLevelForm = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.externalResources";
   }
@@ -282,6 +297,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   }
 
   private static class PathRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (value != null) {
@@ -304,26 +320,32 @@ public class ExternalResourceConfigurable extends BaseConfigurable
   private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel<String> {
     private final String[] myNames = {XmlBundle.message("column.name.edit.external.resource.uri")};
 
+    @Override
     public int getColumnCount() {
       return myNames.length;
     }
 
+    @Override
     public Object getField(String o, int columnIndex) {
       return o;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       return String.class;
     }
 
+    @Override
     public boolean isEditable(int column) {
       return false;
     }
 
+    @Override
     public void setValue(Object aValue, String data, int columnIndex) {
 
     }
 
+    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }
@@ -342,10 +364,12 @@ public class ExternalResourceConfigurable extends BaseConfigurable
       myNames = ArrayUtil.toStringArray(names);
     }
 
+    @Override
     public int getColumnCount() {
       return myNames.length;
     }
 
+    @Override
     public Object getField(NameLocationPair pair, int columnIndex) {
       switch (columnIndex) {
         case 0:
@@ -359,18 +383,22 @@ public class ExternalResourceConfigurable extends BaseConfigurable
       return "";
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       return columnIndex == 2 ? Boolean.class : String.class;
     }
 
+    @Override
     public boolean isEditable(int column) {
       return column == 2;
     }
 
+    @Override
     public void setValue(Object aValue, NameLocationPair data, int columnIndex) {
       data.myShared = !((Boolean)aValue).booleanValue();
     }
 
+    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }

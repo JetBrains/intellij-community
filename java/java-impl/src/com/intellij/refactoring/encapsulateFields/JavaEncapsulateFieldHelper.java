@@ -236,19 +236,10 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
                                                           PsiReferenceExpression expr,
                                                           PsiClass aClass,
                                                           PsiMethod setter) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     final String setterName = fieldDescriptor.getSetterName();
     @NonNls String text = setterName + "(a)";
-    PsiExpression qualifier = expr.getQualifierExpression();
-    if (qualifier != null){
-      text = "q." + text;
-    }
-    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)factory.createExpressionFromText(text, expr);
-
+    PsiMethodCallExpression methodCall = prepareMethodCall(expr,  text);
     methodCall.getArgumentList().getExpressions()[0].replace(setterArgument);
-    if (qualifier != null){
-      methodCall.getMethodExpression().getQualifierExpression().replace(qualifier);
-    }
     methodCall = checkMethodResolvable(methodCall, setter, expr, aClass);
     if (methodCall == null) {
       VisibilityUtil.escalateVisibility(fieldDescriptor.getField(), expr);
@@ -261,24 +252,26 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
                                                           PsiReferenceExpression expr,
                                                           PsiClass aClass,
                                                           PsiMethod getter) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     final String getterName = fieldDescriptor.getGetterName();
     @NonNls String text = getterName + "()";
-    PsiExpression qualifier = expr.getQualifierExpression();
-    if (qualifier != null) {
-      text = "q." + text;
-    }
-    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)factory.createExpressionFromText(text, expr);
-
-    if (qualifier != null) {
-      methodCall.getMethodExpression().getQualifierExpression().replace(qualifier);
-    }
-
+    PsiMethodCallExpression methodCall = prepareMethodCall(expr, text);
     methodCall = checkMethodResolvable(methodCall, getter, expr, aClass);
     if (methodCall == null) {
       VisibilityUtil.escalateVisibility(fieldDescriptor.getField(), expr);
     }
     return methodCall;
+  }
+
+  private static PsiMethodCallExpression prepareMethodCall(PsiReferenceExpression expr, String text) {
+    PsiExpression qualifier = expr.getQualifierExpression();
+    if (qualifier != null) {
+      final PsiElement referenceNameElement = expr.getReferenceNameElement();
+      if (referenceNameElement != null) {
+        text = expr.getText().substring(0, referenceNameElement.getStartOffsetInParent()) + text;
+      }
+    }
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+    return (PsiMethodCallExpression)factory.createExpressionFromText(text, expr);
   }
 
   @Nullable

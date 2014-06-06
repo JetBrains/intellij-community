@@ -31,6 +31,7 @@ public class RncDivImpl extends RncElementImpl implements RncDiv {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitDiv(this);
   }

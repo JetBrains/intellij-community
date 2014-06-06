@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.net.HttpConfigurable;
@@ -66,6 +67,8 @@ public class PluginsAdvertiser implements StartupActivity {
   public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check IntelliJ IDEA Ultimate Edition";
   public static final String DISPLAY_ID = "Plugins Suggestion";
   public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
+
+  private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<KnownExtensions>(null);
 
   public static List<Plugin> retrieve(UnknownFeature unknownFeature) {
     final String featureType = unknownFeature.getFeatureType();
@@ -165,11 +168,15 @@ public class PluginsAdvertiser implements StartupActivity {
   }
 
   public static KnownExtensions loadExtensions() {
+    KnownExtensions knownExtensions = ourKnownExtensions.get();
+    if (knownExtensions != null) return knownExtensions;
     try {
       File file = getExtensionsFile();
       if (file.isFile()) {
         final Document document = JDOMUtil.loadDocument(file);
-        return XmlSerializer.deserialize(document, KnownExtensions.class);
+        knownExtensions = XmlSerializer.deserialize(document, KnownExtensions.class);
+        ourKnownExtensions = new SoftReference<KnownExtensions>(knownExtensions);
+        return knownExtensions;
       }
     }
     catch (Exception e) {

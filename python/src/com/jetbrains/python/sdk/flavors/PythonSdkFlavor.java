@@ -181,11 +181,11 @@ public abstract class PythonSdkFlavor {
   }
 
   @Nullable
-  protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp) {
-    String run_dir = new File(sdkHome).getParent();
-    final ProcessOutput process_output = PySdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
+  protected static String getVersionFromOutput(String sdkHome, String versionOpt, String versionRegexp) {
+    String runDirectory = new File(sdkHome).getParent();
+    final ProcessOutput processOutput = PySdkUtil.getProcessOutput(runDirectory, new String[]{sdkHome, versionOpt}, 10000);
 
-    return getVersionFromOutput(version_regexp, process_output);
+    return getVersionFromOutput(versionRegexp, processOutput);
   }
 
   @Nullable

@@ -30,6 +30,12 @@ public abstract class UniqueVFilePathBuilder {
     public String getUniqueVirtualFilePath(Project project, VirtualFile vFile) {
       return vFile.getPresentableName();
     }
+
+    @NotNull
+    @Override
+    public String getUniqueVirtualFilePathWithinOpenedFileEditors(Project project, VirtualFile vFile) {
+      return vFile.getPresentableName();
+    }
   };
 
   public static UniqueVFilePathBuilder getInstance() {
@@ -42,4 +48,7 @@ public abstract class UniqueVFilePathBuilder {
 
   @NotNull
   public abstract String getUniqueVirtualFilePath(Project project, VirtualFile vFile);
+
+  @NotNull
+  public abstract String getUniqueVirtualFilePathWithinOpenedFileEditors(Project project, VirtualFile vFile);
 }

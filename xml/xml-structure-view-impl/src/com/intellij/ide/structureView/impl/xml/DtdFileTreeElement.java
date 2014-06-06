@@ -36,6 +36,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     super(file);
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return collectElements(getElement().getDocument());
@@ -45,6 +46,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     final List<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>();
 
     XmlUtil.processXmlElements(element, new PsiElementProcessor() {
+      @Override
       public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof XmlElementDecl ||
             element instanceof XmlEntityDecl) {
@@ -56,6 +58,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     return elements;
   }
 
+  @Override
   public String getPresentableText() {
     return getElement().getName();
   }
@@ -72,20 +75,24 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
       super(element);
     }
 
+    @Override
     @NotNull
     public Collection<StructureViewTreeElement> getChildrenBase() {
       return Collections.emptyList();
     }
 
+    @Override
     public String getPresentableText() {
       final PsiNamedElement namedElement = getElement();
       return namedElement != null ? namedElement.getName():"";
     }
 
+    @Override
     public Icon getIcon(final boolean open) {
       return PlatformIcons.XML_TAG_ICON;
     }
 
+    @Override
     public String getLocationString() {
       final XmlElement owner = (XmlElement)getElement();
 

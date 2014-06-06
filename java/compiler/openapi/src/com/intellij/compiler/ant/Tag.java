@@ -83,6 +83,6 @@ public class Tag extends CompositeGenerator {
     if (v2 == null) {
       return null;
     }
-    return Couple.newOne(v1, v2);
+    return Couple.of(v1, v2);
   }
 }

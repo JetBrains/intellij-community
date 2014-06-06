@@ -629,6 +629,10 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'value'
   }
 
+  public void testNoBooleansInMultiplication() {
+    checkPreferredItems 0, 'fact'
+  }
+
   public void testGlobalStaticMemberStats() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)

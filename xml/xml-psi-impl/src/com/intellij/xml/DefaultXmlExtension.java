@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,12 @@ import java.util.*;
  */
 public class DefaultXmlExtension extends XmlExtension {
   
+  @Override
   public boolean isAvailable(final PsiFile file) {
     return true;
   }
 
+  @Override
   @NotNull
   public List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
@@ -110,6 +112,7 @@ public class DefaultXmlExtension extends XmlExtension {
     return false;
   }
 
+  @Override
   public SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix) {
     @NonNls String nsDeclarationAttrName = null;
     for(XmlTag t = context; t != null; t = t.getParentTag()) {

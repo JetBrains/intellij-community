@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -88,6 +89,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     addPanelToWatch(myPanel);
   }
 
+  @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
@@ -106,6 +108,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     uiField.getTextField().setEditable(false);
     uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final TagListDialog tagListDialog = new TagListDialog(title);
         tagListDialog.setData(createCollectionOn(uiField.getText()));
@@ -129,14 +132,16 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     });
   }
 
+  @Override
   protected int getRightMargin() {
     return 60;
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.HTML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
-    settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
+    settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = mySpaceInEmptyTag.isSelected();
     settings.HTML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     settings.HTML_ALIGN_TEXT = myAlignText.isSelected();
@@ -164,10 +169,11 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
-    myWrapText.setSelected(settings.HTML_TEXT_WRAP != CodeStyleSettings.DO_NOT_WRAP);
+    myWrapText.setSelected(settings.HTML_TEXT_WRAP != CommonCodeStyleSettings.DO_NOT_WRAP);
     mySpaceInEmptyTag.setSelected(settings.HTML_SPACE_INSIDE_EMPTY_TAG);
     myAlignAttributes.setSelected(settings.HTML_ALIGN_ATTRIBUTES);
     myAlignText.setSelected(settings.HTML_ALIGN_TEXT);
@@ -186,6 +192,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
@@ -194,7 +201,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if ((settings.HTML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED) != myWrapText.isSelected()) {
+    if ((settings.HTML_TEXT_WRAP == CommonCodeStyleSettings.WRAP_AS_NEEDED) != myWrapText.isSelected()) {
       return true;
     }
 
@@ -256,20 +263,24 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     return false;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected String getPreviewText() {
     return readFromFile(this.getClass(), "preview.html.template");
 
   }
 
+  @Override
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.HTML;
   }
 
+  @Override
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }

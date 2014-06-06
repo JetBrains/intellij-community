@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testDeleteTag() throws Throwable {
     XmlTag aTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a><b/> </a>");
     final XmlTag bTag = aTag.findFirstSubTag("b");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         bTag.delete();
       }
     });
@@ -110,7 +112,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testReplaceTag() throws Throwable {
     final XmlTag aTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a><b/></a>");
     final XmlTag bTag = aTag.findFirstSubTag("b");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         PsiElement cTag = bTag.replace(XmlElementFactory.getInstance(getProject()).createTagFromText("<c/>"));
         assertEquals(1, aTag.getSubTags().length);
         assertEquals(cTag, aTag.getSubTags()[0]);
@@ -123,7 +127,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlTag aTag = elementFactory.createTagFromText("<a>1</a>");
     final XmlText displayText = elementFactory.createDisplayText("2");
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         final PsiElement psiElement = aTag.addAfter(displayText, aTag.getValue().getChildren()[0]);
         assertEquals(psiElement.getContainingFile(), aTag.getContainingFile());
       }
@@ -131,7 +137,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   }
 
   public void testWhitespaceInsideTag() throws Exception {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         XmlElementFactory.getInstance(getProject()).createTagFromText("<p/>").getValue().setText("\n");
       }
     });
@@ -141,7 +149,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     XmlFile xhtmlFile = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("dummy.xhtml", "<html/>");
     final XmlTag rootTag = xhtmlFile.getDocument().getRootTag();
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         rootTag.setAttribute("foo", "bar");
       }
     });
@@ -153,7 +163,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testSetAttribute() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html/>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         rootTag.setAttribute("foo", "bar");
       }
     });
@@ -167,7 +179,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testSetAttributeWithQuotes() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html/>");
     final String value = "a \"b\" c";
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         rootTag.setAttribute("foo", value);
       }
     });
@@ -181,7 +195,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testSetAttributeWithQuotes2() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html/>");
     final String value = "'a \"b\" c'";
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         rootTag.setAttribute("foo", value);
       }
     });
@@ -211,7 +227,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testSetAttributeWithNamespaces() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<ns:tag xmlns:ns=\"xxx\"/>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         rootTag.setAttribute("foo", "", "bar");
       }
     });
@@ -225,7 +243,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit1() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>aaa</html>");
     final XmlText xmlText = rootTag.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         xmlText.removeText(0, 3);
       }
     });
@@ -235,7 +255,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testTextEdit2() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>a&lt;a</html>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         rootTag.getValue().getTextElements()[0].removeText(0, 3);
       }
     });
@@ -246,7 +268,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit3() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>a&lt;a</html>");
     final XmlText xmlText = rootTag.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         xmlText.removeText(1, 2);
       }
     });
@@ -258,7 +282,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit4() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>aaa</html>");
     final XmlText xmlText = rootTag.getValue().getTextElements()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         xmlText.removeText(1, 2);
       }
     });
@@ -293,7 +319,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testTextEdit6() throws Exception {
     final XmlTag rootTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<html>a<b>1</b>c</html>");
     final XmlTag xmlTag = rootTag.findFirstSubTag("b");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         xmlTag.delete();
       }
     });
@@ -303,7 +331,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testBrace() throws Exception {
    final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         tagFromText.getValue().setText("<");
       }
     });
@@ -406,7 +436,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlTagChild child = tag.getValue().getChildren()[0];
     assertTrue(child instanceof XmlText && child.getText().equals("234"));
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         assertNotNull(tag.getParent().addBefore(child, tag));
         tag.delete();
       }
@@ -424,7 +456,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlTagChild child = tag.getValue().getChildren()[0];
     assertTrue(child instanceof XmlText && child.getText().equals("234"));
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         assertNotNull(tag.getParent().addBefore(child, tag));
         tag.delete();
       }
@@ -437,7 +471,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testDisplayText() throws Throwable {
     final XmlTag tag = XmlElementFactory.getInstance(getProject()).createTagFromText("  <foo/>");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         tag.add(XmlElementFactory.getInstance(getProject()).createDisplayText("aaa\nbbb"));
       }
     });
@@ -453,7 +489,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlTagChild[] tagElements = tagB.getValue().getChildren();
     final PsiElement parent = tagB.getParent();
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         PsiElement first = parent.addBefore(tagElements[0], tagB);
         assertNotNull(first);
       }
@@ -507,7 +545,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
       .createFileFromText("test.xml", "<a>\n    <a>\n <b>\n     hasgdgasjdgasdg    asgdjhasgd</b>\n </a>\n</a>");
     final XmlTag tagB = file.getDocument().getRootTag();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         tagB.getSubTags()[0].getSubTags()[0].delete();
       }
     });
@@ -598,7 +638,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
             final XmlText xmlText = (XmlText)children[0];
             assertEquals(text, xmlText.getText());
             xmlText.removeText(i, j);
-            final StringBuffer expected = new StringBuffer(text);
+            final StringBuilder expected = new StringBuilder(text);
             expected.delete(i, j);
             assertEquals(expected.toString(), xmlText.getValue());
           }
@@ -618,7 +658,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
           final XmlText xmlText = (XmlText)children[0];
           assertEquals(text, xmlText.getValue());
           xmlText.insertText(textToInsert, i);
-          final StringBuffer expected = new StringBuffer(text);
+          final StringBuilder expected = new StringBuilder(text);
           expected.insert(i, textToInsert);
           assertEquals(expected.toString(), xmlText.getValue());
         }
@@ -653,7 +693,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     doTestEscapedInsertion("_x_y_z_", "a");
   }
 
-  public static void notestEscapedDeletion() throws Throwable {
+  public static void notestEscapedDeletion() {
     doTestEscapedDeletion("&");
     doTestEscapedDeletion("&&");
     doTestEscapedDeletion(" &&");
@@ -686,7 +726,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
       final XmlText xmlText = (XmlText)children[0];
       assertEquals(tagText, xmlText.getText());
       xmlText.insertText(textToInsert, i);
-      final StringBuffer expectedDisplay = new StringBuffer(text.replace('_', '\u00a0'));
+      final StringBuilder expectedDisplay = new StringBuilder(text.replace('_', '\u00a0'));
       expectedDisplay.insert(i, textToInsert);
       assertEquals(expectedDisplay.toString(), xmlText.getValue());
 
@@ -708,7 +748,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
             final XmlText xmlText = (XmlText)children[0];
             assertEquals(tagText, xmlText.getText());
             xmlText.removeText(i, j);
-            final StringBuffer expectedDisplay = new StringBuffer(text.replace('_', ' '));
+            final StringBuilder expectedDisplay = new StringBuilder(text.replace('_', ' '));
             expectedDisplay.delete(i, j);
             assertEquals(expectedDisplay.toString(), xmlText.getValue());
 

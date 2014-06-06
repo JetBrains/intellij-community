@@ -160,11 +160,14 @@ public class PluginDescriptorChooser {
       public int compare(DomFileElement<IdeaPlugin> o1, DomFileElement<IdeaPlugin> o2) {
         // current module = first group
         final Module module1 = o1.getModule();
-        if (currentModule.equals(module1)) return -1;
         final Module module2 = o2.getModule();
+        final int byAlpha = ModulesAlphaComparator.INSTANCE.compare(module1, module2);
+        if (byAlpha == 0) return 0;
+
+        if (currentModule.equals(module1)) return -1;
         if (currentModule.equals(module2)) return 1;
 
-        return ModulesAlphaComparator.INSTANCE.compare(module1, module2);
+        return byAlpha;
       }
     });
     Collections.sort(elements, new Comparator<DomFileElement<IdeaPlugin>>() {

@@ -20,6 +20,7 @@ import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -275,6 +276,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     for (Project openProject : openProjects) {
       FileStatusManager.getInstance(openProject).fileStatusesChanged();
       DaemonCodeAnalyzer.getInstance(openProject).restart();
+      BookmarkManager.getInstance(openProject).colorsChanged();
     }
   }
 

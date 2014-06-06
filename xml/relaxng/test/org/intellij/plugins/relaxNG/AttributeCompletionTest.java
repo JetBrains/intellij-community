@@ -25,6 +25,7 @@ import org.intellij.plugins.testUtil.CopyFile;
 */
 @CopyFile("*.rng")
 public class AttributeCompletionTest extends HighlightingTestBase {
+  @Override
   public String getTestDataPath() {
     return "completion";
   }

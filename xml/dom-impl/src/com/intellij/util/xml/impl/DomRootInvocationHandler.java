@@ -48,11 +48,13 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
                                   @Nullable ElementStub stub
   ) {
     super(aClass, strategy, tagName, new AbstractDomChildDescriptionImpl(aClass) {
+      @Override
       @NotNull
       public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       public int compareTo(final AbstractDomChildDescriptionImpl o) {
         throw new UnsupportedOperationException();
       }
@@ -60,6 +62,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     myParent = fileElement;
   }
 
+  @Override
   public void undefineInternal() {
     try {
       final XmlTag tag = getXmlTag();
@@ -91,6 +94,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
            getXmlElement() != null;
   }
 
+  @Override
   @NotNull
   public String getXmlElementNamespace() {
     return getXmlName().getNamespace(getFile(), getFile());
@@ -111,23 +115,28 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return null;
   }
 
+  @Override
   @NotNull
   public DomFileElementImpl getParent() {
     return myParent;
   }
 
+  @Override
   public DomElement createPathStableCopy() {
     final DomFileElement stableCopy = myParent.createStableCopy();
     return getManager().createStableValue(new NullableFactory<DomElement>() {
+      @Override
       public DomElement create() {
         return stableCopy.isValid() ? stableCopy.getRootElement() : null;
       }
     });
   }
 
+  @Override
   protected XmlTag setEmptyXmlTag() {
     final XmlTag[] result = new XmlTag[]{null};
     getManager().runChange(new Runnable() {
+      @Override
       public void run() {
         try {
           final String namespace = getXmlElementNamespace();
@@ -144,6 +153,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     return result[0];
   }
 
+  @Override
   @NotNull
   public final DomNameStrategy getNameStrategy() {
     final Class<?> rawType = getRawType();

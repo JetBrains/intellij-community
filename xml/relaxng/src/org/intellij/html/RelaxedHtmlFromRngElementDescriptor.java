@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
     myDelegate = delegate;
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     XmlElementDescriptor elementDescriptor = myDelegate.getElementDescriptor(childTag, contextTag);
 
@@ -53,6 +54,7 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
     return myDelegate.getDefaultName();
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
     return ArrayUtil.mergeArrays(
       myDelegate.getElementsDescriptors(context),
@@ -60,6 +62,7 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
     );
   }
 
+  @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
     return RelaxedHtmlFromSchemaElementDescriptor.addAttrDescriptorsForFacelets(context, myDelegate.getAttributesDescriptors(context));
   }
@@ -89,6 +92,7 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
     return null;
   }
 
+  @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
     final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(attributeName.toLowerCase(), context);
     if (descriptor != null) return descriptor;

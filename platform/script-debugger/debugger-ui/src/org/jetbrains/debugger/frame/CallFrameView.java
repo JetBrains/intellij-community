@@ -44,7 +44,7 @@ public final class CallFrameView extends StackFrameImplBase implements VariableC
 
   @Override
   public Object getEqualityObject() {
-    return callFrame;
+    return callFrame.getEqualityObject();
   }
 
   @Override

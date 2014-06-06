@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -157,6 +158,7 @@ public class BuildOperations {
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
+        private final TObjectIntHashMap<T> idsCache = new TObjectIntHashMap<T>();
 
         @Override
         public boolean apply(T target, File file, R sourceRoot) throws IOException {
@@ -164,6 +166,14 @@ public class BuildOperations {
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(target);
             mappingsCache.put(target, srcToOut);
+          }
+          final int targetId;
+          if (!idsCache.containsKey(target)) {
+            targetId = dataManager.getTargetsState().getBuildTargetId(target);
+            idsCache.put(target, targetId);
+          }
+          else {
+            targetId = idsCache.get(target);
           }
           final String srcPath = file.getPath();
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
@@ -174,7 +184,7 @@ public class BuildOperations {
               deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
             }
             deletedPaths.addAll(deletedForThisSource);
-            dataManager.getOutputToSourceRegistry().removeMapping(deletedForThisSource, srcPath);
+            dataManager.getOutputToTargetRegistry().removeMapping(deletedForThisSource, targetId);
             Set<File> cleaned = cleanedSources.get(target);
             if (cleaned == null) {
               cleaned = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);

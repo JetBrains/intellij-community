@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -584,7 +585,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     builder.setMovable(true).setResizable(true);
-    final AtomicReference<UsageInfo> selectedUsage = new AtomicReference<UsageInfo>();
+    final AtomicReference<Object> selectedUsage = new AtomicReference<Object>();
     final AtomicBoolean moreUsages = new AtomicBoolean();
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -601,7 +602,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
             }
             else {
               moreUsages.set(false);
-              selectedUsage.set(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : null);
+              selectedUsage.set(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
             }
             break;
           }
@@ -616,9 +617,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
           return;
         }
-        UsageInfo usage = selectedUsage.get();
-        if (usage != null) {
-          UsageViewUtil.navigateTo(usage, true);
+        Object usage = selectedUsage.get();
+        if (usage instanceof UsageInfo) {
+          UsageViewUtil.navigateTo((UsageInfo)usage, true);
+        }
+        else if (usage instanceof Navigatable) {
+          ((Navigatable)usage).navigate(true);
         }
       }
     });

@@ -216,7 +216,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       for (VcsDirtyScopeManager manager : managers) {
         Couple<HashSet<FilePath>> filesAndDirs = map.get(manager);
         if (filesAndDirs == null) {
-          filesAndDirs = Couple.newOne(new HashSet<FilePath>(), new HashSet<FilePath>());
+          filesAndDirs = Couple.of(new HashSet<FilePath>(), new HashSet<FilePath>());
           map.put(manager, filesAndDirs);
         }
 

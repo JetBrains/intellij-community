@@ -183,24 +183,26 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
-    if (key.get().get() == null) {
+    final Ref<byte[]> result = Ref.create(key.get().get());
+    if (result.isNull()) {
       if (isPasswordEncrypted()) {
         try {
-          String s = decryptPassword(database.getPasswordInfo());
-          setMasterPassword(s);
+          setMasterPassword(decryptPassword(database.getPasswordInfo()));
+          result.set(key.get().get());
         }
         catch (PasswordSafeException e) {
           // ignore exception and ask password
         }
       }
-      if (key.get().get() == null) {
+      if (result.isNull()) {
         final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
         if (application.holdsReadLock()) {
           throw new IllegalStateException("Access from read action is not allowed, because it might lead to a deadlock.");
         }
         application.invokeAndWait(new Runnable() {
           public void run() {
-            if (key.get().get() == null) {
+            result.set(key.get().get());
+            if (result.isNull()) {
               try {
                 if (isTestMode()) {
                   throw new MasterPasswordUnavailableException("Master password must be specified in test mode.");
@@ -212,6 +214,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
                 }
                 else {
                   MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this, requestor);
+                  result.set(key.get().get());
                 }
               }
               catch (PasswordSafeException e) {
@@ -230,7 +233,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
         }
       }
     }
-    return key.get().get();
+    return result.get();
   }
 
   /**
@@ -304,6 +307,11 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return "Master Key PasswordSafe";
   }
 
+
+  public boolean isMasterPasswordEnabled() {
+    return setMasterPassword("");
+  }
+
   /**
    * @return true, if OS protected passwords are supported for the current platform
    */
@@ -336,7 +344,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    *          if decryption fails
    */
   private static String decryptPassword(byte[] pw) throws MasterPasswordUnavailableException {
-    assert SystemInfo.isWindows;
+    if (!SystemInfo.isWindows) throw new AssertionError("Windows OS expected");
+
     try {
       return new String(WindowsCryptUtils.unprotect(pw), "UTF-8");
     }
@@ -349,6 +358,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * @return true, if the password is currently encrypted in the database
    */
   public boolean isPasswordEncrypted() {
+    if (!isOsProtectedPasswordSupported()) return false;
+
     byte[] i = database.getPasswordInfo();
     return i != null && i.length > 0;
   }

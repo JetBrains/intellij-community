@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,11 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class LanguageLevelUtil extends EffectiveLanguageLevelUtil {
-  private LanguageLevelUtil() { }
-
+  /**
+   * @deprecated use JavaPsiImplementationHelper#getEffectiveLanguageLevel(com.intellij.openapi.vfs.VirtualFile)
+   * todo remove in IDEA 15
+   */
+  @SuppressWarnings({"deprecation", "UnusedDeclaration"})
   @NotNull
   public static LanguageLevel getLanguageLevelForFile(@Nullable VirtualFile file) {
     if (file == null) return LanguageLevel.HIGHEST;

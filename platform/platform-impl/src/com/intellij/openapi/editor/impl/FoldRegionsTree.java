@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,11 @@ abstract class FoldRegionsTree {
   private int[] myCachedStartOffsets;
   private int[] myCachedFoldedLines;
   int myCachedLastIndex = -1;
-  private ArrayList<FoldRegion> myRegions = ContainerUtil.newArrayList();  //sorted in tree left-to-right topdown traversal order
+
+  //sorted using RangeMarker.BY_START_OFFSET comparator
+  //i.e., first by start offset, then, if start offsets are equal, by end offset
+  private ArrayList<FoldRegion> myRegions = ContainerUtil.newArrayList();
+
   private static final Comparator<FoldRegion> BY_END_OFFSET = new Comparator<FoldRegion>() {
     @Override
     public int compare(FoldRegion r1, FoldRegion r2) {
@@ -89,13 +93,15 @@ abstract class FoldRegionsTree {
       }
 
       allValid.add(region);
-      
+
+      if (!region.isExpanded()) {
+        removeRegionsWithSameStartOffset(visible, region);
+        removeRegionsWithSameStartOffset(topLevels, region);
+      }
+
       if (currentCollapsed == null || !contains(currentCollapsed, region)) {
         visible.add(region);
-      }
-      
-      if (!region.isExpanded()) {
-        if (currentCollapsed == null || currentCollapsed.getEndOffset() < region.getStartOffset()) {
+        if (!region.isExpanded()) {
           currentCollapsed = region;
           topLevels.add(region);
         }
@@ -113,6 +119,17 @@ abstract class FoldRegionsTree {
     Arrays.sort(myCachedVisible, BY_END_OFFSET_REVERSE);
 
     updateCachedOffsets();
+  }
+
+  private static void removeRegionsWithSameStartOffset(List<FoldRegion> regions, FoldRegion region) {
+    for (int i = regions.size() - 1; i >= 0 ; i--) {
+      if (regions.get(i).getStartOffset() == region.getStartOffset()) {
+        regions.remove(i);
+      }
+      else {
+        break;
+      }
+    }
   }
 
   @NotNull
@@ -164,31 +181,25 @@ abstract class FoldRegionsTree {
   boolean addRegion(FoldRegion range) {
     // During batchProcessing elements are inserted in ascending order,
     // binary search find acceptable insertion place first time
-    final boolean canUseCachedValue;
-    if (myCachedLastIndex >= myRegions.size()) {
-      // todo this happens after removeRegion()... myCachedListIndex must die!
-      canUseCachedValue = false;
+    boolean canUseCachedValue = false;
+    if (isBatchFoldingProcessing() && myCachedLastIndex >= 0 && myCachedLastIndex < myRegions.size()) {
+      FoldRegion lastRegion = myRegions.get(myCachedLastIndex);
+      if (RangeMarker.BY_START_OFFSET.compare(lastRegion, range) < 0) {
+        canUseCachedValue = myCachedLastIndex == (myRegions.size() - 1)
+                            || RangeMarker.BY_START_OFFSET.compare(range, myRegions.get(myCachedLastIndex + 1)) <= 0;
+      }
     }
-    else {
-      canUseCachedValue =
-        myCachedLastIndex != -1 && isBatchFoldingProcessing() && myRegions.get(myCachedLastIndex).getStartOffset() <= range.getStartOffset();
-    }
-    int fastIndex = canUseCachedValue ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
-    if (fastIndex < 0) fastIndex = -fastIndex - 1;
-    
-    // There is a possible case that given range is the first at the current batch iteration. It's also possible that it
-    // range with the same bounds is already registered (e.g. particular range is registered during 'build initial fold regions' phase
-    // and given range has the same offsets but different 'expanded' status.
-    // We explicitly check for such situation, remove existing region and add the given one instead.
-    if (fastIndex < myRegions.size()) {
-      FoldRegion foldRegion = myRegions.get(fastIndex);
+    int index = canUseCachedValue ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
+    if (index < 0) index = -index - 1;
+
+    if (index < myRegions.size()) {
+      FoldRegion foldRegion = myRegions.get(index);
       if (TextRange.areSegmentsEqual(foldRegion, range)) {
-        removeRegion(foldRegion);
-        return addRegion(range);
-      } 
+        return false;
+      }
     } 
     
-    for (int i = fastIndex - 1; i >=0; --i) {
+    for (int i = index - 1; i >=0; --i) {
       final FoldRegion region = myRegions.get(i);
       if (region.getEndOffset() < range.getStartOffset()) break;
       if (region.isValid() && intersects(region, range)) {
@@ -196,28 +207,15 @@ abstract class FoldRegionsTree {
       }
     }
 
-    for (int i = fastIndex; i < myRegions.size(); i++) {
+    for (int i = index; i < myRegions.size(); i++) {
       final FoldRegion region = myRegions.get(i);
-
-      if (range.getStartOffset() < region.getStartOffset() ||
-          range.getStartOffset() == region.getStartOffset() && range.getEndOffset() > region.getEndOffset()) {
-        for (int j = i + 1; j < myRegions.size(); j++) {
-          final FoldRegion next = myRegions.get(j);
-          if (next.getEndOffset() >= range.getEndOffset() && next.isValid()) {
-            if (next.getStartOffset() < range.getStartOffset()) {
-              return false;
-            }
-            else {
-              break;
-            }
-          }
-        }
-
-        myRegions.add(myCachedLastIndex = i, range);
-        return true;
+      if (region.getStartOffset() > range.getEndOffset()) break;
+      if (region.isValid() && intersects(region, range)) {
+        return false;
       }
     }
-    myRegions.add(myCachedLastIndex = myRegions.size(),range);
+
+    myRegions.add(myCachedLastIndex = index,range);
     return true;
   }
 
@@ -274,7 +272,7 @@ abstract class FoldRegionsTree {
   }
 
   private static boolean contains(FoldRegion outer, FoldRegion inner) {
-    return outer.getStartOffset() < inner.getStartOffset() && outer.getEndOffset() > inner.getStartOffset();
+    return outer.getStartOffset() <= inner.getStartOffset() && outer.getEndOffset() >= inner.getEndOffset();
   }
 
   private static boolean intersects(FoldRegion r1, FoldRegion r2) {
@@ -282,7 +280,7 @@ abstract class FoldRegionsTree {
     final int s2 = r2.getStartOffset();
     final int e1 = r1.getEndOffset();
     final int e2 = r2.getEndOffset();
-    return s1 == s2 && e1 == e2 || s1 < s2 && s2 < e1 && e1 < e2 || s2 < s1 && s1 < e2 && e2 < e1;
+    return s1 < s2 && s2 < e1 && e1 < e2 || s2 < s1 && s1 < e2 && e2 < e1;
   }
 
   static boolean contains(FoldRegion region, int offset) {

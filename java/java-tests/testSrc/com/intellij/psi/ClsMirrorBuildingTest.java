@@ -53,6 +53,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testDefaultPackage() { doTest(); }
   public void testLocalClass() { doTest(); }
   public void testBounds() { doTest(); }
+  public void testGrEnum() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options =

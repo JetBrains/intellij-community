@@ -236,8 +236,18 @@ class IDEA100237 {
         }
     
         final Object baz = new Object() {
-            final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
+            final int qux = bar.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>() + 1;
         };
+    }
+
+    static class Outer {
+        final String a;
+        class Inner {
+            String b = a;
+        }
+        Outer() {
+            a = "";
+        }
     }
 }
 

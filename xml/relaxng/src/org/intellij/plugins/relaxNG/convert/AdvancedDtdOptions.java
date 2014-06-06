@@ -76,6 +76,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
   public AdvancedDtdOptions() {
     myInlineAttlistCheckBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           myAttlistDefine.setEnabled(false);
@@ -89,6 +90,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AnAction(null, "Remove Entry", AllIcons.General.Remove) {
+      @Override
       public void update(AnActionEvent e) {
         if (myNamespaceMap.getModel().getRowCount() == 0 || myNamespaceMap.getSelectedRow() == -1) {
           e.getPresentation().setEnabled(false);
@@ -97,6 +99,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
         }
       }
 
+      @Override
       public void actionPerformed(AnActionEvent e) {
         ((NamespaceMapModel)myNamespaceMap.getModel()).removeRow(myNamespaceMap.getSelectedRow());
       }
@@ -106,10 +109,12 @@ public class AdvancedDtdOptions implements AdvancedOptions {
     myToolbar.add(toolbar.getComponent());
   }
 
+  @Override
   public JComponent getRoot() {
     return myRoot;
   }
 
+  @Override
   public Map<String, ?> getOptions() {
     final HashMap<String, Object> map = new LinkedHashMap<String, Object>();
 
@@ -147,6 +152,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
     }
   }
 
+  @Override
   public void setOptions(Map<String, ?> inputOptions) {
     if (inputOptions.containsKey(COLON_REPLACEMENT)) {
       myColonReplacement.setText((String)inputOptions.get(COLON_REPLACEMENT));
@@ -189,6 +195,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
 
     final HashMap<String, Object> map = new LinkedHashMap<String, Object>();
     file.accept(new PsiRecursiveElementVisitor() {
+      @Override
       public void visitElement(PsiElement element) {
         if (element instanceof XmlElementDecl) {
           final String s = ((XmlElementDecl)element).getName();
@@ -217,26 +224,32 @@ public class AdvancedDtdOptions implements AdvancedOptions {
   private static class NamespaceMapModel extends AbstractTableModel {
     private final List<String[]> myList = new ArrayList<String[]>();
 
+    @Override
     public String getColumnName(int column) {
       return column == 0 ? "Prefix" : "URI";
     }
 
+    @Override
     public int getRowCount() {
       return myList.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 1;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       myList.get(rowIndex)[columnIndex] = (String)aValue;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       return myList.get(rowIndex)[columnIndex];
     }

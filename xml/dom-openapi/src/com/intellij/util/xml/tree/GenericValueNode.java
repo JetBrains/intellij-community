@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,22 @@ public class GenericValueNode extends AbstractDomElementNode {
     myTagName = modelElement.getXmlElementName();
    }
 
+  @Override
   public String getNodeName() {
     return getPropertyName();
   }
 
+  @Override
   public String getTagName() {
     return myTagName;
   }
 
+  @Override
   public DomElement getDomElement() {
     return myModelElement;
   }
 
+  @Override
   protected void doUpdate() {
     setUniformIcon(getNodeIcon());
     clearColoredText();
@@ -63,10 +67,12 @@ public class GenericValueNode extends AbstractDomElementNode {
     }
   }
 
+  @Override
   public SimpleNode[] getChildren() {
     return NO_CHILDREN;
   }
 
+  @Override
   @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myModelElement};

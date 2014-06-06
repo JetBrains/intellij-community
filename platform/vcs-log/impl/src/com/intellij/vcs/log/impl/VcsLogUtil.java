@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ public class VcsLogUtil {
   @NotNull
   public static MultiMap<VirtualFile, VcsRef> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
     MultiMap<VirtualFile, VcsRef> map = new MultiMap<VirtualFile, VcsRef>() {
+      @NotNull
       @Override
       protected Map<VirtualFile, Collection<VcsRef>> createMap() {
         return new TreeMap<VirtualFile, Collection<VcsRef>>(new Comparator<VirtualFile>() { // TODO common to VCS root sorting method

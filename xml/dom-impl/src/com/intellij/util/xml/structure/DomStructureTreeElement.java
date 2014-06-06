@@ -47,21 +47,25 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     return myElement;
   }
 
+  @Override
   @Nullable
   public Object getValue() {
     return myElement.isValid() ? myElement.getXmlElement() : null;
   }
 
+  @Override
   @NotNull
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @Override
   @NotNull
   public TreeElement[] getChildren() {
     if (!myElement.isValid()) return EMPTY_ARRAY;
     final ArrayList<TreeElement> result = new ArrayList<TreeElement>();
     final DomElementVisitor elementVisitor = new DomElementVisitor() {
+      @Override
       public void visitDomElement(final DomElement element) {
         if (element instanceof GenericDomValue) return;
         final DomService.StructureViewMode viewMode = myDescriptor.fun(element);
@@ -85,18 +89,22 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     return new DomStructureTreeElement(element, myDescriptor, myNavigationProvider);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, true);
   }
 
+  @Override
   public boolean canNavigate() {
     return myNavigationProvider != null && myNavigationProvider.canNavigate(myElement);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myNavigationProvider != null && myNavigationProvider.canNavigate(myElement);
   }
 
+  @Override
   public String getPresentableText() {
     if (!myElement.isValid()) return "<unknown>";
     final ElementPresentation presentation = myElement.getPresentation();
@@ -104,11 +112,13 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     return name != null? name : presentation.getTypeName();
   }
 
+  @Override
   @Nullable
   public String getLocationString() {
     return null;
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean open) {
     if (!myElement.isValid()) return null;

@@ -100,7 +100,7 @@ public class DuplicateAction extends EditorAction {
 
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return Couple.newOne(end, end+s.length()-1);   // don't include separator of last line in range to select
+    return Couple.of(end, end + s.length() - 1);   // don't include separator of last line in range to select
   }
 
   @Override

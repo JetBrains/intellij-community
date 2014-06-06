@@ -33,20 +33,24 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
     myTagName = tagName;
   }
 
+  @Override
   public String getName() {
     return myTagName.getLocalName();
   }
 
+  @Override
   @NotNull
   public String getXmlElementName() {
     return myTagName.getLocalName();
   }
 
+  @Override
   @NotNull
   public final XmlName getXmlName() {
     return myTagName;
   }
 
+  @Override
   @NotNull
   public String getCommonPresentableName(@NotNull DomElement parent) {
     return getCommonPresentableName(getDomNameStrategy(parent));
@@ -69,6 +73,7 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
     return result;
   }
 
+  @Override
   public int compareTo(final AbstractDomChildDescriptionImpl o) {
     return o instanceof DomChildDescriptionImpl ? myTagName.compareTo(((DomChildDescriptionImpl)o).myTagName) : 1;
   }

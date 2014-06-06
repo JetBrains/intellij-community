@@ -25,6 +25,7 @@ import org.intellij.plugins.testUtil.CopyFile;
  * Date: 22.08.2007
  */
 public class RngCompletionTest extends HighlightingTestBase {
+  @Override
   public String getTestDataPath() {
     return "completion/rng";
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBCardLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -148,9 +149,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     }
   }
 
+  @Nullable
   @Override
-  public void doCancelAction() {
-    // lets pretend it is the wind..
+  protected ActionListener createCancelAction() {
+    return null;//Prevent closing by <Esc>
   }
 
   @Override

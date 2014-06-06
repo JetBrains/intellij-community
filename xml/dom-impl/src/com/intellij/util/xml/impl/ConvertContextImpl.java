@@ -35,15 +35,18 @@ public class ConvertContextImpl extends AbstractConvertContext {
     this(DomManagerImpl.getDomInvocationHandler(element));
   }
 
+  @Override
   @NotNull
   public DomElement getInvocationElement() {
     return myHandler.getProxy();
   }
 
+  @Override
   public PsiManager getPsiManager() {
     return myHandler.getFile().getManager();
   }
 
+  @Override
   public Module getModule() {
     final DomElement domElement = getInvocationElement();
     if (domElement.getManager().isMockElement(domElement)) {

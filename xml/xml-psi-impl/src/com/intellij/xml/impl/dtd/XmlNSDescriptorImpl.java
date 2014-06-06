@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,17 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   private static final SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl> myCachedDeclsCache = new
     SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl>() {
+    @Override
     protected final CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
       return xmlNSDescriptor.doBuildDeclarationMap();
     }
 
+    @Override
     protected final CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
       return xmlNSDescriptor.myCachedDecls;
     }
 
+    @Override
     protected final void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue, final XmlNSDescriptorImpl xmlNSDescriptor) {
       xmlNSDescriptor.myCachedDecls = cachedValue;
     }
@@ -61,15 +64,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
   private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlElementDecl>() {
+    @Override
     public String getName(@NotNull final XmlElementDecl psiElement) {
       return psiElement.getName();
     }
 
+    @Override
     @NotNull
     public String getNameKey(@NotNull final XmlElementDecl psiElement, @NotNull final String name) {
       return name;
     }
 
+    @Override
     @NotNull
     public PsiElement getNodeForMessage(@NotNull final XmlElementDecl psiElement) {
       return psiElement.getNameElement();
@@ -78,10 +84,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   public XmlNSDescriptorImpl() {}
 
+  @Override
   public XmlFile getDescriptorFile() {
     return myDescriptorFile;
   }
 
+  @Override
   public boolean isHierarhyEnabled() {
     return false;
   }
@@ -98,6 +106,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   // Read-only calculation
   private CachedValue<Map<String, XmlElementDescriptor>> doBuildDeclarationMap() {
     return CachedValuesManager.getManager(myElement.getProject()).createCachedValue(new CachedValueProvider<Map<String, XmlElementDescriptor>>() {
+      @Override
       public Result<Map<String, XmlElementDescriptor>> compute() {
         final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
         myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
@@ -116,11 +125,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
      }, false);
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     String name = tag.getName();
     return getElementDescriptor(name);
   }
 
+  @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     // Suggest more appropriate variant if DOCTYPE <element_name> exists
@@ -147,18 +158,22 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return buildDeclarationMap().get(name);
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return myElement;
   }
 
+  @Override
   public String getName(PsiElement context){
     return getName();
   }
 
+  @Override
   public String getName(){
     return myDescriptorFile.getName();
   }
 
+  @Override
   public void init(PsiElement element){
     myElement = (XmlElement)element;
     myDescriptorFile = (XmlFile)element.getContainingFile();
@@ -168,15 +183,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
   }
 
+  @Override
   public Object[] getDependences(){
     return new Object[]{myElement, ExternalResourceManager.getInstance()};
   }
 
+  @Override
   public void validate(@NotNull XmlDocument document, @NotNull ValidationHost host) {
     if (document.getLanguage() == DTDLanguage.INSTANCE) {
       final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
 
       XmlUtil.processXmlElements(document, new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof XmlElementDecl) decls.add((XmlElementDecl)element);
           return true;

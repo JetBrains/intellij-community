@@ -52,6 +52,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.remote.RemoteFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkCredentials;
+import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathMappingSettings;
@@ -98,6 +99,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final int ERROR_EXECUTION = -6;
   public static final int ERROR_INTERRUPTED = -7;
 
+  public static final int ERROR_VAGRANT_NOT_LAUNCHED = 101;
+  public static final int ERROR_REMOTE_ACCESS = 102;
+
   public static final String PACKAGE_PIP = "pip";
   public static final String PACKAGE_DISTRIBUTE = "distribute";
   public static final String PACKAGE_SETUPTOOLS = "setuptools";
@@ -121,6 +125,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
   public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
+  private static final String LAUNCH_VAGRANT = "launchVagrant";
 
   private List<PyPackage> myPackagesCache = null;
   private Map<String, Set<PyPackage>> myDependenciesCache = null;
@@ -790,11 +795,36 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
       RemoteSdkCredentials remoteSdkCredentials;
       try {
-        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials();
+        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
       }
       catch (InterruptedException e) {
         LOG.error(e);
         remoteSdkCredentials = null;
+      }
+      catch (final ExecutionException e) {
+        if (e.getCause() instanceof VagrantNotStartedException) {
+          throw new PyExternalProcessException(ERROR_VAGRANT_NOT_LAUNCHED, helperPath, args, "Vagrant instance is down. <a href=\"" +
+                                                                      LAUNCH_VAGRANT +
+                                                                      "\">Launch vagrant</a>").withHandler(LAUNCH_VAGRANT, new Runnable() {
+            @Override
+            public void run() {
+              final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+              if (manager != null) {
+
+                try {
+                  manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+                  clearCaches();
+
+                }
+                catch (ExecutionException e1) {
+                  throw new RuntimeException(e1);
+                }
+              }
+            }
+          });
+        } else {
+          throw new PyExternalProcessException(ERROR_REMOTE_ACCESS, helperPath, args, e.getMessage());
+        }
       }
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null && remoteSdkCredentials != null) {

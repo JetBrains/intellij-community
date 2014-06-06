@@ -50,6 +50,7 @@ public class AdvancedOptionsDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     JComponent root;

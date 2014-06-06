@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     myIndent = indent;
   }
 
+  @Override
   protected List<Block> buildChildren() {
     ASTNode child = myNode.getFirstChildNode();
     final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
@@ -135,6 +136,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return false;
   }
 
+  @Override
   @Nullable
   protected
   ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
@@ -161,6 +163,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
            : Indent.getNoneIndent();
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent;
   }
@@ -175,7 +178,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
                                       final Alignment alignment
   ) {
     while (child != null) {
-      if (!XmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = getChildrenIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;
@@ -204,6 +207,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return createSyntheticBlock(localResult, null);
   }
 
+  @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (isPreserveSpace()) return Spacing.getReadOnlySpacing();
     if(child1 instanceof AbstractSyntheticBlock && child2 instanceof AbstractSyntheticBlock) {
@@ -292,14 +296,17 @@ public class XmlTagBlock extends AbstractXmlBlock{
     }
   }
 
+  @Override
   public boolean insertLineBreakBeforeTag() {
     return myXmlFormattingPolicy.insertLineBreakBeforeTag(getTag());
   }
 
+  @Override
   public boolean removeLineBreakBeforeTag() {
     return myXmlFormattingPolicy.removeLineBreakBeforeTag(getTag());
   }
 
+  @Override
   public boolean isTextElement() {
     return myXmlFormattingPolicy.isTextElement(getTag());
   }

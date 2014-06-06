@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,14 +126,7 @@ public abstract class DocumentCommitProcessor {
           return false; // optimistic locking failed
         }
 
-        CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (PsiLock.LOCK) {
-              doActualPsiChange(file, diffLog);
-            }
-          }
-        });
+        doActualPsiChange(file, diffLog);
 
         assertAfterCommit(document, file, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
 
@@ -158,38 +150,40 @@ public abstract class DocumentCommitProcessor {
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
-    file.getViewProvider().beforeContentsSynchronized();
+    CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (PsiLock.LOCK) {
+          file.getViewProvider().beforeContentsSynchronized();
 
-    try {
-      final Document document = file.getViewProvider().getDocument();
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
-      PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
+          final Document document = file.getViewProvider().getDocument();
+          PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
+          PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
 
-      final PsiFileImpl fileImpl = (PsiFileImpl)file;
+          final PsiFileImpl fileImpl = (PsiFileImpl)file;
 
-      if (transaction == null) {
-        final PomModel model = PomManager.getModel(fileImpl.getProject());
+          if (transaction == null) {
+            final PomModel model = PomManager.getModel(fileImpl.getProject());
 
-        model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
-          @Override
-          public PomModelEvent runInner() {
-            return new TreeAspectEvent(model, diffLog.performActualPsiChange(file));
+            model.runTransaction(new PomTransactionBase(fileImpl, model.getModelAspect(TreeAspect.class)) {
+              @Override
+              public PomModelEvent runInner() {
+                return new TreeAspectEvent(model, diffLog.performActualPsiChange(file));
+              }
+            });
           }
-        });
+          else {
+            diffLog.performActualPsiChange(file);
+          }
+        }
       }
-      else {
-        diffLog.performActualPsiChange(file);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    });
   }
 
-  private void assertAfterCommit(Document document,
-                                        final PsiFile file,
-                                        CharSequence oldPsiText,
-                                        FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
+  private void assertAfterCommit(@NotNull Document document,
+                                 @NotNull final PsiFile file,
+                                 @NotNull CharSequence oldPsiText,
+                                 @NotNull FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
     if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
       String fileText = file.getText();
@@ -205,14 +199,7 @@ public abstract class DocumentCommitProcessor {
       try {
         BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
         final DiffLog diffLog = blockSupport.reparseRange(file, new TextRange(0, documentText.length()), documentText, createProgressIndicator());
-        CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (PsiLock.LOCK) {
-              doActualPsiChange(file, diffLog);
-            }
-          }
-        });
+        doActualPsiChange(file, diffLog);
 
         if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
           LOG.error("PSI is broken beyond repair in: " + file);

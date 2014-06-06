@@ -34,6 +34,7 @@ import java.util.HashSet;
  */
 public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   private static final ConcurrentFactoryMap<Class,EnumConverter> ourCache = new ConcurrentFactoryMap<Class, EnumConverter>() {
+    @Override
     @NotNull
     protected EnumConverter create(final Class key) {
       return new EnumConverter(key);
@@ -53,18 +54,22 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
     return NamedEnumUtil.getEnumValueByElement(anEnum);
   }
 
+  @Override
   public final T fromString(final String s, final ConvertContext context) {
     return s==null?null:(T)NamedEnumUtil.getEnumElementByValue((Class)myType, s);
   }
 
+  @Override
   public final String toString(final T t, final ConvertContext context) {
     return t == null? null:getStringValue(t);
   }
 
+  @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
     return CodeInsightBundle.message("error.unknown.enum.value.message", s);
   }
 
+  @Override
   @NotNull
   public Collection<? extends T> getVariants(final ConvertContext context) {
     final XmlElement element = context.getXmlElement();

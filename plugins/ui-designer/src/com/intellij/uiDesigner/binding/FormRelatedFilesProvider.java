@@ -51,7 +51,7 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
     }
     else {
       PsiFile file = context.getContainingFile();
-      if (file.getFileType() == GuiFormFileType.INSTANCE) {
+      if (file != null && file.getFileType() == GuiFormFileType.INSTANCE) {
         try {
           String className = Utils.getBoundClassName(file.getText());
           if (className != null) {

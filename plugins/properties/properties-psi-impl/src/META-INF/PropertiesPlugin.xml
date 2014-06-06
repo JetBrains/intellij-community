@@ -84,6 +84,7 @@
     <iconProvider implementation="com.intellij.lang.properties.xml.XmlPropertiesIconProvider"/>
     <psi.referenceContributor language="XML" implementation="com.intellij.lang.properties.xml.XmlPropertiesReferenceContributor"/>
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder" />
+    <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
   </extensions>
 
   <project-components>

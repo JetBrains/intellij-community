@@ -250,11 +250,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     calculateDialects(inside, languages, langIds, dialects);
     calculateDialects(outside, languages, langIds, dialects);
     MultiMap<LocalInspectionToolWrapper, String> toolToLanguages = new MultiMap<LocalInspectionToolWrapper, String>() {
+      @NotNull
       @Override
       protected Collection<String> createCollection() {
         return new SmartHashSet<String>();
       }
 
+      @NotNull
       @Override
       protected Collection<String> createEmptyCollection() {
         return Collections.emptySet();

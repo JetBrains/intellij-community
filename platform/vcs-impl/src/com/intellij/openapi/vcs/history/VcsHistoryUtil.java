@@ -268,7 +268,7 @@ public class VcsHistoryUtil {
       left = revision2;
       right = revision1;
     }
-    return Couple.newOne(left, right);
+    return Couple.of(left, right);
   }
 
 }

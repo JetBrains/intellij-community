@@ -71,6 +71,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private final boolean myProcessChangedTextOnly;
 
   protected AbstractLayoutCodeProcessor myPreviousCodeProcessor;
+  private List<FileFilter> myFilters = ContainerUtil.newArrayList();
 
   protected AbstractLayoutCodeProcessor(Project project, String commandName, String progressText, boolean processChangedTextOnly) {
     this(project, (Module)null, commandName, progressText, processChangedTextOnly);
@@ -171,6 +172,10 @@ public abstract class AbstractLayoutCodeProcessor {
   private FutureTask<Boolean> getPreviousProcessorTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     return myPreviousCodeProcessor != null ? myPreviousCodeProcessor.preprocessFile(file, processChangedTextOnly)
                                            : null;
+  }
+
+  public void addFileFilter(@NotNull FileFilter filter) {
+    myFilters.add(filter);
   }
 
   /**
@@ -492,7 +497,7 @@ public abstract class AbstractLayoutCodeProcessor {
       if (myFileTreeIterator.hasNext()) {
         PsiFile file = myFileTreeIterator.next();
         myFilesProcessed++;
-        if (file.isWritable() && canBeFormatted(file)) {
+        if (file.isWritable() && canBeFormatted(file) && acceptedByFilters(file)) {
           performFileProcessing(file);
         }
       }
@@ -532,5 +537,20 @@ public abstract class AbstractLayoutCodeProcessor {
     public void setCompositeTask(@Nullable SequentialModalProgressTask compositeTask) {
       myCompositeTask = compositeTask;
     }
+  }
+
+  private boolean acceptedByFilters(@NotNull PsiFile file) {
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) {
+      return false;
+    }
+
+    for (FileFilter filter : myFilters) {
+      if (!filter.accept(file.getVirtualFile())) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

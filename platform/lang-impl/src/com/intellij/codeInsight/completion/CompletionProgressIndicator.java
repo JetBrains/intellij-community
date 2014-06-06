@@ -121,6 +121,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private volatile int myCount;
+  private volatile boolean myHasPsiElements;
   private boolean myLookupUpdated;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters =
     new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(
@@ -320,7 +321,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     if (!myLookupUpdated) {
       if (myLookup.getAdvertisements().isEmpty() && !isAutopopupCompletion() && !DumbService.isDumb(getProject())) {
-        DefaultCompletionContributor.addDefaultAdvertisements(myParameters, myLookup);
+        DefaultCompletionContributor.addDefaultAdvertisements(myParameters, myLookup, myHasPsiElements);
       }
       myLookup.getAdvertiser().showRandomText();
     }
@@ -380,8 +381,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     LOG.assertTrue(myParameters.getPosition().isValid());
 
-    myItemSorters.put(item.getLookupElement(), (CompletionSorterImpl)item.getSorter());
-    if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
+    LookupElement lookupElement = item.getLookupElement();
+    if (!myHasPsiElements && lookupElement.getPsiElement() != null) {
+      myHasPsiElements = true;
+    }
+    myItemSorters.put(lookupElement, (CompletionSorterImpl)item.getSorter());
+    if (!myLookup.addItem(lookupElement, item.getPrefixMatcher())) {
       return;
     }
     myCount++;

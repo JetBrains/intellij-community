@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue<T>, GenericDomValuePattern<T>>{
   private static final InitialPatternCondition CONDITION = new InitialPatternCondition(GenericDomValue.class) {
+    @Override
     public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
       return o instanceof GenericDomValue;
     }
@@ -37,6 +38,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
 
   protected GenericDomValuePattern(final Class<T> aClass) {
     super(new InitialPatternCondition(aClass) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue)o).getDomElementType()));
       }
@@ -46,6 +48,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
 
   public GenericDomValuePattern<T> withStringValue(final ElementPattern<String> pattern) {
     return with(new PatternCondition<GenericDomValue<T>>("withStringValue") {
+      @Override
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
         return pattern.getCondition().accepts(genericDomValue.getStringValue(), context);
       }
@@ -59,6 +62,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
 
   public GenericDomValuePattern<T> withValue(final ElementPattern<?> pattern) {
     return with(new PatternCondition<GenericDomValue<T>>("withValue") {
+      @Override
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
         return pattern.getCondition().accepts(genericDomValue.getValue(), context);
       }

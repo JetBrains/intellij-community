@@ -153,11 +153,13 @@ public class XFramesView implements XDebugView {
     myBuilders.clear();
     mySelectedStack = null;
     XSuspendContext suspendContext = mySession.getSuspendContext();
-    if (suspendContext == null) {
+    if (suspendContext == null || event == SessionEvent.PAUSED) {
       myThreadComboBox.removeAllItems();
       myFramesList.clear();
       myExecutionStacks.clear();
-      return;
+      if (suspendContext == null) {
+        return;
+      }
     }
 
     XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();

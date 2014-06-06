@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -158,7 +159,7 @@ public class ManifestBuilder {
   @NotNull
   private Manifest getDefaultManifest(@NotNull Map<String, String> entries) throws ManifestException {
     Manifest finalManifest = new Manifest();
-    addManifestAttribute(finalManifest, entries, "Created-By", "IntelliJ IDEA");
+    addManifestAttribute(finalManifest, entries, "Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
     addManifestAttribute(finalManifest, entries, "Built-By", System.getProperty("user.name"));
     if (!StringUtil.isEmpty(myJdkVersion)) {
       addManifestAttribute(finalManifest, entries, "Build-Jdk", myJdkVersion);
@@ -180,21 +181,6 @@ public class ManifestBuilder {
         else {
           addManifestAttribute(manifest, entry.getKey(), entry.getValue());
         }
-      }
-    }
-
-    Set<String> keys = entries.keySet();
-    for (String key : keys) {
-      String value = entries.get(key);
-      Attribute attr = manifest.getMainSection().getAttribute(key);
-      if (key.equals("Class-Path") && attr != null) {
-        // Merge the user-supplied Class-Path value with the programmatically
-        // generated Class-Path.  Note that the user-supplied value goes first
-        // so that resources there will override any in the standard Class-Path.
-        attr.setValue(value + " " + attr.getValue());
-      }
-      else {
-        addManifestAttribute(manifest, key, value);
       }
     }
   }

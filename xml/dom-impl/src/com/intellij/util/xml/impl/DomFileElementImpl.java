@@ -18,6 +18,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,74 +48,89 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomFileElementImpl");
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
 
+    @Override
     @Nullable
     public XmlElement getNameElement(DomElement element) {
       return null;
     }
 
+    @Override
     @Nullable
     public GenericDomValue getNameDomElement(DomElement element) {
       return null;
     }
 
+    @Override
     @NotNull
     public List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
       return Collections.emptyList();
     }
 
+    @Override
     @Nullable
     public String getElementName(DomElement element) {
       return null;
     }
 
+    @Override
     @NotNull
     public List<DomChildrenDescription> getChildrenDescriptions() {
       return Collections.emptyList();
     }
 
+    @Override
     @NotNull
     public List<DomFixedChildDescription> getFixedChildrenDescriptions() {
       return Collections.emptyList();
     }
 
+    @Override
     @NotNull
     public List<DomCollectionChildDescription> getCollectionChildrenDescriptions() {
       return Collections.emptyList();
     }
 
+    @Override
     @NotNull
     public List<DomAttributeChildDescription> getAttributeChildrenDescriptions() {
       return Collections.emptyList();
     }
 
+    @Override
     public boolean isTagValueElement() {
       return false;
     }
 
+    @Override
     @Nullable
     public DomFixedChildDescription getFixedChildDescription(String tagName) {
       return null;
     }
 
+    @Override
     @Nullable
     public DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespace) {
       return null;
     }
 
+    @Override
     @Nullable
     public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
       return null;
     }
 
+    @Override
     @Nullable
     public DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespace) {
       return null;
     }
 
+    @Override
     public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
       return null;
     }
 
+    @Override
     @Nullable
     public DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
       return null;
@@ -144,16 +160,19 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
                                                  stub == null ? null : stub.getRootTagStub());
   }
 
+  @Override
   @NotNull
   public final XmlFile getFile() {
     return myFile;
   }
 
+  @Override
   @NotNull
   public XmlFile getOriginalFile() {
     return (XmlFile)myFile.getOriginalFile();
   }
 
+  @Override
   @Nullable
   public XmlTag getRootTag() {
     if (!myFile.isValid()) {
@@ -195,65 +214,80 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return result;
   }
 
+  @Override
   @NotNull
   public final DomManagerImpl getManager() {
     return myManager;
   }
 
+  @Override
   public final Type getDomElementType() {
     return getClass();
   }
 
+  @Override
   @NotNull
   public AbstractDomChildrenDescription getChildDescription() {
     throw new UnsupportedOperationException("Method getChildDescription is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public DomNameStrategy getNameStrategy() {
     return getRootHandler().getNameStrategy();
   }
 
+  @Override
   @NotNull
   public ElementPresentation getPresentation() {
     return new ElementPresentation() {
 
+      @Override
       public @NonNls String getElementName() {
         return "<ROOT>";
       }
 
+      @Override
       public @NonNls String getTypeName() {
         return "<ROOT>";
       }
 
+      @Override
       public Icon getIcon() {
         return null;
       }
     };
   }
 
+  @Override
   public GlobalSearchScope getResolveScope() {
     return myFile.getResolveScope();
   }
 
+  @Override
   @Nullable
   public <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict) {
     return DomFileElement.class.isAssignableFrom(requiredClass) && !strict ? (T)this : null;
   }
 
+  @Override
   public Module getModule() {
-    return ModuleUtil.findModuleForPsiElement(getFile());
+    return ModuleUtilCore.findModuleForPsiElement(getFile());
   }
 
+  @Override
   public void copyFrom(DomElement other) {
     throw new UnsupportedOperationException("Method copyFrom is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public final <T extends DomElement> T createMockCopy(final boolean physical) {
     throw new UnsupportedOperationException("Method createMockCopy is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public final <T extends DomElement> T createStableCopy() {
     return myManager.createStableValue(new Factory<T>() {
+      @Override
       @Nullable
       public T create() {
         return (T)myManager.getFileElement(myFile);
@@ -261,17 +295,20 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     });
   }
 
+  @Override
   @NotNull
   public String getXmlElementNamespace() {
     return "";
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getXmlElementNamespaceKey() {
     return null;
   }
 
+  @Override
   @NotNull
   public final T getRootElement() {
     if (!isValid()) {
@@ -291,11 +328,13 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return (T)getRootHandler().getProxy();
   }
 
+  @Override
   @NotNull
   public Class<T> getRootElementClass() {
     return myRootElementClass;
   }
 
+  @Override
   @NotNull
   public DomFileDescription<T> getFileDescription() {
     return myFileDescription;
@@ -310,10 +349,12 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return "File " + myFile.toString();
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return null;
   }
 
+  @Override
   public final XmlTag getXmlTag() {
     return null;
   }
@@ -323,26 +364,32 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return (DomFileElementImpl<T>)this;
   }
 
+  @Override
   @Nullable
   public DomElement getParent() {
     return null;
   }
 
+  @Override
   public final XmlTag ensureTagExists() {
     return null;
   }
 
+  @Override
   public final XmlElement getXmlElement() {
     return getFile();
   }
 
+  @Override
   public final XmlElement ensureXmlElementExists() {
     return ensureTagExists();
   }
 
+  @Override
   public void undefine() {
   }
 
+  @Override
   public final boolean isValid() {
     return checkValidity() == null;
   }
@@ -364,32 +411,39 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  @Override
   @NotNull
   public final DomGenericInfo getGenericInfo() {
     return EMPTY_DOM_GENERIC_INFO;
   }
 
+  @Override
   @NotNull
   public String getXmlElementName() {
     return "";
   }
 
+  @Override
   public void accept(final DomElementVisitor visitor) {
     myManager.getApplicationComponent().getVisitorDescription(visitor.getClass()).acceptElement(visitor, this);
   }
 
+  @Override
   public void acceptChildren(DomElementVisitor visitor) {
     getRootElement().accept(visitor);
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return (T)myUserData.get(key);
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
     myUserData.put(key, value);
   }
 
+  @Override
   public final long getModificationCount() {
     return myFile.getModificationStamp();
   }

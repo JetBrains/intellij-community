@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int SEEN_CONTENT_TYPE = 0x400;
   protected static final int BASE_STATE_SHIFT = 11;
   @Nullable
-  protected static Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
+  protected static final Language ourDefaultLanguage = Language.findLanguageByID("JavaScript");
 
   private boolean seenTag;
   private boolean seenAttribute;

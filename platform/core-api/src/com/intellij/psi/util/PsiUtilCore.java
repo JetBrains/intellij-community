@@ -451,6 +451,12 @@ public class PsiUtilCore {
     return language;
   }
 
+  /**
+   * Checks if the element is valid. If not, throws {@link com.intellij.psi.PsiInvalidElementAccessException} with
+   * a meaningful message that points to the reasons why the element is not valid and may contain the stack trace
+   * when it was invalidated.
+   * @param element
+   */
   public static void ensureValid(@NotNull PsiElement element) {
     if (!element.isValid()) {
       TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the element valid again (which is a bug)

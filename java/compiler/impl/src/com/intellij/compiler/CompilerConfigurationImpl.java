@@ -701,7 +701,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         continue;
       }
       final String dir = moduleElement.getAttributeValue("generatedDirName", (String)null);
-      modulesToProcess.add(Couple.newOne(name, dir));
+      modulesToProcess.add(Couple.of(name, dir));
     }
 
     myDefaultProcessorsProfile.setEnabled(false);

@@ -28,12 +28,12 @@ public class Property extends Tag {
 
   public Property(@NonNls final String name, final String value) {
     //noinspection HardCodedStringLiteral
-    super("property", Couple.newOne("name", name), Couple.newOne("value", value));
+    super("property", Couple.of("name", name), Couple.of("value", value));
   }
 
   public Property(@NonNls final String filePath) {
     //noinspection HardCodedStringLiteral
-    super("property", Couple.newOne("file", filePath));
+    super("property", Couple.of("file", filePath));
   }
 
 }

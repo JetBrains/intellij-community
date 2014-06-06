@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     super(type);
   }
 
+  @Override
   public boolean processElements(PsiElementProcessor processor, PsiElement place){
     return XmlPsiUtil.processXmlElements(this, processor, false);
   }
@@ -60,6 +61,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     result[0] = null;
 
     processElements(new PsiElementProcessor(){
+      @Override
       public boolean execute(@NotNull PsiElement element){
         if(element instanceof TreeElement && ((ASTNode)element).getElementType() == type){
           result[0] = (XmlElement)element;
@@ -72,6 +74,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return result[0];
   }
 
+  @Override
   public PsiElement getContext() {
     final XmlElement data = getUserData(INCLUDING_ELEMENT);
     if(data != null) return data;
@@ -82,6 +85,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return super.getParent();
   }
 
+  @Override
   @NotNull
   public PsiElement getNavigationElement() {
     if (!isPhysical()) {
@@ -97,10 +101,12 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return super.getNavigationElement();
   }
 
+  @Override
   public PsiElement getParent(){
     return getContext();
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return getContainingFile().getLanguage();
@@ -120,6 +126,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
       final StringBuilder builder = new StringBuilder();
 
       ((XmlElement)name.getPsi()).processElements(new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull final PsiElement element) {
           builder.append(element.getText());
           return true;
@@ -130,6 +137,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return null;
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     return GlobalSearchScope.allScope(getProject());

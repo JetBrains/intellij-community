@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 public class Param extends Tag {
   public Param(@NonNls final String name, final String value) {
     //noinspection HardCodedStringLiteral
-    super("param", Couple.newOne("name", name), Couple.newOne("value", value));
+    super("param", Couple.of("name", name), Couple.of("value", value));
   }
 
 }

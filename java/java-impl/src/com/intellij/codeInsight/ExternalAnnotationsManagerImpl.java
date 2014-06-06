@@ -63,6 +63,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -115,10 +116,12 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
     myBus.syncPublisher(TOPIC).afterExternalAnnotationChanging(owner, annotationFQName, successful);
+    ((PsiModificationTrackerImpl)myPsiManager.getModificationTracker()).incCounter();
   }
 
   private void notifyChangedExternally() {
     myBus.syncPublisher(TOPIC).externalAnnotationsChangedExternally();
+    ((PsiModificationTrackerImpl)myPsiManager.getModificationTracker()).incCounter();
   }
 
   @Override

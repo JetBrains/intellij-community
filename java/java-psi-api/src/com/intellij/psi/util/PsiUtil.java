@@ -569,8 +569,10 @@ public final class PsiUtil extends PsiUtilCore {
     if (typeParameters1.length != typeParameters2.length) return false;
     for (int i = 0; i < typeParameters1.length; i++) {
       final PsiType substituted2 = s2.substitute(typeParameters2[i]);
+      final PsiType substituted1 = s1.substitute(typeParameters1[i]);
       if (!Comparing.equal(s1.substituteWithBoundsPromotion(typeParameters1[i]), substituted2) &&
-          !Comparing.equal(s1.substitute(typeParameters1[i]), substituted2)) return false;
+          !Comparing.equal(s2.substituteWithBoundsPromotion(typeParameters2[i]), substituted1) &&
+          !Comparing.equal(substituted1, substituted2)) return false;
     }
     if (aClass.hasModifierProperty(PsiModifier.STATIC)) return true;
     final PsiClass containingClass1 = aClass.getContainingClass();
@@ -813,7 +815,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Nullable
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
-    PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiMethod.class);
+    PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiEnumConstantInitializer.class, PsiMethod.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
     return parent;
   }

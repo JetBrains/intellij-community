@@ -459,7 +459,7 @@ public class ContainerUtil extends ContainerUtilRt {
       V v1 = map1.get(k);
       V v2 = map2.get(k);
       if (!(v1 == v2 || v1 != null && v1.equals(v2))) {
-        res.put(k, Couple.newOne(v1, v2));
+        res.put(k, Couple.of(v1, v2));
       }
     }
     return res;

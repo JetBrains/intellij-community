@@ -67,17 +67,20 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
     return null;
   }
 
+  @Override
   @Nullable
   public String getMapping(@NotNull PsiFile file) {
     final VirtualFilePointer pointer = getMappedPointer(file);
     return pointer != null ? pointer.getUrl() : null;
   }
 
+  @Override
   public VirtualFile getMappedFile(@NotNull PsiFile file) {
     final VirtualFilePointer url = getMappedPointer(file);
     return url != null ? url.getFile() : null;
   }
 
+  @Override
   public void setMapping(@NotNull PsiFile file, String location) {
     final VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
@@ -102,24 +105,30 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
     }
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "RELAX-NG.NoNamespaceConfig";
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
     reset();
   }
 
+  @Override
   public Mappings getState() {
     final HashMap<String, String> map = new HashMap<String, String>();
     for (Map.Entry<VirtualFilePointer, VirtualFilePointer> entry : myMappings.entrySet()) {
@@ -128,6 +137,7 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
     return new Mappings(map);
   }
 
+  @Override
   public void loadState(Mappings state) {
     reset();
 
@@ -157,6 +167,7 @@ class NoNamespaceConfigImpl extends NoNamespaceConfig implements PersistentState
   }
 
   public static class HectorProvider implements HectorComponentPanelsProvider {
+    @Override
     @Nullable
     public HectorComponentPanel createConfigurable(@NotNull PsiFile file) {
       if (file instanceof XmlFile) {

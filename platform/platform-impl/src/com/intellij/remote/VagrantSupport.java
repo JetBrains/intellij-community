@@ -15,6 +15,7 @@
  */
 package com.intellij.remote;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -55,7 +56,9 @@ public abstract class VagrantSupport {
     });
   }
 
-  public abstract boolean checkVagrantAndRunIfDown(String folder);
+  public abstract boolean checkVagrantRunning(String folder, boolean runIfDown);
+
+  public abstract void runVagrant(String folder) throws ExecutionException;
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
 

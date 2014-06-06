@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,23 +47,28 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
 
   public XmlAttributeDescriptorImpl() {}
 
+  @Override
   public XmlTag getDeclaration(){
     return myTag;
   }
 
+  @Override
   public String getName() {
     return myTag.getAttributeValue("name");
   }
 
+  @Override
   public void init(PsiElement element){
     myTag = (XmlTag) element;
     myUse = myTag.getAttributeValue("use");
   }
 
+  @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isRequired() {
     return REQUIRED_ATTR_VALUE.equals(myUse);
   }
@@ -91,14 +96,17 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return myTag.getAttributeValue("type");
   }
 
+  @Override
   public boolean hasIdType() {
     return hasSimpleSchemaType("ID");
   }
 
+  @Override
   public boolean hasIdRefType() {
     return hasSimpleSchemaType("IDREF");
   }
 
+  @Override
   public boolean isEnumerated() {
     return isEnumerated(null);
   }
@@ -109,6 +117,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return null;
   }
 
+  @Override
   public String getName(PsiElement context) {
 
     String name = getName();
@@ -165,6 +174,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return attributeShouldBeQualified;
   }
 
+  @Override
   public void setName(String name) throws IncorrectOperationException {
     NamedObjectDescriptor.setName(myTag, name);
   }

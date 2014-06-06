@@ -18,6 +18,7 @@ import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public abstract class CloudSupportConfigurableBase<
   DC extends CloudDeploymentNameConfiguration,
   SR extends CloudMultiSourceServerRuntimeInstance<DC, ?, ?, ?>,
   ST extends ServerType<SC>>
-  extends FrameworkSupportConfigurable {
+  extends FrameworkSupportConfigurable implements CloudDataLoader {
 
   private final ST myCloudType;
   private final Project myModelProject;
@@ -58,8 +59,14 @@ public abstract class CloudSupportConfigurableBase<
     getAccountSelectionEditor().initUI();
   }
 
-  protected void reloadExistingApplications() {
-    Collection<Deployment> deployments = new ConnectionTask<Collection<Deployment>>("Loading existing applications list") {
+  @Override
+  public void clearCloudData() {
+    getExistingComboBox().removeAllItems();
+  }
+
+  @Override
+  public void loadCloudData() {
+    new ConnectionTask<Collection<Deployment>>("Loading existing applications list") {
 
       @Override
       protected void run(final ServerConnection<DC> connection,
@@ -75,6 +82,14 @@ public abstract class CloudSupportConfigurableBase<
               public void run() {
                 result.set(connection.getDeployments());
                 semaphore.up();
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (!Disposer.isDisposed(CloudSupportConfigurableBase.this)) {
+                      setupExistingApplications(result.get());
+                    }
+                  }
+                });
               }
             });
           }
@@ -91,12 +106,10 @@ public abstract class CloudSupportConfigurableBase<
       protected Collection<Deployment> run(SR serverRuntimeInstance) throws ServerRuntimeException {
         return null;
       }
-    }.performSync();
+    }.performAsync();
+  }
 
-    if (deployments == null) {
-      return;
-    }
-
+  private void setupExistingApplications(Collection<Deployment> deployments) {
     JComboBox existingComboBox = getExistingComboBox();
     existingComboBox.removeAllItems();
     for (Deployment deployment : deployments) {
@@ -151,6 +164,7 @@ public abstract class CloudSupportConfigurableBase<
           getNotifier().showMessage(e.getMessage(), MessageType.ERROR);
         }
       };
+      myAccountSelectionEditor.setDataLoader(this);
     }
     return myAccountSelectionEditor;
   }

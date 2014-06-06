@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,9 @@ import java.awt.*;
  */
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
+  protected String myLicenseInfo = null;
+  protected boolean myPaidUpgrade;
+  protected boolean mySubscribtionLicense = false;
 
   public AbstractUpdateDialog(boolean enableLink) {
     super(true);
@@ -75,6 +79,27 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       }
     });
   }
+
+  protected void initLicensingInfo(@NotNull UpdateChannel channel, @NotNull BuildInfo build) {
+    LicensingFacade facade = LicensingFacade.getInstance();
+    if (facade != null) {
+      mySubscribtionLicense = facade.isSubscriptionLicense();
+      if (!channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+        Boolean paidUpgrade = facade.isPaidUpgrade(channel.getMajorVersion(), build.getReleaseDate());
+        if (paidUpgrade == Boolean.TRUE) {
+          myPaidUpgrade = true;
+          myLicenseInfo = IdeBundle.message("updates.channel.key.needed", channel.getEvalDays());
+        }
+        else if (paidUpgrade == Boolean.FALSE) {
+          myLicenseInfo = IdeBundle.message("updates.channel.existing.key");
+        }
+      }
+      else {
+        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
+      }
+    }
+  }
+
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
     configureMessageArea(area, IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()), null, null);

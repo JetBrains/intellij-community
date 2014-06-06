@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extend
     super(aClass, modelMerger);
 
     myModelCache = new DomModelCache<M, XmlFile>(project, name + " model") {
+       @Override
        @NotNull
        protected CachedValueProvider.Result<M> computeValue(@NotNull XmlFile file) {
          file = (XmlFile)file.getOriginalFile();
@@ -54,6 +55,7 @@ public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extend
     };
   }
 
+  @Override
   @Nullable
   public M getModelByConfigFile(@Nullable XmlFile psiFile) {
     if (psiFile == null) {

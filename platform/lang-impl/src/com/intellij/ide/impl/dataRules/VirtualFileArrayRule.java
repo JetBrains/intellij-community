@@ -109,7 +109,23 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
     }
 
-    return result == null ? null : VfsUtilCore.toVirtualFileArray(result);
+    if (result == null) {
+      final Object[] objects = (Object[])dataProvider.getData(PlatformDataKeys.SELECTED_ITEMS.getName());
+      if (objects != null) {
+        final VirtualFile[] files = new VirtualFile[objects.length];
+        for (int i = 0, objectsLength = objects.length; i < objectsLength; i++) {
+          Object object = objects[i];
+          if (!(object instanceof VirtualFile)) return null;
+          files[i] = (VirtualFile)object;
+        }
+
+        return files;
+      }
+      return null;
+    }
+    else {
+      return VfsUtilCore.toVirtualFileArray(result);
+    }
   }
 
 

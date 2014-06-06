@@ -53,6 +53,7 @@ public class DomUtil {
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
 
   private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
+    @Override
     @NotNull
     protected Class create(final Type key) {
       final Class<?> result = substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
@@ -60,6 +61,7 @@ public class DomUtil {
     }
   };
   private static final ConcurrentFactoryMap<Couple<Type>, Class> ourVariableSubstitutions = new ConcurrentFactoryMap<Couple<Type>, Class>() {
+    @Override
     @Nullable
     protected Class create(final Couple<Type> key) {
       return ReflectionUtil.substituteGenericType(key.first, key.second);
@@ -160,7 +162,7 @@ public class DomUtil {
   }
 
   public static Class<?> substituteGenericType(Type genericType, Type classType) {
-    return ourVariableSubstitutions.get(Couple.newOne(genericType, classType));
+    return ourVariableSubstitutions.get(Couple.of(genericType, classType));
   }
 
   @Nullable
@@ -208,6 +210,7 @@ public class DomUtil {
   public static <T> List<T> getChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
     final List<T> result = new SmartList<T>();
     parent.acceptChildren(new DomElementVisitor() {
+      @Override
       public void visitDomElement(final DomElement element) {
         if (type.isInstance(element)) {
           result.add((T)element);
@@ -221,6 +224,7 @@ public class DomUtil {
     if (parent instanceof MergedObject) {
       final SmartList<DomElement> result = new SmartList<DomElement>();
       parent.acceptChildren(new DomElementVisitor() {
+        @Override
         public void visitDomElement(final DomElement element) {
           if (hasXml(element)) {
             result.add(element);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,10 +66,12 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     myCollections = staticGenericInfo.getCollections();
   }
 
+  @Override
   public Invocation createInvocation(final JavaMethod method) {
     return myStaticGenericInfo.createInvocation(method);
   }
 
+  @Override
   public final boolean checkInitialized() {
     if (myInitialized) return true;
     myStaticGenericInfo.buildMethodMaps();
@@ -177,14 +179,17 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     return registrar;
   }
 
+  @Override
   public XmlElement getNameElement(DomElement element) {
     return myStaticGenericInfo.getNameElement(element);
   }
 
+  @Override
   public GenericDomValue getNameDomElement(DomElement element) {
     return myStaticGenericInfo.getNameDomElement(element);
   }
 
+  @Override
   @NotNull
   public List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
     checkInitialized();
@@ -192,10 +197,12 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     return myStaticGenericInfo.getCustomNameChildrenDescription();
   }
 
+  @Override
   public String getElementName(DomElement element) {
     return myStaticGenericInfo.getElementName(element);
   }
 
+  @Override
   @NotNull
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     checkInitialized();
@@ -207,53 +214,63 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     return list;
   }
 
+  @Override
   @NotNull
   public final List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
     checkInitialized();
     return myFixeds.getDescriptions();
   }
 
+  @Override
   @NotNull
   public final List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
     checkInitialized();
     return myCollections.getDescriptions();
   }
 
+  @Override
   public FixedChildDescriptionImpl getFixedChildDescription(String tagName) {
     checkInitialized();
     return myFixeds.findDescription(tagName);
   }
 
+  @Override
   public DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespace) {
     checkInitialized();
     return myFixeds.getDescription(tagName, namespace);
   }
 
+  @Override
   public CollectionChildDescriptionImpl getCollectionChildDescription(String tagName) {
     checkInitialized();
     return myCollections.findDescription(tagName);
   }
 
+  @Override
   public DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespace) {
     checkInitialized();
     return myCollections.getDescription(tagName, namespace);
   }
 
+  @Override
   public AttributeChildDescriptionImpl getAttributeChildDescription(String attributeName) {
     checkInitialized();
     return myAttributes.findDescription(attributeName);
   }
 
 
+  @Override
   public DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
     checkInitialized();
     return myAttributes.getDescription(attributeName, namespace);
   }
 
+  @Override
   public boolean isTagValueElement() {
     return myStaticGenericInfo.isTagValueElement();
   }
 
+  @Override
   @NotNull
   public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     checkInitialized();
@@ -264,6 +281,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   public boolean processAttributeChildrenDescriptions(final Processor<AttributeChildDescriptionImpl> processor) {
     final Set<AttributeChildDescriptionImpl> visited = new THashSet<AttributeChildDescriptionImpl>();
     if (!myStaticGenericInfo.processAttributeChildrenDescriptions(new Processor<AttributeChildDescriptionImpl>() {
+      @Override
       public boolean process(AttributeChildDescriptionImpl attributeChildDescription) {
         visited.add(attributeChildDescription);
         return processor.process(attributeChildDescription);

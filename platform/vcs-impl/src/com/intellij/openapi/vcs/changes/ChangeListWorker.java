@@ -107,6 +107,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private void checkForMultipleCopiesNotMove(boolean somethingChanged) {
     final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
+      @NotNull
       protected Collection<Pair<Change, String>> createCollection() {
         return new LinkedList<Pair<Change, String>>();
       }
@@ -565,7 +566,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       final String beforeKey = beforePath == null ? null : beforePath.getIOFile().getAbsolutePath();
       final FilePath afterPath = ChangesUtil.getAfterPath(change);
       final String afterKey = afterPath == null ? null : afterPath.getIOFile().getAbsolutePath();
-      return Couple.newOne(beforeKey, afterKey);
+      return Couple.of(beforeKey, afterKey);
     }
 
     private void preparation() {

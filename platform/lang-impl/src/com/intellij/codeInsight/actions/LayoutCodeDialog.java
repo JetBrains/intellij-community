@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -324,6 +325,18 @@ public class LayoutCodeDialog extends DialogWrapper implements LayoutCodeOptions
   @Override
   public boolean isRearrangeEntries() {
     return myCbArrangeEntries.isSelected();
+  }
+
+  @Nullable
+  @Override
+  public String getFileTypeMask() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public SearchScope getSearchScope() {
+    return null;
   }
 
   @Override

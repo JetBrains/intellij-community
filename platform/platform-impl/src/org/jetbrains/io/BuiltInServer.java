@@ -63,7 +63,9 @@ public class BuiltInServer implements Disposable {
     return port;
   }
 
-  static ServerBootstrap createServerBootstrap(EventLoopGroup eventLoopGroup, final ChannelRegistrar channelRegistrar, @Nullable Map<String, Object> xmlRpcHandlers) {
+  static ServerBootstrap createServerBootstrap(@NotNull EventLoopGroup eventLoopGroup,
+                                               @NotNull final ChannelRegistrar channelRegistrar,
+                                               @Nullable Map<String, Object> xmlRpcHandlers) {
     ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
     if (xmlRpcHandlers == null) {
       final PortUnificationServerHandler portUnificationServerHandler = new PortUnificationServerHandler();

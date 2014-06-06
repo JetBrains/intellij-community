@@ -29,6 +29,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
@@ -77,7 +78,8 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     PsiElement context = originalContext;
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session != null) {
-      Map<?, ValueMarkup> markupMap = ((XDebugSessionImpl)session).getValueMarkers().getAllMarkers();
+      XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
+      Map<?, ValueMarkup> markupMap = markers != null ? markers.getAllMarkers() : null;
       //final Map<ObjectReference, ValueMarkup> markupMap = ValueDescriptorImpl.getMarkupMap(process);
       if (markupMap != null && markupMap.size() > 0) {
         final Pair<String, Map<String, ObjectReference>> markupVariables = createMarkupVariablesText(markupMap);

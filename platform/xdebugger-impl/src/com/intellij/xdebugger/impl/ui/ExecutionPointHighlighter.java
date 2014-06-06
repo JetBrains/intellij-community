@@ -66,7 +66,8 @@ public class ExecutionPointHighlighter {
         mySourcePosition = position;
 
         myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
-        myOpenFileDescriptor.setUseCurrentWindow(true);
+        //see IDEA-125645 and IDEA-63459
+        //myOpenFileDescriptor.setUseCurrentWindow(true);
 
         myGutterIconRenderer = gutterIconRenderer;
         myUseSelection = useSelection;

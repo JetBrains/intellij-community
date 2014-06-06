@@ -30,12 +30,12 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
 import static com.intellij.psi.JavaTokenType.*;
-import static com.intellij.psi.JavaTokenType.EQEQ;
-import static com.intellij.psi.JavaTokenType.NE;
 
 /**
  * @author peter
@@ -247,20 +247,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     for (int i = 0; i < argValues.length; i++) {
       DfaValue argValue = argValues[i];
       MethodContract.ValueConstraint constraint = contract.arguments[i];
-      DfaConstValue expectedValue = constraint == NULL_VALUE || constraint == NOT_NULL_VALUE ? constFactory.getNull() :
-                                    constraint == FALSE_VALUE ? constFactory.getFalse() :
-                                    constraint == TRUE_VALUE ? constFactory.getTrue() :
-                                    null;
+      DfaConstValue expectedValue = constraint.getComparisonValue(factory);
       if (expectedValue == null) continue;
       
-      boolean invertCondition = constraint == NOT_NULL_VALUE;
+      boolean invertCondition = constraint.shouldUseNonEqComparison();
       DfaValue condition = factory.getRelationFactory().createRelation(argValue, expectedValue, EQEQ, invertCondition);
       if (condition == null) {
         if (!(argValue instanceof DfaConstValue)) {
           falseStates.addAll(states);
           continue;
         }
-        condition = constFactory.createFromValue(argValue == expectedValue, PsiType.BOOLEAN, null);
+        condition = constFactory.createFromValue((argValue == expectedValue) != invertCondition, PsiType.BOOLEAN, null);
       }
 
       List<DfaMemoryState> nextStates = ContainerUtil.newArrayList();
@@ -469,16 +466,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return handleConstantComparison(instruction, runner, memState, dfaLeft, dfaRight, DfaRelationValue.getSymmetricOperation(opSign));
     }
 
-    if (EQEQ != opSign && NE != opSign ||
-        !(dfaLeft instanceof DfaConstValue) || !(dfaRight instanceof DfaConstValue)) {
+    if (EQEQ != opSign && NE != opSign) {
       return null;
     }
 
-    boolean negated = (NE == opSign) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
-    if (dfaLeft == dfaRight ^ negated) {
-      return alwaysTrue(instruction, runner, memState);
+    if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue ||
+        dfaLeft == runner.getFactory().getConstFactory().getContractFail() ||
+        dfaRight == runner.getFactory().getConstFactory().getContractFail()) {
+      boolean negated = (NE == opSign) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
+      if (dfaLeft == dfaRight ^ negated) {
+        return alwaysTrue(instruction, runner, memState);
+      }
+      return alwaysFalse(instruction, runner, memState);
     }
-    return alwaysFalse(instruction, runner, memState);
+
+    return null;
   }
 
   private static DfaInstructionState[] checkTypeRanges(BinopInstruction instruction,

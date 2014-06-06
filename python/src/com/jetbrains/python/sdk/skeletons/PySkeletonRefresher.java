@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk.skeletons;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.ExecutionException;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -198,7 +199,12 @@ public class PySkeletonRefresher {
     mySkeletonsPath = skeletonsPath;
     final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
     if (PySdkUtil.isRemote(sdk) && remoteInterpreterManager != null) {
-      mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
+      try {
+        mySkeletonsGenerator = remoteInterpreterManager.createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
+      }
+      catch (ExecutionException e) {
+        throw new InvalidSdkException(e.getMessage(), e.getCause());
+      }
     }
     else {
       mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath(), mySdk, folder);

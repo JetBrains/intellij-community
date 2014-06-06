@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
   }
 
+  @Override
   @NotNull
   public String[] getNames(final Project project, boolean includeNonProjectItems) {
     Set<String> result = new HashSet<String>();
@@ -70,6 +71,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
     List<NavigationItem> result = new ArrayList<NavigationItem>();
@@ -126,27 +128,33 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       myIcon = icon;
     }
 
+    @Override
     @NotNull
     public PsiElement getNavigationElement() {
       return myPsiElement;
     }
 
+    @Override
     public Icon getIcon(boolean flags) {
       return myIcon;
     }
 
+    @Override
     public ItemPresentation getPresentation() {
       return new ItemPresentation() {
 
+        @Override
         public String getPresentableText() {
           return myText;
         }
 
+        @Override
         @Nullable
         public String getLocationString() {
           return '(' + myPsiElement.getContainingFile().getName() + ')';
         }
 
+        @Override
         @Nullable
         public Icon getIcon(boolean open) {
           return myIcon;
@@ -154,6 +162,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       };
     }
 
+    @Override
     public PsiElement getParent() {
       return myPsiElement.getParent();
     }

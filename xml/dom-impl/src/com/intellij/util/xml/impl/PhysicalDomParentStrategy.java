@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     myDomManager = domManager;
   }
 
+  @Override
   public DomInvocationHandler getParentHandler() {
     final XmlTag parentTag = getParentTag(myElement);
     assert parentTag != null;
@@ -55,16 +56,19 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return parent instanceof XmlEntityRef ? parent.getParent() : parent;
   }
 
+  @Override
   @NotNull
   public final XmlElement getXmlElement() {
     return myElement;
   }
 
+  @Override
   @NotNull
   public DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
     return this;
   }
 
+  @Override
   @NotNull
   public DomParentStrategy setXmlElement(@NotNull final XmlElement element) {
     myElement = element;
@@ -76,6 +80,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return "Physical:" + myElement;
   }
 
+  @Override
   @NotNull
   public DomParentStrategy clearXmlElement() {
     final DomInvocationHandler parent = getParentHandler();
@@ -83,6 +88,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return new VirtualDomParentStrategy(parent);
   }
 
+  @Override
   public String checkValidity() {
     return myElement.isValid() ? null : "Invalid PSI";
   }

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public abstract class AbstractIndexTest extends HighlightingTestBase {
 
+  @Override
   protected final CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
     return createContentFixture(factory);
   }

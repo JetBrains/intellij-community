@@ -30,10 +30,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +126,18 @@ public class MethodEvaluator implements Evaluator {
       if (requiresSuperObject && (referenceType instanceof ClassType)) {
         _refType = ((ClassType)referenceType).superclass();
       }
-      final Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
+      Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
+      if (jdiMethod == null || jdiMethod.argumentTypes().size() != args.size()) {
+        // dummy matching, may be improved with types matching later
+        List<Method> methods = _refType.methodsByName(myMethodName);
+        for (Method method : methods) {
+          List<Type> types = method.argumentTypes();
+          if (types.size() == args.size()) {
+            jdiMethod = method;
+            break;
+          }
+        }
+      }
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }

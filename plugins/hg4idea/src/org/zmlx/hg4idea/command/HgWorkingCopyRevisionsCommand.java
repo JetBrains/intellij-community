@@ -100,9 +100,9 @@ public class HgWorkingCopyRevisionsCommand {
   public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision, true);
     switch (revisions.size()) {
-      case 1: return Couple.newOne(revisions.get(0), null);
-      case 2: return Couple.newOne(revisions.get(0), revisions.get(1));
-      default: return Couple.newOne(null, null);
+      case 1: return Couple.of(revisions.get(0), null);
+      case 2: return Couple.of(revisions.get(0), revisions.get(1));
+      default: return Couple.of(null, null);
     }
   }
 
@@ -140,7 +140,7 @@ public class HgWorkingCopyRevisionsCommand {
     commandExecutor.setSilent(true);
     HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
-      return Couple.newOne(HgRevisionNumber.NULL_REVISION_NUMBER, null);
+      return Couple.of(HgRevisionNumber.NULL_REVISION_NUMBER, null);
     }
 
     final List<String> lines = result.getOutputLines();
@@ -154,14 +154,14 @@ public class HgWorkingCopyRevisionsCommand {
           // 9f2e6c02913c+b311eb4eb004+ 186+183+
           List<String> chsets = StringUtil.split(changesets, "+");
           List<String> revs = StringUtil.split(revisions, "+");
-          return Couple.newOne(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
-                               HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
+          return Couple.of(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
+                           HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
         } else {
-          return Couple.newOne(HgRevisionNumber.getInstance(revisions, changesets), null);
+          return Couple.of(HgRevisionNumber.getInstance(revisions, changesets), null);
         }
       }
     }
-    return Couple.newOne(HgRevisionNumber.NULL_REVISION_NUMBER, null);
+    return Couple.of(HgRevisionNumber.NULL_REVISION_NUMBER, null);
   }
 
   /**

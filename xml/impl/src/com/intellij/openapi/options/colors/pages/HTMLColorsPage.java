@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,20 +44,24 @@ public class HTMLColorsPage implements ColorSettingsPage {
   };
   private static final String FULL_PRODUCT_NAME = ApplicationNamesInfo.getInstance().getFullProductName();
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.html.display.name");
   }
 
+  @Override
   public Icon getIcon() {
     return StdFileTypes.HTML.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     // todo: make preview for it
@@ -73,11 +77,13 @@ public class HTMLColorsPage implements ColorSettingsPage {
     return colorDescriptors;
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new HtmlFileHighlighter();
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n" +
@@ -96,6 +102,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
            "</html>";
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
   }

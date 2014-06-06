@@ -179,7 +179,7 @@ public class GitPushDialog extends DialogWrapper {
         GitBranch currentBranch = repository.getCurrentBranch();
         assert currentBranch != null;
         if (myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch() == GitPusher.NO_TARGET_BRANCH) { // push to branch with the same name
-          return Couple.newOne(DEFAULT_REMOTE, currentBranch.getName());
+          return Couple.of(DEFAULT_REMOTE, currentBranch.getName());
         }
         String remoteName;
         try {
@@ -193,10 +193,10 @@ public class GitPushDialog extends DialogWrapper {
           remoteName = DEFAULT_REMOTE;
         }
         String targetBranch = myGitCommitsToPush.get(repository).get(currentBranch).getDestBranch().getNameForRemoteOperations();
-        return Couple.newOne(remoteName, targetBranch);
+        return Couple.of(remoteName, targetBranch);
       }
     }
-    return Couple.newOne(DEFAULT_REMOTE, "");
+    return Couple.of(DEFAULT_REMOTE, "");
   }
 
   @Nullable

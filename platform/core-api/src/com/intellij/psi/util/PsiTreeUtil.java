@@ -223,7 +223,7 @@ public class PsiTreeUtil {
    * @return first found element, or null if nothing found.
    */
   @Nullable
-  @Contract("null, _, _ -> null")
+  @Contract("null, _ -> null")
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<? extends T>... classes) {
     return findChildOfAnyType(element, true, classes);
   }

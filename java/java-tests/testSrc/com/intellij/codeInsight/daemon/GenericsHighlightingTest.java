@@ -82,7 +82,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedOverriding() { doTest5(true); }
   public void testWildcardTypes() { doTest5(true); }
   public void testConvertibleTypes() { doTest5(true); }
-  public void testIntersectionTypes() { doTest7Incompatibility(true); }
+  public void testIntersectionTypes() { doTest6(true); }
   public void testVarargs() { doTest5(true); }
   public void testTypeArgsOnRaw() { doTest5(false); }
   public void testConditionalExpression() { doTest5(false); }
@@ -353,6 +353,21 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA123509() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA125031() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA24479() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA118536() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA125744() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA125423() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA118533() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA112117() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA24496() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA58692() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA57290() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA119757() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA67578() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA57388() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA125800() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIDEA125816() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  //jdk should propagate LL 1.4 but actually it provides LL 1.7?!
+  public void testCastObjectToIntJdk14() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_4, false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

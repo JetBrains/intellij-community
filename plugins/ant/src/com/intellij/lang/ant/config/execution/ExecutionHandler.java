@@ -63,16 +63,17 @@ public final class ExecutionHandler {
   }
 
   @Nullable
-  public static ProcessHandler runTarget(AntRunConfiguration antRunConfiguration,
-                                         final DataContext dataContext,
-                                         List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
+  public static ProcessHandler executeRunConfiguration(AntRunConfiguration antRunConfiguration,
+                                                       final DataContext dataContext,
+                                                       List<BuildFileProperty> additionalProperties,
+                                                       @NotNull final AntBuildListener antBuildListener) {
     AntBuildTarget target = antRunConfiguration.getTarget();
     if (target == null) return null;
     FutureResult<ProcessHandler> result = runBuildImpl((AntBuildFileBase)target.getModel().getBuildFile(),
                                                        new String[]{target.getName()},
                                                        null,
                                                        dataContext,
-                                                       additionalProperties, antBuildListener);
+                                                       additionalProperties, antBuildListener, false);
     if (result != null) {
       try {
         return result.get();
@@ -95,19 +96,19 @@ public final class ExecutionHandler {
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
-      runBuildImpl(buildFile, targets, buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener);
+      runBuildImpl(buildFile, targets, buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener, true);
   }
 
   /**
    * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
    */
   @Nullable
-  public static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
+  private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
                                                           String[] targets,
                                                           @Nullable final AntBuildMessageView buildMessageViewToReuse,
                                                           final DataContext dataContext,
                                                           List<BuildFileProperty> additionalProperties,
-                                                          @NotNull final AntBuildListener antBuildListener) {
+                                                          @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
     final GeneralCommandLine commandLine;
     final Project project = buildFile.getProject();
@@ -158,7 +159,11 @@ public final class ExecutionHandler {
 
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          future.set(runBuild(indicator, messageView, buildFile, antBuildListener, commandLine));
+          ProcessHandler handler = runBuild(indicator, messageView, buildFile, antBuildListener, commandLine);
+          future.set(handler);
+          if (waitFor && handler != null) {
+            handler.waitFor();
+          }
         }
         catch (Throwable e) {
           LOG.error(e);

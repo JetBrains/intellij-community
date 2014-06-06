@@ -311,7 +311,7 @@ public class DaemonListeners implements Disposable {
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
           stopDaemonAndRestartAllFiles();
           VirtualFile virtualFile = event.getFile();
-          PsiFile psiFile = ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
+          PsiFile psiFile = !virtualFile.isValid() ? null : ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
           if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
             Document document = fileDocumentManager.getCachedDocument(virtualFile);
             if (document != null) {

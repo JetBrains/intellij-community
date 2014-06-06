@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
     final ArrayList<IndexedRelevantResource<K, V>> resources = new ArrayList<IndexedRelevantResource<K, V>>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     FileBasedIndex.getInstance().processValues(indexId, key, null, new FileBasedIndex.ValueProcessor<V>() {
+      @Override
       public boolean process(VirtualFile file, V value) {
         ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex, additionalScope);
         resources.add(new IndexedRelevantResource<K, V>(file, key, value, relevance));
@@ -104,6 +105,7 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
     return myRelevance;
   }
 
+  @Override
   public int compareTo(IndexedRelevantResource<K, V> o) {
     int i = myRelevance.compareTo(o.getRelevance());
     return i == 0 ? myValue.compareTo(o.getValue()) : i;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.tree.AbstractDomElementNode;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
 
@@ -51,11 +52,12 @@ public class DomElementsToggleAction extends ToggleAction {
 
     myText = TypePresentationService.getService().getTypePresentableName(myClass);
 
-    if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
+    if(getHiders() == null) DomUtil.getFile(myTreeView.getRootElement()).putUserData(AbstractDomElementNode.TREE_NODES_HIDERS_KEY, new HashMap<Class, Boolean>());
 
     if(getHiders().get(myClass) == null) getHiders().put(myClass, true);
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     super.update(e);
 
@@ -65,6 +67,7 @@ public class DomElementsToggleAction extends ToggleAction {
     e.getPresentation().setEnabled(getHiders() != null && getHiders().get(myClass)!=null);
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     return getHiders().get(myClass);
   }
@@ -73,6 +76,7 @@ public class DomElementsToggleAction extends ToggleAction {
     return DomUtil.getFile(myTreeView.getRootElement()).getUserData(BaseDomElementNode.TREE_NODES_HIDERS_KEY);
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     getHiders().put(myClass, state);
     myTreeView.getBuilder().updateFromRoot();

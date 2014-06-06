@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     myNamespacePrefix = namespacePrefix;
   }
 
+  @Override
   public void handleInsert(final InsertionContext context, final LookupElement item) {
 
     final XmlFile contextFile = (XmlFile)context.getFile();
@@ -81,6 +82,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final XmlNamespaceHelper.Runner<String, IncorrectOperationException> runAfter =
       new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
 
+        @Override
         public void run(final String namespacePrefix) {
 
           PsiDocumentManager.getInstance(project).commitDocument(document);

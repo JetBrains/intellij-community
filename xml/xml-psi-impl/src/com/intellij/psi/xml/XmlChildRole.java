@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public interface XmlChildRole {
 
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
+    @Override
     public ASTNode findChild(@NotNull ASTNode parent) {
       final PsiElement element = XmlTagUtil.getStartTagNameElement((XmlTag)parent.getPsi());
       return element == null ? null : element.getNode();
@@ -35,6 +36,7 @@ public interface XmlChildRole {
   };
 
   RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
+    @Override
     @Nullable
     public ASTNode findChild(@NotNull ASTNode parent) {
       final PsiElement element = XmlTagUtil.getEndTagNameElement((XmlTag)parent.getPsi());
@@ -43,6 +45,7 @@ public interface XmlChildRole {
   };
 
   RoleFinder DOCUMENT_FINDER = new RoleFinder() {
+    @Override
     public ASTNode findChild(@NotNull ASTNode parent) {
       ASTNode oldDocument = parent.findChildByType(XmlElementType.XML_DOCUMENT);
       if(oldDocument == null) oldDocument = parent.findChildByType(XmlElementType.HTML_DOCUMENT);

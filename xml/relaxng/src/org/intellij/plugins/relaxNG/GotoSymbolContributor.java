@@ -32,11 +32,13 @@ import java.util.Collection;
 */
 public class GotoSymbolContributor implements ChooseByNameContributor {
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     return RelaxSymbolIndex.getSymbolsByName(name, project, includeNonProjectItems);
   }
 
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     final Collection<String> names = RelaxSymbolIndex.getSymbolNames(project);

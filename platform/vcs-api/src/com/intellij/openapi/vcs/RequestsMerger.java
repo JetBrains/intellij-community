@@ -226,12 +226,12 @@ public class RequestsMerger {
     }
 
     private static void add(final MyState from, final MyState to, final MyExitAction... action) {
-      myMap.put(Couple.newOne(from, to), action);
+      myMap.put(Couple.of(from, to), action);
     }
 
     @Nullable
     public static MyExitAction[] getExit(final MyState from, final MyState to) {
-      return myMap.get(Couple.newOne(from, to));
+      return myMap.get(Couple.of(from, to));
     }
   }
 

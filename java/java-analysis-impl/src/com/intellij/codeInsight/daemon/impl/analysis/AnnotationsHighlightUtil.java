@@ -153,7 +153,10 @@ public class AnnotationsHighlightUtil {
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
                                                      JavaHighlightUtil.formatType(type), JavaHighlightUtil.formatType(expectedType));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      final HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSurroundWithQuotesAnnotationParameterValueFix(value, expectedType));
+      return info;
     }
 
     LOG.error("Unknown annotation member value: " + value);
@@ -337,9 +340,7 @@ public class AnnotationsHighlightUtil {
   );
 
   @Nullable
-  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation,
-                                                 @NotNull LanguageLevel languageLevel,
-                                                 @NotNull PsiFile containingFile) {
+  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel level, @NotNull PsiFile file) {
     if (ANY_ANNOTATION_ALLOWED.accepts(annotation)) {
       return null;
     }
@@ -355,7 +356,7 @@ public class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo info = HighlightUtil.checkTypeAnnotationFeature(annotation, languageLevel,containingFile);
+      HighlightInfo info = HighlightUtil.checkFeature(annotation, HighlightUtil.Feature.TYPE_ANNOTATIONS, level, file);
       if (info != null) return info;
     }
 

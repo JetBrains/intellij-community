@@ -54,6 +54,7 @@ public class RootIndex extends DirectoryIndex {
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myModuleExcludedRoots;
   private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
+    @NotNull
     @Override
     protected Collection<VirtualFile> createCollection() {
       return ContainerUtil.newLinkedHashSet();

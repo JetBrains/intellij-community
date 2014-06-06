@@ -45,6 +45,9 @@ public interface DockContainer extends Disposable, Activatable {
 
   void add(@NotNull DockableContent content, RelativePoint dropTarget);
 
+  /**
+   * Closes all contained editors.
+   */
   void closeAll();
 
   void addListener(Listener listener, Disposable parent);

@@ -368,16 +368,6 @@ class ConsoleWriter(InteractiveInterpreter):
                 self.skip = 1
             sys.stderr.write(data)
 
-    #Override for avoid using sys.excepthook PY-12600
-    def showsyntaxerror(self, filename=None):
-        from pydev_console_utils import showsyntaxerror
-        showsyntaxerror(filename=filename)
-
-    #Override for avoid using sys.excepthook PY-12600
-    def showtraceback(self, full=False):
-        from pydevd_utils import showtraceback
-        showtraceback(full=full)
-
 def consoleExec(thread_id, frame_id, expression):
     """returns 'False' in case expression is partialy correct
     """
@@ -401,8 +391,7 @@ def consoleExec(thread_id, frame_id, expression):
         code = compile_command(expression)
     except (OverflowError, SyntaxError, ValueError):
         # Case 1
-        # interpreter.showsyntaxerror()
-        interpreter.showtraceback(full=True)
+        interpreter.showsyntaxerror()
         return False
 
     if code is None:

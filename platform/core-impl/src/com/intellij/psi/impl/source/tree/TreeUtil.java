@@ -230,7 +230,7 @@ public class TreeUtil {
   }
 
   public static Couple<ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
-    if (one == two) return Couple.newOne(null, null);
+    if (one == two) return Couple.of(null, null);
 
     LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
     LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
@@ -249,7 +249,7 @@ public class TreeUtil {
     }
     while (one == two && one != null);
 
-    return Couple.newOne(one, two);
+    return Couple.of(one, two);
   }
 
   public static void clearCaches(@NotNull final TreeElement tree) {

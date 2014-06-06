@@ -165,7 +165,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
               while (!canRenameMacro(newName));
 
               if (myRenamingList == null) myRenamingList = new ArrayList<Couple<String>>();
-              myRenamingList.add(Couple.newOne(macro.getName(), newName));
+              myRenamingList.add(Couple.of(macro.getName(), newName));
               macro.setName(newName);
               myMacrosList.repaint();
             }

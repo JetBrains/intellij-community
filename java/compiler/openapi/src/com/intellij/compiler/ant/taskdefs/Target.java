@@ -42,7 +42,7 @@ public class Target extends Tag{
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static Pair[] getOptions(@NonNls String... names) {
     final List<Pair> options = new ArrayList<Pair>();
-    options.add(Couple.newOne("name", names[0]));
+    options.add(Couple.of("name", names[0]));
     appendIfNonEmpty(options, "depends", names[1]);
     appendIfNonEmpty(options, "description", names[2]);
     appendIfNonEmpty(options, "unless", names[3]);
@@ -54,7 +54,7 @@ public class Target extends Tag{
 
   private static void appendIfNonEmpty(List<Pair> options, final String paramName, String value) {
     if (!StringUtil.isEmptyOrSpaces(value)) {
-      options.add(Couple.newOne(paramName, value));
+      options.add(Couple.of(paramName, value));
     }
   }
 }

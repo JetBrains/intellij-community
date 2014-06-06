@@ -75,7 +75,7 @@ public class WorkingContextManager {
     myProject = project;
   }
 
-  private void loadContext(Element fromElement) {
+  public void loadContext(Element fromElement) {
     for (WorkingContextProvider provider : Extensions.getExtensions(WorkingContextProvider.EP_NAME, myProject)) {
       try {
         Element child = fromElement.getChild(provider.getId());

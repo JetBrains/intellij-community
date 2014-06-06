@@ -41,7 +41,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -242,14 +245,12 @@ public class CopyReferenceAction extends DumbAwareAction {
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
     if (logicalRoot != null && logicalRoot.getVirtualFile() != null) {
-      String logical = FileUtil.toSystemIndependentName(VfsUtilCore.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
-      String path = FileUtil.toSystemIndependentName(VfsUtilCore.virtualToIoFile(virtualFile).getPath());
-      return ObjectUtils.assertNotNull(FileUtil.getRelativePath(logical, path, '/'));
+      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRoot.getVirtualFile(), '/'));
     }
 
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
     if (contentRoot != null) {
-      return ObjectUtils.assertNotNull(FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(contentRoot), VfsUtilCore.virtualToIoFile(virtualFile)));
+      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/'));
     }
     return virtualFile.getPath();
   }

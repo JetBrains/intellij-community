@@ -1,0 +1,8 @@
+public class X {
+  /**
+   * @param j
+   */
+  public void m(int j) {
+
+  }
+}

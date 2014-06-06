@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,14 +81,17 @@ public abstract class AbstractSyntheticBlock implements Block {
     return myEndTreeNode.getElementType() == XmlTokenType.XML_TAG_END;
   }
 
+  @Override
   public Wrap getWrap() {
     return null;
   }
 
+  @Override
   public Indent getIndent() {
     return myIndent;
   }
 
+  @Override
   public Alignment getAlignment() {
     return null;
   }
@@ -153,6 +156,7 @@ public abstract class AbstractSyntheticBlock implements Block {
                          subBlocks.get(subBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
+  @Override
   public boolean isIncomplete() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
@@ -187,6 +191,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return (myStartTreeNode == myEndTreeNode) && (myStartTreeNode instanceof OuterLanguageElement);
   }
 
+  @Override
   public boolean isLeaf() {
     return false;
   }

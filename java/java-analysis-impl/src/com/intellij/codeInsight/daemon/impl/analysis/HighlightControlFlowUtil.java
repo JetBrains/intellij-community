@@ -279,7 +279,7 @@ public class HighlightControlFlowUtil {
         if (topBlock == null) return null;
         final PsiElement parent = topBlock.getParent();
         // access to final fields from inner classes always allowed
-        if ((parent instanceof PsiMethod || parent instanceof PsiClassInitializer) && inInnerClass(expression, ((PsiField)variable).getContainingClass(),containingFile)) return null;
+        if (inInnerClass(expression, ((PsiField)variable).getContainingClass(),containingFile)) return null;
         final PsiCodeBlock block;
         final PsiClass aClass;
         if (parent instanceof PsiMethod) {

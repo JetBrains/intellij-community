@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   @NonNls private static final String NAME_ATTR_NAME = "name";
 
   private static final Validator<XmlTag> ELEMENT_VALIDATOR = new Validator<XmlTag>() {
+    @Override
     public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final boolean hasRefAttribute = tag.getAttributeValue(REF_ATTR_NAME) != null;
@@ -95,6 +96,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   };
 
   private static final Validator<XmlTag> ATTRIBUTE_VALIDATOR = new Validator<XmlTag>() {
+    @Override
     public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
 
@@ -123,15 +125,18 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   };
 
   private static final XmlUtil.DuplicationInfoProvider<XmlTag> SCHEMA_ATTR_DUP_INFO_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlTag>() {
+    @Override
     public String getName(@NotNull final XmlTag t) {
       return t.getAttributeValue(NAME_ATTR_NAME);
     }
 
+    @Override
     @NotNull
     public String getNameKey(@NotNull final XmlTag t, @NotNull String name) {
       return name;
     }
 
+    @Override
     @NotNull
     public PsiElement getNodeForMessage(@NotNull final XmlTag t) {
       return t.getAttribute(NAME_ATTR_NAME, null).getValueElement();
@@ -139,6 +144,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   };
 
   private static final Validator<XmlTag> ELEMENT_AND_ATTR_VALIDATOR = new Validator<XmlTag>() {
+    @Override
     public void validate(@NotNull final XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final String nsPrefix = tag.getNamespacePrefix();
@@ -166,6 +172,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     return XmlUtil.XML_SCHEMA_URI.equals(tag.getNamespace());
   }
 
+  @Override
   protected XmlElementDescriptor createElementDescriptor(final XmlTag tag) {
     final XmlElementDescriptor descriptor = super.createElementDescriptor(tag);
     String localName = tag.getAttributeValue(NAME_ATTR_NAME);

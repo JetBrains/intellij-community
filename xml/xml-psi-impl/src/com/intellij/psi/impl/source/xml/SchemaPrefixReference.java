@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,10 +67,12 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
     return myName;
   }
 
+  @Override
   public SchemaPrefix resolve() {
     return myPrefix == null ? resolvePrefix(myElement, myName) : myPrefix;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

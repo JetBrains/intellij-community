@@ -55,10 +55,10 @@ public class Centerizer extends JPanel {
 
   private static Couple<Integer> getFit(int compSize, int containerSize) {
     if (compSize >= containerSize) {
-      return Couple.newOne(0, compSize);
+      return Couple.of(0, compSize);
     } else {
       final int position = containerSize / 2 - compSize / 2;
-      return Couple.newOne(position, compSize);
+      return Couple.of(position, compSize);
     }
   }
 

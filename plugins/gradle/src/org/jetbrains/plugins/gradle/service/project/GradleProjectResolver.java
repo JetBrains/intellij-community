@@ -268,7 +268,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     Set<Couple<String>> rootProjectTaskCandidatesMap = ContainerUtilRt.newHashSet();
     for (final TaskData taskData : rootProjectTaskCandidates) {
-      rootProjectTaskCandidatesMap.add(Couple.newOne(taskData.getName(), taskData.getDescription()));
+      rootProjectTaskCandidatesMap.add(Couple.of(taskData.getName(), taskData.getDescription()));
     }
     for (final Couple<String> p : rootProjectTaskCandidatesMap) {
       projectDataNode.createChild(

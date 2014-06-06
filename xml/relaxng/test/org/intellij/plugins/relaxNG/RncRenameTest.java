@@ -36,10 +36,12 @@ import java.io.File;
  */
 public class RncRenameTest extends HighlightingTestBase {
 
+  @Override
   protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
     return createContentFixture(factory);
   }
 
+  @Override
   public String getTestDataPath() {
     return "rename/rnc";
   }
@@ -79,6 +81,7 @@ public class RncRenameTest extends HighlightingTestBase {
     assertNotNull(file);
 
     new WriteCommandAction.Simple(project) {
+      @Override
       protected void run() throws Throwable {
         myTestFixture.configureByFile("rename-in-include.rnc");
         final RenameRefactoring refactoring = factory.createRename(file, "rename-after.rnc");

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 * Date: 22.11.2007
 */
 public class NoNamespaceSchemaProvider extends XmlSchemaProvider {
+  @Override
   @Nullable
   public XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull PsiFile baseFile) {
     if ("".equals(url)) {

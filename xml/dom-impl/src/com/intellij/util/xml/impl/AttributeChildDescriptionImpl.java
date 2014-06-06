@@ -43,6 +43,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     myGetterMethod = null;
   }
 
+  @Override
   @NotNull
   public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), true);
@@ -50,6 +51,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
 
+  @Override
   public final JavaMethod getGetterMethod() {
     return myGetterMethod;
   }
@@ -59,22 +61,26 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return "Attribute:" + getXmlName();
   }
 
+  @Override
   @Nullable
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
     return method == null ? super.getAnnotation(annotationClass) : method.getAnnotation(annotationClass);
   }
 
+  @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull DomElement parent) {
     return Arrays.asList(getDomAttributeValue(parent));
   }
 
+  @Override
   @NotNull
   public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     throw new UnsupportedOperationException("Method getCommonPresentableName is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public GenericAttributeValue getDomAttributeValue(DomElement parent) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) {

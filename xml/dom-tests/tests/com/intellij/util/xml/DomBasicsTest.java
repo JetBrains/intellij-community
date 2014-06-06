@@ -200,7 +200,7 @@ public class DomBasicsTest extends DomTestCase {
 
   private void assertFixedChildDescription(final DomFixedChildDescription description,
                                            final DomElement child,
-                                           final String tagName) throws NoSuchMethodException {
+                                           final String tagName) {
     assertEquals(1, description.getCount());
     assertEquals(Arrays.asList(child), description.getValues(child.getParent()));
     assertEquals(tagName, description.getXmlElementName());
@@ -210,7 +210,7 @@ public class DomBasicsTest extends DomTestCase {
 
   private static void assertGenericChildDescription(final DomFixedChildDescription description,
                                              final DomElement child,
-                                             final String tagName) throws NoSuchMethodException {
+                                             final String tagName) {
     assertEquals(1, description.getCount());
     assertEquals(Arrays.asList(child), description.getValues(child.getParent()));
     assertEquals(tagName, description.getXmlElementName());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -373,6 +373,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     final XmlTag tag = element.getXmlTag();
     final XmlTag childTag = tag.getSubTags()[0];
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
       public void run() {
         childTag.delete();
       }
@@ -391,7 +392,9 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     final Sepulka element = createElement("<a><foo/><bar/></a>", Sepulka.class);
     final List<MyElement> list = element.getCustomChildren();
     final XmlTag tag = element.getXmlTag();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){
+      @Override
+      public void run() {
         tag.getSubTags()[0].delete();
         tag.getSubTags()[0].delete();
       }
@@ -420,6 +423,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     assertNoCache(leafTag);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tag.getSubTags()[1].delete();
 

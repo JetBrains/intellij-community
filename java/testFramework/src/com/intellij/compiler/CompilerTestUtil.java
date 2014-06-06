@@ -1,6 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -86,12 +87,13 @@ public class CompilerTestUtil {
     }.execute();
   }
 
-  public static void disableExternalCompiler() {
+  public static void disableExternalCompiler(final Project project) {
     new WriteAction() {
       protected void run(final Result result) {
         ApplicationManagerEx.getApplicationEx().doNotSave(true);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         table.removeJdk(table.getInternalJdk());
+        BuildManager.getInstance().clearState(project);
       }
     }.execute();
   }

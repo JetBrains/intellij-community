@@ -28,7 +28,7 @@ public class Exclude extends Tag {
 
   public Exclude(@NonNls final String name) {
     //noinspection HardCodedStringLiteral
-    super("exclude", Couple.newOne("name", name));
+    super("exclude", Couple.of("name", name));
   }
 
 }

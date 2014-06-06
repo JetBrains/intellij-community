@@ -1,10 +1,25 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,6 +45,8 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
+@State(name = "ExternalResourceManagerImpl",
+       storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 
@@ -84,10 +101,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
   private static final String DEFAULT_VERSION = null;
 
-  public ExternalResourceManagerExImpl(PathMacrosImpl pathMacros) {
+  public ExternalResourceManagerExImpl(@NotNull PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
   }
 
+  @Override
   public boolean isStandardResource(VirtualFile file) {
     VirtualFile parent = file.getParent();
     return parent != null && parent.getName().equals("standardSchemas");
@@ -116,10 +134,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return map;
   }
 
+  @Override
   public String getResourceLocation(String url) {
     return getResourceLocation(url, DEFAULT_VERSION);
   }
 
+  @Override
   public String getResourceLocation(@NonNls String url, String version) {
     String result = getUserResource(url, version);
     if (result == null) {
@@ -163,6 +183,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return map != null ? map.get(url) : null;
   }
 
+  @Override
   public String getResourceLocation(@NonNls String url, @NotNull Project project) {
     String location = getProjectResources(project).getResourceLocation(url);
     return location == null || location.equals(url) ? getResourceLocation(url) : location;
@@ -173,6 +194,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return location == null || location.equals(url) ? getResourceLocation(url, version) : location;
   }
 
+  @Override
   @Nullable
   public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
     final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile);
@@ -183,10 +205,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return XmlUtil.findXmlFile(baseFile, location);
   }
 
+  @Override
   public String[] getResourceUrls(FileType fileType, final boolean includeStandard) {
     return getResourceUrls(fileType, DEFAULT_VERSION, includeStandard);
   }
 
+  @Override
   public String[] getResourceUrls(@Nullable final FileType fileType, @NonNls final String version, final boolean includeStandard) {
     final List<String> result = new LinkedList<String>();
     addResourcesFromMap(result, version, myResources);
@@ -210,6 +234,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
     final ExternalResourceManagerExImpl instance = (ExternalResourceManagerExImpl)getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         instance.addResource(url, location);
       }
@@ -218,6 +243,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
       @Override
       public void dispose() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             instance.removeResource(url);
           }
@@ -225,10 +251,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
       }
     });
   }
+  @Override
   public void addResource(String url, String location) {
     addResource(url, DEFAULT_VERSION, location);
   }
 
+  @Override
   public void addResource(@NonNls String url, @NonNls String version, @NonNls String location) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     addSilently(url, version, location);
@@ -243,10 +271,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     myModificationCount++;
   }
 
+  @Override
   public void removeResource(String url) {
     removeResource(url, DEFAULT_VERSION);
   }
 
+  @Override
   public void removeResource(String url, String version) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     Map<String, String> map = getMap(myResources, version, false);
@@ -270,6 +300,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     getProjectResources(project).addResource(url, location);
   }
 
+  @Override
   public String[] getAvailableUrls() {
     Set<String> urls = new HashSet<String>();
     for (Map<String, String> map : myResources.values()) {
@@ -283,11 +314,13 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return getProjectResources(project).getAvailableUrls();
   }
 
+  @Override
   public void clearAllResources() {
     myResources.clear();
     myIgnoredResources.clear();
   }
 
+  @Override
   public void clearAllResources(Project project) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     clearAllResources();
@@ -296,6 +329,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     fireExternalResourceChanged();
   }
 
+  @Override
   public void addIgnoredResource(String url) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     addIgnoredSilently(url);
@@ -307,6 +341,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     myModificationCount++;
   }
 
+  @Override
   public void removeIgnoredResource(String url) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myIgnoredResources.remove(url)) {
@@ -315,6 +350,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     }
   }
 
+  @Override
   public boolean isIgnoredResource(String url) {
     myStdResources.getValue();  // ensure ignored resources are loaded
     return myIgnoredResources.contains(url) || isImplicitNamespaceDescriptor(url);
@@ -328,11 +364,13 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return false;
   }
 
+  @Override
   public String[] getIgnoredResources() {
     myStdResources.getValue();  // ensure ignored resources are loaded
     return ArrayUtil.toStringArray(myIgnoredResources);
   }
 
+  @Override
   public long getModificationCount() {
     return myModificationCount;
   }
@@ -342,7 +380,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     return getProjectResources(project).getModificationCount();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
     myPathMacros.addMacroExpands(macroExpands);
     macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
@@ -372,7 +410,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     final String[] urls = getAvailableUrls();
     for (String url : urls) {
       if (url == null) continue;
@@ -408,10 +446,12 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public void addExternalResourceListener(ExternalResourceListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeExternalResourceListener(ExternalResourceListener listener) {
     myListeners.remove(listener);
   }
@@ -427,8 +467,10 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   }
 
 
-  protected ExternalResourceManagerExImpl getProjectResources(Project project) {
-    return this;
+  private static final NotNullLazyKey<ExternalResourceManagerExImpl, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ExternalResourceManagerExImpl.class);
+
+  private ExternalResourceManagerExImpl getProjectResources(Project project) {
+    return INSTANCE_CACHE.getValue(project);
   }
 
   @Override
@@ -486,6 +528,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   @TestOnly
   public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getInstance().addResource(url, location);
       }
@@ -495,6 +538,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
       @Override
       public void dispose() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             getInstance().removeResource(url);
           }

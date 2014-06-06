@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -114,8 +115,8 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
   }
 
   static class MyValidationMessageConsumer  {
-    List<Pair<PsiElement, String >> errors = new ArrayList<Pair<PsiElement, String>>();
-    List<Pair<PsiElement, String >> warnings = new ArrayList<Pair<PsiElement, String>>();
+    final List<Pair<PsiElement, String >> errors = new ArrayList<Pair<PsiElement, String>>();
+    final List<Pair<PsiElement, String >> warnings = new ArrayList<Pair<PsiElement, String>>();
     ValidationMessageConsumer error() {
       return new ValidationMessageConsumer() {
         @Override
@@ -204,7 +205,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
       return VfsUtil.findFileByURL(new URL(systemId));
     } catch (Exception e) {
       LOG.warn("Failed to build file from uri <" + systemId + ">", e);
-      return VirtualFileManager.getInstance().findFileByUrl(VfsUtil.fixURLforIDEA(systemId));
+      return VirtualFileManager.getInstance().findFileByUrl(VfsUtilCore.fixURLforIDEA(systemId));
     }
   }
 

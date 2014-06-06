@@ -272,11 +272,6 @@ public abstract class PluginManagerMain implements Disposable {
   protected void modifyPluginsList(List<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
-    final RowSorter.SortKey key = pluginsModel.getDefaultSortKey();
-    if (key != null) {
-      pluginTable.getRowSorter().setSortKeys(Collections.singletonList(key));
-    }
-    //pluginsModel.sort();
     pluginsModel.filter(myFilter.getFilter().toLowerCase());
     if (selected != null) {
       select(selected);
@@ -633,7 +628,7 @@ public abstract class PluginManagerMain implements Disposable {
                              : "Plugins were installed", project);
   }
 
-  public static void notifyPluginsWereUpdated(final String title, final Project project) {
+  public static void notifyPluginsWereUpdated(final String title, @Nullable final Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message =

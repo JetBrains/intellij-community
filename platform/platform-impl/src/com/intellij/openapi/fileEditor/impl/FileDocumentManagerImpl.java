@@ -67,6 +67,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,9 +77,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -90,11 +88,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
-  public static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
+  public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
   private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
+  private final Map<VirtualFile, Document> myDocuments = new ConcurrentWeakValueHashMap<VirtualFile, Document>();
 
   private final MessageBus myBus;
 
@@ -174,7 +173,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
         document.setReadOnly(!file.isWritable() || fileType.isBinary());
-        file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document));
+        myDocuments.put(file, document);
         document.putUserData(FILE_KEY, file);
 
         if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
@@ -223,17 +222,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
-    return com.intellij.reference.SoftReference.dereference(file.getUserData(DOCUMENT_KEY));
+    Document hard = file.getUserData(HARD_REF_TO_DOCUMENT_KEY);
+    return hard != null ? hard : myDocuments.get(file);
   }
 
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
     synchronized (lock) {
-      virtualFile.putUserData(DOCUMENT_KEY, new SoftReference<Document>(document) {
-        @Override
-        public Document get() {
-          return document;
-        }
-      });
+      virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
       document.putUserData(FILE_KEY, virtualFile);
     }
   }
@@ -550,7 +545,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       if (document != null) {
         // a file is linked to a document - chances are it is an "unknown text file" now
         if (isBinaryWithoutDecompiler(file)) {
-          file.putUserData(DOCUMENT_KEY, null);
+          myDocuments.remove(file);
+          file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
           document.putUserData(FILE_KEY, null);
         }
       }

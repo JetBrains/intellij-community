@@ -843,16 +843,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
           final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), historyElement);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
-          final int index = i;
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              fileEditorManager.openFileImpl4(window, entry.myFile, isCurrentInTab, entry, isCurrentInTab, index);
-              if (fileEditorManager.isFileOpen(entry.myFile)) {
-                window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue(PINNED)).booleanValue());
-              }
-            }
-          });
+          Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
+          fileEditorManager.openFileImpl4(window, entry.myFile, entry, isCurrentInTab, isCurrentInTab, pin, i);
           if (document != null) {
             // This is just to make sure document reference is kept on stack till this point
             // so that document is available for folding state deserialization in HistoryEntry constructor

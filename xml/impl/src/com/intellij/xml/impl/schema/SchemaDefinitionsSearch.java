@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -65,7 +65,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
         if (infos != null && ! infos.isEmpty()) {
           final XmlFile file = XmlUtil.getContainingFile(xml);
           final Project project = file.getProject();
-          final Module module = ModuleUtil.findModuleForPsiElement(queryParameters);
+          final Module module = ModuleUtilCore.findModuleForPsiElement(queryParameters);
           //if (module == null) return false;
 
           final VirtualFile vf = file.getVirtualFile();

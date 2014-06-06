@@ -75,6 +75,8 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
         if (sSubstitutor != null && PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
           return true;
         }
+        //comment in 18.2.2. Type Compatibility Constraints
+        if (tClass instanceof PsiTypeParameter && ((PsiClassType)s).isRaw()) return true;
       }
     } 
     else if (t instanceof PsiArrayType && t.getArrayDimensions() == s.getArrayDimensions()) {

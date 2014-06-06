@@ -118,7 +118,7 @@ public class PsiEquivalenceUtil {
     findChildRangeDuplicates(first, last, scope, new PairConsumer<PsiElement, PsiElement>() {
       @Override
       public void consume(final PsiElement start, final PsiElement end) {
-        result.add(Couple.newOne(start, end));
+        result.add(Couple.of(start, end));
       }
     });
   }

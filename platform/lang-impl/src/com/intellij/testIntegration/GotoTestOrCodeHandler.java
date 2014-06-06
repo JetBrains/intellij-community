@@ -19,8 +19,8 @@ package com.intellij.testIntegration;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
@@ -124,7 +124,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   protected String getAdText(PsiElement source, int length) {
     if (length > 0 && !TestFinderHelper.isTest(source)) {
       final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-      final Shortcut[] shortcuts = keymap.getShortcuts(IdeActions.ACTION_DEFAULT_RUNNER);
+      final Shortcut[] shortcuts = keymap.getShortcuts(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
       if (shortcuts.length > 0) {
         return ("Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to run selected tests");
       }

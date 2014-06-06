@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NonNls;
 public class Import extends Tag{
   public Import(@NonNls String file, boolean optional) {
     //noinspection HardCodedStringLiteral
-    super("import", Couple.newOne("file", file), Couple.newOne("optional", optional ? "true" : "false"));
+    super("import", Couple.of("file", file), Couple.of("optional", optional ? "true" : "false"));
   }
 
   public Import(@NonNls String file) {
     //noinspection HardCodedStringLiteral
-    super("import", Couple.newOne("file", file));
+    super("import", Couple.of("file", file));
   }
 }

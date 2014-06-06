@@ -24,7 +24,6 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 @Tag("data-views")
 public class XDebuggerDataViewSettings {
   private boolean mySortValues;
-  private EvaluationMode myEvaluationDialogMode = EvaluationMode.EXPRESSION;
 
   @Tag("sort-values")
   public boolean isSortValues() {
@@ -33,14 +32,5 @@ public class XDebuggerDataViewSettings {
 
   public void setSortValues(boolean sortValues) {
     mySortValues = sortValues;
-  }
-
-  @Tag("evaluation-dialog-mode")
-  public EvaluationMode getEvaluationDialogMode() {
-    return myEvaluationDialogMode;
-  }
-
-  public void setEvaluationDialogMode(EvaluationMode evaluationDialogMode) {
-    myEvaluationDialogMode = evaluationDialogMode;
   }
 }

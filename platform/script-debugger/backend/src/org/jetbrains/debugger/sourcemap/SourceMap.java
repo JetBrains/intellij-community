@@ -42,8 +42,14 @@ public class SourceMap {
     return sourceResolver.canonicalizedSources;
   }
 
+  @NotNull
   public MappingList getMappings() {
     return mappings;
+  }
+
+  public int getSourceLineByRawLocation(int rawLine, int rawColumn) {
+    MappingEntry entry = getMappings().get(rawLine, rawColumn);
+    return entry == null ? -1: entry.getSourceLine();
   }
 
   public boolean processMappingsInLine(@NotNull List<Url> sourceUrls,

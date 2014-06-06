@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
 
   public Self withLocalName(final ElementPattern<String> localName) {
     return with(new PsiNamePatternCondition<T>("withLocalName", localName) {
+      @Override
       public String getPropertyValue(@NotNull final Object o) {
         return o instanceof XmlElement ? getLocalName((T)o) : null;
       }
@@ -74,16 +75,19 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   public static class XmlAttributePattern extends XmlNamedElementPattern<XmlAttribute, XmlAttributePattern> {
     protected XmlAttributePattern() {
       super(new InitialPatternCondition<XmlAttribute>(XmlAttribute.class) {
+        @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlAttribute;
         }
       });
     }
 
+    @Override
     protected String getLocalName(XmlAttribute xmlAttribute) {
       return xmlAttribute.getLocalName();
     }
 
+    @Override
     protected String getNamespace(XmlAttribute xmlAttribute) {
       return xmlAttribute.getNamespace();
     }

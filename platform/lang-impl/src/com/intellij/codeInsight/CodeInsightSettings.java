@@ -113,6 +113,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOINSERT_PAIR_QUOTE = true;
   public boolean REFORMAT_BLOCK_ON_RBRACE = true;
 
+  @MagicConstant(intValues = {NO_REFORMAT, INDENT_BLOCK, INDENT_EACH_LINE, REFORMAT_BLOCK})
   public int REFORMAT_ON_PASTE = INDENT_EACH_LINE;
   public static final int NO_REFORMAT = 1;
   public static final int INDENT_BLOCK = 2;
@@ -121,7 +122,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean INDENT_TO_CARET_ON_PASTE = false;
 
-  public int ADD_IMPORTS_ON_PASTE = ASK; // YES, NO or ASK
+  @MagicConstant(intValues = {YES, NO, ASK})
+  public int ADD_IMPORTS_ON_PASTE = ASK;
   public static final int YES = 1;
   public static final int NO = 2;
   public static final int ASK = 3;

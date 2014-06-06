@@ -788,7 +788,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   Couple<Integer> getUnversionedFilesSize() {
     synchronized (myDataLock) {
       final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      return Couple.newOne(holder.getSize(), holder.getNumDirs());
+      return Couple.of(holder.getSize(), holder.getNumDirs());
     }
   }
 

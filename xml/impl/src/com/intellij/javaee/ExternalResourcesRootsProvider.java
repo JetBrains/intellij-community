@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,13 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
     @NotNull
     @Override
     protected Set<String> compute() {
-      ExternalResourceManagerImpl manager = (ExternalResourceManagerImpl)ExternalResourceManager.getInstance();
-      Collection<Map<String,ExternalResourceManagerImpl.Resource>> resources = manager.getStandardResources();
-      Set<ExternalResourceManagerImpl.Resource> dirs = new HashSet<ExternalResourceManagerImpl.Resource>();
+      ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
+      Collection<Map<String, ExternalResourceManagerExImpl.Resource>> resources = manager.getStandardResources();
+      Set<ExternalResourceManagerExImpl.Resource> dirs = new HashSet<ExternalResourceManagerExImpl.Resource>();
       Set<String> set = new HashSet<String>();
-      for (Map<String, ExternalResourceManagerImpl.Resource> map : resources) {
-        for (ExternalResourceManagerImpl.Resource resource : map.values()) {
-          ExternalResourceManagerImpl.Resource dir = new ExternalResourceManagerImpl.Resource(
+      for (Map<String, ExternalResourceManagerExImpl.Resource> map : resources) {
+        for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
+          ExternalResourceManagerExImpl.Resource dir = new ExternalResourceManagerExImpl.Resource(
             resource.directoryName(), resource);
 
           if (dirs.add(dir)) {
@@ -59,6 +59,7 @@ public class ExternalResourcesRootsProvider extends IndexableSetContributor {
     }
   };
 
+  @Override
   public Set<VirtualFile> getAdditionalRootsToIndex() {
 
     HashSet<VirtualFile> roots = new HashSet<VirtualFile>();

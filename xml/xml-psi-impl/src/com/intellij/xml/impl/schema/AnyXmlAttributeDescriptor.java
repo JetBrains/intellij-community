@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,21 +42,26 @@ public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
     myCanContainAttributeType = canContainAttributeType;
   }
 
+  @Override
   public PsiElement getDeclaration(){
     return null;
   }
 
+  @Override
   public String getName(PsiElement context){
     return myAttributeName;
   }
 
+  @Override
   public String getName() {
     return myAttributeName;
   }
 
+  @Override
   public void init(PsiElement element){
   }
 
+  @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
@@ -69,35 +74,43 @@ public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
     return myAttributeName;
   }
 
+  @Override
   public boolean isRequired() {
     return false;
   }
 
+  @Override
   public boolean isFixed() {
     return false;
   }
 
+  @Override
   public boolean hasIdType() {
     return false;
   }
 
+  @Override
   public boolean hasIdRefType() {
     return false;
   }
 
+  @Override
   public String getDefaultValue() {
     return null;
   }
 
   //todo: refactor to hierarchy of value descriptor?
+  @Override
   public boolean isEnumerated() {
     return false;
   }
 
+  @Override
   public String[] getEnumeratedValues() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public String validateValue(XmlElement context, String value) {
     return null;
   }

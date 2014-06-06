@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -324,6 +325,18 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   private boolean myOptimizeImports;
   private boolean myProcessOnlyChangedText;
   private boolean myIsOK = true;
+
+  @Nullable
+  @Override
+  public SearchScope getSearchScope() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getFileTypeMask() {
+    return null;
+  }
 
   @Override
   public boolean isProcessWholeFile() {

@@ -70,7 +70,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   @NotNull private final  ArrangementSectionDetector mySectionDetector;
   @Nullable private final Document                      myDocument;
 
-  @Nullable private Set<PsiField> classFields;
+  @NotNull private HashMap<PsiClass, Set<PsiField>> myCachedClassFields = ContainerUtil.newHashMap();
 
   @NotNull private Set<PsiComment> myProcessedSectionsComments = ContainerUtil.newHashSet();
 
@@ -266,15 +266,18 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       return referencedElements;
     }
 
+    Set<PsiField> classFields = myCachedClassFields.get(containingClass);
     if (classFields == null) {
       classFields = ContainerUtil.map2Set(containingClass.getFields(), new Function.Self<PsiField, PsiField>());
+      myCachedClassFields.put(containingClass, classFields);
     }
 
+    final Set<PsiField> containingClassFields = classFields;
     fieldInitializer.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
-        if (ref instanceof PsiField && classFields.contains(ref)) {
+        if (ref instanceof PsiField && containingClassFields.contains(ref)) {
           referencedElements.add((PsiField)ref);
         }
       }

@@ -29,23 +29,19 @@ import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesImplUtil;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
@@ -60,7 +56,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -73,13 +68,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
@@ -95,13 +87,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final ResourceBundle              myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private final Map<Editor, DocumentListener> myDocumentListeners       = new THashMap<Editor, DocumentListener>();
   private final Project           myProject;
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<PropertiesFile> myBackSlashPressed     = new THashSet<PropertiesFile>();
-  private final Alarm               myUpdateEditorAlarm    = new Alarm();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private JPanel              myValuesPanel;
@@ -279,9 +269,37 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                                                                        : null;
   }
 
-  private void recreateEditorsPanel() {
-    myUpdateEditorAlarm.cancelAllRequests();
+  private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile) {
+    final String currentValue = editor.getDocument().getText();
+    final String selectedProperty = getSelectedPropertyName();
+    assert selectedProperty != null;
 
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+          @Override
+          public void run() {
+            final IProperty property = propertiesFile.findPropertyByKey(selectedProperty);
+            try {
+              if (property == null) {
+                propertiesFile.addProperty(selectedProperty, currentValue);
+              }
+              else {
+                property.setValue(currentValue);
+              }
+            }
+            catch (final IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+
+      }
+    });
+  }
+
+  private void recreateEditorsPanel() {
     myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
@@ -309,11 +327,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       if (oldEditor != null) {
         EditorFactory.getInstance().releaseEditor(oldEditor);
       }
-
-      editor.getContentComponent().addFocusListener(new FocusAdapter() {
+      ((EditorEx) editor).addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(FocusEvent e) {
+        public void focusGained(final Editor editor) {
           mySelectedEditor = editor;
+        }
+
+        @Override
+        public void focusLost(final Editor eventEditor) {
+          writeEditorPropertyValue(editor, propertiesFile);
         }
       });
       gc.gridx = 0;
@@ -364,6 +386,51 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     valuesPanelComponent.add(new JPanel(), gc);
     selectionChanged();
     myValuesPanel.repaint();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        updateEditorsFromProperties();
+      }
+    });
+  }
+
+  @NotNull
+  public static String getPropertyEditorValue(@Nullable final IProperty property) {
+    if (property == null) {
+      return "";
+    }
+    else {
+      String rawValue = property.getValue();
+      return rawValue == null ? "" : PropertiesResourceBundleUtil.fromPropertyValueToValueEditor(rawValue);
+    }
+  }
+
+  private void updateEditorsFromProperties() {
+    String propertyName = getSelectedPropertyName();
+    ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
+    if (propertyName == null) return;
+
+    for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles(myProject)) {
+      final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
+      if (editor == null) continue;
+      final IProperty property = propertiesFile.findPropertyByKey(propertyName);
+      final Document document = editor.getDocument();
+      CommandProcessor.getInstance().executeCommand(null, new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              updateDocumentFromPropertyValue(getPropertyEditorValue(property), document, propertiesFile);
+            }
+          });
+        }
+      }, "", this);
+
+      JPanel titledPanel = myTitledPanels.get(propertiesFile);
+      ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
+      titledPanel.repaint();
+    }
   }
 
   private void installPropertiesChangeListeners() {
@@ -446,63 +513,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     });
   }
 
-  private void updateEditorsFromProperties() {
-    myUpdateEditorAlarm.cancelAllRequests();
-    myUpdateEditorAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!isValid()) return;
-        // there is pending update which is going to change prop file anyway
-        if (!myUpdatePsiAlarm.isEmpty()) {
-          myUpdateEditorAlarm.cancelAllRequests();
-          myUpdateEditorAlarm.addRequest(this, 200);
-          return;
-        }
-        uninstallDocumentListeners();
-        try {
-          String propertyName = getSelectedPropertyName();
-          ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? NO_PROPERTY_SELECTED : VALUES);
-          if (propertyName == null) return;
-
-          List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-          for (final PropertiesFile propertiesFile : propertiesFiles) {
-            EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
-            if (editor == null) continue;
-            reinitSettings(editor);
-            IProperty property = propertiesFile.findPropertyByKey(propertyName);
-            final String value;
-            if (property == null) {
-              value = "";
-            }
-            else {
-              String rawValue = property.getValue();
-              value = rawValue == null ? "" : PropertiesResourceBundleUtil.fromPropertyValueToValueEditor(rawValue);
-            }
-            final Document document = editor.getDocument();
-            CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-              @Override
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    updateDocumentFromPropertyValue(value, document, propertiesFile);
-                  }
-                });
-              }
-            }, "", this);
-
-            JPanel titledPanel = myTitledPanels.get(propertiesFile);
-            ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
-            titledPanel.repaint();
-          }
-        }
-        finally {
-          installDocumentListeners();
-        }
-      }
-    }, 200);
-  }
-
   private void updateDocumentFromPropertyValue(final String value,
                                                final Document document,
                                                final PropertiesFile propertiesFile) {
@@ -511,107 +521,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       text += "\\";
     }
     document.replaceString(0, document.getTextLength(), text);
-  }
-
-  private void updatePropertyValueFromDocument(final String propertyName,
-                                               final PropertiesFile propertiesFile,
-                                               final String text) {
-    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(text)) {
-      myBackSlashPressed.add(propertiesFile);
-    }
-    else {
-      myBackSlashPressed.remove(propertiesFile);
-    }
-    IProperty property = propertiesFile.findPropertyByKey(propertyName);
-    try {
-      if (property == null) {
-        propertiesFile.addProperty(propertyName, text);
-      }
-      else {
-        property.setValue(text);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
-
-  private void installDocumentListeners() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-    for (final PropertiesFile propertiesFile : propertiesFiles) {
-      final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
-      if (editor == null) continue;
-      DocumentAdapter listener = new DocumentAdapter() {
-        private String oldText;
-
-        @Override
-        public void beforeDocumentChange(DocumentEvent e) {
-          oldText = e.getDocument().getText();
-        }
-
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          Document document = e.getDocument();
-          String text = document.getText();
-          updatePropertyValueFor(document, propertiesFile, text, oldText);
-        }
-      };
-      myDocumentListeners.put(editor, listener);
-      editor.getDocument().addDocumentListener(listener);
-    }
-  }
-
-  private void uninstallDocumentListeners() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
-    for (final PropertiesFile propertiesFile : propertiesFiles) {
-      Editor editor = myEditors.get(propertiesFile);
-      uninstallDocumentListener(editor);
-    }
-  }
-
-  private void uninstallDocumentListener(Editor editor) {
-    DocumentListener listener = myDocumentListeners.remove(editor);
-    if (listener != null) {
-      editor.getDocument().removeDocumentListener(listener);
-    }
-  }
-
-  private final Alarm myUpdatePsiAlarm = new Alarm();
-  private void updatePropertyValueFor(final Document document, final PropertiesFile propertiesFile, final String text, final String oldText) {
-    myUpdatePsiAlarm.cancelAllRequests();
-    myUpdatePsiAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!isValid()) return;
-        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            Project project = propertiesFile.getProject();
-            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-            documentManager.commitDocument(document);
-            Document propertiesFileDocument = documentManager.getDocument(propertiesFile.getContainingFile());
-            if (propertiesFileDocument == null) {
-              return;
-            }
-            documentManager.commitDocument(propertiesFileDocument);
-
-            if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-              uninstallDocumentListeners();
-              try {
-                document.replaceString(0, document.getTextLength(), oldText);
-              }
-              finally {
-                installDocumentListeners();
-              }
-              return;
-            }
-            String propertyName = getSelectedPropertyName();
-            if (propertyName == null) return;
-            updatePropertyValueFromDocument(propertyName, propertiesFile, text);
-          }
-        });
-      }
-    }, 300, ModalityState.stateForComponent(getComponent()));
   }
 
   @Nullable
@@ -677,10 +586,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private PropertiesFile getSelectedPropertiesFile() {
     if (mySelectedEditor == null) return null;
     PropertiesFile selectedFile = null;
-    for (PropertiesFile file : myEditors.keySet()) {
-      Editor editor = myEditors.get(file);
+    for (Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
+      Editor editor = entry.getValue();
       if (editor == mySelectedEditor) {
-        selectedFile = file;
+        selectedFile = entry.getKey();
         break;
       }
     }
@@ -761,25 +670,27 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   @Override
   public void dispose() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
+    if (mySelectedEditor != null) {
+      for (final Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
+        if (mySelectedEditor.equals(entry.getValue())) {
+          writeEditorPropertyValue(mySelectedEditor, entry.getKey());
+        }
+      }
+    }
 
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
     myDisposed = true;
     Disposer.dispose(myStructureViewComponent);
     releaseAllEditors();
   }
 
   private void releaseAllEditors() {
-    for (Editor editor : myEditors.values()) {
-      releaseEditor(editor);
+    for (final Editor editor : myEditors.values()) {
+      if (!editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
     }
     myEditors.clear();
-  }
-
-  private void releaseEditor(Editor editor) {
-    if (!editor.isDisposed()) {
-      uninstallDocumentListener(editor);
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
   }
 
   /**
@@ -837,6 +748,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
+    settings.setVirtualSpace(false);
 
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);

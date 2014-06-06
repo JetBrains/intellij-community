@@ -22,6 +22,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -67,9 +68,29 @@ public final class NettyUtil {
   }
 
   @Nullable
-  public static Channel connect(Bootstrap bootstrap, InetSocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
+  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @NotNull ActionCallback asyncResult, int maxAttemptCount) {
     try {
       int attemptCount = 0;
+
+      if (bootstrap.group() instanceof NioEventLoop) {
+        while (true) {
+          ChannelFuture future = bootstrap.connect(remoteAddress).awaitUninterruptibly();
+          if (future.isSuccess()) {
+            return future.channel();
+          }
+          else if (++attemptCount < maxAttemptCount) {
+            //noinspection BusyWait
+            Thread.sleep(attemptCount * MIN_START_TIME);
+          }
+          else {
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+            Throwable cause = future.cause();
+            asyncResult.reject("Cannot connect: " + (cause == null ? "unknown error" : cause.getMessage()));
+            return null;
+          }
+        }
+      }
+
       Socket socket;
       while (true) {
         try {
@@ -123,7 +144,7 @@ public final class NettyUtil {
     }
   }
 
-  public static ServerBootstrap nioServerBootstrap(EventLoopGroup eventLoopGroup) {
+  public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
@@ -137,7 +158,11 @@ public final class NettyUtil {
 
   @SuppressWarnings("UnusedDeclaration")
   public static Bootstrap nioClientBootstrap() {
-    Bootstrap bootstrap = new Bootstrap().group(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(NioSocketChannel.class);
+    return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+  }
+
+  public static Bootstrap nioClientBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
+    Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
   }

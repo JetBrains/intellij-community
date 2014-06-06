@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +43,8 @@ public class RefCountHolder {
   private final PsiFile myFile;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
-  private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
+  private final Map<PsiAnchor, Boolean> myDclsUsedMap = ContainerUtil.newConcurrentMap();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ContainerUtil.newConcurrentMap();
   private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
   private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
   private static final ProgressIndicator READY = new DaemonProgressIndicator();
@@ -130,7 +131,7 @@ public class RefCountHolder {
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
-    myDclsUsedMap.put(result,Boolean.TRUE);
+    myDclsUsedMap.put(PsiAnchor.create(result), Boolean.TRUE);
   }
 
   public void registerReference(@NotNull PsiJavaReference ref, @NotNull JavaResolveResult resolveResult) {
@@ -185,10 +186,10 @@ public class RefCountHolder {
     removeInvalidFrom(myDclsUsedMap.keySet());
   }
 
-  private static void removeInvalidFrom(@NotNull Collection<? extends PsiElement> collection) {
-    for (Iterator<? extends PsiElement> it = collection.iterator(); it.hasNext();) {
-      PsiElement element = it.next();
-      if (!element.isValid()) it.remove();
+  private static void removeInvalidFrom(@NotNull Collection<? extends PsiAnchor> collection) {
+    for (Iterator<? extends PsiAnchor> it = collection.iterator(); it.hasNext();) {
+      PsiAnchor element = it.next();
+      if (element.retrieve() == null) it.remove();
     }
   }
 
@@ -199,7 +200,7 @@ public class RefCountHolder {
     }
     if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
-    Boolean usedStatus = myDclsUsedMap.get(element);
+    Boolean usedStatus = myDclsUsedMap.get(PsiAnchor.create(element));
     return usedStatus == Boolean.TRUE;
   }
 

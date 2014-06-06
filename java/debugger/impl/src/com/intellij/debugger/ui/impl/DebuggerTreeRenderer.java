@@ -69,31 +69,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = stackDescriptor.getIcon();
     }
     else if (descriptor instanceof ValueDescriptorImpl) {
-      final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-      if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
-        nodeIcon = PlatformIcons.FIELD_ICON;
-      }
-      else if (valueDescriptor.isArray()) {
-        nodeIcon = AllIcons.Debugger.Db_array;
-      }
-      else if (valueDescriptor.isPrimitive()) {
-        nodeIcon = AllIcons.Debugger.Db_primitive;
-      }
-      else {
-        if (valueDescriptor instanceof WatchItemDescriptor) {
-          nodeIcon = AllIcons.Debugger.Watch;
-        }
-        else {
-          nodeIcon = AllIcons.Debugger.Value;
-        }
-      }
-      final Icon valueIcon = valueDescriptor.getValueIcon();
-      if (nodeIcon != null && valueIcon != null) {
-        final RowIcon composite = new RowIcon(2);
-        composite.setIcon(nodeIcon, 0);
-        composite.setIcon(valueIcon, 1);
-        nodeIcon = composite;
-      }
+      nodeIcon = getValueIcon((ValueDescriptorImpl)descriptor);
     }
     else if (descriptor instanceof MessageDescriptor) {
       MessageDescriptor messageDescriptor = (MessageDescriptor)descriptor;
@@ -111,6 +87,35 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = AllIcons.Nodes.Static;
     }
 
+    return nodeIcon;
+  }
+
+  public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor) {
+    Icon nodeIcon;
+    if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
+      nodeIcon = PlatformIcons.FIELD_ICON;
+    }
+    else if (valueDescriptor.isArray()) {
+      nodeIcon = AllIcons.Debugger.Db_array;
+    }
+    else if (valueDescriptor.isPrimitive()) {
+      nodeIcon = AllIcons.Debugger.Db_primitive;
+    }
+    else {
+      if (valueDescriptor instanceof WatchItemDescriptor) {
+        nodeIcon = AllIcons.Debugger.Watch;
+      }
+      else {
+        nodeIcon = AllIcons.Debugger.Value;
+      }
+    }
+    final Icon valueIcon = valueDescriptor.getValueIcon();
+    if (nodeIcon != null && valueIcon != null) {
+      final RowIcon composite = new RowIcon(2);
+      composite.setIcon(nodeIcon, 0);
+      composite.setIcon(valueIcon, 1);
+      nodeIcon = composite;
+    }
     return nodeIcon;
   }
 

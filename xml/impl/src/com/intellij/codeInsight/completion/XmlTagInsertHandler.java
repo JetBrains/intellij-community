@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
+  @Override
   public void handleInsert(InsertionContext context, LookupElement item) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
@@ -149,6 +150,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         myAttrValueMarker = editor.getDocument().createRangeMarker(offset + 1, offset + 4);
       }
 
+      @Override
       public void templateFinished(final Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
@@ -156,6 +158,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           char c = editor.getDocument().getCharsSequence().charAt(offset - 3);
           if (c == '/' || (c == ' ' && brokenOff)) {
             new WriteCommandAction.Simple(project) {
+              @Override
               protected void run() throws Throwable {
                 editor.getDocument().replaceString(offset - 2, offset + 1, ">");
               }
@@ -164,6 +167,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         }
       }
 
+      @Override
       public void templateCancelled(final Template template) {
         if (myAttrValueMarker == null) {
           return;
@@ -178,6 +182,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           final int startOffset = myAttrValueMarker.getStartOffset();
           final int endOffset = myAttrValueMarker.getEndOffset();
           new WriteCommandAction.Simple(project) {
+            @Override
             protected void run() throws Throwable {
               editor.getDocument().replaceString(startOffset, endOffset, ">");
             }

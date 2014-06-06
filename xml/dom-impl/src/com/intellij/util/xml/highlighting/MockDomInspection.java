@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,21 @@ public class MockDomInspection<T extends DomElement> extends BasicDomElementsIns
     super(domClass);
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     throw new UnsupportedOperationException("Method getGroupDisplayName is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     throw new UnsupportedOperationException("Method getDisplayName is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {

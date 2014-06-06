@@ -58,4 +58,6 @@ public interface DebugEventListener extends EventListener {
    * @param newUrl the new URL of the debugged target
    */
   void navigated(String newUrl);
+
+  void errorOccurred(@NotNull String errorMessage);
 }

@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
+import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -56,18 +57,15 @@ import java.util.*;
 
 /**
  * @author ik
- * Date: 24.10.2003
+ * @since 24.10.2003
  */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
   private static final Key<ParameterizedCachedValue<MembersMap, PsiClass>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
+  private static final String VALUES_METHOD = "values";
+  private static final String VALUE_OF_METHOD = "valueOf";
 
-  private PsiClassImplUtil() {
-  }
-
-  public static void cacheEverything(PsiClass aClass) {
-    getValues(aClass).getValue(aClass);
-  }
+  private PsiClassImplUtil() { }
 
   @NotNull
   public static PsiField[] getAllFields(@NotNull PsiClass aClass) {
@@ -126,7 +124,7 @@ public class PsiClassImplUtil {
     for (final PsiMethod method : methodsByName) {
       final PsiClass superClass = method.getContainingClass();
       final PsiSubstitutor substitutor;
-      if (checkBases && !aClass.equals(superClass)) {
+      if (checkBases && !aClass.equals(superClass) && superClass != null) {
         substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       }
       else {
@@ -425,6 +423,25 @@ public class PsiClassImplUtil {
     }
   }
 
+  public static boolean processDeclarationsInEnum(@NotNull PsiScopeProcessor processor,
+                                                  @NotNull ResolveState state,
+                                                  @NotNull ClassInnerStuffCache innerStuffCache) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
+      NameHint nameHint = processor.getHint(NameHint.KEY);
+      if ((nameHint == null || VALUES_METHOD.equals(nameHint.getName(state)))) {
+        PsiMethod method = innerStuffCache.getValuesMethod();
+        if (method != null && !processor.execute(method, ResolveState.initial())) return false;
+      }
+      if ((nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state)))) {
+        PsiMethod method = innerStuffCache.getValueOfMethod();
+        if (method != null && !processor.execute(method, ResolveState.initial())) return false;
+      }
+    }
+
+    return true;
+  }
+
   public static boolean processDeclarationsInClass(@NotNull PsiClass aClass,
                                                    @NotNull final PsiScopeProcessor processor,
                                                    @NotNull ResolveState state,
@@ -560,7 +577,7 @@ public class PsiClassImplUtil {
             if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
           }
           final PsiClass containingClass = candidateMethod.getContainingClass();
-          if (visited != null && visited.contains(candidateMethod.getContainingClass())) {
+          if (containingClass == null || visited != null && visited.contains(containingClass)) {
             continue;
           }
 

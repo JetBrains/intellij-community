@@ -51,11 +51,13 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     super(viewProvider, RngCompactLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return RncFileType.getInstance();
   }
 
+  @Override
   @NotNull
   public XmlDocument getDocument() {
     // this needs to be a seperate child element because of com.intellij.util.xml.impl.ExternalChangeProcessor.visitDocumentChanged()
@@ -108,10 +110,12 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     return getDocument().addBefore(element, anchor);
   }
 
+  @Override
   public boolean processElements(PsiElementProcessor processor, PsiElement place) {
     return false;
   }
 
+  @Override
   public GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());
   }
@@ -126,10 +130,12 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     return getClass().getSimpleName() + ":" + getName();
   }
 
+  @Override
   public RncDecl[] getDeclarations() {
     return ((RncDocument)getDocument()).findChildrenByClass(RncDecl.class);
   }
 
+  @Override
   public RncGrammar getGrammar() {
     final XmlDocument document = getDocument();
     return ((RncDocument)document).getGrammar();

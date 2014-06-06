@@ -24,10 +24,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
@@ -74,8 +78,7 @@ public class OptimizeImportsAction extends AnAction {
         else {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
         }
-        LayoutProjectCodeDialog dialog
-          = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), text, false, false);
+        DialogWrapper dialog = new OptimizeOnModuleDialog(project, text);
         dialog.show();
         if (!dialog.isOK()) return;
         if (moduleContext != null) {
@@ -196,5 +199,23 @@ public class OptimizeImportsAction extends AnAction {
 
   private static boolean isOptimizeImportsAvailable(final PsiFile file) {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
+  }
+
+  private static class OptimizeOnModuleDialog extends DialogWrapper {
+    private final String myText;
+
+    OptimizeOnModuleDialog(Project project, String text) {
+      super(project, false);
+      myText = text;
+      setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
+      setTitle(CodeInsightBundle.message("process.optimize.imports"));
+      init();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return new JLabel(myText);
+    }
   }
 }

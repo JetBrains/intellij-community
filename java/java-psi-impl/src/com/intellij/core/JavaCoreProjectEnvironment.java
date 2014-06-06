@@ -63,7 +63,7 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
   }
 
   protected CoreJavaPsiImplementationHelper createJavaPsiImplementationHelper() {
-    return new CoreJavaPsiImplementationHelper();
+    return new CoreJavaPsiImplementationHelper(myProject);
   }
 
   protected JavaFileManager createCoreFileManager() {

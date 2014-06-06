@@ -42,10 +42,10 @@ import java.util.concurrent.ConcurrentMap;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 23;
+  private static final int VERSION = 24;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
-  private static final String OUT_SRC_STORAGE = "out-src";
+  private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
 
@@ -58,7 +58,7 @@ public class BuildDataManager implements StorageOwner {
   private final Mappings myMappings;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
-  private final OutputToSourceRegistry myOutputToSourceRegistry;
+  private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
   private StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
     @Override
@@ -128,18 +128,23 @@ public class BuildDataManager implements StorageOwner {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
-    myOutputToSourceRegistry = new OutputToSourceRegistry(new File(getOutputToSourceRegistryRoot(), "data"));
+    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), useMemoryTempCaches);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
   }
 
-  public OutputToSourceRegistry getOutputToSourceRegistry() {
-    return myOutputToSourceRegistry;
+  public BuildTargetsState getTargetsState() {
+    return myTargetsState;
+  }
+
+  public OutputToTargetRegistry getOutputToTargetRegistry() {
+    return myOutputToTargetRegistry;
   }
 
   public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
     final SourceToOutputMappingImpl sourceToOutputMapping = fetchValue(mySourceToOutputs, target, SOURCE_OUTPUT_MAPPING_VALUE_FACTORY);
-    return new SourceToOutputMappingWrapper(sourceToOutputMapping);
+    final int buildTargetId = myTargetsState.getBuildTargetId(target);
+    return new SourceToOutputMappingWrapper(sourceToOutputMapping, buildTargetId);
   }
 
   @NotNull
@@ -192,7 +197,7 @@ public class BuildDataManager implements StorageOwner {
         }
         finally {
           try {
-            wipeStorage(getOutputToSourceRegistryRoot(), myOutputToSourceRegistry);
+            wipeStorage(getOutputToSourceRegistryRoot(), myOutputToTargetRegistry);
           }
           finally {
             final Mappings mappings = myMappings;
@@ -218,7 +223,7 @@ public class BuildDataManager implements StorageOwner {
     for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping : mySourceToOutputs.values()) {
       mapping.getValue().flush(memoryCachesOnly);
     }
-    myOutputToSourceRegistry.flush(memoryCachesOnly);
+    myOutputToTargetRegistry.flush(memoryCachesOnly);
     mySrcToFormMap.flush(memoryCachesOnly);
     final Mappings mappings = myMappings;
     if (mappings != null) {
@@ -241,7 +246,7 @@ public class BuildDataManager implements StorageOwner {
     finally {
       try {
         closeSourceToOutputStorages();
-        myOutputToSourceRegistry.close();
+        myOutputToTargetRegistry.close();
       }
       finally {
         try {
@@ -321,7 +326,7 @@ public class BuildDataManager implements StorageOwner {
   }
 
   private File getOutputToSourceRegistryRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), OUT_SRC_STORAGE);
+    return new File(myDataPaths.getDataStorageRoot(), OUT_TARGET_STORAGE);
   }
 
   public BuildDataPaths getDataPaths() {
@@ -399,9 +404,11 @@ public class BuildDataManager implements StorageOwner {
   
   private final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
     private final SourceToOutputMapping myDelegate;
+    private final int myBuildTargetId;
 
-    SourceToOutputMappingWrapper(SourceToOutputMapping delegate) {
+    SourceToOutputMappingWrapper(SourceToOutputMapping delegate, int buildTargetId) {
       myDelegate = delegate;
+      myBuildTargetId = buildTargetId;
     }
 
     public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
@@ -409,7 +416,7 @@ public class BuildDataManager implements StorageOwner {
         myDelegate.setOutputs(srcPath, outputs);
       }
       finally {
-        myOutputToSourceRegistry.addMapping(outputs, srcPath);
+        myOutputToTargetRegistry.addMapping(outputs, myBuildTargetId);
       }
     }
 
@@ -418,7 +425,7 @@ public class BuildDataManager implements StorageOwner {
         myDelegate.setOutput(srcPath, outputPath);
       }
       finally {
-        myOutputToSourceRegistry.addMapping(outputPath, srcPath);
+        myOutputToTargetRegistry.addMapping(outputPath, myBuildTargetId);
       }
     }
 
@@ -427,7 +434,7 @@ public class BuildDataManager implements StorageOwner {
         myDelegate.appendOutput(srcPath, outputPath);
       }
       finally {
-        myOutputToSourceRegistry.addMapping(outputPath, srcPath);
+        myOutputToTargetRegistry.addMapping(outputPath, myBuildTargetId);
       }
     }
 
@@ -440,7 +447,7 @@ public class BuildDataManager implements StorageOwner {
         myDelegate.remove(srcPath);
       }
       finally {
-        myOutputToSourceRegistry.removeMapping(outputs, srcPath);
+        myOutputToTargetRegistry.removeMapping(outputs, myBuildTargetId);
       }
     }
 
@@ -449,7 +456,7 @@ public class BuildDataManager implements StorageOwner {
         myDelegate.removeOutput(sourcePath, outputPath);
       }
       finally {
-        myOutputToSourceRegistry.removeMapping(outputPath, sourcePath);
+        myOutputToTargetRegistry.removeMapping(outputPath, myBuildTargetId);
       }
     }
 

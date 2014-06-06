@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,21 @@ public class CompositeCommittable implements Committable, Highlightable {
     return panel;
   }
 
+  @Override
   public void commit() {
     for (final Committable committable : myComponents) {
       committable.commit();
     }
   }
 
+  @Override
   public void reset() {
     for (final Committable committable : myComponents) {
       committable.reset();
     }
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -51,6 +54,7 @@ public class CompositeCommittable implements Committable, Highlightable {
     return myComponents;
   }
 
+  @Override
   public void updateHighlighting() {
     for (final Committable component : myComponents) {
       CommittableUtil.updateHighlighting(component);

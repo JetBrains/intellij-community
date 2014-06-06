@@ -165,11 +165,12 @@ public class SphinxBaseCommand {
         script_params.addParameter(p);
       }
     }
-    cmd.addParameters("Sphinx", "sphinx-quickstart");
 
     cmd.setPassParentEnvironment(true);
     setPythonIOEncoding(cmd.getEnvironment(), "utf-8");
     setPythonUnbuffered(cmd.getEnvironment());
+    cmd.getEnvironment().put("PYCHARM_EP_DIST", "Sphinx");
+    cmd.getEnvironment().put("PYCHARM_EP_NAME", "sphinx-quickstart");
 
     List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(sdk));
     pathList.addAll(PythonCommandLineState.collectPythonPath(module));

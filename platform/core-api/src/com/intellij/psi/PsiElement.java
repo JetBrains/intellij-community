@@ -375,11 +375,25 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException;
 
   /**
-   * Checks if the PSI element corresponds to the current state of the underlying
-   * document. The element is no longer valid after the document has been reparsed
-   * and a new PSI tree has been built for it.
+   * Checks if this PSI element is valid. Valid elements and their hierarchy members
+   * can be accessed for reading and writing. Valid elements can still correspond to
+   * underlying documents whose text is different, when those documents have been changed
+   * and not yet committed ({@link com.intellij.psi.PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
+   * (In this case an attempt to change PSI will result in an exception).
+   *
+   * Any access to invalid elements results in {@link com.intellij.psi.PsiInvalidElementAccessException}.
+   *
+   * Once invalid, elements can't become valid again.
+   *
+   * Elements become invalid in following cases:
+   * <ul>
+   *   <li>They have been deleted via PSI operation ({@link #delete()})</li>
+   *   <li>They have been deleted as a result of an incremental reparse (document commit)</li>
+   *   <li>Their containing file has been changed externally, or renamed so that its PSI had to be rebuilt from scratch</li>
+   * </ul>
    *
    * @return true if the element is valid, false otherwise.
+   * @see com.intellij.psi.util.PsiUtilCore#ensureValid(PsiElement)
    */
   boolean isValid();
 

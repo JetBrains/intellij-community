@@ -91,10 +91,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     RangeHighlighterEx highlighter = myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid() ||
-         highlighter.getStartOffset() >= document.getTextLength() ||
-         document.getLineNumber(highlighter.getStartOffset()) != getLine())) {
-      highlighter.dispose();
-      myHighlighter = null;
+         highlighter.getStartOffset() >= document.getTextLength()
+         // it seems that this check is not needed - we always update line number from the highlighter
+         // and highlighter is removed on line and file change anyway
+         /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
+      removeHighlighter();
       highlighter = null;
     }
 
@@ -213,7 +214,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       public boolean copy(int line, VirtualFile file) {
         if (canMoveTo(line, file)) {
           setFileUrl(file.getUrl());
-          setLine(line);
+          setLine(line, true);
           return true;
         }
         return false;
@@ -232,7 +233,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
-      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()));
+      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
     }
   }
 
@@ -240,14 +241,18 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     if (!Comparing.equal(getFileUrl(), newUrl)) {
       myState.setFileUrl(newUrl);
       mySourcePosition = null;
+      removeHighlighter();
       fireBreakpointChanged();
     }
   }
 
-  private void setLine(final int line) {
+  private void setLine(final int line, boolean removeHighlighter) {
     if (getLine() != line) {
       myState.setLine(line);
       mySourcePosition = null;
+      if (removeHighlighter) {
+        removeHighlighter();
+      }
       fireBreakpointChanged();
     }
   }

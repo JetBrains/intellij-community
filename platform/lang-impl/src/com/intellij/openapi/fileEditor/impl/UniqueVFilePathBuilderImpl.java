@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -38,12 +39,22 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   @NotNull
   @Override
   public String getUniqueVirtualFilePath(Project project, VirtualFile file) {
+    return getUniqueVirtualFilePath(project, file, false);
+  }
+
+  @NotNull
+  @Override
+  public String getUniqueVirtualFilePathWithinOpenedFileEditors(Project project, VirtualFile vFile) {
+    return getUniqueVirtualFilePath(project, vFile, true);
+  }
+
+  private String getUniqueVirtualFilePath(Project project, VirtualFile file, boolean skipNonOpenedFiles) {
     String fileName = file.getName();
-    Collection<VirtualFile> filesWithSameName = FilenameIndex.getVirtualFilesByName(project, fileName,
-                                                                                          ProjectScope.getProjectScope(project));
+    Collection<VirtualFile> filesWithSameName = skipNonOpenedFiles ? Collections.<VirtualFile>emptySet() :
+                                                FilenameIndex.getVirtualFilesByName(project, fileName, ProjectScope.getProjectScope(project));
     THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<VirtualFile>(filesWithSameName);
     // add open files out of project scope
-    for(VirtualFile openFile:FileEditorManager.getInstance(project).getOpenFiles()) {
+    for(VirtualFile openFile: FileEditorManager.getInstance(project).getOpenFiles()) {
       if (openFile.getName().equals(fileName)) {
         setOfFilesWithTheSameName.add(openFile);
       }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -38,7 +39,7 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
                             "Manifest-Version: 1.0\n" +
                             "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
                             "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: IntelliJ IDEA");
+                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   public void testClasspathEntry() throws Exception {
@@ -78,7 +79,7 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
                             "Class-Path: lib/other-project-1.jar\n" +
                             "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
                             "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: IntelliJ IDEA\n");
+                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   public void testDefaultEntries() throws Exception {
@@ -119,7 +120,7 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
                             "Implementation-Vendor-Id: test\n" +
                             "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
                             "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: IntelliJ IDEA\n" +
+                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName() + "\n" +
                             "Specification-Version: 1");
   }
 
@@ -154,7 +155,7 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
                             "Dependencies: some.package\n" +
                             "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
                             "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: IntelliJ IDEA");
+                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   public void testManifestSections() throws Exception {
@@ -195,7 +196,7 @@ public class ManifestGenerationTest extends MavenCompilingTestCase {
                             "Manifest-Version: 1.0\n" +
                             "Build-Jdk: " + extractJdkVersion(getModule("project")) + "\n" +
                             "Built-By: " + System.getProperty("user.name") + "\n" +
-                            "Created-By: IntelliJ IDEA\n" +
+                            "Created-By: " + ApplicationNamesInfo.getInstance().getFullProductName() + "\n" +
                             "\n" +
                             "Name: org/test/SomeOther.class\n" +
                             "Java-Bean: true\n" +

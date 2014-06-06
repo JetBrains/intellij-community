@@ -184,6 +184,11 @@
       <categoryKey>intention.category.junit</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.junit.DataPointHolderConversionIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.junit</categoryKey>
+    </intentionAction>
     <!-- Declaration -->
 
     <!--

@@ -115,11 +115,11 @@ public class BuildPropertiesImpl extends BuildProperties {
         javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jgoodies-forms.jar")));
         add(javac2);
         //noinspection HardCodedStringLiteral
-        register.add(new Tag("taskdef", Couple.newOne("name", "javac2"), Couple.newOne("classname", "com.intellij.ant.Javac2"),
-                             Couple.newOne("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
-        register.add(new Tag("taskdef", Couple.newOne("name", "instrumentIdeaExtensions"),
-                             Couple.newOne("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
-                             Couple.newOne("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef", Couple.of("name", "javac2"), Couple.of("classname", "com.intellij.ant.Javac2"),
+                             Couple.of("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef", Couple.of("name", "instrumentIdeaExtensions"),
+                             Couple.of("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
+                             Couple.of("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
       }
       if (customCompilers.length > 0) {
         for (ChunkCustomCompilerExtension ext : customCompilers) {

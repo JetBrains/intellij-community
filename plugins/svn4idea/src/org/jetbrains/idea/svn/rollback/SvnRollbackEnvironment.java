@@ -355,7 +355,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
 
     private void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
-      myToBeDeleted.add(Couple.newOne(beforeFile, afterFile));
+      myToBeDeleted.add(Couple.of(beforeFile, afterFile));
     }
 
     public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {

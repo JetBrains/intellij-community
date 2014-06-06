@@ -36,4 +36,9 @@ public interface CallFrame {
    */
   @NotNull
   EvaluateContext getEvaluateContext();
+
+  /**
+   @see com.intellij.xdebugger.frame.XStackFrame#getEqualityObject()
+   */
+  Object getEqualityObject();
 }

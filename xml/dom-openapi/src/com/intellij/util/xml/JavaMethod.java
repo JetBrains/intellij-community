@@ -92,6 +92,7 @@ public final class JavaMethod implements AnnotatedElement {
     return myMethod.getName();
   }
 
+  @Override
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     Object annotation = myAnnotationsMap.get(annotationClass);
     if (annotation == null) {

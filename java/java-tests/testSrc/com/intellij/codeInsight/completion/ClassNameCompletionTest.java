@@ -17,6 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -54,6 +56,26 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(path + "/before2.java");
     selectItem(myItems[0]);
     checkResultByFile(path + "/after2.java");
+  }
+
+  public void testTypeParametersTemplate() throws Exception {
+    createClass("package pack; public interface Foo<T> {void foo(T t};");
+
+    String path = "/template";
+
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    configureByFile(path + "/before1.java");
+    selectItem(myItems[0]);
+    TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+    type("String");
+    assert state != null;
+    state.gotoEnd(false);
+    checkResultByFile(path + "/after1.java");
+
+    configureByFile(path + "/before2.java");
+    selectItem(myItems[0]);
+    assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
+    checkResultByFile(path +"/after2.java");
   }
 
   private void createClass(String text) {

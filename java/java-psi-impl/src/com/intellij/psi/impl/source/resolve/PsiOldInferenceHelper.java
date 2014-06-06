@@ -249,7 +249,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
                 }
                 break OtherParameters;
               }
-              else if (currentConstraintType == ConstraintType.SUPERTYPE) {
+              else if (currentConstraintType == ConstraintType.SUPERTYPE && !JavaVersionService.getInstance().isAtLeast(parent, JavaSdkVersion.JDK_1_7)) {
                 if (PsiType.NULL.equals(substitutionFromBounds)) {
                   substitutionFromBounds = currentSubstitution;
                 }
@@ -286,7 +286,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         Pair<PsiType, ConstraintType> otherConstraint =
           inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
         if (otherConstraint != null) {
-          if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) {
+          if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE || 
+              compareSubtypes(constraint.getFirst(), otherConstraint.getFirst())) {
             constraint = otherConstraint;
           }
         }
@@ -305,6 +306,10 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
     }
     return partialSubstitutor;
+  }
+
+  private static boolean compareSubtypes(final PsiType type, final PsiType parentType) {
+    return type != null && parentType != null && TypeConversionUtil.isAssignable(type, parentType);
   }
 
   @Override
@@ -739,7 +744,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
         if (guess != null &&
             !guess.equals(PsiType.NULL) &&
             constraint.getSecond() == ConstraintType.SUPERTYPE &&
-            guess instanceof PsiIntersectionType) {
+            guess instanceof PsiIntersectionType &&
+            !JavaVersionService.getInstance().isAtLeast(parent, JavaSdkVersion.JDK_1_7)) {
           for (PsiType conjuct : ((PsiIntersectionType)guess).getConjuncts()) {
             if (!conjuct.isAssignableFrom(expectedType)) {
               return FAILED_INFERENCE;

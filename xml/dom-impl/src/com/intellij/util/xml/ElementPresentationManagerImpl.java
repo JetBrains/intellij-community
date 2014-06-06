@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.List;
  */
 public class ElementPresentationManagerImpl extends ElementPresentationManager {
 
+  @Override
   @NotNull
   public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags) {
     List<Object> result = new ArrayList<Object>(elements.size());
@@ -43,6 +44,7 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
     return result.toArray();
   }
 
+  @Override
   public Object createVariant(final Object variant, final String name, final PsiElement psiElement) {
     final LookupElementBuilder builder;
     if (psiElement != null) {

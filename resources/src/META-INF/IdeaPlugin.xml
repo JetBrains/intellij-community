@@ -712,6 +712,10 @@
       <className>com.intellij.codeInsight.intention.impl.DeannotateIntentionAction</className>
       <category>Control Flow</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.CreateSwitchIntention</className>
+      <category>Control Flow</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>
@@ -856,6 +860,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
+      <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <category>Other</category>
     </intentionAction>
@@ -874,8 +883,6 @@
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
       <category>Other</category>
     </intentionAction>
-
-
 
 
     <intentionAction>

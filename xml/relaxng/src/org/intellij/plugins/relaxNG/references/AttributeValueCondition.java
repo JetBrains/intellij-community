@@ -29,6 +29,7 @@ class AttributeValueCondition extends PatternCondition<XmlAttributeValue> {
     myRef = ref;
   }
 
+  @Override
   public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {
     return myRef.equals(value.getValue());
   }

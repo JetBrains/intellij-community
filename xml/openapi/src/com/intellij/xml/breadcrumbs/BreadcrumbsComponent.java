@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     addMouseListener(myMouseListener);
     addMouseMotionListener(myMouseListener);
 
-    setToolTipText(new String());
+    setToolTipText("");
   }
 
   public void setItems(@Nullable final List<T> itemsList) {
@@ -74,6 +74,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     myListeners.remove(listener);
   }
 
+  @Override
   public String getToolTipText(final MouseEvent event) {
     final Crumb c = getCrumb(event.getPoint());
     if (c != null) {
@@ -145,6 +146,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     repaint();
   }
 
+  @Override
   public void paint(final Graphics g) {
     final Graphics2D g2 = ((Graphics2D)g);
     final Dimension d = getSize();
@@ -335,19 +337,23 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     return totalWidth;
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Graphics2D g2 = (Graphics2D)getGraphics();
     return new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
   }
 
+  @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public void dispose() {
     removeMouseListener(myMouseListener);
     removeMouseMotionListener(myMouseListener);
@@ -419,10 +425,12 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       myBreadcrumbs = line;
     }
 
+    @Override
     public void mouseDragged(final MouseEvent e) {
       // nothing
     }
 
+    @Override
     public void mouseMoved(final MouseEvent e) {
       final Crumb crumb = myBreadcrumbs.getCrumb(e.getPoint());
       if (crumb != myHoveredCrumb) {
@@ -431,14 +439,17 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       }
     }
 
+    @Override
     public void mouseExited(final MouseEvent e) {
       mouseMoved(e);
     }
 
+    @Override
     public void mouseEntered(final MouseEvent e) {
       mouseMoved(e);
     }
 
+    @Override
     public void mouseClicked(final MouseEvent e) {
       final Crumb crumb = myBreadcrumbs.getCrumb(e.getPoint());
       if (crumb != null) {
@@ -448,9 +459,9 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   private static class Crumb<T extends BreadcrumbsItem> {
-    private String myString;
+    private final String myString;
     private int myOffset = -1;
-    private int myWidth;
+    private final int myWidth;
     private T myItem;
     private BreadcrumbsComponent myLine;
     private boolean mySelected;
@@ -552,6 +563,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       myLine = line;
     }
 
+    @Override
     public void performAction(final int modifiers) {
       if (myForward) {
         myLine.nextPage();
@@ -567,10 +579,12 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       super(null, width);
     }
 
+    @Override
     public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height, final int pageOffset) {
       // does nothing
     }
 
+    @Override
     public void performAction(final int modifiers) {
       // does nothing
     }
@@ -632,6 +646,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return DEFAULT_BG_COLOR;
     }
 
+    @Override
     @Nullable
     Color getBackgroundColor(@NotNull final Crumb c) {
       final BreadcrumbsItem item = c.getItem();
@@ -644,6 +659,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return getBackgroundColor(c.isSelected(), c.isHovered(), c.isLight(), c instanceof NavigationCrumb);
     }
 
+    @Override
     @Nullable
     Color getForegroundColor(@NotNull final Crumb c) {
       if (c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb)) {
@@ -653,6 +669,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return super.getForegroundColor(c);
     }
 
+    @Override
     @Nullable
     Color getBorderColor(@NotNull final Crumb c) {
       return (c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb)) ? LIGHT_BORDER_COLOR : DEFAULT_BORDER_COLOR;
@@ -687,6 +704,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       super(s);
     }
 
+    @Override
     public void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height, final int pageOffset) {
       final PainterSettings s = getSettings();
       final Font oldFont = g2.getFont();
@@ -720,7 +738,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       String string = c.getString();
       if (fm.stringWidth(string) > width) {
         final int dotsWidth = fm.stringWidth("...");
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
         int length = 0;
         for (int i = 0; i < string.length(); i++) {
           final int charWidth = fm.charWidth(string.charAt(i));
@@ -741,6 +759,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       g2.setFont(oldFont);
     }
 
+    @Override
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
       final int width = fm.stringWidth(s) + (ROUND_VALUE * 2);

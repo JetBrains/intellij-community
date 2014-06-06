@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,30 +44,36 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
   };
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.xml.display.name");
   }
 
+  @Override
   public Icon getIcon() {
     return StdFileTypes.XML.getIcon();
   }
 
+  @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     return ATTRS;
   }
 
+  @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;                       
   }
 
+  @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
     return new XmlFileHighlighter();
   }
 
+  @Override
   @NotNull
   public String getDemoText() {
     return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
@@ -84,6 +90,7 @@ public class XMLColorsPage implements ColorSettingsPage {
            "</index>";
   }
 
+  @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
                                     Pair.create("bg", XmlHighlighterColors.XML_TAG));

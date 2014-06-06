@@ -16,11 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
-import com.intellij.codeInspection.AddAssertStatementFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.SurroundWithIfFix;
-import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -54,7 +50,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (toRemove && !onTheFly) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
-    return new LocalQuickFix[]{toRemove ? new DefUseInspection.RemoveAssignmentFix() : createSimplifyToAssignmentFix()};
+    return new LocalQuickFix[]{toRemove ? new RemoveAssignmentFix() : createSimplifyToAssignmentFix()};
   }
 
   @Override

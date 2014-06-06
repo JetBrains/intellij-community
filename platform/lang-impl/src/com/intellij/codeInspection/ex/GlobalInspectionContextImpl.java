@@ -645,6 +645,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final LinkedHashMap<PsiFile, List<HighlightInfo>> results = new LinkedHashMap<PsiFile, List<HighlightInfo>>();
 
     final SearchScope searchScope = scope.toSearchScope();
+    final TextRange range;
+    if (searchScope instanceof LocalSearchScope) {
+      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+      range = elements.length == 1 ? elements[0].getTextRange() : null;
+    }
+    else {
+      range = null;
+    }
     scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {
@@ -661,8 +669,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         }
 
         if (!lTools.isEmpty()) {
-          final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(project).getDocument(file), 0,
-                                                                     file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+          final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(project).getDocument(file), range != null ? range.getStartOffset() : 0,
+                                                                     range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                      HighlightInfoProcessor.getEmpty());
           Runnable runnable = new Runnable() {
             public void run() {

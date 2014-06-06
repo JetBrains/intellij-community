@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 
@@ -29,7 +29,7 @@ public class NewModuleInGroupAction extends NewModuleAction {
   public void update(final AnActionEvent e) {
     super.update(e);
     final ModuleGroup[] moduleGroups = ModuleGroup.ARRAY_DATA_KEY.getData(e.getDataContext());
-    final Module[] modules = e.getData(DataKeys.MODULE_CONTEXT_ARRAY);
+    final Module[] modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     e.getPresentation().setVisible((moduleGroups != null && moduleGroups.length > 0) ||
                                    (modules != null && modules.length > 0));
   }

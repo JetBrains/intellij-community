@@ -61,7 +61,7 @@ public class PropertiesCoreEnvironment {
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlPropertiesIndex());
       appEnvironment.addExtension(StubIndexExtension.EP_NAME, new PropertyKeyIndex());
 
-      appEnvironment.registerApplicationService(PropertiesQuickFixFactory.class, new CorePropertiesQuickFixFactory());
+      appEnvironment.registerApplicationService(PropertiesQuickFixFactory.class, new EmptyPropertiesQuickFixFactory());
       appEnvironment.registerApplicationService(PropertiesRefactoringSettings.class, new PropertiesRefactoringSettings());
       appEnvironment.registerApplicationService(PropertiesSeparatorManager.class, new PropertiesSeparatorManager());
       appEnvironment.addExplicitExtension(LanguageAnnotators.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesAnnotator());

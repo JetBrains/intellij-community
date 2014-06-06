@@ -27,6 +27,7 @@ import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
  * Date: 19.08.2007
  */
 public abstract class RngDefineImpl extends RngDomElementBase implements RngDefine {
+  @Override
   public void setName(String name) {
     final GenericAttributeValue<String> value = getNameAttr();
     if (value.getStringValue() != null) {
@@ -34,18 +35,22 @@ public abstract class RngDefineImpl extends RngDomElementBase implements RngDefi
     }
   }
 
+  @Override
   public String getName() {
     return getNameAttr().getValue();
   }
 
+  @Override
   public PsiElement getNameElement() {
     return getNameAttr().getXmlAttributeValue();
   }
 
+  @Override
   public Pattern getPattern() {
     return getPatternFrom(this);
   }
 
+  @Override
   public void accept(Visitor visitor) {
     visitor.visitDefine(this);
   }

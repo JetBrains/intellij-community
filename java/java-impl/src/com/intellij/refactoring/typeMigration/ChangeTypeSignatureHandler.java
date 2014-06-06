@@ -74,6 +74,9 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   protected static boolean isClassArgument(PsiElement element) {
     if (element instanceof PsiReferenceParameterList) {
       final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
+      if (member instanceof PsiAnonymousClass) {
+        return ((PsiAnonymousClass)member).getBaseClassReference().getParameterList() == element;
+      }
       if (member instanceof PsiClass) {
         final PsiReferenceList implementsList = ((PsiClass)member).getImplementsList();
         final PsiReferenceList extendsList = ((PsiClass)member).getExtendsList();

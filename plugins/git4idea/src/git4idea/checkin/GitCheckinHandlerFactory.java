@@ -261,7 +261,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private Couple<String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
       String name = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
       String email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL);
-      return Couple.newOne(name, email);
+      return Couple.of(name, email);
     }
 
     private boolean emptyCommitMessage() {

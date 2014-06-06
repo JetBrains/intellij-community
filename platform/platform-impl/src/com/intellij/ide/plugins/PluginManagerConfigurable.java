@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,20 +74,20 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public void reset() {
     myPluginManagerMain.reset();
-    if (myAvailable) {
-      final int column = myUISettings.AVAILABLE_SORT_MODE;
-      if (column >= 0) {
-        for (final SortOrder sortOrder : SortOrder.values()) {
-          if (sortOrder.ordinal() == myUISettings.AVAILABLE_SORT_COLUMN_ORDER) {
-            myPluginManagerMain.pluginsModel.setSortKey(new RowSorter.SortKey(column, sortOrder));
-            break;
-          }
-        }
-      }
-      myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.AVAILABLE_SORT_BY_STATUS);
-    } else {
-      myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.INSTALLED_SORT_BY_STATUS);
-    }
+    //if (myAvailable) {
+    //  final int column = myUISettings.AVAILABLE_SORT_MODE;
+    //  if (column >= 0) {
+    //    for (final SortOrder sortOrder : SortOrder.values()) {
+    //      if (sortOrder.ordinal() == myUISettings.AVAILABLE_SORT_COLUMN_ORDER) {
+    //        myPluginManagerMain.pluginsModel.setSortKey(new RowSorter.SortKey(column, sortOrder));
+    //        break;
+    //      }
+    //    }
+    //  }
+    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.AVAILABLE_SORT_BY_STATUS);
+    //} else {
+    //  myPluginManagerMain.pluginsModel.setSortByStatus(myUISettings.INSTALLED_SORT_BY_STATUS);
+    //}
     myPluginManagerMain.pluginsModel.sort();
     getSplitterProportions().restoreSplitterProportions(myPluginManagerMain.getMainPanel());
   }

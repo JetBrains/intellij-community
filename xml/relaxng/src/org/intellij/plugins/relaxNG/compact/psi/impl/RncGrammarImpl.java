@@ -36,14 +36,17 @@ public class RncGrammarImpl extends RncElementImpl implements RncGrammar {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitGrammar(this);
   }
 
+  @Override
   public void accept(Visitor visitor) {
     visitor.visitGrammar(this);
   }
 
+  @Override
   public RncPattern getStart() {
     final ASTNode node = getNode().findChildByType(RncElementTypes.START);
     return node != null ? (RncPattern)node.getPsi() : null;
