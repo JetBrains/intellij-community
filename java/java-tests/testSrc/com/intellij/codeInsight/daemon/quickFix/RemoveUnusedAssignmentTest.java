@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ public class RemoveUnusedAssignmentTest extends LightQuickFixTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new DefUseInspection()};
+    return new LocalInspectionTool[] {new DefUseInspection(), new SillyAssignmentInspection()};
   }
 
   @Override

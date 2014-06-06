@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.sillyAssignment;
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 24, 2001
- * Time: 2:46:32 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.RemoveAssignmentFix;
+
+/**
+ * User: anna
+ * Date: 15-Nov-2005
  */
-package com.intellij.codeInspection.defUse;
-
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.diagnostic.Logger;
-
-public class DefUseInspection extends DefUseInspectionBase {
-
-  @Override
-  protected LocalQuickFix createRemoveInitializerFix() {
-    return new RemoveInitializerFix();
-  }
+public class SillyAssignmentInspection extends SillyAssignmentInspectionBase {
 
   @Override
   protected LocalQuickFix createRemoveAssignmentFix() {
