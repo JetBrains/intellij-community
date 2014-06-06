@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,28 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 
 /**
- * @author nik
+ * @author egor
  */
-@Tag("data-views")
-public class XDebuggerDataViewSettings {
-  private boolean mySortValues;
+@Tag("general")
+public class XDebuggerGeneralSettings {
+  private EvaluationMode myEvaluationDialogMode = EvaluationMode.EXPRESSION;
+  private boolean myUnmuteOnStop = false;
 
-  @Tag("sort-values")
-  public boolean isSortValues() {
-    return mySortValues;
+  @Tag("evaluation-dialog-mode")
+  public EvaluationMode getEvaluationDialogMode() {
+    return myEvaluationDialogMode;
   }
 
-  public void setSortValues(boolean sortValues) {
-    mySortValues = sortValues;
+  public void setEvaluationDialogMode(EvaluationMode evaluationDialogMode) {
+    myEvaluationDialogMode = evaluationDialogMode;
+  }
+
+  @Tag("unmute-on-stop")
+  public boolean isUnmuteOnStop() {
+    return myUnmuteOnStop;
+  }
+
+  public void setUnmuteOnStop(boolean unmuteOnStop) {
+    myUnmuteOnStop = unmuteOnStop;
   }
 }

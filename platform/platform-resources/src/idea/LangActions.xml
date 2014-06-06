@@ -757,7 +757,7 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
-
+      <action id="Debugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction"/>
     </group>
 
     <group id="RunnerLayoutActions">

@@ -16,7 +16,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -39,9 +38,7 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -169,18 +166,6 @@ public class JavaDebugProcess extends XDebugProcess {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), ((JavaStackFrame)frame).getStackFrameProxy());
-        }
-      }
-
-      @Override
-      public void sessionStopped() {
-        if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              session.setBreakpointMuted(false);
-            }
-          });
         }
       }
     });
@@ -322,25 +307,16 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", true) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
-        e.getPresentation().setIcon(AllIcons.General.SecondaryGroup);
+    for (AnAction action : leftToolbar.getChildren(null)) {
+      //TODO: maybe introduce API for extra settings?
+      if (action instanceof DefaultActionGroup && "DebuggerSettings".equals(action.getTemplatePresentation().getText())) {
+        DefaultActionGroup settings = (DefaultActionGroup)action;
+        addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
+        settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
+        settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
+        break;
       }
-
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
-    };
-    settings.add(new WatchLastMethodReturnValueAction());
-    settings.add(new AutoVarsSwitchAction());
-    settings.add(new UnmuteOnStopAction());
-    settings.addSeparator();
-    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
-
-    leftToolbar.add(settings, new Constraints(Anchor.AFTER, "Runner.Layout"));
+    }
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {
@@ -435,7 +411,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) group.add(action);
+    if (action != null) group.addAction(action, Constraints.FIRST);
   }
 
   public NodeManagerImpl getNodeManager() {
