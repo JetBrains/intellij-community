@@ -368,48 +368,15 @@ class ConsoleWriter(InteractiveInterpreter):
                 self.skip = 1
             sys.stderr.write(data)
 
+    #Override for avoid using sys.excepthook PY-12600
     def showsyntaxerror(self, filename=None):
-        """Display the syntax error that just occurred."""
-        #Override for avoid using sys.excepthook PY-12600
-        type, value, tb = sys.exc_info()
-        sys.last_type = type
-        sys.last_value = value
-        sys.last_traceback = tb
-        if filename and type is SyntaxError:
-            # Work hard to stuff the correct filename in the exception
-            try:
-                msg, (dummy_filename, lineno, offset, line) = value.args
-            except ValueError:
-                # Not the format we expect; leave it alone
-                pass
-            else:
-                # Stuff in the right filename
-                value = SyntaxError(msg, (filename, lineno, offset, line))
-                sys.last_value = value
-        list = traceback.format_exception_only(type, value)
-        sys.stderr.write(''.join(list))
+        from pydev_console_utils import showsyntaxerror
+        showsyntaxerror(filename=filename)
 
+    #Override for avoid using sys.excepthook PY-12600
     def showtraceback(self, full=False):
-        """Display the exception that just occurred."""
-        #Override for avoid using sys.excepthook PY-12600
-        try:
-            type, value, tb = sys.exc_info()
-            sys.last_type = type
-            sys.last_value = value
-            sys.last_traceback = tb
-            tblist = traceback.extract_tb(tb)
-            del tblist[:1]
-            if not full: #remove pydev calls from traceback
-                inner = [i for i, s in enumerate(tblist) if '\\python-helpers\\pydev\\pydevd_exec' in s[0]]
-                if inner:
-                    del tblist[:max(inner)+1]
-            lines = traceback.format_list(tblist)
-            if lines:
-                lines.insert(0, "Traceback (most recent call last):\n")
-            lines.extend(traceback.format_exception_only(type, value))
-        finally:
-            tblist = tb = None
-        sys.stderr.write(''.join(lines))
+        from pydevd_utils import showtraceback
+        showtraceback(full=full)
 
 def consoleExec(thread_id, frame_id, expression):
     """returns 'False' in case expression is partialy correct
@@ -434,7 +401,8 @@ def consoleExec(thread_id, frame_id, expression):
         code = compile_command(expression)
     except (OverflowError, SyntaxError, ValueError):
         # Case 1
-        interpreter.showsyntaxerror()
+        # interpreter.showsyntaxerror()
+        interpreter.showtraceback(full=True)
         return False
 
     if code is None:

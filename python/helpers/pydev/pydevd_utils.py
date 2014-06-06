@@ -93,7 +93,40 @@ def quote_smart(s, safe='/'):
             s =  s.encode('utf-8')
 
         return quote(s, safe)
-        
-        
 
+DONT_TRACE_EXEC = (
+    # pydev internal execs that we don't want to trace
+    'pydevd_exec.py',
+    'pydevd_exec2.py',
+    '_pydev_execfile.py',
+    'pydevd.py'
+)
 
+def showtraceback(full=False):
+    'Display the exception that just occurred.'
+    try:
+        import sys
+        type, value, tb = sys.exc_info()
+        sys.last_type = type
+        sys.last_value = value
+        sys.last_traceback = tb
+        tblist = traceback.extract_tb(tb)
+        # del tblist[:1]
+
+        pydev_part = None
+        if not full: #remove pydev calls from traceback
+            inner = None
+            for i in range(0, tblist.__len__()):
+                for execname in DONT_TRACE_EXEC:
+                    if execname in tblist[i][0]:
+                        inner = i
+                        break
+            if inner is not None:
+                pydev_part = ''.join(traceback.format_list(tblist[:inner+1]))
+
+        lines = ''.join(traceback.format_exception(type, value, tb))
+        if pydev_part is not None:
+            lines = lines.replace(pydev_part, "")
+    finally:
+        tblist = tb = None
+    sys.stderr.write(lines)
