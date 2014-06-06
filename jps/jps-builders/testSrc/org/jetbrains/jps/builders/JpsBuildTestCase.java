@@ -311,12 +311,16 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {
+      beforeBuildStarted(descriptor);
       builder.build(scopeBuilder.build(), false);
     }
     catch (RebuildRequestedException e) {
       throw new RuntimeException(e);
     }
     return result;
+  }
+
+  protected void beforeBuildStarted(@NotNull ProjectDescriptor descriptor) {
   }
 
   protected String createFile(String relativePath) {
