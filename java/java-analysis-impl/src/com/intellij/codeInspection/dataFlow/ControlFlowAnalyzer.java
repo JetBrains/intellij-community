@@ -1465,18 +1465,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       final String className = owner.getQualifiedName();
       if ("java.lang.System".equals(className)) {
         if ("exit".equals(methodName)) {
-          return Collections.singletonList(new MethodContract(getAnyArgConstraints(paramCount), ValueConstraint.THROW_EXCEPTION));
+          return Collections.singletonList(new MethodContract(MethodContract.createConstraintArray(paramCount), ValueConstraint.THROW_EXCEPTION));
         }
       }
       else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
                "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className) || "org.testng.AssertJUnit".equals(className)) {
         boolean testng = className.startsWith("org.testng.");
         if ("fail".equals(methodName)) {
-          return Collections.singletonList(new MethodContract(getAnyArgConstraints(paramCount), ValueConstraint.THROW_EXCEPTION));
+          return Collections.singletonList(new MethodContract(MethodContract.createConstraintArray(paramCount), ValueConstraint.THROW_EXCEPTION));
         }
 
         int checkedParam = testng ? 0 : paramCount - 1;
-        ValueConstraint[] constraints = getAnyArgConstraints(paramCount);
+        ValueConstraint[] constraints = MethodContract.createConstraintArray(paramCount);
         if ("assertTrue".equals(methodName)) {
           constraints[checkedParam] = ValueConstraint.FALSE_VALUE;
           return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
@@ -1503,14 +1503,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Nullable
   public static PsiAnnotation findContractAnnotation(PsiMethod method) {
     return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-  }
-
-  private static ValueConstraint[] getAnyArgConstraints(int paramCount) {
-    ValueConstraint[] args = new ValueConstraint[paramCount];
-    for (int i = 0; i < args.length; i++) {
-      args[i] = ValueConstraint.ANY_VALUE;
-    }
-    return args;
   }
 
   private void pushTypeOrUnknown(PsiExpression expr) {
