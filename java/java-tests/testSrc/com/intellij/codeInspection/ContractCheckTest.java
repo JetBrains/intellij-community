@@ -1,7 +1,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.codeInspection.dataFlow.ContractInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest() {
-    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.enableInspections(new ContractInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
@@ -36,4 +36,6 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testDelegationWithUnknownArgument() { doTest(); }
   public void testEqualsUnknownValue() { doTest(); }
   public void testMissingFail() { doTest(); }
+
+  public void testSignatureIssues() { doTest(); }
 }

@@ -83,7 +83,7 @@ public class EditContractIntention extends BaseIntentionAction {
       public String getErrorText(String inputString) {
         if (StringUtil.isEmpty(inputString)) return null;
 
-        return DataFlowInspectionBase.checkContract(method, inputString);
+        return ContractInspection.checkContract(method, inputString);
       }
 
       @Override
