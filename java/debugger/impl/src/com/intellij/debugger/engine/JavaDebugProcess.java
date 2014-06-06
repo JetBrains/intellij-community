@@ -38,7 +38,6 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -308,24 +307,16 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    final DefaultActionGroup settings = new DefaultActionGroup("DebuggerSettings", true) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
-        e.getPresentation().setIcon(AllIcons.General.SecondaryGroup);
+    for (AnAction action : leftToolbar.getChildren(null)) {
+      //TODO: maybe introduce API for extra settings?
+      if (action instanceof DefaultActionGroup && "DebuggerSettings".equals(action.getTemplatePresentation().getText())) {
+        DefaultActionGroup settings = (DefaultActionGroup)action;
+        addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
+        settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
+        settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
+        break;
       }
-
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
-    };
-    settings.add(new WatchLastMethodReturnValueAction());
-    settings.add(new AutoVarsSwitchAction());
-    settings.addSeparator();
-    addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
-
-    leftToolbar.add(settings, new Constraints(Anchor.AFTER, "Runner.Layout"));
+    }
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {
@@ -420,7 +411,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) group.add(action);
+    if (action != null) group.addAction(action, Constraints.FIRST);
   }
 
   public NodeManagerImpl getNodeManager() {
