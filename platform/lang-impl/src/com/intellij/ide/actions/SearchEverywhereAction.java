@@ -1260,6 +1260,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       finally {
         if (!myProgressIndicator.isCanceled()) {
           myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          updatePopup();
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
