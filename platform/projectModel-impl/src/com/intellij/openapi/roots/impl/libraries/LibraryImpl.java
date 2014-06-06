@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -612,13 +613,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void copyRootsFrom(LibraryImpl fromModel) {
-    myRoots.clear();
+    Map<OrderRootType, VirtualFilePointerContainer> clonedRoots = ContainerUtil.newHashMap();
     for (Map.Entry<OrderRootType, VirtualFilePointerContainer> entry : fromModel.myRoots.entrySet()) {
       OrderRootType rootType = entry.getKey();
       VirtualFilePointerContainer container = entry.getValue();
       VirtualFilePointerContainer clone = container.clone(myPointersDisposable);
-      myRoots.put(rootType, clone);
+      clonedRoots.put(rootType, clone);
     }
+    myRoots.clear();
+    myRoots.putAll(clonedRoots);
+
     VirtualFilePointerContainer excludedRoots = fromModel.myExcludedRoots;
     myExcludedRoots = excludedRoots != null ? excludedRoots.clone(myPointersDisposable) : null;
   }
