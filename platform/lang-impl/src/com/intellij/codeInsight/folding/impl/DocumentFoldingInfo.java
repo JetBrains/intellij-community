@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbService;
@@ -286,7 +285,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
         if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
 
         String date = null;
-        boolean canRestoreElement = !DumbService.getInstance(myProject).isDumb() || EditorUtil.supportsDumbModeFolding(psiFile);
+        boolean canRestoreElement = !DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile);
         for (final Object o : element.getChildren()) {
           Element e = (Element)o;
           Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
@@ -350,6 +349,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     result = 31 * result + (myFile != null ? myFile.hashCode() : 0);
     result = 31 * result + myPsiElements.hashCode();
     result = 31 * result + myRangeMarkers.hashCode();
+    result = 31 * result + mySerializedElements.hashCode();
     return result;
   }
 

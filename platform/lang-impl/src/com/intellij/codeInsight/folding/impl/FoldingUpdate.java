@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -186,6 +187,40 @@ public class FoldingUpdate {
         editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
       }
     };
+  }
+
+  /**
+   * Checks the ability to initialize folding in the Dumb Mode. Due to language injections it may depend on
+   * edited file and active injections (not yet implemented).
+   *
+   * @param editor the editor that holds file view
+   * @return true  if folding initialization available in the Dumb Mode
+   */
+  public static boolean supportsDumbModeFolding(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project != null) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file != null) {
+        return supportsDumbModeFolding(file);
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks the ability to initialize folding in the Dumb Mode for file.
+   *
+   * @param file the file to test
+   * @return true  if folding initialization available in the Dumb Mode
+   */
+  public static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
+    final FileViewProvider viewProvider = file.getViewProvider();
+    for (final Language language : viewProvider.getLanguages()) {
+      final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
+      if(foldingBuilder != null && !DumbService.isDumbAware(foldingBuilder))
+        return false;
+    }
+    return true;
   }
 
   static FoldingMap getFoldingsFor(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, boolean quick) {

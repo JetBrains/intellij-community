@@ -29,9 +29,9 @@ import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -55,7 +55,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   private final List<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
-  private static final Key<Boolean> FOLDING_STATE_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_STATE_IN_DOCUMENT");
+  private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
 
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
@@ -205,7 +205,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     final Project project = editor.getProject();
     if (project == null || !project.equals(myProject) || editor.isDisposed()) return;
     if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
-    if (!EditorUtil.supportsDumbModeFolding(editor)) return;
+    if (!FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
     Document document = editor.getDocument();
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -244,6 +244,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
         if (!foldingModel.isFoldingEnabled()) return;
         if (isFoldingsInitializedInEditor(editor)) return;
+        if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
         foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, true, false));
         initFolding(editor);
@@ -266,8 +267,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         documentFoldingInfo.setToEditor(editor);
         documentFoldingInfo.clear();
 
-        document.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
-        editor.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
+        document.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
+        editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
       }
     });
   }
@@ -408,15 +409,15 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       for(Editor editor:editors) {
         EditorFoldingInfo.resetInfo(editor);
       }
-      document.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, null);
+      document.putUserData(FOLDING_STATE_KEY, null);
     }
   }
 
   static boolean isFoldingsInitializedInDocument(@NotNull Document document) {
-    return Boolean.TRUE.equals(document.getUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY));
+    return Boolean.TRUE.equals(document.getUserData(FOLDING_STATE_KEY));
   }
 
   static boolean isFoldingsInitializedInEditor(@NotNull Editor editor) {
-    return Boolean.TRUE.equals(editor.getUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY));
+    return Boolean.TRUE.equals(editor.getUserData(FOLDING_STATE_KEY));
   }
 }

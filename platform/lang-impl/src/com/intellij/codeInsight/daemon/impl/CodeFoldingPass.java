@@ -18,9 +18,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.FoldingUpdate;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -73,6 +73,6 @@ class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDum
    */
   @Override
   public boolean isDumbAware() {
-    return EditorUtil.supportsDumbModeFolding(myEditor);
+    return FoldingUpdate.supportsDumbModeFolding(myEditor);
   }
 }
