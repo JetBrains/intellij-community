@@ -88,14 +88,18 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
-          myExecutionPointHighlighter.update();
-        }
+        updateExecutionPoint(file);
       }
 
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-        myExecutionPointHighlighter.update();
+        updateExecutionPoint(file);
+      }
+
+      private void updateExecutionPoint(@NotNull VirtualFile file) {
+        if (file.equals(myExecutionPointHighlighter.getCurrentFile())) {
+          myExecutionPointHighlighter.update();
+        }
       }
     });
     myBreakpointManager.addBreakpointListener(new XBreakpointAdapter<XBreakpoint<?>>() {
