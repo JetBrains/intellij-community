@@ -8,16 +8,22 @@ import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +32,8 @@ import java.util.Set;
  * Date: 09-Jan-2006
  */
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
+
+  private SoftReference<Graph<Module>> myGraph = new SoftReference<Graph<Module>>(null);
 
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
@@ -38,28 +46,86 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();
       if (module.isDisposed()) return CommonProblemDescriptor.EMPTY_ARRAY;
-      final Module[] declaredDependencies = ModuleRootManager.getInstance(module).getDependencies();
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final OrderEntry[] declaredDependencies = moduleRootManager.getOrderEntries();
+      final Module[] declaredModuleDependencies = moduleRootManager.getDependencies();
+
       List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
       final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
-      for (final Module dependency : declaredDependencies) {
-        if (modules == null || !modules.contains(dependency)) {
-         final CommonProblemDescriptor problemDescriptor;
-          if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
-            problemDescriptor = manager.createProblemDescriptor(
-              InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()),
-              new RemoveModuleDependencyFix(module, dependency));
-          } else {
-            String message = InspectionsBundle
-              .message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName(),
-                       dependency.getName());
-            problemDescriptor = manager.createProblemDescriptor(message);
+      Graph<Module> graph = myGraph.get();
+      if (graph == null) {
+        graph = ModuleManager.getInstance(globalContext.getProject()).moduleGraph();
+        myGraph = new SoftReference<Graph<Module>>(graph);
+      }
+
+      final RefManager refManager = globalContext.getRefManager();
+      for (final OrderEntry entry : declaredDependencies) {
+        if (entry instanceof ModuleOrderEntry) {
+          final Module dependency = ((ModuleOrderEntry)entry).getModule();
+          if (dependency != null) {
+            if (modules == null || !modules.contains(dependency)) {
+              List<String> dependenciesThroughExported = null;
+              if (((ModuleOrderEntry)entry).isExported()) {
+                final Iterator<Module> iterator = graph.getOut(module);
+                while (iterator.hasNext()) {
+                  final Module dep = iterator.next();
+                  final RefModule depRefModule = refManager.getRefModule(dep);
+                  if (depRefModule != null) {
+                    final Set<Module> neededModules = depRefModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
+                    if (neededModules != null && neededModules.contains(dependency)) {
+                      if (dependenciesThroughExported == null) {
+                        dependenciesThroughExported = new ArrayList<String>();
+                      }
+                      dependenciesThroughExported.add(dep.getName());
+                    }
+                  }
+                }
+              }
+              if (modules != null) {
+                List<String> transitiveDependencies = new ArrayList<String>();
+                final OrderEntry[] dependenciesOfDependencies = ModuleRootManager.getInstance(dependency).getOrderEntries();
+                for (OrderEntry secondDependency : dependenciesOfDependencies) {
+                  if (secondDependency instanceof ModuleOrderEntry && ((ModuleOrderEntry)secondDependency).isExported()) {
+                    final Module mod = ((ModuleOrderEntry)secondDependency).getModule();
+                    if (mod != null && modules.contains(mod) && ArrayUtil.find(declaredModuleDependencies, mod) < 0) {
+                      transitiveDependencies.add(mod.getName());
+                    }
+                  }
+                }
+                if (!transitiveDependencies.isEmpty()) {
+                  final String exported = StringUtil.join(transitiveDependencies, ", ");
+                  descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.exported.problem.descriptor1", module.getName(), dependency.getName(), exported)));
+                  continue;
+                }
+              }
+
+              descriptors.add(createDescriptor(scope, manager, module, dependency, dependenciesThroughExported));
+            }
           }
-          descriptors.add(problemDescriptor);
         }
       }
       return descriptors.isEmpty() ? null : descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
     }
     return null;
+  }
+
+  private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
+                                                          InspectionManager manager,
+                                                          Module module,
+                                                          Module dependency, 
+                                                          List<String> exportedDependencies) {
+    if (exportedDependencies != null) {
+      final String exported = StringUtil.join(exportedDependencies, ", ");
+      return manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.exported.problem.descriptor", module.getName(), dependency.getName(), exported));
+    }
+
+    if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
+      final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName());
+      return manager.createProblemDescriptor(allContainsMessage, new RemoveModuleDependencyFix(module, dependency));
+    } else {
+      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName(), dependency.getName());
+      return manager.createProblemDescriptor(message);
+    }
   }
 
   @Override
