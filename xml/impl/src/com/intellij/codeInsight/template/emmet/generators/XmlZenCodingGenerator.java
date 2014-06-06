@@ -15,13 +15,20 @@
  */
 package com.intellij.codeInsight.template.emmet.generators;
 
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +43,9 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   @Override
   public TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
     String s = toString(token, hasChildren, context);
-    TemplateImpl template = token.getTemplate().copy();
+    TemplateImpl tokenTemplate = token.getTemplate();
+    assert tokenTemplate != null;
+    TemplateImpl template = tokenTemplate.copy();
     template.setString(s);
     return template;
   }
@@ -77,4 +86,29 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
 
   @Override
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
+
+  @Nullable
+  @Override
+  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    Editor editor = callback.getEditor();
+    int currentOffset = editor.getCaretModel().getOffset();
+    int startOffset = editor.getDocument().getLineStartOffset(editor.getCaretModel().getLogicalPosition().line);
+
+    CharSequence documentText = editor.getDocument().getCharsSequence();
+    PsiElement prevVisibleLeaf = callback.getContext();
+    while (prevVisibleLeaf != null) {
+      TextRange textRange = prevVisibleLeaf.getTextRange();
+      if (textRange.getEndOffset() <= startOffset) {
+        break;
+      }
+      if (prevVisibleLeaf.getNode().getElementType() == XmlTokenType.XML_TAG_END) {
+        startOffset = textRange.getEndOffset();
+        break;
+      }
+      prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);
+    }
+
+    String key = computeKey(documentText.subSequence(startOffset, currentOffset));
+    return !StringUtil.isEmpty(key) && ZenCodingTemplate.checkTemplateKey(key, callback, this) ? key : null;
+  }
 }
