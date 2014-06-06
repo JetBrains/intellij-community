@@ -16,7 +16,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -41,7 +40,6 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -169,18 +167,6 @@ public class JavaDebugProcess extends XDebugProcess {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), ((JavaStackFrame)frame).getStackFrameProxy());
-        }
-      }
-
-      @Override
-      public void sessionStopped() {
-        if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              session.setBreakpointMuted(false);
-            }
-          });
         }
       }
     });
@@ -336,7 +322,6 @@ public class JavaDebugProcess extends XDebugProcess {
     };
     settings.add(new WatchLastMethodReturnValueAction());
     settings.add(new AutoVarsSwitchAction());
-    settings.add(new UnmuteOnStopAction());
     settings.addSeparator();
     addActionToGroup(settings, XDebuggerActions.AUTO_TOOLTIP);
 

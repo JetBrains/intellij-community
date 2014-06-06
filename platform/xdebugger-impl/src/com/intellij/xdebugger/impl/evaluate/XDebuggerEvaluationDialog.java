@@ -114,7 +114,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     myTreePanel.getTree().addTreeListener(new MyTreeListener());
 
-    EvaluationMode mode = XDebuggerSettingsManager.getInstance().getDataViewSettings().getEvaluationDialogMode();
+    EvaluationMode mode = XDebuggerSettingsManager.getInstance().getGeneralSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
     if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
@@ -171,7 +171,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private void switchToMode(EvaluationMode mode, XExpression text) {
     if (myMode == mode) return;
 
-    XDebuggerSettingsManager.getInstance().getDataViewSettings().setEvaluationDialogMode(mode);
+    XDebuggerSettingsManager.getInstance().getGeneralSettings().setEvaluationDialogMode(mode);
 
     myMode = mode;
 
