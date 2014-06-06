@@ -17,6 +17,7 @@ package com.siyeh.ig;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -44,9 +45,6 @@ import java.util.List;
 public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
-  @NonNls private static final String INSPECTION = "Inspection";
-  @NonNls private static final String INSPECTION_BASE = "InspectionBase";
-
   private String m_shortName = null;
   private long timestamp = -1L;
 
@@ -55,14 +53,9 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   public String getShortName() {
     if (m_shortName == null) {
       final Class<? extends BaseInspection> aClass = getClass();
-      final String name = aClass.getName();
-      if (name.endsWith(INSPECTION)) {
-        m_shortName = name.substring(name.lastIndexOf((int)'.') + 1, name.length() - INSPECTION.length());
-      }
-      else if (name.endsWith(INSPECTION_BASE)) {
-        m_shortName = name.substring(name.lastIndexOf((int)'.') + 1, name.length() - INSPECTION_BASE.length());
-      }
-      else {
+      final String name = aClass.getSimpleName();
+      m_shortName = InspectionProfileEntry.getShortName(name);
+      if (m_shortName.equals(name)) {
         throw new AssertionError("class name must end with 'Inspection' to correctly calculate the short name: " + name);
       }
     }

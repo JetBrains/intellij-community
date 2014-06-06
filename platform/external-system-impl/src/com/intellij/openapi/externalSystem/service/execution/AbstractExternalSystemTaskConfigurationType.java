@@ -162,6 +162,9 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     if (!StringUtil.isEmptyOrSpaces(projectName)) {
       buffer.append(projectName);
       buffer.append(" ");
+    } else {
+      buffer.append(externalProjectPath);
+      buffer.append(" ");
     }
 
     buffer.append("[");

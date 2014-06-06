@@ -15,48 +15,34 @@
  */
 package com.intellij.codeInsight.actions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-
 public class LayoutDirectoryDialog extends LayoutProjectCodeDialog implements DirectoryFormattingOptions {
-  private JCheckBox myIncludeSubdirs;
-
   public LayoutDirectoryDialog(@NotNull Project project,
                                String title,
                                String text,
                                boolean enableOnlyVCSChangedTextCb)
   {
-    super(project, title, text, true, enableOnlyVCSChangedTextCb);
-  }
-
-  public void setEnabledIncludeSubdirsCb(boolean isEnabled) {
-    myIncludeSubdirs.setEnabled(isEnabled);
-  }
-
-  public void setSelectedIncludeSubdirsCb(boolean isSelected) {
-    myIncludeSubdirs.setSelected(isSelected);
+    super(project, title, text, enableOnlyVCSChangedTextCb);
   }
 
   @Override
-  protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout(0, 7));
-    JComponent layoutProjectDialog = super.createCenterPanel();
+  protected boolean shouldShowIncludeSubdirsCb() {
+    return true;
+  }
 
-    myIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
+  public void setEnabledIncludeSubdirsCb(boolean isEnabled) {
+    myIncludeSubdirsCb.setEnabled(isEnabled);
+  }
 
-    panel.add(layoutProjectDialog, BorderLayout.CENTER);
-    panel.add(myIncludeSubdirs, BorderLayout.SOUTH);
-
-    return panel;
+  public void setSelectedIncludeSubdirsCb(boolean isSelected) {
+    myIncludeSubdirsCb.setSelected(isSelected);
   }
 
   @Override
   public boolean isIncludeSubdirectories() {
-    return myIncludeSubdirs.isSelected();
+    return myIncludeSubdirsCb.isSelected();
   }
 
 }

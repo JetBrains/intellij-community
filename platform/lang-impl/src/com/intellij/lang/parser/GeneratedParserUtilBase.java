@@ -360,7 +360,7 @@ public class GeneratedParserUtilBase {
     add = add && length > 1 && !(text.charAt(0) == '<' && text.charAt(length - 1) == '>') &&
           !(text.charAt(0) == '\'' && text.charAt(length - 1) == '\'' && length < 5);
     if (add) {
-      completionState.items.add(text);
+      completionState.addItem(builder_, text);
     }
   }
 
@@ -655,6 +655,10 @@ public class GeneratedParserUtilBase {
     @Override
     public String fun(Object o) {
       return o.toString();
+    }
+
+    public void addItem(PsiBuilder builder, String text) {
+      items.add(text);
     }
   }
 

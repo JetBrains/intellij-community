@@ -99,28 +99,33 @@ public class JavaDebugProcess extends XDebugProcess {
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
       public void changeEvent(final DebuggerContextImpl newContext, int event) {
-        if (event == DebuggerSession.EVENT_PAUSE && myJavaSession.isPaused()) {
-          process.getManagerThread().schedule(new DebuggerContextCommandImpl(newContext) {
-            @Override
-            public void threadAction() {
-              SuspendContextImpl context = newContext.getSuspendContext();
-              if (context != null) {
-                context.initExecutionStacks(newContext.getThreadProxy());
+        if (event == DebuggerSession.EVENT_PAUSE
+            || event == DebuggerSession.EVENT_CONTEXT
+            || event == DebuggerSession.EVENT_REFRESH
+               && myJavaSession.isPaused()) {
+          if (getSession().getSuspendContext() != newContext.getSuspendContext()) {
+            process.getManagerThread().schedule(new DebuggerContextCommandImpl(newContext) {
+              @Override
+              public void threadAction() {
+                SuspendContextImpl context = newContext.getSuspendContext();
+                if (context != null) {
+                  context.initExecutionStacks(newContext.getThreadProxy());
 
-                List<Pair<Breakpoint, Event>> descriptors =
-                  DebuggerUtilsEx.getEventDescriptors(context);
-                if (!descriptors.isEmpty()) {
-                  Breakpoint breakpoint = descriptors.get(0).getFirst();
-                  XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
-                  if (xBreakpoint != null) {
-                    getSession().breakpointReached(xBreakpoint, null, context);
-                    return;
+                  List<Pair<Breakpoint, Event>> descriptors =
+                    DebuggerUtilsEx.getEventDescriptors(context);
+                  if (!descriptors.isEmpty()) {
+                    Breakpoint breakpoint = descriptors.get(0).getFirst();
+                    XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
+                    if (xBreakpoint != null) {
+                      getSession().breakpointReached(xBreakpoint, null, context);
+                      return;
+                    }
                   }
+                  getSession().positionReached(context);
                 }
-                getSession().positionReached(context);
               }
-            }
-          });
+            });
+          }
         }
       }
     });

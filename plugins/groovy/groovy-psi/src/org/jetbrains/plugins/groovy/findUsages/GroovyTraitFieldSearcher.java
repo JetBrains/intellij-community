@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.search.UsageSearchContext;
@@ -33,26 +31,21 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
  * Created by Max Medvedev on 15/04/14
  */
 public class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  public GroovyTraitFieldSearcher() {
+    super(true);
+  }
+
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiElement target = p.getElementToSearch();
 
-    String traitFieldName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        if (target instanceof GrField && !(target instanceof GrTraitField)) {
-          PsiClass aClass = ((GrField)target).getContainingClass();
-          if (GrTraitUtil.isTrait(aClass)) {
-            return GrTraitUtil.getTraitFieldPrefix(aClass) + ((GrField)target).getName();
-          }
-        }
+    if (target instanceof GrField && !(target instanceof GrTraitField)) {
+      PsiClass aClass = ((GrField)target).getContainingClass();
+      if (GrTraitUtil.isTrait(aClass)) {
+        String traitFieldName = GrTraitUtil.getTraitFieldPrefix(aClass) + ((GrField)target).getName();
 
-        return null;
+        p.getOptimizer().searchWord(traitFieldName, p.getEffectiveSearchScope(), UsageSearchContext.IN_CODE, true, target, new MyProcessor(target));
       }
-    });
-
-    if (traitFieldName != null) {
-      p.getOptimizer().searchWord(traitFieldName, p.getEffectiveSearchScope(), UsageSearchContext.IN_CODE, true, target, new MyProcessor(target));
     }
   }
 

@@ -1,182 +1,153 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.PlatformTestCase;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.testFramework.TestFileType;
+
+import static org.junit.Assert.assertArrayEquals;
 
 /**
  * @author max
  */
-public class FoldingTest extends LightPlatformTestCase {
-
+public class FoldingTest extends AbstractEditorTest {
   static {
     PlatformTestCase.autodetectPlatformPrefix();
   }
 
-  public void testStressFoldingFromZeroOffset() throws Exception {
-    for (int len = 2; len < 25; len++) {
-      stress(len);
-    }
-  }
+  private FoldingModelEx myModel;
 
-  public void testStress8() throws Exception {
-    DocumentImpl doc = new DocumentImpl("0123456789\n123456789\n23456789");
-    Editor editor = EditorFactory.getInstance().createEditor(doc);
-    try {
-      final FoldingModel model = editor.getFoldingModel();
-      model.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          model.addFoldRegion(0, 8, "/*...*/").setExpanded(false);
-          model.addFoldRegion(10, 12, "/*...*/").setExpanded(false);
-        }
-      });
-
-      assertEquals(10, editor.logicalPositionToOffset(new LogicalPosition(0, 10)));
-
-      for (int line = 0; line <= 3; line++) {
-        for (int column = 0; column <= 100; column++) {
-          LogicalPosition log = new LogicalPosition(line, column);
-          editor.logicalToVisualPosition(log);
-        }
-      }
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
-  }
-
-  private static void stress(final int len) {
-    DocumentImpl doc = new DocumentImpl("0123456789\n123456789\n23456789");
-    Editor editor = EditorFactory.getInstance().createEditor(doc);
-    try {
-      final FoldingModel model = editor.getFoldingModel();
-      model.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          model.addFoldRegion(0, len, "/*...*/").setExpanded(false);
-          model.addFoldRegion(len + 2, len + 4, "/*...*/").setExpanded(false);
-        }
-      });
-
-      for (int line = 0; line <= 3; line++) {
-        for (int column = 0; column <= 100; column++) {
-          LogicalPosition log = new LogicalPosition(line, column);
-          editor.logicalToVisualPosition(log);
-        }
-      }
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    init("I don't know what you mean by `glory,'\" Alice said" +
+      "Humpty Dumpty smiled contemptuously. \"Of course you don't -- till I tell you. I meant `there's a nice knock-down argument for you!'" +
+      "But glory doesn't mean `a nice knock-down argument,'\" Alice objected." +
+      "When I use a word,\" Humpty Dumpty said, in a rather scornful tone, \"it means just what I choose it to mean -- neither more nor less." +
+      "The question is,\" said Alice, \"whether you can make words mean so many different things." +
+      "The question is,\" said Humpty Dumpty, \"which is to be master -- that's all.",
+         TestFileType.TEXT);
+    myModel = (FoldingModelEx)myEditor.getFoldingModel();
   }
 
   public void testCleanupInvalidRegions() {
-    final DocumentImpl doc = new DocumentImpl("foo1\nfoo2\nfoo3\nfoo4");
-    Editor editor = EditorFactory.getInstance().createEditor(doc);
-    final FoldingModel model = editor.getFoldingModel();
-    try {
-      model.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          model.addFoldRegion(0, 4, "/*...*/");
-          model.addFoldRegion(5, 9, "/*...*/");
-        }
-      });
-      assertSize(2, model.getAllFoldRegions());
-      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-        @Override
-        public void run() {
-          doc.deleteString(0, 5);
-        }
-      });
-      assertSize(1, model.getAllFoldRegions());
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
+    myModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        myModel.addFoldRegion(0, 4, "/*...*/");
+        myModel.addFoldRegion(5, 9, "/*...*/");
+      }
+    });
+    assertSize(2, myModel.getAllFoldRegions());
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        myEditor.getDocument().deleteString(0, 5);
+      }
+    });
+    assertSize(1, myModel.getAllFoldRegions());
   }
 
   public void testIntersects () throws Exception {
-    @NonNls DocumentImpl doc = new DocumentImpl("I don't know what you mean by `glory,'\" Alice said" +
-     "Humpty Dumpty smiled contemptuously. \"Of course you don't -- till I tell you. I meant `there's a nice knock-down argument for you!'" +
-     "But glory doesn't mean `a nice knock-down argument,'\" Alice objected." +
-     "When I use a word,\" Humpty Dumpty said, in a rather scornful tone, \"it means just what I choose it to mean -- neither more nor less." +
-     "The question is,\" said Alice, \"whether you can make words mean so many different things." +
-     "The question is,\" said Humpty Dumpty, \"which is to be master -- that's all." );
-    Editor editor = EditorFactory.getInstance().createEditor(doc);
-    try {
-      final FoldingModel model = editor.getFoldingModel();
-
-      model.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          FoldRegion region = model.addFoldRegion(5, 10, ".");
-          assertNotNull(region);
-          region = model.addFoldRegion(7, 11, ".");
-          assertNull(region);
-          region = model.addFoldRegion(20, 30, ".");
-          assertNotNull(region);
-          region = model.addFoldRegion(9, 12, ".");
-          assertNull(region);
-          region = model.addFoldRegion(7, 10, ".");
-          assertNotNull(region);
-          region = model.addFoldRegion(7, 10, ".");
-          assertNull(region);
-          region = model.addFoldRegion(5, 30, ".");
-          assertNotNull(region);
-        }
-      });
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
+    myModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        FoldRegion region = myModel.addFoldRegion(5, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(7, 11, ".");
+        assertNull(region);
+        region = myModel.addFoldRegion(20, 30, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(9, 12, ".");
+        assertNull(region);
+        region = myModel.addFoldRegion(7, 10, ".");
+        assertNotNull(region);
+        region = myModel.addFoldRegion(7, 10, ".");
+        assertNull(region);
+        region = myModel.addFoldRegion(5, 30, ".");
+        assertNotNull(region);
+      }
+    });
   }
 
-  public void testDuplicateRegions() {
-    StringBuilder text = new StringBuilder();
-    for (int i = 0; i < 450; i++) {
-      text.append('a');
-    }
-    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(text));
+  public void testAddEmptyRegion() {
+    FoldRegion region = null;
     try {
-      final Ref<Boolean> expandedStatus = new Ref<Boolean>();
-      final int startOffset = 6;
-      final int endOffset = 16;
-      final FoldingModelEx model = (FoldingModelEx)editor.getFoldingModel();
-      model.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          model.addFoldRegion(2, 20, "..");
-          model.addFoldRegion(4, 18, "..");
-          FoldRegion oldRegion = model.addFoldRegion(startOffset, endOffset, "..");
-          assertNotNull(oldRegion);
-          expandedStatus.set(!oldRegion.isExpanded());
-        }
-      });
-      assertEquals(3, model.getAllFoldRegions().length);
-      
-      final Ref<FoldRegion> newRegion = new Ref<FoldRegion>();
-      model.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          newRegion.set(model.createFoldRegion(startOffset, endOffset, "..", null, false));
-          assertNotNull(newRegion.get());
-          newRegion.get().setExpanded(expandedStatus.get());
-          boolean additionFlag = model.addFoldRegion(newRegion.get());
-          assertTrue(additionFlag);
-        }
-      });
-      FoldRegion fetched = model.fetchOutermost(startOffset);
-      assertSame(newRegion.get(), fetched);
-      assertEquals(3, model.getAllFoldRegions().length);
+      region = myModel.addFoldRegion(5, 5, "...");
     }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
+    catch (AssertionError ignored) {
     }
+    assertNull(region);
+  }
+
+  public void testCollapsedRegionQueries() {
+    addCollapsedFoldRegion(5, 7, "...");
+    FoldRegion[] regions = myModel.getAllFoldRegions();
+    assertEquals(1, regions.length);
+    FoldRegion region = regions[0];
+    assertNotNull(region);
+
+    assertFalse(myModel.isOffsetCollapsed(4));
+    assertTrue(myModel.isOffsetCollapsed(5));
+    assertTrue(myModel.isOffsetCollapsed(6));
+    assertFalse(myModel.isOffsetCollapsed(7));
+    assertFalse(myModel.isOffsetCollapsed(8));
+
+    assertNull(myModel.getCollapsedRegionAtOffset(4));
+    assertSame(region, myModel.getCollapsedRegionAtOffset(5));
+    assertSame(region, myModel.getCollapsedRegionAtOffset(6));
+    assertNull(myModel.getCollapsedRegionAtOffset(7));
+    assertNull(myModel.getCollapsedRegionAtOffset(8));
+  }
+
+  public void testAdjacentRegions() {
+    addCollapsedFoldRegion(5, 7, "AA");
+    addCollapsedFoldRegion(7, 10, "BB");
+    FoldRegion[] regions = myModel.getAllFoldRegions();
+    assertEquals(2, regions.length);
+    FoldRegion region1 = regions[0];
+    assertNotNull(region1);
+    FoldRegion region2 = regions[1];
+    assertNotNull(region2);
+
+    assertFalse(myModel.isOffsetCollapsed(4));
+    assertTrue(myModel.isOffsetCollapsed(5));
+    assertTrue(myModel.isOffsetCollapsed(6));
+    assertTrue(myModel.isOffsetCollapsed(7));
+    assertTrue(myModel.isOffsetCollapsed(8));
+    assertFalse(myModel.isOffsetCollapsed(10));
+    assertFalse(myModel.isOffsetCollapsed(11));
+
+    assertNull(myModel.getCollapsedRegionAtOffset(4));
+    assertSame(region1, myModel.getCollapsedRegionAtOffset(5));
+    assertSame(region1, myModel.getCollapsedRegionAtOffset(6));
+    assertSame(region2, myModel.getCollapsedRegionAtOffset(7));
+    assertSame(region2, myModel.getCollapsedRegionAtOffset(8));
+    assertNull(myModel.getCollapsedRegionAtOffset(10));
+    assertNull(myModel.getCollapsedRegionAtOffset(11));
+  }
+
+  public void testTopLevel() {
+    FoldRegion region = addCollapsedFoldRegion(5, 15, "...");
+    addCollapsedFoldRegion(10, 12, "???");
+
+    FoldRegion[] topLevelRegions = myModel.fetchTopLevel();
+    assertArrayEquals(new FoldRegion[]{region}, topLevelRegions);
   }
 }

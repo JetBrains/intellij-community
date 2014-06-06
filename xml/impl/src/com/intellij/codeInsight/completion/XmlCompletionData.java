@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ public class XmlCompletionData extends CompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(
         new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter), new ElementFilter() {
+          @Override
           public boolean isAcceptable(Object element, PsiElement context) {
             XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
             if (tag != null) {
@@ -95,6 +96,7 @@ public class XmlCompletionData extends CompletionData {
             return false;
           }
 
+          @Override
           public boolean isClassAcceptable(Class hintClass) {
             return true;
           }
@@ -144,6 +146,7 @@ public class XmlCompletionData extends CompletionData {
   }
 
   private static class SimpleTagContentEnumerationValuesGetter implements ContextGetter {
+    @Override
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
       if (tag != null) {
@@ -199,6 +202,7 @@ public class XmlCompletionData extends CompletionData {
       return null;
     }
 
+    @Override
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       XmlFile containingFile = null;
       XmlFile descriptorFile = null;
@@ -236,6 +240,7 @@ public class XmlCompletionData extends CompletionData {
         final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
 
         final PsiElementProcessor processor = new PsiElementProcessor() {
+          @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
@@ -275,6 +280,7 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected static class EntityRefInsertHandler extends BasicInsertHandler {
+    @Override
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
       context.setAddCompletionChar(false);

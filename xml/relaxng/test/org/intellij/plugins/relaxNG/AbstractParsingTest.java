@@ -30,6 +30,7 @@ public abstract class AbstractParsingTest extends ParsingTestCase {
     super("psi/" + s, "rnc", new RncParserDefinition());
   }
 
+  @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/relaxng/testData/parsing";
   }

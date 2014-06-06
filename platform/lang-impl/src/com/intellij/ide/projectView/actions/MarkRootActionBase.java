@@ -38,7 +38,7 @@ import java.util.List;
 public abstract class MarkRootActionBase extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
+    final Module module = e.getData(LangDataKeys.MODULE);
     VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (module == null || vFiles == null) {
       return;
@@ -61,6 +61,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
       @Override
       public void run() {
         model.commit();
+        module.getProject().save();
       }
     });
   }

@@ -43,14 +43,17 @@ class OverriddenDefineRenderer extends GutterIconRenderer {
     myDefine = define;
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return AllIcons.Gutter.OverridenMethod;
   }
 
+  @Override
   @Nullable
   public AnAction getClickAction() {
     return new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         final PsiElement element = myDefine.getPsiElement();
         if (element == null || !element.isValid()) return;
@@ -75,10 +78,12 @@ class OverriddenDefineRenderer extends GutterIconRenderer {
     };
   }
 
+  @Override
   public boolean isNavigateAction() {
     return true;
   }
 
+  @Override
   @Nullable
   public String getTooltipText() {
     return "Is overridden";

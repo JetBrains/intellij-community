@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,10 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object>() {
+    @Override
     protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
       return CachedValuesManager.getManager(owner.getProject()).createCachedValue(new CachedValueProvider<XmlAttlistDecl[]>() {
+        @Override
         public Result<XmlAttlistDecl[]> compute() {
           return new Result<XmlAttlistDecl[]>(doCollectAttlistDeclarations(owner),owner);
         }
@@ -73,28 +75,34 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     }
   };
 
+  @Override
   public PsiElement getDeclaration(){
     return myElementDecl;
   }
 
+  @Override
   public String getName(PsiElement context){
     return getName();
   }
 
+  @Override
   public String getName() {
     if (myName!=null) return myName;
     return myName = myElementDecl.getName();
   }
 
+  @Override
   public void init(PsiElement element){
     myElementDecl = (XmlElementDecl) element;
   }
 
+  @Override
   @SuppressWarnings("SpellCheckingInspection")
   public Object[] getDependences(){
     return new Object[]{myElementDecl, ExternalResourceManager.getInstance()};
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     return getNsDescriptorFrom(myElementDecl);
   }
@@ -112,6 +120,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   // Read-only action
+  @Override
   protected final XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context) {
     final LinkedHashSet<XmlElementDescriptor> result = new LinkedHashSet<XmlElementDescriptor>();
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
@@ -119,6 +128,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
     
     XmlUtil.processXmlElements(contentSpecElement, new PsiElementProcessor(){
+      @Override
       public boolean execute(@NotNull PsiElement child){
         if (child instanceof XmlToken) {
           final XmlToken token = (XmlToken)child;
@@ -172,6 +182,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   // Read-only calculation
+  @Override
   protected final XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context) {
     final List<XmlAttributeDescriptor> result = new SmartList<XmlAttributeDescriptor>();
     for (XmlAttlistDecl attlistDecl : findAttlistDeclarations(getName())) {
@@ -185,6 +196,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   // Read-only calculation
+  @Override
   protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context) {
     final HashMap<String, XmlAttributeDescriptor> localADM;
     final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors(context);
@@ -230,6 +242,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     return topGroup == null ? null : new XmlElementsGroupImpl(topGroup, null);
   }
 
+  @Override
   public int getContentType() {
     if (myElementDecl.getContentSpecElement().isAny()) {
       return CONTENT_TYPE_ANY;
@@ -248,6 +261,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   // Read-only calculation
+  @Override
   protected HashMap<String, XmlElementDescriptor> collectElementDescriptorsMap(final XmlTag element) {
     final HashMap<String, XmlElementDescriptor> elementDescriptorsMap;
     final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
@@ -259,14 +273,17 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     return elementDescriptorsMap;
   }
 
+  @Override
   public String getQualifiedName() {
     return getName();
   }
 
+  @Override
   public String getDefaultName() {
     return getName();
   }
 
+  @Override
   public void setName(final String name) throws IncorrectOperationException {
     // IDEADEV-11439
     myName = null;

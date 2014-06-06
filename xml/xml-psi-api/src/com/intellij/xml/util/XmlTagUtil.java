@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ public class XmlTagUtil extends XmlTagUtilBase {
 
   static {
     ourCharacterEntities = new HashMap<String, Character>();
-    ourCharacterEntities.put("lt", new Character('<'));
-    ourCharacterEntities.put("gt", new Character('>'));
-    ourCharacterEntities.put("apos", new Character('\''));
-    ourCharacterEntities.put("quot", new Character('\"'));
-    ourCharacterEntities.put("nbsp", new Character('\u00a0'));
-    ourCharacterEntities.put("amp", new Character('&'));
+    ourCharacterEntities.put("lt", '<');
+    ourCharacterEntities.put("gt", '>');
+    ourCharacterEntities.put("apos", '\'');
+    ourCharacterEntities.put("quot", '\"');
+    ourCharacterEntities.put("nbsp", '\u00a0');
+    ourCharacterEntities.put("amp", '&');
   }
 
   /**

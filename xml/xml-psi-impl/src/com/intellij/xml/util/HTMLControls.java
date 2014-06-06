@@ -39,7 +39,7 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class HTMLControls {
-  private static Logger LOG = Logger.getInstance(HTMLControls.class);
+  private static final Logger LOG = Logger.getInstance(HTMLControls.class);
   private static Control[] ourControls;
 
   public static Control[] getControls() {

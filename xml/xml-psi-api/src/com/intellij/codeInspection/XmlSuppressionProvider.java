@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class XmlSuppressionProvider {
 
-  public static ExtensionPointName<XmlSuppressionProvider> EP_NAME = new ExtensionPointName<XmlSuppressionProvider>("com.intellij.xml.xmlSuppressionProvider");
+  public static final ExtensionPointName<XmlSuppressionProvider> EP_NAME = new ExtensionPointName<XmlSuppressionProvider>("com.intellij.xml.xmlSuppressionProvider");
 
   public static boolean isSuppressed(@NotNull PsiElement element, @NotNull String inspectionId) {
     for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {

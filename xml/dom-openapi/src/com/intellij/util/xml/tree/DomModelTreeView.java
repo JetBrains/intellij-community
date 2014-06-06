@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     add(myTree, BorderLayout.CENTER);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
       public void treeExpanded(TreeExpansionEvent event) {
         final SimpleNode simpleNode = myTree.getNodeFor(event.getPath());
 
@@ -91,6 +92,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
         }
       }
 
+      @Override
       public void treeCollapsed(TreeExpansionEvent event) {
         final SimpleNode simpleNode = myTree.getNodeFor(event.getPath());
 
@@ -102,6 +104,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     });
 
     myDomManager.addDomEventListener(new DomChangeAdapter() {
+      @Override
       protected void elementChanged(DomElement element) {
         if (element.isValid()) {
           queueUpdate(DomUtil.getFile(element).getVirtualFile());
@@ -115,6 +118,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
     final Project project = myDomManager.getProject();
     DomElementAnnotationsManager.getInstance(project).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
+      @Override
       public void highlightingFinished(DomFileElement element) {
         if (element.isValid()) {
           queueUpdate(DomUtil.getFile(element).getVirtualFile());
@@ -133,6 +137,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     if (file == null) return;
     if (getProject().isDisposed()) return;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (getProject().isDisposed()) return;
         if (!file.isValid() || isRightFile(file)) {
@@ -162,6 +167,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     return myBuilder;
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -181,6 +187,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     return group;
   }
 
+  @Override
   @Nullable
   public Object getData(String dataId) {
     if (DomModelTreeView.DATA_KEY.is(dataId)) {

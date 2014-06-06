@@ -29,6 +29,7 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
     super(file);
   }
 
+  @Override
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlDocument document = getElement().getDocument();
@@ -66,6 +67,7 @@ public class XmlFileTreeElement extends AbstractXmlTagTreeElement<XmlFile> {
     return structureViewTreeElements;
   }
 
+  @Override
   public String getPresentableText() {
     return getElement().getName();
   }

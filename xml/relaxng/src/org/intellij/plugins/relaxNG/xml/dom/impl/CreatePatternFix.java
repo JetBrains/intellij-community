@@ -47,21 +47,25 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     myReference = reference;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "Create Pattern '" + myReference.getCanonicalText() + "'";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Create Pattern";
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!isAvailable()) {
       return;
@@ -73,6 +77,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return isAvailable();
   }
@@ -91,6 +96,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     doFix();
   }
@@ -120,6 +126,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
     root.add(defineTag);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

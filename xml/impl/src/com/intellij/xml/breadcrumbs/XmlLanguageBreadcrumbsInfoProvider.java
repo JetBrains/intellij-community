@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +39,21 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @NonNls private static final String CLASS_ATTRIBUTE_NAME = "class";
   @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
 
+  @Override
   public boolean acceptElement(@NotNull final PsiElement e) {
     return e instanceof XmlTag && e.isValid();
   }
 
+  @Override
   public Language[] getLanguages() {
     return new Language[]{XMLLanguage.INSTANCE, XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE};
   }
 
+  @Override
   @NotNull
   public String getElementInfo(@NotNull final PsiElement e) {
     final XmlTag tag = (XmlTag)e;
-    final StringBuffer sb = new StringBuffer();
+    final StringBuilder sb = new StringBuilder();
 
     sb.append(tag.getName());
 
@@ -74,10 +77,11 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
     return sb.toString();
   }
 
+  @Override
   @Nullable
   public String getElementTooltip(@NotNull final PsiElement e) {
     final XmlTag tag = (XmlTag)e;
-    final StringBuffer result = new StringBuffer("&lt;");
+    final StringBuilder result = new StringBuilder("&lt;");
     result.append(tag.getName());
     final XmlAttribute[] attributes = tag.getAttributes();
     for (final XmlAttribute each : attributes) {

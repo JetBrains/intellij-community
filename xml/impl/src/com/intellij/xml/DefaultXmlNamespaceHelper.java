@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,12 @@ import java.util.*;
 public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   private static final Logger LOG = Logger.getInstance(DefaultXmlNamespaceHelper.class);
 
+  @Override
   protected boolean isAvailable(PsiFile file) {
     return true;
   }
 
+  @Override
   public void insertNamespaceDeclaration(@NotNull final XmlFile file,
                                          @Nullable final Editor editor,
                                          @NotNull final Set<String> possibleNamespaces,
@@ -160,6 +162,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     return location;
   }
 
+  @Override
   @NotNull
   public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, @NotNull XmlFile file) {
     if (!(element instanceof XmlTag)) {
@@ -216,6 +219,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     return possibleUris;
   }
 
+  @Override
   @NotNull
   public Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context) {
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(context);

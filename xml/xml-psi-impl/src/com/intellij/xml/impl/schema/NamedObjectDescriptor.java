@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
 
   public NamedObjectDescriptor() {}
 
+  @Override
   public void setName(String name) throws IncorrectOperationException {
     setName(myDcl, name);
   }
@@ -47,22 +48,27 @@ public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
     }
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return myDcl;
   }
 
+  @Override
   public String getName(PsiElement context) {
     return getName();
   }
 
+  @Override
   public String getName() {
     return myDcl.getAttributeValue("name");
   }
 
+  @Override
   public void init(PsiElement element) {
     myDcl = (XmlTag)element;
   }
 
+  @Override
   public Object[] getDependences() {
     return new Object[] { myDcl };
   }

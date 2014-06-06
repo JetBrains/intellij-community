@@ -41,6 +41,7 @@ import java.util.ArrayList;
  * Date: 10.08.2007
  */
 public class RncFoldingBuilder implements FoldingBuilder {
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
 
@@ -52,6 +53,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
             : FoldingDescriptor.EMPTY;
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == RncTokenTypes.LBRACE) {
@@ -79,6 +81,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
     return RncTokenTypes.COMMENTS.contains(type) || RncTokenTypes.DOC_TOKENS.contains(type);
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return isCommentLike(node.getElementType()) && CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
   }

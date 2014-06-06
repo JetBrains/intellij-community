@@ -143,11 +143,11 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertTrue(attributes[1].isRequired());
   }
 
-  private static XmlFile createFile(String text) throws Exception {
+  private static XmlFile createFile(String text) {
     return (XmlFile)createFile("test.xml", text);
   }
 
-  private static XmlNSDescriptor createDescriptor(XmlFile file) throws Exception{
+  private static XmlNSDescriptor createDescriptor(XmlFile file) {
     return file.getDocument().getRootTagNSDescriptor();
   }
 

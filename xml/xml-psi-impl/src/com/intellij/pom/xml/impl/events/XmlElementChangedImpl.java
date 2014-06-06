@@ -25,6 +25,7 @@ public class XmlElementChangedImpl implements XmlElementChanged {
     myElement = treeElement;
   }
 
+  @Override
   public XmlElement getElement() {
     return myElement;
   }

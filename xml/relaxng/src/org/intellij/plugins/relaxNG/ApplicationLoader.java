@@ -51,12 +51,14 @@ public class ApplicationLoader implements ApplicationComponent {
   private static final String VALIDATE_XML = "ValidateXml";
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "Relax-NG";
   }
 
+  @Override
   public void initComponent() {
     registerMetaData();
 
@@ -84,6 +86,7 @@ public class ApplicationLoader implements ApplicationComponent {
             RngNsDescriptor.class);
 
     registrar.registerMetaData(new ElementFilter() {
+      @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         if (element instanceof XmlTag) {
           final XmlTag tag = (XmlTag)element;
@@ -93,12 +96,14 @@ public class ApplicationLoader implements ApplicationComponent {
         return false;
       }
 
+      @Override
       public boolean isClassAcceptable(Class hintClass) {
         return XmlTag.class.isAssignableFrom(hintClass);
       }
     }, RngDefineMetaData.class);
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -110,6 +115,7 @@ public class ApplicationLoader implements ApplicationComponent {
   }
 
   public static class ResourceProvider implements StandardResourceProvider {
+    @Override
     public void registerResources(ResourceRegistrar registrar) {
       registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");

@@ -33,7 +33,7 @@ import java.util.Collections;
  * @author Eugene Zhuravlev
  *         Date: 10-Apr-14
  */
-public class OutputToSourceRegistry extends AbstractStateStorage<Integer, TIntHashSet>{
+public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet>{
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
     public void save(@NotNull final DataOutput out, TIntHashSet value) throws IOException {
       final Ref<IOException> exRef = Ref.create(null);
@@ -65,37 +65,36 @@ public class OutputToSourceRegistry extends AbstractStateStorage<Integer, TIntHa
     }
   };
   
-  OutputToSourceRegistry(@NonNls File storePath) throws IOException {
+  OutputToTargetRegistry(@NonNls File storePath) throws IOException {
     super(storePath, new IntInlineKeyDescriptor(), DATA_EXTERNALIZER);
   }
   
-  protected void addMapping(String outputPath, String sourcePath) throws IOException {
-    addMapping(Collections.singleton(outputPath), sourcePath);
+  protected void addMapping(String outputPath, int buildTargetId) throws IOException {
+    addMapping(Collections.singleton(outputPath), buildTargetId);
   }
   
-  protected void addMapping(Collection<String> outputPaths, String sourcePath) throws IOException {
+  protected void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
     final TIntHashSet set = new TIntHashSet();
-    set.add(FileUtil.pathHashCode(sourcePath));
+    set.add(buildTargetId);
     for (String outputPath : outputPaths) {
       appendData(FileUtil.pathHashCode(outputPath), set);
     }
   }
 
-  public void removeMapping(String outputPath, String sourcePath) throws IOException {
-    removeMapping(Collections.singleton(outputPath), sourcePath);
+  public void removeMapping(String outputPath, int buildTargetId) throws IOException {
+    removeMapping(Collections.singleton(outputPath), buildTargetId);
   }
 
-  public void removeMapping(Collection<String> outputPaths, String sourcePath) throws IOException {
+  public void removeMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
     if (outputPaths.isEmpty()) {
       return;
     }
-    final int value = FileUtil.pathHashCode(sourcePath);
     for (String outputPath : outputPaths) {
       final int key = FileUtil.pathHashCode(outputPath);
       synchronized (myDataLock) {
         final TIntHashSet state = getState(key);
         if (state != null) {
-          final boolean removed = state.remove(value);
+          final boolean removed = state.remove(buildTargetId);
           if (state.isEmpty()) {
             remove(key);
           }
@@ -109,22 +108,20 @@ public class OutputToSourceRegistry extends AbstractStateStorage<Integer, TIntHa
     }
   }
   
-  public Collection<String> getSafeToDeleteOutputs(Collection<String> outputPaths, String associatedSourcePath) throws IOException {
+  public Collection<String> getSafeToDeleteOutputs(Collection<String> outputPaths, int currentTargetId) throws IOException {
     final int size = outputPaths.size();
     if (size == 0) {
       return outputPaths;
     }
     final Collection<String> result = new ArrayList<String>(size);
-    Integer cached = null;
     for (String outputPath : outputPaths) {
       final int key = FileUtil.pathHashCode(outputPath);
       synchronized (myDataLock) {
-        final TIntHashSet associatedSources = getState(key);
-        if (associatedSources == null || associatedSources.size() != 1) {
+        final TIntHashSet associatedTargets = getState(key);
+        if (associatedTargets == null || associatedTargets.size() != 1) {
           continue;
         }
-        final int srcHash = cached == null? (cached = FileUtil.pathHashCode(associatedSourcePath)) : cached.intValue();
-        if (associatedSources.contains(srcHash)) {
+        if (associatedTargets.contains(currentTargetId)) {
           result.add(outputPath);
         }
       }

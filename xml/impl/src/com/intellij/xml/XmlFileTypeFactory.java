@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class XmlFileTypeFactory extends FileTypeFactory {
+  @Override
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(HtmlFileType.INSTANCE, "html;htm;sht;shtm;shtml");
     consumer.consume(XHtmlFileType.INSTANCE, "xhtml");

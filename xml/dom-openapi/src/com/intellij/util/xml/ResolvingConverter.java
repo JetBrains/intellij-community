@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,18 @@ import java.util.Set;
 public abstract class ResolvingConverter<T> extends Converter<T> {
   @Deprecated
   public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
+    @Override
     @NotNull
     public Collection getVariants(final ConvertContext context) {
       return Collections.emptyList();
     }
 
+    @Override
     public Object fromString(final String s, final ConvertContext context) {
       return s;
     }
 
+    @Override
     public String toString(final Object t, final ConvertContext context) {
       return String.valueOf(t);
     }
@@ -54,6 +57,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
   /** @see com.intellij.util.xml.converters.values.BooleanValueConverter */
   @Deprecated
   public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
+    @Override
     public Boolean fromString(final String s, final ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {
         return Boolean.TRUE;
@@ -64,10 +68,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
       return null;
     }
 
+    @Override
     public String toString(final Boolean t, final ConvertContext context) {
       return t == null? null:t.toString();
     }
 
+    @Override
     @NotNull
     public Collection<? extends Boolean> getVariants(final ConvertContext context) {
       final DomElement element = context.getInvocationElement();
@@ -80,6 +86,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     }
   };
 
+  @Override
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
     return CodeInsightBundle.message("error.cannot.resolve.default.message", s);
   }
@@ -202,10 +209,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
    */
   public static abstract class StringConverter extends ResolvingConverter<String> {
 
+    @Override
     public String fromString(final String s, final ConvertContext context) {
       return s;
     }
 
+    @Override
     public String toString(final String s, final ConvertContext context) {
       return s;
     }
@@ -223,10 +232,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
       myWrappedConverter = converter;
     }
 
+    @Override
     public T fromString(final String s, final ConvertContext context) {
       return myWrappedConverter.fromString(s, context);
     }
 
+    @Override
     public String toString(final T t, final ConvertContext context) {
       return myWrappedConverter.toString(t, context);
     }

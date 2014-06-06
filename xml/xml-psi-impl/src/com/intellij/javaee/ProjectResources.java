@@ -23,6 +23,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableAdapter;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
@@ -34,7 +35,7 @@ import java.util.Map;
 public class ProjectResources extends ExternalResourceManagerExImpl implements PersistentStateComponent<Element>, JDOMExternalizable {
   private final JDOMExternalizableAdapter myAdapter;
 
-  public ProjectResources(PathMacrosImpl pathMacros) {
+  public ProjectResources(@NotNull PathMacrosImpl pathMacros) {
     super(pathMacros);
     myAdapter = new JDOMExternalizableAdapter(this, "ProjectResources");
   }
@@ -44,10 +45,12 @@ public class ProjectResources extends ExternalResourceManagerExImpl implements P
     return Collections.emptyMap();   
   }
 
+  @Override
   public Element getState() {
     return myAdapter.getState();
   }
 
+  @Override
   public void loadState(Element state) {
     myAdapter.loadState(state);
   }

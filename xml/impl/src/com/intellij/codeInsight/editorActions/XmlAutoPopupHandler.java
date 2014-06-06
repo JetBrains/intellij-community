@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
+  @Override
   public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
     final boolean isXmlLikeFile = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
     boolean spaceInTag = isXmlLikeFile && charTyped == ' ';

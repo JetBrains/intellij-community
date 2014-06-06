@@ -26,13 +26,13 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
@@ -102,25 +101,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     myEvaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(getDebuggerContext()) {
       @Override
       public void threadAction() {
-        Icon nodeIcon;
-        if (myValueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)myValueDescriptor).isStatic()) {
-          nodeIcon = PlatformIcons.FIELD_ICON;
-        }
-        else if (myValueDescriptor.isArray()) {
-          nodeIcon = AllIcons.Debugger.Db_array;
-        }
-        else if (myValueDescriptor.isPrimitive()) {
-          nodeIcon = AllIcons.Debugger.Db_primitive;
-        }
-        else {
-          if (myValueDescriptor instanceof WatchItemDescriptor) {
-            nodeIcon = AllIcons.Debugger.Watch;
-          }
-          else {
-            Icon icon = myValueDescriptor.getValueIcon();
-            nodeIcon = icon != null ? icon : AllIcons.Debugger.Value;
-          }
-        }
+        Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
         final String[] strings = splitValue(myValueDescriptor.getValueLabel());
         String value = StringUtil.notNullize(strings[1]);
         XValuePresentation presentation = new XRegularValuePresentation(value, strings[0]);
@@ -174,7 +155,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     if (StringUtil.startsWithChar(value, '{')) {
       int end = value.indexOf('}');
       if (end > 0) {
-        return new String[]{value.substring(1, end-1), value.substring(end+1)};
+        return new String[]{value.substring(1, end), value.substring(end+1)};
       }
     }
     return new String[]{null, value};

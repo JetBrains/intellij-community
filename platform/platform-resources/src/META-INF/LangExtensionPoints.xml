@@ -802,6 +802,8 @@
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
 
     <extensionPoint name="sdkResolveScopeProvider" interface="com.intellij.psi.SdkResolveScopeProvider"/>
+
+    <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
   </extensionPoints>
 </idea-plugin>
 

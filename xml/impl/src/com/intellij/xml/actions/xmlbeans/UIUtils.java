@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.XmlBundle;
 
@@ -45,10 +46,12 @@ public class UIUtils {
     wsdlUrl.getButton().setToolTipText(XmlBundle.message("browse.button.tooltip"));
     wsdlUrl.getButton().addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent actionEvent) {
           final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, multipleFileSelection) {
             private final List<String> extensions = Arrays.asList(_extensions);
 
+            @Override
             public boolean isFileSelectable(VirtualFile virtualFile) {
               return extensions.contains(virtualFile.getExtension());
             }
@@ -64,7 +67,8 @@ public class UIUtils {
           VirtualFile initialFile = myProject.getBaseDir();
           String selectedItem = wsdlUrl.getTextField().getText();
           if (selectedItem != null && selectedItem.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-            VirtualFile fileByPath = VfsUtil.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(VfsUtil.fixURLforIDEA(selectedItem)), null);
+            VirtualFile fileByPath = VfsUtilCore
+              .findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(VfsUtil.fixURLforIDEA(selectedItem)), null);
             if (fileByPath != null) initialFile = fileByPath;
           }
 
@@ -79,6 +83,6 @@ public class UIUtils {
   }
 
   public static String fixIDEAUrl(String url) {
-    return SystemInfo.isWindows ? VfsUtil.fixIDEAUrl(url) : url;
+    return SystemInfo.isWindows ? VfsUtilCore.fixIDEAUrl(url) : url;
   }
 }

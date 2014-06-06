@@ -34,14 +34,17 @@ public class RncAnnotationImpl extends RncElementImpl implements RncAnnotation {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull RncElementVisitor visitor) {
     visitor.visitAnnotation(this);
   }
 
+  @Override
   public IElementType getTokenType() {
     return getNode().getElementType();
   }
 
+  @Override
   @Nullable
   public RncName getNameElement() {
     return findChildByClass(RncName.class);

@@ -1235,7 +1235,9 @@ public abstract class ChooseByNameBase {
 
     private MyTextField() {
       super(40);
-      setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(this));
+      if (!(getUI() instanceof DarculaTextFieldUI)) {
+        setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(this));
+      }
       setBorder(new DarculaTextBorder());
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);

@@ -77,6 +77,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     return endOfEnd == null ? null : Pair.create(conditionalStart, conditionalEnd);
   }
   
+  @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
     Pair<ASTNode, ASTNode> pair = parseConditionalCommentBoundaries(host);
     if (pair == null) {
@@ -93,6 +94,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     }
   }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Arrays.asList(PsiComment.class);

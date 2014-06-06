@@ -95,7 +95,7 @@ public class ConcurrentBitSetTest extends TestCase {
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }
-  public void testStress2() throws InterruptedException {
+  public void testStress2_Performance() throws InterruptedException {
     final ConcurrentBitSet bitSet = new ConcurrentBitSet();
     int N = 10;
     final int L = 1000000;

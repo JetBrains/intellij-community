@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,14 @@ public class StdErrorReporter extends ErrorReporter {
     myErrorsView = new NewErrorTreeViewPanel(project, null, true, true, rerunAction);
   }
 
+  @Override
   public void startProcessing() {
     final Runnable task = new Runnable() {
+      @Override
       public void run() {
         try {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run() {
               StdErrorReporter.super.startProcessing();
             }
@@ -62,10 +65,12 @@ public class StdErrorReporter extends ErrorReporter {
 
           SwingUtilities.invokeLater(
             new Runnable() {
+              @Override
               public void run() {
                 if (!myErrorsDetected) {
                   SwingUtilities.invokeLater(
                     new Runnable() {
+                      @Override
                       public void run() {
                         removeCompileContents(null);
                         WindowManager.getInstance().getStatusBar(myProject).setInfo(
@@ -79,7 +84,7 @@ public class StdErrorReporter extends ErrorReporter {
           );
         }
         finally {
-          boolean b = Thread.interrupted(); // reset interrupted
+          Thread.interrupted(); // reset interrupted
         }
       }
     };
@@ -96,6 +101,7 @@ public class StdErrorReporter extends ErrorReporter {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
         myProject, new Runnable() {
+          @Override
           public void run() {
             MessageView messageView = MessageView.SERVICE.getInstance(myProject);
             final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
@@ -127,6 +133,7 @@ public class StdErrorReporter extends ErrorReporter {
     }
   }
 
+  @Override
   public void processError(final SAXParseException ex, final ValidateXmlActionHandler.ProblemType problemType) {
     if (LOG.isDebugEnabled()) {
       String error = myHandler.buildMessageString(ex);
@@ -138,6 +145,7 @@ public class StdErrorReporter extends ErrorReporter {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SwingUtilities.invokeLater(
           new Runnable() {
+            @Override
             public void run() {
               final VirtualFile file = myHandler.getFile(ex.getPublicId(), ex.getSystemId());
               myErrorsView.addMessage(
@@ -163,6 +171,7 @@ public class StdErrorReporter extends ErrorReporter {
       myMessageView = messageView;
     }
 
+    @Override
     public void contentRemoved(ContentManagerEvent event) {
       final Content eventContent = event.getContent();
       if (!eventContent.equals(myContent)) {
@@ -176,10 +185,13 @@ public class StdErrorReporter extends ErrorReporter {
       eventContent.putUserData(KEY, null);
     }
 
+    @Override
     public void contentAdded(ContentManagerEvent event) {
     }
+    @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
     }
+    @Override
     public void selectionChanged(ContentManagerEvent event) {
     }
   }
@@ -193,6 +205,7 @@ public class StdErrorReporter extends ErrorReporter {
       myContentManager = contentManager;
     }
 
+    @Override
     public void contentRemoved(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         myErrorsView.stopProcess();
@@ -203,6 +216,7 @@ public class StdErrorReporter extends ErrorReporter {
       }
     }
 
+    @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myErrorsView.isProcessStopped()) {
@@ -226,12 +240,14 @@ public class StdErrorReporter extends ErrorReporter {
       myFuture = future;
     }
 
+    @Override
     public void stopProcess() {
       if (myFuture != null) {
         myFuture.cancel(true);
       }
     }
 
+    @Override
     public boolean isProcessStopped() {
       return myFuture != null && myFuture.isDone();
     }

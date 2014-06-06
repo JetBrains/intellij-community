@@ -33,10 +33,12 @@ public class XmlTagChildChangedImpl implements XmlTagChildChanged {
     myChild = treeElement;
   }
 
+  @Override
   public XmlTag getTag() {
     return myTag;
   }
 
+  @Override
   public XmlTagChild getChild() {
     return myChild;
   }

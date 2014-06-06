@@ -38,10 +38,12 @@ public class XmlTokenTypeFilter implements ElementFilter{
     myType = type;
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionUtil.isAssignable(XmlToken.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof PsiElement) {
       final ASTNode node = ((PsiElement)element).getNode();

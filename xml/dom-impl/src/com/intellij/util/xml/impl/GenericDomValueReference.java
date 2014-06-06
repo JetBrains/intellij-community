@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return myGenericValue;
   }
 
+  @Override
   public boolean isSoft() {
     return true;
   }
@@ -106,6 +107,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return o != null ? getElement() : null;
   }
 
+  @Override
   public boolean isReferenceTo(final PsiElement element) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
@@ -131,17 +133,20 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return WrappingConverter.getDeepestConverter(myGenericValue.getConverter(), myGenericValue);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     final T value = myGenericValue.getValue();
     return value == null ? null : resolveInner(value);
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return StringUtil.notNullize(getStringValue());
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     final ConvertContext context = getConvertContext();
@@ -152,6 +157,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(myGenericValue));
   }
 
+  @Override
   public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
@@ -161,6 +167,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return super.handleElementRename(newElementName);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
@@ -180,6 +187,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final Converter<T> converter = getConverter();

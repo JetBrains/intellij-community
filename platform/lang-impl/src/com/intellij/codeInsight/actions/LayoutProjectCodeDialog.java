@@ -17,15 +17,26 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.find.FindSettings;
+import com.intellij.find.impl.FindDialog;
+import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.event.*;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author max
@@ -33,25 +44,35 @@ import java.awt.*;
 public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
   private static @NonNls final String HELP_ID = "editing.codeReformatting";
 
+  private final Project myProject;
   private final String  myText;
   private final boolean myEnableOnlyVCSChangedTextCb;
-  private final boolean mySuggestOptimizeImports;
-  private final Project myProject;
 
-  
+  private JLabel myTitle;
+  protected JCheckBox myIncludeSubdirsCb;
+
+  private JCheckBox myUseScopeFilteringCb;
+  private ScopeChooserCombo myScopeCombo;
+
+  private JCheckBox myEnableFileNameFilterCb;
+  private ComboBox myFileFilter;
+
   private JCheckBox myCbOptimizeImports;
-  private JCheckBox myCbOnlyVcsChangedRegions;
   private JCheckBox myCbRearrangeEntries;
+  private JCheckBox myCbOnlyVcsChangedRegions;
+
+  private JPanel myWholePanel;
+  private JPanel myOptionsPanel;
+  private JPanel myFiltersPanel;
+  private JLabel myMaskWarningLabel;
 
   public LayoutProjectCodeDialog(@NotNull Project project,
-                                 String title,
-                                 String text,
-                                 boolean suggestOptimizeImports,
+                                 @NotNull String title,
+                                 @NotNull String text,
                                  boolean enableOnlyVCSChangedTextCb)
   {
     super(project, false);
     myText = text;
-    mySuggestOptimizeImports = suggestOptimizeImports;
     myProject = project;
     myEnableOnlyVCSChangedTextCb = enableOnlyVCSChangedTextCb;
 
@@ -62,30 +83,93 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
 
   @Override
   protected JComponent createCenterPanel() {
-    if (!mySuggestOptimizeImports) {
-      return new JLabel(myText);
-    }
+    myTitle.setText(myText);
+    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("reformat.directory.dialog.options")));
+    myFiltersPanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("reformat.directory.dialog.filters")));
 
-    JPanel panel = new JPanel(new GridLayout(4, 1));
-    myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
-    myCbRearrangeEntries = new JCheckBox(CodeInsightBundle.message("reformat.option.rearrange.entries"));
-    myCbOnlyVcsChangedRegions = new JCheckBox(CodeInsightBundle.message("reformat.option.vcs.changed.region"));
+    myMaskWarningLabel.setIcon(AllIcons.General.Warning);
+    myMaskWarningLabel.setVisible(false);
 
-    panel.add(new JLabel(myText));
-    panel.add(myCbOptimizeImports);
-    panel.add(myCbRearrangeEntries);
-    panel.add(myCbOnlyVcsChangedRegions);
+    myIncludeSubdirsCb.setVisible(shouldShowIncludeSubdirsCb());
 
+    initFileTypeFilter();
+    initScopeFilter();
+
+    restoreCbsStates();
+    return myWholePanel;
+  }
+
+  private void restoreCbsStates() {
     myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
     myCbRearrangeEntries.setSelected(LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(myProject));
     myCbOnlyVcsChangedRegions.setEnabled(myEnableOnlyVCSChangedTextCb);
     myCbOnlyVcsChangedRegions.setSelected(
       myEnableOnlyVCSChangedTextCb && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
     );
-
-    return panel;
   }
-  
+
+  private void initScopeFilter() {
+    myUseScopeFilteringCb.setSelected(false);
+    myScopeCombo.setEnabled(false);
+    myUseScopeFilteringCb.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myScopeCombo.setEnabled(myUseScopeFilteringCb.isSelected());
+      }
+    });
+  }
+
+  private void initFileTypeFilter() {
+    FindDialog.initFileFilter(myFileFilter, myEnableFileNameFilterCb);
+    myEnableFileNameFilterCb.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateMaskWarning();
+      }
+    });
+    myFileFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        updateMaskWarning();
+      }
+    });
+  }
+
+  private void updateMaskWarning() {
+    if (myEnableFileNameFilterCb.isSelected()) {
+      String mask = (String)myFileFilter.getEditor().getItem();
+      if (mask == null || !isMaskValid(mask)) {
+        showWarningAndDisableOK();
+        return;
+      }
+    }
+
+    if (myMaskWarningLabel.isVisible()) {
+      clearWarningAndEnableOK();
+    }
+  }
+
+  private void showWarningAndDisableOK() {
+    myMaskWarningLabel.setVisible(true);
+    setOKActionEnabled(false);
+  }
+
+  private void clearWarningAndEnableOK() {
+    myMaskWarningLabel.setVisible(false);
+    setOKActionEnabled(true);
+  }
+
+  private static boolean isMaskValid(@NotNull String mask) {
+    try {
+      FindInProjectUtil.createFileMaskRegExp(mask);
+    }
+    catch (PatternSyntaxException e) {
+      return false;
+    }
+
+    return true;
+  }
+
   @NotNull
   @Override
   protected Action[] createActions() {
@@ -105,12 +189,10 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    if (mySuggestOptimizeImports) {
-      PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
-      LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
-      if (myEnableOnlyVCSChangedTextCb) {
-        PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myCbOnlyVcsChangedRegions.isSelected()));
-      }
+    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
+    LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
+    if (myEnableOnlyVCSChangedTextCb) {
+      PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(myCbOnlyVcsChangedRegions.isSelected()));
     }
   }
 
@@ -120,6 +202,34 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
 
   public boolean isProcessOnlyChangedText() {
     return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
+  }
+
+  @Nullable
+  public String getFileTypeMask() {
+    if (myEnableFileNameFilterCb.isSelected()) {
+      return (String)myFileFilter.getSelectedItem();
+    }
+
+    return null;
+  }
+
+  protected void createUIComponents() {
+    myScopeCombo = new ScopeChooserCombo(myProject, false, false, FindSettings.getInstance().getDefaultScopeName());
+    Disposer.register(myDisposable, myScopeCombo);
+  }
+
+  @Nullable
+  @Override
+  public SearchScope getSearchScope() {
+    if (myUseScopeFilteringCb.isSelected()) {
+      return myScopeCombo.getSelectedScope();
+    }
+
+    return null;
+  }
+
+  protected boolean shouldShowIncludeSubdirsCb() {
+    return false;
   }
 
 }

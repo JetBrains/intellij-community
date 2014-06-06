@@ -136,10 +136,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
   }
 
+  @Override
   public XmlFile getDescriptorFile() {
     return myFile;
   }
 
+  @Override
   public boolean isHierarhyEnabled() {
     return true;
   }
@@ -156,6 +158,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private final Map<QNameKey, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<QNameKey, CachedValue<XmlElementDescriptor>>());
   private final Map<Pair<QNameKey, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<Pair<QNameKey,XmlTag>, CachedValue<TypeDescriptor>>());
 
+  @Override
   @Nullable
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
     return getElementDescriptor(localName, namespace, new HashSet<XmlNSDescriptorImpl>(),false);
@@ -185,6 +188,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         if (name != null) {
           if (checkElementNameEquivalence(localName, namespace, name, tag)) {
             final CachedValue<XmlElementDescriptor> cachedValue = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
+                @Override
                 public Result<XmlElementDescriptor> compute() {
                   final String name = tag.getAttributeValue("name");
 
@@ -324,6 +328,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 if(attributeDescriptor != null){
                   final CachedValue<XmlAttributeDescriptor> value = CachedValuesManager.getManager(includedDocument.getProject()).createCachedValue(
                     new CachedValueProvider<XmlAttributeDescriptor>(){
+                      @Override
                       public Result<XmlAttributeDescriptor> compute() {
                         Object[] deps = attributeDescriptor.getDependences();
                         if (deps.length == 0) {
@@ -350,6 +355,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return new XmlAttributeDescriptorImpl(tag);
   }
 
+  @Override
   public TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {
     String type = descriptorTag.getAttributeValue("type");
 
@@ -360,6 +366,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return findTypeDescriptorImpl(descriptorTag, null, null, null);
   }
 
+  @Override
   public TypeDescriptor getTypeDescriptor(final String name, XmlTag context) {
     if(checkSchemaNamespace(name, context)){
       final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(name);
@@ -526,6 +533,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
             if (document != null) {
 
               final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+                  @Override
                   public Result<TypeDescriptor> compute() {
                     final String currentName = tag.getAttributeValue("name");
 
@@ -600,6 +608,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+      @Override
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final SimpleTypeDescriptor simpleTypeDescriptor = new SimpleTypeDescriptor(tag);
         return new Result<TypeDescriptor>(simpleTypeDescriptor, tag);
@@ -611,6 +620,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+      @Override
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final String name = tag.getAttributeValue("name");
         
@@ -630,6 +640,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return value;
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     PsiElement parent = tag.getParent();
     final String namespace = tag.getNamespace();
@@ -676,11 +687,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return elementDescriptor;
   }
 
+  @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
     class CollectElementsProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
       
+      @Override
       public boolean execute(@NotNull final XmlTag element) {
         ContainerUtil.addIfNotNull(result, getElementDescriptor(element.getAttributeValue("name"), getDefaultNamespace()));
         return true;
@@ -688,6 +701,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
     
     CollectElementsProcessor processor = new CollectElementsProcessor() {
+      @Override
       public boolean execute(@NotNull final XmlTag element) {
         if (!XmlElementDescriptorImpl.isAbstractDeclaration(element)) return super.execute(element);
         return true;
@@ -702,6 +716,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     class CollectAttributesProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
 
+      @Override
       public boolean execute(@NotNull final XmlTag element) {
         result.add(createAttributeDescriptor(element));
         return true;
@@ -893,18 +908,22 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return mySubstitutions != null;
   }
 
+  @Override
   public PsiElement getDeclaration(){
     return myFile.getDocument();
   }
 
+  @Override
   public String getName(PsiElement context){
     return getName();
   }
 
+  @Override
   public String getName(){
     return "";
   }
 
+  @Override
   public void init(PsiElement element){
     myFile = (XmlFile) element.getContainingFile();
     
@@ -931,6 +950,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     dependencies = ArrayUtil.toObjectArray(dependenciesSet);
   }
 
+  @Override
   public Object[] getDependences() {
     if (dependencies == null) dependencies = myFile == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called
     return dependencies;
@@ -986,6 +1006,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     UNDECLARED_STD_TYPES.add("anySimpleType");
   }
 
+  @Override
   public void validate(@NotNull XmlDocument context, @NotNull Validator.ValidationHost host) {
     ExternalDocumentValidator.doValidation(context,host);
   }

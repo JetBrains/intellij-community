@@ -34,6 +34,7 @@ class ChildElementFinder extends RecursionSaveWalker {
     myTargetDepth = targetDepth;
   }
 
+  @Override
   public Void onRef(DRefPattern p) {
     if (myDepth < myTargetDepth || myTargetDepth == -1) {
       return super.onRef(p);
@@ -41,6 +42,7 @@ class ChildElementFinder extends RecursionSaveWalker {
     return null;
   }
 
+  @Override
   public Void onElement(DElementPattern p) {
     myDepth++;
     try {

@@ -141,4 +141,8 @@ public class PackagesNotificationPanel {
       return dimension;
     }
   }
+
+  public void removeLinkHandler(String key) {
+    myLinkHandlers.remove(key);
+  }
 }

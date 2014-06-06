@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+abstract class Foo {
 
-/**
- * Created by Maxim.Mossienko on 1/4/14.
- */
-public interface PsiDependentIndex {
 }
+
+interface Bar extends F<caret>oo {
+
+}
+

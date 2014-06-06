@@ -25,6 +25,7 @@ import org.intellij.plugins.testUtil.CopyFile;
  */
 public class RncHighlightingTest extends HighlightingTestBase {
 
+  @Override
   public String getTestDataPath() {
     return "highlighting/rnc";
   }

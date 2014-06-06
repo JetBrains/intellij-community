@@ -56,6 +56,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   };
   private static final String CLASS_ATTRIBUTE_NAME = "class";
 
+  @Override
   public boolean canSelect(PsiElement e) {
     return canSelectElement(e);
   }
@@ -67,6 +68,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return false;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result;
 

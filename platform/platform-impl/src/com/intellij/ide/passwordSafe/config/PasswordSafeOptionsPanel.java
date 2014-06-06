@@ -3,10 +3,10 @@ package com.intellij.ide.passwordSafe.config;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterPasswordDialog;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
  * The option panel for password safe
  */
 public class PasswordSafeOptionsPanel {
+  private final PasswordSafeImpl myPasswordSafe;
   /**
    * The password storage policy option
    */
@@ -34,6 +35,7 @@ public class PasswordSafeOptionsPanel {
    * The root panel
    */
   private JPanel myRoot;
+  private JBLabel myMasterPasswordStateLabel;
 
   /**
    * The constructor
@@ -41,45 +43,30 @@ public class PasswordSafeOptionsPanel {
    * @param passwordSafe the password safe service instance
    */
   public PasswordSafeOptionsPanel(PasswordSafe passwordSafe) {
-    final PasswordSafeImpl ps = (PasswordSafeImpl)passwordSafe;
-    final ChangeListener listener = new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        boolean isDisk = mySaveOnDiskRadioButton.isSelected();
-        myManagePasswordButton.setEnabled(isDisk);
-      }
-    };
-    mySaveOnDiskRadioButton.addChangeListener(listener);
-    listener.stateChanged(null);
+    myPasswordSafe = (PasswordSafeImpl)passwordSafe;
+    myMasterPasswordStateLabel.setForeground(JBColor.BLUE);
+    updateMasterPasswordState();
     myManagePasswordButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (isMasterKeyEmpty(ps)) {
-          MasterPasswordDialog.resetMasterPasswordDialog(null, ps.getMasterKeyProvider(), PasswordSafeOptionsPanel.class).show();
+        if (myPasswordSafe.getMasterKeyProvider().isEmpty()) {
+          MasterPasswordDialog.resetMasterPasswordDialog(null, myPasswordSafe.getMasterKeyProvider(), PasswordSafeOptionsPanel.class).show();
         }
         else {
-          MasterPasswordDialog.changeMasterPasswordDialog(null, ps.getMasterKeyProvider(), PasswordSafeOptionsPanel.class).show();
+          MasterPasswordDialog.changeMasterPasswordDialog(null, myPasswordSafe.getMasterKeyProvider(), PasswordSafeOptionsPanel.class).show();
         }
-        listener.stateChanged(null);
+        updateMasterPasswordState();
       }
     });
   }
 
-  /**
-   * Check if master key provider is empty
-   *
-   * @param ps the password safe component
-   * @return true if the provider is empty
-   */
-  private static boolean isMasterKeyEmpty(PasswordSafeImpl ps) {
-    return ps.getMasterKeyProvider().isEmpty();
+  private void updateMasterPasswordState() {
+    boolean empty = myPasswordSafe.getMasterKeyProvider().isMasterPasswordEnabled();
+    myMasterPasswordStateLabel.setText(empty ? "Disabled" : "Enabled");
   }
 
-  /**
-   * Load component state from settings
-   *
-   * @param settings the settings to use
-   */
-  public void load(PasswordSafeSettings settings) {
+  public void reset(PasswordSafeSettings settings) {
     PasswordSafeSettings.ProviderType t = settings.getProviderType();
+    updateMasterPasswordState();
     switch (t) {
       case DO_NOT_STORE:
         myDoNotRememberPasswordsRadioButton.setSelected(true);
@@ -95,9 +82,6 @@ public class PasswordSafeOptionsPanel {
     }
   }
 
-  /**
-   * @return the provider type
-   */
   private PasswordSafeSettings.ProviderType getProviderType() {
     if (myDoNotRememberPasswordsRadioButton.isSelected()) {
       return PasswordSafeSettings.ProviderType.DO_NOT_STORE;
@@ -123,7 +107,7 @@ public class PasswordSafeOptionsPanel {
    *
    * @param settings the settings to use
    */
-  public void save(PasswordSafeSettings settings) {
+  public void apply(PasswordSafeSettings settings) {
     settings.setProviderType(getProviderType());
   }
 

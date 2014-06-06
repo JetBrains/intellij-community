@@ -163,9 +163,10 @@ public class JavaStackFrame extends XStackFrame {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     DebuggerContextImpl context = myDebugProcess.getDebuggerContext();
     if (context.getFrameProxy() != getStackFrameProxy()) {
+      SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), getStackFrameProxy().threadProxy());
       context = DebuggerContextImpl.createDebuggerContext(
         myDebugProcess.mySession,
-        context.getSuspendContext(),
+        threadSuspendContext,
         getStackFrameProxy().threadProxy(),
         getStackFrameProxy());
       context.setPositionCache(mySourcePosition);

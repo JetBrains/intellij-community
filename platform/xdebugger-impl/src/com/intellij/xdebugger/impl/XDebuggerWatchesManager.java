@@ -24,7 +24,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +53,6 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
     }
   }
 
-  @Nullable
   @Override
   public WatchesManagerState getState() {
     WatchesManagerState state = new WatchesManagerState();

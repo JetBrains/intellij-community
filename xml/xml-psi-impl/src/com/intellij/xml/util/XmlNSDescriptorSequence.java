@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -43,8 +42,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   }
 
   public XmlNSDescriptorSequence(XmlNSDescriptor[] descriptors){
-    for(int i = 0; i < descriptors.length; i++){
-      final XmlNSDescriptor descriptor = descriptors[i];
+    for (final XmlNSDescriptor descriptor : descriptors) {
       add(descriptor);
     }
   }
@@ -53,34 +51,31 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     sequence.add(descriptor);
   }
 
+  @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tag);
-      if(elementDescriptor != null) return elementDescriptor;
+      if (elementDescriptor != null) return elementDescriptor;
     }
     return null;
   }
 
+  @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()) {
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor)iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       ContainerUtil.addAll(descriptors, descriptor.getRootElementsDescriptors(document));
     }
 
     return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
   }
 
+  @Override
   public XmlFile getDescriptorFile(){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       final XmlFile file = descriptor.getDescriptorFile();
-      if(file != null) return file;
+      if (file != null) return file;
     }
     return null;
   }
@@ -89,58 +84,52 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     return sequence;
   }
 
+  @Override
   public boolean isHierarhyEnabled() {
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
-      if(descriptor.isHierarhyEnabled()) return true;
+    for (XmlNSDescriptor descriptor : sequence) {
+      if (descriptor.isHierarhyEnabled()) return true;
     }
     return false;
   }
 
+  @Override
   public PsiElement getDeclaration(){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       final PsiElement declaration = descriptor.getDeclaration();
-      if(declaration != null) return declaration;
+      if (declaration != null) return declaration;
     }
     return null;
   }
 
+  @Override
   public String getName(PsiElement context){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       final String name = descriptor.getName(context);
-      if(name != null) return name;
+      if (name != null) return name;
     }
     return null;
   }
 
+  @Override
   public String getName(){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       final String name = descriptor.getName();
-      if(name != null) return name;
+      if (name != null) return name;
     }
     return null;
   }
 
+  @Override
   public void init(PsiElement element){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       descriptor.init(element);
     }
   }
 
+  @Override
   public Object[] getDependences(){
     final List<Object> ret = new ArrayList<Object>();
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()) {
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor)iterator.next();
+    for (XmlNSDescriptor descriptor : sequence) {
       ContainerUtil.addAll(ret, descriptor.getDependences());
     }
     return ret.toArray();

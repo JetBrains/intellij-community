@@ -220,12 +220,12 @@ public class ConfigurationContext {
     }
     if (element == null) {
       final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-      element = elements != null && elements.length >= 1 ? elements[0] : null;
+      element = elements != null && elements.length > 0 ? elements[0] : null;
     }
     if (element == null) {
-      final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-      if (file != null) {
-        element = PsiManager.getInstance(project).findFile(file);
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null && files.length > 0) {
+        element = PsiManager.getInstance(project).findFile(files[0]);
       }
     }
     return element;

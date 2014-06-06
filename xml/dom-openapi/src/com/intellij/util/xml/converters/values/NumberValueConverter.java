@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.util.xml.converters.values;
 
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +39,7 @@ public class NumberValueConverter extends ResolvingConverter<String> {
     myAllowEmpty = allowEmpty;
   }
 
+  @Override
   public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     if (s == null) return null;
 
@@ -48,10 +48,12 @@ public class NumberValueConverter extends ResolvingConverter<String> {
     return parseNumber(s, myNumberClass) == null ? null : s;
   }
 
+  @Override
   public String toString(@Nullable final String s, final ConvertContext context) {
     return null;
   }
 
+  @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
     if (s == null) return super.getErrorMessage(s, context);
 

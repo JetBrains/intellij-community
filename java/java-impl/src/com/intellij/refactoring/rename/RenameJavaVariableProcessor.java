@@ -24,9 +24,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -350,6 +352,18 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       PsiField conflictingField = inheritor.findFieldByName(newName, false);
       if (conflictingField != null) {
         result.add(new SubmemberHidesMemberUsageInfo(conflictingField, field));
+      } 
+      else { //local class
+        final PsiMember member = PsiTreeUtil.getParentOfType(inheritor, PsiMember.class);
+        if (member != null) {
+          final ArrayList<PsiVariable> variables = new ArrayList<PsiVariable>();
+          ControlFlowUtil.collectOuterLocals(variables, inheritor, inheritor, member);
+          for (PsiVariable variable : variables) {
+            if (newName.equals(variable.getName())) {
+              result.add(new FieldHidesLocalUsageInfo(variable, field));
+            }
+          }
+        }
       }
     }
   }

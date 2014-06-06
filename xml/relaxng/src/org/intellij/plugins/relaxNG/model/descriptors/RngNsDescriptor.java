@@ -70,6 +70,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private DPattern myPattern;
   private PsiManager myManager;
 
+  @Override
   @Nullable
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     if (myPattern == null) {
@@ -107,6 +108,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private XmlElementDescriptor findRootDescriptor(final XmlTag tag) {
     return CachedValuesManager.getManager(tag.getProject())
         .getParameterizedCachedValue(tag, ROOT_KEY, new ParameterizedCachedValueProvider<XmlElementDescriptor, RngNsDescriptor>() {
+          @Override
           public CachedValueProvider.Result<XmlElementDescriptor> compute(RngNsDescriptor o) {
             final XmlElementDescriptor descr = o.findRootDescriptorInner(tag);
             if (descr != null) {
@@ -151,6 +153,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
       }
     }
     final List<DElementPattern> patterns = ContainerUtil.findAll(list, new Condition<DElementPattern>() {
+      @Override
       public boolean value(DElementPattern pattern) {
         final NameClass nameClass = pattern.getName();
         return nameClass.contains(qName);
@@ -168,6 +171,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     }
   }
 
+  @Override
   @NotNull
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable XmlDocument document) {
     if (myPattern == null) {
@@ -210,15 +214,18 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return descriptor;
   }
 
+  @Override
   @NotNull
   public XmlFile getDescriptorFile() {
     return myFile;
   }
 
+  @Override
   public boolean isHierarhyEnabled() {
     return false;
   }
 
+  @Override
   public synchronized PsiElement getDeclaration() {
     if (!myElement.isValid() || !myFile.isValid()) {
       if (myUrl != null) {
@@ -234,16 +241,19 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return myFile.isValid() ? myFile.getDocument() : null;
   }
 
+  @Override
   @NonNls
   public String getName(PsiElement context) {
     return getName();
   }
 
+  @Override
   @NonNls
   public String getName() {
     return getDescriptorFile().getName();
   }
 
+  @Override
   public Object[] getDependences() {
     if (myPattern != null) {
       if (DumbService.isDumb(myElement.getProject())) {
@@ -261,6 +271,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return new Object[]{ ModificationTracker.EVER_CHANGED };
   }
 
+  @Override
   public synchronized void init(PsiElement element) {
     myElement = element;
     myFile = element instanceof XmlFile ? (XmlFile)element : (XmlFile)element.getContainingFile();
@@ -274,6 +285,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     myPattern = RngParser.getCachedPattern(getDescriptorFile(), RngParser.DEFAULT_HANDLER);
   }
 
+  @Override
   public void validate(@NotNull PsiElement context, @NotNull final ValidationHost host) {
     final XmlDocument doc = PsiTreeUtil.getContextOfType(context, XmlDocument.class, false);
     if (doc == null) {
@@ -290,12 +302,14 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   //@Override
+  @Override
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
     final QName qName = new QName(namespace, localName);
     CachedValue<XmlElementDescriptor> cachedValue = myDescriptorsMap.get(qName);
     if (cachedValue == null) {
       cachedValue =
         CachedValuesManager.getManager(myElement.getProject()).createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
+          @Override
           public Result<XmlElementDescriptor> compute() {
             final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
             return descriptor != null

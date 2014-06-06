@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     super(XmlElementType.XML_ATTRIBUTE_VALUE);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlAttributeValue(this);
@@ -59,6 +60,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     }
   }
 
+  @Override
   public String getValue() {
     // it is more correct way to strip quotes since injected xml may have quotes encoded
     String text = getText();
@@ -73,6 +75,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return text;
   }
 
+  @Override
   public TextRange getValueTextRange() {
     final TextRange range = getTextRange();
     final String value = getValue();
@@ -84,11 +87,13 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return new TextRange(start, end);
   }
 
+  @Override
   public void clearCaches() {
     super.clearCaches();
     myCachedReferences = null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     PsiReference[] cachedReferences = myCachedReferences;
@@ -102,6 +107,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return cachedReferences;
   }
 
+  @Override
   public PsiReference getReference() {
     final PsiReference[] refs = getReferences();
     if (refs.length > 0) return refs[0];
@@ -109,6 +115,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
 
+  @Override
   public int getTextOffset() {
     return getTextRange().getStartOffset() + 1;
   }
@@ -118,6 +125,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return getParent() instanceof XmlAttributeImpl;
   }
 
+  @Override
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
     try {
       final String quoteChar = getTextLength() > 0 ? getText().substring(0, 1) : "";
@@ -135,30 +143,37 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return this;
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
     return new XmlAttributeLiteralEscaper(this);
   }
 
+  @Override
   public PsiMetaData getMetaData() {
     return this;
   }
 
+  @Override
   public PsiElement getDeclaration() {
     return this;
   }
 
+  @Override
   public String getName(final PsiElement context) {
     return getValue();
   }
 
+  @Override
   public String getName() {
     return getValue();
   }
 
+  @Override
   public void init(final PsiElement element) {
   }
 
+  @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
   private static final int MIN_TEXT_RANGE_LENGTH = 3;
   private static final String STYLE_ATTRIBUTE = "style";
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final PsiElement psiElement = node.getPsi();
@@ -217,6 +218,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     return false;
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     if (psi instanceof XmlTag ||
@@ -227,6 +229,7 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
     return null;
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();

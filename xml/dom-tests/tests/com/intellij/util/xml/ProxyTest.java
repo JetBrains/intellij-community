@@ -201,6 +201,7 @@ public class ProxyTest extends TestCase {
   }
 
   interface ConcreteInterface extends GenericInterface<String> {
+    @Override
     Object foo(String t);
   }
 

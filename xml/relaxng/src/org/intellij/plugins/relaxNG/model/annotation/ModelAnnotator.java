@@ -50,12 +50,14 @@ import java.util.Set;
 */
 public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof CommonElement) {
       ((CommonElement)psiElement).accept(new MyAnnotator<PsiElement>(CommonAnnotationHolder.create(holder)));
     }
   }
 
+  @Override
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof RngDomElement) {
       ((RngDomElement)element).accept(new MyAnnotator<DomElement>(CommonAnnotationHolder.create(holder)));
@@ -69,6 +71,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
       myHolder = holder;
     }
 
+    @Override
     public void visitDefine(final Define define) {
       final PsiElement element = define.getPsiElement();
       if (element != null) {
@@ -78,6 +81,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
         final OverriddenDefineSearcher searcher = new OverriddenDefineSearcher(define, xmlFile, result);
 
         final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<XmlFile>() {
+          @Override
           public boolean execute(@NotNull XmlFile file) {
             final Grammar grammar = GrammarFactory.getGrammar(file);
             if (grammar == null) return true;
@@ -102,6 +106,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
       a.setGutterIconRenderer(renderer);
     }
 
+    @Override
     public void visitInclude(Include inc) {
       final Define[] overrides = inc.getOverrides();
       for (Define define : overrides) {

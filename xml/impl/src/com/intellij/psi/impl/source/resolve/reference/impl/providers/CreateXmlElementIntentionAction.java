@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,16 +52,19 @@ class CreateXmlElementIntentionAction implements IntentionAction {
     myDeclarationTagName = declarationTagName;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return XmlBundle.message(myMessageKey, XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()));
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlBundle.message("xml.create.xml.declaration.intention.type");
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!myIsAvailableEvaluated) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myRef.getElement(), XmlTag.class);
@@ -80,6 +83,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
     return myTargetFile != null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
@@ -113,6 +117,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
     template.setToReformat(true);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

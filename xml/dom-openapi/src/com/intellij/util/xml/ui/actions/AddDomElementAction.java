@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public abstract class AddDomElementAction extends AnAction {
     super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     if (!isEnabled(e)) {
       e.getPresentation().setEnabled(false);
@@ -75,6 +76,7 @@ public abstract class AddDomElementAction extends AnAction {
     super.update(e);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final AnAction[] actions = getChildren(e);
     if (actions.length > 1) {
@@ -138,6 +140,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
     if (actions.size() > 1 && showAsPopup()) {
       ActionGroup group = new ActionGroup() {
+        @Override
         @NotNull
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
           return actions.toArray(new AnAction[actions.size()]);
@@ -183,6 +186,7 @@ public abstract class AddDomElementAction extends AnAction {
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final ListPopup groupPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null,

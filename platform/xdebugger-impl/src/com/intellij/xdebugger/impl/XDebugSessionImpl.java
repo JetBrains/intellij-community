@@ -346,7 +346,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   @Nullable
-  public synchronized XValueMarkers<?, ?> getValueMarkers() {
+  public XValueMarkers<?, ?> getValueMarkers() {
     if (myValueMarkers == null) {
       XValueMarkerProvider<?, ?> provider = myDebugProcess.createValueMarkerProvider();
       if (provider != null) {
@@ -833,6 +833,9 @@ public class XDebugSessionImpl implements XDebugSession {
       if (myDependentBreakpointListener != null) {
         breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
       }
+    }
+    if (myValueMarkers != null) {
+      myValueMarkers.clear();
     }
     myStopped = true;
     myDebuggerManager.removeSession(this);

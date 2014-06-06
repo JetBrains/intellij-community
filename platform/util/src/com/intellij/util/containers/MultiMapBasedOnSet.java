@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import java.util.Collections;
  */
 public class MultiMapBasedOnSet<K, V> extends MultiMap<K, V> {
 
+  @NotNull
   @Override
   protected Collection<V> createCollection() {
     return new HashSet<V>();
   }
 
+  @NotNull
   @Override
   protected Collection<V> createEmptyCollection() {
     return Collections.emptySet();

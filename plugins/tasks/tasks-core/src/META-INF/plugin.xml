@@ -121,6 +121,7 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
     <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>

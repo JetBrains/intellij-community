@@ -37,14 +37,6 @@ import java.util.*;
 
 public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHandler {
   @Override
-  public boolean canMove(PsiElement[] elements, PsiElement targetContainer) {
-    final PsiElement[] srcElements = adjustForMove(null, elements, targetContainer);
-    assert srcElements != null;
-
-    return super.canMove(srcElements, targetContainer);
-  }
-
-  @Override
   public PsiElement adjustTargetForMove(DataContext dataContext, PsiElement targetContainer) {
     if (targetContainer instanceof PsiPackage) {
       final Module module = LangDataKeys.TARGET_MODULE.getData(dataContext);
@@ -60,6 +52,11 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
 
   @Override
   public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
+    sourceElements = super.adjustForMove(project, sourceElements, targetElement);
+    if (sourceElements == null) {
+      return null;
+    }
+
     Set<PsiElement> result = new LinkedHashSet<PsiElement>();
     for (PsiElement sourceElement : sourceElements) {
       result.add(sourceElement instanceof PsiClass ? sourceElement.getContainingFile() : sourceElement);
@@ -70,6 +67,10 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
   @Override
   public void doMove(final Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
 
+    elements = super.adjustForMove(project, elements, targetContainer);
+    if (elements == null) {
+      return;
+    }
     MoveFilesOrDirectoriesUtil
       .doMove(project, elements, new PsiElement[]{targetContainer}, callback, new Function<PsiElement[], PsiElement[]>() {
         @Override
@@ -89,7 +90,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
                       adjustedElements.add(containingFile);
                       continue;
                     }
-                  } 
+                  }
                 }
                 adjustedElements.add(element);
               }

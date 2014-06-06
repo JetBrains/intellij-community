@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   private boolean myNullable;
   private final Map<String, Icon> myIcons = new HashMap<String, Icon>();
   private final ItemListener myCommitListener = new ItemListener() {
+    @Override
     public void itemStateChanged(ItemEvent e) {
       setModified();
       commit();
@@ -84,10 +85,12 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   public static Factory<List<Pair<String, Icon>>> createResolvingFunction(final GenericDomValue<?> reference) {
     return new Factory<List<Pair<String, Icon>>>() {
+      @Override
       public List<Pair<String, Icon>> create() {
         final Converter converter = reference.getConverter();
         if (converter instanceof ResolvingConverter) {
           final AbstractConvertContext context = new AbstractConvertContext() {
+            @Override
             @NotNull
             public DomElement getInvocationElement() {
               return reference;
@@ -97,11 +100,13 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
           final Collection<Object> variants = resolvingConverter.getVariants(context);
           final List<Pair<String, Icon>> all =
             new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, new Function<Object, Pair<String, Icon>>() {
+              @Override
               public Pair<String, Icon> fun(final Object s) {
                 return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
               }
             }));
           all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
+            @Override
             public Object fun(final Object s) {
               return new Pair(s, null);
             }
@@ -113,11 +118,13 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     };
   }
 
-  public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<Collection<? extends Object>> variantFactory) {
+  public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<Collection<?>> variantFactory) {
     return new Factory<List<Pair<String, Icon>>>() {
+      @Override
       public List<Pair<String, Icon>> create() {
 
         return ContainerUtil.map(variantFactory.create(), new Function<Object, Pair<String, Icon>>() {
+          @Override
           public Pair<String, Icon> fun(final Object s) {
             return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
           }
@@ -129,8 +136,10 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
     return new Factory<List<Pair<String, Icon>>>() {
+      @Override
       public List<Pair<String, Icon>> create() {
         return ContainerUtil.map2List(aClass.getEnumConstants(), new Function<Enum, Pair<String, Icon>>() {
+          @Override
           public Pair<String, Icon> fun(final Enum s) {
             return Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s));
           }
@@ -151,6 +160,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
       standardValues.add(pair.first);
     }
     return initComboBox(comboBox, new Condition<String>() {
+      @Override
       public boolean value(final String object) {
         return standardValues.contains(object);
       }
@@ -176,6 +186,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     comboBox.setEditable(false);
     comboBox.setPrototypeDisplayValue(new ComboBoxItem("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final Pair<String, Icon> pair = (Pair<String, Icon>)value;
@@ -194,8 +205,10 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     return comboBox;
   }
 
+  @Override
   protected JComboBox createMainComponent(final JComboBox boundedComponent) {
     return initComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, new Condition<String>() {
+      @Override
       public boolean value(final String object) {
         return isValidValue(object);
       }
@@ -223,10 +236,12 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     return !newData.equals(oldData);
   }
 
+  @Override
   protected boolean isCommitted() {
     return getComponent().isPopupVisible() || super.isCommitted();
   }
 
+  @Override
   protected void doReset() {
     final List<Pair<String, Icon>> data = myDataFactory.create();
     final JComboBox comboBox = getComponent();
@@ -255,12 +270,14 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     }
   }
 
+  @Override
   @Nullable
   protected final String getValue() {
     final Pair<String, Icon> pair = (Pair<String, Icon>)getComponent().getSelectedItem();
     return pair == null || pair == EMPTY ? null : pair.first;
   }
 
+  @Override
   protected final void setValue(final String value) {
     final JComboBox component = getComponent();
     if (!isValidValue(value)) {
@@ -271,6 +288,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   }
 
 
+  @Override
   protected void updateComponent() {
     final DomElement domElement = getDomElement();
     if (domElement == null || !domElement.isValid()) return;
@@ -279,6 +297,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!project.isOpen()) return;
         if (!getDomWrapper().isValid()) return;

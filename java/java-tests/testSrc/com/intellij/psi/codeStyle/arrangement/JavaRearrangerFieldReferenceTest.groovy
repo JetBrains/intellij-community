@@ -23,14 +23,12 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
 
   private List<StdArrangementMatchRule> defaultFieldsArrangement = [
-    rule(CLASS),
     rule(FIELD, STATIC, FINAL),
     rule(FIELD, PUBLIC),
     rule(FIELD, PROTECTED),
     rule(FIELD, PACKAGE_PRIVATE),
     rule(FIELD, PRIVATE)
   ]
-
 
   void "test keep referenced package private field before public one which has reference through binary expression"() {
     doTest(initial: '''\
@@ -299,5 +297,40 @@ public class Q {
       rules: defaultFieldsArrangement
     )
   }
+
+  void "test IDEA-123733"() {
+    doTest(
+      initial: '''\
+class First {
+    protected int test = 12;
+}
+
+class Second extends First {
+    void test() {}
+
+    private int q = test;
+    public int t = q;
+}
+''',
+      expected: '''\
+class First {
+    protected int test = 12;
+}
+
+class Second extends First {
+    private int q = test;
+    public int t = q;
+
+    void test() {}
+}
+''',
+      rules: defaultFieldsArrangement
+    )
+  }
+
+
+
+
+
 
 }

@@ -153,7 +153,10 @@ public class AnnotationsHighlightUtil {
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
                                                      JavaHighlightUtil.formatType(type), JavaHighlightUtil.formatType(expectedType));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      final HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSurroundWithQuotesAnnotationParameterValueFix(value, expectedType));
+      return info;
     }
 
     LOG.error("Unknown annotation member value: " + value);

@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="git4idea" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="jira" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>
 

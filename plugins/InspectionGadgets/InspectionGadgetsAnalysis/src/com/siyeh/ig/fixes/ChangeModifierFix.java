@@ -29,18 +29,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeModifierFix extends InspectionGadgetsFix {
+  public static final String FAMILY_NAME = "Change modifier";
 
   @PsiModifier.ModifierConstant private final String modifierText;
-  private final String[] incompatibleModifiers;
 
   public ChangeModifierFix(@NonNls @PsiModifier.ModifierConstant String modifierText) {
     this.modifierText = modifierText;
-    this.incompatibleModifiers = null;
-  }
-
-  public ChangeModifierFix(String modifierText, String... incompatibleModifiers) {
-    this.modifierText = modifierText;
-    this.incompatibleModifiers = incompatibleModifiers;
   }
 
   @Override
@@ -53,7 +47,7 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Change modifier";
+    return FAMILY_NAME;
   }
 
   @Override
@@ -70,10 +64,5 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
       return;
     }
     modifiers.setModifierProperty(modifierText, true);
-    if (incompatibleModifiers != null) {
-      for (String modifier : incompatibleModifiers) {
-        modifiers.setModifierProperty(modifier, false);
-      }
-    }
   }
 }

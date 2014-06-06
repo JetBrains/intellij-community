@@ -50,6 +50,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
   @NonNls
   private static final String COMPATIBILITY_ANNOTATIONS_1_0 = "http://relaxng.org/ns/compatibility/annotations/1.0";
 
+  @Override
   @Nullable
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final XmlElement c = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, XmlAttribute.class);
@@ -133,21 +134,25 @@ public class RngDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
+  @Override
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }

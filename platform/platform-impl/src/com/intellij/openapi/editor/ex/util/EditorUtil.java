@@ -17,9 +17,6 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.lang.folding.FoldingBuilder;
-import com.intellij.lang.folding.LanguageFolding;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,18 +29,11 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -782,15 +772,11 @@ public final class EditorUtil {
 
   /**
    * Finds the start offset of visual line at which given offset is located, not taking soft wraps into account.
-   *
-   * @see #calcSurroundingRange(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.VisualPosition, com.intellij.openapi.editor.VisualPosition)
    */
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset) {
     while(true) {
       offset = getLineStartOffset(offset, editor.getDocument());
-      // this assumes that there cannot be two adjacent collapsed fold regions
-      // (such case is not properly handled currently by FoldingModelImpl/FoldRegionsTree anyway)
-      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
       if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
         break;
       }
@@ -801,14 +787,10 @@ public final class EditorUtil {
 
   /**
    * Finds the end offset of visual line at which given offset is located, not taking soft wraps into account.
-   *
-   * @see #calcSurroundingRange(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.VisualPosition, com.intellij.openapi.editor.VisualPosition)
    */
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int offset) {
     while(true) {
       offset = getLineEndOffset(offset, editor.getDocument());
-      // this assumes that there cannot be two adjacent collapsed fold regions
-      // (such case is not properly handled currently by FoldingModelImpl/FoldRegionsTree anyway)
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
       if (foldRegion == null || foldRegion.getEndOffset() <= offset) {
         break;
@@ -889,41 +871,6 @@ public final class EditorUtil {
     }
     int line = document.getLineNumber(offset);
     return offset == document.getLineEndOffset(line);
-  }
-
-  /**
-   * Checks the ability to initialize folding in the Dumb Mode. Due to language injections it may depend on
-   * edited file and active injections (not yet implemented).
-   *
-   * @param editor the editor that holds file view
-   * @return true  if folding initialization available in the Dumb Mode
-   */
-  public static boolean supportsDumbModeFolding(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    if (project != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file != null) {
-        return supportsDumbModeFolding(file);
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Checks the ability to initialize folding in the Dumb Mode for file.
-   *
-   * @param file the file to test
-   * @return true  if folding initialization available in the Dumb Mode
-   */
-  public static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
-    if (file.getVirtualFile() != null) {
-      FileType ft = FileTypeManager.getInstance().getFileTypeByFile(file.getVirtualFile());
-      if (ft instanceof LanguageFileType) {
-        final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(((LanguageFileType)ft).getLanguage());
-        return DumbService.isDumbAware(foldingBuilder) || ApplicationManager.getApplication().isUnitTestMode();
-      }
-    }
-    return true;
   }
 }
 

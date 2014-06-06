@@ -30,6 +30,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
@@ -131,7 +132,8 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
     breakpoint.setCountFilterEnabled(COUNT_FILTER_ENABLED);
     breakpoint.setCountFilter(COUNT_FILTER);
 
-    breakpoint.setCondition(CONDITION_ENABLED ? myCondition : null);
+    breakpoint.setCondition(myCondition);
+    ((XBreakpointBase)breakpoint.myXBreakpoint).setConditionEnabled(CONDITION_ENABLED);
     if (myCondition != null && !myCondition.isEmpty()) {
       XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XLightBreakpointPropertiesPanel.CONDITION_HISTORY_ID, TextWithImportsImpl.toXExpression(myCondition));
     }

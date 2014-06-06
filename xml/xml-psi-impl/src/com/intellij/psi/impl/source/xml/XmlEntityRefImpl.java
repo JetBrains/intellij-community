@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   private static final Key<String> EVALUATION_IN_PROCESS = Key.create("EvalKey");
 
+  @Override
   public XmlEntityDecl resolve(PsiFile targetFile) {
     String text = getText();
     if (text.equals(GT_ENTITY) || text.equals(QUOT_ENTITY)) return null;
@@ -79,6 +80,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           return resolveEntity(targetElement, entityName, containingFile).getValue();
         }
         value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
+          @Override
           public Result<XmlEntityDecl> compute() {
             return resolveEntity(targetElement, entityName, containingFile);
           }
@@ -103,6 +105,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       final XmlEntityDecl[] result = {null};
 
       PsiElementProcessor processor = new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlDoctype) {
             XmlDoctype xmlDoctype = (XmlDoctype)element;
@@ -187,29 +190,34 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return HtmlUtil.isHtml5Doctype(xmlDoctype) ? Html5SchemaProvider.getCharsDtdLocation() : XmlUtil.getDtdUri(xmlDoctype);
   }
 
+  @Override
   public XmlTag getParentTag() {
     final XmlElement parent = (XmlElement)getParent();
     if(parent instanceof XmlTag) return (XmlTag)parent;
     return null;
   }
 
+  @Override
   public XmlTagChild getNextSiblingInTag() {
     PsiElement nextSibling = getNextSibling();
     if(nextSibling instanceof XmlTagChild) return (XmlTagChild)nextSibling;
     return null;
   }
 
+  @Override
   public XmlTagChild getPrevSiblingInTag() {
     final PsiElement prevSibling = getPrevSibling();
     if(prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlEntityRef.class);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlElement(this);

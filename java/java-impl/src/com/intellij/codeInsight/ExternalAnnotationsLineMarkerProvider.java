@@ -42,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider {
   @Nullable
@@ -81,7 +79,7 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
         return XmlStringUtil.wrapInHtml(JavaDocInfoGenerator.generateSignature(owner));
       }
     };
-    return new LineMarkerInfo<PsiModifierListOwner>(owner, owner.getTextOffset(), AllIcons.Nodes.Annotationtype,
+    return new LineMarkerInfo<PsiModifierListOwner>(owner, owner.getTextOffset(), AllIcons.Gutter.ExtAnnotation,
                                                     Pass.UPDATE_ALL,
                                                     annotationsCollector, new MyIconGutterHandler(),
                                                     GutterIconRenderer.Alignment.LEFT);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,13 @@ public class GenericValueUtil {
   }
 
   public static NullableFunction<GenericValue, String> STRING_VALUE = new NullableFunction<GenericValue, String>() {
+    @Override
     public String fun(final GenericValue genericValue) {
       return genericValue.getStringValue();
     }
   };
   public static NullableFunction<GenericValue, Object> OBJECT_VALUE = new NullableFunction<GenericValue, Object>() {
+    @Override
     public Object fun(final GenericValue genericValue) {
       return genericValue.getValue();
     }

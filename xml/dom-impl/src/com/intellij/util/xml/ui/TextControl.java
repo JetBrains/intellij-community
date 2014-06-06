@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     super(domWrapper, commitOnEveryChange);
   }
 
+  @Override
   protected EditorTextField getEditorTextField(@NotNull final TextPanel panel) {
     final Component component = panel.getComponent(0);
     if (component instanceof ReferenceEditorWithBrowseButton) {
@@ -55,12 +56,14 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     return (EditorTextField)component;
   }
 
+  @Override
   protected TextPanel createMainComponent(TextPanel boundedComponent, final Project project) {
     if (boundedComponent == null) {
       boundedComponent = new TextPanel();
     }
     boundedComponent.removeAll();
     final Function<String, Document> factory = new Function<String, Document>() {
+      @Override
       public Document fun(final String s) {
         return PsiDocumentManager.getInstance(project)
         .getDocument(PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false));
@@ -68,6 +71,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     };
     final TextPanel boundedComponent1 = boundedComponent;
     final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, FileTypes.PLAIN_TEXT) {
+      @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         return boundedComponent1 instanceof MultiLineTextPanel ? makeBigEditor(editor, ((MultiLineTextPanel)boundedComponent1).getRowCount()) : editor;
@@ -82,8 +86,10 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
       final ReferenceEditorWithBrowseButton editor = new ReferenceEditorWithBrowseButton(null, editorTextField, factory);
       boundedComponent.add(editor);
       editor.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           EditorTextField textArea = new EditorTextField(editorTextField.getDocument(), project, FileTypes.PLAIN_TEXT) {
+            @Override
             protected EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
               editor.setEmbeddedIntoDialogWrapper(true);

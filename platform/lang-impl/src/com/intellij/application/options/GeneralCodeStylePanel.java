@@ -42,6 +42,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myFormatterOnLabel;
   private JPanel myMarkerOptionsPanel;
   private final SmartIndentOptionsEditor myIndentOptionsEditor;
+  private final JBScrollPane myScrollPane;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -126,6 +128,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
     myMarkerOptionsPanel.setBorder(
       IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
+    myScrollPane = new JBScrollPane(myPanel,
+                                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
   }
 
   @Nullable
@@ -241,7 +245,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   public JComponent getPanel() {
-    return myPanel;
+    return myScrollPane;
   }
 
   @Override

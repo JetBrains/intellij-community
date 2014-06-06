@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,6 +40,7 @@ public class JetBrainsEmitter implements Emitter {
   static final boolean JB_OFF = false;
   static final boolean REPLACE_TYPES_WITH_INTERFACES = true;
   private String AUTHOR = null;
+  private boolean myUseQualifiedClassNames = false;
 
 
   public void emit(FileManager fileManager, ModelDesc model, File outputRoot) {
@@ -66,6 +70,7 @@ public class JetBrainsEmitter implements Emitter {
     final String typeName = td.name;
     final String typeQName = model.getNSDPrefix(td) + typeName;
     final String pkgName = typeQName.lastIndexOf('.') > -1 ? typeQName.substring(0, typeQName.lastIndexOf('.')) : "";
+    final String stringClass = getStringClassName();
 
     final File outFile = fileManager.getOutputFile(new File(outDir, toJavaFileName(typeQName)));
     PrintWriter out = null;
@@ -179,9 +184,9 @@ public class JetBrainsEmitter implements Emitter {
         if (text) {
           out.println(";");
           out.println();
-          out.println("\tprivate final String value;");
-          out.println("\tprivate " + typeName + "(String value) { this.value = value; }");
-          out.println("\tpublic String getValue() { return value; }");
+          out.println("\tprivate final " + stringClass + " value;");
+          out.println("\tprivate " + typeName + "(" + stringClass + " value) { this.value = value; }");
+          out.println("\tpublic " + stringClass + " getValue() { return value; }");
         }
         out.println();
         out.println("}");
@@ -235,8 +240,8 @@ public class JetBrainsEmitter implements Emitter {
       out.println("");
       for (FieldDesc field : fields) {
         String tagName = field.tagName;
-        String type = field.type;
-        String elementType = field.elementType;
+        String type = myUseQualifiedClassNames ? pkgName + "." + field.type : field.type;
+        String elementType = myUseQualifiedClassNames ? pkgName + "." + field.elementType : field.elementType;
         String name = field.name;
         String paramName = toJavaIdName(field.clType > 0 ? name : field.elementName);
         String javaDocTagName = field.clType < 0 ? tagName + " children" : tagName != null ? tagName + " child" : "simple content";
@@ -330,7 +335,7 @@ public class JetBrainsEmitter implements Emitter {
           type = newType;
         }
         if (isList) {
-          type = "List<" + elementType + ">";
+          type = "java.util.List<" + elementType + ">";
         }
 
         StringBuffer sbAnnotations = new StringBuffer();
@@ -526,6 +531,7 @@ public class JetBrainsEmitter implements Emitter {
     }
     if (jtList.size() == 0) return;
 
+    final String stringClass = getStringClassName();
     String typeName = nsd.helperClass.substring(nsd.helperClass.lastIndexOf(".") + 1);
     final String typeQName = model.toJavaQualifiedTypeName("", nsd.helperClass, false);
     String pkgName = typeQName.substring(0, typeQName.lastIndexOf('.'));
@@ -550,7 +556,7 @@ public class JetBrainsEmitter implements Emitter {
       out.print("public class " + typeName + " ");
       out.println("{");
       out.println("");
-      out.println("\tprivate interface GetName { String getName(Object o); }");
+      out.println("\tprivate interface GetName { " + stringClass + " getName(Object o); }");
       out.println("\tprivate static java.util.HashMap<Class, GetName> nameMap = new java.util.HashMap();");
       out.println("\tstatic {");
 
@@ -597,12 +603,12 @@ public class JetBrainsEmitter implements Emitter {
         String qname = model.getNSDPrefix(td) + td.name;
         String tdNameString = "\"" + toPresentationName(td.name) + "\"";
         out.println("\t\tnameMap.put(" + qname + ".class, new GetName() {");
-        out.println("\t\t\tpublic String getName(Object o) {");
+        out.println("\t\t\tpublic " + stringClass + " getName(Object o) {");
         if (guessedField != null) {
           out.println("\t\t\t\t" + qname + " my = (" + qname + ") o;");
           String getter = "my.get" + Util.capitalize(guessedField.name) + "()";
           if (guessedField.clType > 0) {
-            out.println("\t\t\t\tString s = o==null? null:" + getter +
+            out.println("\t\t\t\t" + stringClass + " s = o==null? null:" + getter +
                         (guessedField.clType == FieldDesc.STR || guessedField.clType == FieldDesc.ATTR ? ".getValue();" : ";"));
             out.println("\t\t\t\treturn s==null?" + tdNameString + ":s;");
           }
@@ -619,7 +625,7 @@ public class JetBrainsEmitter implements Emitter {
       }
       out.println("\t}");
 
-      out.println("\tpublic static String getPresentationName(Object o, String def) {");
+      out.println("\tpublic static " + stringClass + " getPresentationName(Object o, " + stringClass + " def) {");
       out.println("\t\tGetName g = o!=null? nameMap.get(o.getClass().getInterfaces()[0]):null;");
       out.println("\t\treturn g != null?g.getName(o):def;");
       out.println("\t}");
@@ -665,6 +671,10 @@ public class JetBrainsEmitter implements Emitter {
     return typeName.replace('.', File.separatorChar) + ".java";
   }
 
+  private String getStringClassName() {
+    return myUseQualifiedClassNames ? CommonClassNames.JAVA_LANG_STRING : StringUtil.getShortName(CommonClassNames.JAVA_LANG_STRING);
+  }
+
   public static String toJavaIdName(String javaFieldName) {
     if (Util.RESERVED_NAMES_MAP.containsKey(javaFieldName)) {
       javaFieldName += "_";
@@ -675,5 +685,9 @@ public class JetBrainsEmitter implements Emitter {
 
   public void setAuthor(String author) {
     AUTHOR = "@author " + author;
+  }
+
+  public void enableQualifiedClassNames() {
+    myUseQualifiedClassNames = true;
   }
 }

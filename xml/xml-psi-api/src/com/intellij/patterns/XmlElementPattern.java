@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
   public static class Capture extends XmlElementPattern<XmlElement, Capture> {
     protected Capture() {
       super(new InitialPatternCondition<XmlElement>(XmlElement.class) {
+        @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlElement;
         }
@@ -47,6 +48,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
   public static class XmlTextPattern extends XmlElementPattern<XmlText, XmlTextPattern> {
     public XmlTextPattern() {
       super(new InitialPatternCondition<XmlText>(XmlText.class) {
+        @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlText;
         }
@@ -57,6 +59,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
   public static class XmlEntityRefPattern extends XmlElementPattern<XmlEntityRef, XmlEntityRefPattern> {
     public XmlEntityRefPattern() {
       super(new InitialPatternCondition<XmlEntityRef>(XmlEntityRef.class) {
+        @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlEntityRef;
         }

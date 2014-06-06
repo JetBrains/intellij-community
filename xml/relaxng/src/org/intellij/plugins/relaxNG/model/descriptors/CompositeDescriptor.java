@@ -38,6 +38,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
     myPatterns = patterns.toArray(new DElementPattern[patterns.size()]);
   }
 
+  @Override
   protected XmlElementDescriptor findElementDescriptor(XmlTag childTag) {
     final List<DElementPattern> patterns = new ArrayList<DElementPattern>();
     for (DElementPattern pattern : myPatterns) {
@@ -58,6 +59,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
     return NULL;
   }
 
+  @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>(Arrays.asList(super.getElementsDescriptors(context)));
     for (DElementPattern pattern : myPatterns) {
@@ -67,12 +69,14 @@ public class CompositeDescriptor extends RngElementDescriptor {
     return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
   }
 
+  @Override
   protected XmlAttributeDescriptor getAttributeDescriptor(String namespace, String localName) {
     final QName qname = new QName(namespace, localName);
 
     return computeAttributeDescriptor(AttributeFinder.find(qname, myPatterns));
   }
 
+  @Override
   protected XmlAttributeDescriptor[] collectAttributeDescriptors(@Nullable XmlTag context) {
     final QName qName = null;
     final DPattern[] patterns;
@@ -80,6 +84,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
       patterns = myPatterns;
     } else {
       final List<DElementPattern> p = ContainerUtil.findAll(myPatterns, new Condition<DElementPattern>() {
+        @Override
         public boolean value(DElementPattern pattern) {
           return pattern.getName().contains(qName);
         }

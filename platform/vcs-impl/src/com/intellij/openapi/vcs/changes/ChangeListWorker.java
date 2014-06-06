@@ -107,6 +107,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private void checkForMultipleCopiesNotMove(boolean somethingChanged) {
     final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
+      @NotNull
       protected Collection<Pair<Change, String>> createCollection() {
         return new LinkedList<Pair<Change, String>>();
       }

@@ -56,6 +56,7 @@ public class PatternParsing extends DeclarationParsing {
     parseTopLevel();
   }
 
+  @Override
   protected boolean parsePattern() {
     PsiBuilder.Marker marker = myBuilder.mark();
     if (!parseQuantifiedPattern()) {

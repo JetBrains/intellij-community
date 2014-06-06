@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.PriorityActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
@@ -2686,7 +2687,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (expr instanceof PsiMethodCallExpression) {
       final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true));
+        QuickFixAction.registerQuickFixAction(highlightInfo, PriorityActionWrapper
+          .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true)));
       }
     } else if (expr instanceof PsiReferenceExpression) {
       final PsiElement resolve = ((PsiReferenceExpression)expr).resolve();

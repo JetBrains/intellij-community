@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,12 @@ public class BreadcrumbsPsiItem extends BreadcrumbsItem {
     myPresentation = presentation;
   }
 
+  @Override
   public String getDisplayText() {
     return isValid() ? myProvider.getElementInfo(myElement) : "INVALID";
   }
 
+  @Override
   public String getTooltip() {
     final String s = isValid() ? myProvider.getElementTooltip(myElement) : "";
     return s == null ? "" : s;

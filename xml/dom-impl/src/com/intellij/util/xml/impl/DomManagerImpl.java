@@ -93,6 +93,7 @@ public final class DomManagerImpl extends DomManager {
 
     final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
+      @Override
       public void modelChanged(PomModelEvent event) {
         if (myChanging) return;
         
@@ -107,6 +108,7 @@ public final class DomManagerImpl extends DomManager {
         }
       }
 
+      @Override
       public boolean isAspectChangeInteresting(PomModelAspect aspect) {
         return aspect instanceof XmlAspect;
       }
@@ -115,6 +117,7 @@ public final class DomManagerImpl extends DomManager {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       private final List<DomEvent> myDeletionEvents = new SmartList<DomEvent>();
 
+      @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         if (!event.isFromSave()) {
           fireEvents(calcDomChangeEvents(event.getFile()));
@@ -126,10 +129,12 @@ public final class DomManagerImpl extends DomManager {
         fireEvents(calcDomChangeEvents(event.getFile()));
       }
 
+      @Override
       public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
         myDeletionEvents.addAll(calcDomChangeEvents(event.getFile()));
       }
 
+      @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         if (!myDeletionEvents.isEmpty()) {
           fireEvents(myDeletionEvents);
@@ -137,6 +142,7 @@ public final class DomManagerImpl extends DomManager {
         }
       }
 
+      @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         final VirtualFile file = event.getFile();
         if (!file.isDirectory() && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
@@ -193,18 +199,22 @@ public final class DomManagerImpl extends DomManager {
     return (DomManagerImpl)DomManager.getDomManager(project);
   }
 
+  @Override
   public void addDomEventListener(DomEventListener listener, Disposable parentDisposable) {
     myListeners.addListener(listener, parentDisposable);
   }
 
+  @Override
   public final ConverterManager getConverterManager() {
     return ServiceManager.getService(ConverterManager.class);
   }
 
+  @Override
   public final void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory) {
     myGenericValueReferenceProvider.addReferenceProviderForClass(clazz, psiReferenceFactory);
   }
 
+  @Override
   public final ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
@@ -221,6 +231,7 @@ public final class DomManagerImpl extends DomManager {
     }
   }
 
+  @Override
   public final DomGenericInfo getGenericInfo(final Type type) {
     return myApplicationComponent.getStaticGenericInfo(type);
   }
@@ -262,10 +273,12 @@ public final class DomManagerImpl extends DomManager {
     return myApplicationComponent;
   }
 
+  @Override
   public final Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     //noinspection unchecked
@@ -319,6 +332,7 @@ public final class DomManagerImpl extends DomManager {
     return oldChanging;
   }
 
+  @Override
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
@@ -334,6 +348,7 @@ public final class DomManagerImpl extends DomManager {
     return SoftReference.dereference(file.getUserData(CACHED_FILE_ELEMENT));
   }
 
+  @Override
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     final DomFileDescription description = getDomFileDescription(file);
@@ -343,6 +358,7 @@ public final class DomManagerImpl extends DomManager {
     return null;
   }
 
+  @Override
   @Nullable
   public final DomElement getDomElement(final XmlTag element) {
     if (myChanging) return null;
@@ -351,6 +367,7 @@ public final class DomManagerImpl extends DomManager {
     return handler != null ? handler.getProxy() : null;
   }
 
+  @Override
   @Nullable
   public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
     if (myChanging) return null;
@@ -372,6 +389,7 @@ public final class DomManagerImpl extends DomManager {
     return mySemService.getSemElement(DOM_HANDLER_KEY, tag);
   }
 
+  @Override
   @Nullable
   public AbstractDomChildrenDescription findChildrenDescription(@NotNull final XmlTag tag, @NotNull final DomElement parent) {
     return findChildrenDescription(tag, getDomInvocationHandler(parent));
@@ -397,6 +415,7 @@ public final class DomManagerImpl extends DomManager {
     return null;
   }
 
+  @Override
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
@@ -404,18 +423,22 @@ public final class DomManagerImpl extends DomManager {
     return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();
   }
 
+  @Override
   public final boolean isMockElement(DomElement element) {
     return DomUtil.getFile(element).getUserData(MOCK) != null;
   }
 
+  @Override
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
     return createStableValue(provider, new Condition<T>() {
+      @Override
       public boolean value(T t) {
         return t.isValid();
       }
     });
   }
 
+  @Override
   public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
     final T initial = provider.create();
     assert initial != null;
@@ -433,6 +456,7 @@ public final class DomManagerImpl extends DomManager {
   public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
     registerFileDescription(description);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         getFileDescriptions(description.getRootTagName()).remove(description);
         getAcceptingOtherRootTagNameDescriptions().remove(description);
@@ -440,28 +464,33 @@ public final class DomManagerImpl extends DomManager {
     });
   }
 
+  @Override
   public final void registerFileDescription(final DomFileDescription description) {
     mySemService.clearCache();
 
     myApplicationComponent.registerFileDescription(description);
   }
 
+  @Override
   @NotNull
   public final DomElement getResolvingScope(GenericDomValue element) {
     final DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getResolveScope(element);
   }
 
+  @Override
   @Nullable
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);
   }
 
+  @Override
   public TypeChooserManager getTypeChooserManager() {
     return myApplicationComponent.getTypeChooserManager();
   }
 
+  @Override
   public long getModificationCount() {
     return myModificationCount + PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,47 +43,57 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
     myProject = project;
   }
 
+  @Override
   public boolean isRequired() {
     final Required required = myDescription.getAnnotation(Required.class);
     return required != null && required.value();
   }
 
+  @Override
   public boolean isFixed() {
     return false;
   }
 
+  @Override
   public boolean hasIdType() {
     return false;
   }
 
+  @Override
   public boolean hasIdRefType() {
     return false;
   }
 
+  @Override
   @Nullable
   public String getDefaultValue() {
     return null;
   }//todo: refactor to hierarchy of value descriptor?
 
+  @Override
   public boolean isEnumerated() {
     return false;
   }
 
+  @Override
   @Nullable
   public String[] getEnumeratedValues() {
     return null;
   }
 
+  @Override
   @Nullable
   public String validateValue(final XmlElement context, final String value) {
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getDeclaration() {
     return myDescription.getDeclaration(myProject);
   }
 
+  @Override
   @NonNls
   public String getName(final PsiElement context) {
     return getQualifiedAttributeName(context, myDescription.getXmlName());
@@ -108,6 +118,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
     return localName;
   }
 
+  @Override
   @NonNls
   public String getName() {
     return getLocalName();
@@ -117,6 +128,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
     return myDescription.getXmlName().getLocalName();
   }
 
+  @Override
   @Nullable
   public String getNamespace(@NotNull XmlTag context) {
     final DomInvocationHandler handler = DomManagerImpl.getDomManager(myProject).getDomHandler(context);
@@ -127,10 +139,12 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
     return handler.createEvaluatedXmlName(myDescription.getXmlName()).getNamespace(context, handler.getFile());
   }
 
+  @Override
   public void init(final PsiElement element) {
     throw new UnsupportedOperationException("Method init not implemented in " + getClass());
   }
 
+  @Override
   public Object[] getDependences() {
     throw new UnsupportedOperationException("Method getDependences not implemented in " + getClass());
   }

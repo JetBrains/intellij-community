@@ -24,7 +24,7 @@ public class PasswordSafeConfigurable implements SearchableConfigurable, Configu
   /**
    * The option panel to use
    */
-  PasswordSafeOptionsPanel myPanel = null;
+  PasswordSafeOptionsPanel myPanel;
 
   /**
    * The constructor
@@ -56,7 +56,7 @@ public class PasswordSafeConfigurable implements SearchableConfigurable, Configu
    */
   public JComponent createComponent() {
     myPanel = new PasswordSafeOptionsPanel(myPasswordSafe);
-    myPanel.load(mySettings);
+    myPanel.reset(mySettings);
     return myPanel.getRoot();  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -71,14 +71,14 @@ public class PasswordSafeConfigurable implements SearchableConfigurable, Configu
    * {@inheritDoc}
    */
   public void apply() throws ConfigurationException {
-    myPanel.save(mySettings);
+    myPanel.apply(mySettings);
   }
 
   /**
    * {@inheritDoc}
    */
   public void reset() {
-    myPanel.load(mySettings);
+    myPanel.reset(mySettings);
   }
 
   /**

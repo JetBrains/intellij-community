@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.util.List;
  * @author ven
  */
 public class XmlSurroundDescriptor implements SurroundDescriptor {
+  @Override
   @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final Pair<XmlTagChild, XmlTagChild> childrenInRange = XmlUtil.findTagChildrenInRange(file, startOffset, endOffset);
     if (childrenInRange == null) {
@@ -60,6 +61,7 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
+  @Override
   @NotNull public Surrounder[] getSurrounders() {
     return new Surrounder[0]; //everything is in live templates now
   }

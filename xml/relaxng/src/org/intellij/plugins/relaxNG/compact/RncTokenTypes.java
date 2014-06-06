@@ -79,6 +79,7 @@ public class RncTokenTypes {
     assert !ourTokenTypes.isEmpty();
     final Ref<IElementType> ref = new Ref<IElementType>();
     ourTokenTypes.forEachValue(new TObjectProcedure<IElementType>() {
+      @Override
       public boolean execute(IElementType iElementType) {
         if (iElementType.toString().equals(name)) {
           ref.set(iElementType);

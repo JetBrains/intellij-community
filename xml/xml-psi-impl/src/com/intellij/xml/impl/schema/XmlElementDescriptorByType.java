@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,17 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
 
   public XmlElementDescriptorByType() {}
 
+  @Override
   public XmlTag getDeclaration(){
     return myDescriptorTag;
   }
 
+  @Override
   public String getName(PsiElement context){
     return myDescriptorTag.getName();
   }
 
+  @Override
   public XmlNSDescriptor getNSDescriptor() {
     XmlNSDescriptor nsDescriptor = NSDescriptor;
     if (nsDescriptor ==null) {
@@ -60,10 +63,12 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return nsDescriptor;
   }
 
+  @Override
   public ComplexTypeDescriptor getType(XmlElement context) {
     return myType;
   }
 
+  @Override
   public String getDefaultName() {
     XmlTag rootTag = ((XmlFile)getType(null).getDeclaration().getContainingFile()).getDocument().getRootTag();
 
@@ -74,6 +79,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return getName();
   }
   
+  @Override
   protected boolean askParentDescriptorViaXsi() {
     return false;
   }

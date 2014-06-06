@@ -22,22 +22,27 @@ import com.intellij.lang.Commenter;
  */
 public class XmlCommenter implements Commenter {
 
+  @Override
   public String getLineCommentPrefix() {
     return null;
   }
 
+  @Override
   public String getBlockCommentPrefix() {
     return "<!--";
   }
 
+  @Override
   public String getBlockCommentSuffix() {
     return "-->";
   }
 
+  @Override
   public String getCommentedBlockCommentPrefix() {
     return "&lt;!&ndash;";
   }
 
+  @Override
   public String getCommentedBlockCommentSuffix() {
     return "&ndash;&gt;";
   }

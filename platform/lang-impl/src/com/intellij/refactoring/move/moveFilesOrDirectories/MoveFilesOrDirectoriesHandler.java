@@ -50,11 +50,6 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
       }
     }
 
-    PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
-    if (filteredElements.length != elements.length) {
-      // there are nested dirs
-      return false;
-    }
     return super.canMove(elements, targetContainer);
   }
 
@@ -72,13 +67,23 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     doMove(project, elements, targetContainer, null);
   }
 
+
+  @Nullable
+  @Override
+  public PsiElement[] adjustForMove(Project project, PsiElement[] sourceElements, PsiElement targetElement) {
+    return PsiTreeUtil.filterAncestors(sourceElements);
+  }
+
   @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
     if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer,
                         "container: " + targetContainer + "; elements: " + Arrays.toString(elements) + "; working handler: " + toString())) {
       return;
     }
-    MoveFilesOrDirectoriesUtil.doMove(project, adjustForMove(project, elements, targetContainer), new PsiElement[] {targetContainer}, callback);
+    final PsiElement[] adjustedElements = adjustForMove(project, elements, targetContainer);
+    if (adjustedElements != null) {
+      MoveFilesOrDirectoriesUtil.doMove(project, adjustedElements, new PsiElement[] {targetContainer}, callback);
+    }
   }
 
   @Override

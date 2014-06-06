@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
     myName = element.getXmlElementName();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myIsTag ?
@@ -46,11 +47,13 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
            DomBundle.message("remove.attribute.fix.name", myName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return DomBundle.message("quick.fixes.family");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myIsTag) {
       final XmlTag tag = (XmlTag)descriptor.getPsiElement();

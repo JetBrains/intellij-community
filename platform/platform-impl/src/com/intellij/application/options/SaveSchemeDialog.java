@@ -23,19 +23,22 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SaveSchemeDialog extends DialogWrapper {
   private final JTextField mySchemeName = new JTextField();
-  private final ArrayList myInvalidNames;
+  private final List<String> myExistingNames;
 
-  public SaveSchemeDialog(Component parent, String title, ArrayList invalidNames){
+  public SaveSchemeDialog(@NotNull Component parent, String title, @NotNull List<String> existingNames, @NotNull String selectedName) {
     super(parent, false);
-    myInvalidNames = invalidNames;
+    myExistingNames = existingNames;
     setTitle(title);
+    mySchemeName.setText(UniqueNameGenerator.generateUniqueName(selectedName + " copy", existingNames));
     init();
   }
 
@@ -73,13 +76,12 @@ public class SaveSchemeDialog extends DialogWrapper {
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
-    else
-    //noinspection HardCodedStringLiteral
-    if ("default".equals(getSchemeName())) {
-      Messages.showMessageDialog(getContentPane(),ApplicationBundle.message("error.illegal.scheme.name"),
+    else if ("default".equals(getSchemeName())) {
+      Messages.showMessageDialog(getContentPane(), ApplicationBundle.message("error.illegal.scheme.name"),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
-    } else if (myInvalidNames.contains(getSchemeName())) {
+    }
+    else if (myExistingNames.contains(getSchemeName())) {
       Messages.showMessageDialog(
         getContentPane(),
         ApplicationBundle.message("error.a.scheme.with.this.name.already.exists.or.was.deleted.without.applying.the.changes"),

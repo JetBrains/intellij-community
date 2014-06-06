@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author ven
@@ -151,11 +150,7 @@ public class ChooseTypeExpression extends Expression {
 
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
-    Set<LookupElement> result = ContainerUtil.newHashSet();
-
-    if (myForGroovy) {
-      result.add(LookupElementBuilder.create(GrModifier.DEF).bold());
-    }
+    List<LookupElement> result = ContainerUtil.newArrayList();
 
     for (SmartTypePointer item : myItems) {
       PsiType type = TypesUtil.unboxPrimitiveTypeWrapper(item.getType());
@@ -163,6 +158,16 @@ public class ChooseTypeExpression extends Expression {
 
       PsiTypeLookupItem lookupItem = PsiTypeLookupItem.createLookupItem(type, null, PsiTypeLookupItem.isDiamond(type), IMPORT_FIXER);
       result.add(lookupItem);
+    }
+
+    if (myForGroovy) {
+      LookupElementBuilder def = LookupElementBuilder.create(GrModifier.DEF).bold();
+      if (mySelectDef) {
+        result.add(0, def);
+      }
+      else {
+        result.add(def);
+      }
     }
 
     return result.toArray(new LookupElement[result.size()]);

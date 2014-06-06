@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
   public static final Key<Map<Class, Boolean>> TREE_NODES_HIDERS_KEY = Key.create("TREE_NODES_HIDERS_KEY");
 
   private final static Comparator<Class> INHERITORS_COMPARATOR = new Comparator<Class>() {
+    @Override
     public int compare(final Class o1, final Class o2) {
       return o1.isAssignableFrom(o2) ? 1 : -1;
     }

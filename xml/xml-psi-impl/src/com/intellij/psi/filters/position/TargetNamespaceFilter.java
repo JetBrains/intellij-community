@@ -37,10 +37,12 @@ public class TargetNamespaceFilter extends XmlTextFilter {
     super(strs);
   }
 
+  @Override
   public boolean isClassAcceptable(Class hintClass){
     return ReflectionUtil.isAssignable(XmlTag.class, hintClass) || ReflectionUtil.isAssignable(XmlDocument.class, hintClass);
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context){
     if(element instanceof XmlTag){
       final String attributeValue = ((XmlTag)element).getAttributeValue("targetNamespace");

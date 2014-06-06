@@ -75,5 +75,6 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
                                                int numberInIteration,
                                                int totalIterations, @Nullable String surroundedText);
 
+  @Override
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
 }

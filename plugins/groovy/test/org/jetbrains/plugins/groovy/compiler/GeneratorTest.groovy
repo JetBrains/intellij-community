@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * User: Dmitry.Krasilschikov
- * Date: 06.06.2007
- */
-public class GeneratorTest extends LightGroovyTestCase {
 
+/**
+ * @author Dmitry.Krasilschikov
+ * @since 06.06.2007
+ */
+class GeneratorTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/stubGenerator"
 
   public void testArrayType1() throws Throwable { doTest(); }

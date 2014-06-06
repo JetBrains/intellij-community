@@ -106,6 +106,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
 
+    <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"

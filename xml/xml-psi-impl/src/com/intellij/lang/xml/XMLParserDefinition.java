@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,44 +37,53 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class XMLParserDefinition implements ParserDefinition {
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new XmlLexer();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return XmlElementType.XML_FILE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return XmlTokenType.WHITESPACES;
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return XmlTokenType.COMMENTS;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
+  @Override
   @NotNull
   public PsiParser createParser(final Project project) {
     return new XmlParser();
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(ASTNode node) {
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
+  @Override
   public PsiFile createFile(FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.XML_FILE);
   }
 
+  @Override
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
     return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameHandler");
 
 
+  @Override
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
@@ -70,6 +71,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     return isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
   }
 
+  @Override
   public boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
@@ -142,6 +144,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
     if (!isRenaming(dataContext)) {
       return;
@@ -153,6 +156,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     invoke(editor, element, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) {

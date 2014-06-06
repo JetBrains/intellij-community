@@ -71,6 +71,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   private int myEndOffset;
   private TIntIntHashMap myLengthMap;
 
+  @Override
   public void advance() {
     try {
       myCurrentToken = nextToken();
@@ -137,10 +138,12 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     return myBuffer;
   }
 
+  @Override
   public int getBufferEnd() {
     return myEndOffset;
   }
 
+  @Override
   public int getState() {
     try {
       return (Integer)myStateField.get(myLexer);
@@ -149,14 +152,17 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     }
   }
 
+  @Override
   public int getTokenEnd() {
     return myCurrentEnd;
   }
 
+  @Override
   public int getTokenStart() {
     return myCurrentToken == null ? 0 : myCurrentOffset;
   }
 
+  @Override
   @Nullable
   public IElementType getTokenType() {
     if (myCurrentToken == null) {
@@ -174,6 +180,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     init(startOffset, endOffset, reader, initialState);
   }
 
+  @Override
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
@@ -250,9 +257,11 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       myCurPos = startOffset;
     }
 
+    @Override
     public void close() {
     }
 
+    @Override
     public int read(char[] cbuf, int off, int len) {
       if ((off < 0) || (off > cbuf.length) || (len < 0) || ((off + len) > cbuf.length) || ((off + len) < 0)) {
         throw new IndexOutOfBoundsException();
@@ -278,6 +287,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       return charsToCopy;
     }
 
+    @Override
     public int read() {
       if (myCurPos >= myEndOffset) return -1;
       return myText.charAt(myCurPos++);

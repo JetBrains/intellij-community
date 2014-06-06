@@ -44,6 +44,7 @@ public class IdRefProvider extends PsiReferenceProvider {
   public static final HasIdRefTypeCondition HAS_ID_REF_TYPE = new HasIdRefTypeCondition();
   public static final HasIdTypeCondition HAS_ID_TYPE = new HasIdTypeCondition();
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
@@ -73,15 +74,18 @@ public class IdRefProvider extends PsiReferenceProvider {
       myCondition = new AttributeValueCondition(element.getValue());
     }
 
+    @Override
     public PsiElement resolve() {
       final ProcessingContext context = new ProcessingContext();
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(myCondition).save(TARGET), context) {
+        @Override
         public void visitXmlTag(XmlTag tag) {
           super.visitXmlTag(tag);
           if (shouldContinue()) {
             visitSubTags(tag);
           }
         }
+        @Override
         protected boolean shouldContinue() {
           return context.get(TARGET) == null;
         }
@@ -99,12 +103,14 @@ public class IdRefProvider extends PsiReferenceProvider {
       }
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       final ProcessingContext context = new ProcessingContext();
       context.put(VARIANTS, new HashSet<XmlAttributeValue>());
 
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(AddValueCondition.create(VARIANTS)), context) {
+        @Override
         public void visitXmlTag(XmlTag tag) {
           super.visitXmlTag(tag);
           visitSubTags(tag);
@@ -132,6 +138,7 @@ public class IdRefProvider extends PsiReferenceProvider {
       super("IdType");
     }
 
+    @Override
     public boolean accepts(@NotNull XmlAttributeValue xmlAttributeValue, ProcessingContext context) {
       return hasIdType(xmlAttributeValue);
     }
@@ -142,6 +149,7 @@ public class IdRefProvider extends PsiReferenceProvider {
       super("IdRef");
     }
 
+    @Override
     public boolean accepts(@NotNull XmlAttributeValue xmlAttributeValue,  ProcessingContext context) {
       return hasIdRefType(xmlAttributeValue);
     }

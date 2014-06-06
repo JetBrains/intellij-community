@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
     super(XML_PROLOG);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlProlog(this);
@@ -45,6 +46,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
     }
   }
 
+  @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_DOCTYPE) {
@@ -55,6 +57,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
     }
   }
 
+  @Override
   public XmlDoctype getDoctype() {
     return (XmlDoctype)findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE);
   }

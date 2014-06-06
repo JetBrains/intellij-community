@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     myIsStandard = isStandard;
   }
 
+  @Override
   public String getPresentation() {
     return myName != null ? myName : myValue;
   }
@@ -64,6 +65,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myIsStandard;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     if (myColor == null) {
       if (myValue.startsWith("#")) {
@@ -83,6 +85,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return null;
   }
 
+  @Override
   public boolean handleUserSelection(LookupItem item, Project project) {
     if (!myIsStandard) {
       item.setLookupString(myValue);
@@ -135,16 +138,19 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return ourColors;
   }
 
+  @Override
   @Nullable
   public String getTypeHint() {
     return myValue != null && myValue.charAt(0) == '#' ? myValue : null;
   }
 
+  @Override
   @Nullable
   public Color getColorHint() {
     return null;
   }
 
+  @Override
   public boolean isBold() {
     return false;
   }
@@ -153,6 +159,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myName;
   }
 
+  @Override
   public int getPriority() {
     return myName == null || Character.isLowerCase(myName.charAt(0)) ? HIGHER : NORMAL;
   }

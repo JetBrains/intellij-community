@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,21 +98,25 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return myEditable;
   }
 
+  @Override
   public void bind(JComponent component) {
     assert component instanceof DomTableView;
 
     initialize((DomTableView)component);
   }
 
+  @Override
   public void addCommitListener(CommitListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeCommitListener(CommitListener listener) {
     myDispatcher.removeListener(listener);
   }
 
 
+  @Override
   public boolean canNavigate(DomElement element) {
     final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
 
@@ -121,6 +125,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return domElement != null && myCollectionElements.contains(domElement);
   }
 
+  @Override
   public void navigate(DomElement element) {
     final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
@@ -131,6 +136,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.getTable().setRowSelectionInterval(index, index);
   }
 
+  @Override
   public void calcData(final DataKey key, final DataSink sink) {
     if (DOM_COLLECTION_CONTROL.equals(key)) {
       sink.put(DOM_COLLECTION_CONTROL, this);
@@ -158,7 +164,8 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, createPopupActionGroup());
     myCollectionPanel.initializeTable();
     myCollectionPanel.addCustomDataProvider(this);
-    myCollectionPanel.addChangeListener(new DomTableView.ChangeListener() {
+    myCollectionPanel.addChangeListener(new AbstractTableView.ChangeListener() {
+      @Override
       public void changed() {
         reset();
       }
@@ -197,6 +204,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     new WriteCommandAction(getProject(), PsiUtilCore.toPsiFileArray(files)) {
+      @Override
       protected void run(Result result) throws Throwable {
         for (final T t : toDelete) {
           if (t.isValid()) {
@@ -209,6 +217,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   protected final void doRemove() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final int[] selected = myCollectionPanel.getTable().getSelectedRows();
         if (selected == null || selected.length == 0) return;
@@ -234,6 +243,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     writeCommandAction.execute();
   }
 
+  @Override
   public void commit() {
     final CommitListener listener = myDispatcher.getMulticaster();
     listener.beforeCommit(this);
@@ -256,6 +266,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.repaint();
   }
 
+  @Override
   public void dispose() {
     if (myCollectionPanel != null) {
       myCollectionPanel.dispose();
@@ -266,6 +277,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return myParentDomElement.getManager().getProject();
   }
 
+  @Override
   public DomTableView getComponent() {
     if (myCollectionPanel == null) initialize(null);
 
@@ -276,10 +288,12 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return myChildDescription;
   }
 
+  @Override
   public final DomElement getDomElement() {
     return myParentDomElement;
   }
 
+  @Override
   public final void reset() {
     myCollectionElements = new ArrayList<T>(getCollectionElements());
     myCollectionPanel.reset(createColumnInfos(myParentDomElement), myCollectionElements);
@@ -297,6 +311,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   protected DefaultAddAction createDefaultAction(final String name, final Icon icon, final Type type) {
     return new ControlAddAction(name, name, icon) {
+      @Override
       protected Type getElementType() {
         return type;
       }
@@ -321,6 +336,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return (DomEditorManager)component;
   }
 
+  @Override
   public void updateHighlighting() {
     if (myCollectionPanel != null) {
       myCollectionPanel.revalidate();
@@ -341,10 +357,12 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       super(text, description, icon);
     }
 
+    @Override
     protected final DomCollectionChildDescription getDomCollectionChildDescription() {
       return myChildDescription;
     }
 
+    @Override
     protected final DomElement getParentDomElement() {
       return myParentDomElement;
     }
@@ -365,7 +383,8 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       }
     }
 
-    protected final void afterAddition(final T newElement) {
+    @Override
+    protected final void afterAddition(@NotNull final T newElement) {
       reset();
       afterAddition(myCollectionPanel.getTable(), myCollectionElements.size() - 1);
     }
@@ -381,6 +400,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }
 
+    @Override
     protected boolean isEnabled(final AnActionEvent e) {
       return getDomCollectionControl(e) != null;
     }
@@ -389,19 +409,23 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       return DomCollectionControl.getDomCollectionControl(e);
     }
 
+    @Override
     @NotNull
     protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
       return new DomCollectionChildDescription[] {getDomCollectionControl(e).getChildDescription()};
     }
 
+    @Override
     protected DomElement getParentDomElement(final AnActionEvent e) {
       return getDomCollectionControl(e).getDomElement();
     }
 
+    @Override
     protected JComponent getComponent(AnActionEvent e) {
       return getDomCollectionControl(e).getComponent();
     }
 
+    @Override
     @NotNull
     public AnAction[] getChildren(final AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
@@ -409,6 +433,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       return actions == null ? super.getChildren(e) : actions;
     }
 
+    @Override
     protected DefaultAddAction createAddingAction(final AnActionEvent e,
                                                   final String name,
                                                   final Icon icon,
@@ -426,12 +451,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT));
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       control.doEdit();
       control.reset();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       final boolean visible = control != null && control.isEditable();
@@ -446,12 +473,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       control.doRemove();
       control.reset();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final boolean enabled;
       final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);

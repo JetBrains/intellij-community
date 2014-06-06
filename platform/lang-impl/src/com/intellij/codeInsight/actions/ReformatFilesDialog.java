@@ -21,7 +21,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -77,5 +79,17 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
 
   static boolean isOptmizeImportsOptionOn() {
     return PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false);
+  }
+
+  @Nullable
+  @Override
+  public SearchScope getSearchScope() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getFileTypeMask() {
+    return null;
   }
 }

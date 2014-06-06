@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PsiFunction implements NotNullFunction<ASTNode, PsiElement> {
   public static final PsiFunction INSTANCE = new PsiFunction();
 
+  @Override
   @NotNull
   public PsiElement fun(ASTNode astNode) {
     return astNode.getPsi();

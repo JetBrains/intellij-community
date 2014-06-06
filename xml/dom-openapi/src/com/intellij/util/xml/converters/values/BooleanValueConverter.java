@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
     return Arrays.binarySearch(getTrueValues(), s) >= 0;
   }
 
+  @Override
   public String fromString(@Nullable @NonNls final String stringValue, final ConvertContext context) {
     if (stringValue != null && ((myAllowEmpty && stringValue.trim().length() == 0) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
       return stringValue;
@@ -76,15 +77,18 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
     return null;
   }
 
+  @Override
   public String toString(@Nullable final String s, final ConvertContext context) {
     return s;
   }
 
+  @Override
   @NotNull
   public Collection<? extends String> getVariants(final ConvertContext context) {
     return Arrays.asList(VARIANTS);
   }
 
+  @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
     return DomBundle.message("value.converter.format.exception", s, BOOLEAN);
   }

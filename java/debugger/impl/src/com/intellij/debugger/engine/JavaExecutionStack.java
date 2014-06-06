@@ -30,6 +30,7 @@ import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,11 +45,26 @@ public class JavaExecutionStack extends XExecutionStack {
   private final MethodsTracker myTracker = new MethodsTracker();
 
   public JavaExecutionStack(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull DebugProcessImpl debugProcess, boolean current) {
-    super(calcRepresentation(threadProxy), current ? AllIcons.Debugger.ThreadCurrent : AllIcons.Debugger.ThreadSuspended);
+    super(calcRepresentation(threadProxy), calcIcon(threadProxy, current));
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
     if (current) {
       myTopFrame = calcTopFrame();
+    }
+  }
+
+  private static Icon calcIcon(ThreadReferenceProxyImpl threadProxy, boolean current) {
+    if (current) {
+      return AllIcons.Debugger.ThreadCurrent;
+    }
+    else if (threadProxy.getThreadReference().isAtBreakpoint()) {
+      return AllIcons.Debugger.ThreadAtBreakpoint;
+    }
+    else if (threadProxy.isSuspended()) {
+      return AllIcons.Debugger.ThreadSuspended;
+    }
+    else {
+      return AllIcons.Debugger.ThreadRunning;
     }
   }
 
@@ -147,5 +163,22 @@ public class JavaExecutionStack extends XExecutionStack {
       return DebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
     }
     return DebuggerBundle.message("label.thread.node", name, thread.uniqueID(), threadStatusText);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JavaExecutionStack stack = (JavaExecutionStack)o;
+
+    if (!myThreadProxy.equals(stack.myThreadProxy)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myThreadProxy.hashCode();
   }
 }

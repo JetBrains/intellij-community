@@ -78,10 +78,10 @@ public class ChangeBufferingList implements Cloneable {
   }
 
   public void remove(int value) {
-    ensureCapacity(1);
     if (DEBUG) checkSet.remove(value);
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
+      ensureCapacity(1);
       addChange(-value);
     }
     else {
@@ -197,14 +197,17 @@ public class ChangeBufferingList implements Cloneable {
     if (changes == null) {
       changes = new int[Math.max(3, diff)];
     } else if (length + diff > changes.length) {
-      int nextArraySize = Math.min(
-        Math.max(changes.length < 1024 ? changes.length << 1 : changes.length + changes.length / 5, length + diff),
-        MAX_FILES
-      );
-      int[] newChanges = new int[nextArraySize];
+      int[] newChanges = new int[calcNextArraySize(changes.length, length + diff)];
       System.arraycopy(changes, 0, newChanges, 0, length);
       changes = newChanges;
     }
+  }
+
+  static int calcNextArraySize(int currentSize, int wantedSize) {
+    return Math.min(
+          Math.max(currentSize < 1024 ? currentSize << 1 : currentSize + currentSize / 5, wantedSize),
+          MAX_FILES
+        );
   }
 
   public boolean isEmpty() {
@@ -212,7 +215,7 @@ public class ChangeBufferingList implements Cloneable {
       if (changes == null) return true;
       if (removals == 0) return length == 0;
     }
-    // todo we can
+    // todo we can calculate isEmpty in more cases (without container)
     RandomAccessIntContainer intContainer = getRandomAccessContainer();
     return intContainer.size() == 0;
   }

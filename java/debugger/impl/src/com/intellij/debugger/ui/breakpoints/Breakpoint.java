@@ -48,6 +48,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.sun.jdi.*;
@@ -448,9 +449,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       if (logMessage != null && !logMessage.isEmpty()) {
         XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
         XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XBreakpointActionsPanel.LOG_EXPRESSION_HISTORY_ID, expression);
-        if (Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED"))) {
-          myXBreakpoint.setLogExpressionObject(expression);
-        }
+        myXBreakpoint.setLogExpressionObject(expression);
+        ((XBreakpointBase)myXBreakpoint).setLogExpressionEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
       }
     }
     catch (Exception ignored) {

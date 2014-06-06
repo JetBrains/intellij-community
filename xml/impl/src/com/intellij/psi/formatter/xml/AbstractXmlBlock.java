@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.util.List;
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected XmlFormattingPolicy myXmlFormattingPolicy;
-  protected XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
+  protected final XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
   private final boolean myPreserveSpace;
 
   protected AbstractXmlBlock(final ASTNode node,
@@ -238,6 +238,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   private static XmlTag[] collectSubTags(final XmlElement node) {
     final List<XmlTag> result = new ArrayList<XmlTag>();
     node.processElements(new PsiElementProcessor() {
+      @Override
       public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof XmlTag) {
           result.add((XmlTag)element);
@@ -292,6 +293,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     } else if (child.getElementType() == XmlElementType.XML_DOCTYPE) {
       result.add(
         new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace()) {
+          @Override
           protected Wrap getDefaultWrap(final ASTNode node) {
             final IElementType type = node.getElementType();
             return type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
@@ -406,6 +408,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return leaf;
   }
 
+  @Override
   public boolean isLeaf() {
     return (isComment(myNode)) ||
            myNode.getElementType() == TokenType.WHITE_SPACE ||

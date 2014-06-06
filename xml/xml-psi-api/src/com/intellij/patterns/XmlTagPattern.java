@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import java.util.Collection;
 public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedElementPattern<XmlTag, Self> {
   protected XmlTagPattern() {
     super(new InitialPatternCondition<XmlTag>(XmlTag.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof XmlTag;
       }
@@ -42,16 +43,19 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
     super(condition);
   }
 
+  @Override
   protected String getLocalName(XmlTag tag) {
     return tag.getLocalName();
   }
 
+  @Override
   protected String getNamespace(XmlTag tag) {
     return tag.getNamespace();
   }
 
   public Self withAttributeValue(@NotNull @NonNls final String attributeName, @NotNull final String attributeValue) {
     return with(new PatternCondition<XmlTag>("withAttributeValue") {
+      @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         return Comparing.equal(xmlTag.getAttributeValue(attributeName), attributeValue);
       }
@@ -60,6 +64,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
 
   public Self withAnyAttribute(@NotNull @NonNls final String... attributeNames) {
     return with(new PatternCondition<XmlTag>("withAnyAttribute") {
+      @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         for (String attributeName : attributeNames) {
           if (xmlTag.getAttribute(attributeName) != null) {
@@ -73,6 +78,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
 
   public Self withDescriptor(@NotNull final ElementPattern<? extends PsiMetaData> metaDataPattern) {
     return with(new PatternCondition<XmlTag>("withDescriptor") {
+      @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         return metaDataPattern.accepts(xmlTag.getDescriptor());
       }
@@ -81,6 +87,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
 
   public Self isFirstSubtag(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<XmlTag>("isFirstSubtag") {
+      @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         final XmlTag parent = xmlTag.getParentTag();
         return parent != null &&
@@ -95,6 +102,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
 
   public Self withSubTags(@NotNull final ElementPattern<? extends Collection<XmlTag>> pattern) {
     return with(new PatternCondition<XmlTag>("withSubTags") {
+      @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         return pattern.getCondition().accepts(Arrays.asList(xmlTag.getSubTags()), context);
       }

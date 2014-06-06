@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,14 +64,17 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     return result;
   }
 
+  @Override
   public final TableCellEditor getEditor(T value) {
     return myEditor;
   }
 
+  @Override
   public final Class<T> getColumnClass() {
     return (Class<T>)ReflectionUtil.getRawType(myChildDescription.getType());
   }
 
+  @Override
   public TableCellRenderer getCustomizedRenderer(final T domElement, final TableCellRenderer renderer) {
     assert domElement.isValid();
     return getErrorableCellRenderer(renderer, domElement);
@@ -81,6 +84,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     return new ErrorableTableCellRenderer<GenericDomValue>(getGenericValue(domElement), renderer, domElement);
   }
 
+  @Override
   public void setValue(final T o, final String aValue) {
     getGenericValue(o).setStringValue(aValue);
   }
@@ -89,6 +93,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
     return (GenericDomValue)myChildDescription.getValues(o).get(0);
   }
 
+  @Override
   public final String valueOf(T object) {
     if (!object.isValid()) return null;
     final String stringValue = getGenericValue(object).getStringValue();

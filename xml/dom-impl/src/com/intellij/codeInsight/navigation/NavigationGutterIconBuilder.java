@@ -57,6 +57,7 @@ import java.util.*;
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
   private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR = new NotNullFunction<PsiElement, Collection<? extends PsiElement>>() {
+    @Override
     @NotNull
     public Collection<? extends PsiElement> fun(final PsiElement element) {
       return ContainerUtil.createMaybeSingletonList(element);
@@ -77,6 +78,7 @@ public class NavigationGutterIconBuilder<T> {
   private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
   private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
   public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR = new NotNullFunction<DomElement, Collection<? extends PsiElement>>() {
+    @Override
     @NotNull
     public Collection<? extends PsiElement> fun(final DomElement o) {
       return ContainerUtil.createMaybeSingletonList(o.getXmlElement());
@@ -295,6 +297,7 @@ public class NavigationGutterIconBuilder<T> {
     }
 
     return new NotNullLazyValue<List<SmartPsiElementPointer>>() {
+      @Override
       @NotNull
       public List<SmartPsiElementPointer> compute() {
         return calcPsiTargets(project, targets.create(), converter);
@@ -359,16 +362,19 @@ public class NavigationGutterIconBuilder<T> {
       return !myEmpty;
     }
 
+    @Override
     @NotNull
     public Icon getIcon() {
       return myIcon;
     }
 
+    @Override
     @Nullable
     public String getTooltipText() {
       return myTooltipText;
     }
 
+    @Override
     public Alignment getAlignment() {
       return myAlignment;
     }

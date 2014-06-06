@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     return SyntaxHighlighterBase.pack(XmlHighlighterColors.HTML_CODE, pack(keys1.get(tokenType), keys2.get(tokenType)));
   }
 
-  public static final void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
+  public static void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
                                                            Map<IElementType, TextAttributesKey> _keys2) {
     if (_keys1 != null) {
       for (Iterator<IElementType> iterator = _keys1.keySet().iterator(); iterator.hasNext();) {

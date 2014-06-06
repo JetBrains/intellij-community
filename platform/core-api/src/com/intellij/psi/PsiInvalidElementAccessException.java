@@ -62,6 +62,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     if (element == null) {
       myMessage = message;
       myDiagnostic = Attachment.EMPTY_ARRAY;
+    } else if (element == PsiUtilCore.NULL_PSI_ELEMENT) {
+      myMessage = "NULL_PSI_ELEMENT ;" + message;
+      myDiagnostic = Attachment.EMPTY_ARRAY;
     } else {
       boolean recursiveInvocation = Boolean.TRUE.equals(element.getUserData(REPORTING_EXCEPTION));
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
@@ -142,7 +145,6 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       if (context != null && !context.isValid()) {
         return "invalid context: " + reason(context);
       }
-      return "non-physical provider: " + provider; // "dummy" file?
     }
     PsiManager manager = file.getManager();
     if (manager.getProject().isDisposed()) return "project is disposed";
@@ -151,6 +153,9 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
     FileViewProvider provider1 = manager.findViewProvider(vFile);
     if (provider != provider1) return "different providers: "+provider+"("+Integer.toHexString(System.identityHashCode(provider))+"); "+provider1+"("+Integer.toHexString(System.identityHashCode(provider1))+")";
+    if (!provider.isPhysical()) {
+      return "non-physical provider: " + provider; // "dummy" file?
+    }
     return "psi is outdated";
   }
 

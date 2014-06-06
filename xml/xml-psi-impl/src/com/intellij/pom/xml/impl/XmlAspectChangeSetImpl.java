@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,15 +46,18 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     }
   }
 
+  @Override
   public List<XmlChange> getChanges(){
     return Collections.unmodifiableList(myChanges);
   }
 
+  @Override
   @NotNull
   public PomModelAspect getAspect() {
     return myModel.getModelAspect(XmlAspect.class);
   }
 
+  @Override
   public void merge(@NotNull PomChangeSet blocked) {
     final List<XmlChange> changes = ((XmlAspectChangeSetImpl)blocked).myChanges;
     for (XmlChange xmlChange : changes) {
@@ -62,21 +65,24 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     }
   }
 
+  @Override
   public void add(XmlChange xmlChange) {
     myChanges.add(xmlChange);
   }
 
+  @Override
   public void clear() {
     myChanges.clear();
   }
 
+  @Override
   @NotNull
   public Iterable<XmlFile> getChangedFiles() {
     return myChangedFiles;
   }
 
   public String toString(){
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     final Iterator<XmlChange> iterator = myChanges.iterator();
     while (iterator.hasNext()) {
       XmlChange xmlChange = iterator.next();
@@ -88,6 +94,7 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     return buffer.toString();
   }
 
+  @Override
   public void addChangedFile(@NotNull final XmlFile xmlFile) {
     myChangedFiles.add(xmlFile);
   }

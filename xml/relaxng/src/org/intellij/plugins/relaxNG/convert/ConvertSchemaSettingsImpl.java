@@ -144,6 +144,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
 
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         myPropertyChangeSupport.firePropertyChange(OUTPUT_PATH, null, getOutputDestination());
       }
@@ -151,6 +152,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     tf.setText(firstFile.getParent().getPath().replace('/', File.separatorChar));
 
     final ItemListener listener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           final SchemaType type = getOutputType();
@@ -169,6 +171,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
+  @Override
   @NotNull
   public SchemaType getOutputType() {
     if (myOutputRng.isSelected()) {
@@ -183,10 +186,12 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
+  @Override
   public String getOutputEncoding() {
     return (String)myEncoding.getSelectedItem();
   }
 
+  @Override
   public int getIndent() {
     return parseInt(myIndent.getText().trim());
   }
@@ -199,14 +204,17 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
+  @Override
   public int getLineLength() {
     return parseInt(myLineLength.getText());
   }
   
+  @Override
   public String getOutputDestination() {
     return myOutputDestination.getText();
   }
 
+  @Override
   public void addAdvancedSettings(List<String> inputParams, List<String> outputParams) {
     setParams(myInputOptions, inputParams);
 

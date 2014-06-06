@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
   public DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
     this(project, file, name, new Factory<T>() {
+      @Override
       public T create() {
         return component;
       }
@@ -58,6 +59,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     myName = name;
     
     DomElementAnnotationsManager.getInstance(project).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
+      @Override
       public void highlightingFinished(@NotNull DomFileElement element) {
         if (isInitialised() && getComponent().isShowing() && element.isValid()) {
           updateHighlighting();
@@ -66,12 +68,14 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     }, this);
   }
 
+  @Override
   public void updateHighlighting() {
     if (checkIsValid()) {
       CommittableUtil.updateHighlighting(myComponent);
     }
   }
 
+  @Override
   public void commit() {
     if (checkIsValid() && isInitialised()) {
       setShowing(false);
@@ -84,6 +88,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     }
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     ensureInitialized();
@@ -94,12 +99,14 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     return myComponent;
   }
 
+  @Override
   @NotNull
   protected JComponent createCustomComponent() {
     new MnemonicHelper().register(getComponent());
     myComponent = myComponentFactory.create();
     DomUIFactory.getDomUIFactory().setupErrorOutdatingUserActivityWatcher(this, getDomElement());
     DomManager.getDomManager(getProject()).addDomEventListener(new DomEventListener() {
+      @Override
       public void eventOccured(DomEvent event) {
         checkIsValid();
       }
@@ -108,16 +115,19 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     return myComponent.getComponent();
   }
 
+  @Override
   @NotNull
   public final String getName() {
     return myName;
   }
 
+  @Override
   protected DomElement getSelectedDomElement() {
     if (myComponent == null) return null;
     return DomUINavigationProvider.findDomElement(myComponent);
   }
 
+  @Override
   protected void setSelectedDomElement(DomElement domElement) {
     final DomUIControl domControl = DomUINavigationProvider.findDomControl(myComponent, domElement);
     if (domControl != null) {
@@ -125,6 +135,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     }
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     ensureInitialized();
     return DomUIFactory.getDomUIFactory().createDomHighlighter(getProject(), this, getDomElement());
@@ -135,10 +146,12 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
 
+  @Override
   public boolean isValid() {
     return super.isValid() && (!isInitialised() || getDomElement().isValid());
   }
 
+  @Override
   public void reset() {
     if (checkIsValid()) {
       myComponent.reset();
@@ -152,6 +165,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
     final XmlFile file = DomUtil.getFile(element);
     final Factory<BasicDomElementComponent> factory = new Factory<BasicDomElementComponent>() {
+      @Override
       public BasicDomElementComponent create() {
 
         CaptionComponent captionComponent = new CaptionComponent(name, icon);
@@ -162,6 +176,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
       }
     };
     return new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
+      @Override
       public JComponent getPreferredFocusedComponent() {
         return null;
       }
@@ -176,6 +191,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     panel.add(element.isValid() ? committablePanel.getComponent() : new JPanel(), BorderLayout.CENTER);
 
     BasicDomElementComponent component = new BasicDomElementComponent(element) {
+      @Override
       public JComponent getComponent() {
         return panel;
       }

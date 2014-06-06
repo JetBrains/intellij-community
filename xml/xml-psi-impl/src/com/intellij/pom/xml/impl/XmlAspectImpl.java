@@ -49,6 +49,7 @@ public class XmlAspectImpl implements XmlAspect {
     myModel.registerAspect(XmlAspect.class, this, Collections.singleton((PomModelAspect)myTreeAspect));
   }
 
+  @Override
   public void update(PomModelEvent event) {
     if (!event.getChangedAspects().contains(myTreeAspect)) return;
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);

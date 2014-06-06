@@ -34,7 +34,7 @@ public class GroovyScopeUtil {
 
   public static SearchScope restrictScopeToGroovyFiles(SearchScope originalScope, SearchScope effectiveScope) {
     SearchScope restricted = restrictScopeToGroovyFiles(originalScope);
-    return originalScope.intersectWith(effectiveScope);
+    return restricted.intersectWith(effectiveScope);
   }
 
 
