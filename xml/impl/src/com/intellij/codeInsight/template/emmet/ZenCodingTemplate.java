@@ -323,7 +323,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     });
     field.addKeyboardListener(new KeyAdapter() {
       @Override
-      public void keyPressed(KeyEvent e) {
+      public void keyPressed(@NotNull KeyEvent e) {
         if (!field.isPopupVisible()) {
           switch (e.getKeyCode()) {
             case KeyEvent.VK_ENTER:
