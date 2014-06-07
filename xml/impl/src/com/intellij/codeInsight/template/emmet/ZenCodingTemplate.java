@@ -509,6 +509,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           }
         }).isEmpty();
         
+        CompletionResultSet resultSet = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
+        resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
         if (!regularTemplateWithSamePrefixExists) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
           final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
@@ -518,9 +520,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             template.setKey(templatePrefix);
             template.setDescription(template.getTemplateText());
 
-            CompletionResultSet resultSet = result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(templatePrefix));
-            resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().startsWith(templatePrefix));
-            resultSet.addElement(new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(), true, true));
+            resultSet.addElement(new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(), 
+              !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true));
           }
         }
       }
