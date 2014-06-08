@@ -208,9 +208,7 @@ public class GrReferenceAdjuster implements ReferenceAdjuster {
     PsiResolveHelper helper = JavaPsiFacade.getInstance(ref.getProject()).getResolveHelper();
     if (ref instanceof GrReferenceElement) {
       final String classNameText = ((GrReferenceElement)ref).getClassNameText();
-      if (classNameText != null) {
-        return helper.resolveReferencedClass(classNameText, ref);
-      }
+      return helper.resolveReferencedClass(classNameText, ref);
     }
     return null;
   }
