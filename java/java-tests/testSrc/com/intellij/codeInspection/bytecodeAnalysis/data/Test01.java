@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis.data;
 
+import com.intellij.codeInspection.bytecodeAnalysis.ExpectContract;
 import com.intellij.codeInspection.bytecodeAnalysis.ExpectNotNull;
 
 /**
@@ -43,4 +44,15 @@ public class Test01 {
   static void v(Object o) {
 
   }
+
+  @ExpectContract("null->null")
+  static String toString1(Object o) {
+    return o == null ? null : o.toString();
+  }
+
+  @ExpectContract("null->!null")
+  static String toString2(Object o) {
+    return o == null ? "null" : o.toString();
+  }
+
 }

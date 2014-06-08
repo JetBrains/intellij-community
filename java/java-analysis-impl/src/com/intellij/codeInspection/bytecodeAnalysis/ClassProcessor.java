@@ -35,7 +35,6 @@ public class ClassProcessor extends VirtualFileVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ClassProcessor");
 
   final static ELattice<Value> valueLattice = new ELattice<Value>(Value.Bot, Value.Top);
-  final Solver<Key, Value> solver = new Solver<Key, Value>(valueLattice);
   final IntIdSolver myIntIdSolver;
 
   @NotNull
@@ -163,7 +162,6 @@ public class ClassProcessor extends VirtualFileVisitor {
 
   void addEquation(Equation<Key, Value> equation) {
     try {
-      //solver.addEquation(equation);
       myIntIdSolver.addEquation(enumerate(equation));
     }
     catch (IOException e) {

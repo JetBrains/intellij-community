@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Contract;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import java.lang.annotation.Annotation;
  * @author lambdamix
  */
 public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
-
+  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private final String myClassesProjectRelativePath = "/classes/" + Test01.class.getPackage().getName().replace('.', '/');
   private JavaPsiFacade myJavaPsiFacade;
   private InferredAnnotationsManager myInferredAnnotationsManager;
@@ -95,6 +96,18 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       ExpectNotNull expectedAnnotation = javaMethod.getAnnotation(ExpectNotNull.class);
       PsiAnnotation actualAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, AnnotationUtil.NOT_NULL);
       assertEquals(expectedAnnotation == null, actualAnnotation == null);
+
+      // contracts
+      ExpectContract expectedContract = javaMethod.getAnnotation(ExpectContract.class);
+      PsiAnnotation actualContractAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+
+      assertEquals(expectedContract == null, actualContractAnnotation == null);
+
+      if (expectedAnnotation != null) {
+        String expectedContractValue = expectedContract.value();
+        String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContractAnnotation, null);
+        assertEquals(expectedContractValue, actualContractValue);
+      }
     }
   }
 

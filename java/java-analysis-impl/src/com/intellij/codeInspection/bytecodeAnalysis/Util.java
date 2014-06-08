@@ -48,7 +48,7 @@ public class Util {
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
-      InternalKey key = null;
+      InternalKey key;
       try {
         String s = enumerators.internalKeyEnumerator.valueOf(inKey);
         key = readInternalKey(s);
@@ -68,6 +68,7 @@ public class Util {
         else if (direction instanceof Out && value == Value.NotNull) {
           annotations.add(baseAnnKey, new AnnotationData("org.jetbrains.annotations.NotNull", ""));
         }
+        // TODO - sort (normalize) contract clauses
         else if (direction instanceof InOut) {
           StringBuilder sb = contracts.get(baseAnnKey);
           if (sb == null) {
@@ -83,7 +84,9 @@ public class Util {
     }
 
     for (Map.Entry<String, StringBuilder> contract : contracts.entrySet()) {
-      annotations.add(contract.getKey(), new AnnotationData("org.jetbrains.annotations.Contract", contract.getValue().append('"').toString()));
+      if (!annotations.containsKey(contract.getKey())) {
+        annotations.add(contract.getKey(), new AnnotationData("org.jetbrains.annotations.Contract", contract.getValue().append('"').toString()));
+      }
     }
     return annotations;
   }
