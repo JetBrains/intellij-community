@@ -866,6 +866,9 @@ public class TypesUtil {
       if (resolved != null) {
         return resolved.getQualifiedName();
       }
+      else {
+        return PsiNameHelper.getQualifiedClassName(type.getCanonicalText(), true);
+      }
     }
 
     return null;
