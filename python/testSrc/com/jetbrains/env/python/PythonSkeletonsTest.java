@@ -13,7 +13,7 @@ import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
