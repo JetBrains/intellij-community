@@ -371,7 +371,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
             if (wildcardType.isExtends()) {
-              final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
+              final PsiType bound = wildcardType.getBound();
+              if (bound instanceof PsiArrayType && substitutedBoundType instanceof PsiArrayType &&
+                  !bound.isAssignableFrom(substitutedBoundType) && !substitutedBoundType.isAssignableFrom(bound)) {
+                continue;
+              }
+              final PsiType glb = GenericsUtil.getGreatestLowerBound(bound, substitutedBoundType);
               if (glb != null) {
                 substituted = PsiWildcardType.createExtends(manager, glb);
               }
