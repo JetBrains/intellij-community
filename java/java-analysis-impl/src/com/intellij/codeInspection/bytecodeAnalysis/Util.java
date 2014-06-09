@@ -36,8 +36,8 @@ public class Util {
     }
   }
 
-  public static MostlySingularMultiMap<String, AnnotationData> makeAnnotations(TIntObjectHashMap<Value> internalIdSolutions,
-                                                                               Enumerators enumerators) {
+  public static MostlySingularMultiMap<String, AnnotationData> makeAnnotations(TIntObjectHashMap<Value> internalIdSolutions) {
+    BytecodeAnalysisConverter lowering = BytecodeAnalysisConverter.getInstance();
     MostlySingularMultiMap<String, AnnotationData> annotations = new MostlySingularMultiMap<String, AnnotationData>();
     HashMap<String, StringBuilder> contracts = new HashMap<String, StringBuilder>();
     TIntObjectIterator<Value> iterator = internalIdSolutions.iterator();
@@ -50,7 +50,7 @@ public class Util {
       }
       InternalKey key;
       try {
-        String s = enumerators.internalKeyEnumerator.valueOf(inKey);
+        String s = lowering.internalKeyEnumerator.valueOf(inKey);
         key = readInternalKey(s);
       }
       catch (IOException e) {

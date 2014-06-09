@@ -65,8 +65,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
 
   private final PsiManager myPsiManager;
 
-  private final Enumerators myEnumerators;
-
   private MostlySingularMultiMap<String, AnnotationData> myAnnotations = new MostlySingularMultiMap<String, AnnotationData>();
 
   public BytecodeAnalysisHandler(Project project, PsiManager psiManager) {
@@ -86,15 +84,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
         doIndex();
       }
     });
-    Enumerators enumerators;
-    try {
-      enumerators = new Enumerators(getEnumerator(project, "internalKeys"), getEnumerator(project, "annotationKeys"));
-    }
-    catch (IOException e) {
-      LOG.error("Cannot initialize enumerators", e);
-      enumerators = null;
-    }
-    myEnumerators = enumerators;
   }
 
   void setAnnotations(MostlySingularMultiMap<String, AnnotationData> annotations) {
@@ -194,9 +183,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
   }
 
   private void doIndex() {
-    if (myEnumerators != null) {
-      DumbService.getInstance(myProject).queueTask(new BytecodeAnalysisTask(myProject, myEnumerators));
-    }
+    DumbService.getInstance(myProject).queueTask(new BytecodeAnalysisTask(myProject));
   }
 }
 
@@ -245,29 +232,13 @@ class AnnotationData {
   }
 }
 
-// TODO - this should application-level
-class Enumerators {
-  @NotNull
-  final PersistentStringEnumerator internalKeyEnumerator;
-  @NotNull
-  final PersistentStringEnumerator annotationKeyEnumerator;
-
-  Enumerators(@NotNull PersistentStringEnumerator internalKeyEnumerator,
-              @NotNull PersistentStringEnumerator annotationKeyEnumerator) {
-    this.internalKeyEnumerator = internalKeyEnumerator;
-    this.annotationKeyEnumerator = annotationKeyEnumerator;
-  }
-}
-
 class BytecodeAnalysisTask extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisTask");
   private final Project myProject;
   private long myClassFilesCount = 0;
-  private final Enumerators myEnumerators;
 
-  BytecodeAnalysisTask(Project project, Enumerators enumerators) {
+  BytecodeAnalysisTask(Project project) {
     myProject = project;
-    myEnumerators = enumerators;
   }
 
   private VirtualFileVisitor<?> myClassFilesCounter = new VirtualFileVisitor() {
@@ -299,11 +270,11 @@ class BytecodeAnalysisTask extends DumbModeTask {
     }
     LOG.info("Found " + myClassFilesCount + " classes to Index");
     BytecodeAnalysisHandler handler = myProject.getComponent(BytecodeAnalysisHandler.class);
-    ClassProcessor myClassProcessor = new ClassProcessor(indicator, myClassFilesCount, myEnumerators);
+    ClassFileProcessor myClassFileProcessor = new ClassFileProcessor(indicator, myClassFilesCount);
     for (VirtualFile classRoot : classRoots) {
-      VfsUtilCore.visitChildrenRecursively(classRoot, myClassProcessor);
+      VfsUtilCore.visitChildrenRecursively(classRoot, myClassFileProcessor);
     }
-    handler.setAnnotations(myClassProcessor.annotations());
+    handler.setAnnotations(myClassFileProcessor.annotations());
   }
 
 
