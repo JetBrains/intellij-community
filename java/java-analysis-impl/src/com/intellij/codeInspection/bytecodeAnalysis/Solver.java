@@ -48,11 +48,9 @@ final class ELattice<T extends Enum<T>> {
 
 // component specialized for ints
 final class IntIdComponent {
-  boolean touched;
   final int[] ids;
 
   IntIdComponent(int[] ids) {
-    this.touched = false;
     this.ids = ids;
   }
 
@@ -61,7 +59,7 @@ final class IntIdComponent {
   }
 
   public boolean isEmptyAndTouched() {
-    return touched && IdUtils.isEmpty(ids);
+    return IdUtils.isEmptyAndTouched(ids);
   }
 
   public boolean isEmpty() {
@@ -69,15 +67,14 @@ final class IntIdComponent {
   }
 
   public void removeAndTouch(int id) {
-    if (IdUtils.remove(ids, id)) {
-      touched = true;
-    }
+    IdUtils.removeAndTouch(ids, id);
   }
 }
 
 class IdUtils {
   // absent value
   static final int nullId = -1;
+  static final int touchedId = -2;
 
   static boolean contains(int[] ids, int id) {
     for (int i : ids) {
@@ -90,11 +87,23 @@ class IdUtils {
 
   static boolean isEmpty(int[] ids) {
     for (int i : ids) {
-      if (i != nullId) {
+      if (i != nullId && i != touchedId) {
         return false;
       }
     }
     return true;
+  }
+
+
+  static boolean isEmptyAndTouched(int[] ids) {
+    boolean touched = false;
+    for (int i : ids) {
+      if (i != nullId && i != touchedId) {
+        return false;
+      }
+      touched = touched || i == touchedId;
+    }
+    return touched;
   }
 
   static IntIdComponent[] toArray(Collection<IntIdComponent> set) {
@@ -111,6 +120,16 @@ class IdUtils {
     for (int i = 0; i < ids.length; i++) {
       if (ids[i] == id) {
         ids[i] = nullId;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static boolean removeAndTouch(int[] ids, int id) {
+    for (int i = 0; i < ids.length; i++) {
+      if (ids[i] == id) {
+        ids[i] = touchedId;
         return true;
       }
     }
@@ -198,6 +217,7 @@ final class IntIdPending implements IntIdResult {
     this.delta = delta;
   }
 }
+
 final class IntIdEquation {
   final int id;
   final IntIdResult rhs;
