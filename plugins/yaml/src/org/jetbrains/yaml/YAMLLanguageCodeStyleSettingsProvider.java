@@ -38,6 +38,11 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return "product: \n" + "  name: RubyMine\n" + "  version: 4\n" + "  vendor: JetBrains\n" + "  url: \"http://jetbrains.com/ruby\"";
   }
 
+  @Override
+  public boolean isIndentBasedLanguageSemantics() {
+    return true;
+  }
+
   private class YAMLIndentOptionsEditor extends IndentOptionsEditor {
 
     @Override
