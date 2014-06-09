@@ -460,6 +460,7 @@
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
+    <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
 
     <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/>
 

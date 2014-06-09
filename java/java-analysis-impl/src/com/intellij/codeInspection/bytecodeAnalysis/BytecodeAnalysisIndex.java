@@ -32,6 +32,9 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
   public static final ID<Integer, Collection<IntIdEquation>> NAME = ID.create("bytecodeAnalysis");
   private final EquationExternalizer myExternalizer = new EquationExternalizer();
 
+  private static final DataIndexer<Integer, Collection<IntIdEquation>, FileContent> INDEXER =
+    new ClassDataIndexer(BytecodeAnalysisConverter.getInstance());
+
   @NotNull
   @Override
   public ID<Integer, Collection<IntIdEquation>> getName() {
@@ -41,7 +44,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
   @NotNull
   @Override
   public DataIndexer<Integer, Collection<IntIdEquation>, FileContent> getIndexer() {
-    return null;
+    return INDEXER;
   }
 
   @NotNull
