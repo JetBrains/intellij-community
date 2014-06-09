@@ -35,25 +35,19 @@ import java.util.List;
 import java.util.Set;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
+import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
 
 public class HgRegularUpdater implements HgUpdater {
 
-  private final Project project;
+  @NotNull private final Project project;
   @NotNull private final VirtualFile repoRoot;
-  @NotNull private final UpdateConfiguration updateConfiguration;
+  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
-  public HgRegularUpdater(Project project, @NotNull VirtualFile repository, @NotNull UpdateConfiguration configuration) {
+  public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {
     this.project = project;
     this.repoRoot = repository;
     this.updateConfiguration = configuration;
-  }
-
-  private boolean shouldMerge() {
-    return updateConfiguration.shouldMerge();
-  }
-
-  private boolean shouldCommitAfterMerge() {
-    return updateConfiguration.shouldCommitAfterMerge();
   }
 
   public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
@@ -81,46 +75,52 @@ public class HgRegularUpdater implements HgUpdater {
 //      throw new VcsException("working dir not at branch tip (use \"Update to...\" to check out branch tip)");
 //    }
 
-    HgCommandExitCode pullResult = pull(repoRoot, indicator);
-    if (pullResult == HgCommandExitCode.ERROR) {
-      return false;
+    if (updateConfiguration.shouldPull()) {
+      HgCommandExitCode pullResult = pull(repoRoot, indicator);
+      if (pullResult == HgCommandExitCode.ERROR) {
+        return false;
+      }
     }
 
-    if (shouldMerge()) {
+    List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
+    if (parentsBeforeUpdate.size() > 1) {
+      throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
+    }
 
-      List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
-      if (parentsBeforeUpdate.size() > 1) {
-        throw new VcsException(HgVcsMessages.message("hg4idea.update.error.uncommittedMerge", repoRoot.getPath()));
-      }
+    indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
 
-      indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
+    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
+    List<HgRevisionNumber> remainingOriginalBranchHeads =
+      determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
+    HgUpdateType updateType = updateConfiguration.getUpdateType();
 
-      List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
-      List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
-      List<HgRevisionNumber> remainingOriginalBranchHeads =
-        determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
-
-      if (branchHeadsAfterPull.size() > 1) {
+    if (branchHeadsAfterPull.size() > 1 && updateType != ONLY_UPDATE) {
+      // merge strategy
+      if (updateType == MERGE) {
         abortOnLocalChanges();
         abortOnMultiplePulledHeads(pulledBranchHeads);
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
 
         HgCommandResult mergeResult = doMerge(indicator);
 
-        if (shouldCommitAfterMerge()) {
+        if (updateConfiguration.shouldCommitAfterMerge()) {
           commitOrWarnAboutConflicts(warnings, mergeResult);
         }
       }
+      //rebase strategy
       else {
-        //in case of multiple heads the update will report the appropriate error
-        update(repoRoot, indicator, updatedFiles, warnings);
+        processRebase(indicator, updatedFiles);  //resolve conflicts processed during rebase
+        return true;
       }
-      //any kind of update could have resulted in merges and merge conflicts, so run the resolver
-      resolvePossibleConflicts(updatedFiles);
     }
+    //if pull complete successfully and there are only one head, we need just update working directory to the head
     else {
-      processRebase(indicator, updatedFiles);
+      //in case of multiple heads the update will report the appropriate error
+      update(repoRoot, indicator, updatedFiles, warnings);
     }
+    //any kind of update could have resulted in merges and merge conflicts, so run the resolver
+    resolvePossibleConflicts(updatedFiles);
 
     return true;
   }
@@ -219,14 +219,16 @@ public class HgRegularUpdater implements HgUpdater {
     while (result.getExitValue() == 1) {    //if result == null isAbort will be true;
       resolvePossibleConflicts(updatedFiles);
       if (!HgConflictResolver.findConflicts(project, repoRoot).isEmpty()) {
-        return;
+        break;
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
         new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
-        return;
+        break;
       }
     }
+    repository.update();
+    repoRoot.refresh(true, true);
   }
 
   private void abortOnLocalChanges() throws VcsException {
@@ -258,7 +260,8 @@ public class HgRegularUpdater implements HgUpdater {
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
     HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repo);
-    String warningMessages = ensureSuccess(hgUpdateCommand.execute()).getWarnings();
+    HgCommandResult updateResult = hgUpdateCommand.execute();
+    String warningMessages = ensureSuccess(updateResult).getRawError();
     handlePossibleWarning(warnings, warningMessages);
 
     HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);

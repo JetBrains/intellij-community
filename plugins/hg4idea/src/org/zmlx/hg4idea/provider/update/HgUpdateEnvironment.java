@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,10 +35,11 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  private final HgUpdater.UpdateConfiguration updateConfiguration = new HgUpdater.UpdateConfiguration();
+  private final HgUpdateConfigurationSettings updateConfiguration;
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
+    updateConfiguration = ServiceManager.getService(project, HgUpdateConfigurationSettings.class);
   }
 
   public void fillGroups(UpdatedFiles updatedFiles) {
@@ -84,10 +86,10 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
   }
   
   public static class UpdateConfigurable implements Configurable {
-    private final HgUpdater.UpdateConfiguration updateConfiguration;
+    private final HgUpdateConfigurationSettings updateConfiguration;
     protected HgUpdateDialog updateDialog;
 
-    public UpdateConfigurable(HgUpdater.UpdateConfiguration updateConfiguration) {
+    public UpdateConfigurable(HgUpdateConfigurationSettings updateConfiguration) {
       this.updateConfiguration = updateConfiguration;
     }
 
@@ -101,8 +103,8 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     }
 
     public JComponent createComponent() {
-      updateDialog = new HgUpdateDialog();
-      return updateDialog.createCenterPanel();
+      updateDialog = new HgUpdateDialog(updateConfiguration);
+      return updateDialog.getContentPanel();
     }
 
     public boolean isModified() {
