@@ -118,8 +118,8 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
         }
         else if (stackTop instanceof CallResultValue) {
           Set<Key> keys = ((CallResultValue) stackTop).inters;
-          Set<Component<Key>> components = new HashSet<Component<Key>>();
-          components.add(new Component<Key>(false, keys));
+          Set<Set<Key>> components = new HashSet<Set<Key>>();
+          components.add(keys);
           results.put(stateIndex, new Pending<Key, Value>(Value.Bot, components));
           computed.put(insnIndex, append(computed.get(insnIndex), state));
         }

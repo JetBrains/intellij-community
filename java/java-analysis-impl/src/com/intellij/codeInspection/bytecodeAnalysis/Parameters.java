@@ -62,12 +62,14 @@ abstract class PResults {
       return "Identity";
     }
   };
+  // similar to top, maximal element
   static final PResult Return = new PResult() {
     @Override
     public String toString() {
       return "Return";
     }
   };
+  // minimal element
   static final PResult NPE = new PResult() {
     @Override
     public String toString() {
@@ -153,9 +155,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Component<Key>> components = new HashSet<Component<Key>>();
+      Set<Set<Key>> components = new HashSet<Set<Key>>();
       for (Set<Key> prod : condNpe.sop) {
-        components.add(new Component<Key>(false, prod));
+        components.add(prod);
       }
       return new Equation<Key, Value>(parameter, new Pending<Key, Value>(Value.NotNull, components));
     }

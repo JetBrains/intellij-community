@@ -177,17 +177,17 @@ public class ClassProcessor extends VirtualFileVisitor {
       result = new IntIdFinal(((Final<Key, Value>)rhs).value);
     } else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
-      Set<Component<Key>> deltaOrig = pending.delta;
+      Set<Set<Key>> deltaOrig = pending.delta;
       IntIdComponent[] components = new IntIdComponent[deltaOrig.size()];
       int componentI = 0;
-      for (Component<Key> keyComponent : deltaOrig) {
-        int[] ids = new int[keyComponent.ids.size()];
+      for (Set<Key> keyComponent : deltaOrig) {
+        int[] ids = new int[keyComponent.size()];
         int idI = 0;
-        for (Key id : keyComponent.ids) {
+        for (Key id : keyComponent) {
           ids[idI] = myEnumerators.internalKeyEnumerator.enumerate(Util.internalKeyString(id));
           idI++;
         }
-        IntIdComponent intIdComponent = new IntIdComponent(keyComponent.touched, ids);
+        IntIdComponent intIdComponent = new IntIdComponent(ids);
         components[componentI] = intIdComponent;
         componentI++;
       }
