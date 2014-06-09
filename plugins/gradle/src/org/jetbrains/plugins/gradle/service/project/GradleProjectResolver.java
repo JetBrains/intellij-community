@@ -143,6 +143,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final ProjectImportAction projectImportAction = new ProjectImportAction(resolverCtx.isPreviewMode());
 
     final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<KeyValue<String, String>>();
+    final List<String> commandLineArgs = ContainerUtil.newArrayList();
+
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
@@ -154,6 +156,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
       // collect extra JVM arguments provided by gradle project resolver extensions
       extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
+      // collect extra command-line arguments
+      commandLineArgs.addAll(resolverExtension.getExtraCommandLineArgs());
     }
 
     final ParametersList parametersList = new ParametersList();
@@ -164,7 +168,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
 
-    final List<String> commandLineArgs = ContainerUtil.newArrayList();
     // TODO [vlad] remove the check
     if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
       File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject);

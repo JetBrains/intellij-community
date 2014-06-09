@@ -346,6 +346,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
+  public List<String> getExtraCommandLineArgs() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
   public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
