@@ -22,35 +22,4 @@ public interface HgUpdater {
 
   boolean update(UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> exceptions)
     throws VcsException;
-
-  class UpdateConfiguration{
-    private boolean shouldMerge = true;
-    private boolean shouldCommitAfterMerge = true;
-    private boolean shouldRebase = false;
-
-
-    public void setShouldMerge(boolean shouldMerge) {
-      this.shouldMerge = shouldMerge;
-    }
-
-    public void setShouldCommitAfterMerge(boolean shouldCommitAfterMerge) {
-      this.shouldCommitAfterMerge = shouldCommitAfterMerge;
-    }
-
-    public void setShouldRebase(boolean shouldRebase) {
-      this.shouldRebase = shouldRebase;
-    }
-
-  public boolean shouldRebase() {
-    return shouldRebase;
-  }
-  
-  public boolean shouldMerge() {
-    return shouldMerge;
-  }
-  
-  public boolean shouldCommitAfterMerge() {
-    return shouldMerge() && shouldCommitAfterMerge;
-  }
-  }
 }

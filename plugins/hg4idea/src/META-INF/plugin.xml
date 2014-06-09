@@ -31,6 +31,8 @@
                         serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
+    <projectService serviceInterface="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"
+                    serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
   </extensions>
