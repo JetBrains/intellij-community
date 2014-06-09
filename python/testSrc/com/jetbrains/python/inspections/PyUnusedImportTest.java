@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**

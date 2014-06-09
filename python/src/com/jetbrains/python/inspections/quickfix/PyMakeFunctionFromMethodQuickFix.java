@@ -28,7 +28,7 @@ import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NonNls;

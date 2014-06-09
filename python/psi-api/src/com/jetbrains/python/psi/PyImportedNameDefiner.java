@@ -20,5 +20,5 @@ package com.jetbrains.python.psi;
  *
  * @author vlan
  */
-public interface PyImportedNameDefiner extends NameDefiner {
+public interface PyImportedNameDefiner extends NameDefiner, PyElement {
 }
