@@ -21,6 +21,7 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
 
   public void testConcurrentHashMap() throws Exception { doTest(); }
   public void testRemoveAllCall() throws Exception { doTest(); }
+  public void testSetList() throws Exception { doTest(); }
   public void testUseDfa() throws Exception { doTest(); }
   public void testWildcard() throws Exception { doTest(); }
   public void testIgnoreConvertible() throws Exception {

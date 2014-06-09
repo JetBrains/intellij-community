@@ -158,11 +158,14 @@ public class SuspiciousMethodCallUtil {
         PsiType paramType = parameters[0].getType();
         if (InheritanceUtil.isInheritor(paramType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType qualifierType = qualifier.getType();
-          if (qualifierType != null && !qualifierType.isAssignableFrom(argType)) {
+          if (qualifierType != null) {
             final PsiType itemType = JavaGenericsUtil.getCollectionItemType(argType, calleeMethod.getResolveScope());
-            return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
-                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
-                                                PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));
+            final PsiType qualifierItemType = JavaGenericsUtil.getCollectionItemType(qualifierType, calleeMethod.getResolveScope());
+            if (qualifierItemType != null && itemType != null && !qualifierItemType.isAssignableFrom(itemType)) {
+              return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
+                                                  PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
+                                                  PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));
+            }
           }
           return null;
         }
