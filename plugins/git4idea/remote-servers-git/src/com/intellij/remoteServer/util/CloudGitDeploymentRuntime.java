@@ -1,14 +1,20 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
@@ -16,6 +22,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
+import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.actions.GitInit;
 import git4idea.commands.*;
@@ -29,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -38,13 +46,17 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   private static final Logger LOG = Logger.getInstance("#" + CloudGitDeploymentRuntime.class.getName());
 
+  private static final String COMMIT_MESSAGE = "Deploy";
+
   private final GitRepositoryManager myGitRepositoryManager;
   private final Git myGit;
+  private final AbstractVcsHelper myVcsHelper;
 
   private final VirtualFile myContentRoot;
   private final File myRepositoryRootFile;
 
   private final String myDefaultRemoteName;
+  private final ChangeListManagerEx myChangeListManager;
   private String myRemoteName;
   private final String myCloudName;
 
@@ -68,23 +80,135 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     LOG.assertTrue(contentRoot != null, "Repository root is not found");
     myContentRoot = contentRoot;
 
-    myGitRepositoryManager = GitUtil.getRepositoryManager(getProject());
+    Project project = getProject();
+    myGitRepositoryManager = GitUtil.getRepositoryManager(project);
     myGit = ServiceManager.getService(Git.class);
     if (myGit == null) {
       throw new ServerRuntimeException("Can't initialize GIT");
     }
+    GitPlatformFacade gitPlatformFacade = ServiceManager.getService(GitPlatformFacade.class);
+    myVcsHelper = gitPlatformFacade.getVcsHelper(project);
+    myChangeListManager = gitPlatformFacade.getChangeListManager(project);
   }
 
   @Override
   public CloudGitApplication deploy() throws ServerRuntimeException {
     CloudGitApplication application = findOrCreateApplication();
+    deployApplication(application);
+    return application;
+  }
+
+  private void deployApplication(CloudGitApplication application) throws ServerRuntimeException {
+    boolean firstDeploy = findRepository() == null;
+
     GitRepository repository = findOrCreateRepository();
     addOrResetGitRemote(application, repository);
-    add();
-    commit();
+
+    if (firstDeploy) {
+      add();
+      commit();
+      return;
+    }
+
+    final LocalChangeList activeChangeList = myChangeListManager.getDefaultChangeList();
+    if (activeChangeList == null) {
+      add();
+      commit();
+      return;
+    }
+
+    Collection<Change> changes = activeChangeList.getChanges();
+    final List<Change> relevantChanges = new ArrayList<Change>();
+    for (Change change : changes) {
+      if (isRelevant(change.getBeforeRevision()) || isRelevant(change.getAfterRevision())) {
+        relevantChanges.add(change);
+      }
+    }
+    if (relevantChanges.isEmpty()) {
+      Integer showCommitDialogChoice = runOnEdt(new Computable<Integer>() {
+
+        @Override
+        public Integer compute() {
+          return Messages.showYesNoCancelDialog(getProject(),
+                                                "Active changelist does not contain a relevant change.\n"
+                                                + "Do you want to show commit dialog anyway?\n\n"
+                                                + "Yes - show commit dialog\n"
+                                                + "No - push immediately\n"
+                                                + "Cancel - interrupt deploy",
+                                                "Deploy",
+                                                Messages.getWarningIcon());
+        }
+      });
+      if (showCommitDialogChoice == Messages.YES) {
+        relevantChanges.addAll(changes);
+      }
+      else if (showCommitDialogChoice == Messages.NO) {
+        pushApplication(application);
+        return;
+      }
+      else {
+        throw new ServerRuntimeException("Deploy interrupted");
+      }
+    }
+
+    final Semaphore commitSemaphore = new Semaphore();
+    commitSemaphore.down();
+
+    final Ref<Boolean> commitSucceeded = new Ref<Boolean>(false);
+    Boolean commitStarted = runOnEdt(new Computable<Boolean>() {
+
+      @Override
+      public Boolean compute() {
+        return myVcsHelper.commitChanges(relevantChanges, activeChangeList, COMMIT_MESSAGE,
+                                         new CommitResultHandler() {
+
+                                           @Override
+                                           public void onSuccess(@NotNull String commitMessage) {
+                                             commitSucceeded.set(true);
+                                             commitSemaphore.up();
+                                           }
+
+                                           @Override
+                                           public void onFailure() {
+                                             commitSemaphore.up();
+                                           }
+                                         });
+      }
+    });
+    if (commitStarted != null && commitStarted) {
+      commitSemaphore.waitFor();
+      if (!commitSucceeded.get()) {
+        repository.update();
+        throw new ServerRuntimeException("Commit failed");
+      }
+    }
+    else {
+      getLoggingHandler().println("Commit canceled");
+    }
+
     repository.update();
     pushApplication(application);
-    return application;
+  }
+
+  private boolean isRelevant(ContentRevision contentRevision) throws ServerRuntimeException {
+    if (contentRevision == null) {
+      return false;
+    }
+    GitRepository repository = getRepository();
+    VirtualFile affectedFile = contentRevision.getFile().getVirtualFile();
+    return affectedFile != null && VfsUtilCore.isAncestor(repository.getRoot(), affectedFile, false);
+  }
+
+  private static <T> T runOnEdt(final Computable<T> computable) {
+    final Ref<T> result = new Ref<T>();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+
+      @Override
+      public void run() {
+        result.set(computable.compute());
+      }
+    }, ModalityState.any());
+    return result.get();
   }
 
   public void undeploy() throws ServerRuntimeException {
@@ -273,7 +397,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
         handler.setStdoutSuppressed(false);
-        handler.addParameters("-m", "Deploy");
+        handler.addParameters("-m", COMMIT_MESSAGE);
         handler.endOptions();
         handler.run();
       }
