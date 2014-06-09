@@ -31,7 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -198,7 +198,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
         url = url.substring(0, sharpPos);
       }
 
-      Couple<String> pair = URLUtil.splitJarUrl(url);
+      Pair<String, String> pair = URLUtil.splitJarUrl(url);
       if (pair == null) return null;
 
       File jarFile = new File(FileUtil.toSystemDependentName(pair.first));

@@ -137,7 +137,7 @@ public class GenericsHighlightUtil {
       if (targetParametersNum == 0) {
         if (PsiTreeUtil.getParentOfType(referenceParameterList, PsiCall.class) != null &&
             typeParameterListOwner instanceof PsiMethod &&
-            javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+            (javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7) || hasSuperMethodsWithTypeParams((PsiMethod)typeParameterListOwner))) {
           description = null;
         }
         else {
@@ -194,6 +194,13 @@ public class GenericsHighlightUtil {
     }
 
     return null;
+  }
+
+  private static boolean hasSuperMethodsWithTypeParams(PsiMethod method) {
+    for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+      if (superMethod.hasTypeParameters()) return true;
+    }
+    return false;
   }
 
   private static PsiType detectExpectedType(PsiReferenceParameterList referenceParameterList) {

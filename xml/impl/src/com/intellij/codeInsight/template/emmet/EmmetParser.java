@@ -67,12 +67,11 @@ public abstract class EmmetParser {
       }
 
       final String filterSuffix = ((IdentifierToken)token).getText();
-      if (!ZenCodingUtil.checkFilterSuffix(filterSuffix)) {
-        return null;
+      if (ZenCodingUtil.checkFilterSuffix(filterSuffix)) {
+        result = new FilterNode(result, filterSuffix);
       }
 
       advance();
-      result = new FilterNode(result, filterSuffix);
     }
   }
 

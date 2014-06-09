@@ -261,10 +261,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     });
   }
-  private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("file type re-detect", Condition.FALSE, -1, new Processor<Collection<VirtualFile>>() {
+
+  private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("File type re-detect", Condition.FALSE, -1, new Processor<Collection<VirtualFile>>() {
     @Override
     public boolean process(Collection<VirtualFile> files) {
-      ((FileTypeManagerImpl)getInstance()).reDetect(files);
+      reDetect(files);
       return true;
     }
   });
@@ -317,8 +318,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private boolean shouldBeSavedToFile(final FileType fileType) {
     if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) return false;
-    if (myDefaultTypes.contains(fileType) && !isDefaultModified(fileType)) return false;
-    return true;
+    return !myDefaultTypes.contains(fileType) || isDefaultModified(fileType);
   }
 
   @Override

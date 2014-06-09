@@ -35,25 +35,19 @@ import java.util.List;
 import java.util.Set;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
+import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
 
 public class HgRegularUpdater implements HgUpdater {
 
   @NotNull private final Project project;
   @NotNull private final VirtualFile repoRoot;
-  @NotNull private final UpdateConfiguration updateConfiguration;
+  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
-  public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull UpdateConfiguration configuration) {
+  public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {
     this.project = project;
     this.repoRoot = repository;
     this.updateConfiguration = configuration;
-  }
-
-  private boolean shouldMerge() {
-    return updateConfiguration.shouldMerge();
-  }
-
-  private boolean shouldCommitAfterMerge() {
-    return updateConfiguration.shouldCommitAfterMerge();
   }
 
   public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
@@ -81,9 +75,11 @@ public class HgRegularUpdater implements HgUpdater {
 //      throw new VcsException("working dir not at branch tip (use \"Update to...\" to check out branch tip)");
 //    }
 
-    HgCommandExitCode pullResult = pull(repoRoot, indicator);
-    if (pullResult == HgCommandExitCode.ERROR) {
-      return false;
+    if (updateConfiguration.shouldPull()) {
+      HgCommandExitCode pullResult = pull(repoRoot, indicator);
+      if (pullResult == HgCommandExitCode.ERROR) {
+        return false;
+      }
     }
 
     List<HgRevisionNumber> parentsBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).parents(repoRoot);
@@ -97,17 +93,18 @@ public class HgRegularUpdater implements HgUpdater {
     List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
     List<HgRevisionNumber> remainingOriginalBranchHeads =
       determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
+    HgUpdateType updateType = updateConfiguration.getUpdateType();
 
-    if (branchHeadsAfterPull.size() > 1) {
+    if (branchHeadsAfterPull.size() > 1 && updateType != ONLY_UPDATE) {
       // merge strategy
-      if (shouldMerge()) {
+      if (updateType == MERGE) {
         abortOnLocalChanges();
         abortOnMultiplePulledHeads(pulledBranchHeads);
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
 
         HgCommandResult mergeResult = doMerge(indicator);
 
-        if (shouldCommitAfterMerge()) {
+        if (updateConfiguration.shouldCommitAfterMerge()) {
           commitOrWarnAboutConflicts(warnings, mergeResult);
         }
       }
