@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>testSimple_0.iml</file>
+    <problem_class>Unused library</problem_class>
+    <description>Unused library 'JUnit'</description>
+  </problem>
+
+</problems>
+
