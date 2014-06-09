@@ -18,7 +18,11 @@
 #include <pthread.h>
 #include <sys/mount.h>
 
+#define PRIVATE_DIR "/private/"
+#define PRIVATE_LEN 9
+
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static bool report_private = true;
 
 static void reportEvent(char *event, char *path) {
     int len = 0;
@@ -32,15 +36,15 @@ static void reportEvent(char *event, char *path) {
     }
 
     pthread_mutex_lock(&lock);
-
-    fputs(event, stdout);
-    fputc('\n', stdout);
-    if (path != NULL) {
-        fwrite(path, len, 1, stdout);
+    if (report_private || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) != 0) {
+        fputs(event, stdout);
         fputc('\n', stdout);
+        if (path != NULL) {
+            fwrite(path, len, 1, stdout);
+            fputc('\n', stdout);
+        }
+        fflush(stdout);
     }
-
-    fflush(stdout);
     pthread_mutex_unlock(&lock);
 }
 
@@ -128,13 +132,21 @@ static char command[2048];
 
 static void ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
+    bool has_private_root = false;
 
     while (TRUE) {
         fscanf(stdin, "%s", command);
         if (strcmp(command, "#") == 0 || feof(stdin)) break;
         char* path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
+        if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
+            has_private_root = true;
+        }
     }
+
+    pthread_mutex_lock(&lock);
+    report_private = has_private_root;
+    pthread_mutex_unlock(&lock);
 
     PrintMountedFileSystems(roots);
 
