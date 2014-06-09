@@ -255,15 +255,11 @@ final class Equation<Id, T> {
 
 final class IntIdSolver {
 
-  private final ELattice<Value> lattice;
+  private static final ELattice<Value> LATTICE = new ELattice<Value>(Value.Bot, Value.Top);
   private final IntToIntSetMap dependencies = new IntToIntSetMap(10000, 0.5f);
   private final TIntObjectHashMap<IntIdPending> pending = new TIntObjectHashMap<IntIdPending>();
   private final TIntObjectHashMap<Value> solved = new TIntObjectHashMap<Value>();
   private final IntStack moving = new IntStack();
-
-  IntIdSolver(ELattice<Value> lattice) {
-    this.lattice = lattice;
-  }
 
   void addEquation(IntIdEquation equation) {
     IntIdResult rhs = equation.rhs;
@@ -272,8 +268,8 @@ final class IntIdSolver {
       moving.push(equation.id);
     } else if (rhs instanceof IntIdPending) {
       IntIdPending pendResult = (IntIdPending)rhs;
-      if (pendResult.infinum == lattice.top) {
-        solved.put(equation.id, lattice.top);
+      if (pendResult.infinum == LATTICE.top) {
+        solved.put(equation.id, LATTICE.top);
         moving.push(equation.id);
       } else {
         for (IntIdComponent component : pendResult.delta) {
@@ -314,7 +310,7 @@ final class IntIdSolver {
 
   // substitute id -> value into pending
   IntIdResult substitute(IntIdPending pending, int id, Value value) {
-    if (value == lattice.bot) {
+    if (value == LATTICE.bot) {
       // remove components (products) with bottom
       ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
       for (IntIdComponent component : pending.delta) {
@@ -329,14 +325,14 @@ final class IntIdSolver {
         return new IntIdPending(pending.infinum, toArray(delta));
       }
     }
-    else if (value.equals(lattice.top)) {
+    else if (value.equals(LATTICE.top)) {
       ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
       // remove top from components
       for (IntIdComponent component : pending.delta) {
         component.remove(id);
         if (!component.isEmptyAndTouched()) {
           if (component.isEmpty()) {
-            return new IntIdFinal(lattice.top);
+            return new IntIdFinal(LATTICE.top);
           } else {
             delta.add(component);
           }
@@ -350,9 +346,9 @@ final class IntIdSolver {
       }
     }
     else {
-      Value infinum = lattice.join(pending.infinum, value);
-      if (infinum == lattice.top) {
-        return new IntIdFinal(lattice.top);
+      Value infinum = LATTICE.join(pending.infinum, value);
+      if (infinum == LATTICE.top) {
+        return new IntIdFinal(LATTICE.top);
       }
       ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
       for (IntIdComponent component : pending.delta) {

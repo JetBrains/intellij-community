@@ -31,9 +31,10 @@ import java.util.Collection;
 public class EquationExternalizer implements DataExternalizer<Collection<IntIdEquation>> {
   @Override
   public void save(@NotNull DataOutput out, Collection<IntIdEquation> equations) throws IOException {
-    DataInputOutputUtil.writeINT(out, equations.size());
+    out.writeInt(equations.size());
+
     for (IntIdEquation equation : equations) {
-      out.write(equation.id);
+      out.writeInt(equation.id);
       IntIdResult rhs = equation.rhs;
       if (rhs instanceof IntIdFinal) {
         IntIdFinal finalResult = (IntIdFinal)rhs;
@@ -43,10 +44,12 @@ public class EquationExternalizer implements DataExternalizer<Collection<IntIdEq
         IntIdPending pendResult = (IntIdPending)rhs;
         out.writeBoolean(false);
         DataInputOutputUtil.writeINT(out, pendResult.infinum.ordinal());
-        out.writeInt(pendResult.delta.length);
+        DataInputOutputUtil.writeINT(out, pendResult.delta.length);
+
         for (IntIdComponent component : pendResult.delta) {
           int[] ids = component.ids;
           DataInputOutputUtil.writeINT(out, ids.length);
+
           for (int id : ids) {
             out.writeInt(id);
           }
@@ -57,7 +60,8 @@ public class EquationExternalizer implements DataExternalizer<Collection<IntIdEq
 
   @Override
   public Collection<IntIdEquation> read(@NotNull DataInput in) throws IOException {
-    int size = DataInputOutputUtil.readINT(in);
+
+    int size = in.readInt();
     ArrayList<IntIdEquation> result = new ArrayList<IntIdEquation>(size);
 
     for (int x = 0; x < size; x++) {
@@ -70,9 +74,10 @@ public class EquationExternalizer implements DataExternalizer<Collection<IntIdEq
       } else {
         int ordinal = DataInputOutputUtil.readINT(in);
         Value value = Value.values()[ordinal];
-        int componentsNumber = DataInputOutputUtil.readINT(in);
-        IntIdComponent[] components = new IntIdComponent[componentsNumber];
-        for (int i = 0; i < componentsNumber; i++) {
+        int deltaLength = DataInputOutputUtil.readINT(in);
+        IntIdComponent[] components = new IntIdComponent[deltaLength];
+
+        for (int i = 0; i < deltaLength; i++) {
           int componentSize = DataInputOutputUtil.readINT(in);
           int[] ids = new int[componentSize];
           for (int j = 0; j < componentSize; j++) {

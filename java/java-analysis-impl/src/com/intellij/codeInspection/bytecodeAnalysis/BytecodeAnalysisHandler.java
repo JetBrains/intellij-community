@@ -19,43 +19,34 @@ import com.intellij.ProjectTopics;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.source.*;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 public class BytecodeAnalysisHandler extends AbstractProjectComponent {
@@ -65,7 +56,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
 
   private final PsiManager myPsiManager;
 
-  private MostlySingularMultiMap<String, AnnotationData> myAnnotations = new MostlySingularMultiMap<String, AnnotationData>();
+  private MostlySingularMultiMap<String, AnnotationData> myAnnotations = null;
 
   public BytecodeAnalysisHandler(Project project, PsiManager psiManager) {
     super(project);
@@ -74,26 +65,16 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       @Override
       public void run() {
-        doIndex();
+        //doIndex();
       }
     });
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        doIndex();
+        //doIndex();
       }
     });
-  }
-
-  void setAnnotations(MostlySingularMultiMap<String, AnnotationData> annotations) {
-    this.myAnnotations = annotations;
-  }
-
-  private static PersistentStringEnumerator getEnumerator(Project project, String name) throws IOException {
-    File dir = new File(PathManager.getIndexRoot(), "faba");
-    File enumeratorFile = new File(dir, project.getLocationHash() + name);
-    return new PersistentStringEnumerator(enumeratorFile);
   }
 
   // TODO: what follows was just copied/modified from BaseExternalAnnotationsManager
@@ -139,12 +120,29 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     });
   }
 
-  private List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
+  private synchronized List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
     String key = getExternalName(listOwner);
     if (key == null) {
       return NO_DATA;
     }
     SmartList<AnnotationData> result = new SmartList<AnnotationData>();
+
+    if (myAnnotations == null) {
+      LOG.info("initializing annotations");
+      final IntIdSolver solver = new IntIdSolver();
+      FileBasedIndex.getInstance().processValues(BytecodeAnalysisIndex.NAME, BytecodeAnalysisIndex.KEY, null, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
+        @Override
+        public boolean process(VirtualFile file, Collection<IntIdEquation> value) {
+          for (IntIdEquation intIdEquation : value) {
+            solver.addEquation(intIdEquation);
+          }
+          return true;
+        }
+      }, ProjectScope.getLibrariesScope(myProject));
+      myAnnotations = Util.makeAnnotations(solver.solve());
+      LOG.info("initialized " + myAnnotations.size());
+    }
+
     Iterable<AnnotationData> inferred = myAnnotations.get(key);
     ContainerUtil.addAll(result, inferred);
     return result;
@@ -180,10 +178,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
       }
       return (PsiAnnotation)element;
     }
-  }
-
-  private void doIndex() {
-    DumbService.getInstance(myProject).queueTask(new BytecodeAnalysisTask(myProject));
   }
 }
 
@@ -230,52 +224,4 @@ class AnnotationData {
            ", annotationParameters='" + annotationParameters + '\'' +
            '}';
   }
-}
-
-class BytecodeAnalysisTask extends DumbModeTask {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisTask");
-  private final Project myProject;
-  private long myClassFilesCount = 0;
-
-  BytecodeAnalysisTask(Project project) {
-    myProject = project;
-  }
-
-  private VirtualFileVisitor<?> myClassFilesCounter = new VirtualFileVisitor() {
-    @Override
-    public boolean visitFile(@NotNull VirtualFile file) {
-      if (!file.isDirectory() && "class".equals(file.getExtension())) {
-        myClassFilesCount++;
-      }
-      return true;
-    }
-  };
-
-  @Override
-  public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-    indicator.setText("Bytecode analysis");
-    indicator.setIndeterminate(false);
-    HashSet<VirtualFile> classRoots = new HashSet<VirtualFile>();
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    for (Module module : moduleManager.getModules()) {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      OrderEntry[] entries = moduleRootManager.getOrderEntries();
-      for (OrderEntry entry : entries) {
-        Collections.addAll(classRoots, entry.getFiles(OrderRootType.CLASSES));
-      }
-    }
-
-    for (VirtualFile classRoot : classRoots) {
-      VfsUtilCore.visitChildrenRecursively(classRoot, myClassFilesCounter);
-    }
-    LOG.info("Found " + myClassFilesCount + " classes to Index");
-    BytecodeAnalysisHandler handler = myProject.getComponent(BytecodeAnalysisHandler.class);
-    ClassFileProcessor myClassFileProcessor = new ClassFileProcessor(indicator, myClassFilesCount);
-    for (VirtualFile classRoot : classRoots) {
-      VfsUtilCore.visitChildrenRecursively(classRoot, myClassFileProcessor);
-    }
-    handler.setAnnotations(myClassFileProcessor.annotations());
-  }
-
-
 }

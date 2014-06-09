@@ -43,7 +43,7 @@ public class ClassFileProcessor extends VirtualFileVisitor {
     this.myProgressIndicator = indicator;
     this.totalClassFiles = totalClassFiles;
     myLowering = BytecodeAnalysisConverter.getInstance();
-    myIntIdSolver = new IntIdSolver(valueLattice);
+    myIntIdSolver = new IntIdSolver();
   }
 
   @Override
