@@ -19,28 +19,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.JBLabel;
-import net.sourceforge.jeuclid.swing.JMathComponent;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.MarkdownCell;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import uk.ac.ed.ph.snuggletex.SnuggleEngine;
-import uk.ac.ed.ph.snuggletex.SnuggleInput;
-import uk.ac.ed.ph.snuggletex.SnuggleSession;
-import uk.ac.ed.ph.snuggletex.XMLStringOutputOptions;
-import uk.ac.ed.ph.snuggletex.internal.util.XMLUtilities;
-import uk.ac.ed.ph.snuggletex.utilities.SimpleStylesheetCache;
-import uk.ac.ed.ph.snuggletex.utilities.StylesheetManager;
+import org.scilab.forge.jlatexmath.ParseException;
+import org.scilab.forge.jlatexmath.TeXFormula;
+import org.scilab.forge.jlatexmath.TeXIcon;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 
 /**
  * @author traff
@@ -54,8 +45,7 @@ public class MarkdownPanel extends JPanel {
     super();
     setLayout(new VerticalFlowLayout(FlowLayout.LEFT));
     myProject = project;
-    final String text = StringUtil.join(cell.getSource(), "\n");
-    initPanel(text);
+    initPanel(cell.getSource());
 
 
     addMouseListener(new MouseAdapter() {
@@ -69,63 +59,73 @@ public class MarkdownPanel extends JPanel {
     });
   }
 
-  private void initPanel(@Nullable final String text) {
+  private void initPanel(@Nullable final String[] text) {
     if (text == null) return;
-    final SnuggleEngine engine = new SnuggleEngine(new SimpleStylesheetCache());
-    final SnuggleSession session = engine.createSession();
+    StringBuilder formula = new StringBuilder();
+    boolean hasFormula = false;
+    boolean isEscaped = false;
+    boolean inFormula = false;
+    for (String string : text) {
+      if (string.startsWith("```") && !isEscaped) {
+        isEscaped = true;
+      }
+      else if (StringUtil.trimTrailing(string).endsWith("```") && isEscaped) {
+        isEscaped = false;
+      }
 
-    final SnuggleInput input = new SnuggleInput(text);
-    try {
-      session.parseInput(input);
-    }
-    catch (IOException e) {
-      LOG.error("Couldn't parse formula " + text);
-      return;
-    }
-    final NodeList nodes = session.buildDOMSubtree();
-    boolean hasPlain = true;
-    final StringBuilder plainContent = new StringBuilder();
-    int compNumber = 0;
-    for (int i = 0; i != nodes.getLength(); ++i) {
-      final Node node = nodes.item(i);
-      final StylesheetManager stylesheetManager = session.getStylesheetManager();
-      final XMLStringOutputOptions xmlStringOutputOptions = engine.getDefaultXMLStringOutputOptions();
-      final String str = XMLUtilities.serializeNodeChildren(stylesheetManager, node, xmlStringOutputOptions);
-
-      final Node child = node.getFirstChild();
-      if (child != null && "math".equals(child.getLocalName())) {
-        if (hasPlain) {
-          hasPlain = false;
-          compNumber = addPlainComponent(compNumber, plainContent);
-          plainContent.setLength(0);
-        }
-        final JMathComponent comp = new JMathComponent();
-        comp.setBackground(IpnbEditorUtil.getBackground());
-        comp.setOpaque(true);
-        comp.setContent("<html>" + str + "</html>");
-
-        add(comp, compNumber);
-        compNumber += 1;
+      if ((StringUtil.trimTrailing(string).endsWith("$$") || string.startsWith("\\\\end{")) && inFormula) {
+        inFormula = false;
+      }
+      else if (string.trim().startsWith("$$") && !isEscaped) {
+        formula.append(string.substring(2));
+        hasFormula = true;
+        inFormula = true;
+      }
+      if (string.startsWith("\\") && !isEscaped || inFormula) {
+        inFormula = true;
+        hasFormula = true;
+        if (string.contains("equation*"))
+          string = string.replace("equation*", "align");
+        formula.append(string);
       }
       else {
-        hasPlain = true;
-        plainContent.append(IpnbUtils.markdown2Html(str));
+        if (hasFormula) {
+          try {
+            TeXFormula f = new TeXFormula(formula.toString());
+            final Image image = f.createBufferedImage(TeXFormula.SERIF, new Float(20.), JBColor.BLACK, JBColor.WHITE);
+            JLabel picLabel = new JLabel(new ImageIcon(image));
+            add(picLabel);
+          }
+          catch (ParseException x) {
+            x.printStackTrace();
+          }
+          hasFormula = false;
+          formula = new StringBuilder();
+
+        }
+        else {
+          final String s = IpnbUtils.markdown2Html(string);
+          final JLabel comp = new JLabel("<html><body style='width: 900px'" + s + "</body></html>");
+          final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
+          comp.setFont(font);
+          add(comp);
+        }
       }
     }
-    if (hasPlain) {
-      addPlainComponent(compNumber, plainContent);
+    if (hasFormula) {
+      try {
+        TeXFormula f = new TeXFormula(formula.toString());
+        final TeXIcon icon = f.createTeXIcon(TeXFormula.SERIF, 20);
+        JLabel picLabel = new JLabel(icon);
+        add(picLabel);
+      }
+      catch (ParseException x) {
+        x.printStackTrace();
+      }
     }
     setBackground(IpnbEditorUtil.getBackground());
     setOpaque(true);
 
-  }
-
-  private int addPlainComponent(final int compNumber, @NotNull final StringBuilder plainContent) {
-    final JBLabel comp = new JBLabel("<html>" + plainContent.toString() + "</html>");
-    comp.setBackground(IpnbEditorUtil.getBackground());
-    comp.setOpaque(true);
-    add(comp, compNumber);
-    return compNumber + 1;
   }
 
   public boolean isEditing() {

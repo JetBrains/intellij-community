@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jlatexmath-1.0.3">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jlatexmath-1.0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

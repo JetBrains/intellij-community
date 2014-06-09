@@ -43,7 +43,7 @@ public class IpnbUtils {
     MarkdownUtil.replaceHeaders(processedLines);
     MarkdownUtil.removeImages(processedLines);
     MarkdownUtil.generateLists(processedLines);
-    MarkdownUtil.replaceCodeBlock(processedLines);
+    //MarkdownUtil.replaceCodeBlock(processedLines);
     final String[] lineArray = ArrayUtil.toStringArray(processedLines);
     final String normalizedMarkdown = StringUtil.join(lineArray, "\n");
     String html = ourMarkdownProcessor.markdown(normalizedMarkdown);
