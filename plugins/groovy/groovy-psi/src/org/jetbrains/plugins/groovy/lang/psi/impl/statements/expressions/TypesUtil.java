@@ -747,7 +747,7 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiType inferAnnotationMemberValueType(GrAnnotationMemberValue value) {
+  public static PsiType inferAnnotationMemberValueType(final GrAnnotationMemberValue value) {
     if (value instanceof GrExpression) {
       return ((GrExpression)value).getType();
     }
