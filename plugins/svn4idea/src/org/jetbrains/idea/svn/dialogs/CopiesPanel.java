@@ -312,7 +312,7 @@ public class CopiesPanel {
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><i>").append("Working copy root</i></td></tr>");
     }
     if (!info.hasError()) {
-      if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) || WorkingCopyFormat.ONE_DOT_EIGHT.equals(info.getFormat())) {
+      if (info.getFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN)) {
         sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CLEANUP).append("\">Cleanup</a></td></tr>");
       }
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");

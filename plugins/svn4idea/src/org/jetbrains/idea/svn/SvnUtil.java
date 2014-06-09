@@ -637,9 +637,7 @@ public class SvnUtil {
 
     WorkingCopyFormat format = getFormat(current);
 
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)
-           ? current
-           : getWorkingCopyRoot(file);
+    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : getWorkingCopyRoot(file);
   }
 
   private static File getParentWithDb(File file) {

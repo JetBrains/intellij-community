@@ -264,7 +264,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       final String list = isUndo ? null : SvnChangelistListener.getCurrentMapping(vcs, src);
 
       WorkingCopyFormat format = vcs.getWorkingCopyFormat(src);
-      final boolean is17OrLater = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format);
+      final boolean is17OrLater = format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN);
       if (is17OrLater) {
         SVNStatus srcStatus = getFileStatus(vcs, src);
         final File toDir = dst.getParentFile();
@@ -988,7 +988,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
       final String singleFilePrompt;
       if (deletedFiles.size() == 1 && deletedFiles.get(0).getFirst().isDirectory()) {
-        singleFilePrompt = WorkingCopyFormat.ONE_DOT_SEVEN.equals(deletedFiles.get(0).getSecond()) ?
+        singleFilePrompt = deletedFiles.get(0).getSecond().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ?
                            SvnBundle.getString("confirmation.text.delete.dir.17") :
                            SvnBundle.getString("confirmation.text.delete.dir");
       }

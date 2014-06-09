@@ -331,7 +331,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     if (copy == null) {
       WorkingCopyFormat format = mySvnVcs.getWorkingCopyFormat(file);
 
-      return !WorkingCopyFormat.UNKNOWN.equals(format) && format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN);
+      return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN);
     } else {
       return copy.is17Copy();
     }

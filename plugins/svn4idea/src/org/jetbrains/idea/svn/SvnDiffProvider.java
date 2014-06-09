@@ -232,8 +232,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
       long revision = -1;
 
-      // skipped for 1.8
-      if (!WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
+      // skipped for >= 1.8
+      if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
         // get really latest revision
         // TODO: Algorithm seems not to be correct in all cases - for instance, when some subtree was deleted and replaced by other
         // TODO: with same names. pegRevision should be used somehow but this complicates the algorithm

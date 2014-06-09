@@ -64,7 +64,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
       assertDirectory(target1);
 
       WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
-      if (!format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT)) {
+      if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
         throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format);
       }
     }
