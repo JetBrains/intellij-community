@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Set<Module> myModules;
   private final GlobalSearchScope myProjectScope;
 
-  public ModuleWithDependentsScope(Module module, boolean onlyTests) {
+  ModuleWithDependentsScope(Module module, boolean onlyTests) {
     super(module.getProject());
     myModule = module;
     myOnlyTests = onlyTests;
@@ -77,6 +77,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
     if (moduleOfFile == null) return false;
@@ -85,14 +86,17 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     return myProjectScope.contains(file);
   }
 
+  @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return myModules.contains(aModule);
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return false;
   }
