@@ -91,6 +91,8 @@ public class AutoTestManager {
     if (processHandler != null && !processHandler.isProcessTerminated()) {
       return;
     }
+    descriptor.setReuseActivation(true);
+    descriptor.setActivateToolWindowWhenAdded(false);
     restarter.run();
   }
 
