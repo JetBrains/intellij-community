@@ -83,7 +83,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
 
   private final SoftWrapsStorage               myStorage;
   private final EditorEx                       myEditor;
-  private final SoftWrapPainter myPainter;
+  private       SoftWrapPainter                myPainter;
   private final SoftWrapDataMapper myDataMapper;
 
   /**
@@ -1025,6 +1025,11 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   @Override
   public String toString() {
     return dumpState();
+  }
+
+  // for testing purposes
+  public void setSoftWrapPainter(SoftWrapPainter painter) {
+    myPainter = painter;
   }
 
   /**

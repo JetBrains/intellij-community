@@ -85,7 +85,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
   private final SoftWrapsStorage                   myStorage;
-  private final SoftWrapPainter                    myPainter;
+  private       SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
   private final SoftWrapAwareVisualSizeManager     myVisualSizeManager;
 
@@ -128,39 +128,18 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private boolean myForceAdditionalColumns;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
-    this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
-  }
-
-  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
-    this(editor, storage, painter, new DefaultEditorTextRepresentationHelper(editor));
-  }
-
-  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
-                           @NotNull EditorTextRepresentationHelper representationHelper) {
-    this(editor, storage, painter, representationHelper, new CachingSoftWrapDataMapper(editor, storage, representationHelper));
-    myApplianceManager.addListener(myDataMapper);
-  }
-
-  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
-                           @NotNull EditorTextRepresentationHelper representationHelper, @NotNull CachingSoftWrapDataMapper dataMapper)
-  {
-    this(editor, storage, painter, new SoftWrapApplianceManager(storage, editor, painter, representationHelper, dataMapper), dataMapper);
-  }
-
-  public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
-                           @NotNull SoftWrapApplianceManager applianceManager, @NotNull CachingSoftWrapDataMapper dataMapper)
-  {
     myEditor = editor;
-    myStorage = storage;
-    myPainter = painter;
-    myApplianceManager = applianceManager;
-    myDataMapper = dataMapper;
+    myStorage = new SoftWrapsStorage();
+    myPainter = new CompositeSoftWrapPainter(editor);
+    DefaultEditorTextRepresentationHelper representationHelper = new DefaultEditorTextRepresentationHelper(editor);
+    myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage, representationHelper);
+    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, representationHelper, myDataMapper);
     myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
-    myVisualSizeManager = new SoftWrapAwareVisualSizeManager(painter);
+    myVisualSizeManager = new SoftWrapAwareVisualSizeManager(myPainter);
 
     myDocumentListeners.add(myApplianceManager);
-    applianceManager.addListener(myVisualSizeManager);
-    applianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
+    myApplianceManager.addListener(myVisualSizeManager);
+    myApplianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
       public void recalculationEnds() {
         for (SoftWrapChangeListener listener : mySoftWrapListeners) {
@@ -174,6 +153,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     editor.addPropertyChangeListener(this);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DocumentBulkUpdateListener.TOPIC, this);
+
+    myApplianceManager.addListener(myDataMapper);
   }
 
   /**
@@ -451,7 +432,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
                              && myFoldBasedApplianceStrategy.processSoftWraps();
 
     if (!useSoftWraps) {
-      return useSoftWraps;
+      return false;
     }
 
     if (myDirty) {
@@ -714,6 +695,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         task.run(false);
       }
     }
+  }
+
+  // for testing purposes
+  public void setSoftWrapPainter(SoftWrapPainter painter) {
+    myPainter = painter;
+    myApplianceManager.setSoftWrapPainter(painter);
+    myVisualSizeManager.setSoftWrapPainter(painter);
   }
 
   @NotNull

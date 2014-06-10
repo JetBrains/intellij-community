@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -167,6 +169,27 @@ public class EditorTestUtil {
   public static boolean configureSoftWraps(Editor editor, final int visibleWidth, final int charWidthInPixels) {
     editor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
+    model.setSoftWrapPainter(new SoftWrapPainter() {
+      @Override
+      public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+        return charWidthInPixels;
+      }
+
+      @Override
+      public int getDrawingHorizontalOffset(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+        return charWidthInPixels;
+      }
+
+      @Override
+      public int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType) {
+        return charWidthInPixels;
+      }
+
+      @Override
+      public boolean canUse() {
+        return true;
+      }
+    });
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();

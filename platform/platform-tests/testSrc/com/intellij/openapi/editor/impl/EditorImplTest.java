@@ -62,7 +62,7 @@ public class EditorImplTest extends AbstractEditorTest {
       document.insertString(document.getLineStartOffset(i), "//");
     }
 
-    verifySoftWrapPositions(58, 87);
+    verifySoftWrapPositions(58, 93);
   }
 
   private void init(String text) throws IOException {
