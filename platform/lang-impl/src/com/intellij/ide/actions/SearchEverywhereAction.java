@@ -752,8 +752,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .createPopup();
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
-    Component parent = UIUtil.findUltimateParent(window);
 
+    //noinspection ConstantConditions
+    e.getProject().getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+      }
+
+      @Override
+      public void exitDumbMode() {
+        rebuildList(myPopupField.getText());
+      }
+    });
+
+    Component parent = UIUtil.findUltimateParent(window);
     registerDataProvider(panel);
     final RelativePoint showPoint;
     if (me != null) {
