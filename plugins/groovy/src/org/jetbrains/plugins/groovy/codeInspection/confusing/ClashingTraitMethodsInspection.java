@@ -87,13 +87,15 @@ public class ClashingTraitMethodsInspection extends BaseInspection {
         if (superSignatures.size() > 1) {
           List<GrTypeDefinition> traits = ContainerUtil.newArrayList();
           for (HierarchicalMethodSignature superSignature : superSignatures) {
-            PsiClass superClass = superSignature.getMethod().getContainingClass();
-            if (GrTraitUtil.isTrait(superClass)) {
+            PsiMethod superMethod = superSignature.getMethod();
+            PsiClass superClass = superMethod.getContainingClass();
+            if (GrTraitUtil.isTrait(superClass) &&
+                !superMethod.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
               traits.add((GrTypeDefinition)superClass);
             }
           }
 
-          if (!traits.isEmpty()) {
+          if (traits.size() > 1) {
             clashingMethods.add(new ClashingMethod(signature, traits));
           }
         }
