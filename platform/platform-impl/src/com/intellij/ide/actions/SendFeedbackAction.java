@@ -90,6 +90,11 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     return sb.toString();
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(ApplicationInfoEx.getInstanceEx() != null);
+  }
+
   private static boolean isEvaluationLicense() {
     final LicensingFacade provider = LicensingFacade.getInstance();
     return provider != null && provider.isEvaluationLicense();
