@@ -53,7 +53,7 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
     if (myIndex.isInLibraryClasses(file)) {
       return myIndex.getClassRootForFile(file);
     }
-    if (myIndex.isInContent(file)) {
+    if (myIndex.isInLibrarySource(file)) {
       return myIndex.getSourceRootForFile(file);
     }
     return null;

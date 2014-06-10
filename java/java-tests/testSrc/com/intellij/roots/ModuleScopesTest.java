@@ -3,7 +3,9 @@ package com.intellij.roots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.scopes.LibraryScope;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -53,6 +55,16 @@ public class ModuleScopesTest extends ModuleTestCase {
 
     assertTrue(moduleA.getModuleRuntimeScope(true).contains(classB));
     assertTrue(moduleA.getModuleRuntimeScope(true).contains(libraryClass));
+  }
+
+  public void testLibraryScope() throws IOException {
+    VirtualFile libraryClass = myFixture.createFile("lib/classes/Test.class");
+    VirtualFile librarySrc = myFixture.createFile("lib/src/Test.java", "public class Test { }");
+    Library library = PsiTestUtil.addProjectLibrary(myModule, "my-lib", Collections.singletonList(libraryClass.getParent()),
+                                                    Collections.singletonList(librarySrc.getParent()));
+    LibraryScope scope = new LibraryScope(myProject, library);
+    assertTrue(scope.contains(libraryClass));
+    assertTrue(scope.contains(librarySrc));
   }
 
   public void testTestOnlyModuleDependency() throws Exception {
