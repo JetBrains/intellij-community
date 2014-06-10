@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
-
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-
 /**
  * Created by Max Medvedev on 09/06/14
  */
-class ClashingTraitMethodsQuickFixTest extends GrIntentionTestCase {
+class ClashingTraitMethodsQuickFixTest /*extends GrIntentionTestCase*/ {
   ClashingTraitMethodsQuickFixTest() {
     super(GroovyInspectionBundle.message("declare.explicit.implementations.of.trait"), ClashingTraitMethodsInspection)
   }

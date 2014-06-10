@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethod
 /**
  * Created by Max Medvedev on 09/06/14
  */
-class ClashingTraitMethodsTest extends GrHighlightingTestBase {
+class ClashingTraitMethodsTest /*extends GrHighlightingTestBase*/ {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
