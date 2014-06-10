@@ -9,7 +9,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
@@ -31,7 +30,7 @@ public class TraitMethodImplementor implements MethodImplementor {
 
   @Override
   public GenerationInfo createGenerationInfo(PsiMethod method, boolean mergeIfExists) {
-    return new GroovyGenerationInfo(method, false);
+    return null;
   }
 
   @NotNull
