@@ -248,13 +248,13 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (varargs && (!psiMethod.isVarArgs() || myFunctionalMethodVarArgs)) continue;
 
         if ((varargs || parameterTypes.length == signatureParameterTypes2.length) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, varargs, 0)) {
+            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, varargs, 0)) {
           firstCandidates.add(conflict);
         }
 
         if (hasReceiver &&
             (varargs || parameterTypes.length == signatureParameterTypes2.length + 1) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, substitutor, varargs, 1)) {
+            PsiMethodReferenceUtil.isCorrectAssignment(signatureParameterTypes2, parameterTypes, varargs, 1)) {
           secondCandidates.add(conflict);
         }
       }
