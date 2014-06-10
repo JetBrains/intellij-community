@@ -93,7 +93,6 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(ApplicationInfoEx.getInstanceEx() != null);
-
   }
 
   private static boolean isEvaluationLicense() {
