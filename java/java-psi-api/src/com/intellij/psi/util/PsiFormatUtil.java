@@ -451,12 +451,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
   @Nullable
-  public static String getRawExternalName(PsiModifierListOwner owner, final boolean showParamName, int maxParamsToShow) {
+  public static String getRawExternalName(PsiModifierListOwner owner) {
     final StringBuilder builder = new StringBuilder();
-    if (owner instanceof PsiClass) {
-      ClassUtil.formatClassName((PsiClass)owner, builder);
-      return builder.toString();
-    }
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(owner, PsiClass.class, false);
     if (psiClass == null) return null;
     ClassUtil.formatClassName(psiClass, builder);
@@ -464,11 +460,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       builder.append(" ");
       formatMethod((PsiMethod)owner, PsiSubstitutor.EMPTY,
                    SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                   showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_RAW_TYPE| SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
-                   maxParamsToShow, builder);
-    }
-    else if (owner instanceof PsiField) {
-      builder.append(" ").append(((PsiField)owner).getName());
+                   SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
+                   Integer.MAX_VALUE, builder);
     }
     else if (owner instanceof PsiParameter) {
       final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
@@ -480,16 +473,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       builder.append(" ");
       formatMethod(psiMethod, PsiSubstitutor.EMPTY,
                    SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                   showParamName ? SHOW_NAME | SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES : SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
-                   maxParamsToShow, builder);
+                   SHOW_TYPE | SHOW_RAW_TYPE | SHOW_FQ_CLASS_NAMES,
+                   Integer.MAX_VALUE, builder);
       builder.append(" ");
-
-      if (showParamName) {
-        formatVariable((PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY, builder);
-      }
-      else {
-        builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
-      }
+      builder.append(psiMethod.getParameterList().getParameterIndex((PsiParameter)owner));
     }
     else {
       return null;

@@ -150,7 +150,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
 
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
-    String rawExternalName = PsiFormatUtil.getRawExternalName(listOwner, false, Integer.MAX_VALUE);
+    String rawExternalName = PsiFormatUtil.getRawExternalName(listOwner);
     if (rawExternalName != null) {
       rawExternalName = rawExternalName.replace("...)", "[])");
     }
