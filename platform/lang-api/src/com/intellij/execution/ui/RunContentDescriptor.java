@@ -40,7 +40,7 @@ public class RunContentDescriptor implements Disposable {
   private final String myHelpId;
 
   private boolean myActivateToolWindowWhenAdded = true;
-  private boolean myReuseActivation = false;
+  private boolean myReuseToolWindowActivation = false;
   private long myExecutionId = 0;
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
@@ -158,12 +158,12 @@ public class RunContentDescriptor implements Disposable {
     myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
 
-  public boolean isReuseActivation() {
-    return myReuseActivation;
+  public boolean isReuseToolWindowActivation() {
+    return myReuseToolWindowActivation;
   }
 
-  public void setReuseActivation(boolean reuseActivation) {
-    myReuseActivation = reuseActivation;
+  public void setReuseToolWindowActivation(boolean reuseToolWindowActivation) {
+    myReuseToolWindowActivation = reuseToolWindowActivation;
   }
 
   public long getExecutionId() {
