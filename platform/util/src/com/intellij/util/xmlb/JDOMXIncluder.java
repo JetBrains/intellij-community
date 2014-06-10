@@ -185,8 +185,6 @@ public class JDOMXIncluder {
   }
 
   private List<Content> resolve(Element original, Stack<String> bases) throws XIncludeException {
-    if (!bases.isEmpty()) bases.peek();
-
     if (isIncludeElement(original)) {
       return resolveXIncludeElement(original, bases);
     }
@@ -348,8 +346,6 @@ public class JDOMXIncluder {
   }
 
   private Element resolveNonXIncludeElement(Element original, Stack<String> bases) throws XIncludeException {
-    if (!bases.isEmpty()) bases.peek();
-
     Element result = new Element(original.getName(), original.getNamespace());
     for (Attribute a : original.getAttributes()) {
       result.setAttribute(a.clone());
