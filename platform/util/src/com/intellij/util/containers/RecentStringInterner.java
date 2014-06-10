@@ -82,9 +82,13 @@ public class RecentStringInterner {
 
   public void clear() {
     for(int i = 0; i < myInterns.length; ++i) {
-      myStripeLocks[i].lock();
-      myInterns[i].clear();
-      myStripeLocks[i].unlock();
+      try {
+        myStripeLocks[i].lock();
+        myInterns[i].clear();
+      }
+      finally {
+        myStripeLocks[i].unlock();
+      }
     }
   }
 }
