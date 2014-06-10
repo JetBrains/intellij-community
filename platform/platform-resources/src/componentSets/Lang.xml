@@ -231,7 +231,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisHandler</implementation-class>
+      <implementation-class>com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis</implementation-class>
     </component>
   </project-components>
 

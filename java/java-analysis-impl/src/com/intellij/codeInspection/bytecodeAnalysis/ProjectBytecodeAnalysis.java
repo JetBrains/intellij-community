@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,16 +50,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BytecodeAnalysisHandler extends AbstractProjectComponent {
+public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis");
   private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
 
   private final PsiManager myPsiManager;
 
   private MostlySingularMultiMap<String, AnnotationData> myAnnotations = null;
 
-  public BytecodeAnalysisHandler(Project project, PsiManager psiManager) {
+  public ProjectBytecodeAnalysis(Project project, PsiManager psiManager) {
     super(project);
     myPsiManager = psiManager;
 
@@ -77,6 +78,27 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     });
   }
 
+  private void loadAnnotations() {
+    LOG.info("initializing annotations");
+    final IntIdSolver solver = new IntIdSolver();
+    FileBasedIndex.getInstance().processValues(
+      BytecodeAnalysisIndex.NAME, BytecodeAnalysisIndex.KEY, null, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
+        @Override
+        public boolean process(VirtualFile file, Collection<IntIdEquation> value) {
+          for (IntIdEquation intIdEquation : value) {
+            solver.addEquation(intIdEquation);
+          }
+          return true;
+        }
+      }, ProjectScope.getLibrariesScope(myProject));
+    LOG.info("equations are constructed");
+    TIntObjectHashMap<Value> solutions = solver.solve();
+    LOG.info("equations are solved");
+    myAnnotations = BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
+    LOG.info("initialized " + myAnnotations.size());
+  }
+
+
   // TODO: what follows was just copied/modified from BaseExternalAnnotationsManager
   // TODO: refactor?
   @Nullable
@@ -94,7 +116,6 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     return data.getAnnotation(this);
   }
 
-
   @Nullable
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     List<AnnotationData> result = collectInferredAnnotations(listOwner);
@@ -102,7 +123,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     PsiAnnotation[] myResult = ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
       @Override
       public PsiAnnotation fun(AnnotationData data) {
-        return data.getAnnotation(BytecodeAnalysisHandler.this);
+        return data.getAnnotation(ProjectBytecodeAnalysis.this);
       }
     });
     String key = getExternalName(listOwner);
@@ -128,19 +149,7 @@ public class BytecodeAnalysisHandler extends AbstractProjectComponent {
     SmartList<AnnotationData> result = new SmartList<AnnotationData>();
 
     if (myAnnotations == null) {
-      LOG.info("initializing annotations");
-      final IntIdSolver solver = new IntIdSolver();
-      FileBasedIndex.getInstance().processValues(BytecodeAnalysisIndex.NAME, BytecodeAnalysisIndex.KEY, null, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
-        @Override
-        public boolean process(VirtualFile file, Collection<IntIdEquation> value) {
-          for (IntIdEquation intIdEquation : value) {
-            solver.addEquation(intIdEquation);
-          }
-          return true;
-        }
-      }, ProjectScope.getLibrariesScope(myProject));
-      myAnnotations = Util.makeAnnotations(solver.solve());
-      LOG.info("initialized " + myAnnotations.size());
+      loadAnnotations();
     }
 
     Iterable<AnnotationData> inferred = myAnnotations.get(key);
@@ -192,7 +201,7 @@ class AnnotationData {
   }
 
   @NotNull
-  PsiAnnotation getAnnotation(@NotNull BytecodeAnalysisHandler context) {
+  PsiAnnotation getAnnotation(@NotNull ProjectBytecodeAnalysis context) {
     PsiAnnotation a = annotation;
     if (a == null) {
       annotation = a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));

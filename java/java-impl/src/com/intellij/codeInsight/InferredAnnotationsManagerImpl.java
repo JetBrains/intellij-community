@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisHandler;
+import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +25,12 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @Nullable
   @Override
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    return listOwner.getProject().getComponent(BytecodeAnalysisHandler.class).findInferredAnnotation(listOwner, annotationFQN);
+    return listOwner.getProject().getComponent(ProjectBytecodeAnalysis.class).findInferredAnnotation(listOwner, annotationFQN);
   }
 
   @Nullable
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    return listOwner.getProject().getComponent(BytecodeAnalysisHandler.class).findInferredAnnotations(listOwner);
+    return listOwner.getProject().getComponent(ProjectBytecodeAnalysis.class).findInferredAnnotations(listOwner);
   }
 }
