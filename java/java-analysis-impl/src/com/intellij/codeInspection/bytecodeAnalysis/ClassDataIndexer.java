@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +31,11 @@ import java.util.Map;
  * @author lambdamix
  */
 public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEquation>, FileContent> {
-  final BytecodeAnalysisConverter myLowering;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer");
+  final BytecodeAnalysisConverter myConverter;
 
-  public ClassDataIndexer(BytecodeAnalysisConverter lowering) {
-    myLowering = lowering;
+  public ClassDataIndexer(BytecodeAnalysisConverter converter) {
+    myConverter = converter;
   }
 
   @NotNull
@@ -43,14 +45,13 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
     Collection<IntIdEquation> idEquations = new ArrayList<IntIdEquation>(rawEquations.size());
     for (Equation<Key, Value> rawEquation : rawEquations) {
       try {
-        IntIdEquation idEquation = myLowering.enumerate(rawEquation);
+        IntIdEquation idEquation = myConverter.convert(rawEquation);
         idEquations.add(idEquation);
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
-
     return Collections.singletonMap(BytecodeAnalysisIndex.KEY, idEquations);
   }
 }

@@ -15,16 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-final class MethodExtra {
-  final String signature;
-  final int access;
-
-  MethodExtra(String signature, int access) {
-    this.signature = signature;
-    this.access = access;
-  }
-}
-
 final class Method {
   final String internalClassName;
   final String methodName;

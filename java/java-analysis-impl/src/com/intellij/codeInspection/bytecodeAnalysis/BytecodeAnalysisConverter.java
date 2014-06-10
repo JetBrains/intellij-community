@@ -18,7 +18,9 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,25 +29,17 @@ import java.util.Set;
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisConverter extends ApplicationComponent.Adapter {
+public class BytecodeAnalysisConverter implements ApplicationComponent {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter");
 
   public static BytecodeAnalysisConverter getInstance() {
     return ApplicationManager.getApplication().getComponent(BytecodeAnalysisConverter.class);
   }
 
   PersistentStringEnumerator internalKeyEnumerator;
-  private final File myFile = new File(PathManager.getIndexRoot(), "faba.internalIds");
 
-  public BytecodeAnalysisConverter() {
-    try {
-      internalKeyEnumerator = new PersistentStringEnumerator(myFile);
-    }
-    catch (IOException e) {
-      //e.printStackTrace();
-    }
-  }
-
-  IntIdEquation enumerate(Equation<Key, Value> equation) throws IOException {
+  IntIdEquation convert(Equation<Key, Value> equation) throws IOException {
     Result<Key, Value> rhs = equation.rhs;
     IntIdResult result;
     if (rhs instanceof Final) {
@@ -70,5 +64,33 @@ public class BytecodeAnalysisConverter extends ApplicationComponent.Adapter {
     }
     int key = internalKeyEnumerator.enumerate(Util.internalKeyString(equation.id));
     return new IntIdEquation(key, result);
+  }
+
+  @Override
+  public void initComponent() {
+    try {
+      File dir = new File(PathManager.getIndexRoot(), "bytecodeKeys");
+      final File internalKeysFile = new File(dir, "faba.internalIds");
+      internalKeyEnumerator = new PersistentStringEnumerator(internalKeysFile);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  @Override
+  public void disposeComponent() {
+    try {
+      internalKeyEnumerator.close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "BytecodeAnalysisConverter";
   }
 }
