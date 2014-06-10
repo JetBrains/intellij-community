@@ -66,7 +66,7 @@ public class LambdaHighlightingUtil {
             return lambdaParameter;
           }
         } else {
-          if (!TypeConversionUtil.isAssignable(lambdaParameterType, substitutedParamType)) {
+          if (!TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
             return lambdaParameter;
           }
         }
