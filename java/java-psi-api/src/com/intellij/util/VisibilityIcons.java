@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
 
@@ -55,7 +56,7 @@ public class VisibilityIcons {
       }
   }
 
-  public static void setVisibilityIcon(int accessLevel, RowIcon baseIcon) {
+  public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {
     Icon icon;
     switch (accessLevel) {
       case PsiUtil.ACCESS_LEVEL_PUBLIC:
