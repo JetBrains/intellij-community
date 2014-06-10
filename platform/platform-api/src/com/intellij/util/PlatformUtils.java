@@ -93,6 +93,10 @@ public class PlatformUtils {
     return PlatformUtilsCore.isWebStorm();
   }
 
+  public static boolean isDatabaseIDE() {
+    return PlatformUtilsCore.isDatabaseIDE();
+  }
+
   /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
   @SuppressWarnings("UnusedDeclaration")
   public static boolean isIdeaProject(@Nullable Project project) {
