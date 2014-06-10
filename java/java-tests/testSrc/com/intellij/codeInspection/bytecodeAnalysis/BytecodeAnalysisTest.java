@@ -18,6 +18,9 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInspection.bytecodeAnalysis.data.Test01;
+import com.intellij.codeInspection.bytecodeAnalysis.data.Test02;
+import com.intellij.codeInspection.bytecodeAnalysis.data.Test03;
+import com.intellij.codeInspection.bytecodeAnalysis.data.TestAnnotation;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,10 +30,14 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
 
 /**
  * @author lambdamix
@@ -40,14 +47,25 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   private final String myClassesProjectRelativePath = "/classes/" + Test01.class.getPackage().getName().replace('.', '/');
   private JavaPsiFacade myJavaPsiFacade;
   private InferredAnnotationsManager myInferredAnnotationsManager;
+  private BytecodeAnalysisConverter myBytecodeAnalysisConverter;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myJavaPsiFacade = JavaPsiFacade.getInstance(myModule.getProject());
     myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
+    myBytecodeAnalysisConverter = BytecodeAnalysisConverter.getInstance();
+
+    setUpDataClasses();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myBytecodeAnalysisConverter.disposeComponent();
+    super.tearDown();
+  }
+
+  // TODO - test it, possible solution - via external annotation manager??
   /*
   public void testVelocityJar() {
     VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib");
@@ -60,13 +78,20 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
   */
 
-  public void testDataClasses() throws IOException {
-    VirtualFile dataClassesDir = setUpDataClasses();
-    PsiTestUtil.addLibrary(myModule, "dataClasses", dataClassesDir.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
-    //PsiClass psiClass = myJavaPsiFacade.findClass(Test01.class.getName(), GlobalSearchScope.moduleWithLibrariesScope(myModule));
-    //assertNotNull(psiClass);
 
+  public void testInference() throws IOException {
     checkAnnotations(Test01.class);
+  }
+
+  public void testCompoundKeys() throws IOException {
+    checkCompoundIds(Test01.class);
+    checkCompoundIds(Test02.class);
+    checkCompoundIds(Test02.Inner1.class);
+    checkCompoundIds(Test02.Inner2.class);
+    checkCompoundIds(Test03.class);
+    checkCompoundIds(Test03.Inner1.class);
+    checkCompoundIds(Test03.Inner2.class);
+    checkCompoundIds(TestAnnotation.class);
   }
 
   private void checkAnnotations(Class<?> javaClass) {
@@ -111,13 +136,59 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private VirtualFile setUpDataClasses() throws IOException {
+  private void checkCompoundIds(Class<?> javaClass) throws IOException {
+    String javaClassName = javaClass.getCanonicalName();
+    System.out.println(javaClassName);
+    PsiClass psiClass = myJavaPsiFacade.findClass(javaClassName, GlobalSearchScope.moduleWithLibrariesScope(myModule));
+    assertNotNull(psiClass);
+
+    for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
+      System.out.println(javaMethod.getName());
+      Method method = new Method(Type.getDescriptor(javaClass), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
+      boolean noKey = javaMethod.getAnnotation(ExpectNoPsiKey.class) != null;
+      PsiMethod psiMethod = psiClass.findMethodsByName(javaMethod.getName(), false)[0];
+      checkCompoundId(method, psiMethod, noKey);
+    }
+
+    for (Constructor<?> constructor : javaClass.getDeclaredConstructors()) {
+      Method method = new Method(Type.getDescriptor(javaClass), "<init>", Type.getConstructorDescriptor(constructor));
+      boolean noKey = constructor.getAnnotation(ExpectNoPsiKey.class) != null;
+      PsiMethod[] constructors = psiClass.getConstructors();
+      PsiMethod psiMethod = constructors[0];
+      checkCompoundId(method, psiMethod, noKey);
+    }
+  }
+
+  private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) throws IOException {
+    Direction direction = new Out();
+    int[] psiKey = myBytecodeAnalysisConverter.mkCompoundKey(psiMethod, direction);
+    if (noKey) {
+      assertNull(psiKey);
+      return;
+    }
+    else {
+      assertNotNull(psiKey);
+    }
+
+    int[] asmKey = myBytecodeAnalysisConverter.mkCompoundKey(new Key(method, direction));
+
+    System.out.println(Arrays.toString(asmKey));
+    System.out.println(Arrays.toString(psiKey));
+
+    System.out.println(myBytecodeAnalysisConverter.showCompoundKey(asmKey));
+    System.out.println(myBytecodeAnalysisConverter.showCompoundKey(psiKey));
+
+    Assert.assertArrayEquals(asmKey, psiKey);
+  }
+
+  private void setUpDataClasses() throws IOException {
     File classesDir = new File(Test01.class.getResource(".").getFile());
     File destDir = new File(myModule.getProject().getBaseDir().getPath() + myClassesProjectRelativePath);
     FileUtil.copyDir(classesDir, destDir);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destDir);
     assertNotNull(vFile);
-    return vFile;
+
+    PsiTestUtil.addLibrary(myModule, "dataClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
 }

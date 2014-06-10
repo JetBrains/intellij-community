@@ -52,7 +52,15 @@ enum Value {
   Bot, NotNull, Null, True, False, Top
 }
 
-interface Direction {}
+interface Direction {
+  static final int OUT_DIRECTION = 0;
+  static final int IN_DIRECTION = 1;
+  static final int INOUT_DIRECTION = 2;
+  int directionId();
+  int paramId();
+  int valueId();
+}
+
 final class In implements Direction {
   final int paramIndex;
 
@@ -77,6 +85,21 @@ final class In implements Direction {
   @Override
   public int hashCode() {
     return paramIndex;
+  }
+
+  @Override
+  public int directionId() {
+    return IN_DIRECTION;
+  }
+
+  @Override
+  public int paramId() {
+    return paramIndex;
+  }
+
+  @Override
+  public int valueId() {
+    return 0;
   }
 }
 
@@ -113,6 +136,21 @@ final class InOut implements Direction {
   public String toString() {
     return "InOut " + paramIndex + " " + inValue.toString();
   }
+
+  @Override
+  public int directionId() {
+    return INOUT_DIRECTION;
+  }
+
+  @Override
+  public int paramId() {
+    return paramIndex;
+  }
+
+  @Override
+  public int valueId() {
+    return inValue.ordinal();
+  }
 }
 
 final class Out implements Direction {
@@ -129,6 +167,21 @@ final class Out implements Direction {
   @Override
   public boolean equals(Object obj) {
     return obj instanceof Out;
+  }
+
+  @Override
+  public int directionId() {
+    return OUT_DIRECTION;
+  }
+
+  @Override
+  public int paramId() {
+    return 0;
+  }
+
+  @Override
+  public int valueId() {
+    return 0;
   }
 }
 
