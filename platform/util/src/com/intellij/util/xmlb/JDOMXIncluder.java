@@ -34,6 +34,23 @@ import java.util.regex.Pattern;
 
 public class JDOMXIncluder {
   private static final Logger LOG = Logger.getInstance(JDOMXIncluder.class);
+  public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
+    @NotNull
+    @Override
+    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
+      try {
+        if (base != null) {
+          return new URL(new URL(base), relativePath);
+        }
+        else {
+          return new URL(relativePath);
+        }
+      }
+      catch (MalformedURLException ex) {
+        throw new XIncludeException(ex);
+      }
+    }
+  };
 
   @NonNls private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
   @NonNls private static final String XI = "xi";
@@ -48,9 +65,11 @@ public class JDOMXIncluder {
 
   public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
   private final boolean myIgnoreMissing;
+  private final PathResolver myPathResolver;
 
-  private JDOMXIncluder(boolean ignoreMissing) {
+  private JDOMXIncluder(boolean ignoreMissing, PathResolver pathResolver) {
     myIgnoreMissing = ignoreMissing;
+    myPathResolver = pathResolver;
   }
 
   public static Document resolve(Document original, String base) throws XIncludeException {
@@ -58,11 +77,15 @@ public class JDOMXIncluder {
   }
 
   public static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException {
-    return new JDOMXIncluder(ignoreMissing).doResolve(original, base);
+    return resolve(original, base, ignoreMissing, DEFAULT_PATH_RESOLVER);
+  }
+
+  public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
+    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
   }
 
   public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
-    return new JDOMXIncluder(false).doResolve(original, base);
+    return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
 
   private Document doResolve(Document original, String base) {
@@ -190,24 +213,7 @@ public class JDOMXIncluder {
       base = baseAttribute.getValue();
     }
 
-    URL remote;
-    if (base != null) {
-      try {
-        URL context = new URL(base);
-        remote = new URL(context, href);
-      }
-      catch (MalformedURLException ex) {
-        throw new XIncludeException(ex);
-      }
-    }
-    else { // base == null
-      try {
-        remote = new URL(href);
-      }
-      catch (MalformedURLException ex) {
-        throw new XIncludeException(ex);
-      }
-    }
+    URL remote = myPathResolver.resolvePath(href, base);
 
     boolean parse = true;
     final String parseAttribute = element.getAttributeValue(PARSE);
@@ -362,9 +368,13 @@ public class JDOMXIncluder {
       else {
         result.addContent(o.clone());
       }
-    } // end while
+    }
 
     return result;
+  }
 
+  public interface PathResolver {
+    @NotNull
+    URL resolvePath(@NotNull String relativePath, @Nullable String base);
   }
 }
