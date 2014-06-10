@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     final T member = getPsiMember();
     if (member == null) return;
 
-    LOG.assertTrue(member instanceof GroovyPsiElement);
+    LOG.assertTrue(member instanceof GroovyPsiElement, member);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(member.getProject());
 
     final PsiElement prev = member.getPrevSibling();
