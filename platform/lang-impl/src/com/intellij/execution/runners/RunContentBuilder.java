@@ -260,7 +260,12 @@ public class RunContentBuilder extends LogConsoleManagerBase {
    */
   public RunContentDescriptor showRunContent(final RunContentDescriptor reuseContent) {
     final RunContentDescriptor descriptor = createDescriptor();
-    if(reuseContent != null) descriptor.setAttachedContent(reuseContent.getAttachedContent());
+    if (reuseContent != null) {
+      descriptor.setAttachedContent(reuseContent.getAttachedContent());
+      if (reuseContent.isReuseActivation()) {
+        descriptor.setActivateToolWindowWhenAdded(reuseContent.isActivateToolWindowWhenAdded());
+      }
+    }
     return descriptor;
   }
 
