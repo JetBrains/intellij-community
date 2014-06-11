@@ -743,6 +743,7 @@ public class JavaDocInfoGenerator {
         buffer.append("</font>");
         buffer.append("&nbsp;");
       }
+      buffer.append("\n");
     }
   }
 
