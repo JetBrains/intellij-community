@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -127,7 +128,31 @@ public class HgCommandExecutor {
     logCommand(operation, arguments);
 
     final List<String> cmdLine = new LinkedList<String>();
-    cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
+
+    HgCommandServerExecutor serverExecutor = myVcs.getServerExecutor();
+    boolean executeWithCommandServer = serverExecutor != null && myVcs.getProjectSettings().isCommandServerExecution();
+    //todo chane to appropriate updater
+    // if not started - start
+    if (executeWithCommandServer &&
+        (serverExecutor.getState() == HgCommandServerExecutor.State.NOT_STARTED ||
+         serverExecutor.getState() == HgCommandServerExecutor.State.STOPPED) &&
+        repo != null) {
+      serverExecutor.startServer(new File(repo.getPath()));
+    }
+    // if not stopped  - stop , should be performed using messageBus
+    else if (!executeWithCommandServer && serverExecutor != null && serverExecutor.getState() == HgCommandServerExecutor.State.RUNNING) {
+      serverExecutor.stop();
+    }
+    executeWithCommandServer = executeWithCommandServer && serverExecutor.getState() == HgCommandServerExecutor.State.RUNNING;
+
+    if (!executeWithCommandServer) {
+      cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
+      if (HgVcs.HGENCODING == null) {
+        cmdLine.add("--encoding");
+        cmdLine.add(HgEncodingUtil.getNameFor(myCharset));
+      }
+    }
+    cmdLine.add(operation);
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -138,21 +163,17 @@ public class HgCommandExecutor {
     cmdLine.add("extensions.mq=");
 
     cmdLine.addAll(DEFAULT_OPTIONS);
-    cmdLine.add(operation);
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
-    }
-    if (HgVcs.HGENCODING == null) {
-      cmdLine.add("--encoding");
-      cmdLine.add(HgEncodingUtil.getNameFor(myCharset));
     }
 
     try {
       String workingDir = repo != null ? repo.getPath() : null;
-      ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
       long startTime = System.currentTimeMillis();
       LOG.debug(String.format("hg %s started", operation));
-      HgCommandResult result = shellCommand.execute(myShowOutput);
+      HgCommandResult result = executeWithCommandServer
+                               ? serverExecutor.runCommand(cmdLine)
+                               : new ShellCommand(cmdLine, workingDir, myCharset).execute(myShowOutput);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       logResult(result);
       return result;
@@ -165,7 +186,12 @@ public class HgCommandExecutor {
       }
       return null;
     }
-    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
+    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user
+      LOG.info(e.getMessage(), e);
+      return null;
+    }
+    catch (IOException e) {
+      showError(e);
       LOG.info(e.getMessage(), e);
       return null;
     }

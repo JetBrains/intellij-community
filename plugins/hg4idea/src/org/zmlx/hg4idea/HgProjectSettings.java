@@ -41,6 +41,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myCheckOutgoing = true;
     public Boolean CHECK_INCOMING_OUTGOING = null;
     public boolean myIgnoreWhitespacesInAnnotations = true;
+    public boolean myExecuteWithCommandServer = false;
   }
 
   public State getState() {
@@ -71,6 +72,14 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
       myState.myIgnoreWhitespacesInAnnotations = ignoreWhitespacesInAnnotations;
       myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
     }
+  }
+
+  public boolean isCommandServerExecution() {
+    return myState.myExecuteWithCommandServer;
+  }
+
+  public void setExecuteWithCommandServer(boolean executeWithCommandServer) {
+    myState.myExecuteWithCommandServer = executeWithCommandServer;
   }
 
   public String getHgExecutable() {

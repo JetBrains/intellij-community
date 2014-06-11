@@ -50,6 +50,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandServerExecutor;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
@@ -60,6 +61,7 @@ import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
+import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
@@ -98,6 +100,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
+  private volatile HgCommandServerExecutor myServerExecutor;
 
   private HgVFSListener myVFSListener;
   private final HgMergeProvider myMergeProvider;
@@ -213,6 +216,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
+  public HgCommandServerExecutor getServerExecutor() {
+    return myServerExecutor;
+  }
+
   @Override
   public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
     Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
@@ -313,6 +320,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       });
     }
 
+    myServerExecutor = new HgCommandServerExecutor(myProject,HgEncodingUtil.getDefaultCharset(myProject));
     // Force a branch topic update
     myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject, null);
   }
@@ -349,7 +357,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-
+    myServerExecutor.stop();
     super.deactivate();
   }
 

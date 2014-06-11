@@ -31,6 +31,7 @@ public abstract class HgErrorHandler {
   private static boolean fatalErrorOccurred(HgCommandResult result) {
     return 
       result.getExitValue() == 255 ||
+      result.getExitValue() == -1 ||         // error result value for command server execution is -1
       result.getRawError().contains("** unknown exception encountered");
   }
   
