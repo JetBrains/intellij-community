@@ -2026,15 +2026,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   static class TitleIndexes {
-    volatile int topHit;
-    volatile int recentFiles;
-    volatile int runConfigurations;
-    volatile int classes;
-    volatile int files;
-    volatile int actions;
-    volatile int settings;
-    volatile int toolWindows;
-    volatile int symbols;
+    volatile int topHit = -1;
+    volatile int recentFiles = -1;
+    volatile int runConfigurations = -1;
+    volatile int classes = -1;
+    volatile int files = -1;
+    volatile int actions = -1;
+    volatile int settings = -1;
+    volatile int toolWindows = -1;
+    volatile int symbols = -1;
 
     final String gotoClassTitle;
     final String gotoFileTitle;
