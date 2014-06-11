@@ -36,7 +36,7 @@ static void reportEvent(char *event, char *path) {
     }
 
     pthread_mutex_lock(&lock);
-    if (report_private || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) != 0) {
+    if (path == NULL || report_private || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) != 0) {
         fputs(event, stdout);
         fputc('\n', stdout);
         if (path != NULL) {
