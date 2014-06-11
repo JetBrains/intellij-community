@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
@@ -697,7 +698,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
 
-  // for testing purposes
+  @TestOnly
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
     myApplianceManager.setSoftWrapPainter(painter);

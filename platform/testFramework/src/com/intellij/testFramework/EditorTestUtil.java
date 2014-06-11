@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
 import java.awt.*;
@@ -155,6 +156,7 @@ public class EditorTestUtil {
    *
    * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
    */
+  @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt) {
     int charWidthInPixels = 7;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
@@ -166,6 +168,7 @@ public class EditorTestUtil {
    *
    * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
    */
+  @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int visibleWidth, final int charWidthInPixels) {
     editor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();

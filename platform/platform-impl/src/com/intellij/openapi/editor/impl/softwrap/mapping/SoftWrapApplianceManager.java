@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1027,7 +1028,7 @@ public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
     return dumpState();
   }
 
-  // for testing purposes
+  @TestOnly
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
   }

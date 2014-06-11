@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +101,7 @@ public class SoftWrapAwareVisualSizeManager extends SoftWrapAwareDocumentParsing
     }
   }
 
-  // for testing purposes
+  @TestOnly
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
   }
