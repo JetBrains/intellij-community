@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,8 +39,8 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
     private final boolean myCheckBases;
     private final boolean myAllowStaticMethod;
 
-    public SearchParameters(final PsiMethod method,
-                            @Nullable final PsiClass aClass,
+    public SearchParameters(@NotNull PsiMethod method,
+                            @Nullable PsiClass aClass,
                             final boolean checkBases,
                             final boolean allowStaticMethod) {
       myCheckBases = checkBases;
@@ -52,6 +53,7 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
       return myCheckBases;
     }
 
+    @NotNull
     public final PsiMethod getMethod() {
       return myMethod;
     }
@@ -69,7 +71,11 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
   private SuperMethodsSearch() {
   }
 
-  public static Query<MethodSignatureBackedByPsiMethod> search(final PsiMethod derivedMethod, @Nullable final PsiClass psiClass, boolean checkBases, boolean allowStaticMethod) {
+  @NotNull
+  public static Query<MethodSignatureBackedByPsiMethod> search(@NotNull PsiMethod derivedMethod,
+                                                               @Nullable final PsiClass psiClass,
+                                                               boolean checkBases,
+                                                               boolean allowStaticMethod) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod);
     return SUPER_METHODS_SEARCH_INSTANCE.createUniqueResultsQuery(parameters, MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
   }
