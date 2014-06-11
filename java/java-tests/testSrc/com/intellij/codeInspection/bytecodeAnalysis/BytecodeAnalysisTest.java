@@ -18,9 +18,9 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInspection.bytecodeAnalysis.data.Test01;
-import com.intellij.codeInspection.bytecodeAnalysis.data.Test02;
-import com.intellij.codeInspection.bytecodeAnalysis.data.Test03;
+import com.intellij.codeInspection.bytecodeAnalysis.data.TestConverterData;
 import com.intellij.codeInspection.bytecodeAnalysis.data.TestAnnotation;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
+import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.junit.Assert;
@@ -57,6 +58,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     myBytecodeAnalysisConverter = BytecodeAnalysisConverter.getInstance();
 
     setUpDataClasses();
+    setUpVelocityLibrary();
   }
 
   @Override
@@ -65,32 +67,31 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     super.tearDown();
   }
 
-  // TODO - test it, possible solution - via external annotation manager??
-  /*
+  // TODO: real integration test (possible solution - via external annotation manager??)
   public void testVelocityJar() {
-    VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib");
-    assertNotNull(lib);
-    PsiTestUtil.addLibrary(myModule, "velocity", lib.getPath(), new String[]{"/velocity.jar!/"}, new String[]{});
     PsiClass psiClass = myJavaPsiFacade.findClass(SystemUtils.class.getName(), GlobalSearchScope.moduleWithLibrariesScope(myModule));
     assertNotNull(psiClass);
     PsiMethod getJavaHomeMethod = psiClass.findMethodsByName("getJavaHome", false)[0];
     assertNotNull(InferredAnnotationsManager.getInstance(myModule.getProject()).findInferredAnnotation(getJavaHomeMethod, AnnotationUtil.NOT_NULL));
   }
-  */
+
+  private void setUpVelocityLibrary() {
+    VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib");
+    assertNotNull(lib);
+    PsiTestUtil.addLibrary(myModule, "velocity", lib.getPath(), new String[]{"/velocity.jar!/"}, new String[]{});
+  }
 
 
   public void testInference() throws IOException {
     checkAnnotations(Test01.class);
   }
 
-  public void testCompoundKeys() throws IOException {
+  public void testConverter() throws IOException {
     checkCompoundIds(Test01.class);
-    checkCompoundIds(Test02.class);
-    checkCompoundIds(Test02.Inner1.class);
-    checkCompoundIds(Test02.Inner2.class);
-    checkCompoundIds(Test03.class);
-    checkCompoundIds(Test03.Inner1.class);
-    checkCompoundIds(Test03.Inner2.class);
+    checkCompoundIds(TestConverterData.class);
+    checkCompoundIds(TestConverterData.StaticNestedClass.class);
+    checkCompoundIds(TestConverterData.InnerClass.class);
+    checkCompoundIds(TestConverterData.GenericStaticNestedClass.class);
     checkCompoundIds(TestAnnotation.class);
   }
 
@@ -107,8 +108,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
         Annotation[] parameterAnnotations = annotations[i];
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[i];
         PsiAnnotation inferredAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiParameter, AnnotationUtil.NOT_NULL);
-        for (int j = 0; j < parameterAnnotations.length; j++) {
-          Annotation parameterAnnotation = parameterAnnotations[j];
+        for (Annotation parameterAnnotation : parameterAnnotations) {
           if (parameterAnnotation.annotationType() == ExpectNotNull.class) {
             assertNotNull(inferredAnnotation);
             continue params;
@@ -128,7 +128,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
       assertEquals(expectedContract == null, actualContractAnnotation == null);
 
-      if (expectedAnnotation != null) {
+      if (expectedContract != null) {
         String expectedContractValue = expectedContract.value();
         String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContractAnnotation, null);
         assertEquals(expectedContractValue, actualContractValue);
@@ -144,14 +144,14 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
     for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
       System.out.println(javaMethod.getName());
-      Method method = new Method(Type.getDescriptor(javaClass), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
+      Method method = new Method(Type.getType(javaClass).getInternalName(), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
       boolean noKey = javaMethod.getAnnotation(ExpectNoPsiKey.class) != null;
       PsiMethod psiMethod = psiClass.findMethodsByName(javaMethod.getName(), false)[0];
       checkCompoundId(method, psiMethod, noKey);
     }
 
     for (Constructor<?> constructor : javaClass.getDeclaredConstructors()) {
-      Method method = new Method(Type.getDescriptor(javaClass), "<init>", Type.getConstructorDescriptor(constructor));
+      Method method = new Method(Type.getType(javaClass).getInternalName(), "<init>", Type.getConstructorDescriptor(constructor));
       boolean noKey = constructor.getAnnotation(ExpectNoPsiKey.class) != null;
       PsiMethod[] constructors = psiClass.getConstructors();
       PsiMethod psiMethod = constructors[0];
@@ -175,8 +175,8 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     System.out.println(Arrays.toString(asmKey));
     System.out.println(Arrays.toString(psiKey));
 
-    System.out.println(myBytecodeAnalysisConverter.showCompoundKey(asmKey));
-    System.out.println(myBytecodeAnalysisConverter.showCompoundKey(psiKey));
+    System.out.println(myBytecodeAnalysisConverter.debugCompoundKey(asmKey));
+    System.out.println(myBytecodeAnalysisConverter.debugCompoundKey(psiKey));
 
     Assert.assertArrayEquals(asmKey, psiKey);
   }
@@ -187,7 +187,6 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     FileUtil.copyDir(classesDir, destDir);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destDir);
     assertNotNull(vFile);
-
     PsiTestUtil.addLibrary(myModule, "dataClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 

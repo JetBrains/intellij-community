@@ -28,24 +28,20 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -53,28 +49,25 @@ import java.util.List;
 public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis");
-  private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
+  private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(0);
 
   private final PsiManager myPsiManager;
 
-  private MostlySingularMultiMap<String, AnnotationData> myAnnotations = null;
+  private Annotations myAnnotations = null;
 
   public ProjectBytecodeAnalysis(Project project, PsiManager psiManager) {
     super(project);
     myPsiManager = psiManager;
 
+    // TODO: question: what is a proper way to handle indices changes?
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       @Override
-      public void run() {
-        //doIndex();
-      }
+      public void run() {}
     });
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        //doIndex();
-      }
+      public void rootsChanged(ModuleRootEvent event) {}
     });
   }
 
@@ -95,24 +88,18 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("equations are solved");
     myAnnotations = BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
-    LOG.info("initialized " + myAnnotations.size());
+    LOG.info("initialized ");
   }
 
 
   // TODO: what follows was just copied/modified from BaseExternalAnnotationsManager
-  // TODO: refactor?
   @Nullable
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    String key = getExternalName(listOwner);
-    if (key == null) {
-      return null;
-    }
     List<AnnotationData> list = collectInferredAnnotations(listOwner);
     AnnotationData data = findByFQN(list, annotationFQN);
     if (data == null) {
       return null;
     }
-    LOG.info("annotation: " + key + " " + data);
     return data.getAnnotation(this);
   }
 
@@ -120,15 +107,12 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     List<AnnotationData> result = collectInferredAnnotations(listOwner);
     if (result == null || result.isEmpty()) return null;
-    PsiAnnotation[] myResult = ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
+    return ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
       @Override
       public PsiAnnotation fun(AnnotationData data) {
         return data.getAnnotation(ProjectBytecodeAnalysis.this);
       }
     });
-    String key = getExternalName(listOwner);
-    LOG.info("annotations: " + key + " " + result);
-    return myResult;
   }
 
   @Nullable
@@ -142,28 +126,40 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   }
 
   private synchronized List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
-    String key = getExternalName(listOwner);
-    if (key == null) {
-      return NO_DATA;
-    }
-    SmartList<AnnotationData> result = new SmartList<AnnotationData>();
-
     if (myAnnotations == null) {
       loadAnnotations();
     }
-
-    Iterable<AnnotationData> inferred = myAnnotations.get(key);
-    ContainerUtil.addAll(result, inferred);
-    return result;
+    try {
+      int key = getKey(listOwner);
+      if (key == -1) {
+        return NO_DATA;
+      }
+      SmartList<AnnotationData> result = new SmartList<AnnotationData>();
+      ContainerUtil.addIfNotNull(result, myAnnotations.contracts.get(key));
+      ContainerUtil.addIfNotNull(result, myAnnotations.outs.get(key));
+      ContainerUtil.addIfNotNull(result, myAnnotations.params.get(key));
+      return result;
+    }
+    catch (IOException e) {
+      return NO_DATA;
+    }
   }
 
-  @Nullable
-  protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
-    String rawExternalName = PsiFormatUtil.getRawExternalName(listOwner);
-    if (rawExternalName != null) {
-      rawExternalName = rawExternalName.replace("...)", "[])");
+  protected static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {
+    if (owner instanceof PsiMethod) {
+      return BytecodeAnalysisConverter.getInstance().mkKey((PsiMethod)owner, new Out());
     }
-    return rawExternalName;
+    else if (owner instanceof PsiParameter) {
+      final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
+      if (!(declarationScope instanceof PsiMethod)) {
+        return -1;
+      }
+      final PsiMethod psiMethod = (PsiMethod)declarationScope;
+      final int index = psiMethod.getParameterList().getParameterIndex((PsiParameter)owner);
+      return BytecodeAnalysisConverter.getInstance().mkKey(psiMethod, new In(index));
+    } else {
+      return -1;
+    }
   }
 
   // interner for storing annotation FQN
@@ -187,6 +183,18 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       }
       return (PsiAnnotation)element;
     }
+  }
+}
+
+class Annotations {
+  final TIntObjectHashMap<AnnotationData> outs;
+  final TIntObjectHashMap<AnnotationData> params;
+  final TIntObjectHashMap<AnnotationData> contracts;
+
+  Annotations(TIntObjectHashMap<AnnotationData> outs, TIntObjectHashMap<AnnotationData> params, TIntObjectHashMap<AnnotationData> contracts) {
+    this.outs = outs;
+    this.params = params;
+    this.contracts = contracts;
   }
 }
 
