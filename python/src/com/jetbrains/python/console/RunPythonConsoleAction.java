@@ -103,7 +103,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       pythonPath = mappingSettings.convertToRemote(pythonPath);
     }
 
-    String customStartScript = settingsProvider == null ? "" : settingsProvider.getMergedCustomStartScript();
+    String customStartScript = settingsProvider == null ? "" : settingsProvider.getStartScript();
 
     if(customStartScript.trim().length() > 0){
       customStartScript = "\n" + customStartScript;

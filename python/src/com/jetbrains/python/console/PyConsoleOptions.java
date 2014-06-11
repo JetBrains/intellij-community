@@ -83,10 +83,13 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
+
+    mergeStartScripts(state.myPythonConsoleState.getCustomStartScript(),
+                      RunPythonConsoleAction.CONSOLE_START_COMMAND, myState.myPythonConsoleState);
   }
 
   public static class State {
-    public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings();
+    public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings(RunPythonConsoleAction.CONSOLE_START_COMMAND);
 
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowSeparatorLine = true;
@@ -96,7 +99,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   @Tag("console-settings")
   public static class PyConsoleSettings {
     public String myCustomStartScript; //Necessary for handle starting scripts created before 3.4 (PY-13039)
-    public String myMergedCustomStartScript = RunPythonConsoleAction.CONSOLE_START_COMMAND;
+    public String myStartScript;
     public String mySdkHome = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
@@ -111,8 +114,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public PyConsoleSettings(){
     }
 
-    public PyConsoleSettings(String myCustomStartScript){
-      this.myMergedCustomStartScript = myCustomStartScript;
+    public PyConsoleSettings(String startScript){
+      myStartScript = startScript;
     }
 
     public void apply(AbstractPyCommonOptionsForm form) {
@@ -171,9 +174,9 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return myCustomStartScript;
     }
 
-    @Attribute("merged-custom-start-script")
-    public String getMergedCustomStartScript() {
-      return myMergedCustomStartScript;
+    @Attribute("start-script")
+    public String getStartScript() {
+      return myStartScript;
     }
 
     @Attribute("sdk-home")
@@ -224,8 +227,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return myMappings;
     }
 
-    public void setMergedCustomStartScript(String mergedCustomStartScript) {
-      myMergedCustomStartScript = mergedCustomStartScript;
+    public void setStartScript(String startScript) {
+      myStartScript = startScript;
     }
 
     public void setCustomStartScript(String customStartScript) {
@@ -266,6 +269,13 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void setMappings(@Nullable PathMappingSettings mappings) {
       myMappings = mappings != null ? mappings : new PathMappingSettings();
+    }
+  }
+
+  public static void mergeStartScripts(String oldCustomScript, String startScript, PyConsoleSettings settings){
+    if(oldCustomScript != null && oldCustomScript.trim().length() > 0){
+      settings.setStartScript(startScript + "\n" + oldCustomScript);
+      settings.setCustomStartScript(null);
     }
   }
 }
