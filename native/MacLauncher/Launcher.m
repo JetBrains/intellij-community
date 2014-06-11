@@ -106,9 +106,9 @@ NSArray *allVms() {
     }
     if (! jvmBundlePaths.count > 0 ) {
         NSBundle *bundle = [NSBundle mainBundle];
-        NSString *appDir = bundle.bundlePath;
+        NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
-        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"jre"], jvmBundlePaths);
+        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
         if (jvmBundlePaths.count > 0) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
