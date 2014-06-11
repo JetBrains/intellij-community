@@ -54,6 +54,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -179,6 +180,24 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
         }
       }
 
+      @Nullable
+      @Override
+      public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Object getProjectSettings() throws ProcessCanceledException {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
       @Override
       public void generateProject(@NotNull final Project project,
                                   @NotNull VirtualFile baseDir,
@@ -283,7 +302,7 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
   private boolean isFrameworkInstalled(Sdk sdk) {
     PyFrameworkProjectGenerator projectGenerator = (PyFrameworkProjectGenerator)getProjectGenerator();
 
-    return projectGenerator != null && projectGenerator.isFrameworkInstalled(myProject, sdk);
+    return projectGenerator != null && projectGenerator.isFrameworkInstalled(sdk);
   }
 
   private static boolean acceptsRemoteSdk(DirectoryProjectGenerator generator) {

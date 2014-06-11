@@ -15,11 +15,9 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.module.*;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.module.WebModuleBuilder;
+import com.intellij.openapi.module.WebModuleType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
@@ -28,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
+import java.io.File;
 
 /**
  * @author Dmitry Avdeev
@@ -64,4 +62,16 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   public GeneratorPeer<T> getPeer() {
     return myPeerHolder.getValue();
   }
+
+  @Override
+  @Nullable
+  public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
+    return getPeer().getComponent();
+  }
+
+  @Override
+  public T getProjectSettings() throws ProcessCanceledException {
+    return getPeer().getSettings();
+  }
+
 }

@@ -15,18 +15,13 @@
  */
 package com.jetbrains.python.newProject;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
-/**
- * @author yole
- */
-public interface PyFrameworkProjectGenerator<T> extends DirectoryProjectGenerator<T> {
-  String getFrameworkTitle();
+public class PyCharmNewProjectAction extends AnAction {
 
-  boolean isFrameworkInstalled(Sdk sdk);
-
-  boolean acceptsRemoteSdk();
-
-  boolean supportsPython3();
+  public void actionPerformed(final AnActionEvent e) {
+    final PyCharmNewProjectDialog dlg = new PyCharmNewProjectDialog();
+    dlg.show();
+  }
 }
