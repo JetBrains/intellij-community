@@ -312,7 +312,7 @@ abstract class Analysis<Res> {
     Type[] args = Type.getArgumentTypes(methodNode.desc);
     int local = 0;
     if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
-      frame.setLocal(local++, new BasicValue(Type.getObjectType(controlFlow.className)));
+      frame.setLocal(local++, new AbstractValues.NotNullValue(Type.getObjectType(controlFlow.className)));
     }
     for (int i = 0; i < args.length; i++) {
       BasicValue value;

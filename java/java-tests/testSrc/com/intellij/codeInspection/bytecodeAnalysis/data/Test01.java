@@ -55,4 +55,13 @@ public class Test01 {
     return o == null ? "null" : o.toString();
   }
 
+  @ExpectNotNull
+  static String constantString() {
+    return "s";
+  }
+
+  @ExpectNotNull
+  public Test01 getThis() {
+    return this;
+  }
 }
