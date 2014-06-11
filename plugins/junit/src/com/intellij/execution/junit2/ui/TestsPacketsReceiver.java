@@ -178,7 +178,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     final TestProxy testProxy = reader.readObject();
 
     if (testProxy.getParent() == null) { //model.getRoot() == testProxy
-      getDynamicParent(myModel, testProxy).addChild(testProxy);
+      getDynamicParent(myModel, testProxy).insertNextRunningChild(testProxy);
     }
 
     final int state = reader.readInt();

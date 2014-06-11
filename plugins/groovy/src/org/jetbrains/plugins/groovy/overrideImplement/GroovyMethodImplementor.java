@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 
 /**
  * @author Medvedev Max
@@ -46,6 +47,8 @@ public class GroovyMethodImplementor implements MethodImplementor {
   @Override
   public PsiMethod[] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
     if (!(inClass instanceof GrTypeDefinition)) return PsiMethod.EMPTY_ARRAY;
+    if (method instanceof GrTraitMethod) return PsiMethod.EMPTY_ARRAY;
+
     final PsiClass containingClass = method.getContainingClass();
     PsiSubstitutor substitutor = inClass.isInheritor(containingClass, true)
                                  ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, inClass, PsiSubstitutor.EMPTY)
@@ -67,40 +70,54 @@ public class GroovyMethodImplementor implements MethodImplementor {
                                              final PsiMethod baseMethod,
                                              final boolean toCopyJavaDoc,
                                              final boolean insertOverrideIfPossible) {
-    return new Consumer<PsiMethod>() {
-      @Override
-      public void consume(PsiMethod method) {
-        Project project = targetClass.getProject();
+    return new PsiMethodConsumer(targetClass, toCopyJavaDoc, baseMethod, insertOverrideIfPossible);
+  }
 
-        if (toCopyJavaDoc) {
-          PsiDocComment baseMethodDocComment = baseMethod.getDocComment();
-          if (baseMethodDocComment != null) {
-            GrDocComment docComment =
-              GroovyPsiElementFactory.getInstance(project).createDocCommentFromText(baseMethodDocComment.getText());
-            GrDocCommentUtil.setDocComment(((GrMethod)method), docComment);
-          }
-        }
-        else {
-          PsiDocComment docComment = method.getDocComment();
-          if (docComment != null) {
-            docComment.delete();
-          }
-        }
+  static class PsiMethodConsumer implements Consumer<PsiMethod> {
+    private final PsiClass myTargetClass;
+    private final boolean myToCopyJavaDoc;
+    private final PsiMethod myBaseMethod;
+    private final boolean myInsertOverrideIfPossible;
 
-        if (insertOverrideIfPossible) {
-          if (OverrideImplementUtil.canInsertOverride(method, targetClass) &&
-              JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OVERRIDE, targetClass.getResolveScope()) != null &&
-              method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) == null) {
-            method.getModifierList().addAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
-          }
-        }
-        else {
-          PsiAnnotation annotation = method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
-          if (annotation != null) {
-            annotation.delete();
-          }
+    public PsiMethodConsumer(PsiClass targetClass, boolean toCopyJavaDoc, PsiMethod baseMethod, boolean insertOverrideIfPossible) {
+      myTargetClass = targetClass;
+      myToCopyJavaDoc = toCopyJavaDoc;
+      myBaseMethod = baseMethod;
+      myInsertOverrideIfPossible = insertOverrideIfPossible;
+    }
+
+    @Override
+    public void consume(PsiMethod method) {
+      Project project = myTargetClass.getProject();
+
+      if (myToCopyJavaDoc) {
+        PsiDocComment baseMethodDocComment = myBaseMethod.getDocComment();
+        if (baseMethodDocComment != null) {
+          GrDocComment docComment =
+            GroovyPsiElementFactory.getInstance(project).createDocCommentFromText(baseMethodDocComment.getText());
+          GrDocCommentUtil.setDocComment(((GrMethod)method), docComment);
         }
       }
-    };
+      else {
+        PsiDocComment docComment = method.getDocComment();
+        if (docComment != null) {
+          docComment.delete();
+        }
+      }
+
+      if (myInsertOverrideIfPossible) {
+        if (OverrideImplementUtil.canInsertOverride(method, myTargetClass) &&
+            JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OVERRIDE, myTargetClass.getResolveScope()) != null &&
+            method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) == null) {
+          method.getModifierList().addAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+        }
+      }
+      else {
+        PsiAnnotation annotation = method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+        if (annotation != null) {
+          annotation.delete();
+        }
+      }
+    }
   }
 }

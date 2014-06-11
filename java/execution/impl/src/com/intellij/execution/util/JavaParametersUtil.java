@@ -27,6 +27,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
@@ -36,6 +38,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.annotations.MagicConstant;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -128,6 +131,14 @@ public class JavaParametersUtil {
   }
 
   private static Sdk createAlternativeJdk(final String jreHome) throws CantRunException {
+    final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(jreHome);
+    if (configuredJdk != null) {
+      return configuredJdk;
+    }
+    final boolean isJdk = JavaSdk.checkForJdk(new File(jreHome));
+    if (isJdk) {
+      throw new CantRunException("Jre expected but jdk found");
+    }
     final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
     return jdk;
@@ -135,11 +146,12 @@ public class JavaParametersUtil {
 
   public static void checkAlternativeJRE(CommonJavaRunConfigurationParameters configuration) throws RuntimeConfigurationWarning {
     if (configuration.isAlternativeJrePathEnabled()) {
-      if (configuration.getAlternativeJrePath() == null ||
-          configuration.getAlternativeJrePath().length() == 0 ||
-          !JavaSdk.checkForJre(configuration.getAlternativeJrePath())) {
+      final String alternativeJrePath = configuration.getAlternativeJrePath();
+      if (alternativeJrePath == null ||
+          alternativeJrePath.length() == 0 ||
+          ProjectJdkTable.getInstance().findJdk(alternativeJrePath) == null && !JavaSdk.checkForJre(alternativeJrePath)) {
         throw new RuntimeConfigurationWarning(
-          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", configuration.getAlternativeJrePath()));
+          ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", alternativeJrePath));
       }
     }
   }

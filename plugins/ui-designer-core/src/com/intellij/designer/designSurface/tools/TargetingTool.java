@@ -125,7 +125,7 @@ public abstract class TargetingTool extends InputTool {
     }
   }
 
-  private void handleKeyEvent() {
+  protected void handleKeyEvent() {
     if (myContext != null) {
       updateContext();
       showFeedback();

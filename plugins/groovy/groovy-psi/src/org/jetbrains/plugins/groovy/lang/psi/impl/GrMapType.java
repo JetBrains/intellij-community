@@ -183,4 +183,9 @@ public abstract class GrMapType extends GrLiteralClassType {
   public static GrMapType createFromNamedArgs(PsiElement context, GrNamedArgument[] args) {
     return new GrMapTypeFromNamedArgs(context, args);
   }
+
+  @Override
+  public String toString() {
+    return "map type";
+  }
 }

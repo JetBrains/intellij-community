@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
@@ -86,6 +87,22 @@ public class GroovyOverrideImplementUtil {
     GroovyChangeContextUtil.encodeContextInfo(result);
     return result;
   }
+
+  public static GrMethod generateTraitMethodPrototype(GrTypeDefinition aClass, GrTraitMethod method, PsiSubstitutor substitutor) {
+    final Project project = aClass.getProject();
+
+    final GrMethod result = (GrMethod)GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
+
+    setupModifierList(result);
+    setupTraitMethodBody(project, result, method);
+    setupReturnType(result, method);
+
+    setupAnnotations(aClass, method, result);
+
+    GroovyChangeContextUtil.encodeContextInfo(result);
+    return result;
+  }
+
 
   private static void setupReturnType(GrMethod result, PsiMethod method) {
     if (method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) {
@@ -174,6 +191,32 @@ public class GroovyOverrideImplementUtil {
     }
   }
 
+  private static void setupTraitMethodBody(Project project, GrMethod resultMethod, GrTraitMethod traitMethod) {
+    PsiClass traitClass = traitMethod.getPrototype().getContainingClass();
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("\nreturn ");
+    builder.append(traitClass.getQualifiedName());
+    builder.append(".super.");
+    builder.append(traitMethod.getName());
+    builder.append("(");
+    GrParameter[] parameters = resultMethod.getParameters();
+    for (GrParameter parameter : parameters) {
+      builder.append(parameter.getName()).append(",");
+    }
+    if (parameters.length > 0) {
+      builder.replace(builder.length() - 1, builder.length(), ")\n");
+    }
+    else {
+      builder.append(")\n");
+    }
+
+    GroovyFile file = GroovyPsiElementFactory.getInstance(project).createGroovyFile(builder, false, null);
+
+    GrOpenBlock block = resultMethod.getBlock();
+    block.getNode().addChildren(file.getFirstChild().getNode(), null, block.getRBrace().getNode());
+  }
+
   public static void chooseAndOverrideMethods(@NotNull Project project,
                                               @NotNull Editor editor,
                                               @NotNull GrTypeDefinition aClass){
@@ -223,8 +266,7 @@ public class GroovyOverrideImplementUtil {
     new WriteCommandAction(project, aClass.getContainingFile()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                     chooser.isInsertOverrideAnnotation());
+        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
       }
     }.execute();
   }

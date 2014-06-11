@@ -15,12 +15,6 @@ import java.util.HashSet;
  */
 public class SceneBuilderKitWrapper {
   public static SceneBuilder create(URL url, EditorCallback editorCallback) throws Exception {
-    // JavaFX -> Swing drag&drop fix
-    Field identifier = DataFormat.class.getDeclaredField("identifier");
-    identifier.setAccessible(true);
-    identifier.set(AbstractDragSource.INTERNAL_DATA_FORMAT, Collections
-      .unmodifiableSet(new HashSet<String>(Arrays.asList("application/scene.builder.internal"))));
-
     // JavaFX class loading fix
     FXMLLoader.setDefaultClassLoader(SceneBuilderKitWrapper.class.getClassLoader());
 

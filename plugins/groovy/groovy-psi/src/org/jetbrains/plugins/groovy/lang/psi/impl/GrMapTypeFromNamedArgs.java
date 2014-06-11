@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -50,7 +52,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
       return ContainerUtil.map(myOtherEntries, new Function<Couple<GrExpression>, Couple<PsiType>>() {
         @Override
         public Couple<PsiType> fun(Couple<GrExpression> pair) {
-          return Couple.of(pair.first.getType(), pair.second.getType());
+          return Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second));
         }
       });
     }
@@ -62,7 +64,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     protected Map<String, PsiType> compute() {
       HashMap<String, PsiType> result = ContainerUtil.newHashMap();
       for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
-        result.put(entry.getKey(), entry.getValue().getType());
+        result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
       }
       return result;
     }
@@ -99,7 +101,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   @Override
   public PsiType getTypeByStringKey(String key) {
     GrExpression expression = myStringEntries.get(key);
-    return expression != null ? expression.getType() : null;
+    return expression != null ? inferTypePreventingRecursion(expression) : null;
   }
 
   @NotNull
@@ -121,7 +123,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
       result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
     }
     for (Couple<GrExpression> entry : myOtherEntries) {
-      result.add(entry.first.getType());
+      result.add(inferTypePreventingRecursion(entry.first));
     }
     result.remove(null);
     return result.toArray(createArray(result.size()));
@@ -132,13 +134,23 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   protected PsiType[] getAllValueTypes() {
     Set<PsiType> result = ContainerUtil.newHashSet();
     for (GrExpression expression : myStringEntries.values()) {
-      result.add(expression.getType());
+      result.add(inferTypePreventingRecursion(expression));
     }
     for (Couple<GrExpression> entry : myOtherEntries) {
-      result.add(entry.second.getType());
+      result.add(inferTypePreventingRecursion(entry.second));
     }
     result.remove(null);
     return result.toArray(createArray(result.size()));
+  }
+
+  @Nullable
+  private static PsiType inferTypePreventingRecursion(final GrExpression expression) {
+    return RecursionManager.doPreventingRecursion(expression, false, new Computable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return expression.getType();
+      }
+    });
   }
 
   @NotNull

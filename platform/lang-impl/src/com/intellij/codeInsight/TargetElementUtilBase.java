@@ -349,8 +349,8 @@ public class TargetElementUtilBase {
     return navElement;
   }
 
-  public boolean includeSelfInGotoImplementation(final PsiElement element) {
-    final TargetElementEvaluator elementEvaluator = element != null ? targetElementEvaluator.forLanguage(element.getLanguage()):null;
+  public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
+    final TargetElementEvaluator elementEvaluator = targetElementEvaluator.forLanguage(element.getLanguage());
     return elementEvaluator == null || elementEvaluator.includeSelfInGotoImplementation(element);
   }
 

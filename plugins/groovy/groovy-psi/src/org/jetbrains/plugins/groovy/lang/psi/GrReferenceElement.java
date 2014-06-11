@@ -47,7 +47,7 @@ public interface GrReferenceElement<Q extends PsiElement> extends GroovyPsiEleme
   @Nullable
   GrTypeArgumentList getTypeArgumentList();
 
-  @Nullable
+  @NotNull
   String getClassNameText();
 
   PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException;

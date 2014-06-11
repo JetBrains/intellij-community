@@ -254,7 +254,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue condition = factory.getRelationFactory().createRelation(argValue, expectedValue, EQEQ, invertCondition);
       if (condition == null) {
         if (!(argValue instanceof DfaConstValue)) {
-          falseStates.addAll(states);
+          for (DfaMemoryState state : states) {
+            falseStates.add(state.createCopy());
+          }
           continue;
         }
         condition = constFactory.createFromValue((argValue == expectedValue) != invertCondition, PsiType.BOOLEAN, null);

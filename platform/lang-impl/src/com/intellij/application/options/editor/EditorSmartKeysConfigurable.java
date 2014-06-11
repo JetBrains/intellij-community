@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JCheckBox myCbInsertJavadocStubOnEnter;
   private JCheckBox myCbSurroundSelectionOnTyping;
   private JCheckBox myCbReformatBlockOnTypingRBrace;
+  private JCheckBox myCbIndentingBackspace;
   private boolean myAddonsInitialized = false;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
@@ -160,6 +161,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
 
+    myCbIndentingBackspace.setSelected(codeInsightSettings.INDENTING_BACKSPACE);
+
     super.reset();
   }
 
@@ -179,6 +182,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED = myCbSurroundSelectionOnTyping.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
+    codeInsightSettings.INDENTING_BACKSPACE = myCbIndentingBackspace.isSelected();
 
     super.apply();
   }
@@ -203,6 +207,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     isModified |= isModified(myCbCamelWords, editorSettings.isCamelWords());
 
     isModified |= isModified(myCbSurroundSelectionOnTyping, codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
+
+    isModified |= isModified(myCbIndentingBackspace, codeInsightSettings.INDENTING_BACKSPACE);
 
     return isModified;
 

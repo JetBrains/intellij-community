@@ -16,6 +16,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -30,6 +32,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -48,10 +51,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assert;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
@@ -266,27 +266,38 @@ public class PsiTestUtil {
   }
 
   public static void addProjectLibrary(final Module module, final String libName, final VirtualFile... classesRoots) {
+    addProjectLibrary(module, libName, Arrays.asList(classesRoots), Collections.<VirtualFile>emptyList());
+  }
+
+  public static Library addProjectLibrary(final Module module, final String libName, final List<VirtualFile> classesRoots,
+                                       final List<VirtualFile> sourceRoots) {
+    final Ref<Library> result = Ref.create();
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
-        addProjectLibrary(module, model, libName, classesRoots);
+        result.set(addProjectLibrary(module, model, libName, classesRoots, sourceRoots));
       }
     });
+    return result.get();
   }
 
-  private static void addProjectLibrary(final Module module,
-                                        final ModifiableRootModel model,
-                                        final String libName,
-                                        final VirtualFile... classesRoots) {
-    new WriteCommandAction.Simple(module.getProject()) {
+  private static Library addProjectLibrary(final Module module,
+                                           final ModifiableRootModel model,
+                                           final String libName,
+                                           final List<VirtualFile> classesRoots,
+                                           final List<VirtualFile> sourceRoots) {
+    RunResult<Library> result = new WriteAction<Library>() {
       @Override
-      protected void run() throws Throwable {
+      protected void run(@NotNull Result<Library> result) throws Throwable {
         LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
         Library library = libraryTable.createLibrary(libName);
         Library.ModifiableModel libraryModel = library.getModifiableModel();
         try {
           for (VirtualFile root : classesRoots) {
             libraryModel.addRoot(root, OrderRootType.CLASSES);
+          }
+          for (VirtualFile root : sourceRoots) {
+            libraryModel.addRoot(root, OrderRootType.SOURCES);
           }
           libraryModel.commit();
         }
@@ -302,8 +313,11 @@ public class PsiTestUtil {
         System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
         orderEntries[0] = last;
         model.rearrangeOrderEntries(orderEntries);
+        result.setResult(library);
       }
-    }.execute().throwException();
+    }.execute();
+    result.throwException();
+    return result.getResultObject();
   }
 
   public static void addLibrary(final Module module,
@@ -327,7 +341,7 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    addProjectLibrary(module, model, libName, VfsUtilCore.toVirtualFileArray(classesRoots));
+    addProjectLibrary(module, model, libName, classesRoots, Collections.<VirtualFile>emptyList());
   }
 
   public static void addLibrary(final Module module,

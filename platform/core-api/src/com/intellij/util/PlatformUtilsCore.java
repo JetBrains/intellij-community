@@ -29,6 +29,7 @@ public class PlatformUtilsCore {
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
   public static final String FLEX_PREFIX = "Flex";
+  public static final String DBE_PREFIX = "0xDBE";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -80,5 +81,9 @@ public class PlatformUtilsCore {
 
   public static boolean isWebStorm() {
     return WEB_PREFIX.equals(getPlatformPrefix());
+  }
+
+  public static boolean isDatabaseIDE() {
+    return DBE_PREFIX.equals(getPlatformPrefix());
   }
 }

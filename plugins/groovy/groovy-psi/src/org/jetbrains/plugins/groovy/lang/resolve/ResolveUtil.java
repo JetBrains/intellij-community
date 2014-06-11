@@ -374,8 +374,11 @@ public class ResolveUtil {
     else if (base instanceof GrTraitType) {
       key = ((GrTraitType)base).erasure().getCanonicalText();
     }
+    else if (base instanceof PsiClassType) {
+      key = TypesUtil.getQualifiedName(base);
+    }
     else {
-      key = TypeConversionUtil.erasure(base).getCanonicalText();
+      key = base.getCanonicalText();
     }
     Map<String, PsiType> result = cache.get(key);
     if (result == null) {
@@ -388,10 +391,13 @@ public class ResolveUtil {
 
   @NotNull
   private static String rawCanonicalText(@NotNull PsiType type) {
-    final String result = type.getCanonicalText();
-    final int i = result.indexOf('<');
-    if (i > 0) return result.substring(0, i);
-    return result;
+    if (type instanceof PsiClassType) {
+      String qname = TypesUtil.getQualifiedName(type);
+      if (qname != null) {
+        return qname;
+      }
+    }
+    return TypeConversionUtil.erasure(type).getCanonicalText();
   }
 
   public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {

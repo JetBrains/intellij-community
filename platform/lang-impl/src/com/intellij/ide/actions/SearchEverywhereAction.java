@@ -58,6 +58,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAware;
@@ -137,12 +138,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private String[] myActions;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private int myMoreClassesIndex = -1;
-  private int myMoreFilesIndex = -1;
-  private int myMoreActionsIndex = -1;
-  private int myMoreSettingsIndex = -1;
-  private int myMoreSymbolsIndex = -1;
-  private TitleIndexes myTitleIndexes;
   private Map<String, String> myConfigurables = new HashMap<String, String>();
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
@@ -439,7 +434,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         search.setText("");
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
-        myTitleIndexes = new TitleIndexes();
+        //myTitleIndexes = new TitleIndexes();
         editor.setColumns(SEARCH_FIELD_COLUMNS);
         myFocusComponent = e.getOppositeComponent();
         //noinspection SSBasedInspection
@@ -476,16 +471,21 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void jumpNextGroup(boolean forward) {
     final int index = myList.getSelectedIndex();
+    final SearchListModel model = getModel();
     if (index >= 0) {
-      final int newIndex = forward ? myTitleIndexes.next(index) : myTitleIndexes.prev(index);
+      final int newIndex = forward ? model.myTitleIndexes.next(index) : model.myTitleIndexes.prev(index);
       myList.setSelectedIndex(newIndex);
-      int more = myTitleIndexes.next(newIndex) - 1;
+      int more = model.myTitleIndexes.next(newIndex) - 1;
       if (more < newIndex) {
         more = myList.getItemsCount() - 1;
       }
       ListScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
       ListScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
     }
+  }
+
+  private SearchListModel getModel() {
+    return (SearchListModel)myList.getModel();
   }
 
   private void onFocusLost() {
@@ -516,10 +516,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void clearModel() {
-    myMoreClassesIndex = -1;
-    myMoreFilesIndex = -1;
-    myMoreActionsIndex = -1;
-    myMoreSettingsIndex = -1;
+    //myMoreClassesIndex = -1;
+    //myMoreFilesIndex = -1;
+    //myMoreActionsIndex = -1;
+    //myMoreSettingsIndex = -1;
+    //myMoreSymbolsIndex = -1;
   }
 
   private SearchTextField getField() {
@@ -532,14 +533,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                               ? DefaultRunExecutor.getRunExecutorInstance()
                               : ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
     assert project != null;
-
+    final SearchListModel model = getModel();
     if (isMoreItem(index)) {
       String actionId = null;
-      if (index == myMoreClassesIndex) actionId = "GotoClass";
-      else if (index == myMoreFilesIndex) actionId = "GotoFile";
-      else if (index == myMoreSettingsIndex) actionId = "ShowSettings";
-      else if (index == myMoreActionsIndex) actionId = "GotoAction";
-      else if (index == myMoreSymbolsIndex) actionId = "GotoSymbol";
+      if (index == model.myMoreClassesIndex) actionId = "GotoClass";
+      else if (index == model.myMoreFilesIndex) actionId = "GotoFile";
+      else if (index == model.myMoreSettingsIndex) actionId = "ShowSettings";
+      else if (index == model.myMoreActionsIndex) actionId = "GotoAction";
+      else if (index == model.myMoreSymbolsIndex) actionId = "GotoSymbol";
       if (actionId != null) {
         final AnAction action = ActionManager.getInstance().getAction(actionId);
         GotoActionAction.openOptionOrPerformAction(action, getField().getText(), project, getField(), myActionEvent);
@@ -622,13 +623,21 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private boolean isMoreItem(int index) {
-    return index == myMoreClassesIndex || index == myMoreFilesIndex || index == myMoreSettingsIndex || index == myMoreActionsIndex || index == myMoreSymbolsIndex;
+    final SearchListModel model = getModel();
+    return index == model.myMoreClassesIndex ||
+           index == model.myMoreFilesIndex ||
+           index == model.myMoreSettingsIndex ||
+           index == model.myMoreActionsIndex ||
+           index == model.myMoreSymbolsIndex;
   }
 
   private void rebuildList(final String pattern) {
     assert EventQueue.isDispatchThread() : "Must be EDT";
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
+    }
+    if (myCalcThread != null && !myCalcThread.isCanceled()) {
+      myCalcThread.cancel();
     }
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
 
@@ -744,8 +753,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myBalloon.getContent().setBorder(new EmptyBorder(0,0,0,0));
     final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
 
-    Component parent = UIUtil.findUltimateParent(window);
+    //noinspection ConstantConditions
+    e.getProject().getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+      }
 
+      @Override
+      public void exitDumbMode() {
+        rebuildList(myPopupField.getText());
+      }
+    });
+
+    Component parent = UIUtil.findUltimateParent(window);
     registerDataProvider(panel);
     final RelativePoint showPoint;
     if (me != null) {
@@ -1014,7 +1034,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         bg = cmp.getBackground();
       }
       myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
-      String title = myTitleIndexes.getTitle(index);
+      String title = getModel().myTitleIndexes.getTitle(index);
       myMainPanel.removeAll();
       if (title != null) {
         myTitle.setText(title);
@@ -1123,7 +1143,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myTitle.setFont(getTitleFont());
       int index = 0;
       while (index < model.getSize()) {
-        String title = myTitleIndexes.getTitle(index);
+        String title = getModel().myTitleIndexes.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
         }
@@ -1209,7 +1229,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
             //noinspection unchecked
             myList.setModel(myListModel);
-            myTitleIndexes.clear();
             clearModel();
             myAlreadyAddedFiles.clear();
             myAlreadyAddedActions.clear();
@@ -1258,7 +1277,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myDone.setRejected();
       }
       finally {
-        if (!myProgressIndicator.isCanceled()) {
+        if (!isCanceled()) {
           myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
           updatePopup();
         }
@@ -1277,6 +1296,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     protected void check() {
       myProgressIndicator.checkCanceled();
+      if (myDone.isRejected()) throw new ProcessCanceledException();
     }
 
     private void buildToolWindows(String pattern) {
@@ -1298,12 +1318,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       check();
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myProgressIndicator.isCanceled()) return;
+          if (isCanceled()) return;
           if (toolWindows.size() > 0) {
-            myTitleIndexes.toolWindows = myListModel.size();
+            myListModel.myTitleIndexes.toolWindows = myListModel.size();
             for (Object toolWindow : toolWindows) {
               myListModel.addElement(toolWindow);
             }
@@ -1340,24 +1360,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       check();
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (myProgressIndicator.isCanceled()) return;
+          if (isCanceled()) return;
           if (actions.size() > 0) {
-            myTitleIndexes.actions = myListModel.size();
+            myListModel.myTitleIndexes.actions = myListModel.size();
             for (Object action : actions) {
               myListModel.addElement(action);
             }
           }
-          myMoreActionsIndex = actions.size() >= MAX_ACTIONS ? myListModel.size() - 1 : -1;
+          myListModel.myMoreActionsIndex = actions.size() >= MAX_ACTIONS ? myListModel.size() - 1 : -1;
           if (settings.size() > 0) {
-            myTitleIndexes.settings = myListModel.size();
+            myListModel.myTitleIndexes.settings = myListModel.size();
             for (Object setting : settings) {
               myListModel.addElement(setting);
             }
           }
-          myMoreSettingsIndex = settings.size() >= MAX_SETTINGS ? myListModel.size() - 1 : -1;
+          myListModel.myMoreSettingsIndex = settings.size() >= MAX_SETTINGS ? myListModel.size() - 1 : -1;
         }
       });
     }
@@ -1409,16 +1429,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       check();
 
       if (files.size() > 0) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!myProgressIndicator.isCanceled()) {
-              myTitleIndexes.files = myListModel.size();
-              for (Object file : files) {
-                myListModel.addElement(file);
-              }
-              myMoreFilesIndex = files.size() >= MAX_FILES ? myListModel.size() - 1 : -1;
+            if (isCanceled()) return;
+            myListModel.myTitleIndexes.files = myListModel.size();
+            for (Object file : files) {
+              myListModel.addElement(file);
             }
+            myListModel.myMoreFilesIndex = files.size() >= MAX_FILES ? myListModel.size() - 1 : -1;
           }
         });
       }
@@ -1455,16 +1474,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       check();
 
       if (symbols.size() > 0) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!myProgressIndicator.isCanceled()) {
-              myTitleIndexes.symbols = myListModel.size();
-              for (Object file : symbols) {
-                myListModel.addElement(file);
-              }
-              myMoreSymbolsIndex = symbols.size() >= MAX_SYMBOLS ? myListModel.size() - 1 : -1;
+            if (isCanceled()) return;
+            myListModel.myTitleIndexes.symbols = myListModel.size();
+            for (Object file : symbols) {
+              myListModel.addElement(file);
             }
+            myListModel.myMoreSymbolsIndex = symbols.size() >= MAX_SYMBOLS ? myListModel.size() - 1 : -1;
           }
         });
       }
@@ -1507,15 +1525,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       if (runConfigurations.size() > 0) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!myProgressIndicator.isCanceled()) {
-              myTitleIndexes.runConfigurations = myListModel.size();
-              for (Object runConfiguration : runConfigurations) {
-                myListModel.addElement(runConfiguration);
-              }
-              myMoreFilesIndex = runConfigurations.size() >= MAX_RUN_CONFIGURATION ? myListModel.size() - 1 : -1;
+            if (isCanceled()) return;
+            myListModel.myTitleIndexes.runConfigurations = myListModel.size();
+            for (Object runConfiguration : runConfigurations) {
+              myListModel.addElement(runConfiguration);
             }
           }
         });
@@ -1529,7 +1545,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
         return;
       }
-
+      check();
       boolean includeLibs = includeLibraries || showAll.get();
       int filesCounter = 0;
       final Set<Object> elements = new LinkedHashSet<Object>();
@@ -1557,16 +1573,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       check();
 
       if (classes.size() > 0) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!myProgressIndicator.isCanceled()) {
-              myTitleIndexes.classes = myListModel.size();
-              for (Object file : classes) {
-                myListModel.addElement(file);
-              }
-              myMoreClassesIndex = classes.size() >= MAX_CLASSES ? myListModel.size() - 1 : -1;
+            if (isCanceled()) return;
+            myListModel.myTitleIndexes.classes = myListModel.size();
+            for (Object file : classes) {
+              myListModel.addElement(file);
             }
+            myListModel.myMoreClassesIndex = classes.size() >= MAX_CLASSES ? myListModel.size() - 1 : -1;
           }
         });
       } else {
@@ -1592,18 +1607,21 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (files.size() > 0) {
         myAlreadyAddedFiles.addAll(files);
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!myProgressIndicator.isCanceled()) {
-              myTitleIndexes.recentFiles = myListModel.size();
-              for (Object file : files) {
-                myListModel.addElement(file);
-              }
+            if (isCanceled()) return;
+            myListModel.myTitleIndexes.recentFiles = myListModel.size();
+            for (Object file : files) {
+              myListModel.addElement(file);
             }
           }
         });
       }
+    }
+
+    private boolean isCanceled() {
+      return myProgressIndicator.isCanceled() || myDone.isRejected();
     }
 
     private void buildTopHit(String pattern) {
@@ -1695,14 +1713,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         provider.consumeTopHits(pattern, consumer);
       }
       if (elements.size() > 0) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (!myProgressIndicator.isCanceled()) {
-              myTitleIndexes.topHit = myListModel.size();
-              for (Object element : elements) {
-                myListModel.addElement(element);
-              }
+            if (isCanceled()) return;
+            myListModel.myTitleIndexes.topHit = myListModel.size();
+            for (Object element : elements) {
+              myListModel.addElement(element);
             }
           }
         });
@@ -1865,6 +1882,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     public ActionCallback cancel() {
       myProgressIndicator.cancel();
+      myDone.setRejected();
       return myDone;
     }
 
@@ -2008,15 +2026,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   static class TitleIndexes {
-    int topHit;
-    int recentFiles;
-    int runConfigurations;
-    int classes;
-    int files;
-    int actions;
-    int settings;
-    int toolWindows;
-    int symbols;
+    volatile int topHit;
+    volatile int recentFiles;
+    volatile int runConfigurations;
+    volatile int classes;
+    volatile int files;
+    volatile int actions;
+    volatile int settings;
+    volatile int toolWindows;
+    volatile int symbols;
 
     final String gotoClassTitle;
     final String gotoFileTitle;
@@ -2095,6 +2113,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static class SearchListModel extends DefaultListModel {
     @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
+
+    volatile int myMoreClassesIndex = -1;
+    volatile int myMoreFilesIndex = -1;
+    volatile int myMoreActionsIndex = -1;
+    volatile int myMoreSettingsIndex = -1;
+    volatile int myMoreSymbolsIndex = -1;
+    volatile TitleIndexes myTitleIndexes = new TitleIndexes();
 
     private SearchListModel() {
       super();

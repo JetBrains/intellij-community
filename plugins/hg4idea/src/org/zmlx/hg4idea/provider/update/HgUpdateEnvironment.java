@@ -103,7 +103,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     }
 
     public JComponent createComponent() {
-      updateDialog = new HgUpdateDialog(updateConfiguration);
+      updateDialog = new HgUpdateDialog();
       return updateDialog.getContentPanel();
     }
 

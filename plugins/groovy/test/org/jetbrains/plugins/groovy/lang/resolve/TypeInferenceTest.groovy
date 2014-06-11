@@ -696,4 +696,22 @@ class Any {
     doExprTest('1f/2.4', 'java.lang.Double')
   }
 
+  void testRecursionWithMaps() {
+    doTest('''
+def foo(Map map) {
+  while(true)
+    ma<caret>p = [a:map]
+}
+''', 'java.util.Map<java.lang.String, java.util.Map>')
+  }
+
+  void testRecursionWithLists() {
+    doTest('''
+def foo(List list) {
+  while(true)
+    lis<caret>t = [list]
+}
+''', 'java.util.ArrayList<java.util.List>')
+  }
+
 }

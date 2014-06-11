@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
@@ -25,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -66,8 +68,15 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     });
     compilerManager.addAfterTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        final AntConfiguration config = AntConfiguration.getInstance(myProject);
-        ((AntConfigurationBase)config).ensureInitialized();
+        final AntConfigurationBase config = (AntConfigurationBase)AntConfiguration.getInstance(myProject);
+        config.ensureInitialized();
+        if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+          final AntBuildTarget target = config.getTargetForEvent(ExecuteAfterCompilationEvent.getInstance());
+          if (target != null) {
+            context.addMessage(CompilerMessageCategory.INFORMATION, "Skipping ant target \"" + target.getDisplayName() + "\" because of compilation errors", null , -1, -1);
+          }
+          return true;
+        }
         return config.executeTargetAfterCompile(dataContext);
       }
     });

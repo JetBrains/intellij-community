@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 #include <CoreServices/CoreServices.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <strings.h>
 #include <sys/mount.h>
 
 #define PRIVATE_DIR "/private/"
@@ -25,7 +27,7 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static bool report_private = true;
 
 static void reportEvent(char *event, char *path) {
-    int len = 0;
+    size_t len = 0;
     if (path != NULL) {
         len = strlen(path);
         for (char* p = path; *p != '\0'; p++) {
@@ -36,7 +38,7 @@ static void reportEvent(char *event, char *path) {
     }
 
     pthread_mutex_lock(&lock);
-    if (report_private || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) != 0) {
+    if (path == NULL || report_private || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) != 0) {
         fputs(event, stdout);
         fputc('\n', stdout);
         if (path != NULL) {
@@ -84,7 +86,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     if (fsCount == -1) return;
 
     struct statfs fs[fsCount];
-    fsCount = getfsstat(fs, sizeof(struct statfs) * fsCount, MNT_NOWAIT);
+    fsCount = getfsstat(fs, (int)(sizeof(struct statfs) * fsCount), MNT_NOWAIT);
     if (fsCount == -1) return;
 
     CFMutableArrayRef mounts = CFArrayCreateMutable(NULL, 0, NULL);
@@ -92,11 +94,11 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     for (int i = 0; i < fsCount; i++) {
         if ((fs[i].f_flags & MNT_LOCAL) != MNT_LOCAL) {
             char *mount = fs[i].f_mntonname;
-            int mountLen = strlen(mount);
+            size_t mountLen = strlen(mount);
 
             for (int j = 0; j < CFArrayGetCount(roots); j++) {
                 char *root = (char *)CFArrayGetValueAtIndex(roots, j);
-                int rootLen = strlen(root);
+                size_t rootLen = strlen(root);
 
                 if (rootLen >= mountLen && strncmp(root, mount, mountLen) == 0) {
                     // root under mount point
