@@ -50,6 +50,23 @@ final class ELattice<T extends Enum<T>> {
 final class IntIdComponent {
   final int[] ids;
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof IntIdComponent)) return false;
+
+    IntIdComponent component = (IntIdComponent)o;
+
+    if (!Arrays.equals(ids, component.ids)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(ids);
+  }
+
   IntIdComponent(int[] ids) {
     this.ids = ids;
   }
@@ -216,6 +233,26 @@ final class IntIdPending implements IntIdResult {
     this.infinum = infinum;
     this.delta = delta;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof IntIdPending)) return false;
+
+    IntIdPending pending = (IntIdPending)o;
+
+    if (!Arrays.equals(delta, pending.delta)) return false;
+    if (infinum != pending.infinum) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = infinum.ordinal();
+    result = 31 * result + Arrays.hashCode(delta);
+    return result;
+  }
 }
 
 final class IntIdEquation {
@@ -225,6 +262,26 @@ final class IntIdEquation {
   IntIdEquation(int id, IntIdResult rhs) {
     this.id = id;
     this.rhs = rhs;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof IntIdEquation)) return false;
+
+    IntIdEquation equation = (IntIdEquation)o;
+
+    if (id != equation.id) return false;
+    if (!rhs.equals(equation.rhs)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = id;
+    result = 31 * result + rhs.hashCode();
+    return result;
   }
 }
 
