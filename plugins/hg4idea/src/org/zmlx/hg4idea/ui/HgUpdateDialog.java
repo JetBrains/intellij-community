@@ -36,10 +36,11 @@ public class HgUpdateDialog {
   private JRadioButton myRebaseRadioButton;
 
 
-  public HgUpdateDialog(@NotNull HgUpdateConfigurationSettings updateSettings) {
-    myContentPanel = createCenterPanel(updateSettings);
+  public HgUpdateDialog() {
+    myContentPanel = createCenterPanel();
   }
 
+  @NotNull
   public JComponent getContentPanel() {
     return myContentPanel;
   }
@@ -48,7 +49,7 @@ public class HgUpdateDialog {
     myCommitAfterMergeCheckBox.setEnabled(myMergeRadioButton.isSelected());
   }
 
-  public void applyTo(HgUpdateConfigurationSettings updateConfiguration) {
+  public void applyTo(@NotNull HgUpdateConfigurationSettings updateConfiguration) {
     updateConfiguration.setShouldPull(myPullCheckBox.isSelected());
     if (myOnlyUpdateButton.isSelected()) {
       updateConfiguration.setUpdateType(HgUpdateType.ONLY_UPDATE);
@@ -62,14 +63,15 @@ public class HgUpdateDialog {
     updateConfiguration.setShouldCommitAfterMerge(myCommitAfterMergeCheckBox.isSelected());
   }
 
-  public JComponent createCenterPanel(HgUpdateConfigurationSettings updateSettings) {
+  @NotNull
+  public JComponent createCenterPanel() {
     MigLayout migLayout = new MigLayout("flowy,ins 0, fill");
     JPanel contentPane = new JPanel(migLayout);
 
     myPullCheckBox = new JBCheckBox("Pull", true);
     myPullCheckBox.setMnemonic('p');
     myPullCheckBox.setToolTipText("Pull from the default remote repository");
-    myPullCheckBox.setSelected(updateSettings.shouldPull());
+    myPullCheckBox.setSelected(true);
 
     myOnlyUpdateButton = new JRadioButton("Only Update", true);
     myOnlyUpdateButton.setMnemonic('u');
@@ -88,7 +90,7 @@ public class HgUpdateDialog {
     myCommitAfterMergeCheckBox = new JCheckBox("Commit after merge without conflicts", false);
     myCommitAfterMergeCheckBox.setMnemonic('c');
     myCommitAfterMergeCheckBox.setToolTipText("Commit automatically after the merge");
-    myCommitAfterMergeCheckBox.setSelected(updateSettings.shouldCommitAfterMerge());
+    myCommitAfterMergeCheckBox.setSelected(false);
 
     myRebaseRadioButton = new JRadioButton("Rebase", false);
     myRebaseRadioButton.setToolTipText("Rebase changesets to a branch tip as destination");
@@ -97,7 +99,7 @@ public class HgUpdateDialog {
 
     contentPane.add(myPullCheckBox, "left");
     JPanel strategyPanel = new JPanel(migLayout);
-    strategyPanel.setBorder(IdeBorderFactory.createTitledBorder("Update Strategy"));
+    strategyPanel.setBorder(IdeBorderFactory.createTitledBorder("Update Strategy", false));
     strategyPanel.add(myOnlyUpdateButton, "left");
     strategyPanel.add(myMergeRadioButton, "left");
     strategyPanel.add(myCommitAfterMergeCheckBox, "gapx 5%");

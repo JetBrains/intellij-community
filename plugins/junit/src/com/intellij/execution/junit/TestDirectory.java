@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 
 import java.util.Collection;
 
@@ -53,8 +53,7 @@ class TestDirectory extends TestPackage {
   public SourceScope getSourceScope() {
     final String dirName = myConfiguration.getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
-    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopes
-        .directoryScope(myProject, file, true);
+    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(myProject, file, true);
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
@@ -69,8 +68,7 @@ class TestDirectory extends TestPackage {
       @Override
       public GlobalSearchScope getLibrariesScope() {
         final Module module = myConfiguration.getConfigurationModule().getModule();
-        LOG.assertTrue(module != null);
-        return GlobalSearchScope.moduleWithLibrariesScope(module);
+        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(myProject);
       }
 
       @Override

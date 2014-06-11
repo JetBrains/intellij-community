@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -281,6 +282,8 @@ public class JdkUtil {
         commandLine.setCharset(charset);
       }
       catch (UnsupportedCharsetException ignore) {
+      }
+      catch (IllegalCharsetNameException ignore) {
       }
     }
   }

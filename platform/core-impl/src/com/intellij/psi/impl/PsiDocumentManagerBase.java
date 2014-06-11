@@ -158,7 +158,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     document = FileDocumentManager.getInstance().getDocument(viewProvider.getVirtualFile());
     if (document != null) {
       if (document.getTextLength() != file.getTextLength()) {
-        String message = "Modified PSI with no document: " + file + "; physical=" + viewProvider.isPhysical();
+        String message = "Document/PSI mismatch: " + file + " (" + file.getClass() + "); physical=" + viewProvider.isPhysical();
         if (document.getTextLength() + file.getTextLength() < 8096) {
           message += "\n=== document ===\n" + document.getText() + "\n=== PSI ===\n" + file.getText();
         }

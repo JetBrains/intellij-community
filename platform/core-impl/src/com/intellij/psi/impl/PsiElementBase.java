@@ -251,7 +251,10 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
 
   @Override
   public boolean isValid() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
+    while (parent != null && parent.getClass() == this.getClass()) {
+      parent = parent.getParent();
+    }
     return parent != null && parent.isValid();
   }
 

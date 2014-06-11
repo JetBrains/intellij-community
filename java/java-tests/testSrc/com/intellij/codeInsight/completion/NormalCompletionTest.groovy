@@ -1240,7 +1240,7 @@ class XInternalError {}
     configure()
     def items = myFixture.lookupElements.findAll { it.lookupString == 'String' }
     assert items.size() == 1
-    assert LookupElementPresentation.renderElement(items[0]).tailText?.contains('java.lang')
+    assert LookupElementPresentation.renderElement(items[0]).tailText == ' (java.lang)'
   }
 
   public void testSameSignature() {

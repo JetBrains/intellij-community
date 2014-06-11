@@ -226,9 +226,22 @@ NSString *getDefaultPropertiesFilePath() {
     return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/bin/idea.properties"];
 }
 
-NSString *getDefaultVMOptionsFilePath() {
-    return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/bin/idea.vmoptions"];
+// NSString *getDefaultVMOptionsFilePath() {
+//    return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@fileName];
+
+NSString *getDefaultFilePath(NSString *fileName) {
+    NSString *fullFileName = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/Contents"];
+    fullFileName = [fullFileName stringByAppendingString:fileName];
+    NSLog(@"fullFileName is: %@", fullFileName);
+    if ([[NSFileManager defaultManager] fileExistsAtPath:fullFileName]) {
+      NSLog(@"fullFileName exists: %@", fullFileName);
+    } else{
+      fullFileName = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:fileName];
+      NSLog(@"fullFileName exists: %@", fullFileName);
+    }
+    return fullFileName;
 }
+
 
 NSString *getVMOptionsFilePath() {
     return [getPreferencesFolderPath() stringByAppendingString:@"/idea.vmoptions"];
@@ -237,7 +250,8 @@ NSString *getVMOptionsFilePath() {
 NSArray *parseVMOptions() {
     NSArray *inConfig=[VMOptionsReader readFile:getVMOptionsFilePath()];
     if (inConfig) return inConfig;
-    return [VMOptionsReader readFile:getDefaultVMOptionsFilePath()];
+    //return [VMOptionsReader readFile:getDefaultVMOptionsFilePath()];
+    return [VMOptionsReader readFile:getDefaultFilePath(@"/bin/idea.vmoptions")];
 }
 
 NSDictionary *parseProperties() {

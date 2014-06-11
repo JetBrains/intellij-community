@@ -957,6 +957,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeDeferred() {
+    if (myDeferredToRemove.isEmpty()) {
+      return ActionCallback.DONE;
+    }
     final ActionCallback callback = new ActionCallback();
 
     final long executionRequest = ++myRemoveDeferredRequest;

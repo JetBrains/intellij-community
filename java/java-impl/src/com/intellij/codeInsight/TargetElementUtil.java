@@ -250,7 +250,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Override
-  public boolean includeSelfInGotoImplementation(final PsiElement element) {
+  public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
     if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
     }

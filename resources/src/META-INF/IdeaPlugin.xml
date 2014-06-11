@@ -719,6 +719,10 @@
       <className>com.intellij.codeInsight.intention.impl.CreateSwitchIntention</className>
       <category>Control Flow</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
+      <category>Control Flow</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction</className>

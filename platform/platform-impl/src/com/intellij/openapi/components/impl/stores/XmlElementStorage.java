@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.filter.ElementFilter;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ import java.util.*;
 public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
-  @NonNls private static final String ATTR_NAME = "name";
+  private static final String ATTR_NAME = "name";
   private static final String VERSION_FILE_SUFFIX = ".ver";
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
@@ -56,7 +55,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected int myProviderUpToDateHash = -1;
   private boolean mySavingDisabled = false;
 
-  private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at loading we store Element, on setState Integer of hash// at loading we store Element, on setState Integer of hash
+  private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at load we store Element, on setState Integer of hash
 
   private final ComponentVersionProvider myLocalVersionProvider;
   protected final RemoteComponentVersionProvider myRemoteVersionProvider;
@@ -75,7 +74,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
                               @NotNull String rootElementName,
                               @Nullable StreamProvider streamProvider,
                               String fileSpec,
-                              ComponentRoamingManager componentRoamingManager, ComponentVersionProvider localComponentVersionsProvider) {
+                              ComponentRoamingManager componentRoamingManager,
+                              ComponentVersionProvider componentVersionProvider) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myRootElementName = rootElementName;
     myStreamProvider = streamProvider;
@@ -83,7 +83,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myComponentRoamingManager = componentRoamingManager;
     Disposer.register(parentDisposable, this);
 
-    myLocalVersionProvider = localComponentVersionsProvider;
+    myLocalVersionProvider = componentVersionProvider;
     myRemoteVersionProvider = streamProvider == null || !streamProvider.isVersioningRequired() ? null : new RemoteComponentVersionProvider();
   }
 

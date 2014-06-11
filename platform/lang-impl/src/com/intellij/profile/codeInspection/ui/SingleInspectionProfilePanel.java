@@ -295,7 +295,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
         final InspectionToolWrapper[] profileEntries = profileModifiableModel.getInspectionTools(null);
         for (InspectionToolWrapper toolWrapper : profileEntries) {
-          profileModifiableModel.disableTool(toolWrapper.getShortName(), (NamedScope)null, project);
+          profileModifiableModel.disableTool(toolWrapper.getShortName(), null, project);
         }
         profileModifiableModel.setLocal(true);
         profileModifiableModel.setModified(true);
@@ -766,6 +766,9 @@ public class SingleInspectionProfilePanel extends JPanel {
             //Can't be
           }
         }
+        catch (Throwable t) {
+          LOG.error("Failed to load description for: " + descriptor.getToolWrapper().getTool().getClass() + "; description: " + description, t);
+        }
 
       }
       else {
@@ -1032,7 +1035,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     for (Map.Entry<Descriptor, List<Descriptor>> entry : myDescriptors.entrySet()) {
       Descriptor desc = entry.getKey();
       Project project = myProjectProfileManager.getProject();
-      if (mySelectedProfile.isToolEnabled(desc.getKey(), (NamedScope)null, project) != desc.isEnabled()){
+      if (mySelectedProfile.isToolEnabled(desc.getKey(), null, project) != desc.isEnabled()){
         return true;
       }
       if (mySelectedProfile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
