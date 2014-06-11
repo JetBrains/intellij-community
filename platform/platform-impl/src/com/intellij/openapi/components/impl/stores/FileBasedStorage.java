@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -51,39 +52,31 @@ import java.util.List;
 public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
 
+  private static boolean ourConfigDirectoryRefreshed = false;
+
   private final String myFilePath;
   private final IFile myFile;
-  protected final String myRootElementName;
-
-  private static boolean myConfigDirectoryRefreshed = false;
+  private final String myRootElementName;
   private volatile VirtualFile myCachedVirtualFile;
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           StreamProvider streamProvider,
-                          final String filePath,
-                          final String fileSpec,
+                          String filePath,
+                          String fileSpec,
                           String rootElementName,
                           @NotNull Disposable parentDisposable,
                           PicoContainer picoContainer,
-                          ComponentRoamingManager componentRoamingManager, ComponentVersionProvider localComponentVersionProvider) {
-    super(pathMacroManager, parentDisposable, rootElementName, streamProvider,  fileSpec, componentRoamingManager, localComponentVersionProvider);
-    Application app = ApplicationManager.getApplication();
+                          ComponentRoamingManager componentRoamingManager,
+                          ComponentVersionProvider componentVersionProvider) {
+    super(pathMacroManager, parentDisposable, rootElementName, streamProvider, fileSpec, componentRoamingManager, componentVersionProvider);
 
-    if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
-      try {
-        syncRefreshPathRecursively(PathManager.getConfigPath(), "componentVersions");
-      }
-      finally {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        myConfigDirectoryRefreshed = true;
-      }
-    }
+    refreshConfigDirectoryOnce();
 
     myRootElementName = rootElementName;
     myFilePath = filePath;
     myFile = FileSystem.FILE_SYSTEM.createFile(myFilePath);
 
-    VirtualFileTracker virtualFileTracker = (VirtualFileTracker)picoContainer.getComponentInstanceOfType(VirtualFileTracker.class);
+    VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myFile.getAbsolutePath();
@@ -111,21 +104,25 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private static void syncRefreshPathRecursively(@NotNull String configDirectoryPath, @Nullable final String excludeDir) {
-    VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(configDirectoryPath);
-    if (configDir != null) {
-      requestAllChildren(configDir, excludeDir);
-      VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
-    }
-  }
-
-  private static void requestAllChildren(final VirtualFile configDir, @Nullable final String excludeDir) {
-    VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        return excludeDir == null || !excludeDir.equals(file.getName());
+  private static void refreshConfigDirectoryOnce() {
+    Application app = ApplicationManager.getApplication();
+    if (!ourConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
+      try {
+        VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManager.getConfigPath());
+        if (configDir != null) {
+          VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
+            @Override
+            public boolean visitFile(@NotNull VirtualFile file) {
+              return !"componentVersions".equals(file.getName());
+            }
+          });
+          VfsUtil.markDirtyAndRefresh(false, true, false, configDir);
+        }
       }
-    });
+      finally {
+        ourConfigDirectoryRefreshed = true;
+      }
+    }
   }
 
   @Override
