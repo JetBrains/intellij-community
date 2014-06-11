@@ -21,6 +21,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.data.Test01;
 import com.intellij.codeInspection.bytecodeAnalysis.data.TestConverterData;
 import com.intellij.codeInspection.bytecodeAnalysis.data.TestAnnotation;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,16 +57,15 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     myJavaPsiFacade = JavaPsiFacade.getInstance(myModule.getProject());
     myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
     myBytecodeAnalysisConverter = BytecodeAnalysisConverter.getInstance();
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      @Override
+      public void run() {
+        myBytecodeAnalysisConverter.disposeComponent();
+      }
+    });
 
     setUpDataClasses();
     setUpVelocityLibrary();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    // FIXME: without explicit call, this application component is not disposed, what is the correct way for automatic disposal in tests?
-    myBytecodeAnalysisConverter.disposeComponent();
-    super.tearDown();
   }
 
   // TODO: real integration test (possible solution - via external annotation manager??)
