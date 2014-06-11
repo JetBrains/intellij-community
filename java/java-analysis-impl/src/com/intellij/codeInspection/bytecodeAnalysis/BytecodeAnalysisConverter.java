@@ -66,6 +66,9 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       myCompoundKeyEnumerator = new PersistentEnumeratorDelegate<int[]>(compoundKeysFile, new IntArrayKeyDescriptor(), 1024 * 4);
     }
     catch (IOException e) {
+      // FIXME - what is a simple and idiomatic way to handle this??
+      // 1) "restart" enumerators
+      // 2) inform indexer to "rebuild" my indices
       LOG.error(e);
     }
   }
@@ -78,6 +81,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       myCompoundKeyEnumerator.close();
     }
     catch (IOException e) {
+      // FIXME - what to do when there is an error during disposal of enumerator?
       LOG.error(e);
     }
   }
@@ -117,6 +121,9 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return new IntIdEquation(key, result);
   }
 
+  // FIXME - (for all mkXXX) what is the best practice to write such kind of boilerplate?
+  // 1) On one side, this is a very "hot" method, so, extract small operations to make it readable may be expensive
+  // 2) On the other side, current code in unreadable
   @NotNull
   public int[] mkCompoundKey(@NotNull Key key) throws IOException {
     Direction direction = key.direction;
@@ -155,7 +162,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     }
     return null;
   }
-
 
   private void writeType(int[] compoundKey, int i, Type type) throws IOException {
     String className = type.getClassName();
@@ -293,6 +299,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return false;
   }
 
+  // FIXME - how to handle errors here? - this is called after indexing is complete
   public Annotations makeAnnotations(TIntObjectHashMap<Value> internalIdSolutions) {
     final TIntObjectHashMap<AnnotationData> outs = new TIntObjectHashMap<AnnotationData>();
     final TIntObjectHashMap<AnnotationData> params = new TIntObjectHashMap<AnnotationData>();
@@ -313,7 +320,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         compoundKey = myCompoundKeyEnumerator.valueOf(key);
       }
       catch (IOException e) {
-        // TODO: question: how to react?
+        // TODO
       }
 
       if (compoundKey != null) {
@@ -344,7 +351,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
             contractElement(sb, arity, (InOut)direction, value);
           }
           catch (IOException e) {
-            // TODO: question: how to react?
+            // TODO
           }
         }
       }

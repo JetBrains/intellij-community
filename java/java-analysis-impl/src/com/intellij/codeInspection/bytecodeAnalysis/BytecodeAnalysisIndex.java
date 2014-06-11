@@ -18,10 +18,15 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -73,5 +78,70 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
   @Override
   public int getVersion() {
     return 0;
+  }
+
+  public static class EquationExternalizer implements DataExternalizer<Collection<IntIdEquation>> {
+    @Override
+    public void save(@NotNull DataOutput out, Collection<IntIdEquation> equations) throws IOException {
+      out.writeInt(equations.size());
+
+      for (IntIdEquation equation : equations) {
+        out.writeInt(equation.id);
+        IntIdResult rhs = equation.rhs;
+        if (rhs instanceof IntIdFinal) {
+          IntIdFinal finalResult = (IntIdFinal)rhs;
+          out.writeBoolean(true);
+          DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
+        } else {
+          IntIdPending pendResult = (IntIdPending)rhs;
+          out.writeBoolean(false);
+          DataInputOutputUtil.writeINT(out, pendResult.infinum.ordinal());
+          DataInputOutputUtil.writeINT(out, pendResult.delta.length);
+
+          for (IntIdComponent component : pendResult.delta) {
+            int[] ids = component.ids;
+            DataInputOutputUtil.writeINT(out, ids.length);
+
+            for (int id : ids) {
+              out.writeInt(id);
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    public Collection<IntIdEquation> read(@NotNull DataInput in) throws IOException {
+
+      int size = in.readInt();
+      ArrayList<IntIdEquation> result = new ArrayList<IntIdEquation>(size);
+
+      for (int x = 0; x < size; x++) {
+        int equationId = in.readInt();
+        boolean isFinal = in.readBoolean();
+        if (isFinal) {
+          int ordinal = DataInputOutputUtil.readINT(in);
+          Value value = Value.values()[ordinal];
+          result.add(new IntIdEquation(equationId, new IntIdFinal(value)));
+        } else {
+          int ordinal = DataInputOutputUtil.readINT(in);
+          Value value = Value.values()[ordinal];
+          int deltaLength = DataInputOutputUtil.readINT(in);
+          IntIdComponent[] components = new IntIdComponent[deltaLength];
+
+          for (int i = 0; i < deltaLength; i++) {
+            int componentSize = DataInputOutputUtil.readINT(in);
+            int[] ids = new int[componentSize];
+            for (int j = 0; j < componentSize; j++) {
+              ids[j] = in.readInt();
+            }
+            components[i] = new IntIdComponent(ids);
+          }
+          result.add(new IntIdEquation(equationId, new IntIdPending(value, components)));
+        }
+      }
+
+      return result;
+    }
   }
 }

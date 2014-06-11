@@ -63,6 +63,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    // FIXME: without explicit call, this application component is not disposed, what is the correct way for automatic disposal in tests?
     myBytecodeAnalysisConverter.disposeComponent();
     super.tearDown();
   }

@@ -59,7 +59,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     super(project);
     myPsiManager = psiManager;
 
-    // TODO: question: what is a proper way to handle indices changes?
+    // FIXME - the main question, the best way to "aggregate" my indices and "re-aggregate" them on change
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       @Override
       public void run() {}
@@ -125,6 +125,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     });
   }
 
+  // FIXME - the main question, again
   private synchronized List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
     if (myAnnotations == null) {
       loadAnnotations();

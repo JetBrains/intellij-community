@@ -51,6 +51,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
         idEquations.add(idEquation);
       }
       catch (IOException e) {
+        // FIXME - how to handle an error in underlying enumerator?
         LOG.error(e);
       }
     }
