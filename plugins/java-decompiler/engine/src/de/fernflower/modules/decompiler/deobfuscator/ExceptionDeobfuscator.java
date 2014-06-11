@@ -313,7 +313,7 @@ public class ExceptionDeobfuscator {
 			}
 
 			if(!setEntries.isEmpty()) {
-				if(setEntries.size() > 1 || ent.getValue().contains(first)) {
+				if(setEntries.size() > 1 /*|| ent.getValue().contains(first)*/) {
 					return true;
 				}
 			}
