@@ -357,7 +357,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   public static void processGatheredCoverage(RunConfigurationBase configuration) {
-    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
+    final Project project = configuration.getProject();
+    if (project.isDisposed()) return;
+    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
     //noinspection ConstantConditions
     final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
