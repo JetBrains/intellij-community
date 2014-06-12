@@ -54,7 +54,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.List;
 
 /**
@@ -178,18 +177,6 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
         else {
           return new PyNewProjectSettings();
         }
-      }
-
-      @Nullable
-      @Override
-      public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Object getProjectSettings() throws ProcessCanceledException {
-        return null;
       }
 
       @Nullable

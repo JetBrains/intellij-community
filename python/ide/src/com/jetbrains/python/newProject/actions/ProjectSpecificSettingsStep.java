@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.newProject.actions;
 
+import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.util.NullableConsumer;
+import com.jetbrains.python.newProject.PythonProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,12 @@ public class ProjectSpecificSettingsStep extends AbstractProjectSettingsStep imp
   @Override
   @Nullable
   protected JPanel createAdvancedSettings() {
-    final JComponent advancedSettings = myProjectGenerator.getSettingsPanel(myProjectDirectory);
+    JComponent advancedSettings = null;
+    if (myProjectGenerator instanceof PythonProjectGenerator)
+      advancedSettings = ((PythonProjectGenerator)myProjectGenerator).getSettingsPanel(myProjectDirectory);
+    else if (myProjectGenerator instanceof WebProjectTemplate) {
+      advancedSettings = ((WebProjectTemplate)myProjectGenerator).getPeer().getComponent();
+    }
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
       final HideableDecorator deco = new HideableDecorator(jPanel, "Mor&e Settings", false);

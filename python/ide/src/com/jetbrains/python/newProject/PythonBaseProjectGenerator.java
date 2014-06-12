@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-public class PythonBaseProjectGenerator implements DirectoryProjectGenerator {
+public class PythonBaseProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
   @NotNull
   @Nls
   @Override
@@ -37,7 +37,7 @@ public class PythonBaseProjectGenerator implements DirectoryProjectGenerator {
   }
 
   @Override
-  public Object getProjectSettings() throws ProcessCanceledException {
+  public Object getProjectSettings() {
     return new PyNewProjectSettings();
   }
 

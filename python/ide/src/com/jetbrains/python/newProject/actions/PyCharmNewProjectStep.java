@@ -16,6 +16,7 @@
 package com.jetbrains.python.newProject.actions;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -44,6 +45,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonBaseProjectGenerator;
+import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkService;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -140,7 +142,12 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
           @Override
           public void projectOpened(Project project, Module module) {
             if (generator != null) {
-              final Object projectSettings = generator.getProjectSettings();
+              Object projectSettings = null;
+              if (generator instanceof PythonProjectGenerator)
+                projectSettings = ((PythonProjectGenerator)generator).getProjectSettings();
+              else if (generator instanceof WebProjectTemplate) {
+                projectSettings = ((WebProjectTemplate)generator).getPeer().getSettings();
+              }
               if (projectSettings instanceof PyNewProjectSettings) {
                 ((PyNewProjectSettings)projectSettings).setSdk(settings.getSdk());
                 ((PyNewProjectSettings)projectSettings).setInstallFramework(settings.installFramework());
