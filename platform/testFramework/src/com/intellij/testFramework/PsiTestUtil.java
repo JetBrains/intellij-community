@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
@@ -53,7 +54,6 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
 @NonNls
 public class PsiTestUtil {
@@ -119,7 +119,7 @@ public class PsiTestUtil {
   }
 
   public static void removeAllRoots(Module module, final Sdk jdk) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.clear();
@@ -133,7 +133,7 @@ public class PsiTestUtil {
   }
 
   public static void addSourceContentToRoots(Module module, @NotNull final VirtualFile vDir, final boolean testSource) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.addContentEntry(vDir).addSourceFolder(vDir, testSource);
@@ -157,7 +157,7 @@ public class PsiTestUtil {
 
   public static <P extends JpsElement> void addSourceRoot(Module module, final VirtualFile vDir,
                                                           @NotNull final JpsModuleSourceRootType<P> rootType, final P properties) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @SuppressWarnings("unchecked")
       @Override
       public void consume(ModifiableRootModel model) {
@@ -180,7 +180,7 @@ public class PsiTestUtil {
   }
 
   public static ContentEntry addContentRoot(Module module, final VirtualFile vDir) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.addContentEntry(vDir);
@@ -198,10 +198,15 @@ public class PsiTestUtil {
   }
 
   public static void addExcludedRoot(Module module, final VirtualFile dir) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
-      public void consume(ModifiableRootModel model) {
-        findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
+      public void consume(final ModifiableRootModel model) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
+          }
+        });
       }
     });
   }
@@ -216,7 +221,7 @@ public class PsiTestUtil {
   }
 
   public static void removeContentEntry(Module module, final ContentEntry e) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.removeContentEntry(e);
@@ -225,7 +230,7 @@ public class PsiTestUtil {
   }
 
   public static void removeSourceRoot(Module module, final VirtualFile root) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         ContentEntry entry = findContentEntryWithAssertion(model, root);
@@ -240,7 +245,7 @@ public class PsiTestUtil {
   }
 
   public static void removeExcludedRoot(Module module, final VirtualFile root) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         ContentEntry entry = findContentEntryWithAssertion(model, root);
@@ -257,7 +262,7 @@ public class PsiTestUtil {
   }
 
   public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         addLibrary(module, model, libName, libPath, jarArr);
@@ -272,7 +277,7 @@ public class PsiTestUtil {
   public static Library addProjectLibrary(final Module module, final String libName, final List<VirtualFile> classesRoots,
                                        final List<VirtualFile> sourceRoots) {
     final Ref<Library> result = Ref.create();
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         result.set(addProjectLibrary(module, model, libName, classesRoots, sourceRoots));
@@ -395,7 +400,7 @@ public class PsiTestUtil {
   }
 
   public static void setCompilerOutputPath(Module module, final String url, final boolean forTests) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
@@ -411,7 +416,7 @@ public class PsiTestUtil {
   }
 
   public static void setExcludeCompileOutput(Module module, final boolean exclude) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude);
@@ -420,7 +425,7 @@ public class PsiTestUtil {
   }
 
   public static void setJavadocUrls(Module module, final String... urls) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
+    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(ModifiableRootModel model) {
         model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
