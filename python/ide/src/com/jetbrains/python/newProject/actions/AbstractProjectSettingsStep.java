@@ -72,6 +72,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
         @Override
         public void stateChanged(boolean validSettings) {
+          checkValid();
           if (validSettings) {
             setErrorText(null);
           }
