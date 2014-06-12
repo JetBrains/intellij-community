@@ -43,7 +43,7 @@ public class PythonBaseProjectGenerator implements DirectoryProjectGenerator {
 
   @Nullable
   @Override
-  public Icon getIcon() {
+  public Icon getLogo() {
     return PythonIcons.Python.Python_logo;
   }
 

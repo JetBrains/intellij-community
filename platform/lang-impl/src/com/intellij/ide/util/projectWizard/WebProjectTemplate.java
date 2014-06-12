@@ -58,6 +58,10 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
     return WebModuleBuilder.ICON;
   }
 
+  public Icon getLogo() {
+    return WebModuleBuilder.ICON;
+  }
+
   @NotNull
   public GeneratorPeer<T> getPeer() {
     return myPeerHolder.getValue();

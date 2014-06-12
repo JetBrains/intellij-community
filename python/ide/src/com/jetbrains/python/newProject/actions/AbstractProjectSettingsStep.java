@@ -134,7 +134,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   protected Icon getIcon() {
-    return myProjectGenerator.getIcon();
+    return myProjectGenerator.getLogo();
   }
 
   private JPanel createBasePanel() {

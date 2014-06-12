@@ -194,7 +194,7 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
 
       @Nullable
       @Override
-      public Icon getIcon() {
+      public Icon getLogo() {
         return null;
       }
 
