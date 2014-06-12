@@ -85,6 +85,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
+    bus.connect().subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
+      @Override
+      public void transactionStarted(@NotNull Document document, @NotNull PsiFile file) {
+        myUncommittedDocuments.remove(document);
+      }
+
+      @Override
+      public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
+      }
+    });
   }
 
   @Override
@@ -384,8 +394,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       runnable.run();
     }
     else {
-      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(),
-                     "Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise.");
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock otherwise. "+Thread.currentThread());
+      }
 
       final Semaphore s1 = new Semaphore();
       final Semaphore s2 = new Semaphore();
