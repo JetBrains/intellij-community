@@ -276,7 +276,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
           if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
             final PyPackage pip = packageManager.findPackage("pip");
             myInstallFramework = pip != null;
-            setWarningText("Django will be installed on selected interpreter");
+            setWarningText(frameworkName + " will be installed on selected interpreter");
           }
         }
         catch (PyExternalProcessException ignored) {
