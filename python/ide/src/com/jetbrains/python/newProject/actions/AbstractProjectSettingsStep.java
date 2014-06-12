@@ -29,6 +29,7 @@ import com.jetbrains.python.PythonSdkChooserCombo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
+import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -73,12 +74,18 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         @Override
         public void stateChanged(boolean validSettings) {
           checkValid();
-          if (validSettings) {
-            setErrorText(null);
-          }
         }
       });
     }
+    else if (myProjectGenerator instanceof PythonProjectGenerator) {
+      ((PythonProjectGenerator)myProjectGenerator).addSettingsStateListener(new PythonProjectGenerator.SettingsListener() {
+        @Override
+        public void stateChanged() {
+          checkValid();
+        }
+      });
+    }
+
     myCreateAction = new AnAction("Create    ", "Create Project", getIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
