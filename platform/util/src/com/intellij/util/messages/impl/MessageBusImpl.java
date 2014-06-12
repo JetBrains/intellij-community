@@ -102,7 +102,10 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private RootBus asRoot() {
-    return (RootBus)this;
+    if ((this instanceof RootBus)) {
+      return (RootBus)this;
+    }
+    throw new AssertionError("Accessing disposed message bus; " + myOwner);
   }
 
   private List<Integer> notifyChildBusCreated(final MessageBusImpl childBus) {
