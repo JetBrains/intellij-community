@@ -73,7 +73,13 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     }
     CountDownLatch latch = new CountDownLatch(count)
     for (c in classList) {
-      ApplicationManager.application.executeOnPooledThread { Thread.yield(); c.text; latch.countDown() }
+      ApplicationManager.application.executeOnPooledThread {
+        Thread.yield();
+        ApplicationManager.application.runReadAction {
+          c.text;
+        }
+        latch.countDown()
+      }
       for (m in c.methods) {
         def parameters = m.parameterList.parameters
         for (i in 0..<parameters.size()) {
