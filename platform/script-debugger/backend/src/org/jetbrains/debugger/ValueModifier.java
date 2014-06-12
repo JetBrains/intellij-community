@@ -13,7 +13,7 @@ public interface ValueModifier {
   // it works quickly and we don't want to complicate our code and debugger SDK
   ActionCallback setValue(@NotNull Variable variable, String newValue, @NotNull EvaluateContext evaluateContext);
 
-  ActionCallback setValue(@NotNull Variable variable, Value newValue, @NotNull EvaluateContext evaluateContext);
+  ActionCallback setValue(@NotNull Variable variable, @NotNull Value newValue, @NotNull EvaluateContext evaluateContext);
 
   @NotNull
   AsyncResult<Value> evaluateGet(@NotNull Variable variable, @NotNull EvaluateContext evaluateContext);

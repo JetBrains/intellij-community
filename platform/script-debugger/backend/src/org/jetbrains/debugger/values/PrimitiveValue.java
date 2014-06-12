@@ -4,6 +4,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrimitiveValue extends ValueBase {
+  public static final PrimitiveValue NULL_VALUE = new PrimitiveValue(ValueType.NULL, "null");
+  public static final PrimitiveValue UNDEFINED_VALUE = new PrimitiveValue(ValueType.UNDEFINED, "undefined");
+
   private final String valueString;
 
   public PrimitiveValue(@NotNull ValueType type, @NotNull String valueString) {
