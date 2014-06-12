@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.util.text.SyncDateFormat;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -49,8 +49,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   public String USER = "";
   public boolean STOP_ON_COPY = false;
 
-  public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG,
-                                                                                                            SimpleDateFormat.LONG));
+  public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG));
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -84,12 +83,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public Date getDateAfter() {
-    if (USE_DATE_AFTER_FILTER) {
-      return parseDate(DATE_AFTER);
-    }
-    else {
-      return null;
-    }
+    return parseDate(DATE_AFTER);
   }
 
   public Long getChangeBeforeFilter() {
@@ -117,7 +111,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public Date getDateAfterFilter() {
-    return parseDate(DATE_AFTER);
+    return USE_DATE_AFTER_FILTER ? parseDate(DATE_AFTER) : null;
   }
 
   public void setDateAfter(final Date value) {
