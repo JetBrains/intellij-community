@@ -1,5 +1,6 @@
 package com.jetbrains.python.newProject;
 
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,10 @@ public abstract class PythonProjectGenerator {
 
   public Object getProjectSettings() {
     return new PyNewProjectSettings();
+  }
+
+  public ValidationResult warningValitation() {
+    return ValidationResult.OK;
   }
 
   public void addSettingsStateListener(@NotNull SettingsListener listener) {

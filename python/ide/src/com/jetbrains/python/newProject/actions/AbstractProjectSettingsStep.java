@@ -231,6 +231,9 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   public boolean checkValid() {
     final String projectName = myLocationField.getText();
+    setErrorText(null);
+    myInstallFramework = false;
+
     if (projectName.trim().isEmpty()) {
       setErrorText("Project name can't be empty");
       return false;
@@ -246,7 +249,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         setErrorText(validationResult.getErrorMessage());
         return false;
       }
-
+      if (myProjectGenerator instanceof PythonProjectGenerator) {
+        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValitation();
+        if (!warningResult.isOk()) {
+          setWarningText(warningResult.getErrorMessage());
+        }
+      }
       if (myProjectGenerator instanceof WebProjectTemplate) {
         final ValidationInfo validationInfo = ((WebProjectTemplate)myProjectGenerator).getPeer().validate();
         if (validationInfo != null) {
@@ -257,8 +265,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     }
 
     final Sdk sdk = getSdk();
-    setErrorText(null);
-    myInstallFramework = false;
 
     final boolean isPy3k = sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
     if (sdk != null && PythonSdkType.isRemote(sdk) && !acceptsRemoteSdk(myProjectGenerator)) {
@@ -305,7 +311,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public void setWarningText(@Nullable String text) {
-    myErrorLabel.setText("Note: " + text);
+    myErrorLabel.setText("Note: " + text + "  ");
     myErrorLabel.setForeground(JBColor.YELLOW);
   }
 
