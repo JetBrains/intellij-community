@@ -22,7 +22,6 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.CenteredIcon;
 import com.jetbrains.python.PythonSdkChooserCombo;
@@ -56,8 +55,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   protected final DirectoryProjectGenerator myProjectGenerator;
   private final NullableConsumer<AbstractProjectSettingsStep> myCallback;
   private PythonSdkChooserCombo mySdkCombo;
-  private JCheckBox myFrameworkCheckbox;
-  private boolean myInstallFrameworkChanged;
+  private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
   protected final File myProjectDirectory;
   private Button myCreateButton;
@@ -202,26 +200,11 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     c.weightx = 1.;
     panel.add(mySdkCombo, c);
 
-    myFrameworkCheckbox = new JBCheckBox("Install <framework>");
-    c.gridx = 0;
-    c.gridy = 2;
-    c.gridwidth = 2;
-    c.weightx = 0.0;
-    panel.add(myFrameworkCheckbox, c);
-    myFrameworkCheckbox.setVisible(false);
-
     registerValidators();
     return panel;
   }
 
   protected void registerValidators() {
-    myFrameworkCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myInstallFrameworkChanged = true;
-        checkValid();
-      }
-    });
 
     myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -275,7 +258,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
     final Sdk sdk = getSdk();
     setErrorText(null);
-    myFrameworkCheckbox.setVisible(false);
+    myInstallFramework = false;
 
     final boolean isPy3k = sdk != null && PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
     if (sdk != null && PythonSdkType.isRemote(sdk) && !acceptsRemoteSdk(myProjectGenerator)) {
@@ -292,18 +275,13 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         try {
           if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
             final PyPackage pip = packageManager.findPackage("pip");
-            myFrameworkCheckbox.setText("Install " + frameworkName);
-            myFrameworkCheckbox.setMnemonic(frameworkName.charAt(0));
-            myFrameworkCheckbox.setVisible(pip != null);
-            if (!myInstallFrameworkChanged) {
-              myFrameworkCheckbox.setSelected(pip != null);
-            }
+            myInstallFramework = pip != null;
+            setWarningText("Django will be installed on selected interpreter");
           }
         }
-        catch (PyExternalProcessException e) {
-          myFrameworkCheckbox.setVisible(false);
+        catch (PyExternalProcessException ignored) {
         }
-        if (!myFrameworkCheckbox.isSelected()) {
+        if (!myInstallFramework) {
           setErrorText("No " + frameworkName + " support installed in selected interpreter");
           return false;
         }
@@ -322,7 +300,13 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   public void setErrorText(@Nullable String text) {
     myErrorLabel.setText(text);
+    myErrorLabel.setForeground(JBColor.RED);
     myCreateButton.setEnabled(text == null);
+  }
+
+  public void setWarningText(@Nullable String text) {
+    myErrorLabel.setText("Note: " + text);
+    myErrorLabel.setForeground(JBColor.YELLOW);
   }
 
   public void selectCompatiblePython() {
@@ -403,7 +387,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   public boolean installFramework() {
-    return myFrameworkCheckbox.isSelected() && myFrameworkCheckbox.isVisible();
+    return myInstallFramework;
   }
 
 }
