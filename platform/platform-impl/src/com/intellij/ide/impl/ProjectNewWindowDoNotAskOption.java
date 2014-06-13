@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 
 public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOption {
   public boolean isToBeShown() {
@@ -38,6 +39,7 @@ public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOpt
     return false;
   }
 
+  @NotNull
   public String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.ask");
   }

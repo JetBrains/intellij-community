@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module.impl;
+package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
-import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
+import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,16 +27,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   private final Module myModule;
-  private final StripedLockIntObjectConcurrentHashMap<GlobalSearchScope> myScopeCache = new StripedLockIntObjectConcurrentHashMap<GlobalSearchScope>();
-  private GlobalSearchScope myModuleWithDependentsScope;
-  private GlobalSearchScope myModuleTestsWithDependentsScope;
+  private final ConcurrentIntObjectMap<GlobalSearchScope> myScopeCache = new StripedLockIntObjectConcurrentHashMap<GlobalSearchScope>();
+  private ModuleWithDependentsTestScope myModuleTestsWithDependentsScope;
 
   public ModuleScopeProviderImpl(@NotNull Module module) {
     myModule = module;
   }
 
   @NotNull
-  public GlobalSearchScope getCachedScope(@ModuleWithDependenciesScope.ScopeConstant int options) {
+  private GlobalSearchScope getCachedScope(@ModuleWithDependenciesScope.ScopeConstant int options) {
     GlobalSearchScope scope = myScopeCache.get(options);
     if (scope == null) {
       scope = new ModuleWithDependenciesScope(myModule, options);
@@ -44,7 +43,6 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
     }
     return scope;
   }
-
 
   @Override
   @NotNull
@@ -93,19 +91,15 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @Override
   @NotNull
   public GlobalSearchScope getModuleWithDependentsScope() {
-    GlobalSearchScope scope = myModuleWithDependentsScope;
-    if (scope == null) {
-      myModuleWithDependentsScope = scope = new ModuleWithDependentsScope(myModule, false);
-    }
-    return scope;
+    return getModuleTestsWithDependentsScope().getBaseScope();
   }
 
   @Override
   @NotNull
-  public GlobalSearchScope getModuleTestsWithDependentsScope() {
-    GlobalSearchScope scope = myModuleTestsWithDependentsScope;
+  public ModuleWithDependentsTestScope getModuleTestsWithDependentsScope() {
+    ModuleWithDependentsTestScope scope = myModuleTestsWithDependentsScope;
     if (scope == null) {
-      myModuleTestsWithDependentsScope = scope = new ModuleWithDependentsScope(myModule, true);
+      myModuleTestsWithDependentsScope = scope = new ModuleWithDependentsTestScope(myModule);
     }
     return scope;
   }
@@ -120,8 +114,6 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   @Override
   public void clearCache() {
     myScopeCache.clear();
-    myModuleWithDependentsScope = null;
     myModuleTestsWithDependentsScope = null;
   }
-
 }

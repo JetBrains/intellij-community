@@ -10,9 +10,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,12 +30,15 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,9 +51,74 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   private static final String COMMIT_MESSAGE = "Deploy";
 
+  private static final CommitSession NO_COMMIT = new CommitSession() {
+
+    @Nullable
+    @Override
+    public JComponent getAdditionalConfigurationUI() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public JComponent getAdditionalConfigurationUI(Collection<Change> changes, String commitMessage) {
+      return null;
+    }
+
+    @Override
+    public boolean canExecute(Collection<Change> changes, String commitMessage) {
+      return true;
+    }
+
+    @Override
+    public void execute(Collection<Change> changes, String commitMessage) {
+
+    }
+
+    @Override
+    public void executionCanceled() {
+
+    }
+
+    @Override
+    public String getHelpId() {
+      return null;
+    }
+  };
+
+  private static final List<CommitExecutor> ourCommitExecutors = Arrays.asList(
+    new CommitExecutor() {
+
+      @Nls
+      @Override
+      public String getActionText() {
+        return "Commit and Push";
+      }
+
+      @NotNull
+      @Override
+      public CommitSession createCommitSession() {
+        return CommitSession.VCS_COMMIT;
+      }
+    },
+    new CommitExecutor() {
+
+      @Nls
+      @Override
+      public String getActionText() {
+        return "Push without Commit";
+      }
+
+      @NotNull
+      @Override
+      public CommitSession createCommitSession() {
+        return NO_COMMIT;
+      }
+    }
+  );
+
   private final GitRepositoryManager myGitRepositoryManager;
   private final Git myGit;
-  private final AbstractVcsHelper myVcsHelper;
 
   private final VirtualFile myContentRoot;
   private final File myRepositoryRootFile;
@@ -87,7 +155,6 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       throw new ServerRuntimeException("Can't initialize GIT");
     }
     GitPlatformFacade gitPlatformFacade = ServiceManager.getService(GitPlatformFacade.class);
-    myVcsHelper = gitPlatformFacade.getVcsHelper(project);
     myChangeListManager = gitPlatformFacade.getChangeListManager(project);
   }
 
@@ -159,20 +226,25 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
       @Override
       public Boolean compute() {
-        return myVcsHelper.commitChanges(relevantChanges, activeChangeList, COMMIT_MESSAGE,
-                                         new CommitResultHandler() {
+        return CommitChangeListDialog.commitChanges(getProject(),
+                                                    relevantChanges,
+                                                    activeChangeList,
+                                                    ourCommitExecutors,
+                                                    false,
+                                                    COMMIT_MESSAGE,
+                                                    new CommitResultHandler() {
 
-                                           @Override
-                                           public void onSuccess(@NotNull String commitMessage) {
-                                             commitSucceeded.set(true);
-                                             commitSemaphore.up();
-                                           }
+                                                      @Override
+                                                      public void onSuccess(@NotNull String commitMessage) {
+                                                        commitSucceeded.set(true);
+                                                        commitSemaphore.up();
+                                                      }
 
-                                           @Override
-                                           public void onFailure() {
-                                             commitSemaphore.up();
-                                           }
-                                         });
+                                                      @Override
+                                                      public void onFailure() {
+                                                        commitSemaphore.up();
+                                                      }
+                                                    });
       }
     });
     if (commitStarted != null && commitStarted) {
@@ -183,7 +255,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       }
     }
     else {
-      getLoggingHandler().println("Commit canceled");
+      throw new ServerRuntimeException("Deploy interrupted");
     }
 
     repository.update();

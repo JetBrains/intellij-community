@@ -19,7 +19,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -128,11 +127,12 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
         }
       }
     };
-    final ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    final Application application = ApplicationManager.getApplication();
     // also do not show auth if thread does not have progress indicator
-    if (application.holdsReadLock() || application.isDispatchThread() || ! ProgressManager.getInstance().hasProgressIndicator()) {
+    if (application.isReadAccessAllowed() || !ProgressManager.getInstance().hasProgressIndicator()) {
       application.executeOnPooledThread(checker);
-    } else {
+    }
+    else {
       checker.run();
       return resultRef.get();
     }

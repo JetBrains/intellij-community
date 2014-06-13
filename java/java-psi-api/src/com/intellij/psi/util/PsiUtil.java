@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -311,19 +312,18 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
+  @MagicConstant(intValues = {ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PRIVATE})
   public static int getAccessLevel(@NotNull PsiModifierList modifierList) {
     if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return ACCESS_LEVEL_PRIVATE;
     }
-    else if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+    if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
       return ACCESS_LEVEL_PACKAGE_LOCAL;
     }
-    else if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+    if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
       return ACCESS_LEVEL_PROTECTED;
     }
-    else {
-      return ACCESS_LEVEL_PUBLIC;
-    }
+    return ACCESS_LEVEL_PUBLIC;
   }
 
   @PsiModifier.ModifierConstant

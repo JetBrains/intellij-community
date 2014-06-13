@@ -50,6 +50,7 @@ import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -629,6 +630,7 @@ public class MergeFromTheirsResolver {
           return true;
         }
 
+        @NotNull
         @Override
         public String getDoNotShowMessage() {
           return CommonBundle.message("dialog.options.do.not.ask");

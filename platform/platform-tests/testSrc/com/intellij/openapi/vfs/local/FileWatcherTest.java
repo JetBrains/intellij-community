@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
@@ -436,7 +436,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     File subDir = createTestDir(targetDir, "sub");
     File file = createTestFile(subDir, "test.txt");
     File rootFile = createSubst(targetDir.getPath());
-    VirtualDirectoryImpl.allowRootAccess(rootFile.getPath());
+    VfsRootAccess.allowRootAccess(rootFile.getPath());
     VirtualFile vfsRoot = myFileSystem.findFileByIoFile(rootFile);
 
     try {
@@ -478,7 +478,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
         ((NewVirtualFile)vfsRoot).markDirty();
         myFileSystem.refresh(false);
       }
-      VirtualDirectoryImpl.disallowRootAccess(rootFile.getPath());
+      VfsRootAccess.disallowRootAccess(rootFile.getPath());
     }
   }
 

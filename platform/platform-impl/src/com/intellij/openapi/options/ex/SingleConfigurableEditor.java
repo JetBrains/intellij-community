@@ -54,7 +54,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
                                   Configurable configurable,
                                   @NonNls String dimensionKey,
                                   final boolean showApplyButton,
-                                  final IdeModalityType ideModalityType) {
+                                  @NotNull IdeModalityType ideModalityType) {
     super(project, true, ideModalityType);
     myDimensionKey = dimensionKey;
     myShowApplyButton = showApplyButton;
@@ -96,7 +96,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     this(parent, configurable, dimensionServiceKey, showApplyButton, IdeModalityType.IDE);
   }
 
-  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey, IdeModalityType ideModalityType) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey, @NotNull IdeModalityType ideModalityType) {
     this(project, configurable, dimensionKey, true, ideModalityType);
   }
 
@@ -108,7 +108,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     this(parent, configurable, dimensionServiceKey, true);
   }
 
-  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, IdeModalityType ideModalityType) {
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NotNull IdeModalityType ideModalityType) {
     this(project, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), ideModalityType);
   }
 

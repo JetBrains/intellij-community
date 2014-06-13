@@ -77,7 +77,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
   private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
-
+  private boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
 
@@ -255,7 +255,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           }
         });
         files.remove(null);
-        if (!files.isEmpty()) {
+        if (!files.isEmpty() && RE_DETECT_ASYNC) {
           reDetectQueue.offer(files);
         }
       }
@@ -274,6 +274,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public void drainReDetectQueue() {
     reDetectQueue.drain();
   }
+  @TestOnly
+  public void reDetectAsync(boolean enable) {
+    RE_DETECT_ASYNC = enable;
+  }
 
   private void reDetect(@NotNull Collection<VirtualFile> files) {
     final List<VirtualFile> changed = new ArrayList<VirtualFile>();
@@ -287,7 +291,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
     }
-    if (!changed.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!changed.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {

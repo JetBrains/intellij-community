@@ -537,8 +537,10 @@ public class PsiImplUtil {
 
   @NotNull
   public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
-    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(member);
     PsiFile file = member.getContainingFile();
+    PsiElement topElement = file == null ? member : file;
+    Project project = topElement.getProject();
+    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getInstance(project).getUseScope(topElement);
     if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
@@ -549,28 +551,23 @@ public class PsiImplUtil {
       return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
     }
 
-    if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
+    PsiModifierList modifierList = member.getModifierList();
+    int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
+    if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC || accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
       return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
-    else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
-    }
-    else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+    if (accessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
       PsiClass topClass = PsiUtil.getTopLevelClass(member);
-      return topClass != null ? new LocalSearchScope(topClass) : file != null ? new LocalSearchScope(file) : maximalUseScope;
+      return topClass != null ? new LocalSearchScope(topClass) : file == null ? maximalUseScope : new LocalSearchScope(file);
     }
-    else {
-      if (file instanceof PsiJavaFile) {
-        PsiPackage aPackage = JavaPsiFacade.getInstance(member.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
-        if (aPackage != null) {
-          SearchScope scope = PackageScope.packageScope(aPackage, false);
-          scope = scope.intersectWith(maximalUseScope);
-          return scope;
-        }
+    if (file instanceof PsiJavaFile) {
+      PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(((PsiJavaFile)file).getPackageName());
+      if (aPackage != null) {
+        SearchScope scope = PackageScope.packageScope(aPackage, false);
+        return scope.intersectWith(maximalUseScope);
       }
-
-      return maximalUseScope;
     }
+    return maximalUseScope;
   }
 
   public static boolean isInServerPage(@Nullable final PsiElement element) {

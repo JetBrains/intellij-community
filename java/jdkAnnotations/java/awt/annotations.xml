@@ -71,6 +71,18 @@
   <item name="java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.awt.Component java.awt.Point getLocation()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Component java.awt.Point location()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Component void setLocation(java.awt.Point) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.awt.Container void add(java.awt.Component, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.awt.Container void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -232,6 +244,9 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
+  </item>
+  <item name='java.awt.Window void setLocation(java.awt.Point) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
 

@@ -1374,6 +1374,7 @@ public class Messages {
       return doCreateCenterPanel();
     }
 
+    @NotNull
     @Override
     LayoutManager createRootLayout() {
       return isMacSheetEmulation() ? myLayout = new MyBorderLayout() : super.createRootLayout();
