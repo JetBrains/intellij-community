@@ -1160,6 +1160,7 @@ public abstract class DialogWrapper {
   }
 
   protected void init() {
+    assert SwingUtilities.isEventDispatchThread() : "Dialog must be init in EDT only: "+Thread.currentThread();
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
 
