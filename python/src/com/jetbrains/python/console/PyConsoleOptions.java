@@ -84,7 +84,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
 
-    mergeStartScripts(state.myPythonConsoleState.getCustomStartScript(),
+    mergeStartScripts(state.myPythonConsoleState,
                       RunPythonConsoleAction.CONSOLE_START_COMMAND, myState.myPythonConsoleState);
   }
 
@@ -272,9 +272,18 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     }
   }
 
-  public static void mergeStartScripts(String oldCustomScript, String startScript, PyConsoleSettings settings){
+  public static void mergeStartScripts(PyConsoleSettings loadedSettings, String defaultStartScript, PyConsoleSettings settings){
+
+    String oldCustomScript = loadedSettings.getCustomStartScript();
+
+    if(oldCustomScript == null && loadedSettings.getStartScript() == null){
+      settings.setStartScript(defaultStartScript);
+      settings.setCustomStartScript("");
+      return;
+    }
+
     if(oldCustomScript != null && oldCustomScript.trim().length() > 0){
-      settings.setStartScript(startScript + "\n" + oldCustomScript);
+      settings.setStartScript(defaultStartScript + "\n" + oldCustomScript);
       settings.setCustomStartScript(null);
     }
   }

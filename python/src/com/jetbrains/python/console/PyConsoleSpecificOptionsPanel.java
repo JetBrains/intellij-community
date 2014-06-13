@@ -103,7 +103,7 @@ public class PyConsoleSpecificOptionsPanel {
   }
 
   private void configureStartingScriptPanel(final PyConsoleOptions.PyConsoleSettings optionsProvider) {
-    myEditorTextField =
+;    myEditorTextField =
       new EditorTextField(createDocument(myProject, optionsProvider.myStartScript), myProject, PythonFileType.INSTANCE) {
         @Override
         protected EditorEx createEditor() {
