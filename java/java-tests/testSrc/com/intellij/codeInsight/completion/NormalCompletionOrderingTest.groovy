@@ -637,6 +637,10 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'Deprecated', 'Override'
   }
 
+  public void testPreferThrownExceptionsInCatch() {
+    checkPreferredItems 0, 'FileNotFoundException', 'File'
+  }
+
   public void testGlobalStaticMemberStats() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)

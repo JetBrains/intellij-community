@@ -882,7 +882,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {
         return true;
       }
-      if (superParent instanceof PsiClass) {
+      if (superParent instanceof PsiClass || superParent instanceof PsiCatchSection) {
         return false;
       }
       superParent = superParent.getParent();
