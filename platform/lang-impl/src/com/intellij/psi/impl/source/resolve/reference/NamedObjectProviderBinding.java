@@ -47,10 +47,10 @@ public abstract class NamedObjectProviderBinding<Provider> implements ProviderBi
     final Map<String, List<ProviderInfo<Provider, ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (final String attributeName : names) {
-      List<ProviderInfo<Provider, ElementPattern>> psiReferenceProviders = map.get(attributeName);
+      String key = caseSensitive ? attributeName : attributeName.toLowerCase();
+      List<ProviderInfo<Provider, ElementPattern>> psiReferenceProviders = map.get(key);
 
       if (psiReferenceProviders == null) {
-        String key = caseSensitive ? attributeName : attributeName.toLowerCase();
         map.put(key, psiReferenceProviders = new SmartList<ProviderInfo<Provider, ElementPattern>>());
       }
 

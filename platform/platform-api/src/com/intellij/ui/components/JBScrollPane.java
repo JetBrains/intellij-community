@@ -33,7 +33,7 @@ import java.lang.reflect.Method;
 
 public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
-  private JLayeredPane myLayeredPane;
+  private boolean myHasOverlayScrollbars;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -64,89 +64,14 @@ public class JBScrollPane extends JScrollPane {
     if (c == null) return null;
 
     if (!(c instanceof JViewport)) {
-      // if asked for a viewport child, take a viewport.
-      // If not (e.g asked for a scrollbar), go straight to JLayeredPane  
       Container vp = c.getParent();
       if (vp instanceof JViewport) c = vp;
     }
     
     c = c.getParent();
-    if (c instanceof JLayeredPane) {
-      c = c.getParent();
-    }
-    if (!(c instanceof JBScrollPane)) return null;
+    if (!(c instanceof JScrollPane)) return null;
 
-    return (JBScrollPane)c;
-  }
-
-  @Override
-  public void setVerticalScrollBar(JScrollBar c) {
-    JScrollBar old = getVerticalScrollBar();
-    super.setVerticalScrollBar(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.VERTICAL_SCROLLBAR);
-  }
-
-  @Override
-  public void setHorizontalScrollBar(JScrollBar c) {
-    JScrollBar old = getHorizontalScrollBar();
-    super.setHorizontalScrollBar(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.HORIZONTAL_SCROLLBAR);
-  }
-
-  @Override
-  public void setColumnHeader(JViewport c) {
-    JViewport old = getColumnHeader();
-    super.setColumnHeader(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.COLUMN_HEADER);
-  }
-
-  @Override
-  public void setRowHeader(JViewport c) {
-    JViewport old = getRowHeader();
-    super.setRowHeader(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.ROW_HEADER);
-  }
-
-  @Override
-  public void setViewport(JViewport c) {
-    JViewport old = getViewport();
-    super.setViewport(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.VIEWPORT);
-  }
-
-  @Override
-  public void setCorner(String key, Component c) {
-    Component old = getCorner(key);
-    super.setCorner(key, c);
-    transferToLayeredPane(old, c, key);
-  }
-
-  private void transferToLayeredPane(Component old, Component c, String key) {
-    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return;
-    
-    JLayeredPane pane = getLayoutPane();
-    LayoutManager layout = getLayout();
-
-    if (old != null && old != c) {
-      pane.remove(old);
-      layout.removeLayoutComponent(old);
-    }
-    
-    if (c != null) {
-      if (ScrollPaneConstants.VERTICAL_SCROLLBAR.equals(key) || ScrollPaneConstants.HORIZONTAL_SCROLLBAR.equals(key)) {
-        pane.setLayer(c, JLayeredPane.PALETTE_LAYER);
-      }
-      pane.add(c);
-      layout.addLayoutComponent(key, c);
-    }
-  }
-
-  @NotNull
-  private JLayeredPane getLayoutPane() {
-    if (myLayeredPane == null) {
-      myLayeredPane = new JLayeredPane();
-    }
-    return myLayeredPane;
+    return (JScrollPane)c;
   }
 
   private void init() {
@@ -154,9 +79,6 @@ public class JBScrollPane extends JScrollPane {
   }
   
   private void init(boolean setupCorners) {
-    if (ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
-      add(getLayoutPane());
-    }
     setLayout(new ScrollPaneLayout());
  
     if (setupCorners) {
@@ -176,6 +98,11 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
+  }
+
+  @Override
+  public boolean isOptimizedDrawingEnabled() {
+    return !myHasOverlayScrollbars;
   }
 
   private void updateViewportBorder() {
@@ -206,19 +133,21 @@ public class JBScrollPane extends JScrollPane {
   public void layout() {
     super.layout();
 
-    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return;
-    
     LayoutManager layout = getLayout();
-    if (layout instanceof ScrollPaneLayout && myLayeredPane != null) {
-      relayoutScrollbars(this, (ScrollPaneLayout)layout, myLayeredPane);
+    if (layout instanceof ScrollPaneLayout) {
+      myHasOverlayScrollbars = relayoutScrollbars(
+        this, (ScrollPaneLayout)layout,
+        myHasOverlayScrollbars // should be relayouted if was changed previously
+      );
+    }
+    else {
+      myHasOverlayScrollbars = false;
     }
   }
 
-  private static void relayoutScrollbars(@NotNull JComponent container,
-                                         @NotNull ScrollPaneLayout layout,
-                                         @NotNull JLayeredPane layeredPane) {
+  private static boolean relayoutScrollbars(@NotNull JComponent container, @NotNull ScrollPaneLayout layout, boolean forceRelayout) {
     JViewport viewport = layout.getViewport();
-    if (viewport == null) return;
+    if (viewport == null) return false;
     
     JScrollBar vsb = layout.getVerticalScrollBar();
     JScrollBar hsb = layout.getHorizontalScrollBar();
@@ -229,7 +158,14 @@ public class JBScrollPane extends JScrollPane {
 
     boolean extendsViewportUnderVScrollbar = vsb != null && shouldExtendViewportUnderScrollbar(vsb);
     boolean extendsViewportUnderHScrollbar = hsb != null && shouldExtendViewportUnderScrollbar(hsb);
-    
+    boolean hasOverlayScrollbars = extendsViewportUnderVScrollbar || extendsViewportUnderHScrollbar;
+
+    if (!hasOverlayScrollbars && !forceRelayout) return false;
+
+    container.setComponentZOrder(viewport, container.getComponentCount() - 1);
+    if (vsb != null) container.setComponentZOrder(vsb, 0);
+    if (hsb != null) container.setComponentZOrder(hsb, 0);
+
     if (extendsViewportUnderVScrollbar) {
       viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
       viewportBounds.width = Math.max(viewportBounds.width, vsb.getX() + vsb.getWidth());
@@ -270,9 +206,8 @@ public class JBScrollPane extends JScrollPane {
     }
 
     viewport.setBounds(viewportBounds);
-    Insets insets = container.getInsets();
-    if (insets == null) insets = new Insets(0, 0, 0, 0);
-    layeredPane.setBounds(0, 0, container.getWidth() - insets.right, container.getHeight() - insets.bottom);
+
+    return hasOverlayScrollbars;
   }
 
   private static boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {

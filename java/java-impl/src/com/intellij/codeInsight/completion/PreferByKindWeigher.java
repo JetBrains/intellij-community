@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
@@ -29,8 +30,10 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.KnownElementWeigher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -69,10 +72,32 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   }
 
   private static Condition<PsiClass> createSuitabilityCondition(final PsiElement position) {
-    if (IN_CATCH_TYPE.accepts(position) ||
-        IN_MULTI_CATCH_TYPE.accepts(position) ||
-        JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position) ||
-        INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
+    if (IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position)) {
+      PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(position, PsiTryStatement.class);
+      final List<PsiClass> thrownExceptions = ContainerUtil.newArrayList();
+      if (tryStatement != null && tryStatement.getTryBlock() != null) {
+        for (PsiClassType type : ExceptionUtil.getThrownExceptions(tryStatement.getTryBlock())) {
+          ContainerUtil.addIfNotNull(thrownExceptions, type.resolve());
+        }
+      }
+      if (thrownExceptions.isEmpty()) {
+        ContainerUtil.addIfNotNull(thrownExceptions, 
+                                   JavaPsiFacade.getInstance(position.getProject()).findClass(
+                                     CommonClassNames.JAVA_LANG_THROWABLE, position.getResolveScope()));
+      }
+      return new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass psiClass) {
+          for (PsiClass exception : thrownExceptions) {
+            if (InheritanceUtil.isInheritorOrSelf(psiClass, exception, true)) {
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+    }
+    else if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position) || INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
       return new Condition<PsiClass>() {
         @Override
         public boolean value(PsiClass psiClass) {
@@ -120,6 +145,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     collectionFactory,
     expectedTypeMethod,
     suitableClass,
+    improbableKeyword,
     nonInitialized,
     classLiteral,
     classNameOrGlobalStatic,
@@ -138,9 +164,12 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
         return MyResult.probableKeyword;
       }
-      if (PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) {
-        boolean inReturn = PsiTreeUtil.getParentOfType(myPosition, PsiReturnStatement.class, false, PsiMember.class) != null;
+      if ((PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) && myCompletionType == CompletionType.SMART) {
+        boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? MyResult.probableKeyword : MyResult.normal;
+      }
+      if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
+        return MyResult.improbableKeyword;
       }
     }
 

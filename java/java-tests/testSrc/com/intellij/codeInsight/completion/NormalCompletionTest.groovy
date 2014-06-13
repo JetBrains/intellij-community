@@ -792,7 +792,7 @@ public class ListUtils {
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    assertFirstStringItems("false", "fefefef", "float", "finalize");
+    assertFirstStringItems("fefefef", "false", "float", "finalize");
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {
@@ -937,6 +937,13 @@ public class ListUtils {
   public void testNewExpectedClassParens() throws Throwable { doTest('\n'); }
 
   public void testQualifyInnerMembers() throws Throwable { doTest('\n') }
+
+  public void testDeepInner() throws Throwable {
+    configure()
+    assert myFixture.lookupElementStrings == ['ClassInner1', 'ClassInner1.ClassInner2']
+    selectItem(lookup.items[1])
+    checkResult()
+  }
 
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }

@@ -290,7 +290,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
-        if (isDisposed() || isDisposeInProgress()) {
+        if (isDisposed() || myDisposeInProgress) {
           return;
         }
         ShutDownTracker.invokeAndWait(isUnitTestMode(), true, new Runnable() {
