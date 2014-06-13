@@ -109,7 +109,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   }
 
   @Override
-  public boolean isKeyHighlySelective() {
+  public boolean keyIsUniqueForIndexedFile() {
     return true;
   }
 

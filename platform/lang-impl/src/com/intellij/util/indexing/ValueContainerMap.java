@@ -30,13 +30,16 @@ import java.io.*;
  */
 class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
+  private final boolean myKeyIsUniqueForIndexedFile;
 
   ValueContainerMap(@NotNull final File file,
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
-                    @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
-
+                    @NotNull DataExternalizer<Value> valueExternalizer,
+                    boolean keyIsUniqueForIndexedFile
+                    ) throws IOException {
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
+    myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
 
   @NotNull
@@ -48,7 +51,11 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
   protected void doPut(Key key, ValueContainer<Value> container) throws IOException {
     synchronized (myEnumerator) {
       ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
-      if (!valueContainer.needsCompacting()) {
+
+      // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
+      // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
+      // file) and there is no benefit to accumulate values for particular key because only one value exists
+      if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
         final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
         //noinspection IOResourceOpenedButNotSafelyClosed
         final DataOutputStream _out = new DataOutputStream(bytes);
