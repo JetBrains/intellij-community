@@ -13,7 +13,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -303,6 +302,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
               return true;
             }
 
+            @NotNull
             @Override
             public String getDoNotShowMessage() {
               return CommonBundle.message("dialog.options.do.not.show");
