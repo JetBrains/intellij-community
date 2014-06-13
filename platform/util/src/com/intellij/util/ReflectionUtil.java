@@ -272,6 +272,16 @@ public class ReflectionUtil {
     return findMethod(getClassDeclaredMethods(aClass, false), name, parameters);
   }
 
+  @Nullable
+  public static Field getDeclaredField(@NotNull Class aClass, @NonNls @NotNull final String name) {
+    return processFields(aClass, new Condition<Field>() {
+      @Override
+      public boolean value(Field field) {
+        return name.equals(field.getName());
+      }
+    });
+  }
+
   public static List<Method> getClassPublicMethods(@NotNull Class aClass) {
     return getClassPublicMethods(aClass, false);
   }
@@ -284,10 +294,16 @@ public class ReflectionUtil {
   public static List<Method> getClassDeclaredMethods(@NotNull Class aClass) {
     return getClassDeclaredMethods(aClass, false);
   }
-  
+
+  @NotNull
   public static List<Method> getClassDeclaredMethods(@NotNull Class aClass, boolean includeSynthetic) {
     Method[] methods = aClass.getDeclaredMethods();
     return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
+  }
+  @NotNull
+  public static List<Field> getClassDeclaredFields(@NotNull Class aClass) {
+    Field[] fields = aClass.getDeclaredFields();
+    return Arrays.asList(fields);
   }
 
   private static List<Method> filterRealMethods(Method[] methods) {
