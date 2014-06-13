@@ -938,6 +938,13 @@ public class ListUtils {
 
   public void testQualifyInnerMembers() throws Throwable { doTest('\n') }
 
+  public void testDeepInner() throws Throwable {
+    configure()
+    assert myFixture.lookupElementStrings == ['ClassInner1', 'ClassInner1.ClassInner2']
+    selectItem(lookup.items[1])
+    checkResult()
+  }
+
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInAnno() throws Throwable { doTest('\n') }

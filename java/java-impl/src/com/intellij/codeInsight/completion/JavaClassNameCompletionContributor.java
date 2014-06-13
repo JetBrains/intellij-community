@@ -151,9 +151,11 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     if (withInners && name != null) {
       for (PsiClass inner : psiClass.getInnerClasses()) {
         if (inner.hasModifierProperty(PsiModifier.STATIC)) {
-          for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, withInners, insertHandler, condition)) {
+          for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, true, insertHandler, condition)) {
             String forced = lookupInner.getForcedPresentableName();
-            lookupInner.setForcedPresentableName(name + "." + (forced != null ? forced : inner.getName()));
+            String qualifiedName = name + "." + (forced != null ? forced : inner.getName());
+            lookupInner.setForcedPresentableName(qualifiedName);
+            lookupInner.setLookupString(qualifiedName);
             result.add(lookupInner);
           }
         }
