@@ -21,6 +21,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 class ConstantExpressionPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
@@ -32,7 +34,7 @@ class ConstantExpressionPredicate implements PsiElementPredicate {
     }
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     final PsiType expressionType = expression.getType();
-    if (expressionType == null || expressionType.equalsToText("java.lang.String")) {
+    if (expressionType == null || expressionType.equalsToText(JAVA_LANG_STRING)) {
       // intention disabled for string concatenations because of performance issues on
       // relatively common large string expressions.
       return false;
@@ -43,7 +45,7 @@ class ConstantExpressionPredicate implements PsiElementPredicate {
         return false;
       }
       final PsiType type = operand.getType();
-      if (type == null || type.equalsToText("java.lang.String")) {
+      if (type == null || type.equalsToText(JAVA_LANG_STRING)) {
         return false;
       }
     }

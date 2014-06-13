@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
@@ -469,7 +471,7 @@ public class TypeConversionUtil {
 
     int rank = TYPE_TO_RANK_MAP.get(type);
     if (rank != 0) return rank;
-    if (type.equalsToText("java.lang.String")) return STRING_RANK;
+    if (type.equalsToText(JAVA_LANG_STRING)) return STRING_RANK;
     return Integer.MAX_VALUE;
   }
 
@@ -531,12 +533,12 @@ public class TypeConversionUtil {
       }
     }
     else if (tokenType == JavaTokenType.PLUS) {
-      if (ltype.equalsToText("java.lang.String")) {
+      if (ltype.equalsToText(JAVA_LANG_STRING)) {
         isApplicable = !isVoidType(rtype);
         resultTypeRank = STRING_RANK;
         break Label;
       }
-      else if (rtype.equalsToText("java.lang.String")) {
+      else if (rtype.equalsToText(JAVA_LANG_STRING)) {
         isApplicable = !isVoidType(ltype);
         resultTypeRank = STRING_RANK;
         break Label;
@@ -1370,7 +1372,7 @@ public class TypeConversionUtil {
   public static Object computeCastTo(final Object operand, final PsiType castType) {
     if (operand == null || castType == null) return null;
     Object value;
-    if (operand instanceof String && castType.equalsToText("java.lang.String")) {
+    if (operand instanceof String && castType.equalsToText(JAVA_LANG_STRING)) {
       value = operand;
     }
     else if (operand instanceof Boolean && PsiType.BOOLEAN.equals(castType)) {
@@ -1444,12 +1446,12 @@ public class TypeConversionUtil {
     if (sign == JavaTokenType.PLUS) {
       // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
       if (rType == null) return null;
-      if (rType.equalsToText("java.lang.String")) {
+      if (rType.equalsToText(JAVA_LANG_STRING)) {
         return rType;
       }
       if (!accessLType) return NULL_TYPE;
       if (lType == null) return null;
-      if (lType.equalsToText("java.lang.String")) {
+      if (lType.equalsToText(JAVA_LANG_STRING)) {
         return lType;
       }
       return unboxAndBalanceTypes(lType, rType);

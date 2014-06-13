@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -59,7 +61,7 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     if (type == null) {
       final Project project = psiClass.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass aClass = facade.findClass("java.lang.String", GlobalSearchScope.allScope(project));
+      final PsiClass aClass = facade.findClass(JAVA_LANG_STRING, GlobalSearchScope.allScope(project));
       if (aClass == null) {
         return NO_FIXES;
       }

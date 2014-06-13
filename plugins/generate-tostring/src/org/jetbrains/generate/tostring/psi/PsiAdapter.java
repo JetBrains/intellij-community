@@ -15,7 +15,6 @@
  */
 package org.jetbrains.generate.tostring.psi;
 
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -30,6 +29,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.util.StringUtil;
+
+import static com.intellij.psi.CommonClassNames.*;
 
 /**
  * Basic PSI Adapter with common function that works in all supported versions of IDEA.
@@ -169,7 +170,7 @@ public class PsiAdapter {
      * @return true if it's a String type.
      */
     public static boolean isStringType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.lang.String");
+        return isTypeOf(factory, type, JAVA_LANG_STRING);
     }
 
     /**
@@ -180,7 +181,7 @@ public class PsiAdapter {
      * @return true if it's an Object type.
      */
     public static boolean isObjectType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, CommonClassNames.JAVA_LANG_OBJECT);
+        return isTypeOf(factory, type, JAVA_LANG_OBJECT);
     }
 
     /**
@@ -219,7 +220,7 @@ public class PsiAdapter {
             return "boolean".equals(s);
         } else {
             // test for Object type of Boolean
-            return isTypeOf(factory, type, "java.lang.Boolean");
+            return isTypeOf(factory, type, JAVA_LANG_BOOLEAN);
         }
     }
 
@@ -554,7 +555,7 @@ public class PsiAdapter {
             }
 
             // parameter must be Object
-            if (!(parameters[0].getType().getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT))) {
+            if (!(parameters[0].getType().getCanonicalText().equals(JAVA_LANG_OBJECT))) {
                 continue;
             }
 

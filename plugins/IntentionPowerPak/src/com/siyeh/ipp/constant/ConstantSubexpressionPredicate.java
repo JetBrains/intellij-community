@@ -21,6 +21,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 class ConstantSubexpressionPredicate implements PsiElementPredicate {
 
   @Override
@@ -45,7 +47,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiType type = polyadicExpression.getType();
-    if (type == null || type.equalsToText("java.lang.String")) {
+    if (type == null || type.equalsToText(JAVA_LANG_STRING)) {
       // handled by JoinConcatenatedStringLiteralsIntention
       return false;
     }

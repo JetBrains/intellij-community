@@ -46,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
 
@@ -590,7 +592,7 @@ public final class PsiUtil extends PsiUtilCore {
    */
   public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
     return field.hasModifierProperty(PsiModifier.FINAL)
-           && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText("java.lang.String"))
+           && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText(JAVA_LANG_STRING))
            && field.hasInitializer()
            && isConstantExpression(field.getInitializer());
   }

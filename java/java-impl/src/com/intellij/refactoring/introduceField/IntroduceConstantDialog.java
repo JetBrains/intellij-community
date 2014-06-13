@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false, false)))&&
+    if ((myTypeSelectorManager.isSuggestedType(CommonClassNames.JAVA_LANG_STRING) || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false, false)))&&
         LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
         JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);

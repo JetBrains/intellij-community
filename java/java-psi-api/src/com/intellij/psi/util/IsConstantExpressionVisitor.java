@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashMap;
 
 import java.util.Map;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class IsConstantExpressionVisitor extends JavaElementVisitor {
   protected boolean myIsConstant;
@@ -63,7 +65,7 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
     }
     PsiType type = element.getType();
     if (type instanceof PsiPrimitiveType) return;
-    if (type.equalsToText("java.lang.String")) return;
+    if (type.equalsToText(JAVA_LANG_STRING)) return;
     myIsConstant = false;
   }
 
@@ -88,7 +90,7 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
       operand.accept(this);
       if (!myIsConstant) return;
       final PsiType type = operand.getType();
-      if (type != null && !(type instanceof PsiPrimitiveType) && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (type != null && !(type instanceof PsiPrimitiveType) && !type.equalsToText(JAVA_LANG_STRING)) {
         myIsConstant = false;
         return;
       }
