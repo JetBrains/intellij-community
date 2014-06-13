@@ -389,6 +389,7 @@ public class ShowFilePathAction extends AnAction {
         return true;
       }
 
+      @NotNull
       @Override
       public String getDoNotShowMessage() {
         return CommonBundle.message("dialog.options.do.not.ask");

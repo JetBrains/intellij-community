@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 
 public class TerminateRemoteProcessDialog {
   public static int show(final Project project,
@@ -70,6 +71,7 @@ public class TerminateRemoteProcessDialog {
       return false;
     }
 
+    @NotNull
     @Override
     public String getDoNotShowMessage() {
       return ExecutionBundle.message("terminate.after.disconnect.checkbox");
