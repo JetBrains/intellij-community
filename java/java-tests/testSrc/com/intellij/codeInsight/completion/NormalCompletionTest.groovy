@@ -792,7 +792,7 @@ public class ListUtils {
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    assertFirstStringItems("false", "fefefef", "float", "finalize");
+    assertFirstStringItems("fefefef", "false", "float", "finalize");
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {

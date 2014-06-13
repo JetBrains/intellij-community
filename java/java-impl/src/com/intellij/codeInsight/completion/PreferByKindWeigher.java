@@ -139,8 +139,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword)) {
         return MyResult.probableKeyword;
       }
-      if (PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) {
-        boolean inReturn = PsiTreeUtil.getParentOfType(myPosition, PsiReturnStatement.class, false, PsiMember.class) != null;
+      if ((PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) && myCompletionType == CompletionType.SMART) {
+        boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? MyResult.probableKeyword : MyResult.normal;
       }
       if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
