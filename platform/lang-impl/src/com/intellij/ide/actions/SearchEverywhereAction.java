@@ -1336,6 +1336,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final Set<Object> settings = new HashSet<Object>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       if (myActions == null) {
+        if (myActionModel == null) {
+          myActionModel = createActionModel();
+        }
         myActions = myActionModel.getNames(true);
       }
 
