@@ -73,12 +73,12 @@ import java.util.Set;
  */
 @SuppressWarnings({"SSBasedInspection", "MethodMayBeStatic", "UnusedDeclaration"})
 public abstract class DialogWrapper {
-
   public static enum IdeModalityType {
     IDE,
     PROJECT,
     MODELESS;
 
+    @NotNull
     public Dialog.ModalityType toAwtModality() {
       switch (this) {
         case IDE:
@@ -88,7 +88,7 @@ public abstract class DialogWrapper {
         case MODELESS:
           return Dialog.ModalityType.MODELESS;
       }
-      return null;
+      throw new IllegalStateException(toString());
     }
   }
 
@@ -125,6 +125,7 @@ public abstract class DialogWrapper {
   private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
                                                                                 InputEvent.ALT_MASK | InputEvent.SHIFT_MASK);
 
+  @NotNull
   private final DialogWrapperPeer myPeer;
   private int myExitCode = CANCEL_EXIT_CODE;
 
@@ -162,6 +163,7 @@ public abstract class DialogWrapper {
   private Computable<Point> myInitialLocationCallback;
 
   protected final Disposable myDisposable = new Disposable() {
+    @Override
     public String toString() {
       return DialogWrapper.this.toString();
     }
@@ -176,6 +178,7 @@ public abstract class DialogWrapper {
   private boolean myResizeInProgress = false;
   private ComponentAdapter myResizeListener;
 
+  @NotNull
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
   }
@@ -203,7 +206,7 @@ public abstract class DialogWrapper {
     this(project, canBeParent, IdeModalityType.IDE);
   }
 
-  protected DialogWrapper(@Nullable Project project, boolean canBeParent, IdeModalityType ideModalityType) {
+  protected DialogWrapper(@Nullable Project project, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
     myPeer = createPeer(project, canBeParent, ideModalityType);
     final Window window = myPeer.getWindow();
     if (window != null) {
@@ -576,7 +579,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  public static JPanel addDoNotShowCheckBox(JComponent southPanel, @NotNull JCheckBox checkBox) {
+  public static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JCheckBox checkBox) {
     final JPanel panel = new JPanel(new BorderLayout());
 
     JPanel wrapper = new JPanel(new GridBagLayout());
@@ -720,14 +723,14 @@ public abstract class DialogWrapper {
     }
     setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
-      if (myPeer != null && !myPeer.isHeadless()) {
+      if (!myPeer.isHeadless()) {
         getRootPane().setDefaultButton(button);
       }
     }
     return button;
   }
 
-  private void setMargin(JButton button) {
+  private void setMargin(@NotNull JButton button) {
     // Aqua LnF does a good job of setting proper margin between buttons. Setting them specifically causes them be 'square' style instead of
     // 'rounded', which is expected by apple users.
     if (!SystemInfo.isMac) {
@@ -738,6 +741,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @NotNull
   protected DialogWrapperPeer createPeer(@NotNull Component parent, final boolean canBeParent) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
@@ -747,26 +751,31 @@ public abstract class DialogWrapper {
    * Instead, use e.g. {@link DialogWrapper#createPeer(Window, boolean, boolean)}
    */
   @Deprecated
+  @NotNull
   protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
     return createPeer(null, canBeParent, applicationModalIfPossible);
   }
 
+  @NotNull
   protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final IdeModalityType ideModalityType) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, ideModalityType);
   }
 
   @Deprecated
+  @NotNull
   protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
     return DialogWrapperPeerFactory.getInstance()
       .createPeer(this, owner, canBeParent, applicationModalIfPossible ? IdeModalityType.IDE : IdeModalityType.PROJECT);
   }
 
+  @NotNull
   protected DialogWrapperPeer createPeer(@Nullable final Project project,
                                          final boolean canBeParent,
-                                         final IdeModalityType ideModalityType) {
+                                         @NotNull IdeModalityType ideModalityType) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent, ideModalityType);
   }
 
+  @NotNull
   protected DialogWrapperPeer createPeer(@Nullable final Project project, final boolean canBeParent) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
   }
@@ -1036,7 +1045,6 @@ public abstract class DialogWrapper {
    * @see javax.swing.JDialog#getContentPane
    */
   public Container getContentPane() {
-    assert myPeer != null;
     return myPeer.getContentPane();
   }
 
@@ -1221,6 +1229,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @NotNull
   LayoutManager createRootLayout() {
     return new BorderLayout();
   }
@@ -1309,6 +1318,7 @@ public abstract class DialogWrapper {
     return true;
   }
 
+  @NotNull
   protected JComponent createContentPane() {
     return new JPanel();
   }
@@ -1486,6 +1496,7 @@ public abstract class DialogWrapper {
    * @return dialog location
    * @see javax.swing.JDialog#getLocation
    */
+  @NotNull
   public Point getLocation() {
     return myPeer.getLocation();
   }
@@ -1494,7 +1505,7 @@ public abstract class DialogWrapper {
    * @param p new dialog location
    * @see javax.swing.JDialog#setLocation(Point)
    */
-  public void setLocation(Point p) {
+  public void setLocation(@NotNull Point p) {
     myPeer.setLocation(p);
   }
 
@@ -1564,7 +1575,7 @@ public abstract class DialogWrapper {
     return myInitialLocationCallback == null ? null : myInitialLocationCallback.compute();
   }
 
-  public void setInitialLocationCallback(Computable<Point> callback) {
+  public void setInitialLocationCallback(@NotNull Computable<Point> callback) {
     myInitialLocationCallback = callback;
   }
 
@@ -1711,7 +1722,7 @@ public abstract class DialogWrapper {
      *
      * @param name the action name (see {@link Action#NAME})
      */
-    protected DialogWrapperAction(String name) {
+    protected DialogWrapperAction(@NotNull String name) {
       putValue(NAME, name);
     }
 
@@ -1838,9 +1849,6 @@ public abstract class DialogWrapper {
           if (myMaxErrorTextLength == 0) {
             updateHeightForErrorText();
           }
-          else {
-            //if (getRootPane() != null) myPeer.pack();
-          }
           myMaxErrorTextLength = text.length();
           updateHeightForErrorText();
         }
@@ -1864,7 +1872,7 @@ public abstract class DialogWrapper {
     return null;
   }
 
-  private void resizeWithAnimation(final Dimension size) {
+  private void resizeWithAnimation(@NotNull final Dimension size) {
     //todo[kb]: fix this PITA
     myResizeInProgress = true;
     if (!Registry.is("enable.animation.on.dialogs")) {
@@ -1961,6 +1969,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @NotNull
   public final DialogWrapperPeer getPeer() {
     return myPeer;
   }
@@ -1976,6 +1985,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @NotNull
   public final Disposable getDisposable() {
     return myDisposable;
   }
@@ -1996,14 +2006,15 @@ public abstract class DialogWrapper {
 
     boolean shouldSaveOptionsOnCancel();
 
+    @NotNull
     String getDoNotShowMessage();
   }
 
   public static class PropertyDoNotAskOption implements DoNotAskOption {
-
+    @NotNull
     private final String myProperty;
 
-    public PropertyDoNotAskOption(String property) {
+    public PropertyDoNotAskOption(@NotNull String property) {
       myProperty = property;
     }
 
@@ -2027,12 +2038,14 @@ public abstract class DialogWrapper {
       return false;
     }
 
+    @NotNull
     @Override
     public String getDoNotShowMessage() {
       return CommonBundle.message("dialog.options.do.not.ask");
     }
   }
 
+  @NotNull
   private ErrorPaintingType getErrorPaintingType() {
     return ErrorPaintingType.SIGN;
   }
