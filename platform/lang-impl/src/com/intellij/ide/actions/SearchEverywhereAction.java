@@ -46,6 +46,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -128,14 +129,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_RECENT_FILES = 10;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   private static final int POPUP_MAX_WIDTH = 600;
+  private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
-  private GotoClassModel2 myClassModel;
-  private GotoFileModel myFileModel;
-  private GotoActionModel myActionModel;
-  private GotoSymbolModel2 mySymbolsModel;
-  private String[] myActions;
+  private volatile GotoClassModel2 myClassModel;
+  private volatile GotoFileModel myFileModel;
+  private volatile GotoActionModel myActionModel;
+  private volatile GotoSymbolModel2 mySymbolsModel;
+  private volatile String[] myActions;
   private Component myFocusComponent;
   private JBPopup myPopup;
   private Map<String, String> myConfigurables = new HashMap<String, String>();
@@ -498,7 +500,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myCalcThread = null;
         }
         myAlarm.cancelAllRequests();
-        clearModel();
         if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
           myBalloon.cancel();
           myPopup.cancel();
@@ -513,14 +514,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         });
       }
     });
-  }
-
-  private void clearModel() {
-    //myMoreClassesIndex = -1;
-    //myMoreFilesIndex = -1;
-    //myMoreActionsIndex = -1;
-    //myMoreSettingsIndex = -1;
-    //myMoreSymbolsIndex = -1;
   }
 
   private SearchTextField getField() {
@@ -1229,7 +1222,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
             //noinspection unchecked
             myList.setModel(myListModel);
-            clearModel();
             myAlreadyAddedFiles.clear();
             myAlreadyAddedActions.clear();
           }
@@ -1273,7 +1265,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }, true);
       }
-      catch (Exception ignore) {
+      catch (ProcessCanceledException ignore) {
+        myDone.setRejected();
+      }
+      catch (Exception e) {
+        LOG.error(e);
         myDone.setRejected();
       }
       finally {
@@ -1301,6 +1297,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildToolWindows(String pattern) {
       if (myActions == null) {
+        if (myActionModel == null) {
+          myActionModel = createActionModel();
+        }
         myActions = myActionModel.getNames(true);
       }
       final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
@@ -1726,7 +1725,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void checkModelsUpToDate() {
+    private synchronized void checkModelsUpToDate() {
       if (myClassModel == null) {
         myClassModel = new GotoClassModel2(project);
         myFileModel = new GotoFileModel(project);
@@ -1892,7 +1891,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  protected void resetFields() {
+  protected synchronized void resetFields() {
     if (myBalloon!= null) {
       myBalloon.cancel();
       myBalloon = null;
