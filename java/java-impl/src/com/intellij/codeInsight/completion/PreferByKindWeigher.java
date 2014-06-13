@@ -120,6 +120,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     collectionFactory,
     expectedTypeMethod,
     suitableClass,
+    improbableKeyword,
     nonInitialized,
     classLiteral,
     classNameOrGlobalStatic,
@@ -141,6 +142,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)) {
         boolean inReturn = PsiTreeUtil.getParentOfType(myPosition, PsiReturnStatement.class, false, PsiMember.class) != null;
         return inReturn ? MyResult.probableKeyword : MyResult.normal;
+      }
+      if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
+        return MyResult.improbableKeyword;
       }
     }
 
