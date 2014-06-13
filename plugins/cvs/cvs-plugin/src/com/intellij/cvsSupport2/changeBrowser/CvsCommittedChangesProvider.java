@@ -18,7 +18,6 @@ package com.intellij.cvsSupport2.changeBrowser;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.cvsIntegration.CvsResult;
@@ -66,7 +65,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
-    return CvsConfiguration.getInstance(myProject).CHANGE_BROWSER_SETTINGS;
+    return new ChangeBrowserSettings();
   }
 
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {

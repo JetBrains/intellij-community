@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.Options;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.netbeans.lib.cvsclient.command.Watch;
@@ -80,8 +79,6 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
   public boolean OVERRIDE_EXISTING_TAG_FOR_PROJECT = true;
   public String TAG_AFTER_PROJECT_COMMIT_NAME = "";
   public boolean CLEAN_COPY = false;
-
-  public ChangeBrowserSettings CHANGE_BROWSER_SETTINGS = new ChangeBrowserSettings();
 
 
   public static CvsConfiguration getInstance(Project project) {
