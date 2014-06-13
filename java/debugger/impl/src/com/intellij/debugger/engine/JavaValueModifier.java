@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /*
  * Class SetValueAction
@@ -231,7 +233,7 @@ public class JavaValueModifier extends XValueModifier {
   }
 
   private Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
-    if (value != null && "java.lang.String".equals(varType.name()) && !(value instanceof StringReference)) {
+    if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtilsEx.getValueAsString(context, value);
       if (v != null) {
         value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf(v);
