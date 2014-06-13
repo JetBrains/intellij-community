@@ -29,14 +29,16 @@ import java.util.List;
  *         Date: Dec 14, 2007
  */
 public abstract class ValueContainer<Value> {
-  public interface IntIterator {
+  public interface IntIterator extends Cloneable {
     boolean hasNext();
-    
+
     int next();
 
     int size();
 
     boolean hasAscendingOrder();
+
+    IntIterator createCopyInInitialState();
   }
 
   public interface IntPredicate {

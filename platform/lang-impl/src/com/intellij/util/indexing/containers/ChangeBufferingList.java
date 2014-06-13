@@ -240,35 +240,43 @@ public class ChangeBufferingList implements Cloneable {
   public ValueContainer.IntIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && removals == 0) {
-      return new ValueContainer.IntIterator() {
-        int cursor;
-        @Override
-        public boolean hasNext() {
-          return cursor < length;
-        }
-
-        @Override
-        public int next() {
-          int current = cursor;
-          ++cursor;
-          return changes[current];
-        }
-
-        @Override
-        public int size() {
-          return length;
-        }
-
-        @Override
-        public boolean hasAscendingOrder() {
-          return false;
-        }
-      };
+      return new ChangesIterator();
     }
     return getRandomAccessContainer().intIterator();
   }
 
   public IdSet getCheckSet() {
     return checkSet;
+  }
+
+  private class ChangesIterator implements ValueContainer.IntIterator {
+    private int cursor;
+
+    @Override
+    public boolean hasNext() {
+      return cursor < length;
+    }
+
+    @Override
+    public int next() {
+      int current = cursor;
+      ++cursor;
+      return changes[current];
+    }
+
+    @Override
+    public int size() {
+      return length;
+    }
+
+    @Override
+    public boolean hasAscendingOrder() {
+      return false;
+    }
+
+    @Override
+    public ValueContainer.IntIterator createCopyInInitialState() {
+      return new ChangesIterator();
+    }
   }
 }

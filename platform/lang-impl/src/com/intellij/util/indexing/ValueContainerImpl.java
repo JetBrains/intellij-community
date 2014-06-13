@@ -279,6 +279,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     public boolean hasAscendingOrder() {
       return true;
     }
+
+    @Override
+    public IntIterator createCopyInInitialState() {
+      return this;
+    }
   };
 
   @NotNull
@@ -492,6 +497,11 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     @Override
     public boolean hasAscendingOrder() {
       return true;
+    }
+
+    @Override
+    public IntIterator createCopyInInitialState() {
+      return new SingleValueIterator(myValue);
     }
   }
 
