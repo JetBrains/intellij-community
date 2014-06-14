@@ -23,7 +23,6 @@ public class TemplateLanguagePanel extends JPanel {
     super(new BorderLayout());
     add(myMainPanel, BorderLayout.CENTER);
     myTemplatesFolderLabel.setLabelFor(myTemplatesFolder);
-    myTemplatesFolder.setTextFieldPreferredWidth(50);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.withTreeRootVisible(true);
     descriptor.setShowFileSystemRoots(true);
