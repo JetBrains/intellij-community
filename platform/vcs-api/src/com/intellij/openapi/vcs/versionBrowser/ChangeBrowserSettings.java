@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.SyncDateFormat;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -29,31 +28,29 @@ import java.util.List;
 
 public class ChangeBrowserSettings implements JDOMExternalizable {
 
-  @NonNls public static final String HEAD = "HEAD";
-
-  private static final Logger LOG = Logger.getInstance(ChangeBrowserSettings.class);
-
   public interface Filter {
     boolean accepts(CommittedChangeList change);
   }
+
+  public static final String HEAD = "HEAD";
+  public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG));
+
+  private static final Logger LOG = Logger.getInstance(ChangeBrowserSettings.class);
 
   public boolean USE_DATE_BEFORE_FILTER = false;
   public boolean USE_DATE_AFTER_FILTER = false;
   public boolean USE_CHANGE_BEFORE_FILTER = false;
   public boolean USE_CHANGE_AFTER_FILTER = false;
 
-
   public String DATE_BEFORE = "";
   public String DATE_AFTER = "";
 
-  @NonNls public String CHANGE_BEFORE = "";
+  public String CHANGE_BEFORE = "";
   public String CHANGE_AFTER = "";
 
   public boolean USE_USER_FILTER = false;
   public String USER = "";
   public boolean STOP_ON_COPY = false;
-
-  public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG));
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
