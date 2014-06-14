@@ -70,12 +70,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public void setDateBefore(final Date value) {
-    if (value == null) {
-      DATE_BEFORE = null;
-    }
-    else {
-      DATE_BEFORE = DATE_FORMAT.format(value);
-    }
+    DATE_BEFORE = value == null ? null : DATE_FORMAT.format(value);
   }
 
   public Date getDateBefore() {
@@ -95,12 +90,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public Date getDateBeforeFilter() {
-    if (USE_DATE_BEFORE_FILTER) {
-      return parseDate(DATE_BEFORE);
-    }
-    else {
-      return null;
-    }
+    return USE_DATE_BEFORE_FILTER ? parseDate(DATE_BEFORE) : null;
   }
 
   public Long getChangeAfterFilter() {
@@ -115,13 +105,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public void setDateAfter(final Date value) {
-    if (value == null) {
-      DATE_AFTER = null;
-
-    }
-    else {
-      DATE_AFTER = DATE_FORMAT.format(value);
-    }
+    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
   }
 
   protected List<Filter> createFilters() {
@@ -208,12 +192,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   public String getUserFilter() {
-    if (USE_USER_FILTER) {
-      return USER;
-    }
-    else {
-      return null;
-    }
+    return USE_USER_FILTER ? USER : null;
   }
 
   public boolean isAnyFilterSpecified() {
