@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.SyncDateFormat;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -60,7 +62,8 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  private static Date parseDate(final String dateStr) {
+  @Nullable
+  private static Date parseDate(@Nullable String dateStr) {
     if (dateStr == null) return null;
     try {
       return DATE_FORMAT.parse(dateStr);
@@ -71,18 +74,21 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
-  public void setDateBefore(final Date value) {
+  public void setDateBefore(@Nullable Date value) {
     DATE_BEFORE = value == null ? null : DATE_FORMAT.format(value);
   }
 
+  @Nullable
   public Date getDateBefore() {
     return parseDate(DATE_BEFORE);
   }
 
+  @Nullable
   public Date getDateAfter() {
     return parseDate(DATE_AFTER);
   }
 
+  @Nullable
   public Long getChangeBeforeFilter() {
     if (USE_CHANGE_BEFORE_FILTER && CHANGE_BEFORE.length() > 0) {
       if (HEAD.equals(CHANGE_BEFORE)) return null;
@@ -91,10 +97,12 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     return null;
   }
 
+  @Nullable
   public Date getDateBeforeFilter() {
     return USE_DATE_BEFORE_FILTER ? parseDate(DATE_BEFORE) : null;
   }
 
+  @Nullable
   public Long getChangeAfterFilter() {
     if (USE_CHANGE_AFTER_FILTER && CHANGE_AFTER.length() > 0) {
       return Long.parseLong(CHANGE_AFTER);
@@ -102,14 +110,16 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     return null;
   }
 
+  @Nullable
   public Date getDateAfterFilter() {
     return USE_DATE_AFTER_FILTER ? parseDate(DATE_AFTER) : null;
   }
 
-  public void setDateAfter(final Date value) {
+  public void setDateAfter(@Nullable Date value) {
     DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
   }
 
+  @NotNull
   protected List<Filter> createFilters() {
     final ArrayList<Filter> result = new ArrayList<Filter>();
     addDateFilter(USE_DATE_BEFORE_FILTER, getDateBefore(), result, true);
@@ -156,10 +166,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     return result;
   }
 
-  private static void addDateFilter(final boolean useFilter,
-                                    final Date date,
-                                    final ArrayList<Filter> result,
-                                    final boolean before) {
+  private static void addDateFilter(final boolean useFilter, final Date date, final ArrayList<Filter> result, final boolean before) {
     if (useFilter) {
       assert date != null;
       result.add(new Filter() {
@@ -173,6 +180,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
+  @NotNull
   public Filter createFilter() {
     final List<Filter> filters = createFilters();
     return new Filter() {
@@ -185,7 +193,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     };
   }
 
-  public void filterChanges(final List<? extends CommittedChangeList> changeListInfos) {
+  public void filterChanges(@NotNull List<? extends CommittedChangeList> changeListInfos) {
     Filter filter = createFilter();
     for (Iterator<? extends CommittedChangeList> iterator = changeListInfos.iterator(); iterator.hasNext();) {
       CommittedChangeList changeListInfo = iterator.next();
@@ -195,6 +203,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
+  @Nullable
   public String getUserFilter() {
     return USE_USER_FILTER ? USER : null;
   }
