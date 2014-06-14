@@ -65,5 +65,7 @@ public abstract class TemplatesService {
 
   public abstract List<String> getTemplateFileTypes();
   public abstract void setTemplateFileTypes(List<String> fileTypes);
+
+  public abstract void generateTemplates(@NotNull final TemplateSettingsHolder settings, VirtualFile baseDir);
 }
 

@@ -591,6 +591,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  @Override
   @Nullable
   public PyPackage findPackage(String name) throws PyExternalProcessException {
     return findPackageByName(name, getPackages());
