@@ -128,11 +128,10 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final JPanel bottomPanel = new JPanel(new BorderLayout());
     myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
 
-    bottomPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
     myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
-    bottomPanel.add(myErrorLabel, BorderLayout.WEST);
+    bottomPanel.add(myErrorLabel, BorderLayout.SOUTH);
     bottomPanel.add(myCreateButton, BorderLayout.CENTER);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
