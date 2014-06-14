@@ -181,22 +181,6 @@ private layoutPlugins(layouts) {
   dir("plugins") {
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
-    /*
-    layouts.layoutPlugin("pycharm-flask")
-    layouts.layoutPlugin("pycharm-numpy")
-    layouts.layoutPlugin("textmate") {
-      dir("themes") {
-        fileset(dir: "${home}/plugins/textmate/lib/themes/", includes: "*.tmTheme")
-      }
-      fileset(dir: "${home}/plugins/textmate/lib") {
-        include(name: "jcodings.jar")
-        include(name: "joni.jar")
-      }
-    }
-    layouts.layoutPlugin("puppet")
-    layouts.layoutPlugin("fileWatcher")
-    layouts.layoutPlugin("ini4idea")
-    */
   }
 
   layouts.layoutCommunityPlugins(ch)
