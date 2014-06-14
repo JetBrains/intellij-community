@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.text.SyncDateFormat;
 import org.jdom.Element;
@@ -27,7 +28,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ChangeBrowserSettings implements JDOMExternalizable {
+
   @NonNls public static final String HEAD = "HEAD";
+
+  private static final Logger LOG = Logger.getInstance(ChangeBrowserSettings.class);
 
   public interface Filter {
     boolean accepts(CommittedChangeList change);
@@ -65,6 +69,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
       return DATE_FORMAT.parse(dateStr);
     }
     catch (Exception e) {
+      LOG.warn(e);
       return null;
     }
   }
@@ -124,6 +129,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
       }
       catch (NumberFormatException e) {
         //ignore
+        LOG.info(e);
       }
     }
 
@@ -138,6 +144,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
       }
       catch (NumberFormatException e) {
         //ignore
+        LOG.info(e);
       }
     }
 
