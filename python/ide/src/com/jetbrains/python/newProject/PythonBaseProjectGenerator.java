@@ -21,7 +21,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator implement
   @Nls
   @Override
   public String getName() {
-    return "Basic project";
+    return "Pure Python";
   }
 
   @Nullable
