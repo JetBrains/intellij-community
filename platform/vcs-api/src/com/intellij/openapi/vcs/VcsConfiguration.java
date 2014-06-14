@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -32,7 +33,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * author: lesya
@@ -137,6 +140,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
 
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
+
+  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<String, ChangeBrowserSettings>();
 
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
