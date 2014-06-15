@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class MacUtil {
   }
 
   @Nullable
-  public static ID findWindowForTitle(final String title) {
+  public static ID findWindowForTitle(@Nullable String title) {
     if (title == null || title.isEmpty()) return null;
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -173,23 +173,22 @@ public class MacUtil {
       catch (IllegalAccessException e) {
         LOG.debug(e);
       }
-
-    } else {
+    }
+    else {
       String foremostWindowTitle = getWindowTitle(w);
       windowId = findWindowForTitle(foremostWindowTitle);
     }
     return windowId;
   }
 
-
+  @Nullable
   public static String getWindowTitle(Window documentRoot) {
-    String windowTitle;
+    String windowTitle = null;
     if (documentRoot instanceof Frame) {
       windowTitle = ((Frame)documentRoot).getTitle();
-    } else if (documentRoot instanceof Dialog) {
+    }
+    else if (documentRoot instanceof Dialog) {
       windowTitle = ((Dialog)documentRoot).getTitle();
-    } else {
-      throw new RuntimeException("The window " + documentRoot.getClass() + " is not a frame and not a dialog!");
     }
     return windowTitle;
   }

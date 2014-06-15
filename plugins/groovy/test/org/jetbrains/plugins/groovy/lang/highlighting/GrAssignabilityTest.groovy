@@ -31,10 +31,12 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
   public void testIncompatibleTypesAssignments() { doTest(); }
 
   public void testDefaultMapConstructorNamedArgs() {
+    addBigDecimal()
     doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
   public void testDefaultMapConstructorNamedArgsError() {
+    addBigDecimal()
     doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return null;
   }
 
+  @NotNull
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<PsiClass>();
@@ -193,6 +194,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return result.toArray(new PsiClass[result.size()]);
   }
 
+  @NotNull
   @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
     return Collections.emptyList();

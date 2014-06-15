@@ -255,6 +255,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
           return false;
         }
 
+        @NotNull
         @Override
         public String getDoNotShowMessage() {
           return checkboxMessage;

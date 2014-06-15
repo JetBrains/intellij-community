@@ -15,27 +15,16 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-
 import java.rmi.RemoteException;
 
 public class MavenServerManagerHelper {
   /** {@link MavenServerManager#collectClassPathAndLibsFolder()} forces maven2 in test mode; we want maven3. */
   public static MavenServer connectToMaven3Server() throws RemoteException {
-    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     MavenServerManager msm = MavenServerManager.getInstance(); // do this first, it won't work outside of unit test mode
 
     msm.cleanup(); // in case we were previously connected to maven2
 
-    boolean oldUnitTestMode = application.isUnitTestMode();
-    application.setUnitTestMode(false);
-    try {
-      return msm.getOrCreateWrappee();
-    }
-    finally {
-      application.setUnitTestMode(oldUnitTestMode);
-    }
+    return msm.getOrCreateWrappee();
   }
 
   public static void disconnectFromServer() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,6 @@ public class JavaGenerateMemberCompletionContributor {
   private static void addSuperSignatureElements(final PsiClass parent, boolean implemented, CompletionResultSet result, Set<MethodSignature> addedSignatures) {
     for (CandidateInfo candidate : OverrideImplementExploreUtil.getMethodsToOverrideImplement(parent, implemented)) {
       PsiMethod baseMethod = (PsiMethod)candidate.getElement();
-      assert baseMethod != null;
       PsiClass baseClass = baseMethod.getContainingClass();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
       if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {

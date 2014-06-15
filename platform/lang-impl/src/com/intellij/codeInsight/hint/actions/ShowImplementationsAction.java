@@ -295,7 +295,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setCancelCallback(new Computable<Boolean>() {
           @Override
           public Boolean compute() {
-            final BackgroundUpdaterTask task = myTaskRef.get();
+            final BackgroundUpdaterTask task = SoftReference.dereference(myTaskRef);
             if (task != null) {
               task.setCanceled();
             }

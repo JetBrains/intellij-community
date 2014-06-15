@@ -22,16 +22,23 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestTreeView;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.ui.Tree;
 
+import javax.swing.*;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -98,7 +105,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
   }
 
   public static boolean isMultipleElementsSelected(ConfigurationContext context) {
-    if (AbstractTestProxy.DATA_KEY.getData(context.getDataContext()) != null) return false;
+    if (TestsUIUtil.isMultipleSelectionImpossible(context.getDataContext())) return false;
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     final PsiElement[] elements = collectPatternElements(context, classes);
     if (elements != null && collectTestMembers(elements, false).size() > 1) {

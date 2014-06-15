@@ -150,11 +150,27 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     if (!(variable instanceof ObjectProperty) || ((ObjectProperty)variable).getGetter() == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-      ObsolescentAsyncResults.consume(getEvaluateContext().evaluate(variable.getName()), node, new PairConsumer<Value, XValueNode>() {
+      getEvaluateContext().evaluate(variable.getName()).doWhenDone(new Consumer<Value>() {
         @Override
-        public void consume(Value value, XValueNode node) {
-          VariableView.this.value = value;
-          computePresentation(value, node);
+        public void consume(Value value) {
+         if (!node.isObsolete()) {
+           VariableView.this.value = value;
+           computePresentation(value, node);
+         }
+        }
+      }).doWhenRejected(new PairConsumer<Value, String>() {
+        @Override
+        public void consume(Value value, String error) {
+          if (!node.isObsolete()) {
+            value = getViewSupport().transformErrorOnGetUsedReferenceValue(value, error);
+            if (value == null) {
+              node.setPresentation(getIcon(), null, error, false);
+            }
+            else {
+              VariableView.this.value = value;
+              computePresentation(value, node);
+            }
+          }
         }
       });
       return;

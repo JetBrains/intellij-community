@@ -522,7 +522,7 @@ public class PsiImplUtil {
     while (next != null) {
       final ASTNode node = next.getNode();
       final IElementType type = node.getElementType();
-      if (type == GroovyTokenTypes.mSEMI) {
+      if (type == GroovyTokenTypes.mSEMI || type == TokenType.WHITE_SPACE && !next.getText().contains("\n")) {
         final PsiElement nnext = next.getNextSibling();
         container.deleteChildRange(next, next);
         next = nnext;

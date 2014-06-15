@@ -45,6 +45,7 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
   private Map<String, XDebuggerSettings<?>> mySettingsById;
   private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
+  private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
   public static XDebuggerSettingsManager getInstance() {
     return ServiceManager.getService(XDebuggerSettingsManager.class);
@@ -53,6 +54,7 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
   public SettingsState getState() {
     SettingsState settingsState = new SettingsState();
     settingsState.setDataViewSettings(myDataViewSettings);
+    settingsState.setGeneralSettings(myGeneralSettings);
     for (XDebuggerSettings<?> settings : getSettingsList()) {
       SpecificSettingsState state = new SpecificSettingsState();
       state.setId(settings.getId());
@@ -71,8 +73,13 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     return myDataViewSettings;
   }
 
+  public XDebuggerGeneralSettings getGeneralSettings() {
+    return myGeneralSettings;
+  }
+
   public void loadState(final SettingsState state) {
     myDataViewSettings = state.getDataViewSettings();
+    myGeneralSettings = state.getGeneralSettings();
     for (SpecificSettingsState settingsState : state.getSpecificStates()) {
       XDebuggerSettings<?> settings = findSettings(settingsState.getId());
       if (settings != null) {
@@ -106,6 +113,7 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
   public static class SettingsState {
     private List<SpecificSettingsState> mySpecificStates = new ArrayList<SpecificSettingsState>();
     private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
+    private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
     @Tag("debuggers")
     @AbstractCollection(surroundWithTag = false)
@@ -124,6 +132,15 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
 
     public void setDataViewSettings(XDebuggerDataViewSettings dataViewSettings) {
       myDataViewSettings = dataViewSettings;
+    }
+
+    @Property(surroundWithTag = false)
+    public XDebuggerGeneralSettings getGeneralSettings() {
+      return myGeneralSettings;
+    }
+
+    public void setGeneralSettings(XDebuggerGeneralSettings generalSettings) {
+      myGeneralSettings = generalSettings;
     }
   }
 

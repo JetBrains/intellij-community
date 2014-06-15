@@ -27,11 +27,12 @@ public class CvsFilePath extends FilePathImpl {
 
   private final CvsRepositoryLocation myRepositoryLocation;
 
-  public CvsFilePath(@NotNull VirtualFile virtualFile, CvsRepositoryLocation repositoryLocation) {
+  public CvsFilePath(@NotNull VirtualFile virtualFile, @NotNull CvsRepositoryLocation repositoryLocation) {
     super(virtualFile);
     myRepositoryLocation = repositoryLocation;
   }
 
+  @NotNull
   public CvsRepositoryLocation getRepositoryLocation() {
     return myRepositoryLocation;
   }

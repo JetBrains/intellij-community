@@ -31,12 +31,14 @@ import java.util.List;
 public abstract class ValueContainer<Value> {
   public interface IntIterator {
     boolean hasNext();
-    
+
     int next();
 
     int size();
 
     boolean hasAscendingOrder();
+
+    IntIterator createCopyInInitialState();
   }
 
   public interface IntPredicate {

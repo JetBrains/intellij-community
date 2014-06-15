@@ -30,6 +30,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseInspection {
   private static final int TERM_LIMIT = 3;
   /**
@@ -193,7 +195,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
       if (type == null) {
         return false;
       }
-      return "java.lang.String".equals(type.getCanonicalText());
+      return type.equalsToText(JAVA_LANG_STRING);
     }
   }
 }

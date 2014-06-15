@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 

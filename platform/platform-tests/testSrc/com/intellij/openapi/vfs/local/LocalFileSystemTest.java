@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -310,7 +311,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     }
 
     String parent = FileUtil.toSystemIndependentName(file.getParent());
-    VirtualDirectoryImpl.allowRootAccess(parent);
+    VfsRootAccess.allowRootAccess(parent);
     try {
       VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
       assertNotNull(virtualFile);
@@ -322,7 +323,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       assertEquals(FileAttributes.HIDDEN, attributes.flags);
     }
     finally {
-      VirtualDirectoryImpl.disallowRootAccess(parent);
+      VfsRootAccess.disallowRootAccess(parent);
     }
   }
 

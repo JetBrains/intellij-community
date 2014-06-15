@@ -100,4 +100,10 @@ public class BasicDebuggerViewSupport implements DebuggerViewSupport, MemberFilt
   public String normalizeMemberName(@NotNull Variable variable) {
     return variable.getName();
   }
+
+  @Override
+  @Nullable
+  public Value transformErrorOnGetUsedReferenceValue(@Nullable Value value, @Nullable String error) {
+    return value;
+  }
 }

@@ -30,9 +30,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -55,12 +57,11 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static final Condition<PsiReference> PROPERTY_REFERENCE = FilteringIterator.instanceOf(PropertyReference.class);
-  private void doAdd(CompletionParameters parameters, final CompletionResultSet result) {
+  private static void doAdd(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiReference[] references = ArrayUtil.mergeArrays(position.getReferences(), position.getParent().getReferences());
-    PropertyReference propertyReference = (PropertyReference)ContainerUtil.find(references, PROPERTY_REFERENCE);
-    if (propertyReference != null) {
+    PropertyReference propertyReference = ContainerUtil.findInstance(references, PropertyReference.class);
+    if (propertyReference != null && !hasMoreImportantReference(references, propertyReference)) {
       final int startOffset = parameters.getOffset();
       PsiElement element = propertyReference.getElement();
       final int offsetInElement = startOffset - element.getTextRange().getStartOffset();
@@ -69,17 +70,16 @@ public class PropertiesCompletionContributor extends CompletionContributor {
 
       LookupElement[] variants = getVariants(propertyReference);
       result.withPrefixMatcher(prefix).addAllElements(Arrays.asList(variants));
-      if (variants.length != 0) {
-        result.stopHere();
-      }
     }
-    //if (parameters.isExtendedCompletion()) {
-    //  CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
-    //    public void consume(final CompletionResult completionResult) {
-    //      result.passResult(completionResult);
-    //    }
-    //  });
-    //}
+  }
+
+  private static boolean hasMoreImportantReference(PsiReference[] references, PropertyReference propertyReference) {
+    return propertyReference.isSoft() && ContainerUtil.or(references, new Condition<PsiReference>() {
+      @Override
+      public boolean value(PsiReference reference) {
+        return !reference.isSoft();
+      }
+    });
   }
 
   public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<LookupElement>() {

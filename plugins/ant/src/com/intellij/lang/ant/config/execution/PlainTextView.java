@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,7 +52,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   public void dispose() {
-    myConsole.dispose();
+    Disposer.dispose(myConsole);
   }
 
   @Override

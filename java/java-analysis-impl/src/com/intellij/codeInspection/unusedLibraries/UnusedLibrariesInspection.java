@@ -23,35 +23,22 @@ package com.intellij.codeInspection.unusedLibraries;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.BackwardDependenciesBuilder;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
-import com.intellij.psi.search.scope.packageSet.ParsingException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,139 +47,62 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class UnusedLibrariesInspection extends GlobalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + UnusedLibrariesInspection.class.getName());
-  private final JobDescriptor BACKWARD_ANALYSIS = new JobDescriptor(InspectionsBundle.message("unused.library.backward.analysis.job.description"));
+
+  @Override
+  public boolean isGraphNeeded() {
+    return true;
+  }
 
   @Nullable
   @Override
-  public JobDescriptor[] getAdditionalJobs() {
-    return new JobDescriptor[]{BACKWARD_ANALYSIS};
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new UnusedLibraryGraphAnnotator(refManager);
   }
 
+  @Nullable
   @Override
-  public void runInspection(@NotNull AnalysisScope scope,
-                            @NotNull InspectionManager manager,
-                            @NotNull final GlobalInspectionContext globalContext,
-                            @NotNull ProblemDescriptionsProcessor problemProcessor) {
-    final Project project = manager.getProject();
-    final ArrayList<VirtualFile> libraryRoots = new ArrayList<VirtualFile>();
-    if (scope.getScopeType() == AnalysisScope.PROJECT) {
-      ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(project, false, false));
-    }
-    else {
-      final Set<Module> modules = new HashSet<Module>();
-      scope.accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitFile(PsiFile file) {
-          if (!(file instanceof PsiCompiledElement)) {
-            final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile != null) {
-              final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-              if (module != null) {
-                modules.add(module);
-              }
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext,
+                                                @NotNull ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefModule) {
+      final RefModule refModule = (RefModule)refEntity;
+      final Module module = refModule.getModule();
+      if (module.isDisposed()) return CommonProblemDescriptor.EMPTY_ARRAY;
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final Set<VirtualFile> usedRoots = refModule.getUserData(UnusedLibraryGraphAnnotator.USED_LIBRARY_ROOTS);
+
+      final List<CommonProblemDescriptor> result = new ArrayList<CommonProblemDescriptor>();
+      for (OrderEntry entry : moduleRootManager.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry && !((LibraryOrderEntry)entry).isExported()) {
+          if (usedRoots == null) {
+            String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
+            result.add(manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, null)));
+          } else {
+            final Set<VirtualFile> files = new HashSet<VirtualFile>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
+            files.removeAll(usedRoots);
+            if (!files.isEmpty()) {
+              final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
+                @Override
+                public String fun(final VirtualFile file) {
+                  return file.getPresentableName();
+                }
+              }, ",");
+              String message =
+                InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
+              processor.addProblemElement(refModule,
+                                          manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, entry, files)));
             }
           }
         }
-      });
-      ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(modules.toArray(new Module[modules.size()]), false, false));
-    }
-    if (libraryRoots.isEmpty()) {
-      return;
-    }
-
-    GlobalSearchScope searchScope;
-    try {
-      @NonNls final String libsName = "libs";
-      NamedScope libScope = new NamedScope(libsName, PackageSetFactory.getInstance().compile("lib:*..*"));
-      searchScope = GlobalSearchScopesCore.filterScope(project, libScope);
-    }
-    catch (ParsingException e) {
-      //can't be
-      LOG.error(e);
-      return;
-    }
-    final AnalysisScope analysisScope = new AnalysisScope(searchScope, project);
-    analysisScope.setSearchInLibraries(true);
-    final BackwardDependenciesBuilder builder = new BackwardDependenciesBuilder(project, analysisScope);
-
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-
-    BACKWARD_ANALYSIS.setTotalAmount(builder.getTotalFileCount());
-    ProgressIndicator progress = new AbstractProgressIndicatorBase() {
-      @Override
-      public void setFraction(final double fraction) {
-        super.setFraction(fraction);
-        int nextAmount = (int)(fraction * BACKWARD_ANALYSIS.getTotalAmount());
-        if (nextAmount > BACKWARD_ANALYSIS.getDoneAmount() && nextAmount < BACKWARD_ANALYSIS.getTotalAmount()) {
-          BACKWARD_ANALYSIS.setDoneAmount(nextAmount);
-          globalContext.incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
-        }
       }
 
-      @Override
-      public boolean isCanceled() {
-        return progressIndicator != null && progressIndicator.isCanceled() || super.isCanceled();
-      }
-    };
-    ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-      @Override
-      public void run() {
-        builder.analyze();
-      }
-    }, progress);
-    BACKWARD_ANALYSIS.setDoneAmount(BACKWARD_ANALYSIS.getTotalAmount());
-    final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
-    for (PsiFile file : dependencies.keySet()) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      LOG.assertTrue(virtualFile != null);
-      for (Iterator<VirtualFile> i = libraryRoots.iterator(); i.hasNext();) {
-        if (VfsUtilCore.isAncestor(i.next(), virtualFile, false)) {
-          i.remove();
-        }
-      }
+      return result.isEmpty() ? null : result.toArray(new CommonProblemDescriptor[result.size()]);
     }
-    if (libraryRoots.isEmpty()) {
-      return;
-    }
-    ProjectFileIndex projectIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    Map<OrderEntry, Set<VirtualFile>> unusedLibs = new HashMap<OrderEntry, Set<VirtualFile>>();
-    for (VirtualFile libraryRoot : libraryRoots) {
-      final List<OrderEntry> orderEntries = projectIndex.getOrderEntriesForFile(libraryRoot);
-      for (OrderEntry orderEntry : orderEntries) {
-        Set<VirtualFile> files = unusedLibs.get(orderEntry);
-        if (files == null) {
-          files = new HashSet<VirtualFile>();
-          unusedLibs.put(orderEntry, files);
-        }
-        files.add(libraryRoot);
-      }
-    }
-    final RefManager refManager = globalContext.getRefManager();
-    for (OrderEntry orderEntry : unusedLibs.keySet()) {
-      if (!(orderEntry instanceof LibraryOrderEntry)) continue;
-      final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
-      final Set<VirtualFile> files = unusedLibs.get(orderEntry);
-      final VirtualFile[] roots = ((LibraryOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
-      if (files.size() < roots.length) {
-        final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
-            @Override
-            public String fun(final VirtualFile file) {
-              return file.getPresentableName();
-            }
-          }, ",");
-        String message =
-          InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName());
-        problemProcessor.addProblemElement(refModule,
-                                           manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, files)));
-      }
-      else {
-        String message = InspectionsBundle.message("unused.library.problem.descriptor", orderEntry.getPresentableName());
-        problemProcessor.addProblemElement(refModule,
-                                           manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, null)));
-      }
-    }
+    return null;
   }
+
 
   @Override
   public boolean isEnabledByDefault() {
@@ -270,6 +180,43 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
           model.commit();
         }
       });
+    }
+  }
+
+  private static class UnusedLibraryGraphAnnotator extends RefGraphAnnotator {
+    public static final Key<Set<VirtualFile>> USED_LIBRARY_ROOTS = Key.create("inspection.dependencies");
+    private final DirectoryIndex myDirectoryIndex;
+    private RefManager myManager;
+
+    public UnusedLibraryGraphAnnotator(RefManager manager) {
+      myManager = manager;
+      myDirectoryIndex = DirectoryIndex.getInstance(manager.getProject());
+    }
+
+    @Override
+    public void onMarkReferenced(PsiElement what, PsiElement from, boolean referencedFromClassInitializer) {
+      if (what != null && from != null){
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(what);
+        final VirtualFile containingDir = virtualFile != null ? virtualFile.getParent() : null;
+        if (containingDir != null) {
+          final DirectoryInfo infoForDirectory = myDirectoryIndex.getInfoForDirectory(containingDir);
+          final VirtualFile libraryClassRoot = infoForDirectory != null ? infoForDirectory.getLibraryClassRoot() : null;
+          if (libraryClassRoot != null) {
+            final Module fromModule = ModuleUtilCore.findModuleForPsiElement(from);
+            if (fromModule != null){
+              final RefModule refModule = myManager.getRefModule(fromModule);
+              if (refModule != null) {
+                Set<VirtualFile> modules = refModule.getUserData(USED_LIBRARY_ROOTS);
+                if (modules == null){
+                  modules = new HashSet<VirtualFile>();
+                  refModule.putUserData(USED_LIBRARY_ROOTS, modules);
+                }
+                modules.add(libraryClassRoot);
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

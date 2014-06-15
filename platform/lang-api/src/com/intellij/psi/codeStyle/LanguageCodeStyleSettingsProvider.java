@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -223,6 +221,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
     SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
     fieldCollector.collectFields();
     return fieldCollector.getCollectedFields();
+  }
+
+  public boolean isIndentBasedLanguageSemantics() {
+    return false;
   }
 
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {

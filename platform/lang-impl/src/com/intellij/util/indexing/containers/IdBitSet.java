@@ -220,5 +220,10 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     public boolean hasAscendingOrder() {
       return true;
     }
+
+    @Override
+    public ValueContainer.IntIterator createCopyInInitialState() {
+      return new Iterator();
+    }
   }
 }

@@ -398,6 +398,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testShebang() { //PY-12775
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

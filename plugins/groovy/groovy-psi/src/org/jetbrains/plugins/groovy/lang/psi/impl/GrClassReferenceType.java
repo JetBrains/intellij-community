@@ -108,13 +108,16 @@ public class GrClassReferenceType extends PsiClassType {
   @Override
   @NotNull
   public PsiClassType rawType() {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myReferenceElement.getProject());
+
     final PsiClass clazz = resolve();
     if (clazz != null) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(clazz.getProject());
       return factory.createType(clazz, factory.createRawSubstitutor(clazz));
     }
-
-    return this;
+    else {
+      String qName = myReferenceElement.getClassNameText();
+      return factory.createTypeByFQClassName(qName, myReferenceElement.getResolveScope());
+    }
   }
 
   @NotNull

@@ -17,16 +17,14 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.Nullable;
@@ -57,21 +55,8 @@ public class StubTreeBuilder {
         Language l = languageFileType.getLanguage();
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
-        PsiFile psi = null;
         CharSequence contentAsText = inputData.getContentAsText();
-        Document document = FileDocumentManager.getInstance().getCachedDocument(inputData.getFile());
-        if (document != null) {
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(inputData.getProject());
-          if (psiDocumentManager.isUncommited(document)) {
-            PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
-            if(existingPsi != null) {
-              psi = existingPsi;
-            }
-          }
-        }
-        if (psi == null) {
-          psi = inputData.getPsiFile();
-        }
+        PsiFile psi = ((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument();
         psi = psi.getViewProvider().getStubBindingRoot();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
 

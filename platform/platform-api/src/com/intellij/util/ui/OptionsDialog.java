@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -48,6 +49,7 @@ public abstract class OptionsDialog extends DialogWrapper  {
       return OptionsDialog.this.shouldSaveOptionsOnCancel();
     }
 
+    @NotNull
     @Override
     public String getDoNotShowMessage() {
       return OptionsDialog.this.getDoNotShowMessage();

@@ -181,17 +181,34 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   public void addChild(final TestProxy child) {
+    addChild(child, -1);
+  }
+
+  public void addChild(final TestProxy child, final int idx) {
     if (myChildren.contains(child))
       return;
     if (child.getParent() != null)
       return;//todo throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
-    myChildren.add(child);
+    myChildren.insert(child, idx);
     child.myParent = this;
     addLast(child);
     child.setPrinter(myPrinter);
     pullEvent(new NewChildEvent(this, child));
     getState().changeStateAfterAddingChildTo(this, child);
     myNotifier.onChildAdded(this, child);
+  }
+
+  public void insertNextRunningChild(final TestProxy child) {
+    int idx = -1;
+    List<TestProxy> list = myChildren.getList();
+    for (int i = 0; i < list.size(); i++) {
+      TestProxy proxy = list.get(i);
+      if (!proxy.getState().isFinal()) {
+        idx = i;
+        break;
+      }
+    }
+    addChild(child, idx);
   }
 
 

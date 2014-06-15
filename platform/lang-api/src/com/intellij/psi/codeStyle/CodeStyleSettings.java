@@ -575,7 +575,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     for (final CustomCodeStyleSettings settings : customSettings) {
       final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
-      assert parentCustomSettings != null;
+      assert parentCustomSettings != null : "Custom settings are null for " + settings.getClass();
       settings.writeExternal(element, parentCustomSettings);
     }
 

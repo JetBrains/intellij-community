@@ -56,6 +56,7 @@ import java.util.Arrays;
 
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -80,7 +81,8 @@ public class IdeaApplication {
     ourInstance = this;
 
     myArgs = args;
-    boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
+    boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
+    boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
     boolean headless = Main.isHeadless();
     if (!headless) {
@@ -99,7 +101,7 @@ public class IdeaApplication {
         }
       }
 
-      ApplicationManagerEx.createApplication(isInternal, false, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
+      ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
     }
 
     if (myStarter == null) {

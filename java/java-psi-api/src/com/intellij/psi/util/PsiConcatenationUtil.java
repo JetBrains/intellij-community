@@ -22,6 +22,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 /**
  * User: cdr
  */
@@ -42,11 +44,11 @@ public class PsiConcatenationUtil {
       formatString.append(formatText);
     } else if (expression instanceof PsiPolyadicExpression) {
       final PsiType type = expression.getType();
-      if (type != null && type.equalsToText("java.lang.String")) {
+      if (type != null && type.equalsToText(JAVA_LANG_STRING)) {
         final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression) expression;
         PsiExpression[] operands = binaryExpression.getOperands();
         PsiType left = operands[0].getType();
-        boolean stringStarted = left != null && left.equalsToText("java.lang.String");
+        boolean stringStarted = left != null && left.equalsToText(JAVA_LANG_STRING);
         if (stringStarted) {
           buildFormatString(operands[0], formatString, formatParameters, printfFormat);
         }
@@ -54,7 +56,7 @@ public class PsiConcatenationUtil {
           PsiExpression op = operands[i];
           PsiType optype = op.getType();
           PsiType r = TypeConversionUtil.calcTypeForBinaryExpression(left, optype, binaryExpression.getOperationTokenType(), true);
-          if (r != null && r.equalsToText("java.lang.String") && !stringStarted) {
+          if (r != null && r.equalsToText(JAVA_LANG_STRING) && !stringStarted) {
             stringStarted = true;
             PsiElement element = binaryExpression.getTokenBeforeOperand(op);
             if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
@@ -64,7 +66,7 @@ public class PsiConcatenationUtil {
             addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
           }
           if (stringStarted) {
-            if (optype != null && (optype.equalsToText("java.lang.String") || optype == PsiType.CHAR)) {
+            if (optype != null && (optype.equalsToText(JAVA_LANG_STRING) || optype == PsiType.CHAR)) {
               buildFormatString(op, formatString, formatParameters, printfFormat);
             }
             else {

@@ -33,7 +33,10 @@ import java.lang.reflect.Method;
 
 public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
-  private JLayeredPane myLayeredPane;
+  private boolean myHasOverlayScrollbars;
+
+  private int myOverriddenVPolicy = -1;
+  private int myOverriddenHPolicy = -1;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -64,89 +67,14 @@ public class JBScrollPane extends JScrollPane {
     if (c == null) return null;
 
     if (!(c instanceof JViewport)) {
-      // if asked for a viewport child, take a viewport.
-      // If not (e.g asked for a scrollbar), go straight to JLayeredPane  
       Container vp = c.getParent();
       if (vp instanceof JViewport) c = vp;
     }
     
     c = c.getParent();
-    if (c instanceof JLayeredPane) {
-      c = c.getParent();
-    }
-    if (!(c instanceof JBScrollPane)) return null;
+    if (!(c instanceof JScrollPane)) return null;
 
-    return (JBScrollPane)c;
-  }
-
-  @Override
-  public void setVerticalScrollBar(JScrollBar c) {
-    JScrollBar old = getVerticalScrollBar();
-    super.setVerticalScrollBar(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.VERTICAL_SCROLLBAR);
-  }
-
-  @Override
-  public void setHorizontalScrollBar(JScrollBar c) {
-    JScrollBar old = getHorizontalScrollBar();
-    super.setHorizontalScrollBar(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.HORIZONTAL_SCROLLBAR);
-  }
-
-  @Override
-  public void setColumnHeader(JViewport c) {
-    JViewport old = getColumnHeader();
-    super.setColumnHeader(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.COLUMN_HEADER);
-  }
-
-  @Override
-  public void setRowHeader(JViewport c) {
-    JViewport old = getRowHeader();
-    super.setRowHeader(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.ROW_HEADER);
-  }
-
-  @Override
-  public void setViewport(JViewport c) {
-    JViewport old = getViewport();
-    super.setViewport(c);
-    transferToLayeredPane(old, c, ScrollPaneConstants.VIEWPORT);
-  }
-
-  @Override
-  public void setCorner(String key, Component c) {
-    Component old = getCorner(key);
-    super.setCorner(key, c);
-    transferToLayeredPane(old, c, key);
-  }
-
-  private void transferToLayeredPane(Component old, Component c, String key) {
-    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return;
-    
-    JLayeredPane pane = getLayoutPane();
-    LayoutManager layout = getLayout();
-
-    if (old != null && old != c) {
-      pane.remove(old);
-      layout.removeLayoutComponent(old);
-    }
-    
-    if (c != null) {
-      if (ScrollPaneConstants.VERTICAL_SCROLLBAR.equals(key) || ScrollPaneConstants.HORIZONTAL_SCROLLBAR.equals(key)) {
-        pane.setLayer(c, JLayeredPane.PALETTE_LAYER);
-      }
-      pane.add(c);
-      layout.addLayoutComponent(key, c);
-    }
-  }
-
-  @NotNull
-  private JLayeredPane getLayoutPane() {
-    if (myLayeredPane == null) {
-      myLayeredPane = new JLayeredPane();
-    }
-    return myLayeredPane;
+    return (JScrollPane)c;
   }
 
   private void init() {
@@ -154,9 +82,6 @@ public class JBScrollPane extends JScrollPane {
   }
   
   private void init(boolean setupCorners) {
-    if (ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) {
-      add(getLayoutPane());
-    }
     setLayout(new ScrollPaneLayout());
  
     if (setupCorners) {
@@ -176,6 +101,11 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
+  }
+
+  @Override
+  public boolean isOptimizedDrawingEnabled() {
+    return !myHasOverlayScrollbars;
   }
 
   private void updateViewportBorder() {
@@ -201,24 +131,75 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
+  @Override
+  public int getHorizontalScrollBarPolicy() {
+    // See layout() for explanation
+    //noinspection MagicConstant
+    return myOverriddenHPolicy != -1 ? myOverriddenHPolicy : super.getHorizontalScrollBarPolicy();
+  }
+
+  @Override
+  public int getVerticalScrollBarPolicy() {
+    // See layout() for explanation
+    //noinspection MagicConstant
+    return myOverriddenVPolicy != -1 ? myOverriddenVPolicy : super.getVerticalScrollBarPolicy();
+  }
+
   @SuppressWarnings("deprecation")
   @Override
   public void layout() {
+    LayoutManager layout = getLayout();
+    ScrollPaneLayout scrollLayout = layout instanceof ScrollPaneLayout ? (ScrollPaneLayout)layout : null;
+
+    // Logic here is a workaround necessary to support OS X overlaid scrollbars.
+
+    int oldHPolicy = -1;
+    int oldVPolicy = -1;
+    if (scrollLayout != null) {
+      // First, we override scrollbar policy to HORIZONTAL_SCROLLBAR_AS_NEEDED so JScrollPane could correctly lay them out.
+      // We do so only when policy is ALWAYS so they could be hidden by JScrollPane when necessary.
+      // Also, we only override when scrollbar is an overlay scrollbar.
+      // (The related problem is IDEA-123688)
+      if (isOverlaidScrollbar(getHorizontalScrollBar())) {
+        oldHPolicy = scrollLayout.getHorizontalScrollBarPolicy();
+        if (oldHPolicy == HORIZONTAL_SCROLLBAR_ALWAYS) {
+          scrollLayout.setHorizontalScrollBarPolicy(myOverriddenHPolicy = HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        }
+      }
+
+      if (isOverlaidScrollbar(getVerticalScrollBar())) {
+        oldVPolicy = scrollLayout.getVerticalScrollBarPolicy();
+        if (oldVPolicy == VERTICAL_SCROLLBAR_ALWAYS) {
+          scrollLayout.setVerticalScrollBarPolicy(myOverriddenVPolicy = VERTICAL_SCROLLBAR_AS_NEEDED);
+        }
+      }
+    }
+
+    // Now we let JScrollPane layout everything as necessary
     super.layout();
 
-    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return;
-    
-    LayoutManager layout = getLayout();
-    if (layout instanceof ScrollPaneLayout && myLayeredPane != null) {
-      relayoutScrollbars(this, (ScrollPaneLayout)layout, myLayeredPane);
+    if (scrollLayout != null) {
+      // Now it's time to jump in and expand the viewport so it fits the whole area 
+      // (taking into consideration corners, headers and other stuff).
+      myHasOverlayScrollbars = relayoutScrollbars(
+        this, scrollLayout,
+        myHasOverlayScrollbars // If last time we did relayouting, we should restore it back.
+      );
+
+      // Now we restore overridden policies as though nothing happened at all.
+      if (oldHPolicy != -1) scrollLayout.setHorizontalScrollBarPolicy(oldHPolicy);
+      if (oldVPolicy != -1) scrollLayout.setVerticalScrollBarPolicy(oldVPolicy);
+      myOverriddenHPolicy = -1;
+      myOverriddenVPolicy = -1;
+    }
+    else {
+      myHasOverlayScrollbars = false;
     }
   }
 
-  private static void relayoutScrollbars(@NotNull JComponent container,
-                                         @NotNull ScrollPaneLayout layout,
-                                         @NotNull JLayeredPane layeredPane) {
+  private static boolean relayoutScrollbars(@NotNull JComponent container, @NotNull ScrollPaneLayout layout, boolean forceRelayout) {
     JViewport viewport = layout.getViewport();
-    if (viewport == null) return;
+    if (viewport == null) return false;
     
     JScrollBar vsb = layout.getVerticalScrollBar();
     JScrollBar hsb = layout.getHorizontalScrollBar();
@@ -227,19 +208,26 @@ public class JBScrollPane extends JScrollPane {
 
     Rectangle viewportBounds = viewport.getBounds();
 
-    boolean extendsViewportUnderVScrollbar = vsb != null && shouldExtendViewportUnderScrollbar(vsb);
-    boolean extendsViewportUnderHScrollbar = hsb != null && shouldExtendViewportUnderScrollbar(hsb);
-    
-    if (extendsViewportUnderVScrollbar) {
+    boolean extendViewportUnderVScrollbar = vsb != null && shouldExtendViewportUnderScrollbar(vsb);
+    boolean extendViewportUnderHScrollbar = hsb != null && shouldExtendViewportUnderScrollbar(hsb);
+    boolean hasOverlayScrollbars = extendViewportUnderVScrollbar || extendViewportUnderHScrollbar;
+
+    if (!hasOverlayScrollbars && !forceRelayout) return false;
+
+    container.setComponentZOrder(viewport, container.getComponentCount() - 1);
+    if (vsb != null) container.setComponentZOrder(vsb, 0);
+    if (hsb != null) container.setComponentZOrder(hsb, 0);
+
+    if (extendViewportUnderVScrollbar) {
       viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
       viewportBounds.width = Math.max(viewportBounds.width, vsb.getX() + vsb.getWidth());
     }
-    if (extendsViewportUnderHScrollbar) {
+    if (extendViewportUnderHScrollbar) {
       viewportBounds.y = Math.min(viewportBounds.y, hsb.getY());
       viewportBounds.height = Math.max(viewportBounds.height, hsb.getY() + hsb.getHeight());
     }
  
-    if (extendsViewportUnderVScrollbar) {
+    if (extendViewportUnderVScrollbar) {
       if (hsb != null) {
         Rectangle scrollbarBounds = hsb.getBounds();
         scrollbarBounds.width = viewportBounds.width - scrollbarBounds.x;
@@ -253,7 +241,7 @@ public class JBScrollPane extends JScrollPane {
       hideFromView(layout.getCorner(UPPER_RIGHT_CORNER));
       hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
     }
-    if (extendsViewportUnderHScrollbar) {
+    if (extendViewportUnderHScrollbar) {
       if (vsb != null) {
         Rectangle scrollbarBounds = vsb.getBounds();
         scrollbarBounds.height = viewportBounds.height - scrollbarBounds.y;
@@ -270,14 +258,17 @@ public class JBScrollPane extends JScrollPane {
     }
 
     viewport.setBounds(viewportBounds);
-    Insets insets = container.getInsets();
-    if (insets == null) insets = new Insets(0, 0, 0, 0);
-    layeredPane.setBounds(0, 0, container.getWidth() - insets.right, container.getHeight() - insets.bottom);
+
+    return hasOverlayScrollbars;
   }
 
   private static boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
     if (scrollbar == null || !scrollbar.isVisible()) return false;
-    ScrollBarUI vsbUI = scrollbar.getUI();
+    return isOverlaidScrollbar(scrollbar);
+  }
+
+  private static boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
+    ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 

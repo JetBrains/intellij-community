@@ -67,7 +67,7 @@ public class JarMemoryLoader {
     int size = ZipShort.getValue(bytes);
 
     JarMemoryLoader loader = new JarMemoryLoader();
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
       MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry);
       loader.myResources.put(entry.getName(), resource);

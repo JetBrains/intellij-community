@@ -25,12 +25,8 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +39,7 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public abstract class ZenCodingGenerator {
-  private static final ExtensionPointName<ZenCodingGenerator> EP_NAME =
-    new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
-  private static final TokenSet VALID_LEAF_TYPES = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, XmlTokenType.XML_CHAR_ENTITY_REF);
+  private static final ExtensionPointName<ZenCodingGenerator> EP_NAME = new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
 
   public abstract TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
 
@@ -75,96 +69,71 @@ public abstract class ZenCodingGenerator {
   @Nullable
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
-    final int currentOffset = editor.getCaretModel().getOffset();
-    final CharSequence documentText = editor.getDocument().getCharsSequence();
-    PsiElement element = callback.getContext();
-    int line = editor.getCaretModel().getLogicalPosition().line;
-    int lineStart = editor.getDocument().getLineStartOffset(line);
-    int elementStart = -1;
-    do {
-      PsiElement e = element;
-      while ((e instanceof LeafPsiElement && VALID_LEAF_TYPES.contains(((LeafPsiElement)e).getElementType())) || 
-             e instanceof PsiWhiteSpace || e instanceof PsiErrorElement) {
-        elementStart = e.getTextRange().getStartOffset();
-        e = e.getPrevSibling();
-      }
-      if (elementStart >= 0) {
-        int startOffset = Math.max(elementStart, lineStart);
-        String key = computeKey(startOffset, currentOffset, documentText);
-        if (key != null) {
-          while (key.length() > 0 && !ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
-            key = key.substring(1);
-          }
-          if (key.length() > 0) {
-            return key;
-          }
-        }
-      }
-      element = element.getParent();
-    }
-    while (element != null && elementStart > lineStart);
-    return null;
+    int currentOffset = editor.getCaretModel().getOffset();
+    int startOffset = editor.getDocument().getLineStartOffset(editor.getCaretModel().getLogicalPosition().line);
+    String key = computeKey(editor.getDocument().getCharsSequence().subSequence(startOffset, currentOffset));
+    return !StringUtil.isEmpty(key) && ZenCodingTemplate.checkTemplateKey(key, callback, this) ? key : null;
   }
-
+  
   @Nullable
-  protected static String computeKey(int startOffset, int currentOffset, CharSequence documentText) {
-    if (currentOffset < startOffset || startOffset > documentText.length() || currentOffset > documentText.length()) {
-      return null;
-    }
-    String s = documentText.subSequence(startOffset, currentOffset).toString();
-    int index = 0;
-    while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
-      index++;
-    }
-    String key = s.substring(index);
-    int lastWhitespaceIndex = -1;
-    int lastQuoteIndex = -1;
-    int lastApostropheIndex = -1;
-    boolean inBrackets = false;
-    int bracesStack = 0;
+  protected String computeKey(@NotNull CharSequence text) {
+    int currentOffset = text.length();
+    int groupCount = 0;
+    int bracketCount = 0;
+    int textCount = 0;
 
-    for (int i = 0; i < key.length(); i++) {
-      char c = key.charAt(i);
-      if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
-        if (c == '"') {
-          lastQuoteIndex = -1;
-        }
-        else if (c == '\'') lastApostropheIndex = -1;
-      }
-      else if (Character.isWhitespace(c)) {
-        lastWhitespaceIndex = i;
-      }
-      else if (c == '"') {
-        lastQuoteIndex = i;
-      }
-      else if (c == '\'') {
-        lastApostropheIndex = i;
+    while (currentOffset > 0) {
+      currentOffset--;
+      char c = text.charAt(currentOffset);
+
+      if (c == ']') {
+        bracketCount++;
       }
       else if (c == '[') {
-        inBrackets = true;
+        if (bracketCount == 0) {
+          currentOffset++;
+          break;
+        }
+        bracketCount--;
       }
-      else if (c == ']' && inBrackets) {
-        lastWhitespaceIndex = -1;
-        inBrackets = false;
+      else if (c == '}') {
+        textCount++;
       }
       else if (c == '{') {
-        bracesStack++;
+        if (textCount == 0) {
+          currentOffset++;
+          break;
+        }
+        textCount--;
       }
-      else if (c == '}' && bracesStack > 0) {
-        bracesStack--;
-        if (bracesStack == 0) {
-          lastWhitespaceIndex = -1;
+      else if (c == ')') {
+        groupCount++;
+      }
+      else if (c == '(') {
+        if (groupCount == 0) {
+          currentOffset++;
+          break;
+        }
+        groupCount--;
+      }
+      else {
+        if (bracketCount > 0 || textCount > 0) {
+          // respect all characters inside attribute sets or text nodes
+          continue;
+        }
+        if (!isAllowedChar(c)) {
+          currentOffset++;
+          break;
         }
       }
     }
-    if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
-      int max = Math.max(lastQuoteIndex, lastApostropheIndex);
-      return max < key.length() - 1 ? key.substring(max) : null;
-    }
-    if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
-      return key.substring(lastWhitespaceIndex + 1);
-    }
-    return key;
+    return groupCount == 0 && textCount == 0 && bracketCount == 0 && currentOffset >= 0 && currentOffset < text.length() 
+           ? text.subSequence(currentOffset, text.length()).toString().replaceFirst("^[*+>^]+", "") 
+           : null;
+  }
+
+  private static boolean isAllowedChar(char c) {
+    return (Character.isDigit(c) || Character.isLetter(c) || StringUtil.containsChar("/>+^[](){}#.*:$-_!@|%", c));
   }
 
   @NotNull

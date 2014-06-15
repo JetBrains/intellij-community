@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  private ConfigurableWrapper(ConfigurableEP ep) {
+  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
     myEp = ep;
   }
 
@@ -96,6 +96,13 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     return myEp.getDisplayName();
+  }
+
+  public String getInstanceClass() {
+    return myEp.instanceClass;
+  }
+  public String getProviderClass() {
+    return myEp.providerClass;
   }
 
   @Nullable

@@ -299,12 +299,12 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression) {
+  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression, @NotNull LanguageLevel languageLevel) {
     final PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement == null) return null;
     PsiType castType = castTypeElement.getType();
     if (isIntersection(castTypeElement, castType)) {
-      if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
         if (conjuncts != null) {
           final List<PsiTypeElement> conjList = new ArrayList<PsiTypeElement>(Arrays.asList(conjuncts));
@@ -680,8 +680,8 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  public static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull PsiVariable variable) {
-    if ("_".equals(variable.getName()) && PsiUtil.isLanguageLevel8OrHigher(variable)) {
+  public static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull PsiVariable variable, @NotNull LanguageLevel languageLevel) {
+    if ("_".equals(variable.getName()) && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
         String message = JavaErrorMessages.message("underscore.lambda.identifier");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message).create();
@@ -1416,7 +1416,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkThisOrSuperExpressionInIllegalContext(@NotNull PsiExpression expr,
-                                                                  @Nullable PsiJavaCodeReferenceElement qualifier) {
+                                                                  @Nullable PsiJavaCodeReferenceElement qualifier,
+                                                                  @NotNull LanguageLevel languageLevel) {
     if (expr instanceof PsiSuperExpression) {
       final PsiElement parent = expr.getParent();
       if (!(parent instanceof PsiReferenceExpression)) {
@@ -1442,7 +1443,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (aClass == null) return null;
 
     if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false) &&
-        !resolvesToImmediateSuperInterface(expr, qualifier, aClass)) {
+        !resolvesToImmediateSuperInterface(expr, qualifier, aClass, languageLevel)) {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
     }
 
@@ -1492,8 +1493,9 @@ public class HighlightUtil extends HighlightUtilBase {
 
   private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,
                                                            @Nullable PsiJavaCodeReferenceElement qualifier,
-                                                           @NotNull PsiClass aClass) {
-    if (!(expr instanceof PsiSuperExpression) || qualifier == null || !PsiUtil.isLanguageLevel8OrHigher(expr)) return false;
+                                                           @NotNull PsiClass aClass,
+                                                           @NotNull LanguageLevel languageLevel) {
+    if (!(expr instanceof PsiSuperExpression) || qualifier == null || !languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
     final PsiType superType = expr.getType();
     if (!(superType instanceof PsiClassType)) return false;
     final PsiClass superClass = ((PsiClassType)superType).resolve();

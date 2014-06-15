@@ -42,6 +42,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.psi.CommonClassNames.*;
+
 /**
  * @author peter
  */
@@ -50,24 +52,24 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   private static final Set<String> iterations = new HashSet<String>();
 
   static {
-    simpleTypes.put("times", "java.lang.Integer");
-    simpleTypes.put("upto", "java.lang.Integer");
-    simpleTypes.put("downto", "java.lang.Integer");
-    simpleTypes.put("step", "java.lang.Integer");
+    simpleTypes.put("times", JAVA_LANG_INTEGER);
+    simpleTypes.put("upto", JAVA_LANG_INTEGER);
+    simpleTypes.put("downto", JAVA_LANG_INTEGER);
+    simpleTypes.put("step", JAVA_LANG_INTEGER);
     simpleTypes.put("withObjectOutputStream", "java.io.ObjectOutputStream");//todo
     simpleTypes.put("withObjectInputStream", "java.io.ObjectInputStream");
     simpleTypes.put("withOutputStream", "java.io.OutputStream");
     simpleTypes.put("withInputStream", "java.io.InputStream");
     simpleTypes.put("withDataOutputStream", "java.io.DataOutputStream");
     simpleTypes.put("withDataInputStream", "java.io.DataInputStream");
-    simpleTypes.put("eachLine", "java.lang.String");
-    simpleTypes.put("eachFile", CommonClassNames.JAVA_IO_FILE);
-    simpleTypes.put("eachDir", CommonClassNames.JAVA_IO_FILE);
-    simpleTypes.put("eachFileRecurse", CommonClassNames.JAVA_IO_FILE);
-    simpleTypes.put("traverse", CommonClassNames.JAVA_IO_FILE);
-    simpleTypes.put("eachDirRecurse", CommonClassNames.JAVA_IO_FILE);
-    simpleTypes.put("eachFileMatch", CommonClassNames.JAVA_IO_FILE);
-    simpleTypes.put("eachDirMatch", CommonClassNames.JAVA_IO_FILE);
+    simpleTypes.put("eachLine", JAVA_LANG_STRING);
+    simpleTypes.put("eachFile", JAVA_IO_FILE);
+    simpleTypes.put("eachDir", JAVA_IO_FILE);
+    simpleTypes.put("eachFileRecurse", JAVA_IO_FILE);
+    simpleTypes.put("traverse", JAVA_IO_FILE);
+    simpleTypes.put("eachDirRecurse", JAVA_IO_FILE);
+    simpleTypes.put("eachFileMatch", JAVA_IO_FILE);
+    simpleTypes.put("eachDirMatch", JAVA_IO_FILE);
     simpleTypes.put("withReader", "java.io.Reader");
     simpleTypes.put("withWriter", "java.io.Writer");
     simpleTypes.put("withWriterAppend", "java.io.Writer");
@@ -78,7 +80,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     simpleTypes.put("filterLine", "String");
     simpleTypes.put("accept", "java.net.Socket");
     simpleTypes.put("dropWhile", "java.lang.Character");
-    simpleTypes.put("eachMatch", "java.lang.String");
+    simpleTypes.put("eachMatch", JAVA_LANG_STRING);
     simpleTypes.put("replaceAll", "java.util.regex.Matcher");
     simpleTypes.put("replaceFirst", "java.util.regex.Matcher");
     simpleTypes.put("splitEachLine", "java.util.List<java.lang.String>");
@@ -158,11 +160,11 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       if (params.length == 1) {
         return findTypeForIteration(qualifier, closure);
       }
-      if (params.length == 2 && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+      if (params.length == 2 && InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
         if (index == 0) {
-          return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+          return PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 0, true);
         }
-        return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+        return PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 1, true);
       }
     }
     else if (GdkMethodUtil.isWithName(methodName) && params.length == 1) {
@@ -174,36 +176,36 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         if (index == 0) {
           return res;
         }
-        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
+        return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, closure);
       }
-      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+      if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
         if (params.length == 2) {
           if (index == 0) {
             return getEntryForMap(type, closure.getProject(), closure.getResolveScope());
           }
-          return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
+          return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, closure);
         }
         if (params.length == 3) {
           if (index == 0) {
-            return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+            return PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 0, true);
           }
           if (index == 1) {
-            return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+            return PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 1, true);
           }
-          return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
+          return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, closure);
         }
       }
     }
     else if (GdkMethodUtil.INJECT.equals(methodName) && params.length == 2) {
       if (index == 0) {
-        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, closure);
+        return TypesUtil.createTypeByFQClassName(JAVA_LANG_OBJECT, closure);
       }
 
       PsiType res = findTypeForIteration(qualifier, closure);
       if (res != null) {
         return res;
       }
-      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+      if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
         return getEntryForMap(type, closure.getProject(), closure.getResolveScope());
       }
     }
@@ -211,13 +213,13 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       final PsiType itemType = findTypeForIteration(qualifier, closure);
       if (itemType != null) {
         return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(
-          CommonClassNames.JAVA_UTIL_ARRAY_LIST + "<" + itemType.getCanonicalText() + ">", closure);
+          JAVA_UTIL_ARRAY_LIST + "<" + itemType.getCanonicalText() + ">", closure);
       }
-      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_ARRAY_LIST, closure);
+      return TypesUtil.createTypeByFQClassName(JAVA_UTIL_ARRAY_LIST, closure);
     }
     else if (GdkMethodUtil.WITH_DEFAULT.equals(methodName)) {
-      if (params.length == 1 && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+      if (params.length == 1 && InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
+        return PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 0, true);
       }
     }
     else if (GdkMethodUtil.SORT.equals(methodName)) {
@@ -254,18 +256,18 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
   @Nullable
   private static PsiType getEntryForMap(@Nullable PsiType map, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
-    PsiType key = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 0, true);
-    PsiType value = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+    PsiType key = PsiUtil.substituteTypeParameter(map, JAVA_UTIL_MAP, 0, true);
+    PsiType value = PsiUtil.substituteTypeParameter(map, JAVA_UTIL_MAP, 1, true);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiClass entryClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, scope);
+    final PsiClass entryClass = JavaPsiFacade.getInstance(project).findClass(JAVA_UTIL_MAP_ENTRY, scope);
     if (entryClass == null) {
       if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
-        final String text = String.format("%s<%s,%s>", CommonClassNames.JAVA_UTIL_MAP_ENTRY, key.getCanonicalText(), value.getCanonicalText());
+        final String text = String.format("%s<%s,%s>", JAVA_UTIL_MAP_ENTRY, key.getCanonicalText(), value.getCanonicalText());
         return factory.createTypeFromText(text, null);
       }
       else {
-        return factory.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP_ENTRY, scope);
+        return factory.createTypeByFQClassName(JAVA_UTIL_MAP_ENTRY, scope);
       }
     }
     else {
@@ -310,11 +312,11 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return extracted;
     }
 
-    if (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(type, CommonClassNames.JAVA_IO_FILE)) {
+    if (TypesUtil.isClassType(type, JAVA_LANG_STRING) || TypesUtil.isClassType(type, JAVA_IO_FILE)) {
       return PsiType.getJavaLangString(manager, resolveScope);
     }
 
-    if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+    if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
       return getEntryForMap(type, manager.getProject(), resolveScope);
     }
     return type;
@@ -332,7 +334,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     final PsiType returnType = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element);
     final PsiType iteratorType = candidate.getSubstitutor().substitute(returnType);
 
-    return PsiUtil.substituteTypeParameter(iteratorType, CommonClassNames.JAVA_UTIL_ITERATOR, 0, false);
+    return PsiUtil.substituteTypeParameter(iteratorType, JAVA_UTIL_ITERATOR, 0, false);
   }
 
   @Nullable

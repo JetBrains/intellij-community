@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 15-Nov-2005
- */
-public class SillyAssignmentInspection extends BaseJavaBatchLocalInspectionTool {
+public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionTool {
+
   @Override
   @NotNull
   public String getGroupDisplayName() {
@@ -94,7 +91,7 @@ public class SillyAssignmentInspection extends BaseJavaBatchLocalInspectionTool 
     };
   }
 
-  private static void checkSillyAssignment(PsiAssignmentExpression assignment, ProblemsHolder holder) {
+  private void checkSillyAssignment(PsiAssignmentExpression assignment, ProblemsHolder holder) {
     if (assignment.getOperationTokenType() != JavaTokenType.EQ) return;
     PsiExpression lExpression = assignment.getLExpression();
     PsiExpression rExpression = assignment.getRExpression();
@@ -118,7 +115,11 @@ public class SillyAssignmentInspection extends BaseJavaBatchLocalInspectionTool 
     final PsiVariable variable = (PsiVariable)lRef.resolve();
     if (variable == null) return;
     holder.registerProblem(assignment, InspectionsBundle.message("assignment.to.itself.problem.descriptor", variable.getName()),
-                           ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix());
+  }
+
+  protected LocalQuickFix createRemoveAssignmentFix() {
+    return null;
   }
 
   /**

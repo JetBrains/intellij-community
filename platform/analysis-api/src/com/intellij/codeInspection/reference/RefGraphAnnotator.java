@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.psi.PsiElement;
+
 /**
  * Callback which gets called while a reference graph is being built during a global
  * inspection run.
@@ -70,5 +72,17 @@ public abstract class RefGraphAnnotator {
                                boolean forWriting) {
     onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer);
   }
+
+
+  /**
+   * Called when 'what' element doesn't belong to the selected scope. 
+   * @param what                            the referenced element
+   * @param from                            the referencing element
+   * @param referencedFromClassInitializer if true, <code>refFrom</code> is a class and the reference
+   *                                       has been found in its initializer block.
+   */
+  public void onMarkReferenced(PsiElement what,
+                               PsiElement from,
+                               boolean referencedFromClassInitializer) {}
 
 }

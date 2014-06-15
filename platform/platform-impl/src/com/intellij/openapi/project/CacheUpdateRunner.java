@@ -313,12 +313,12 @@ public class CacheUpdateRunner {
     return ApplicationManager.getApplication().isReadAccessAllowed() ? new Runnable() {
       @Override
       public void run() {
-        boolean old = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
+        ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
         try {
           process.run();
         }
         finally {
-          ApplicationImpl.setExceptionalThreadWithReadAccessFlag(old);
+          ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
         }
       }
     } : process;

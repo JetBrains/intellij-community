@@ -78,6 +78,21 @@ public class ArrayUtil extends ArrayUtilRt {
     System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
     return result;
   }
+  @NotNull
+  public static boolean[] realloc(@NotNull boolean[] array, final int newSize) {
+    if (newSize == 0) {
+      return EMPTY_BOOLEAN_ARRAY;
+    }
+
+    final int oldSize = array.length;
+    if (oldSize == newSize) {
+      return array;
+    }
+
+    boolean[] result = new boolean[newSize];
+    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
+    return result;
+  }
 
   @NotNull
   public static int[] realloc(@NotNull int[] array, final int newSize) {
@@ -127,6 +142,12 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   public static byte[] append(@NotNull byte[] array, byte value) {
+    array = realloc(array, array.length + 1);
+    array[array.length - 1] = value;
+    return array;
+  }
+  @NotNull
+  public static boolean[] append(@NotNull boolean[] array, boolean value) {
     array = realloc(array, array.length + 1);
     array[array.length - 1] = value;
     return array;

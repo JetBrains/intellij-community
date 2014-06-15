@@ -13,32 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine;
+package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 
 /**
-* @author egor
-*/
-class UnmuteOnStopAction extends ToggleAction {
-  private volatile boolean myUnmuteOnStop;
-
-  UnmuteOnStopAction() {
-    super(DebuggerBundle.message("action.unmute.on.stop.text"), DebuggerBundle.message("action.unmute.on.stop.text"), null);
-    myUnmuteOnStop = DebuggerSettings.getInstance().UNMUTE_ON_STOP;
-  }
-
+ * @author egor
+ */
+public class UnmuteOnStopAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return myUnmuteOnStop;
+    return XDebuggerSettingsManager.getInstance().getGeneralSettings().isUnmuteOnStop();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    myUnmuteOnStop = state;
-    DebuggerSettings.getInstance().UNMUTE_ON_STOP = state;
+    XDebuggerSettingsManager.getInstance().getGeneralSettings().setUnmuteOnStop(state);
   }
 }

@@ -628,7 +628,7 @@ public abstract class PluginManagerMain implements Disposable {
                              : "Plugins were installed", project);
   }
 
-  public static void notifyPluginsWereUpdated(final String title, final Project project) {
+  public static void notifyPluginsWereUpdated(final String title, @Nullable final Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message =

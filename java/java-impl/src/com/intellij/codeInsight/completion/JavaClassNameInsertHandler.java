@@ -53,6 +53,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     PsiElement position = file.findElementAt(offset);
+    PsiJavaCodeReferenceElement ref = position != null && position.getParent() instanceof PsiJavaCodeReferenceElement ?
+                                      (PsiJavaCodeReferenceElement) position.getParent() : null;
     PsiClass psiClass = item.getObject();
     final Project project = context.getProject();
 
@@ -75,14 +77,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       return;
     }
 
-    if (position != null) {
-      PsiElement parent = position.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
-        if (PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null && ref.isReferenceTo(psiClass)) {
-          return;
-        }
-      }
+    if (ref != null && PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null && ref.isReferenceTo(psiClass)) {
+      return;
     }
 
     OffsetKey refEnd = context.trackOffset(context.getTailOffset(), false);
@@ -92,7 +88,9 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       context.setAddCompletionChar(false);
     }
 
-    PsiTypeLookupItem.addImportForItem(context, psiClass);
+    if (ref == null || !ref.isQualified()) {
+      PsiTypeLookupItem.addImportForItem(context, psiClass);
+    }
     if (context.getOffset(refEnd) < 0) {
       return;
     }

@@ -178,6 +178,8 @@ public class PluginManager extends PluginManagerCore {
 
           myPlugins2Enable = null;
           myPlugins2Disable = null;
+
+          PluginManagerMain.notifyPluginsWereUpdated("Changes were applied", null);
         }
       }));
       myPluginError = null;

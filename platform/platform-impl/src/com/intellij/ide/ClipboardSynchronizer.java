@@ -20,11 +20,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.concurrency.FutureResult;
 import com.sun.jna.IntegerType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +38,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -251,7 +252,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
     @Nullable
     private static Transferable getContentsSafe() {
-      final Ref<Transferable> result = new Ref<Transferable>();
+      final FutureResult<Transferable> result = new FutureResult<Transferable>();
 
       Foundation.executeOnMainThread(new Runnable() {
         @Override
@@ -261,9 +262,14 @@ public class ClipboardSynchronizer implements ApplicationComponent {
             result.set(transferable);
           }
         }
-      }, true, true);
+      }, true, false);
 
-      return result.get();
+      try {
+        return result.get(10, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception ignored) {
+        return null;
+      }
     }
 
     @Nullable
