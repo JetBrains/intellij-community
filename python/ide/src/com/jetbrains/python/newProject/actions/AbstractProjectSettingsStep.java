@@ -1,6 +1,7 @@
 package com.jetbrains.python.newProject.actions;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -292,6 +293,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   public void setErrorText(@Nullable String text) {
     myErrorLabel.setText(text);
     myErrorLabel.setForeground(JBColor.RED);
+    myErrorLabel.setIcon(AllIcons.Actions.Lightning);
     myCreateButton.setEnabled(text == null);
   }
 
