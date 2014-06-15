@@ -976,6 +976,14 @@ public class ResolveUtil {
     }, state, null, place);
   }
 
+  public static boolean isClassReference(@NotNull GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifier();
+    return "class".equals(ref.getReferenceName()) &&
+           qualifier instanceof GrReferenceExpression &&
+           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+           !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isThisReference(qualifier);
+  }
+
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;
     private final boolean myHasVisibilityModifier;

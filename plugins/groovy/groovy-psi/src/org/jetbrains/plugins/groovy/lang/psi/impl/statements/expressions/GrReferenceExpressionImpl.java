@@ -159,15 +159,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     IElementType nameType = nameElement.getNode().getElementType();
     if (nameType == GroovyTokenTypes.kTHIS) {
-      ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
-      if (GrReferenceResolveUtil.resolveThisExpression(this, results)) {
-        return results.toArray(new GroovyResolveResult[results.size()]);
+      GroovyResolveResult[] results = GrThisReferenceResolver.resolveThisExpression(this);
+      if (results != null) {
+        return results;
       }
     }
     else if (nameType == GroovyTokenTypes.kSUPER) {
-      ArrayList<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
-      if (GrReferenceResolveUtil.resolveSuperExpression(this, results)) {
-        return results.toArray(new GroovyResolveResult[results.size()]);
+      GroovyResolveResult[] results = GrSuperReferenceResolver.resolveSuperExpression(this);
+      if (results != null) {
+        return results;
       }
     }
 
@@ -178,8 +178,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     GroovyResolveResult[] classCandidates = null;
 
+    GrReferenceResolveRunner resolveRunner = new GrReferenceResolveRunner(this);
+
     ResolverProcessor processor = new PropertyResolverProcessor(name, this);
-    GrReferenceResolveUtil.resolveImpl(processor, this);
+    resolveRunner.resolveImpl(processor);
     final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
 
     if (hasAt()) {
@@ -191,7 +193,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (canBeClassOrPackage && findClassOrPackageAtFirst()) {
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-      GrReferenceResolveUtil.resolveImpl(classProcessor, this);
+      resolveRunner.resolveImpl(classProcessor);
       classCandidates = classProcessor.getCandidates();
       if (classCandidates.length > 0 && containsPackage(classCandidates)) return classCandidates;
     }
@@ -215,9 +217,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
       AccessorResolverProcessor accessorResolver =
-        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, GrReferenceResolveUtil.getQualifierType(this),
-                                      getTypeArguments());
-      GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
+        new AccessorResolverProcessor(accessorName, name, this, !isLValue, false, PsiImplUtil.getQualifierType(this), getTypeArguments());
+      resolveRunner.resolveImpl(accessorResolver);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
 
       //can be only one correct candidate or some incorrect
@@ -235,11 +236,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return fieldList.toArray(new GroovyResolveResult[fieldList.size()]);
     }
 
-    if (classCandidates == null && canBeClassOrPackage ) {
-      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-      GrReferenceResolveUtil.resolveImpl(classProcessor, this);
-      classCandidates = classProcessor.getCandidates();
-    }
     if (classCandidates != null && classCandidates.length > 0) return classCandidates;
     if (!accessorResults.isEmpty()) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
@@ -258,7 +254,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   private void processMethods(@NotNull MethodResolverProcessor methodResolver) {
-    GrReferenceResolveUtil.resolveImpl(methodResolver, this);
+    new GrReferenceResolveRunner(this).resolveImpl(methodResolver);
     if (methodResolver.hasApplicableCandidates()) {
       return;
     }
@@ -287,8 +283,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
+    GrReferenceResolveRunner resolveRunner = new GrReferenceResolveRunner(this);
+
     PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, this);
-    GrReferenceResolveUtil.resolveImpl(propertyResolver, this);
+    resolveRunner.resolveImpl(propertyResolver);
     final GroovyResolveResult[] propertyCandidates = propertyResolver.getCandidates();
 
     if (!allVariants) { //search for local variables
@@ -345,8 +343,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
       AccessorResolverProcessor getterResolver =
-        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, GrReferenceResolveUtil.getQualifierType(this), getTypeArguments());
-      GrReferenceResolveUtil.resolveImpl(getterResolver, this);
+        new AccessorResolverProcessor(getterName, name, this, true, genericsMatter, PsiImplUtil.getQualifierType(this), getTypeArguments());
+      resolveRunner.resolveImpl(getterResolver);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
         return candidates;
@@ -424,7 +422,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);
       }
     }
-    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(this);
+    PsiType qualifierType = PsiImplUtil.getQualifierType(this);
     return new MethodResolverProcessor(name, this, false, qualifierType, argTypes, getTypeArguments(), allVariants, byShape);
   }
 
@@ -637,7 +635,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
           "getClass".equals(method.getName())) {
-        return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(this), getProject(), getResolveScope());
+        return TypesUtil.createJavaLangClassType(PsiImplUtil.getQualifierType(this), getProject(), getResolveScope());
       }
 
       return PsiUtil.getSmartReturnType(method);
@@ -701,7 +699,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   private static PsiType getTypeFromClassRef(@NotNull GrReferenceExpressionImpl ref) {
     if ("class".equals(ref.getReferenceName())) {
-      return TypesUtil.createJavaLangClassType(GrReferenceResolveUtil.getQualifierType(ref), ref.getProject(), ref.getResolveScope());
+      return TypesUtil.createJavaLangClassType(PsiImplUtil.getQualifierType(ref), ref.getProject(), ref.getResolveScope());
     }
     return null;
   }
@@ -710,7 +708,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @Override
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
-      if (GrReferenceResolveUtil.isClassReference(refExpr)) {
+      if (ResolveUtil.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
         LOG.assertTrue(qualifier != null);
         return TypesUtil.createJavaLangClassType(qualifier.getType(), refExpr.getProject(), refExpr.getResolveScope());
@@ -783,7 +781,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (incompleteCode) {
       ResolverProcessor processor = CompletionProcessor.createRefSameNameProcessor(this, name);
-      GrReferenceResolveUtil.resolveImpl(processor, this);
+      new GrReferenceResolveRunner(this).resolveImpl(processor);
       GroovyResolveResult[] propertyCandidates = processor.getCandidates();
       if (propertyCandidates.length > 0 && !PsiUtil.isSingleBindingVariant(propertyCandidates)) return propertyCandidates;
     }

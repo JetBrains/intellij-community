@@ -69,7 +69,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
@@ -447,7 +446,7 @@ public class ExpressionGenerator extends Generator {
       else if (resolved == null || resolved instanceof GrBindingVariable) {
         //write unresolved reference assignment via setter GroovyObject.setProperty(String name, Object value)
         final GrExpression qualifier = ((GrReferenceExpression)realLValue).getQualifier();
-        final PsiType type = GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)realLValue);
+        final PsiType type = PsiImplUtil.getQualifierType((GrReferenceExpression)realLValue);
 
         final GrExpression[] args = {
           factory.createExpressionFromText("\"" + ((GrReferenceExpression)realLValue).getReferenceName() + "\""),
@@ -952,7 +951,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    if (GrReferenceResolveUtil.isClassReference(referenceExpression)) {
+    if (ResolveUtil.isClassReference(referenceExpression)) {
       LOG.assertTrue(qualifier != null);
       qualifier.accept(this);
       builder.append(".class");
@@ -1052,7 +1051,7 @@ public class ExpressionGenerator extends Generator {
           }
           else {
             PsiType stringType = PsiType.getJavaLangString(referenceExpression.getManager(), referenceExpression.getResolveScope());
-            PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(referenceExpression);
+            PsiType qualifierType = PsiImplUtil.getQualifierType(referenceExpression);
             GroovyResolveResult[] candidates = qualifierType != null
                                                ? ResolveUtil.getMethodCandidates(qualifierType, "getProperty", referenceExpression,
                                                                                  stringType)

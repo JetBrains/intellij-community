@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -49,7 +49,7 @@ public class QuickfixUtil {
       return PsiUtil.getContextClass(refExpr);
     }
 
-    PsiType type = GrReferenceResolveUtil.getQualifierType(refExpr);
+    PsiType type = PsiImplUtil.getQualifierType(refExpr);
 
     if (type == null && compileStatic) {
       return GroovyPsiManager.getInstance(refExpr.getProject()).findClassWithCache(CommonClassNames.JAVA_LANG_OBJECT, refExpr.getResolveScope());

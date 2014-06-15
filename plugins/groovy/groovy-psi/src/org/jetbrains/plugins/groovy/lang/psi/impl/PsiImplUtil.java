@@ -46,10 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -76,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -987,5 +985,39 @@ public class PsiImplUtil {
       expr = ((GrReferenceExpression)expr).getQualifierExpression();
     }
     return expr == null;
+  }
+
+  @Nullable
+  public static PsiType getQualifierType(@NotNull GrReferenceExpression ref) {
+    final GrExpression rtQualifier = getRuntimeQualifier(ref);
+    if (rtQualifier != null) {
+      return rtQualifier.getType();
+    }
+
+    PsiClass containingClass = null;
+    final GrMember member = PsiTreeUtil.getParentOfType(ref, GrMember.class);
+    if (member == null) {
+      final PsiFile file = ref.getContainingFile();
+      if (file instanceof GroovyFileBase && ((GroovyFileBase)file).isScript()) {
+        containingClass = ((GroovyFileBase)file).getScriptClass();
+      }
+      else {
+        return null;
+      }
+    }
+    else if (member instanceof GrMethod) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+        containingClass = member.getContainingClass();
+      }
+    }
+
+    if (containingClass != null) {
+      final PsiClassType categoryType = GdkMethodUtil.getCategoryType(containingClass);
+      if (categoryType != null) {
+        return categoryType;
+      }
+      return JavaPsiFacade.getElementFactory(ref.getProject()).createType(containingClass);
+    }
+    return null;
   }
 }

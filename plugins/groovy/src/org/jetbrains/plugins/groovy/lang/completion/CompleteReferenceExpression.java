@@ -55,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
@@ -394,7 +393,7 @@ public class CompleteReferenceExpression {
   }
 
   private boolean isMap() {
-    final PsiType qType = GrReferenceResolveUtil.getQualifierType(myRefExpr);
+    final PsiType qType = PsiImplUtil.getQualifierType(myRefExpr);
     return InheritanceUtil.isInheritor(qType, CommonClassNames.JAVA_UTIL_MAP);
   }
 
@@ -436,7 +435,7 @@ public class CompleteReferenceExpression {
       myFieldPointerOperator = myRefExpr.hasAt();
       myMethodPointerOperator = myRefExpr.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap();
-      final PsiType thisType = GrReferenceResolveUtil.getQualifierType(myRefExpr);
+      final PsiType thisType = PsiImplUtil.getQualifierType(myRefExpr);
       mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, myRefExpr, myRefExpr.getParent());
     }
 
