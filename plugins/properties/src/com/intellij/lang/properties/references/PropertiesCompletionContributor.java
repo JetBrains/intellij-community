@@ -70,9 +70,6 @@ public class PropertiesCompletionContributor extends CompletionContributor {
 
       LookupElement[] variants = getVariants(propertyReference);
       result.withPrefixMatcher(prefix).addAllElements(Arrays.asList(variants));
-      if (variants.length != 0) {
-        result.stopHere();
-      }
     }
   }
 
