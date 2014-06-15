@@ -67,7 +67,6 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
               contentRoot,
               WEB_SITE_NAME,
               "myMainApp",
-              templateDir,
               djangoPath,
               false,
               false
