@@ -90,8 +90,13 @@ public abstract class HgPlatformTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myProjectFixture.tearDown();
-    super.tearDown();
+    try {
+      myProjectFixture.tearDown();
+      clearFields(this);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static void setUpHgrc(@NotNull VirtualFile repositoryRoot) throws IOException {
