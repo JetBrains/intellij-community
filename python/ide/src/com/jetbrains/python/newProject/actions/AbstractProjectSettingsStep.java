@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
@@ -292,14 +293,14 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
   public void setErrorText(@Nullable String text) {
     myErrorLabel.setText(text);
-    myErrorLabel.setForeground(JBColor.RED);
+    myErrorLabel.setForeground(MessageType.ERROR.getTitleForeground());
     myErrorLabel.setIcon(text == null ? null : AllIcons.Actions.Lightning);
     myCreateButton.setEnabled(text == null);
   }
 
   public void setWarningText(@Nullable String text) {
     myErrorLabel.setText("Note: " + text + "  ");
-    myErrorLabel.setForeground(JBColor.YELLOW);
+    myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
   }
 
   public void selectCompatiblePython() {
