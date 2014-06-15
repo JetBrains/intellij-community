@@ -293,7 +293,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   public void setErrorText(@Nullable String text) {
     myErrorLabel.setText(text);
     myErrorLabel.setForeground(JBColor.RED);
-    myErrorLabel.setIcon(AllIcons.Actions.Lightning);
+    myErrorLabel.setIcon(text == null ? null : AllIcons.Actions.Lightning);
     myCreateButton.setEnabled(text == null);
   }
 
