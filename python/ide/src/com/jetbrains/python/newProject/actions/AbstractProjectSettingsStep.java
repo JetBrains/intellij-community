@@ -87,23 +87,8 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     myCreateAction = new AnAction("Create    ", "Create Project", getIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        boolean isOk;
-        try {
-          isOk = checkValid();
-          if (myProjectGenerator instanceof WebProjectTemplate) {
-            final ValidationInfo validationInfo = ((WebProjectTemplate)myProjectGenerator).getPeer().validate();
-            isOk = validationInfo == null;
-            if (!isOk) {
-              setErrorText(validationInfo.message);
-            }
-          }
-        }
-        catch (RuntimeException e1) {
-          isOk = false;
-          setErrorText(e1.getMessage());
-        }
-
-        if (isOk && myCallback != null)
+        boolean isValid = checkValid();
+        if (isValid && myCallback != null)
           myCallback.consume(AbstractProjectSettingsStep.this);
       }
     };
@@ -255,8 +240,9 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         }
       }
       if (myProjectGenerator instanceof WebProjectTemplate) {
-        final ValidationInfo validationInfo = ((WebProjectTemplate)myProjectGenerator).getPeer().validate();
-        if (validationInfo != null) {
+        final WebProjectGenerator.GeneratorPeer peer = ((WebProjectTemplate)myProjectGenerator).getPeer();
+        final ValidationInfo validationInfo = peer.validate();
+        if (validationInfo != null && !peer.isBackgroundJobRunning()) {
           setErrorText(validationInfo.message);
           return false;
         }
