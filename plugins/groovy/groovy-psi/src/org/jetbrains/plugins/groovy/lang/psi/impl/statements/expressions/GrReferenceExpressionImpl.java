@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -261,16 +260,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     // Search in ClosureMissingMethodContributor
     if (!isQualified() && getContext() instanceof GrMethodCall) {
-      for (PsiElement e = this.getContext(); e != null; e = e.getContext()) {
-        if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, e);
-          for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
-            if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, state)) {
-              return;
-            }
-          }
-        }
-      }
+      ClosureMissingMethodContributor.processMethodsFromClosures(this, methodResolver);
     }
   }
 

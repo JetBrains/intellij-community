@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -62,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
@@ -156,14 +154,7 @@ public class CompleteReferenceExpression {
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(myRefExpr, myProcessor, true);
 
-      for (PsiElement e = myRefExpr.getParent(); e != null; e = e.getParent()) {
-        if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, e);
-          for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
-            contributor.processMembers((GrClosableBlock)e, myProcessor, myRefExpr, state);
-          }
-        }
-      }
+      ClosureMissingMethodContributor.processMethodsFromClosures(myRefExpr, myProcessor);
 
       GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(myRefExpr);
       if (runtimeQualifier != null) {
