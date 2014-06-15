@@ -381,7 +381,7 @@
                                  implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
 
     <methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.GroovyMethodImplementor"/>
-    <!--<methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.TraitMethodImplementor"/>-->
+    <methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.TraitMethodImplementor"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyAnnotationAttributeInfoHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyTypeParameterInfoHandler"/>
