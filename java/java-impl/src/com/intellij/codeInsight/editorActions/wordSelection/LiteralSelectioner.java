@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 
 import java.util.List;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class LiteralSelectioner extends BasicSelectioner {
   @Override
@@ -34,8 +37,10 @@ public class LiteralSelectioner extends BasicSelectioner {
   }
 
   private static boolean isStringLiteral(PsiElement element) {
-    return element instanceof PsiLiteralExpression &&
-           ((PsiLiteralExpression)element).getType().equalsToText("java.lang.String") && element.getText().startsWith("\"") && element.getText().endsWith("\"");
+    final PsiType type = element instanceof PsiLiteralExpression ? ((PsiLiteralExpression)element).getType() : null;
+    return  type != null && type.equalsToText(JAVA_LANG_STRING)
+            && element.getText().startsWith("\"")
+            && element.getText().endsWith("\"");
   }
 
   @Override
