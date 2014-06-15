@@ -125,6 +125,7 @@ public abstract class GitPlatformTest extends UsefulTestCase {
       myDialogManager.cleanup();
       myVcsNotifier.cleanup();
       myProjectFixture.tearDown();
+      clearFields(this);
     }
     finally {
       super.tearDown();

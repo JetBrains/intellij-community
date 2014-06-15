@@ -408,7 +408,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           extension.getKeyDescriptor(),
           extension.getValueExternalizer(),
           extension.getCacheSize(),
-          extension.isKeyHighlySelective(),
+          extension.keyIsUniqueForIndexedFile(),
           extension.traceKeyHashToVirtualFileMapping()
         );
 

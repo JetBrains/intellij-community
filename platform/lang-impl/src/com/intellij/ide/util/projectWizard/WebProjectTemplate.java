@@ -15,11 +15,9 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.module.*;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.module.WebModuleBuilder;
+import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
@@ -28,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -60,8 +57,13 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
     return WebModuleBuilder.ICON;
   }
 
+  public Icon getLogo() {
+    return AllIcons.Nodes.PpWebLogo;
+  }
+
   @NotNull
   public GeneratorPeer<T> getPeer() {
     return myPeerHolder.getValue();
   }
+
 }

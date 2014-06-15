@@ -30,7 +30,7 @@ import java.util.List;
  * Created by Max Medvedev on 03/06/14
  */
 public class ClashingTraitMethodsInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance(MyQuickFix.class);
+  private static final Logger LOG = Logger.getInstance(ClashingTraitMethodsInspection.class);
 
   @NotNull
   @Override

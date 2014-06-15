@@ -39,4 +39,6 @@ public abstract class PyPackageManager {
   public abstract void showInstallationError(Project project, String title, String description);
   public abstract void showInstallationError(Component owner, String title, String description);
   public abstract void refresh();
+  public abstract PyPackage findPackage(String name) throws PyExternalProcessException;
+
 }

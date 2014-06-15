@@ -79,5 +79,10 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
     public boolean hasAscendingOrder() {
       return false;
     }
+
+    @Override
+    public ValueContainer.IntIterator createCopyInInitialState() {
+      return new IntSetIterator();
+    }
   }
 }

@@ -75,7 +75,7 @@ public class StubSerializationHelper {
 
   public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-    FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
 
     doSerialize(rootStub, stubOutputStream);
@@ -98,18 +98,19 @@ public class StubSerializationHelper {
 
   @NotNull
   public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
-    FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
-    final int size = DataInputOutputUtil.readINT(inputStream);
+    final int numberOfStrings = DataInputOutputUtil.readINT(inputStream);
     byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+    storage.myStrings.ensureCapacity(numberOfStrings);
 
-    int i = 1;
-    while(i <= size) {
+    int i = 0;
+    while(i < numberOfStrings) {
       String s = myStringInterner.get(IOUtil.readUTFFast(buffer, inputStream));
       storage.myStrings.add(s);
-      storage.myEnumerates.put(s, i);
       ++i;
     }
+
     return deserialize(inputStream, null);
   }
 
@@ -139,12 +140,18 @@ public class StubSerializationHelper {
   }
 
   private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
-    private final TObjectIntHashMap<String> myEnumerates = new TObjectIntHashMap<String>();
+    private final TObjectIntHashMap<String> myEnumerates;
     private final ArrayList<String> myStrings = new ArrayList<String>();
+
+    FileLocalStringEnumerator(boolean forSavingStub) {
+      if (forSavingStub) myEnumerates = new TObjectIntHashMap<String>();
+      else myEnumerates = null;
+    }
 
     @Override
     public int enumerate(@Nullable String value) throws IOException {
       if (value == null) return 0;
+      assert myEnumerates != null; // enumerate possible only when writing stub
       int i = myEnumerates.get(value);
       if (i == 0) {
         myEnumerates.put(value, i = myStrings.size() + 1);

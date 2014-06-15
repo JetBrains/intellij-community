@@ -132,6 +132,11 @@ public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
     public boolean hasAscendingOrder() {
       return true;
     }
+
+    @Override
+    public ValueContainer.IntIterator createCopyInInitialState() {
+      return new Iterator();
+    }
   }
 
   private static int binarySearch(int[] set, int off, int length, int key) {

@@ -381,7 +381,7 @@
                                  implementationClass="org.jetbrains.plugins.groovy.overrideImplement.GroovyImplementMethodsHandler"/>
 
     <methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.GroovyMethodImplementor"/>
-    <!--<methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.TraitMethodImplementor"/>-->
+    <methodImplementor implementation="org.jetbrains.plugins.groovy.overrideImplement.TraitMethodImplementor"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyAnnotationAttributeInfoHandler"/>
     <codeInsight.parameterInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyTypeParameterInfoHandler"/>
@@ -925,12 +925,10 @@
                      displayName="Overly complex arithmetic expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOverlyComplexArithmeticExpressionInspection"/>
-<!--
     <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingTraitMethods"
                      displayName="Clashing trait methods"
                      groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection"/>
--->
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyOverlyComplexBooleanExpression"
                      displayName="Overly complex boolean expression"

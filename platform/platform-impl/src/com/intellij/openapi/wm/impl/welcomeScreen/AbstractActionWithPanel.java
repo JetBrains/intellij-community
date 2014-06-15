@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.newProject;
+package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.DumbAware;
 
-/**
- * @author yole
- */
-public interface PyFrameworkProjectGenerator<T> extends DirectoryProjectGenerator<T> {
-  String getFrameworkTitle();
+import javax.swing.*;
 
-  boolean isFrameworkInstalled(Sdk sdk);
+public abstract class AbstractActionWithPanel extends AnAction implements DumbAware {
 
-  boolean acceptsRemoteSdk();
+  public abstract JPanel createPanel();
 
-  boolean supportsPython3();
 }
