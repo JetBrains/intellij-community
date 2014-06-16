@@ -86,7 +86,7 @@ public class SvnRecursiveStatusWalker {
         }
       } else {
         try {
-          final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
+          final SVNStatus status = item.getClient().doStatus(ioFile, false);
           myReceiver.process(path, status);
         } catch (SVNException e) {
           handleStatusException(item, path, e);

@@ -198,7 +198,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     SVNStatus result = null;
 
     try {
-      result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote, false);
+      result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote);
     }
     catch (SVNException e) {
       LOG.debug(e);

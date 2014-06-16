@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -93,11 +92,6 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public SVNStatus doStatus(File path, boolean remote) throws SVNException {
     return getStatusClient().doStatus(path, remote);
-  }
-
-  @Override
-  public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
-    return getStatusClient().doStatus(path, remote, collectParentExternals);
   }
 
   @NotNull

@@ -40,5 +40,4 @@ public interface StatusClient extends SvnClient {
           boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler,
           Collection changeLists) throws SVNException;
   SVNStatus doStatus( File path, boolean remote) throws SVNException;
-  SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException;
 }

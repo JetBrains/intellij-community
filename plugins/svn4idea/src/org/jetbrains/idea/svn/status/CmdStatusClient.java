@@ -269,13 +269,8 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   public SVNStatus doStatus(File path, boolean remote) throws SVNException {
-    return doStatus(path, remote, false);
-  }
-
-  @Override
-  public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
     final SVNStatus[] svnStatus = new SVNStatus[1];
-    doStatus(path, SVNRevision.UNDEFINED, SVNDepth.EMPTY, remote, false, false, collectParentExternals, new ISVNStatusHandler() {
+    doStatus(path, SVNRevision.UNDEFINED, SVNDepth.EMPTY, remote, false, false, false, new ISVNStatusHandler() {
       @Override
       public void handleStatus(SVNStatus status) throws SVNException {
         svnStatus[0] = status;
