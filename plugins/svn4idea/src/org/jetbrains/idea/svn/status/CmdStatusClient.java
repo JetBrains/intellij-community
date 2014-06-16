@@ -52,13 +52,6 @@ import java.util.*;
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
-  public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
-    throws SVNException {
-    return doStatus(path, SVNRevision.UNDEFINED, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, remote, reportAll, includeIgnored, false,
-                    handler, null);
-  }
-
-  @Override
   public long doStatus(final File path,
                        final SVNRevision revision,
                        final SVNDepth depth,

@@ -32,10 +32,16 @@ import java.util.Collection;
  * Time: 9:46 AM
  */
 public interface StatusClient extends SvnClient {
-  long doStatus(File path, boolean recursive, boolean remote, boolean reportAll,
-          boolean includeIgnored, ISVNStatusHandler handler) throws SVNException;
-  long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll,
-          boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler,
-          Collection changeLists) throws SVNException;
+
+  long doStatus(File path,
+                SVNRevision revision,
+                SVNDepth depth,
+                boolean remote,
+                boolean reportAll,
+                boolean includeIgnored,
+                boolean collectParentExternals,
+                ISVNStatusHandler handler,
+                Collection changeLists) throws SVNException;
+
   SVNStatus doStatus( File path, boolean remote) throws SVNException;
 }
