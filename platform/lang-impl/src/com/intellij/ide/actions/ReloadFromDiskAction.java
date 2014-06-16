@@ -50,6 +50,7 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
             @Override
             public void run() {
               if (!project.isDisposed()) {
+                file.getVirtualFile().refresh(false, false);
                 PsiManager.getInstance(project).reloadFromDisk(file);
               }
             }
