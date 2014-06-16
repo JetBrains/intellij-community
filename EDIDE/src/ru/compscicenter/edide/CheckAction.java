@@ -6,9 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -33,13 +30,13 @@ public class CheckAction extends AnAction {
       return;
     }
     String basePath = project.getBasePath();
-
     if (basePath == null) return;
     Editor editor = StudyEditor.getRecentOpenedEditor(project);
     if (editor == null) {
       return;
     }
     VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    //TODO: replace with platform independent path join
     String testFile = basePath +
                       "/.idea/" + tm.getTest(tm.getTaskNumForFile(vfOpenedFile.getName()));
     GeneralCommandLine cmd = new GeneralCommandLine();
@@ -66,6 +63,7 @@ public class CheckAction extends AnAction {
         }
         System.out.println(line);
       }
+      //TODO: replace with popup
       JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.DEFAULT_OPTION);
       if (testResult == "test passed") {
         int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;

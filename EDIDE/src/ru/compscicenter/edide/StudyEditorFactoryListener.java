@@ -1,8 +1,6 @@
 package ru.compscicenter.edide;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
+
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import gherkin.deps.net.iharder.Base64;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -29,12 +28,14 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
 
   protected boolean fileChanged(VirtualFile file) throws IOException {
     File usual_file = new File(file.getPath());
-    File template = new File(StudyEditorFactoryListener.class.getResource(file.getName()).getFile());
-    char[] text1 = FileUtil.loadFileText(usual_file);
-    char[] text2 = FileUtil.loadFileText(template);
-    for (int i = 0; i < text1.length; i++) {
-      boolean r = (text1[i] == text2[i]);
-      if (r == false) return true;
+    InputStream usual_file_stream = new FileInputStream(usual_file);
+    InputStream metaIs = StudyEditorFactoryListener.class.getResourceAsStream(file.getName());
+    int sym;
+    while( (sym = metaIs.read()) != -1) {
+      int sym2 = usual_file_stream.read();
+      if (sym != sym2) {
+        return true;
+      }
     }
     return false;
   }
