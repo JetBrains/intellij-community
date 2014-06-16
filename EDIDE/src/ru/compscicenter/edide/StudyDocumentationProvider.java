@@ -22,60 +22,62 @@ import java.util.List;
  */
 public class StudyDocumentationProvider extends DocumentationProviderEx {
 
-    @Nullable
-    @Override
-    public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-        return "Study docs";
+  @Nullable
+  @Override
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    return "Study docs";
+  }
+
+  @Nullable
+  @Override
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+    return null;
+  }
+
+
+  @Nullable
+  @Override
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+    String file = element.getContainingFile().getName();
+    Editor editor = StudyEditor.getRecentOpenedEditor(element.getProject());
+    LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
+    TaskManager tm = TaskManager.getInstance();
+    int taskNum = tm.getTaskNumForFile(file);
+    String docsfile = tm.getDocFileForTask(taskNum, pos, file);
+    if (docsfile == null) {
+      docsfile = "empty_study.docs";
     }
-
-    @Nullable
-    @Override
-    public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-        return null;
+    InputStream ip = StudyDocumentationProvider.class.getResourceAsStream(docsfile);
+    BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
+    StringBuilder text = new StringBuilder();
+    try {
+      while (bf.ready()) {
+        String line = bf.readLine();
+        text.append(line + "\n");
+      }
     }
-
-
-
-    @Nullable
-    @Override
-    public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-        String file = element.getContainingFile().getName();
-        Editor editor = StudyEditor.getRecentOpenedEditor(element.getProject());
-        LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-        TaskManager tm =  TaskManager.getInstance();
-        int taskNum = tm.getTaskNumForFile(file);
-        String docsfile = tm.getDocFileForTask(taskNum, pos, file);
-        if (docsfile == null) {
-            docsfile = "empty_study.docs";
-        }
-        InputStream ip = StudyDocumentationProvider.class.getResourceAsStream(docsfile);
-        BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
-        StringBuilder text = new StringBuilder();
-        try {
-            while(bf.ready()) {
-                String line = bf.readLine();
-                text.append(line + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return text.toString();
+    catch (IOException e) {
+      e.printStackTrace();
     }
+    return text.toString();
+  }
 
-    @Nullable
-    @Override
-    public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-        return null;
-    }
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    return null;
+  }
 
-    @Nullable
-    @Override
-    public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-        return null;
-    }
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+    return null;
+  }
 
-    @Override
-    public PsiElement getCustomDocumentationElement(@NotNull final Editor editor, @NotNull final PsiFile file, @Nullable PsiElement contextElement) {
-        return null;
-    }
+  @Override
+  public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
+                                                  @NotNull final PsiFile file,
+                                                  @Nullable PsiElement contextElement) {
+    return null;
+  }
 }

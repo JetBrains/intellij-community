@@ -13,44 +13,45 @@ import org.jetbrains.annotations.NotNull;
  * Time: 12:45
  */
 public class StudyFileEditorProvider implements FileEditorProvider {
-    public static final String EDITOR_TYPE_ID = "StudyEditor";
-    private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
-    @Override
-    public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-        return defaultTextEditorProvider.accept(project, file);
-    }
+  public static final String EDITOR_TYPE_ID = "StudyEditor";
+  private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
 
-    @NotNull
-    @Override
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        return new StudyEditor(project, file);
-    }
+  @Override
+  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+    return defaultTextEditorProvider.accept(project, file);
+  }
 
-    @Override
-    public void disposeEditor(@NotNull FileEditor editor) {
-      defaultTextEditorProvider.disposeEditor(editor);
-    }
+  @NotNull
+  @Override
+  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    return new StudyEditor(project, file);
+  }
 
-    @NotNull
-    @Override
-    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-        return defaultTextEditorProvider.readState(sourceElement, project, file);
-    }
+  @Override
+  public void disposeEditor(@NotNull FileEditor editor) {
+    defaultTextEditorProvider.disposeEditor(editor);
+  }
 
-    @Override
-    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
-      defaultTextEditorProvider.writeState(state, project, targetElement);
-    }
+  @NotNull
+  @Override
+  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+    return defaultTextEditorProvider.readState(sourceElement, project, file);
+  }
 
-    @NotNull
-    @Override
-    public String getEditorTypeId() {
-        return EDITOR_TYPE_ID;
-    }
+  @Override
+  public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+    defaultTextEditorProvider.writeState(state, project, targetElement);
+  }
 
-    @NotNull
-    @Override
-    public FileEditorPolicy getPolicy() {
-        return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
-    }
+  @NotNull
+  @Override
+  public String getEditorTypeId() {
+    return EDITOR_TYPE_ID;
+  }
+
+  @NotNull
+  @Override
+  public FileEditorPolicy getPolicy() {
+    return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+  }
 }

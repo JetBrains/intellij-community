@@ -24,63 +24,61 @@ import java.io.InputStreamReader;
  * Time: 20:33
  */
 public class CheckAction extends AnAction {
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-        Project project = e.getProject();
-        FileDocumentManager.getInstance().saveAllDocuments();
-        TaskManager tm = TaskManager.getInstance();
-        if (!project.isOpen()) {
-            return;
-        }
-        String basePath = project.getBasePath();
-
-        if (basePath == null) return;
-        Editor editor = StudyEditor.getRecentOpenedEditor(project);
-        if (editor == null) {
-            return;
-        }
-        VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        String testFile =  basePath +
-                "/.idea/" + tm.getTest(tm.getTaskNumForFile(vfOpenedFile.getName()));
-        GeneralCommandLine cmd = new GeneralCommandLine();
-        cmd.setWorkDirectory(basePath + "/.idea");
-        cmd.setExePath("python");
-        cmd.addParameter(testFile);
-        try {
-            Process p = cmd.createProcess();
-            InputStream is_err =  p.getErrorStream();
-            InputStream is = p.getInputStream();
-            BufferedReader bf = new BufferedReader(new InputStreamReader(is));
-            BufferedReader bf_err = new BufferedReader(new InputStreamReader(is_err));
-            String line;
-            String testResult = "test failed";
-            while ((line = bf.readLine())!=null) {
-                if (line.equals("OK")) {
-                    testResult = "test passed";
-                }
-                System.out.println(line);
-            }
-            while ((line = bf_err.readLine())!=null) {
-                if (line == "OK") {
-                    testResult = "test passed";
-                }
-                System.out.println(line);
-            }
-            JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.DEFAULT_OPTION);
-            if (testResult == "test passed") {
-                int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
-                if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
-                    TaskManager.getInstance().incrementTask();
-                }
-            }
-
-
-
-        } catch (ExecutionException e1) {
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    Project project = e.getProject();
+    FileDocumentManager.getInstance().saveAllDocuments();
+    TaskManager tm = TaskManager.getInstance();
+    if (!project.isOpen()) {
+      return;
     }
+    String basePath = project.getBasePath();
+
+    if (basePath == null) return;
+    Editor editor = StudyEditor.getRecentOpenedEditor(project);
+    if (editor == null) {
+      return;
+    }
+    VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    String testFile = basePath +
+                      "/.idea/" + tm.getTest(tm.getTaskNumForFile(vfOpenedFile.getName()));
+    GeneralCommandLine cmd = new GeneralCommandLine();
+    cmd.setWorkDirectory(basePath + "/.idea");
+    cmd.setExePath("python");
+    cmd.addParameter(testFile);
+    try {
+      Process p = cmd.createProcess();
+      InputStream is_err = p.getErrorStream();
+      InputStream is = p.getInputStream();
+      BufferedReader bf = new BufferedReader(new InputStreamReader(is));
+      BufferedReader bf_err = new BufferedReader(new InputStreamReader(is_err));
+      String line;
+      String testResult = "test failed";
+      while ((line = bf.readLine()) != null) {
+        if (line.equals("OK")) {
+          testResult = "test passed";
+        }
+        System.out.println(line);
+      }
+      while ((line = bf_err.readLine()) != null) {
+        if (line == "OK") {
+          testResult = "test passed";
+        }
+        System.out.println(line);
+      }
+      JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.DEFAULT_OPTION);
+      if (testResult == "test passed") {
+        int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
+        if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
+          TaskManager.getInstance().incrementTask();
+        }
+      }
+    }
+    catch (ExecutionException e1) {
+      e1.printStackTrace();
+    }
+    catch (IOException e1) {
+      e1.printStackTrace();
+    }
+  }
 }

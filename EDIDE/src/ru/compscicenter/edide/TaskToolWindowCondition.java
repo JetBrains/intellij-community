@@ -4,8 +4,8 @@ import com.intellij.openapi.util.Condition;
 
 public class TaskToolWindowCondition implements Condition {
 
-    @Override
-    public boolean value(Object o) {
-        return true;
-    }
+  @Override
+  public boolean value(Object o) {
+    return true;
+  }
 }

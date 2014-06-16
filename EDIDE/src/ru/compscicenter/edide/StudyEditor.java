@@ -22,135 +22,137 @@ import java.beans.PropertyChangeListener;
  * Time: 14:16
  */
 public class StudyEditor implements FileEditor {
-    private FileEditor defaultEditor;
-    final JComponent comp;
+  private FileEditor defaultEditor;
+  final JComponent comp;
 
-    private String getTextForTask(VirtualFile file) {
-        int taskNum = TaskManager.getInstance().getTaskNumForFile(file.getName());
-        return TaskManager.getInstance().getTaskText(taskNum);
-    }
+  private String getTextForTask(VirtualFile file) {
+    int taskNum = TaskManager.getInstance().getTaskNumForFile(file.getName());
+    return TaskManager.getInstance().getTaskText(taskNum);
+  }
 
-    public StudyEditor(Project project, VirtualFile file) {
-        defaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
-        comp = defaultEditor.getComponent();
-        JLabel taskText = new JLabel(getTextForTask(file));
-        taskText.setFont(new Font("Arial", Font.PLAIN, 16));
-        comp.add(taskText, BorderLayout.NORTH);
-    }
+  public StudyEditor(Project project, VirtualFile file) {
+    defaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
+    comp = defaultEditor.getComponent();
+    JLabel taskText = new JLabel(getTextForTask(file));
+    taskText.setFont(new Font("Arial", Font.PLAIN, 16));
+    comp.add(taskText, BorderLayout.NORTH);
+  }
 
-    public FileEditor getDefaultEditor() {
-        return defaultEditor;
-    }
+  public FileEditor getDefaultEditor() {
+    return defaultEditor;
+  }
 
-    @NotNull
-    @Override
-    public JComponent getComponent() {
-        return comp;
-    }
+  @NotNull
+  @Override
+  public JComponent getComponent() {
+    return comp;
+  }
 
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-        return comp;
-    }
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return comp;
+  }
 
-    @NotNull
-    @Override
-    public String getName() {
-        return "Study Editor";
-    }
+  @NotNull
+  @Override
+  public String getName() {
+    return "Study Editor";
+  }
 
-    @NotNull
-    @Override
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-        return defaultEditor.getState(level);
-    }
+  @NotNull
+  @Override
+  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    return defaultEditor.getState(level);
+  }
 
-    @Override
-    public void setState(@NotNull FileEditorState state) {
-        defaultEditor.setState(state);
-    }
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    defaultEditor.setState(state);
+  }
 
-    @Override
-    public boolean isModified() {
-        return defaultEditor.isModified();
-    }
+  @Override
+  public boolean isModified() {
+    return defaultEditor.isModified();
+  }
 
-    @Override
-    public boolean isValid() {
-        return defaultEditor.isValid();
-    }
+  @Override
+  public boolean isValid() {
+    return defaultEditor.isValid();
+  }
 
-    @Override
-    public void selectNotify() {
-      defaultEditor.selectNotify();
-    }
+  @Override
+  public void selectNotify() {
+    defaultEditor.selectNotify();
+  }
 
-    @Override
-    public void deselectNotify() {
-        defaultEditor.deselectNotify();
-    }
+  @Override
+  public void deselectNotify() {
+    defaultEditor.deselectNotify();
+  }
 
-    @Override
-    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-        defaultEditor.addPropertyChangeListener(listener);
-    }
+  @Override
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+    defaultEditor.addPropertyChangeListener(listener);
+  }
 
-    @Override
-    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-        defaultEditor.removePropertyChangeListener(listener);
-    }
+  @Override
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+    defaultEditor.removePropertyChangeListener(listener);
+  }
 
-    @Nullable
-    @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-        return defaultEditor.getBackgroundHighlighter();
-    }
+  @Nullable
+  @Override
+  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    return defaultEditor.getBackgroundHighlighter();
+  }
 
-    @Nullable
-    @Override
-    public FileEditorLocation getCurrentLocation() {
-        return defaultEditor.getCurrentLocation();
-    }
+  @Nullable
+  @Override
+  public FileEditorLocation getCurrentLocation() {
+    return defaultEditor.getCurrentLocation();
+  }
 
-    @Nullable
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-        return defaultEditor.getStructureViewBuilder();
-    }
+  @Nullable
+  @Override
+  public StructureViewBuilder getStructureViewBuilder() {
+    return defaultEditor.getStructureViewBuilder();
+  }
 
-    @Override
-    public void dispose() {
-        defaultEditor.dispose();
-    }
+  @Override
+  public void dispose() {
+    defaultEditor.dispose();
+  }
 
-    @Nullable
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-        return defaultEditor.getUserData(key);
-    }
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return defaultEditor.getUserData(key);
+  }
 
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-        defaultEditor.putUserData(key, value);
-    }
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    defaultEditor.putUserData(key, value);
+  }
 
 
-    static public Editor getRecentOpenedEditor(Project project) {
-        FileEditor[] fes = FileEditorManager.getInstance(project).getAllEditors();
-        for (int i = fes.length-1; i>=0; i--) {
-            FileEditor fe = fes[i];
-            if (!(fe instanceof StudyEditor)) {
-                continue;
-            } else {
-                FileEditor defaultEditor = ((StudyEditor)fe).getDefaultEditor();
-                if (!(defaultEditor instanceof PsiAwareTextEditorImpl)) {
-                    continue;
-                } else {
-                    return ((PsiAwareTextEditorImpl) defaultEditor).getEditor();
-                }
-            }
+  static public Editor getRecentOpenedEditor(Project project) {
+    FileEditor[] fes = FileEditorManager.getInstance(project).getAllEditors();
+    for (int i = fes.length - 1; i >= 0; i--) {
+      FileEditor fe = fes[i];
+      if (!(fe instanceof StudyEditor)) {
+        continue;
+      }
+      else {
+        FileEditor defaultEditor = ((StudyEditor)fe).getDefaultEditor();
+        if (!(defaultEditor instanceof PsiAwareTextEditorImpl)) {
+          continue;
         }
-        return null;
+        else {
+          return ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
+        }
+      }
     }
+    return null;
+  }
 }
