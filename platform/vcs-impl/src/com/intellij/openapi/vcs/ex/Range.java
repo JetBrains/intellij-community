@@ -154,22 +154,4 @@ public class Range {
   public RangeHighlighter getHighlighter() {
     return myRangeHighlighter;
   }
-
-  public boolean contains(int offset1, int offset2) {
-    return  getOffset1() <= offset1 && getOffset2() >= offset2;
-  }
-
-  public boolean containsLine(int line) {
-    if (myType == DELETED) return (myOffset1 - 1) <= line
-                                  && (myOffset2) >= line;
-    return myOffset1 <= line && myOffset2 >= line;
-  }
-
-  public boolean isAfter(int line) {
-    if (myType == DELETED)
-      return (getOffset1() - 1) > line;
-    else
-      return getOffset1() > line;
-  }
-
 }

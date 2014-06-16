@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,21 +153,45 @@ public class OrderEntryUtil {
     rootModel.commit();
   }
 
-  public static void replaceLibrary(@NotNull ModifiableRootModel model, @NotNull Library oldLibrary, @NotNull Library newLibrary) {
-    OrderEntry[] entries = model.getOrderEntries();
+  private static int findLibraryOrderEntry(@NotNull OrderEntry[] entries, @NotNull Library library) {
     for (int i = 0; i < entries.length; i++) {
-      OrderEntry orderEntry = entries[i];
-      if (orderEntry instanceof LibraryOrderEntry && oldLibrary.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
-        model.removeOrderEntry(orderEntry);
-        final LibraryOrderEntry newEntry = model.addLibraryEntry(newLibrary);
-        final OrderEntry[] newEntries = new OrderEntry[entries.length];
-        System.arraycopy(entries, 0, newEntries, 0, i);
-        newEntries[i] = newEntry;
-        System.arraycopy(entries, i, newEntries, i+1, entries.length - i - 1);
-        model.rearrangeOrderEntries(newEntries);
-        return;
+      OrderEntry entry = entries[i];
+      if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)entry).getLibrary())) {
+        return i;
       }
     }
+    return -1;
+  }
+
+  public static void replaceLibrary(@NotNull ModifiableRootModel model, @NotNull Library oldLibrary, @NotNull Library newLibrary) {
+    int i = findLibraryOrderEntry(model.getOrderEntries(), oldLibrary);
+    if (i == -1) return;
+
+    model.addLibraryEntry(newLibrary);
+    replaceLibraryByAdded(model, i);
+  }
+
+  public static void replaceLibraryEntryByAdded(@NotNull ModifiableRootModel model, @NotNull LibraryOrderEntry entry) {
+    int i = ArrayUtil.indexOf(model.getOrderEntries(), entry);
+    if (i == -1) return;
+
+    replaceLibraryByAdded(model, i);
+  }
+
+  private static void replaceLibraryByAdded(ModifiableRootModel model, int toReplace) {
+    OrderEntry[] entries = model.getOrderEntries();
+    LibraryOrderEntry newEntry = (LibraryOrderEntry)entries[entries.length - 1];
+    LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entries[toReplace];
+    boolean exported = libraryEntry.isExported();
+    DependencyScope scope = libraryEntry.getScope();
+    model.removeOrderEntry(libraryEntry);
+    newEntry.setExported(exported);
+    newEntry.setScope(scope);
+    final OrderEntry[] newEntries = new OrderEntry[entries.length-1];
+    System.arraycopy(entries, 0, newEntries, 0, toReplace);
+    newEntries[toReplace] = newEntry;
+    System.arraycopy(entries, toReplace + 1, newEntries, toReplace + 1, entries.length - toReplace - 2);
+    model.rearrangeOrderEntries(newEntries);
   }
 
   public static <T extends OrderEntry> void processOrderEntries(@NotNull Module module,

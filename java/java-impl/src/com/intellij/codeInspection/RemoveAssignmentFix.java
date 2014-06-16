@@ -40,7 +40,7 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     if (!(parent instanceof PsiAssignmentExpression)) return;
     final PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
     final PsiElement gParent = parent.getParent();
-    if (gParent instanceof PsiExpression && rExpression != null) {
+    if ((gParent instanceof PsiExpression || gParent instanceof PsiExpressionList) && rExpression != null) {
       if (!FileModificationService.getInstance().prepareFileForWrite(gParent.getContainingFile())) return;
       if (gParent instanceof PsiParenthesizedExpression) {
         gParent.replace(rExpression);
