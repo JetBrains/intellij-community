@@ -95,6 +95,7 @@ target(name: "compile", description: "Compile module python") {
     dirset(dir: "${pluginHome}") {
       include(name: "resources")
       include(name: "src")
+      include(name: "gen")
       include(name: "pluginSrc")
       include(name: "pydevSrc")
       include(name: "openapi/src")
