@@ -27,6 +27,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -335,11 +336,15 @@ public class Bookmark implements Navigatable {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      g.setColor(ICON_BACKGROUND_COLOR);
-      g.fillRect(x, y, getIconWidth(), getIconHeight());
-      g.setColor(JBColor.GRAY);
-      g.drawRect(x, y, getIconWidth(), getIconHeight());
-      myIcon.paintIcon(c, g, x, y);
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        Color gutterBackground = EditorColors.GUTTER_BACKGROUND.getDefaultColor();
+        g2.setColor(gutterBackground);
+        g2.fillRoundRect(x, y, getIconWidth(), getIconHeight(), 4, 4);
+        myIcon.paintIcon(c, g2, x, y);
+      } finally {
+        g2.dispose();
+      }
     }
 
     @Override

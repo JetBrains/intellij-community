@@ -1157,7 +1157,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public ArrayReference newInstance(final ArrayType arrayType,
                                     final int dimension)
     throws EvaluateException {
-    return arrayType.newInstance(dimension);
+    try {
+      return arrayType.newInstance(dimension);
+    }
+    catch (Exception e) {
+      throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
   }
 
   @Override
