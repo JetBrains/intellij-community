@@ -47,22 +47,6 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
   private static final String ourAuthenticationRealm = "Authentication realm:";
 
-  @Override
-  public long[] doUpdate(final File[] paths, final SVNRevision revision, final SVNDepth depth, final boolean allowUnversionedObstructions,
-                         final boolean depthIsSticky, final boolean makeParents) throws SVNException {
-    // since one revision is passed -> I assume same repository here
-    checkWorkingCopy(paths[0]);
-
-    final List<String> parameters = new ArrayList<String>();
-
-    fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
-    CommandUtil.put(parameters, makeParents, "--parents");
-    CommandUtil.put(parameters, myIgnoreExternals, "--ignore-externals");
-    CommandUtil.put(parameters, paths);
-
-    return run(paths, parameters, SvnCommandName.up);
-  }
-
   private void checkWorkingCopy(@NotNull File path) throws SVNException {
     final SVNInfo info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
 
@@ -71,14 +55,13 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     }
   }
 
-  private long[] run(@NotNull File[] paths, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SVNException {
-    File base = paths[0];
-    base = base.isDirectory() ? base : base.getParentFile();
+  private long[] run(@NotNull File path, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SVNException {
+    File base = path.isDirectory() ? path : path.getParentFile();
 
     final AtomicReference<long[]> updatedToRevision = new AtomicReference<long[]>();
     updatedToRevision.set(new long[0]);
 
-    final BaseUpdateCommandListener listener = createCommandListener(paths, updatedToRevision, base);
+    final BaseUpdateCommandListener listener = createCommandListener(new File[]{path}, updatedToRevision, base);
     try {
       execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
     }
@@ -157,7 +140,15 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   @Override
   public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SVNException {
-    final long[] longs = doUpdate(new File[]{path}, revision, depth, allowUnversionedObstructions, depthIsSticky, false);
+    checkWorkingCopy(path);
+
+    final List<String> parameters = new ArrayList<String>();
+
+    fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
+    CommandUtil.put(parameters, myIgnoreExternals, "--ignore-externals");
+    CommandUtil.put(parameters, path);
+
+    final long[] longs = run(path, parameters, SvnCommandName.up);
     return longs[0];
   }
 
@@ -178,7 +169,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
     parameters.add("--ignore-ancestry");
 
-    long[] revisions = run(new File[]{path}, parameters, SvnCommandName.switchCopy);
+    long[] revisions = run(path, parameters, SvnCommandName.switchCopy);
 
     return revisions != null && revisions.length > 0 ? revisions[0] : -1;
   }

@@ -32,8 +32,6 @@ import java.io.File;
  */
 public interface UpdateClient extends SvnClient {
 
-  long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean makeParents) throws SVNException;
-
   long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException;
 
   void setUpdateLocksOnDemand(boolean locksOnDemand);

@@ -40,16 +40,6 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
   protected boolean myLocksOnDemand;
 
   @Override
-  public long[] doUpdate(File[] paths,
-                         SVNRevision revision,
-                         SVNDepth depth,
-                         boolean allowUnversionedObstructions,
-                         boolean depthIsSticky,
-                         boolean makeParents) throws SVNException {
-    return getClient().doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
-  }
-
-  @Override
   public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SVNException {
     return getClient().doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
