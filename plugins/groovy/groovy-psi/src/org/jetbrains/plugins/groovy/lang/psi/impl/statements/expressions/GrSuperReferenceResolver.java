@@ -53,16 +53,16 @@ public class GrSuperReferenceResolver {
       GroovyResolveResult result = ((GrReferenceExpression)qualifier).advancedResolve();
       PsiElement resolved = result.getElement();
       if (resolved instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)resolved;
+        PsiClass superClass = (PsiClass)resolved;
 
         GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(ref, GrTypeDefinition.class, true);
-        if (scopeClass != null && GrTraitUtil.isTrait(aClass) && aClass.isInheritor(scopeClass, false)) {
-          PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, scopeClass, PsiSubstitutor.EMPTY);
-          return new GroovyResolveResultImpl[]{new GroovyResolveResultImpl(aClass, null, null, superClassSubstitutor, true, true)};
+        if (scopeClass != null && GrTraitUtil.isTrait(superClass) && scopeClass.isInheritor(superClass, false)) {
+          PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, scopeClass, PsiSubstitutor.EMPTY);
+          return new GroovyResolveResultImpl[]{new GroovyResolveResultImpl(superClass, null, null, superClassSubstitutor, true, true)};
         }
 
-        if (PsiUtil.hasEnclosingInstanceInScope(aClass, ref, false)) {
-          return getSuperClass(aClass);
+        if (PsiUtil.hasEnclosingInstanceInScope(superClass, ref, false)) {
+          return getSuperClass(superClass);
         }
       }
     }
