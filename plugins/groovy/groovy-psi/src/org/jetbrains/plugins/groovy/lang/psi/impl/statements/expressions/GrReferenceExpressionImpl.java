@@ -235,6 +235,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return fieldList.toArray(new GroovyResolveResult[fieldList.size()]);
     }
 
+    if (classCandidates == null && canBeClassOrPackage ) {
+      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
+      resolveRunner.resolveImpl(classProcessor);
+      classCandidates = classProcessor.getCandidates();
+    }
+
     if (classCandidates != null && classCandidates.length > 0) return classCandidates;
     if (!accessorResults.isEmpty()) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
