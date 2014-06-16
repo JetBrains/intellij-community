@@ -21,7 +21,7 @@ import com.intellij.util.Consumer;
 /**
  * @author traff
  */
-public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
+public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
   /**
    * Synchronously returns remote sdk credentials
    * @return
