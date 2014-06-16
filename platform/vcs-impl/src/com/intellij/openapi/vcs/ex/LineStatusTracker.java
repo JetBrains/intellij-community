@@ -452,7 +452,9 @@ public class LineStatusTracker {
 
     private void replaceRanges(List<Range> rangesInChange, List<Range> newRangesInChange) {
       for (Range range : rangesInChange) {
-        range.getHighlighter().dispose();
+        if (range.getHighlighter() != null) {
+          range.getHighlighter().dispose();
+        }
         range.setHighlighter(null);
       }
       for (Range range : newRangesInChange) {
