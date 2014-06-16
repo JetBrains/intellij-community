@@ -55,18 +55,6 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   private static final Logger LOG = Logger.getInstance(CmdInfoClient.class);
 
-  @Override
-  public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-    doInfo(path, SVNRevision.UNDEFINED, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, handler);
-  }
-
-  @Override
-  public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    doInfo(path, pegRevision, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, handler);
-  }
-
-  @Override
   public void doInfo(File path,
                      SVNRevision pegRevision,
                      SVNRevision revision,
@@ -194,13 +182,6 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     parameters.add("--xml");
   }
 
-  @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    doInfo(url, pegRevision, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, handler);
-  }
-
-  @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
     throws SVNException {
     String path = url.toDecodedString();

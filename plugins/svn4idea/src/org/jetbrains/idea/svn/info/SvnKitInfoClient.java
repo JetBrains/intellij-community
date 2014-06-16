@@ -18,8 +18,6 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.info.InfoClient;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
@@ -40,39 +38,6 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
 
   public SVNWCClient getClient() {
     return myVcs.getSvnKitManager().createWCClient();
-  }
-
-  @Override
-  public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-    getClient().doInfo(path, revision, recursive, handler);
-  }
-
-  @Override
-  public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    getClient().doInfo(path, pegRevision, revision, recursive, handler);
-  }
-
-  @Override
-  public void doInfo(File path,
-                     SVNRevision pegRevision,
-                     SVNRevision revision,
-                     SVNDepth depth,
-                     Collection changeLists,
-                     ISVNInfoHandler handler) throws SVNException {
-    getClient().doInfo(path, pegRevision, revision, depth, changeLists, handler);
-  }
-
-  @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
-    throws SVNException {
-    getClient().doInfo(url, pegRevision, revision, recursive, handler);
-  }
-
-  @Override
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
-    throws SVNException {
-    getClient().doInfo(url, pegRevision, revision, depth, handler);
   }
 
   @Override
