@@ -213,6 +213,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myWorkingCopiesContent.activate();
   }
 
+  /**
+   * TODO: This seems to be related to some issues when upgrading from 1.6 to 1.7. So it is not currently required for 1.8 and later
+   * TODO: formats. And should be removed when 1.6 working copies are no longer supported by IDEA.
+   */
   private void cleanup17copies() {
     final Runnable callCleanupWorker = new Runnable() {
       public void run() {

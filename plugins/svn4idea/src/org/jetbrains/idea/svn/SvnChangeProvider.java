@@ -111,6 +111,10 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  /**
+   * TODO: Currently could not find exact case when "file status is not correctly refreshed after external commit" that is covered by this
+   * TODO: code. So for now, checks for formats greater than 1.7 are not added here.
+   */
   private static void putAdministrative17UnderVfsListener(Set<NestedCopyInfo> pointInfos) {
     if (! SvnVcs.ourListenToWcDb) return;
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
