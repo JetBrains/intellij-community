@@ -15,17 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ToggleModelAction;
 import com.intellij.execution.testframework.ToggleModelActionProvider;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import icons.GradleIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 
@@ -42,6 +46,9 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
   }
 
   private static class MyToggleModelAction extends ToggleModelAction {
+    @Nullable
+    private ProjectSystemId mySystemId;
+
     public MyToggleModelAction(TestConsoleProperties properties) {
       super(GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.text"),
             GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.desc"),
@@ -50,6 +57,10 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
 
     @Override
     public void setModel(TestFrameworkRunningModel model) {
+      final RunConfiguration runConfiguration = model.getProperties().getConfiguration();
+      if(runConfiguration instanceof ExternalSystemRunConfiguration) {
+        mySystemId = ((ExternalSystemRunConfiguration)runConfiguration).getSettings().getExternalSystemId();
+      }
     }
 
     @Override
@@ -64,6 +75,11 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     protected boolean isEnabled() {
       final String reportFilePath = getReportFilePath();
       return reportFilePath != null;
+    }
+
+    @Override
+    protected boolean isVisible() {
+      return GradleConstants.SYSTEM_ID.equals(mySystemId);
     }
 
     @Nullable
