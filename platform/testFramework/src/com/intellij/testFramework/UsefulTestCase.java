@@ -57,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.Timer;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -69,6 +70,8 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -800,7 +803,23 @@ public abstract class UsefulTestCase extends TestCase {
       if (firstTimerF != null) {
         ReflectionUtil.resetField(timerQueue, firstTimerF);
       }
-      fail("Not disposed Timer: " + timer.toString() + "; queue:" + timerQueue);
+      String text = "";
+      if (timer instanceof Delayed) {
+        long delay = ((Delayed)timer).getDelay(TimeUnit.MILLISECONDS);
+        text = "(delayed for "+delay+"ms)";
+        Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
+        getTimer.setAccessible(true);
+        try {
+          timer = getTimer.invoke(timer);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      Timer t = (Timer)timer;
+      text = "Timer (listeners: "+Arrays.asList(t.getActionListeners()) + ") "+text;
+
+      fail("Not disposed Timer: " + text + "; queue:" + timerQueue);
     }
   }
 
