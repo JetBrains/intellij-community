@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -43,15 +44,18 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   public void actionPerformed(AnActionEvent event) {
     final OrderEntry entry = myPanel.getSelectedEntry();
     if (!(entry instanceof LibraryOrderEntry)) return;
-    final LibraryEx library = (LibraryEx)((LibraryOrderEntry)entry).getLibrary();
+    LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+    final LibraryEx library = (LibraryEx)libraryEntry.getLibrary();
     if (library == null) return;
 
     final Library copied = doCopy(library);
     if (copied == null) return;
 
-    myPanel.getRootModel().removeOrderEntry(entry);
     if (!isConvertingToModuleLibrary()) {
-      myPanel.getRootModel().addLibraryEntry(copied);
+      OrderEntryUtil.replaceLibrary(myPanel.getRootModel(), library, copied);
+    }
+    else {
+      OrderEntryUtil.replaceLibraryEntryByAdded(myPanel.getRootModel(), libraryEntry);
     }
   }
 
