@@ -504,9 +504,21 @@ public class RedundantCastUtil {
           return;
         }
         if (parent instanceof PsiForeachStatement) {
-          if (InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(opType), false, CommonClassNames.JAVA_LANG_ITERABLE)) {
-            addToResults(typeCast);
-            return;
+          final PsiClassType.ClassResolveResult castResolveResult = PsiUtil.resolveGenericsClassInType(opType);
+          final PsiClass psiClass = castResolveResult.getElement();
+          if (psiClass != null) {
+            final PsiClass iterableClass = JavaPsiFacade.getInstance(parent.getProject()).findClass(CommonClassNames.JAVA_LANG_ITERABLE, psiClass.getResolveScope());
+            if (iterableClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
+              final PsiTypeParameter[] iterableTypeParameters = iterableClass.getTypeParameters();
+              if (iterableTypeParameters.length == 1) {
+                final PsiType resultedParamType = TypeConversionUtil.getSuperClassSubstitutor(iterableClass, psiClass, castResolveResult.getSubstitutor()).substitute(iterableTypeParameters[0]);
+                if (resultedParamType != null && 
+                    TypeConversionUtil.isAssignable(((PsiForeachStatement)parent).getIterationParameter().getType(), resultedParamType)) {
+                  addToResults(typeCast);
+                  return;
+                }
+              }
+            }
           }
         }
         if (parent instanceof PsiThrowStatement) {
