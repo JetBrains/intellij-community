@@ -44,8 +44,8 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -68,7 +68,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     dialog.show();
   }
 
-  public static void doCheckout(final Project project, final File target, final String url, final SVNRevision revision,
+  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final SVNRevision revision,
                                 final SVNDepth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     if (! target.exists()) {
       target.mkdirs();
@@ -186,7 +186,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   @CalledInAwt
   @NotNull
-  public static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
+  public static WorkingCopyFormat promptForWCopyFormat(@NotNull File target, @NotNull Project project) {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
@@ -312,14 +312,15 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     public WorkingCopyFormat prompt() {
       assert !ApplicationManager.getApplication().isUnitTestMode();
 
-      final WorkingCopyFormat result = displayUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN);
+      final WorkingCopyFormat result = displayUpgradeDialog();
 
       ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
 
       return result;
     }
 
-    private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
+    @NotNull
+    private WorkingCopyFormat displayUpgradeDialog() {
       final UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
       final ModalityState dialogState = ModalityState.any();
 
@@ -354,6 +355,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
     }
 
+    @NotNull
     private List<WorkingCopyFormat> loadSupportedFormats() {
       List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
 
@@ -368,6 +370,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       return result;
     }
 
+    @NotNull
     private static List<WorkingCopyFormat> getOtherFactoryFormats(@NotNull ClientFactory otherFactory) {
       List<WorkingCopyFormat> result;
 
