@@ -19,6 +19,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -120,8 +121,8 @@ public class EncryptionUtil {
       c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_KEY);
       return c.doFinal(rawKey);
     }
-    catch (Exception e) {
-      throw new IllegalStateException(ENCRYPT_KEY_ALGORITHM + " is not available", e);
+    catch (GeneralSecurityException e) {
+      throw new IllegalStateException(e.getMessage(), e);
     }
   }
 
