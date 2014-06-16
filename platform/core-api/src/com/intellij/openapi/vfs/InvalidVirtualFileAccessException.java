@@ -23,6 +23,10 @@ public class InvalidVirtualFileAccessException extends RuntimeException {
     super(composeMessage(file));
   }
 
+  public InvalidVirtualFileAccessException(String message) {
+    super(message);
+  }
+
   private static String composeMessage(VirtualFile file) {
     String url = file.getUrl();
     String message = "Accessing invalid virtual file: " + url;
