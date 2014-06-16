@@ -244,7 +244,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
           });
         }
 
-        return ((PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData()).getRemoteSdkCredentials().getSdkId();
+        return ((PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData()).getRemoteSdkCredentials(false).getSdkId();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
