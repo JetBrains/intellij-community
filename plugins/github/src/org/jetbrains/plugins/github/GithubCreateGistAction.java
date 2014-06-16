@@ -254,18 +254,29 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static List<FileContent> getContentFromFile(@NotNull VirtualFile file, @NotNull Project project, @Nullable String prefix) {
+  private static List<FileContent> getContentFromFile(@NotNull final VirtualFile file, @NotNull Project project, @Nullable String prefix) {
     if (file.isDirectory()) {
       return getContentFromDirectory(file, project, prefix);
     }
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    String content;
-    if (document != null) {
-      content = document.getText();
-    }
-    else {
-      content = readFile(file);
-    }
+    String content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        try {
+          Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document != null) {
+            return document.getText();
+          }
+          else {
+            return new String(file.contentsToByteArray(), file.getCharset());
+          }
+        }
+        catch (IOException e) {
+          LOG.info("Couldn't read contents of the file " + file, e);
+          return null;
+        }
+      }
+    });
     if (content == null) {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Couldn't read the contents of the file " + file);
       return Collections.emptyList();
@@ -287,23 +298,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
     }
     return contents;
-  }
-
-  @Nullable
-  private static String readFile(@NotNull final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        try {
-          return new String(file.contentsToByteArray(), file.getCharset());
-        }
-        catch (IOException e) {
-          LOG.info("Couldn't read contents of the file " + file, e);
-          return null;
-        }
-      }
-    });
   }
 
   private static String addPrefix(@NotNull String name, @Nullable String prefix, boolean addTrailingSlash) {

@@ -62,7 +62,7 @@ public class ConvertToNestedIfIntention extends Intention {
     if (returnValue == null || ErrorUtil.containsDeepError(returnValue)) {
       return;
     }
-    final String newStatementText = buildIf(returnValue, new StringBuilder()).toString();
+    final String newStatementText = buildIf(returnValue, true, new StringBuilder()).toString();
     final Project project = returnStatement.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{" + newStatementText + "}", returnStatement);
@@ -73,23 +73,23 @@ public class ConvertToNestedIfIntention extends Intention {
     PsiReplacementUtil.replaceStatement(returnStatement, "return false;");
   }
 
-  private static StringBuilder buildIf(@Nullable PsiExpression expression, StringBuilder out) {
+  private static StringBuilder buildIf(@Nullable PsiExpression expression, boolean top, StringBuilder out) {
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(tokenType)) {
         for (PsiExpression operand : operands) {
-          buildIf(operand, out);
+          buildIf(operand, false, out);
         }
-        if (!StringUtil.endsWith(out, "return true;")) {
+        if (top && !StringUtil.endsWith(out, "return true;")) {
           out.append("return true;");
         }
         return out;
       }
-      else if (JavaTokenType.OROR.equals(tokenType)) {
+      else if (top && JavaTokenType.OROR.equals(tokenType)) {
         for (PsiExpression operand : operands) {
-          buildIf(operand, out);
+          buildIf(operand, false, out);
           if (!StringUtil.endsWith(out, "return true;")) {
             out.append("return true;");
           }
@@ -99,7 +99,7 @@ public class ConvertToNestedIfIntention extends Intention {
     }
     else if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      buildIf(parenthesizedExpression.getExpression(), out);
+      buildIf(parenthesizedExpression.getExpression(), top, out);
       return out;
     }
     if (expression != null) {

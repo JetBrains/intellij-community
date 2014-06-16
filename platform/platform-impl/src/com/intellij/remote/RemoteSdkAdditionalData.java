@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
-  extends SdkAdditionalData, RemoteSdkProducer<T>, RemoteSdkProperties {
+  extends SdkAdditionalData, RemoteSdkCredentialsProducer<T>, RemoteSdkProperties {
   void completeInitialization();
 
   boolean isInitialized();

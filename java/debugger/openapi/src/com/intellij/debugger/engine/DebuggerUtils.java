@@ -291,29 +291,36 @@ public abstract class DebuggerUtils {
     }
 
     if (subType instanceof ClassType) {
-      result = getSuperType(((ClassType)subType).superclass(), superType);
-      if (result != null) {
-        return result;
-      }
-
-      List ifaces = ((ClassType)subType).allInterfaces();
-      for (Object iface : ifaces) {
-        InterfaceType interfaceType = (InterfaceType)iface;
-        if (typeEquals(interfaceType, superType)) {
-          return interfaceType;
+      try {
+        final ClassType clsType = (ClassType)subType;
+        result = getSuperType(clsType.superclass(), superType);
+        if (result != null) {
+          return result;
         }
+
+        for (InterfaceType iface : clsType.allInterfaces()) {
+          if (typeEquals(iface, superType)) {
+            return iface;
+          }
+        }
+      }
+      catch (ClassNotPreparedException e) {
+        LOG.info(e);
       }
       return null;
     }
 
     if (subType instanceof InterfaceType) {
-      List ifaces = ((InterfaceType)subType).superinterfaces();
-      for (Object iface : ifaces) {
-        InterfaceType interfaceType = (InterfaceType)iface;
-        result = getSuperType(interfaceType, superType);
-        if (result != null) {
-          return result;
+      try {
+        for (InterfaceType iface : ((InterfaceType)subType).superinterfaces()) {
+          result = getSuperType(iface, superType);
+          if (result != null) {
+            return result;
+          }
         }
+      }
+      catch (ClassNotPreparedException e) {
+        LOG.info(e);
       }
     }
     else if (subType instanceof ArrayType) {
@@ -324,7 +331,7 @@ public abstract class DebuggerUtils {
           return instanceOf(subTypeItem, superTypeItem) ? subType : null;
         }
         catch (ClassNotLoadedException e) {
-          LOG.debug(e);
+          LOG.info(e);
         }
       }
     }

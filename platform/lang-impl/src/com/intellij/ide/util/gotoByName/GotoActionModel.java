@@ -312,7 +312,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   @NotNull
   public String[] getNames(boolean checkBoxState) {
-    final ArrayList<String> result = new ArrayList<String>();
+    final LinkedHashSet<String> result = new LinkedHashSet<String>();
     result.add(INTENTIONS_KEY);
     for (AnAction action : myActionsMap.keySet()) {
       result.add(getActionId(action));
