@@ -55,21 +55,6 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   private static final Logger LOG = Logger.getInstance(CmdInfoClient.class);
 
-  public void doInfo(File path,
-                     SVNRevision pegRevision,
-                     SVNRevision revision,
-                     SVNDepth depth,
-                     Collection changeLists,
-                     final ISVNInfoHandler handler) throws SVNException {
-    File base = path.isDirectory() ? path : path.getParentFile();
-    base = CommandUtil.correctUpToExistingParent(base);
-    if (base == null) {
-      // very unrealistic
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
-    }
-    issueCommand(path, pegRevision, revision, depth, changeLists, handler, base);
-  }
-
   private void issueCommand(File path, SVNRevision pegRevision,
                             SVNRevision revision,
                             SVNDepth depth,
@@ -182,12 +167,24 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     parameters.add("--xml");
   }
 
-  public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
-    throws SVNException {
-    String path = url.toDecodedString();
+  @Override
+  public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
+    File base = path.isDirectory() ? path : path.getParentFile();
+    base = CommandUtil.correctUpToExistingParent(base);
+    if (base == null) {
+      // very unrealistic
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
+    }
+    CollectInfoHandler handler = new CollectInfoHandler();
+    issueCommand(path, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, null, handler, base);
+    return handler.getInfo();
+  }
+
+  @Override
+  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
     List<String> parameters = new ArrayList<String>();
 
-    fillParameters(path, pegRevision, revision, depth, parameters);
+    fillParameters(url.toDecodedString(), pegRevision, revision, SVNDepth.EMPTY, parameters);
     CommandExecutor command;
     try {
       command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
@@ -198,31 +195,9 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       throw new SVNException(SVNErrorMessage.create(code, e), e);
     }
 
+    CollectInfoHandler handler = new CollectInfoHandler();
     parseResult(handler, null, command.getOutput());
-  }
-
-  @Override
-  public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
-    final SVNInfo[] infoArr = new SVNInfo[1];
-    doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, null, new ISVNInfoHandler() {
-      @Override
-      public void handleInfo(SVNInfo info) throws SVNException {
-        infoArr[0] = info;
-      }
-    });
-    return infoArr[0];
-  }
-
-  @Override
-  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    final SVNInfo[] infoArr = new SVNInfo[1];
-    doInfo(url, pegRevision, revision, SVNDepth.EMPTY, new ISVNInfoHandler() {
-      @Override
-      public void handleInfo(SVNInfo info) throws SVNException {
-        infoArr[0] = info;
-      }
-    });
-    return infoArr[0];
+    return handler.getInfo();
   }
 
   @Override
@@ -244,6 +219,21 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       if (handler != null) {
         parseResult(handler, base, result);
       }
+    }
+  }
+
+  private static class CollectInfoHandler implements ISVNInfoHandler {
+
+    @Nullable private SVNInfo myInfo;
+
+    @Override
+    public void handleInfo(SVNInfo info) throws SVNException {
+      myInfo = info;
+    }
+
+    @Nullable
+    public SVNInfo getInfo() {
+      return myInfo;
     }
   }
 }
