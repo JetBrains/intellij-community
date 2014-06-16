@@ -536,7 +536,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
-    return myData.changeUserMap(oldMap, newMap);
+    return myData.changeUserMap(oldMap, UserDataInterner.internUserData(newMap));
   }
 
 }

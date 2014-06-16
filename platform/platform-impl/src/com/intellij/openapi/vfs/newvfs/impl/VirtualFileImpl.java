@@ -142,7 +142,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
-    return mySegment.changeUserMap(Math.abs(getId()), oldMap, newMap);
+    return mySegment.changeUserMap(Math.abs(getId()), oldMap, UserDataInterner.internUserData(newMap));
   }
 
 }
