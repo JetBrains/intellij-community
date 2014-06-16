@@ -333,9 +333,6 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
 
   String vmOptions = "-Dfile.encoding=UTF-8 ${vmOptions()} -Xverify:none"
-  if (isEap() && !args.mac_no_yjp) {
-    vmOptions += " ${yjpOptions(args.system_selector)}"
-  }
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
@@ -354,7 +351,11 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   new File("$path/bin/idea.properties").text = effectiveProperties.toString()
-  new File("$path/bin/idea.vmoptions").text = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  if (isEap() && !args.mac_no_yjp) {
+    ideaVmOptions += " ${yjpOptions(args.system_selector)}"
+  }
+  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
