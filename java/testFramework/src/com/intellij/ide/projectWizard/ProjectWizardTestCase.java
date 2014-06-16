@@ -216,6 +216,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       }
     });
     SelectTemplateSettings.getInstance().setLastTemplate(null, null);
+    UIUtil.dispatchAllInvocationEvents();
+    Thread.sleep(2000); //wait for JBCardLayout release timers
+    UIUtil.dispatchAllInvocationEvents();
     super.tearDown();
   }
 

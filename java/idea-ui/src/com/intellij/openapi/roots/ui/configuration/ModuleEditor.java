@@ -332,7 +332,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     private final ModifiableRootModel myDelegateModel;
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
       Arrays.asList("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                    "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType"));
+                    "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries"));
 
     ModifiableRootModelInvocationHandler(ModifiableRootModel model) {
       myDelegateModel = model;

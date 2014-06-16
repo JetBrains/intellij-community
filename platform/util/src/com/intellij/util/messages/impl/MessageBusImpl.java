@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -39,6 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author max
+ */
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
   private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = new Comparator<MessageBusImpl>() {
@@ -224,7 +223,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void checkNotDisposed() {
-    LOG.assertTrue(!myDisposed, "Already disposed: " + myOwner);
+    if (myDisposed) LOG.error("Already disposed: " + myOwner);
   }
 
   private void calcSubscribers(Topic topic, List<MessageBusConnectionImpl> result) {

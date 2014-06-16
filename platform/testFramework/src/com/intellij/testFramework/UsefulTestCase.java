@@ -19,13 +19,10 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -38,14 +35,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameHandler;
-import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
@@ -64,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.Timer;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -75,6 +69,9 @@ import java.lang.reflect.Modifier;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -178,13 +175,14 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
   private static final Class DELETE_ON_EXIT_HOOK_CLASS;
   static {
-    Class<?> aClass = null;
-    Set<String> files = null;
+    Class<?> aClass;
     try {
       aClass = Class.forName("java.io.DeleteOnExitHook");
-      files = ReflectionUtil.getField(aClass, null, Set.class, "files");
     }
-    catch (Exception ignored) { }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    Set<String> files = ReflectionUtil.getField(aClass, null, Set.class, "files");
     DELETE_ON_EXIT_HOOK_CLASS = aClass;
     DELETE_ON_EXIT_HOOK_DOT_FILES = files;
   }
@@ -777,26 +775,51 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected static void checkAllTimersAreDisposed() {
+    Field firstTimerF;
+    Object timerQueue;
+    Object timer;
     try {
-      Class<?> aClass = Class.forName("javax.swing.TimerQueue");
+      Class<?> TimerQueueC = Class.forName("javax.swing.TimerQueue");
+      Method sharedInstance = TimerQueueC.getDeclaredMethod("sharedInstance");
+      sharedInstance.setAccessible(true);
 
-      Method inst = aClass.getDeclaredMethod("sharedInstance");
-      inst.setAccessible(true);
-      Object queue = inst.invoke(null);
-      Field field = aClass.getDeclaredField("firstTimer");
-      field.setAccessible(true);
-      Object firstTimer = field.get(queue);
-      if (firstTimer != null) {
-        try {
-          fail("Not disposed Timer: " + firstTimer.toString() + "; queue:" + queue);
-        }
-        finally {
-          field.set(queue, null);
-        }
+      firstTimerF = ReflectionUtil.getDeclaredField(TimerQueueC, "firstTimer");
+      timerQueue = sharedInstance.invoke(null);
+      if (firstTimerF == null) {
+        // jdk 8
+        DelayQueue delayQueue = ReflectionUtil.getField(TimerQueueC, timerQueue, DelayQueue.class, "queue");
+        timer = delayQueue.peek();
+      }
+      else {
+        // ancient jdk
+        firstTimerF.setAccessible(true);
+        timer = firstTimerF.get(timerQueue);
       }
     }
     catch (Throwable e) {
-      // Ignore
+      throw new RuntimeException(e);
+    }
+    if (timer != null) {
+      if (firstTimerF != null) {
+        ReflectionUtil.resetField(timerQueue, firstTimerF);
+      }
+      String text = "";
+      if (timer instanceof Delayed) {
+        long delay = ((Delayed)timer).getDelay(TimeUnit.MILLISECONDS);
+        text = "(delayed for "+delay+"ms)";
+        Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
+        getTimer.setAccessible(true);
+        try {
+          timer = getTimer.invoke(timer);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      Timer t = (Timer)timer;
+      text = "Timer (listeners: "+Arrays.asList(t.getActionListeners()) + ") "+text;
+
+      fail("Not disposed Timer: " + text + "; queue:" + timerQueue);
     }
   }
 
@@ -886,12 +909,11 @@ public abstract class UsefulTestCase extends TestCase {
     while (aClass != null && aClass != Object.class) {
       if (aClass.getAnnotation(annotationClass) != null) return true;
       if (!methodChecked) {
-        try {
-          Method method = aClass.getDeclaredMethod(methodName);
+        Method method = ReflectionUtil.getDeclaredMethod(aClass, methodName);
+        if (method != null) {
           if (method.getAnnotation(annotationClass) != null) return true;
           methodChecked = true;
         }
-        catch (NoSuchMethodException ignored) { }
       }
       aClass = aClass.getSuperclass();
     }

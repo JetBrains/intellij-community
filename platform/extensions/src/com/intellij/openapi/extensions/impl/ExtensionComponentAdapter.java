@@ -191,4 +191,9 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   public void setNotificationSent(boolean notificationSent) {
     myNotificationSent = notificationSent;
   }
+
+  @Override
+  public String toString() {
+    return "ExtensionComponentAdapter[" + myImplementationClassName + "]: plugin=" + myPluginDescriptor;
+  }
 }
