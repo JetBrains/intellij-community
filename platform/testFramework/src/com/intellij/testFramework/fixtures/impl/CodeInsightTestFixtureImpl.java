@@ -82,6 +82,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -186,6 +187,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     VirtualFile result;
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+      VfsRootAccess.allowRootAccess(fromFile.getPath());
       VirtualFile fromVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fromFile);
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
@@ -231,20 +233,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
     }
-    else {
-      final File targetFile = new File(getTempDirPath() + "/" + targetPath);
-      try {
-        FileUtil.copyDir(fromFile, targetFile);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
-      Assert.assertNotNull(file);
-      file.refresh(false, true);
-      return file;
+    final File targetFile = new File(getTempDirPath() + "/" + targetPath);
+    try {
+      FileUtil.copyDir(fromFile, targetFile);
     }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+    Assert.assertNotNull(file);
+    file.refresh(false, true);
+    return file;
   }
 
   @NotNull
