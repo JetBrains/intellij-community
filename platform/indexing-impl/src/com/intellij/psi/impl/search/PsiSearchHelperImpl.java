@@ -104,7 +104,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                      @NotNull final Processor<PsiElement> processor) {
     TextOccurenceProcessor occurrenceProcessor = new TextOccurenceProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement) {
+      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
         if (CommentUtilCore.isCommentTextElement(element)) {
           if (element.findReferenceAt(offsetInElement) == null) {
             return processor.process(element);
@@ -846,7 +846,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final RequestResultProcessor wrapped = singleRequest.processor;
     return new TextOccurenceProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement) {
+      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
 
         return wrapped.processTextOccurrence(element, offsetInElement, consumer);

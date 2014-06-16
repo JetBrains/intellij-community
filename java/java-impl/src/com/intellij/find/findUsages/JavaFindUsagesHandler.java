@@ -220,9 +220,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  protected Set<String> getStringsToSearch(final PsiElement element) {
+  protected Set<String> getStringsToSearch(@NotNull final PsiElement element) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      return getStringsToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+      return aPackage == null ? Collections.<String>emptySet() : getStringsToSearch(aPackage);
     }
 
     final Set<String> result = new HashSet<String>();
@@ -264,7 +265,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (element instanceof XmlAttributeValue) {
           ContainerUtil.addIfNotNull(result, ((XmlAttributeValue)element).getValue());
-        } else {
+        }
+        else {
           LOG.error("Unknown element type: " + element);
         }
       }

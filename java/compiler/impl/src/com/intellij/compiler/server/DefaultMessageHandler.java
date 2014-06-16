@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -308,7 +308,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
     TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement) {
+      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
         return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
       }
     };
