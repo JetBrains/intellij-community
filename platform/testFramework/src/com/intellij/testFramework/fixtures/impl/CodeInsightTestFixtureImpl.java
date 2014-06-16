@@ -186,8 +186,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     VirtualFile result;
+    final String path = fromFile.getPath();
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-      VfsRootAccess.allowRootAccess(fromFile.getPath());
+      VfsRootAccess.allowRootAccess(path);
+      Disposer.register(myTestRootDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          VfsRootAccess.disallowRootAccess(path);
+        }
+      });
       VirtualFile fromVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fromFile);
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
@@ -219,7 +226,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assert file != null : targetFile;
       result = file;
     }
-    result.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, fromFile.getPath());
+    result.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, path);
     return result;
   }
 
