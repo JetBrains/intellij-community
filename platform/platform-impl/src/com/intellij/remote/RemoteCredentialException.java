@@ -18,15 +18,8 @@ package com.intellij.remote;
 /**
  * @author traff
  */
-public class VagrantCredentialsException extends RuntimeException {
-  private String myVagrantFolder;
-
-  public VagrantCredentialsException(String message, String vagrantFolder) {
+public class RemoteCredentialException extends RuntimeException {
+  public RemoteCredentialException(String message) {
     super(message);
-    myVagrantFolder = vagrantFolder;
-  }
-
-  public String getVagrantFolder() {
-    return myVagrantFolder;
   }
 }
