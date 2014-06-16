@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.MultiMap;
@@ -82,14 +82,12 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           }
         }
         if (! repoUrls.isEmpty()) {
-          final String join = StringUtil.join(repoUrls.toArray(new String[repoUrls.size()]), ",\n");
+          final String join = StringUtil.join(repoUrls, ",\n");
           final int isOk = Messages.showOkCancelDialog(project,
             SvnBundle.message("checkin.different.formats.involved", repoUrls.size() > 1 ? 1 : 0, join),
             "Subversion: Commit Will Split", Messages.getWarningIcon());
-          if (Messages.OK == isOk) {
-            return ReturnResult.COMMIT;
-          }
-          return ReturnResult.CANCEL;
+
+          return Messages.OK == isOk ? ReturnResult.COMMIT : ReturnResult.CANCEL;
         }
         return ReturnResult.COMMIT;
       }
@@ -104,17 +102,17 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         if (SvnConfiguration.getInstance(project).isAutoUpdateAfterCommit()) {
           final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
           final List<FilePath> paths = new ArrayList<FilePath>();
-          for (int i = 0; i < roots.length; i++) {
-            VirtualFile root = roots[i];
+          for (VirtualFile root : roots) {
             boolean take = false;
             for (VirtualFile commitRoot : commitRoots) {
-              if (VfsUtil.isAncestor(root, commitRoot, false)) {
+              if (VfsUtilCore.isAncestor(root, commitRoot, false)) {
                 take = true;
                 break;
               }
             }
-            if (! take) continue;
-            paths.add(new FilePathImpl(root));
+            if (take) {
+              paths.add(new FilePathImpl(root));
+            }
           }
           if (paths.isEmpty()) return;
           ApplicationManager.getApplication().invokeLater(new Runnable() {
