@@ -190,5 +190,10 @@ public class ServiceManagerImpl implements BaseComponent {
     public String getAssignableToClassName() {
       return myDescriptor.getInterface();
     }
+
+    @Override
+    public String toString() {
+      return "ServiceComponentAdapter[" + myDescriptor.getInterface() + "]: implementation=" + myDescriptor.getImplementation() + ", plugin=" + myPluginDescriptor;
+    }
   }
 }

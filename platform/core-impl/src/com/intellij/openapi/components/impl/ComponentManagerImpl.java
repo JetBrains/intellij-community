@@ -611,5 +611,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       visitor.visitComponentAdapter(this);
       myDelegate.accept(visitor);
     }
+
+    @Override
+    public String toString() {
+      return "ComponentConfigAdapter[" + getComponentKey() + "]: implementation=" + getComponentImplementation() + ", plugin=" + myConfig.getPluginId();
+    }
   }
 }

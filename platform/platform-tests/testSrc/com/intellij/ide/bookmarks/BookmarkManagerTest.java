@@ -21,10 +21,12 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NonNls;
+import org.picocontainer.ComponentAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,6 +71,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   }
   
   public void testBookmarkLineRemove() throws IOException {
+    List<ComponentAdapter> adapters = getProject().getPicoContainer().getComponentAdaptersOfType(ChangeListManagerImpl.class);
+    System.out.println(adapters.size() + " adapters:");
+    for (ComponentAdapter adapter : adapters) {
+      System.out.println(adapter);
+    }
+
     @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
