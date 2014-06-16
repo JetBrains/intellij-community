@@ -101,12 +101,12 @@ public class StringUtil extends StringUtilRt {
   };
 
   @NotNull
-  public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
+  public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {
     return replace(text, oldS, newS, false);
   }
 
   @NotNull
-  public static String replaceIgnoreCase(@NotNull String text, @NotNull String oldS, @Nullable String newS) {
+  public static String replaceIgnoreCase(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {
     return replace(text, oldS, newS, true);
   }
 
@@ -139,23 +139,20 @@ public class StringUtil extends StringUtilRt {
     return newBuffer == null ? buffer : newBuffer.toString();
   }
 
-  public static String replace(@NotNull final String text, @NotNull final String oldS, @Nullable final String newS, boolean ignoreCase) {
+  public static String replace(@NonNls @NotNull final String text, @NonNls @NotNull final String oldS, @NonNls @NotNull final String newS, final boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
-    final String text1 = ignoreCase ? text.toLowerCase() : text;
-    final String oldS1 = ignoreCase ? oldS.toLowerCase() : oldS;
     StringBuilder newText = null;
     int i = 0;
 
-    while (i < text1.length()) {
-      int i1 = text1.indexOf(oldS1, i);
+    while (i < text.length()) {
+      final int i1 = ignoreCase? indexOfIgnoreCase(text, oldS, i) : text.indexOf(oldS, i);
       if (i1 < 0) {
         if (i == 0) return text;
         newText.append(text, i, text.length());
         break;
       }
       else {
-        if (newS == null) return null;
         if (newText == null) newText = new StringBuilder(text.length() - i);
         newText.append(text, i, i1);
         newText.append(newS);
