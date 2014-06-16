@@ -54,31 +54,8 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
     throws SVNException {
-    return doStatus(path, recursive, remote, reportAll, includeIgnored, false, handler);
-  }
-
-  @Override
-  public long doStatus(File path,
-                       boolean recursive,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       ISVNStatusHandler handler) throws SVNException {
-    return doStatus(path, SVNRevision.UNDEFINED, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-  }
-
-  @Override
-  public long doStatus(File path,
-                       SVNRevision revision,
-                       boolean recursive,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       ISVNStatusHandler handler) throws SVNException {
-    return doStatus(path, revision, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, remote, reportAll, includeIgnored,
-                    collectParentExternals, handler, null);
+    return doStatus(path, SVNRevision.UNDEFINED, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, remote, reportAll, includeIgnored, false,
+                    handler, null);
   }
 
   @Override

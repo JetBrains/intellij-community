@@ -34,8 +34,6 @@ import java.util.Collection;
 public interface StatusClient extends SvnClient {
   long doStatus(File path, boolean recursive, boolean remote, boolean reportAll,
           boolean includeIgnored, ISVNStatusHandler handler) throws SVNException;
-  long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;
-  long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;
   long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll,
           boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler,
           Collection changeLists) throws SVNException;

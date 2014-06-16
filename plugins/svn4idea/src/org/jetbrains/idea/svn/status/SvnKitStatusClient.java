@@ -54,29 +54,6 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   public long doStatus(File path,
-                       boolean recursive,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       ISVNStatusHandler handler) throws SVNException {
-    return getStatusClient().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-  }
-
-  @Override
-  public long doStatus(File path,
-                       SVNRevision revision,
-                       boolean recursive,
-                       boolean remote,
-                       boolean reportAll,
-                       boolean includeIgnored,
-                       boolean collectParentExternals,
-                       ISVNStatusHandler handler) throws SVNException {
-    return getStatusClient().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-  }
-
-  @Override
-  public long doStatus(File path,
                        SVNRevision revision,
                        SVNDepth depth,
                        boolean remote,
