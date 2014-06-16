@@ -544,22 +544,31 @@ public class LineStatusTracker {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
-      TextRange currentTextRange = getCurrentTextRange(range);
+      TextRange currentTextRange = getCurrentTextRangeWithMagic(range);
 
       if (range.getType() == Range.INSERTED) {
         myDocument
           .replaceString(currentTextRange.getStartOffset(), Math.min(currentTextRange.getEndOffset() + 1, myDocument.getTextLength()), "");
       }
       else if (range.getType() == Range.DELETED) {
-        String upToDateContent = getUpToDateContent(range);
+        String upToDateContent = getUpToDateContentWithMagic(range);
         myDocument.insertString(currentTextRange.getStartOffset(), upToDateContent);
       }
       else {
 
-        String upToDateContent = getUpToDateContent(range);
+        String upToDateContent = getUpToDateContentWithMagic(range);
         myDocument.replaceString(currentTextRange.getStartOffset(), Math.min(currentTextRange.getEndOffset() + 1, myDocument.getTextLength()),
                                  upToDateContent);
       }
+    }
+  }
+
+  public String getUpToDateContentWithMagic(Range range) {
+    synchronized (myLock) {
+      TextRange textRange = getUpToDateRangeWithMagic(range);
+      final int startOffset = textRange.getStartOffset();
+      final int endOffset = Math.min(textRange.getEndOffset() + 1, myUpToDateDocument.getTextLength());
+      return myUpToDateDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
     }
   }
 
@@ -576,25 +585,23 @@ public class LineStatusTracker {
     return myProject;
   }
 
+  TextRange getCurrentTextRangeWithMagic(Range range) {
+    return getRangeWithMagic(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument);
+  }
+
+  TextRange getUpToDateRangeWithMagic(Range range) {
+    return getRangeWithMagic(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument);
+  }
+
   TextRange getCurrentTextRange(Range range) {
-    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument, false);
+    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument);
   }
 
   TextRange getUpToDateRange(Range range) {
-    return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument, false);
+    return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument);
   }
 
-  TextRange getCurrentTextRangeWithEndSymbol(Range range) {
-    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument, true);
-  }
-
-  // a hack
-  TextRange getUpToDateRangeWithEndSymbol(Range range) {
-    return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument, true);
-  }
-
-  private static TextRange getRange(byte rangeType, int offset1, int offset2, byte emptyRangeCondition, Document document,
-                                    final boolean keepEnd) {
+  private static TextRange getRangeWithMagic(byte rangeType, int offset1, int offset2, byte emptyRangeCondition, Document document) {
     if (rangeType == emptyRangeCondition) {
       int lineStartOffset;
       if (offset1 == 0) {
@@ -612,10 +619,20 @@ public class LineStatusTracker {
       int endOffset = document.getLineEndOffset(offset2 - 1);
       if (startOffset > 0) {
         -- startOffset;
-        if (! keepEnd) {
-          -- endOffset;
-        }
+        -- endOffset;
       }
+      return new TextRange(startOffset, endOffset);
+    }
+  }
+
+  private static TextRange getRange(byte rangeType, int offset1, int offset2, byte emptyRangeCondition, Document document) {
+    if (rangeType == emptyRangeCondition) {
+      int lineStartOffset = offset1 < document.getLineCount() ? document.getLineStartOffset(offset1) : document.getTextLength();
+      return new TextRange(lineStartOffset, lineStartOffset);
+    }
+    else {
+      int startOffset = document.getLineStartOffset(offset1);
+      int endOffset = document.getLineEndOffset(offset2 - 1);
       return new TextRange(startOffset, endOffset);
     }
   }
