@@ -220,17 +220,17 @@ public class JBScrollPane extends JScrollPane {
 
     if (extendViewportUnderVScrollbar) {
       viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
-      viewportBounds.width = Math.max(viewportBounds.width, vsb.getX() + vsb.getWidth());
+      viewportBounds.width = vsb.getX() + vsb.getWidth() - viewportBounds.x;
     }
     if (extendViewportUnderHScrollbar) {
       viewportBounds.y = Math.min(viewportBounds.y, hsb.getY());
-      viewportBounds.height = Math.max(viewportBounds.height, hsb.getY() + hsb.getHeight());
+      viewportBounds.height = hsb.getY() + hsb.getHeight() - viewportBounds.y;
     }
  
     if (extendViewportUnderVScrollbar) {
       if (hsb != null) {
         Rectangle scrollbarBounds = hsb.getBounds();
-        scrollbarBounds.width = viewportBounds.width - scrollbarBounds.x;
+        scrollbarBounds.width = viewportBounds.x + viewportBounds.width - scrollbarBounds.x;
         hsb.setBounds(scrollbarBounds);
       }
       if (colHead != null) {
@@ -244,7 +244,7 @@ public class JBScrollPane extends JScrollPane {
     if (extendViewportUnderHScrollbar) {
       if (vsb != null) {
         Rectangle scrollbarBounds = vsb.getBounds();
-        scrollbarBounds.height = viewportBounds.height - scrollbarBounds.y;
+        scrollbarBounds.height = viewportBounds.y + viewportBounds.height - scrollbarBounds.y;
         vsb.setBounds(scrollbarBounds);
       }
       if (rowHead != null) {
