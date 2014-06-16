@@ -191,16 +191,16 @@ public class GrStaticChecker {
   public static boolean isInStaticContext(@NotNull PsiElement place) {
     PsiClass targetClass = null;
     if (place instanceof GrReferenceExpression) {
-      PsiElement qualifier = ((GrReferenceExpression)place).getQualifier();
-      if (PsiUtil.isThisReference(place) && qualifier instanceof GrReferenceExpression) {
-        targetClass = (PsiClass)((GrReferenceExpression)qualifier).resolve();
+      PsiElement qualifier = ((GrQualifiedReference)place).getQualifier();
+      if (PsiUtil.isThisReference(place) && qualifier instanceof GrQualifiedReference) {
+        targetClass = (PsiClass)((GrQualifiedReference)qualifier).resolve();
       }
     }
     return isInStaticContext(place, targetClass);
   }
 
   public static boolean isInStaticContext(@NotNull PsiElement place, @Nullable PsiClass targetClass) {
-    if (place instanceof GrQualifiedReference) {
+    if (place instanceof GrReferenceExpression) {
       GrQualifiedReference reference = (GrQualifiedReference)place;
       PsiElement qualifier = reference.getQualifier();
       if (qualifier != null && !PsiUtil.isThisOrSuperRef(reference)) {
@@ -210,7 +210,7 @@ public class GrStaticChecker {
         else if (PsiUtil.isThisReference(qualifier)) { //instance 'this' already is processed. So it static 'this'
           return true;
         }
-        return qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
+        return qualifier instanceof GrQualifiedReference && ((GrQualifiedReference)qualifier).resolve() instanceof PsiClass;
       }
 
 
@@ -221,6 +221,7 @@ public class GrStaticChecker {
     PsiElement run = place;
     while (run != null && run != targetClass) {
       if (targetClass == null && run instanceof PsiClass) return false;
+      if (run instanceof GrClosableBlock) return false;
       if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
       run = run.getParent();
     }
@@ -228,7 +229,7 @@ public class GrStaticChecker {
   }
 
   public static boolean isPropertyAccessInStaticMethod(@NotNull GrReferenceExpression referenceExpression) {
-    return isInStaticContext(referenceExpression, null) &&
+    return isInStaticContext(referenceExpression) &&
            !(referenceExpression.getParent() instanceof GrMethodCall) &&
            referenceExpression.getQualifier() == null;
   }

@@ -146,7 +146,7 @@ public class GrUnresolvedAccessChecker {
 
     if (refElement.getParent() instanceof GrNewExpression) {
 
-      boolean inStaticContext = GrStaticChecker.isInStaticContext(refElement, null);
+      boolean inStaticContext = GrStaticChecker.isInStaticContext(refElement);
 
       if (!inStaticContext && GrUnresolvedAccessInspection.isSuppressed(refElement)) return null;
 
