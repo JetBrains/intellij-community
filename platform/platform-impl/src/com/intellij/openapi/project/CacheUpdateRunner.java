@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
@@ -40,7 +41,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CacheUpdateRunner {
+public class CacheUpdateRunner extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
@@ -58,13 +59,9 @@ public class CacheUpdateRunner {
     return new ArrayList<CacheUpdater>(myUpdaters).toString();
   }
 
-  public int queryNeededFiles(@NotNull ProgressIndicator indicator) {
+  private int queryNeededFiles(@NotNull ProgressIndicator indicator) {
     // can be queried twice in DumbService  
     return getSession(indicator).getFilesToUpdate().size();
-  }
-
-  public int getNumberOfPendingUpdateJobs(@NotNull ProgressIndicator indicator) {
-    return getSession(indicator).getNumberOfPendingUpdateJobs();
   }
 
   @NotNull
@@ -76,7 +73,7 @@ public class CacheUpdateRunner {
     return session;
   }
 
-  public void processFiles(@NotNull final ProgressIndicator indicator, boolean processInReadAction) {
+  private void processFiles(@NotNull final ProgressIndicator indicator, boolean processInReadAction) {
     try {
       Collection<VirtualFile> files = mySession.getFilesToUpdate();
 
@@ -134,7 +131,7 @@ public class CacheUpdateRunner {
     }
   }
 
-  public void updatingDone() {
+  private void updatingDone() {
     try {
       mySession.updatingDone();
     }
@@ -215,6 +212,21 @@ public class CacheUpdateRunner {
       LOG.error(throwable);
     }
     return false;
+  }
+
+  @Override
+  public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+    indicator.setIndeterminate(true);
+    indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+    int count = queryNeededFiles(indicator);
+
+    indicator.setIndeterminate(false);
+    indicator.setText(IdeBundle.message("progress.indexing.updating"));
+    if (count > 0) {
+      processFiles(indicator, true);
+    }
+    updatingDone();
   }
 
   private static class MyRunnable implements Runnable {
