@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +132,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return path;
   }
 
+  @Override
   protected void updateStep() {
     if (!mySteps.isEmpty()) {
       getCurrentStepObject().updateStep();
@@ -140,6 +141,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     myIcon.setIcon(null);
   }
 
+  @Override
   protected void dispose() {
     StepSequence sequence = getSequence();
     if (sequence != null) {
@@ -150,6 +152,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     super.dispose();
   }
 
+  @Override
   protected final void doOKAction() {
     int idx = getCurrentStep();
     try {
@@ -213,6 +216,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return true;
   }
 
+  @Override
   public void doNextAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     if (!commitStepData(step)) {
@@ -223,17 +227,13 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
 
+  @Override
   protected String getHelpID() {
     ModuleWizardStep step = getCurrentStepObject();
     if (step != null) {
       return step.getHelpId();
     }
     return null;
-  }
-
-  @TestOnly
-  public void doOk() {
-    doOKAction();
   }
 
   @TestOnly
@@ -246,12 +246,14 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
   }
 
+  @Override
   protected void doPreviousAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();
     super.doPreviousAction();
   }
 
+  @Override
   public void doCancelAction() {
     final ModuleWizardStep step = getCurrentStepObject();
     step.onStepLeaving();
@@ -262,6 +264,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return getNextStep(step) == step;
   }
 
+  @Override
   protected final int getNextStep(final int step) {
     ModuleWizardStep nextStep = null;
     final StepSequence stepSequence = getSequence();
@@ -275,6 +278,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return nextStep == null ? step : mySteps.indexOf(nextStep);
   }
 
+  @Override
   protected final int getPreviousStep(final int step) {
       ModuleWizardStep previousStep = null;
       final StepSequence stepSequence = getSequence();

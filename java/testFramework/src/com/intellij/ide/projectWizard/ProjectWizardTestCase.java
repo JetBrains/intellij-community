@@ -133,7 +133,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         throw new RuntimeException(currentStep + " is not validated");
       }
     }
-    myWizard.doOk();
   }
 
   protected void createWizard(Project project) throws IOException {
@@ -162,6 +161,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     for (final Sdk jdk : jdks) {
       if (projectSdk != jdk) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             ProjectJdkTable.getInstance().removeJdk(jdk);
           }
@@ -172,6 +172,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   protected void setupJdk() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
         Sdk defaultJdk = new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome());
@@ -209,6 +210,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       myCreatedProject = null;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         for (Sdk sdk : mySdks) {
           ProjectJdkTable.getInstance().removeJdk(sdk);
@@ -253,6 +255,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected Sdk createSdk(String name, SdkTypeId sdkType) {
     final Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ProjectJdkTable.getInstance().addJdk(sdk);
       }
