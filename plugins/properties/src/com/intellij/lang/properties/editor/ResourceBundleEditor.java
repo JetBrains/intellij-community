@@ -84,6 +84,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
+  private String                            myOldPropertyName;
   private final ResourceBundle              myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
@@ -271,7 +272,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile) {
     final String currentValue = editor.getDocument().getText();
-    final String selectedProperty = getSelectedPropertyName();
+    final String currentSelectedProperty = getSelectedPropertyName();
+    final String selectedProperty = myOldPropertyName == null ? currentSelectedProperty : myOldPropertyName;
+
     assert selectedProperty != null;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -505,10 +508,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
   private void selectionChanged() {
     myBackSlashPressed.clear();
+    final String currentSelectedPropertyName = getSelectedPropertyName();
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (myOldPropertyName != null && !myOldPropertyName.equals(currentSelectedPropertyName)) {
+          for (final Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
+            writeEditorPropertyValue(entry.getValue(), entry.getKey());
+          }
+        }
         updateEditorsFromProperties();
+        myOldPropertyName = currentSelectedPropertyName;
       }
     });
   }

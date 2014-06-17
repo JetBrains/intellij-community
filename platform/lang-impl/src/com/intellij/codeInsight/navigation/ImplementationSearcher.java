@@ -49,7 +49,7 @@ public class ImplementationSearcher {
     return searchImplementations(element, editor, offset, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          return targetElementUtil.includeSelfInGotoImplementation(element);
+          return element == null || targetElementUtil.includeSelfInGotoImplementation(element);
         }
     }), onRef);
   }

@@ -137,4 +137,8 @@ public abstract class AbstractCreationTool extends TargetingTool {
       myToolProvider.loadDefaultTool();
     }
   }
+
+  @Override
+  protected void handleKeyEvent() {
+  }
 }

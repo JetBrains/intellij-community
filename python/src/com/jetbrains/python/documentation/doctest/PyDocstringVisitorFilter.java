@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation.doctest;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.validation.DocStringAnnotator;
 import com.jetbrains.python.validation.HighlightingAnnotator;

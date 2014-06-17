@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 public class CopyConcatenatedStringToClipboardIntention extends Intention {
 
   @Override
@@ -50,7 +52,7 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
       return;
     }
     final PsiType type = concatenationExpression.getType();
-    if (type == null || !type.equalsToText("java.lang.String")) {
+    if (type == null || !type.equalsToText(JAVA_LANG_STRING)) {
       return;
     }
     final StringBuilder text = buildConcatenationText(concatenationExpression, new StringBuilder());

@@ -47,7 +47,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private static WelcomePane createInnerPanel(WelcomeScreen screen) {
-    WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Root");
+    WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Quick Start");
 
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);

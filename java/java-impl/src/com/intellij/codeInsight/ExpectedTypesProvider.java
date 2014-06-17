@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -938,7 +938,6 @@ public class ExpectedTypesProvider {
         for (CandidateInfo candidate : methodCandidates) {
           PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
-          assert method != null;
           PsiParameter[] params = method.getParameterList().getParameters();
           if (params.length <= index) continue;
           PsiParameter param = params[index];

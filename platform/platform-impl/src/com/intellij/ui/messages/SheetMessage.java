@@ -66,9 +66,9 @@ public class SheetMessage {
                       final String defaultButton,
                       final String focusedButton)
   {
-    beforeShowFocusOwner = new WeakReference<Component>(
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow().getMostRecentFocusOwner()
-    );
+    final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    final Component recentFocusOwner = activeWindow == null ? null : activeWindow.getMostRecentFocusOwner();
+    beforeShowFocusOwner = new WeakReference<Component>(recentFocusOwner);
 
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);

@@ -15,23 +15,20 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author shkate@jetbrains.com
  */
-public class JavaSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
+public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
   private final MethodNameTokenizerJava myMethodNameTokenizer = new MethodNameTokenizerJava();
   private final DocCommentTokenizer myDocCommentTokenizer = new DocCommentTokenizer();
   private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();
@@ -57,15 +54,5 @@ public class JavaSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy
     }
 
     return super.getTokenizer(element);
-  }
-
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name) {
-    return SuppressManager.getInstance().isSuppressedFor(element, name);
-  }
-
-  @Override
-  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
-    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(name));
   }
 }

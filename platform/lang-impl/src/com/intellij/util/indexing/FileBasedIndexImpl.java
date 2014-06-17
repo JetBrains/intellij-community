@@ -408,7 +408,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           extension.getKeyDescriptor(),
           extension.getValueExternalizer(),
           extension.getCacheSize(),
-          extension.isKeyHighlySelective(),
+          extension.keyIsUniqueForIndexedFile(),
           extension.traceKeyHashToVirtualFileMapping()
         );
 
@@ -1808,6 +1808,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return !myNotRequiringContentIndices.contains(indexId);
   }
 
+  private @Nullable IndexableFileSet getIndexableSetForFile(VirtualFile file) {
+    for (IndexableFileSet set : myIndexableSets) {
+      if (set.isInSet(file)) {
+        return set;
+      }
+    }
+    return null;
+  }
+
+
   private abstract static class InvalidationTask implements Runnable {
     private final VirtualFile mySubj;
 
@@ -2051,8 +2061,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
           });
-          // the file is for sure not a dir and it was previously indexed by at least one index
-          if (!isTooLarge(file)) scheduleForUpdate(file);
+          // the file is for sure not a dir and it was previously indexed by at least one index AND it belongs to some update set
+          if (!isTooLarge(file) && getIndexableSetForFile(file) != null) scheduleForUpdate(file);
         }
       }
       else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index
@@ -2143,12 +2153,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         }
       }
       else {
-        for (IndexableFileSet set : myIndexableSets) {
-          if (set.isInSet(file)) {
-            processor.process(file);
-            break;
-          }
-        }
+        if (getIndexableSetForFile(file) != null) processor.process(file);
       }
     }
 
@@ -2574,7 +2579,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (visitedRoots != null && root != file && file.isDirectory() && !visitedRoots.add(file)) {
+        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
           return false; // avoid visiting files more than once, e.g. additional indexed roots intersect sometimes
         }
         if (indicator != null) indicator.checkCanceled();

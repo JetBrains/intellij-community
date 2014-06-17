@@ -53,4 +53,7 @@ public interface DebuggerViewSupport {
 
   @NotNull
   String normalizeMemberName(@NotNull Variable variable);
+
+  @Nullable
+  Value transformErrorOnGetUsedReferenceValue(@Nullable Value value, @Nullable String error);
 }

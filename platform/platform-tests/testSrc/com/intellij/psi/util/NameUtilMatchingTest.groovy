@@ -410,6 +410,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("foba", "Foo4Bar");
     assertMatches("*TEST-* ", "TEST-001");
     assertMatches("*TEST-0* ", "TEST-001");
+    assertMatches("*v2 ", "VARCHAR2");
   }
 
   public void testSpecialSymbols() {

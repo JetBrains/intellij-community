@@ -95,13 +95,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder, isOnTheFly);
-
-        for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, IGNORE_ASSERT_STATEMENTS, isOnTheFly);
-          for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-            holder.registerProblem(entry.getKey(), entry.getValue());
-          }
-        }
       }
 
       @Override
@@ -119,51 +112,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
-      @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
-        if (!ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
-
-        PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
-        if (method == null) return;
-
-        String text = AnnotationUtil.getStringAttributeValue(annotation, null);
-        if (StringUtil.isNotEmpty(text)) {
-          String error = checkContract(method, text);
-          if (error != null) {
-            PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
-            assert value != null;
-            holder.registerProblem(value, error);
-            return;
-          }
-        }
-
-        if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) && 
-            PsiType.VOID.equals(method.getReturnType())) {
-          PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
-          assert value != null;
-          holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
-        }
-      }
     };
-  }
-
-  @Nullable
-  public static String checkContract(PsiMethod method, String text) {
-    List<MethodContract> contracts;
-    try {
-      contracts = MethodContract.parseContract(text);
-    }
-    catch (MethodContract.ParseException e) {
-      return e.getMessage();
-    }
-    int paramCount = method.getParameterList().getParametersCount();
-    for (int i = 0; i < contracts.size(); i++) {
-      MethodContract contract = contracts.get(i);
-      if (contract.arguments.length != paramCount) {
-        return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
-      }
-    }
-    return null;
   }
 
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {

@@ -446,7 +446,7 @@ public class HighlightMethodUtil {
           final String message = JavaErrorMessages
             .message("incompatible.call.types", idx + 1, substitutor.substitute(parameters[idx].getType()).getCanonicalText(), argType.getCanonicalText());
 
-          return XmlStringUtil.wrapInHtml("<body>" + message +
+          return XmlStringUtil.wrapInHtml("<body>" + XmlStringUtil.escapeString(message) +
                                           " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
                                           (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
                                           ">" + DaemonBundle.message("inspection.extended.description") + "</a></body>");
@@ -506,36 +506,29 @@ public class HighlightMethodUtil {
     if (methodCandidate2 != null) {
       return null;
     }
+    if (element != null && !resolveResult.isAccessible()) {
+      description = HighlightUtil.buildProblemWithAccessDescription(referenceToMethod, resolveResult);
+      elementToHighlight = referenceToMethod.getReferenceNameElement();
+    }
+    else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
+      description = HighlightUtil.buildProblemWithStaticDescription(element);
+      elementToHighlight = referenceToMethod.getReferenceNameElement();
+    }
     else {
-      if (element != null && !resolveResult.isAccessible()) {
-        description = HighlightUtil.buildProblemWithAccessDescription(referenceToMethod, resolveResult);
+      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
+      description = JavaErrorMessages.message("cannot.resolve.method", methodName);
+      if (candidates.length == 0) {
         elementToHighlight = referenceToMethod.getReferenceNameElement();
-      }
-      else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-        description = HighlightUtil.buildProblemWithStaticDescription(element);
-        elementToHighlight = referenceToMethod.getReferenceNameElement();
+        highlightInfoType = HighlightInfoType.WRONG_REF;
       }
       else {
-        String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
-        description = JavaErrorMessages.message("cannot.resolve.method", methodName);
-        if (candidates.length == 0) {
-          elementToHighlight = referenceToMethod.getReferenceNameElement();
-          highlightInfoType = HighlightInfoType.WRONG_REF;
-        }
-        else {
-          return null;
-        }
+        return null;
       }
-      toolTip = XmlStringUtil.escapeString(description);
     }
+    toolTip = XmlStringUtil.escapeString(description);
     HighlightInfo info =
       HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight).description(description).escapedToolTip(toolTip).create();
-    if (methodCandidate2 == null) {
-      registerMethodCallIntentions(info, methodCall, list, resolveHelper);
-    }
-    if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
-      HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
-    }
+    registerMethodCallIntentions(info, methodCall, list, resolveHelper);
     if (element != null && !resolveResult.isStaticsScopeCorrect()) {
       HighlightUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
     }
@@ -1014,7 +1007,7 @@ public class HighlightMethodUtil {
   }
 
   @Nullable
-  static HighlightInfo checkMethodCanHaveBody(PsiMethod method, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+  static HighlightInfo checkMethodCanHaveBody(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
     PsiClass aClass = method.getContainingClass();
     boolean hasNoBody = method.getBody() == null;
     boolean isInterface = aClass != null && aClass.isInterface();
@@ -1035,7 +1028,7 @@ public class HighlightMethodUtil {
     else if (isInterface) {
       if (!isExtension && !isStatic) {
         description = JavaErrorMessages.message("interface.methods.cannot.have.body");
-        if (PsiUtil.isLanguageLevel8OrHigher(method)) {
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false));
           additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
         }
@@ -1242,7 +1235,7 @@ public class HighlightMethodUtil {
       }
       return createIncompatibleReturnTypeMessage(currentMethod, otherSuperMethod, otherSuperReturnType,
                                                  currentType, JavaErrorMessages.message("unrelated.overriding.methods.return.types"),
-                                                 false ? currentMethod.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE);
+                                                 TextRange.EMPTY_RANGE);
     }
     return null;
   }
@@ -1262,7 +1255,7 @@ public class HighlightMethodUtil {
       if (aClass.equals(containingClass)) continue; //to be checked at method level
 
       if (aClass.isInterface() && !containingClass.isInterface()) continue;
-      HighlightInfo highlightInfo = null;
+      HighlightInfo highlightInfo;
       if (allAbstracts) {
         superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
         superSignatures.add(signature);

@@ -154,10 +154,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                   @Nullable final PsiType classToDelegate) {
     if (classToDelegate == null) return true;
 
-    if (state.get(ClassHint.RESOLVE_CONTEXT) == null) {
-      state = state.put(ClassHint.RESOLVE_CONTEXT, this);
-    }
-
     return ResolveUtil.processAllDeclarationsSeparately(classToDelegate, processor, nonCodeProcessor,
                                             state.put(ClassHint.RESOLVE_CONTEXT, this), place);
   }

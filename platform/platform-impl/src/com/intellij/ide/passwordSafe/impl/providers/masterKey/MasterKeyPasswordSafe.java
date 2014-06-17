@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -179,7 +179,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
 
   @Override
   protected byte[] key(@Nullable final Project project, @NotNull final Class requestor) throws PasswordSafeException {
-    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
     if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
@@ -196,9 +196,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       if (result.isNull()) {
         final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
-        if (application.holdsReadLock()) {
-          throw new IllegalStateException("Access from read action is not allowed, because it might lead to a deadlock.");
-        }
         application.invokeAndWait(new Runnable() {
           public void run() {
             result.set(key.get().get());
@@ -214,8 +211,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
                 }
                 else {
                   MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this, requestor);
-                  result.set(key.get().get());
                 }
+                result.set(key.get().get());
               }
               catch (PasswordSafeException e) {
                 ex.set(e);

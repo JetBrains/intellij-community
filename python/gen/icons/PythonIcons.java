@@ -45,6 +45,7 @@ public class PythonIcons {
     public static final Icon PropertyGetter = load("/icons/com/jetbrains/python/propertyGetter.png"); // 16x16
     public static final Icon PropertySetter = load("/icons/com/jetbrains/python/propertySetter.png"); // 16x16
     public static final Icon Pypy = load("/icons/com/jetbrains/python/pypy.png"); // 16x16
+    public static final Icon Python_logo = load("/icons/com/jetbrains/python/python-logo.png"); // 32x32
     public static final Icon Python = load("/icons/com/jetbrains/python/python.png"); // 16x16
     public static final Icon Python_24 = load("/icons/com/jetbrains/python/python_24.png"); // 24x24
     public static final Icon PythonClosed = load("/icons/com/jetbrains/python/pythonClosed.png"); // 16x16

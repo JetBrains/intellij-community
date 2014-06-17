@@ -39,7 +39,7 @@ public abstract class ResolveScopeManager {
   }
 
   @NotNull
-  public static GlobalSearchScope getElementUseScope(PsiElement element) {
+  public static GlobalSearchScope getElementUseScope(@NotNull PsiElement element) {
     return getInstance(element.getProject()).getUseScope(element);
   }
 

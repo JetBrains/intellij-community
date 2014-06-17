@@ -79,7 +79,7 @@
 
   <actions>
     <group id="PlatformOpenProjectGroup">
-      <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PythonNewDirectoryProjectAction"/>
+      <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
@@ -95,7 +95,7 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.PythonNewDirectoryProjectAction" icon="AllIcons.General.CreateNewProject"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.actions.PyCharmNewProjectStep" icon="AllIcons.General.CreateNewProject"/>
       <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

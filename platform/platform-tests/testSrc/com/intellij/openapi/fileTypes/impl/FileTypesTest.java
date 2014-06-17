@@ -56,10 +56,12 @@ public class FileTypesTest extends PlatformTestCase {
     super.setUp();
     myFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
+    myFileTypeManager.reDetectAsync(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
+    myFileTypeManager.reDetectAsync(false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -304,11 +306,13 @@ public class FileTypesTest extends PlatformTestCase {
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof PlainTextFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_MODULE");
+      UIUtil.dispatchAllInvocationEvents();
       myFileTypeManager.drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ModuleFileType);
 
       VfsUtil.saveText(vFile, "TYPE:IDEA_PROJECT");
+      UIUtil.dispatchAllInvocationEvents();
       myFileTypeManager.drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);

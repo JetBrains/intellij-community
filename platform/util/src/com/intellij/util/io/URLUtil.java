@@ -15,7 +15,7 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -88,7 +88,7 @@ public class URLUtil {
 
   @NotNull
   private static InputStream openJarStream(@NotNull URL url) throws IOException {
-    Couple<String> paths = splitJarUrl(url.getFile());
+    Pair<String, String> paths = splitJarUrl(url.getFile());
     if (paths == null) {
       throw new MalformedURLException(url.getFile());
     }
@@ -116,7 +116,7 @@ public class URLUtil {
    * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
    */
   @Nullable
-  public static Couple<String> splitJarUrl(@NotNull String url) {
+  public static Pair<String, String> splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(JAR_SEPARATOR);
     if (pivot < 0) return null;
 
@@ -137,7 +137,7 @@ public class URLUtil {
       }
     }
 
-    return Couple.of(jarPath, resourcePath);
+    return Pair.create(jarPath, resourcePath);
   }
 
   @NotNull

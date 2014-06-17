@@ -43,7 +43,7 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
   public abstract SingleEntryIndexer<V> getIndexer();
 
   @Override
-  public boolean isKeyHighlySelective() {
+  public boolean keyIsUniqueForIndexedFile() {
     return true;
   }
 }

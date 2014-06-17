@@ -183,6 +183,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     PsiImplUtil.setQualifier(this, newQualifier);
   }
 
+  @NotNull
   @Override
   public String getClassNameText() {
     String cachedQName = myCachedQName;

@@ -21,6 +21,8 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+
 class StringToCharPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
@@ -34,7 +36,7 @@ class StringToCharPredicate implements PsiElementPredicate {
       return false;
     }
     final String typeText = type.getCanonicalText();
-    if (!"java.lang.String".equals(typeText)) {
+    if (!JAVA_LANG_STRING.equals(typeText)) {
       return false;
     }
     final String value = (String)expression.getValue();
@@ -54,7 +56,7 @@ class StringToCharPredicate implements PsiElementPredicate {
         return false;
       }
       final String parentTypeText = parentType.getCanonicalText();
-      if (!"java.lang.String".equals(parentTypeText)) {
+      if (!JAVA_LANG_STRING.equals(parentTypeText)) {
         return false;
       }
       if (parentExpression.getOperationTokenType() != JavaTokenType.PLUS) {
@@ -65,14 +67,14 @@ class StringToCharPredicate implements PsiElementPredicate {
       if (index > 0) {
         for (int i = 0; i < index && i < operands.length; i++) {
           final PsiType type = operands[i].getType();
-          if (type != null && type.equalsToText("java.lang.String")) {
+          if (type != null && type.equalsToText(JAVA_LANG_STRING)) {
             return true;
           }
         }
       }
       else if (index == 0) {
         final PsiType type = operands[index + 1].getType();
-        return type != null && type.equalsToText("java.lang.String");
+        return type != null && type.equalsToText(JAVA_LANG_STRING);
       }
       return false;
     }
@@ -88,7 +90,7 @@ class StringToCharPredicate implements PsiElementPredicate {
         return false;
       }
       final String parentTypeText = parentType.getCanonicalText();
-      return "java.lang.String".equals(parentTypeText);
+      return JAVA_LANG_STRING.equals(parentTypeText);
     }
     if (parent instanceof PsiExpressionList) {
       final PsiElement grandParent = parent.getParent();
@@ -125,7 +127,7 @@ class StringToCharPredicate implements PsiElementPredicate {
         final PsiElement method = methodExpression.resolve();
         return method != null;
       }
-      else if ("java.lang.String".equals(className)) {
+      else if (JAVA_LANG_STRING.equals(className)) {
         @NonNls final String methodName =
           methodExpression.getReferenceName();
         if (!"indexOf".equals(methodName) &&

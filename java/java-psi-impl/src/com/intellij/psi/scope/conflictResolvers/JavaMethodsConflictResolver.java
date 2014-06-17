@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,18 +148,16 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       ProgressManager.checkCanceled();
       final CandidateInfo conflict = iterator.next();
       final PsiMethod method = (PsiMethod)conflict.getElement();
-      if (method != null) {
-        final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-        if (methodParameters.length == 0) continue;
-        final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
-        final PsiType paramType = param.getType();
-        // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
-        // A lambda expression or a method reference expression is potentially compatible with a type variable if the type variable is a type parameter of the candidate method.
-        final PsiClass paramClass = PsiUtil.resolveClassInType(paramType);
-        if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) continue;
-        if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
-          iterator.remove();
-        }
+      final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+      if (methodParameters.length == 0) continue;
+      final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
+      final PsiType paramType = param.getType();
+      // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
+      // A lambda expression or a method reference expression is potentially compatible with a type variable if the type variable is a type parameter of the candidate method.
+      final PsiClass paramClass = PsiUtil.resolveClassInType(paramType);
+      if (paramClass instanceof PsiTypeParameter && ((PsiTypeParameter)paramClass).getOwner() == method) continue;
+      if (!lambdaExpression.isAcceptable(((MethodCandidateInfo)conflict).getSubstitutor(false).substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
+        iterator.remove();
       }
     }
   }
@@ -240,7 +238,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       ProgressManager.checkCanceled();
       CandidateInfo info = conflicts.get(i);
       PsiMethod method = (PsiMethod)info.getElement();
-      assert method != null;
 
       if (!method.hasModifierProperty(PsiModifier.STATIC) && superMethods.contains(method)) {
         conflicts.remove(i);
@@ -258,7 +255,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         continue;
       }
       PsiMethod existingMethod = (PsiMethod)existing.getElement();
-      assert existingMethod != null;
       PsiClass existingClass = existingMethod.getContainingClass();
       if (class1 != null && existingClass != null && 
           class1.isInterface() && CommonClassNames.JAVA_LANG_OBJECT.equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
@@ -768,7 +764,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       for (CandidateInfo conflict : conflicts) {
         ProgressManager.checkCanceled();
         PsiMethod method = (PsiMethod)conflict.getElement();
-        if (method != objectVararg && method != null && method.isVarArgs()) {
+        if (method != objectVararg && method.isVarArgs()) {
           final int paramsCount = method.getParameterList().getParametersCount();
           final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
           final PsiType componentType = ((PsiArrayType)type).getComponentType();
@@ -784,7 +780,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   @Nullable
   private static PsiType getFunctionalType(int functionalTypeIdx, CandidateInfo candidateInfo) {
     final PsiMethod psiMethod = (PsiMethod)candidateInfo.getElement();
-    LOG.assertTrue(psiMethod != null);
+    LOG.assertTrue(true);
     final PsiParameter[] methodParameters = psiMethod.getParameterList().getParameters();
     if (methodParameters.length == 0) return null;
     final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];

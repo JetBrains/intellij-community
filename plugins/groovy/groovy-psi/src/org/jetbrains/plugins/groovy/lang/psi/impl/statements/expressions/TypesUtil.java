@@ -422,7 +422,7 @@ public class TypesUtil {
 
   public static boolean isNumericType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
-      return TYPE_TO_RANK.contains(type.getCanonicalText());
+      return TYPE_TO_RANK.contains(getQualifiedName(type));
     }
 
     return type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type);
@@ -547,12 +547,12 @@ public class TypesUtil {
         }
       }
     }
-    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&
-             CommonClassNames.JAVA_LANG_STRING.equals(type2.getInternalCanonicalText())) {
+    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(getQualifiedName(type1)) &&
+             CommonClassNames.JAVA_LANG_STRING.equals(getQualifiedName(type2))) {
       return type2;
     }
-    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(type2.getCanonicalText()) &&
-             CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
+    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(getQualifiedName(type2)) &&
+             CommonClassNames.JAVA_LANG_STRING.equals(getQualifiedName(type1))) {
       return type1;
     }
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
@@ -628,11 +628,7 @@ public class TypesUtil {
   }
 
   public static boolean isClassType(@Nullable PsiType type, @NotNull String qName) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      return psiClass != null && qName.equals(psiClass.getQualifiedName());
-    }
-    return false;
+    return qName.equals(getQualifiedName(type));
   }
 
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
@@ -751,7 +747,7 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiType inferAnnotationMemberValueType(GrAnnotationMemberValue value) {
+  public static PsiType inferAnnotationMemberValueType(final GrAnnotationMemberValue value) {
     if (value instanceof GrExpression) {
       return ((GrExpression)value).getType();
     }
@@ -859,4 +855,23 @@ public class TypesUtil {
 
     return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
+
+  @Nullable
+  public static String getQualifiedName(@Nullable PsiType type) {
+    if (type instanceof PsiClassType) {
+      PsiClass resolved = ((PsiClassType)type).resolve();
+      if (resolved instanceof PsiAnonymousClass) {
+        return getQualifiedName(((PsiAnonymousClass)resolved).getBaseClassType());
+      }
+      if (resolved != null) {
+        return resolved.getQualifiedName();
+      }
+      else {
+        return PsiNameHelper.getQualifiedClassName(type.getCanonicalText(), true);
+      }
+    }
+
+    return null;
+  }
+
 }

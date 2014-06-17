@@ -80,7 +80,7 @@
               <text value="Pro&amp;ject:"/>
             </properties>
           </component>
-          <component id="195cd" class="javax.swing.JComboBox" binding="myModuleCombo">
+          <component id="195cd" class="com.intellij.application.options.ModulesComboBox" binding="myModuleCombo">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

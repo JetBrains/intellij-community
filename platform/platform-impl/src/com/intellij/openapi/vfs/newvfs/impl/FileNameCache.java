@@ -91,6 +91,7 @@ public class FileNameCache {
 
   @NotNull
   private static IntObjectLinkedMap.MapEntry<CharSequence> getEntry(int id) {
+    assert id > 0;
     final int stripe = calcStripeIdFromNameId(id);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -107,10 +108,6 @@ public class FileNameCache {
   @NotNull
   public static CharSequence getVFileName(int nameId) {
     return getEntry(nameId).value;
-  }
-
-  static int compareNameTo(int nameId, @NotNull CharSequence name, boolean ignoreCase) {
-    return VirtualFileSystemEntry.compareNames(getEntry(nameId).value, name, ignoreCase);
   }
 
   @NotNull

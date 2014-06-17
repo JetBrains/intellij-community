@@ -36,6 +36,14 @@ public class MethodContract {
     this.returnValue = returnValue;
   }
 
+  static ValueConstraint[] createConstraintArray(int paramCount) {
+    ValueConstraint[] args = new ValueConstraint[paramCount];
+    for (int i = 0; i < args.length; i++) {
+      args[i] = ValueConstraint.ANY_VALUE;
+    }
+    return args;
+  }
+
   @Override
   public String toString() {
     return StringUtil.join(arguments, new Function<ValueConstraint, String>() {

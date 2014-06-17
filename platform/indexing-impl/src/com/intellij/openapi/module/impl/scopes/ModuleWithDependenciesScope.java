@@ -59,7 +59,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myModule = module;
     myOptions = options;
 
-    myProjectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    myProjectFileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
     OrderEnumerator en = ModuleRootManager.getInstance(module).orderEntries();
     /*if (myIncludeOtherModules) */en.recursively();

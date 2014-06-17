@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -719,9 +718,9 @@ public final class EditorUtil {
    * @see #getNotFoldedLineEndOffset(com.intellij.openapi.editor.Editor, int)
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static Couple<LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
-                                                             @NotNull VisualPosition start,
-                                                             @NotNull VisualPosition end) {
+  public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
+                                                                            @NotNull VisualPosition start,
+                                                                            @NotNull VisualPosition end) {
     final Document document = editor.getDocument();
     final FoldingModel foldingModel = editor.getFoldingModel();
 
@@ -729,8 +728,7 @@ public final class EditorUtil {
     for (
       int line = first.line, offset = document.getLineStartOffset(line);
       offset >= 0;
-      offset = document.getLineStartOffset(line))
-    {
+      offset = document.getLineStartOffset(line)) {
       final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
       if (foldRegion == null) {
         first = new LogicalPosition(line, 0);
@@ -749,8 +747,7 @@ public final class EditorUtil {
     for (
       int line = second.line, offset = document.getLineEndOffset(line);
       offset <= document.getTextLength();
-      offset = document.getLineEndOffset(line))
-    {
+      offset = document.getLineEndOffset(line)) {
       final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
       if (foldRegion == null) {
         second = new LogicalPosition(line + 1, 0);
@@ -767,7 +764,7 @@ public final class EditorUtil {
     if (second.line >= document.getLineCount()) {
       second = editor.offsetToLogicalPosition(document.getTextLength());
     }
-    return Couple.of(first, second);
+    return Pair.create(first, second);
   }
 
   /**

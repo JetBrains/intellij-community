@@ -22,6 +22,9 @@ public class ConvertToNestedIfIntentionTest extends IPPTestCase {
 
   public void testNested() { doTest(); }
   public void testStaircase() { doTest(); }
+  public void testStaircaseWithParenthesis() { doTest(); }
+  public void testStaircaseWithOrInside() { doTest(); }
+  public void testOrStaircaseInside() { doTest(); }
   public void testOneLevelStaircase() { assertIntentionNotAvailable(); }
 
   public void testAndOrMixed() { doTest(); }

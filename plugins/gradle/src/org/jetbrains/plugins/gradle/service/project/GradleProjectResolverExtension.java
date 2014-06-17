@@ -102,6 +102,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   List<KeyValue<String, String>> getExtraJvmArgs();
 
   @NotNull
+  List<String> getExtraCommandLineArgs();
+
+  @NotNull
   ExternalSystemException getUserFriendlyError(@NotNull Throwable error, @NotNull String projectPath, @Nullable String buildFilePath);
 
   /**

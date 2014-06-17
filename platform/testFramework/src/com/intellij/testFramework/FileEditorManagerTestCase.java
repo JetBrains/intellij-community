@@ -49,6 +49,7 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   protected FileEditorManagerImpl myManager;
   private FileEditorManager myOldManager;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myManager = new FileEditorManagerImpl(getProject(), DockManager.getInstance(getProject()), EditorHistoryManager.getInstance(getProject()));
@@ -87,7 +88,12 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        myManager.getMainSplitters().openFiles();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            myManager.getMainSplitters().openFiles();
+          }
+        });
       }
     });
     while (true) {

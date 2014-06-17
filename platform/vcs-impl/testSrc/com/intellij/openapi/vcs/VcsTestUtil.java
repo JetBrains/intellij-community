@@ -19,7 +19,6 @@ import com.intellij.notification.Notification;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -39,26 +38,18 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.*;
 
 public class VcsTestUtil {
-
   public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
                                        @Nullable final String content) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(project) {
+    return new WriteCommandAction<VirtualFile>(project) {
       @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile file = parent.createChildData(this, name);
-          if (content != null) {
-            file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
-          }
-          result.set(file);
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        VirtualFile file = parent.createChildData(this, name);
+        if (content != null) {
+          file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        result.setResult(file);
       }
-    }.execute();
-    return result.get();
+    }.execute().throwException().getResultObject();
   }
 
   /**

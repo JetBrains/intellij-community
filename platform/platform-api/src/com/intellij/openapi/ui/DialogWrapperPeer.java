@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -129,12 +130,13 @@ public abstract class DialogWrapperPeer {
   /**
    * @see javax.swing.JDialog#getLocation
    */
+  @NotNull
   public abstract Point getLocation();
 
   /**
    * @see javax.swing.JDialog#setLocation(java.awt.Point)
    */
-  public abstract void setLocation(Point p);
+  public abstract void setLocation(@NotNull Point p);
 
   /**
    * @see javax.swing.JDialog#setLocation(int,int)

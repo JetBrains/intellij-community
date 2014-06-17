@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class ToStringRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "ToStringRenderer";
@@ -103,7 +105,7 @@ public class ToStringRenderer extends NodeRendererImpl {
       return false;
     }
 
-    if(type.name().equals("java.lang.String")) {
+    if(JAVA_LANG_STRING.equals(type.name())) {
       return false; // do not render 'String' objects for performance reasons
     }
 

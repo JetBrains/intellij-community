@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SHOW_STATIC_AFTER_INSTANCE = false;
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
+
+  public boolean INDENTING_BACKSPACE = false;
 
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;

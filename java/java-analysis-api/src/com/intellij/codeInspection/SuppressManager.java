@@ -29,7 +29,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class SuppressManager implements BatchSuppressManager {
+public abstract class SuppressManager implements BatchSuppressManager, InspectionSuppressor {
 
   public static SuppressManager getInstance() {
     return ServiceManager.getService(SuppressManager.class);

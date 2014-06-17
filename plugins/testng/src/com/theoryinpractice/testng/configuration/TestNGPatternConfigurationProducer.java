@@ -27,6 +27,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -86,7 +87,7 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
   }
 
   public static boolean isMultipleElementsSelected(ConfigurationContext context) {
-    if (AbstractTestProxy.DATA_KEY.getData(context.getDataContext()) != null) return false;
+    if (TestsUIUtil.isMultipleSelectionImpossible(context.getDataContext())) return false;
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     final PsiElement[] elements = collectPatternElements(context, classes);
     if (elements != null && collectTestMembers(elements).size() > 1) {

@@ -108,10 +108,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
 
-    final String canonicalText = type.getCanonicalText();
-    if (canonicalText.startsWith("java.")) return true;
-    if (GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(canonicalText)) return false;
-    if (canonicalText.startsWith("groovy.")) return true;
+    final String qname = TypesUtil.getQualifiedName(type);
+    if (qname != null) {
+      if (qname.startsWith("java.")) return true; //so we have jdk map here
+      if (GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname)) return false;
+      if (qname.startsWith("groovy.")) return true; //we have gdk map here
+    }
 
     return false;
   }

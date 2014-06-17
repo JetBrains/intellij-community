@@ -154,7 +154,6 @@ public class GroovyShellConsoleImpl extends LanguageConsoleImpl {
     GrCodeReferenceElement reference = anImport.getImportReference();
     if (reference == null) return null;
     String qname = reference.getClassNameText();
-    if (qname == null) return null;
     buffer.append(qname);
     if (!anImport.isOnDemand()) {
       String importedName = anImport.getImportedName();

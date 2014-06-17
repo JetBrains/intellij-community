@@ -270,7 +270,7 @@
 
     <localInspection language="Python" shortName="PyArgumentListInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
-    <localInspection language="Python" shortName="PyUnresolvedReferencesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unresolved.refs" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnresolvedReferencesInspection"/>
+    <localInspection language="Python" shortName="PyUnresolvedReferencesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unresolved.refs" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection"/>
     <localInspection language="Python" shortName="PyInterpreterInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInterpreterInspection"/>
     <localInspection language="Python" shortName="PyMethodParametersInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.problematic.first.parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodParametersInspection"/>
     <localInspection language="Python" shortName="PyUnreachableCodeInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unreachable.code" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnreachableCodeInspection"/>
@@ -532,6 +532,7 @@
   <extensionPoints>    
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
+    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceSkipper" interface="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceSkipperExtPoint"/>
     <extensionPoint qualifiedName="Pythonid.resolveResultRater" interface="com.jetbrains.python.psi.impl.PyResolveResultRater"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>

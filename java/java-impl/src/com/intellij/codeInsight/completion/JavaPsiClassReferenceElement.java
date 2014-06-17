@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -41,6 +42,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaPsiClassReferenceElement extends LookupItem<Object> {
+  public static final Key<String> PACKAGE_NAME = Key.create("PACKAGE_NAME");
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
   private volatile Reference<PsiClass> myCache;
@@ -171,8 +173,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     presentation.setTailText(tailText, true);
   }
 
-  public static String getLocationString(LookupItem item) {
-    return StringUtil.notNullize((String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
+  public static String getLocationString(LookupItem<?> item) {
+    String pkgName = item.getAttribute(PACKAGE_NAME);
+    return pkgName == null ? "" : " (" + pkgName + ")";
   }
 
   private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {

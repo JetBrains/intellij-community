@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,20 +37,28 @@ public abstract class DialogWrapperPeerFactory {
     return ServiceManager.getService(DialogWrapperPeerFactory.class);
   }
 
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent);
 
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType);
 
   /** @see DialogWrapper#DialogWrapper(boolean, boolean)
    */
   @Deprecated
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, boolean applicationModalIfPossible);
   @Deprecated
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, boolean applicationModalIfPossible);
   @Deprecated
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);
 
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType);
+  @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType);
 }

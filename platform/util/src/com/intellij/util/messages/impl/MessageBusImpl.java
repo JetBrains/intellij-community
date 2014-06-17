@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.util.messages.impl;
 
@@ -39,6 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author max
+ */
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
   private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = new Comparator<MessageBusImpl>() {
@@ -76,7 +75,6 @@ public class MessageBusImpl implements MessageBus {
   private MessageBusImpl myParentBus;
 
   //is used for debugging purposes
-  @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
   private final Object myOwner;
   private boolean myDisposed;
 
@@ -103,7 +101,10 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private RootBus asRoot() {
-    return (RootBus)this;
+    if ((this instanceof RootBus)) {
+      return (RootBus)this;
+    }
+    throw new AssertionError("Accessing disposed message bus; " + myOwner);
   }
 
   private List<Integer> notifyChildBusCreated(final MessageBusImpl childBus) {
@@ -222,7 +223,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void checkNotDisposed() {
-    LOG.assertTrue(!myDisposed, "Already disposed");
+    if (myDisposed) LOG.error("Already disposed: " + myOwner);
   }
 
   private void calcSubscribers(Topic topic, List<MessageBusConnectionImpl> result) {

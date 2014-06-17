@@ -848,6 +848,7 @@ public class AllIcons {
     public static final Icon PpLib = IconLoader.getIcon("/nodes/ppLib.png"); // 16x16
     public static final Icon PpLibFolder = IconLoader.getIcon("/nodes/ppLibFolder.png"); // 16x16
     public static final Icon PpWeb = IconLoader.getIcon("/nodes/ppWeb.png"); // 16x16
+    public static final Icon PpWebLogo = IconLoader.getIcon("/nodes/ppWebLogo.png"); // 32x32
     public static final Icon Project = IconLoader.getIcon("/nodes/project.png"); // 16x16
     public static final Icon Property = IconLoader.getIcon("/nodes/property.png"); // 16x16
     public static final Icon PropertyRead = IconLoader.getIcon("/nodes/propertyRead.png"); // 16x16

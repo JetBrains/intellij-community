@@ -78,7 +78,7 @@ public abstract class FileBasedIndexExtension<K, V> {
     return Collections.emptyList();
   }
 
-  public boolean isKeyHighlySelective() {
+  public boolean keyIsUniqueForIndexedFile() {
     return false;
   }
 

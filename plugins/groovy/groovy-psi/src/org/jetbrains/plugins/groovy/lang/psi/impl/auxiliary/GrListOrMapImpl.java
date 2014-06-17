@@ -17,6 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -215,8 +217,13 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         protected PsiType[] inferComponents() {
           return ContainerUtil.map(initializers, new Function<GrExpression, PsiType>() {
             @Override
-            public PsiType fun(GrExpression expression) {
-              return expression.getType();
+            public PsiType fun(final GrExpression expression) {
+              return RecursionManager.doPreventingRecursion(expression, false, new Computable<PsiType>() {
+                @Override
+                public PsiType compute() {
+                  return expression.getType();
+                }
+              });
             }
           }, new PsiType[initializers.length]);
         }

@@ -145,7 +145,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
-  public abstract boolean testConnection(RemoteCredentials credentials);
+  public abstract boolean testConnection(@NotNull RemoteCredentials credentials);
 
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(Process process,
                                                                       PyRemoteSdkCredentials data,

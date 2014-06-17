@@ -406,7 +406,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     new Thread() {
       @Override
       public void run() {
-        new WaitFor() {
+        new WaitFor(60000) {
           @Override
           protected boolean condition() {
             return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame || myRunner == null;

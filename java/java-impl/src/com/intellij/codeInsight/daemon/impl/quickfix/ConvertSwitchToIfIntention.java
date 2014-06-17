@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
 * User: anna
@@ -82,7 +84,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       return;
     }
     final boolean isSwitchOnString =
-      switchExpressionType.equalsToText("java.lang.String");
+      switchExpressionType.equalsToText(JAVA_LANG_STRING);
     boolean useEquals = isSwitchOnString;
     if (!useEquals) {
       final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);

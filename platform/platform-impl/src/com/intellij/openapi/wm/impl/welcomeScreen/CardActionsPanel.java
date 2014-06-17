@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBCardLayout;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
@@ -63,31 +64,26 @@ public class CardActionsPanel extends JPanel {
     withBottomFiller.add(card, BorderLayout.NORTH);
     myContent.add(withBottomFiller, cardId);
 
-    List<Button> buttons = buildButtons(group, cardId);
+    List<JComponent> components = buildComponents(group, cardId);
 
-    JPanel buttonsPanel = new JPanel(new GridLayout(buttons.size(), 1, 5, 5));
+    JPanel componentsPanel = new JPanel(new GridLayout(components.size(), 1, 5, 5));
     if (!USE_ICONS) {
-      buttonsPanel.setOpaque(false);
+      componentsPanel.setOpaque(false);
     }
-    buttonsPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-    for (Button button : buttons) {
-      buttonsPanel.add(button);
+    componentsPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+    for (JComponent component : components) {
+      componentsPanel.add(component);
     }
-    card.add(buttonsPanel, BorderLayout.CENTER);
+    card.add(componentsPanel, BorderLayout.CENTER);
     String title;
-    if (parentId != null) {
-      title = group.getTemplatePresentation().getText();
-    }
-    else {
-      title = "Quick Start";
-    }
+    title = group.getTemplatePresentation().getText();
     card.add(new HeaderPanel(title, parentId), BorderLayout.NORTH);
   }
 
-  private List<Button> buildButtons(ActionGroup group, String parentId) {
+  private List<JComponent> buildComponents(ActionGroup group, String parentId) {
     AnAction[] actions = group.getChildren(null);
 
-    List<Button> buttons = new ArrayList<Button>();
+    List<JComponent> components = new ArrayList<JComponent>();
     PresentationFactory factory = new PresentationFactory();
 
     for (AnAction action : actions) {
@@ -101,21 +97,25 @@ public class CardActionsPanel extends JPanel {
           final String id = String.valueOf(++nCards);
           createCardForGroup(childGroup, id, parentId);
 
-          buttons.add(new Button(new ActivateCard(id), presentation));
+          components.add(new Button(new ActivateCard(id), presentation));
         }
         else {
-          buttons.addAll(buildButtons(childGroup, parentId));
+          components.addAll(buildComponents(childGroup, parentId));
         }
+      }
+      else if (action instanceof AbstractActionWithPanel){
+        final JPanel panel = ((AbstractActionWithPanel)action).createPanel();
+        components.add(panel);
       }
       else {
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(this),
                                         ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
         if (presentation.isVisible()) {
-          buttons.add(new Button(action, presentation));
+          components.add(new Button(action, presentation));
         }
       }
     }
-    return buttons;
+    return components;
   }
 
   private class HeaderPanel extends JPanel {
@@ -159,7 +159,7 @@ public class CardActionsPanel extends JPanel {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         g.setColor(LightColors.SLIGHTLY_GREEN);
         g.fillRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
-        g.setColor(Color.GRAY);
+        g.setColor(JBColor.GRAY);
         g.drawRoundRect(x + 4, y + 4, 32 - 8, 32 - 8, 8, 8);
       }
 

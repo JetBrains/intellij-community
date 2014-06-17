@@ -173,7 +173,7 @@ public layoutCommunity(String classesPath, Set usedJars) {
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])
 
-  String macAppRoot = isEap() ? "PyCharm CE ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm CE.app"
+  String macAppRoot = isEap() ? "PyCharm CE ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm CE.app/Contents"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPC-${buildNumber}.sit", [paths.distAll], paths.distMac)
 }
 
@@ -181,22 +181,6 @@ private layoutPlugins(layouts) {
   dir("plugins") {
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
-    /*
-    layouts.layoutPlugin("pycharm-flask")
-    layouts.layoutPlugin("pycharm-numpy")
-    layouts.layoutPlugin("textmate") {
-      dir("themes") {
-        fileset(dir: "${home}/plugins/textmate/lib/themes/", includes: "*.tmTheme")
-      }
-      fileset(dir: "${home}/plugins/textmate/lib") {
-        include(name: "jcodings.jar")
-        include(name: "joni.jar")
-      }
-    }
-    layouts.layoutPlugin("puppet")
-    layouts.layoutPlugin("fileWatcher")
-    layouts.layoutPlugin("ini4idea")
-    */
   }
 
   layouts.layoutCommunityPlugins(ch)

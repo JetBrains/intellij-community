@@ -200,6 +200,12 @@ public class SuppressionUtil extends SuppressionUtilCore {
     if (tool instanceof BatchSuppressableTool) {
       return ((BatchSuppressableTool)tool).isSuppressedFor(place);
     }
+
+    final InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(place.getLanguage());
+    if (suppressor != null) {
+      return suppressor.isSuppressedFor(place, tool.getID());
+    }
+
     String alternativeId;
     String id;
 

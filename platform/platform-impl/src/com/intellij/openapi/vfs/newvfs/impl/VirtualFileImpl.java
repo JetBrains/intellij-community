@@ -23,9 +23,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +38,8 @@ import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
 
-  VirtualFileImpl(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
-    super(nameId, parent, id, attributes);
+  VirtualFileImpl(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
+    super(id, segment, parent);
   }
 
   @Override
@@ -128,4 +128,21 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
     super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }
+
+  @Override
+  protected void setUserMap(KeyFMap map) {
+    mySegment.setUserMap(Math.abs(getId()), map);
+  }
+
+  @NotNull
+  @Override
+  protected KeyFMap getUserMap() {
+    return mySegment.getUserMap(this);
+  }
+
+  @Override
+  protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+    return mySegment.changeUserMap(Math.abs(getId()), oldMap, UserDataInterner.internUserData(newMap));
+  }
+
 }

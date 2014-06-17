@@ -830,15 +830,27 @@ public class HighlightInfo implements Segment {
           throw new AssertionError("unknown tool: " + toolWrapper+"; key: "+myKey);
         }
 
+        SuppressQuickFix[] suppressFixes = null;
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
+          suppressFixes = SuppressQuickFix.EMPTY_ARRAY;
           final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
           if (suppressActions != null) {
             ContainerUtil.addAll(newOptions, suppressActions);
           }
         }
         if (wrappedTool instanceof BatchSuppressableTool) {
-          final SuppressQuickFix[] suppressActions = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
-          ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
+          suppressFixes = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
+        }
+
+        if (suppressFixes == null) {
+          final InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
+          if (suppressor != null) {
+            suppressFixes = suppressor.getSuppressActions(element, wrappedTool.getShortName());
+          }
+        }
+
+        if (suppressFixes != null) {
+          ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, new Function<SuppressQuickFix, IntentionAction>() {
             @Override
             public IntentionAction fun(SuppressQuickFix fix) {
               return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
