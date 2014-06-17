@@ -51,7 +51,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
-    PushedFilePropertiesUpdater.getInstance(myProject).performPushTasks(indicator);
+    PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
 
     indicator.setIndeterminate(true);
     indicator.setText(IdeBundle.message("progress.indexing.scanning"));
