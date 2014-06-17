@@ -247,7 +247,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       if(!command.endsWith("\n")){
         addAdditionalPathsCommand = "\n" + addAdditionalPathsCommand;
       }
-      command = command + addAdditionalPathsCommand;
+      command += addAdditionalPathsCommand;
     }
 
     return command.replace(WORKING_DIR_ENV, path);

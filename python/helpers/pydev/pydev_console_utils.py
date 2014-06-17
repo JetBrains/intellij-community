@@ -499,7 +499,7 @@ class FakeFrame:
     A class to be used as a mock of a frame.
     '''
 
-def showsyntaxerror(self, filename=None):
+def showsyntaxerror(filename=None):
     """Display the syntax error that just occurred
         at same manner for ipython and regular pydev"""
     type, value, tb = sys.exc_info()
