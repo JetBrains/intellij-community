@@ -773,11 +773,43 @@ public class FileUtil extends FileUtilRt {
    */
   @NotNull
   public static String normalize(@NotNull String path) {
-    final StringBuilder result = new StringBuilder(path.length());
-
     int start = 0;
     boolean separator = false;
-    if (SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+    if (SystemInfo.isWindows) {
+      if (path.startsWith("//")) {
+        start = 2;
+        separator = true;
+      }
+      else if (path.startsWith("\\\\")) {
+        return normalizeTail(0, path, false);
+      }
+    }
+
+    for (int i = start; i < path.length(); ++i) {
+      final char c = path.charAt(i);
+      if (c == '/') {
+        if (separator) {
+          return normalizeTail(i, path, true);
+        }
+        separator = true;
+      }
+      else if (c == '\\') {
+        return normalizeTail(i, path, separator);
+      }
+      else {
+        separator = false;
+      }
+    }
+
+    return path;
+  }
+
+  @NotNull
+  private static String normalizeTail(int prefixEnd, @NotNull String path, boolean separator) {
+    final StringBuilder result = new StringBuilder(path.length());
+    result.append(path, 0, prefixEnd);
+    int start = prefixEnd;
+    if (start==0 && SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
       separator = true;
