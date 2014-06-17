@@ -38,6 +38,11 @@ public class SuppressManagerImpl extends SuppressManager {
   }
 
   @Override
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
+    return createBatchSuppressActions(HighlightDisplayKey.find(toolShortName));
+  }
+
+  @Override
   public boolean isSuppressedFor(@NotNull final PsiElement element, final String toolId) {
     return JavaSuppressionUtil.getElementToolSuppressedIn(element, toolId) != null;
   }

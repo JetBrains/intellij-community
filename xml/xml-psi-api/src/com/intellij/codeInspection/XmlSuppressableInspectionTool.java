@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +32,12 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   @NotNull
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return new SuppressQuickFix[]{new SuppressTag(), new SuppressForFile(getID()), new SuppressAllForFile()};
+    return getSuppressFixes(getID());
+  }
+
+  public static SuppressQuickFix[] getSuppressFixes(final String shortName) {
+    final String id = HighlightDisplayKey.find(shortName).getID();
+    return new SuppressQuickFix[]{new SuppressTagStatic(id), new SuppressForFile(id), new SuppressAllForFile()};
   }
 
   @Override
