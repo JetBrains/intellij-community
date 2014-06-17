@@ -27,9 +27,13 @@ import java.io.*;
 public class StudyEditorFactoryListener implements EditorFactoryListener {
 
   protected boolean fileChanged(VirtualFile file) throws IOException {
+    //TODO: surround with try-catch block
     File usual_file = new File(file.getPath());
     InputStream usual_file_stream = new FileInputStream(usual_file);
     InputStream metaIs = StudyEditorFactoryListener.class.getResourceAsStream(file.getName());
+    BufferedReader bf_meta = new BufferedReader(new InputStreamReader(metaIs));
+    BufferedReader bf_usual = new BufferedReader(new InputStreamReader(usual_file_stream));
+    /*
     int sym;
     while( (sym = metaIs.read()) != -1) {
       int sym2 = usual_file_stream.read();
@@ -37,6 +41,19 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
         return true;
       }
     }
+    return false;
+    */
+    while(bf_meta.ready()) {
+      String line1 = bf_meta.readLine();
+      String line2 = bf_usual.readLine();
+      if (!line1.equals(line2)) {
+        bf_meta.close();
+        bf_usual.close();
+        return true;
+      }
+    }
+    bf_meta.close();
+    bf_usual.close();;
     return false;
   }
 
