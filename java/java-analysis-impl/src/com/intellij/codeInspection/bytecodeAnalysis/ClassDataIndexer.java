@@ -24,10 +24,7 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author lambdamix
@@ -43,23 +40,45 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
   @NotNull
   @Override
   public Map<Integer, Collection<IntIdEquation>> map(@NotNull FileContent inputData) {
-    ArrayList<Equation<Key, Value>> rawEquations = processClass(new ClassReader(inputData.getContent()));
-    Collection<IntIdEquation> idEquations = new ArrayList<IntIdEquation>(rawEquations.size());
-    for (Equation<Key, Value> rawEquation : rawEquations) {
-      try {
-        IntIdEquation idEquation = myConverter.convert(rawEquation);
-        idEquations.add(idEquation);
+    ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()));
+    List<Equation<Key, Value>> rawParameterEquations = rawEquations.parameterEquations;
+    List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
+
+    Collection<IntIdEquation> idParameterEquations = new ArrayList<IntIdEquation>(rawParameterEquations.size());
+    Collection<IntIdEquation> idContractEquations = new ArrayList<IntIdEquation>(rawContractEquations.size());
+
+    HashMap<Integer, Collection<IntIdEquation>> map = new HashMap<Integer, Collection<IntIdEquation>>(2);
+    map.put(BytecodeAnalysisIndex.PARAMETERS, idParameterEquations);
+    map.put(BytecodeAnalysisIndex.CONTRACTS, idContractEquations);
+
+    try {
+      for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
+        idParameterEquations.add(myConverter.convert(rawParameterEquation));
       }
-      catch (IOException e) {
-        // FIXME - how to handle an error in underlying enumerator?
-        LOG.error(e);
+      for (Equation<Key, Value> rawContractEquation: rawContractEquations) {
+        idContractEquations.add(myConverter.convert(rawContractEquation));
       }
     }
-    return Collections.singletonMap(BytecodeAnalysisIndex.KEY, idEquations);
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return map;
   }
 
-  public static ArrayList<Equation<Key, Value>> processClass(final ClassReader classReader) {
-    final ArrayList<Equation<Key, Value>> result = new ArrayList<Equation<Key, Value>>();
+  private static class ClassEquations {
+    final List<Equation<Key, Value>> parameterEquations;
+    final List<Equation<Key, Value>> contractEquations;
+
+    private ClassEquations(List<Equation<Key, Value>> parameterEquations, List<Equation<Key, Value>> contractEquations) {
+      this.parameterEquations = parameterEquations;
+      this.contractEquations = contractEquations;
+    }
+  }
+
+  public static ClassEquations processClass(final ClassReader classReader) {
+    final List<Equation<Key, Value>> parameterEquations = new ArrayList<Equation<Key, Value>>();
+    final List<Equation<Key, Value>> contractEquations = new ArrayList<Equation<Key, Value>>();
+
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -96,21 +115,21 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
                 boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
                 if (isReferenceArg) {
-                  result.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i)).analyze());
+                  parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i)).analyze());
                 }
                 if (isReferenceResult || isBooleanResult) {
                   if (isReferenceArg) {
-                    result.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null)).analyze());
-                    result.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull)).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null)).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull)).analyze());
                   }
                   if (isBooleanArg) {
-                    result.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False)).analyze());
-                    result.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True)).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False)).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True)).analyze());
                   }
                 }
               }
               if (isReferenceResult) {
-                result.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out()).analyze());
+                contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out()).analyze());
               }
               added = true;
             } catch (AnalyzerException e) {
@@ -129,26 +148,26 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
             boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
 
             if (isReferenceArg) {
-              result.add(new Equation<Key, Value>(new Key(method, new In(i)), new Final<Key, Value>(Value.Top)));
+              contractEquations.add(new Equation<Key, Value>(new Key(method, new In(i)), new Final<Key, Value>(Value.Top)));
               if (isReferenceResult || isBooleanResult) {
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null)), new Final<Key, Value>(Value.Top)));
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull)), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null)), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull)), new Final<Key, Value>(Value.Top)));
               }
             }
             if (Type.BOOLEAN_TYPE.equals(argType)) {
               if (isReferenceResult || isBooleanResult) {
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False)), new Final<Key, Value>(Value.Top)));
-                result.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True)), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False)), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True)), new Final<Key, Value>(Value.Top)));
               }
             }
           }
           if (isReferenceResult) {
-            result.add(new Equation<Key, Value>(new Key(method, new Out()), new Final<Key, Value>(Value.Top)));
+            parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out()), new Final<Key, Value>(Value.Top)));
           }
         }
       }
     }, 0);
 
-    return result;
+    return new ClassEquations(parameterEquations, contractEquations);
   }
 }

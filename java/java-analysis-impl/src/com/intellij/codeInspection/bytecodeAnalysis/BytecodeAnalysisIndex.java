@@ -33,7 +33,8 @@ import java.util.Collection;
  * @author lambdamix
  */
 public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Collection<IntIdEquation>> {
-  public static final int KEY = 0;
+  public static final int PARAMETERS = 0;
+  public static final int CONTRACTS = 1;
   public static final ID<Integer, Collection<IntIdEquation>> NAME = ID.create("bytecodeAnalysis");
   private final EquationExternalizer myExternalizer = new EquationExternalizer();
 

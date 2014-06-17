@@ -46,6 +46,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @author lambdamix
+ */
 public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis");
@@ -72,10 +75,16 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   }
 
   private void loadAnnotations() {
-    LOG.info("initializing annotations");
-    final IntIdSolver solver = new IntIdSolver();
+    Annotations parameterAnnotations = loadParameterAnnotations();
+    Annotations contractAnnotations = loadContractAnnotations();
+    myAnnotations = new Annotations(contractAnnotations.outs, parameterAnnotations.params, contractAnnotations.contracts);
+  }
+
+  private Annotations loadParameterAnnotations() {
+    LOG.info("initializing parameter annotations");
+    final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.NotNull, Value.Top));
     FileBasedIndex.getInstance().processValues(
-      BytecodeAnalysisIndex.NAME, BytecodeAnalysisIndex.KEY, null, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
+      BytecodeAnalysisIndex.NAME, BytecodeAnalysisIndex.PARAMETERS, null, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
         @Override
         public boolean process(VirtualFile file, Collection<IntIdEquation> value) {
           for (IntIdEquation intIdEquation : value) {
@@ -84,11 +93,29 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
           return true;
         }
       }, ProjectScope.getLibrariesScope(myProject));
-    LOG.info("equations are constructed");
-    TIntObjectHashMap<Value> solutions = solver.solve();
-    LOG.info("equations are solved");
-    myAnnotations = BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
-    LOG.info("initialized ");
+    LOG.info("parameter equations are constructed");
+    TIntObjectHashMap<Value> contractSolutions = solver.solve();
+    LOG.info("parameter equations are solved");
+    return BytecodeAnalysisConverter.getInstance().makeAnnotations(contractSolutions);
+  }
+
+  private Annotations loadContractAnnotations() {
+    LOG.info("initializing contract annotations");
+    final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.Bot, Value.Top));
+    FileBasedIndex.getInstance().processValues(
+      BytecodeAnalysisIndex.NAME, BytecodeAnalysisIndex.CONTRACTS, null, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
+        @Override
+        public boolean process(VirtualFile file, Collection<IntIdEquation> value) {
+          for (IntIdEquation intIdEquation : value) {
+            solver.addEquation(intIdEquation);
+          }
+          return true;
+        }
+      }, ProjectScope.getLibrariesScope(myProject));
+    LOG.info("contract equations are constructed");
+    TIntObjectHashMap<Value> contractSolutions = solver.solve();
+    LOG.info("contract equations are solved");
+    return BytecodeAnalysisConverter.getInstance().makeAnnotations(contractSolutions);
   }
 
 
@@ -235,11 +262,4 @@ class AnnotationData {
     return result;
   }
 
-  @Override
-  public String toString() {
-    return "AnnotationData{" +
-           "annotationClassFqName='" + annotationClassFqName + '\'' +
-           ", annotationParameters='" + annotationParameters + '\'' +
-           '}';
-  }
 }
