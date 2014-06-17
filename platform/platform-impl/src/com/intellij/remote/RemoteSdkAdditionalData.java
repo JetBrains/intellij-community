@@ -43,5 +43,5 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
 
   CredentialsType getRemoteConnectionType();
 
-  void switchOnConnectionType(RemoteSdkConnectionAcceptor acceptor);
+  void switchOnConnectionType(@NotNull RemoteSdkConnectionAcceptor acceptor);
 }

@@ -57,7 +57,7 @@ public class RemoteSdkCredentialsBuilder {
     copyTo.setRemoteRoots(data.getRemoteRoots());
   }
 
-  public static void copyCredentials(RemoteCredentials data, MutableRemoteCredentials copyTo) {
+  public static void copyCredentials(@NotNull RemoteCredentials data, @NotNull MutableRemoteCredentials copyTo) {
     copyTo.setHost(data.getHost());
     copyTo.setPort(data.getPort());
     copyTo.setAnonymous(data.isAnonymous());
