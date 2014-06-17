@@ -679,14 +679,6 @@ def layoutAndroid(String androidHome) {
         fileset(dir: "$androidHome/tools-base/templates")
       }
     }
-
-    dir("android-designer") {
-      dir("lib") {
-        jar("android-designer.jar") {
-          module("android-designer")
-        }
-      }
-    }
   }
 }
 
