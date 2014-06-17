@@ -194,24 +194,6 @@ public class SuppressionUtil extends SuppressionUtilCore {
   }
 
   public static boolean inspectionResultSuppressed(@NotNull PsiElement place, @NotNull LocalInspectionTool tool) {
-    if (tool instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
-    }
-    if (tool instanceof BatchSuppressableTool) {
-      return ((BatchSuppressableTool)tool).isSuppressedFor(place);
-    }
-
-    final InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(place.getLanguage());
-    if (suppressor != null) {
-      return suppressor.isSuppressedFor(place, tool.getID());
-    }
-
-    String alternativeId;
-    String id;
-
-    return isSuppressed(place, id = tool.getID()) ||
-           (alternativeId = tool.getAlternativeID()) != null &&
-           !alternativeId.equals(id) &&
-           isSuppressed(place, alternativeId);
+    return tool.isSuppressedFor(place);
   }
 }

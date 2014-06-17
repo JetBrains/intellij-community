@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -46,7 +47,7 @@ import java.util.Set;
  * @since 28-Nov-2005
  */
 @SuppressWarnings("JavadocReference")
-public abstract class InspectionProfileEntry {
+public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
@@ -55,6 +56,42 @@ public abstract class InspectionProfileEntry {
   private static Set<String> ourBlackList = null;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer = null;
+
+  @NonNls
+  @Nullable
+  public String getAlternativeID() {
+    return null;
+  }
+
+  @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
+    if (suppressor != null) {
+      String toolId = getSuppressId();
+      if (suppressor.isSuppressedFor(element, toolId)) {
+        return true;
+      }
+      final String alternativeId = getAlternativeID();
+      return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
+    }
+    return false;
+  }
+
+  protected String getSuppressId() {
+    return getShortName();
+  }
+
+  @NotNull
+  @Override
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    if (element != null) {
+      InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
+      if (suppressor != null) {
+        return suppressor.getSuppressActions(element, getShortName());
+      }
+    }
+    return SuppressQuickFix.EMPTY_ARRAY;
+  }
 
   public void cleanup(Project project) {
 

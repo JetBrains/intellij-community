@@ -26,23 +26,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
+public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool {
   @NonNls static final String ALL = "ALL";
-
-  @NotNull
-  @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return getSuppressFixes(getID());
-  }
 
   public static SuppressQuickFix[] getSuppressFixes(final String shortName) {
     final String id = HighlightDisplayKey.find(shortName).getID();
     return new SuppressQuickFix[]{new SuppressTagStatic(id), new SuppressForFile(id), new SuppressAllForFile()};
-  }
-
-  @Override
-  public boolean isSuppressedFor(@NotNull final PsiElement element) {
-    return XmlSuppressionProvider.isSuppressed(element, getID());
   }
 
   public class SuppressTag extends SuppressTagStatic {
