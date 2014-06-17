@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import gnu.trove.TIntHashSet;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -36,9 +37,9 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   private final InOutInterpreter interpreter;
   private final Value inValue;
 
-  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction) {
+  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, TIntHashSet resultOrigins) {
     super(richControlFlow, direction);
-    interpreter = new InOutInterpreter(direction);
+    interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
   }
 
@@ -247,47 +248,55 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
 class InOutInterpreter extends BasicInterpreter {
   final Direction direction;
+  final InsnList insns;
+  final TIntHashSet resultOrigins;
 
-  InOutInterpreter(Direction direction) {
+  InOutInterpreter(Direction direction, InsnList insns, TIntHashSet resultOrigins) {
     this.direction = direction;
+    this.insns = insns;
+    this.resultOrigins = resultOrigins;
   }
 
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
-    switch (insn.getOpcode()) {
-      case ICONST_0:
-        return FalseValue;
-      case ICONST_1:
-        return TrueValue;
-      case ACONST_NULL:
-        return NullValue;
-      case LDC:
-        Object cst = ((LdcInsnNode) insn).cst;
-        if (cst instanceof Type) {
-          Type type = (Type) cst;
-          if (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY) {
-            return new NotNullValue(Type.getObjectType("java/lang/Class"));
+    boolean propagate = resultOrigins.contains(insns.indexOf(insn));
+    if (propagate) {
+      switch (insn.getOpcode()) {
+        case ICONST_0:
+          return FalseValue;
+        case ICONST_1:
+          return TrueValue;
+        case ACONST_NULL:
+          return NullValue;
+        case LDC:
+          Object cst = ((LdcInsnNode)insn).cst;
+          if (cst instanceof Type) {
+            Type type = (Type)cst;
+            if (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY) {
+              return new NotNullValue(Type.getObjectType("java/lang/Class"));
+            }
+            if (type.getSort() == Type.METHOD) {
+              return new NotNullValue(Type.getObjectType("java/lang/invoke/MethodType"));
+            }
           }
-          if (type.getSort() == Type.METHOD) {
-            return new NotNullValue(Type.getObjectType("java/lang/invoke/MethodType"));
+          else if (cst instanceof String) {
+            return new NotNullValue(Type.getObjectType("java/lang/String"));
           }
-        }
-        else if (cst instanceof String) {
-          return new NotNullValue(Type.getObjectType("java/lang/String"));
-        }
-        else if (cst instanceof Handle) {
-          return new NotNullValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
-        }
-        break;
-      case NEW:
-        return new NotNullValue(Type.getObjectType(((TypeInsnNode)insn).desc));
-      default:
+          else if (cst instanceof Handle) {
+            return new NotNullValue(Type.getObjectType("java/lang/invoke/MethodHandle"));
+          }
+          break;
+        case NEW:
+          return new NotNullValue(Type.getObjectType(((TypeInsnNode)insn).desc));
+        default:
+      }
     }
     return super.newOperation(insn);
   }
 
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
+    boolean propagate = resultOrigins.contains(insns.indexOf(insn));
     switch (insn.getOpcode()) {
       case CHECKCAST:
         if (value instanceof ParamValue) {
@@ -301,7 +310,10 @@ class InOutInterpreter extends BasicInterpreter {
         break;
       case NEWARRAY:
       case ANEWARRAY:
-        return new NotNullValue(super.unaryOperation(insn, value).getType());
+        if (propagate) {
+          return new NotNullValue(super.unaryOperation(insn, value).getType());
+        }
+        break;
       default:
     }
     return super.unaryOperation(insn, value);
@@ -309,42 +321,45 @@ class InOutInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
+    boolean propagate = resultOrigins.contains(insns.indexOf(insn));
     int opCode = insn.getOpcode();
     int shift = opCode == INVOKESTATIC ? 0 : 1;
-    switch (opCode) {
-      case INVOKESTATIC:
-      case INVOKESPECIAL:
-        MethodInsnNode mNode = (MethodInsnNode) insn;
-        Method method = new Method(mNode.owner, mNode.name, mNode.desc);
-        Type retType = Type.getReturnType(mNode.desc);
-        boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
-        if (!Type.VOID_TYPE.equals(retType)) {
-          if (direction instanceof InOut) {
-            InOut inOut = (InOut) direction;
-            HashSet<Key> keys = new HashSet<Key>();
-            for (int i = shift; i < values.size(); i++) {
-              if (values.get(i) instanceof ParamValue) {
-                keys.add(new Key(method, new InOut(i - shift, inOut.inValue)));
+    if (propagate) {
+      switch (opCode) {
+        case INVOKESTATIC:
+        case INVOKESPECIAL:
+          MethodInsnNode mNode = (MethodInsnNode)insn;
+          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Type retType = Type.getReturnType(mNode.desc);
+          boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
+          if (!Type.VOID_TYPE.equals(retType)) {
+            if (direction instanceof InOut) {
+              InOut inOut = (InOut)direction;
+              HashSet<Key> keys = new HashSet<Key>();
+              for (int i = shift; i < values.size(); i++) {
+                if (values.get(i) instanceof ParamValue) {
+                  keys.add(new Key(method, new InOut(i - shift, inOut.inValue)));
+                }
+              }
+              if (isRefRetType) {
+                keys.add(new Key(method, new Out()));
+              }
+              if (!keys.isEmpty()) {
+                return new CallResultValue(retType, keys);
               }
             }
-            if (isRefRetType) {
+            else if (isRefRetType) {
+              HashSet<Key> keys = new HashSet<Key>();
               keys.add(new Key(method, new Out()));
-            }
-            if (!keys.isEmpty()) {
               return new CallResultValue(retType, keys);
             }
-          }
-          else if (isRefRetType) {
-            HashSet<Key> keys = new HashSet<Key>();
-            keys.add(new Key(method, new Out()));
-            return new CallResultValue(retType, keys);
-          }
 
-        }
-        break;
-      case MULTIANEWARRAY:
-        return new NotNullValue(super.naryOperation(insn, values).getType());
-      default:
+          }
+          break;
+        case MULTIANEWARRAY:
+          return new NotNullValue(super.naryOperation(insn, values).getType());
+        default:
+      }
     }
     return super.naryOperation(insn, values);
   }

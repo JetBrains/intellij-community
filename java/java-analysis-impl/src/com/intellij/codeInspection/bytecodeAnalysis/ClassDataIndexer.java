@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
@@ -109,6 +110,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
           boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
           if (reducible) {
             try {
+              TIntHashSet resultOrigins = cfg.resultOrigins(className, methodNode);
               for (int i = 0; i < argumentTypes.length; i++) {
                 Type argType = argumentTypes[i];
                 int argSort = argType.getSort();
@@ -119,17 +121,17 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 }
                 if (isReferenceResult || isBooleanResult) {
                   if (isReferenceArg) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null)).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull)).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins).analyze());
                   }
                   if (isBooleanArg) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False)).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True)).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins).analyze());
                   }
                 }
               }
               if (isReferenceResult) {
-                contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out()).analyze());
+                contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins).analyze());
               }
               added = true;
             } catch (AnalyzerException e) {

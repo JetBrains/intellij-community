@@ -250,6 +250,9 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
     }
     compoundKey[i] = myPackageEnumerator.enumerate(packageName);
+    if (className == null) {
+       LOG.info("className is null for " + psiClass + " " + qname);
+    }
     if (dimensions == 0) {
       compoundKey[i + 1] = myNamesEnumerator.enumerate(className);
     } else {

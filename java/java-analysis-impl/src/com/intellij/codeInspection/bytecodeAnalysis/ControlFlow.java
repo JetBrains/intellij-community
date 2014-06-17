@@ -15,22 +15,126 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.TIntHashSet;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InsnList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
-import org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer;
-import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
-import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
+import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 
 import java.util.*;
 
+import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+
 final class cfg {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.cfg");
   static ControlFlowGraph buildControlFlowGraph(String className, MethodNode methodNode) {
     try {
       return new ControlFlowBuilder(className, methodNode).buildCFG();
     } catch (AnalyzerException e) {
+      // TODO
       throw new RuntimeException();
     }
   }
+
+  static TIntHashSet resultOrigins(String className, MethodNode methodNode) {
+    try {
+      Frame<SourceValue>[] frames = new Analyzer<SourceValue>(MININAL_ORIGIN_INTERPRETER).analyze(className, methodNode);
+      InsnList insns = methodNode.instructions;
+      TIntHashSet result = new TIntHashSet();
+      for (int i = 0; i < frames.length; i++) {
+        AbstractInsnNode insnNode = insns.get(i);
+        switch (insnNode.getOpcode()) {
+          case ARETURN:
+          case IRETURN:
+          case LRETURN:
+          case FRETURN:
+          case DRETURN:
+            for (AbstractInsnNode sourceInsn : frames[i].pop().insns) {
+              result.add(insns.indexOf(sourceInsn));
+            }
+            break;
+
+          default:
+            break;
+        }
+      }
+      return result;
+    }
+    catch (AnalyzerException e) {
+      LOG.error(e);
+      throw new RuntimeException();
+    }
+  }
+
+  static final Interpreter<SourceValue> MININAL_ORIGIN_INTERPRETER = new SourceInterpreter() {
+    final SourceValue[] sourceVals = {new SourceValue(1), new SourceValue(2)};
+
+    @Override
+    public SourceValue newOperation(AbstractInsnNode insn) {
+      SourceValue result = super.newOperation(insn);
+      switch (insn.getOpcode()) {
+        case ICONST_0:
+        case ICONST_1:
+        case ACONST_NULL:
+        case LDC:
+        case NEW:
+          return result;
+        default:
+          return sourceVals[result.getSize() - 1];
+      }
+    }
+
+    @Override
+    public SourceValue unaryOperation(AbstractInsnNode insn, SourceValue value) {
+      SourceValue result = super.unaryOperation(insn, value);
+      switch (insn.getOpcode()) {
+        case CHECKCAST:
+        case NEWARRAY:
+        case ANEWARRAY:
+          return result;
+        default:
+          return sourceVals[result.getSize() - 1];
+      }
+    }
+
+    @Override
+    public SourceValue binaryOperation(AbstractInsnNode insn, SourceValue value1, SourceValue value2) {
+      switch (insn.getOpcode()) {
+        case LALOAD:
+        case DALOAD:
+        case LADD:
+        case DADD:
+        case LSUB:
+        case DSUB:
+        case LMUL:
+        case DMUL:
+        case LDIV:
+        case DDIV:
+        case LREM:
+        case LSHL:
+        case LSHR:
+        case LUSHR:
+        case LAND:
+        case LOR:
+        case LXOR:
+          return sourceVals[1];
+        default:
+          return sourceVals[0];
+      }
+    }
+
+    @Override
+    public SourceValue ternaryOperation(AbstractInsnNode insn, SourceValue value1, SourceValue value2, SourceValue value3) {
+      return sourceVals[0];
+    }
+
+    @Override
+    public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {
+      return value;
+    }
+
+  };
 
   private interface Action {}
   private static class MarkScanned implements Action {
