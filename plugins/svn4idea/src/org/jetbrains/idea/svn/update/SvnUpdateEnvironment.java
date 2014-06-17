@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -71,7 +70,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
     }
 
-    protected long doUpdate(final File root) throws SVNException {
+    protected long doUpdate(final File root) throws SvnBindException {
       final long rev;
 
       final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());

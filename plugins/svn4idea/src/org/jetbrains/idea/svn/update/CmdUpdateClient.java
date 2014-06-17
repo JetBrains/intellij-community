@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
@@ -48,35 +47,24 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
   private static final String ourAuthenticationRealm = "Authentication realm:";
 
-  private void checkWorkingCopy(@NotNull File path) throws SVNException {
-    final SVNInfo info;
-    try {
-      info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
-    }
-    catch (SvnBindException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
-    }
+  private void checkWorkingCopy(@NotNull File path) throws SvnBindException {
+    final SVNInfo info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath()));
+      throw new SvnBindException(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath());
     }
   }
 
-  private long[] run(@NotNull File path, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SVNException {
+  private long[] run(@NotNull File path, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
 
     final AtomicReference<long[]> updatedToRevision = new AtomicReference<long[]>();
     updatedToRevision.set(new long[0]);
 
     final BaseUpdateCommandListener listener = createCommandListener(new File[]{path}, updatedToRevision, base);
-    try {
-      execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
-    }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
-    }
+    execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
 
-    listener.throwIfException();
+    listener.throwWrappedIfException();
 
     return updatedToRevision.get();
   }
@@ -146,7 +134,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
 
   @Override
   public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
-    throws SVNException {
+    throws SvnBindException {
     checkWorkingCopy(path);
 
     final List<String> parameters = new ArrayList<String>();
@@ -166,7 +154,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
                        SVNRevision revision,
                        SVNDepth depth,
                        boolean allowUnversionedObstructions,
-                       boolean depthIsSticky) throws SVNException {
+                       boolean depthIsSticky) throws SvnBindException {
     checkWorkingCopy(path);
 
     List<String> parameters = new ArrayList<String>();

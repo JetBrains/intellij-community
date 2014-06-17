@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -41,8 +42,13 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
 
   @Override
   public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
-    throws SVNException {
-    return getClient().doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
+    throws SvnBindException {
+    try {
+      return getClient().doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
@@ -51,8 +57,13 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
                        SVNRevision pegRevision,
                        SVNRevision revision,
                        SVNDepth depth,
-                       boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-    return getClient().doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
+                       boolean allowUnversionedObstructions, boolean depthIsSticky) throws SvnBindException {
+    try {
+      return getClient().doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override

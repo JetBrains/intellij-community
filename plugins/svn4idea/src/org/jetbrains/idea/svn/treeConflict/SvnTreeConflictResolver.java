@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -100,48 +101,43 @@ public class SvnTreeConflictResolver {
   }
 
   private void updatetoTheirsFull() throws VcsException {
-    try {
-      final File ioFile = myPath.getIOFile();
-      SVNStatus status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
-      if (myCommittedRevision == null) {
-        myCommittedRevision = new SvnRevisionNumber(status.getCommittedRevision());
-      }
-      if (status == null || SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
-        myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
-        updateIoFile(ioFile, SVNRevision.HEAD);
-        return;
-      } else if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-        myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
-        updateIoFile(ioFile, SVNRevision.HEAD);
-        FileUtil.delete(ioFile);
-        return;
-      } else {
-        final Set<File> usedToBeAdded = new HashSet<File>();
-        if (myPath.isDirectory()) {
-          StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
-          statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, false, false, false, false,
-                                new ISVNStatusHandler() {
-                                  @Override
-                                  public void handleStatus(SVNStatus status) throws SVNException {
-                                    if (status != null && SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-                                      usedToBeAdded.add(status.getFile());
-                                    }
-                                  }
-                                }, null);
-        }
-        myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
-        for (File wasAdded : usedToBeAdded) {
-          FileUtil.delete(wasAdded);
-        }
-        updateIoFile(ioFile, SVNRevision.HEAD);
-      }
+    final File ioFile = myPath.getIOFile();
+    SVNStatus status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
+    if (myCommittedRevision == null) {
+      myCommittedRevision = new SvnRevisionNumber(status.getCommittedRevision());
     }
-    catch (SVNException e1) {
-      throw new VcsException(e1);
+    if (status == null || SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
+      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      updateIoFile(ioFile, SVNRevision.HEAD);
+      return;
+    } else if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      updateIoFile(ioFile, SVNRevision.HEAD);
+      FileUtil.delete(ioFile);
+      return;
+    } else {
+      final Set<File> usedToBeAdded = new HashSet<File>();
+      if (myPath.isDirectory()) {
+        StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
+        statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, false, false, false, false,
+                              new ISVNStatusHandler() {
+                                @Override
+                                public void handleStatus(SVNStatus status) throws SVNException {
+                                  if (status != null && SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+                                    usedToBeAdded.add(status.getFile());
+                                  }
+                                }
+                              }, null);
+      }
+      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      for (File wasAdded : usedToBeAdded) {
+        FileUtil.delete(wasAdded);
+      }
+      updateIoFile(ioFile, SVNRevision.HEAD);
     }
   }
 
-  private void updateIoFile(@NotNull File ioFile, @NotNull final SVNRevision revision) throws SVNException {
+  private void updateIoFile(@NotNull File ioFile, @NotNull final SVNRevision revision) throws SvnBindException {
     if (! ioFile.exists()) {
       File parent = ioFile.getParentFile();
       myVcs.getFactory(parent).createUpdateClient().doUpdate(parent, revision, SVNDepth.INFINITY, true, false);

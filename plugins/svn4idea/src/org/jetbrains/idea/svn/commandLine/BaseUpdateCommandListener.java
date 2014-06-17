@@ -2,7 +2,6 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -55,19 +54,11 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
     }
   }
 
-  public void throwIfException() throws SVNException {
+  public void throwWrappedIfException() throws SvnBindException {
     SVNException e = exception.get();
 
     if (e != null) {
-      throw e;
-    }
-  }
-
-  public void throwWrappedIfException() throws VcsException {
-    SVNException e = exception.get();
-
-    if (e != null) {
-      throw new VcsException(e);
+      throw new SvnBindException(e);
     }
   }
 
