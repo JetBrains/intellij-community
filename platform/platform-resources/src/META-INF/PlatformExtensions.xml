@@ -283,6 +283,7 @@
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
 
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
+    <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
 
