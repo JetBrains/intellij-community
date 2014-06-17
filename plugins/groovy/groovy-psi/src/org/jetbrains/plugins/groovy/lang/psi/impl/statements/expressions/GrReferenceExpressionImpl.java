@@ -58,10 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
@@ -604,7 +601,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           return factory.createType((PsiClass)resolved);
         }
       }
-      if (getParent() instanceof GrReferenceExpression || PsiUtil.isSuperReference(this)) {
+      else if (PsiUtil.isSuperReference(this)) {
+        PsiClass contextClass = PsiUtil.getContextClass(this);
+        if (GrTraitUtil.isTrait(contextClass)) {
+          PsiClassType[] extendsTypes = contextClass.getExtendsListTypes();
+          PsiClassType[] implementsTypes = contextClass.getImplementsListTypes();
+
+          PsiClassType[] superTypes = ArrayUtil.mergeArrays(implementsTypes, extendsTypes, PsiClassType.ARRAY_FACTORY);
+
+          return PsiIntersectionType.createIntersection(ArrayUtil.reverseArray(superTypes));
+        }
+        return factory.createType((PsiClass)resolved);
+      }
+      if (getParent() instanceof GrReferenceExpression) {
         return factory.createType((PsiClass)resolved);
       }
       else {
