@@ -27,6 +27,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -56,6 +57,8 @@ import java.util.List;
  * @author nik
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
+  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
+
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     @Override
@@ -323,5 +326,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   @Nullable
   public static XDebuggerTree getTree(DataContext context) {
     return XDEBUGGER_TREE_KEY.getData(context);
+  }
+
+  public TransferToEDTQueue<Runnable> getLaterInvocator() {
+    return myLaterInvocator;
   }
 }
