@@ -21,9 +21,9 @@ import java.beans.PropertyChangeListener;
  * Date: 23.05.14
  * Time: 14:16
  */
-public class StudyEditor implements FileEditor {
-  private FileEditor defaultEditor;
-  final JComponent comp;
+class StudyEditor implements FileEditor {
+  private final FileEditor defaultEditor;
+  private final JComponent comp;
 
   private String getTextForTask(VirtualFile file) {
     int taskNum = TaskManager.getInstance().getTaskNumForFile(file.getName());
@@ -38,7 +38,7 @@ public class StudyEditor implements FileEditor {
     comp.add(taskText, BorderLayout.NORTH);
   }
 
-  public FileEditor getDefaultEditor() {
+  FileEditor getDefaultEditor() {
     return defaultEditor;
   }
 
@@ -140,15 +140,9 @@ public class StudyEditor implements FileEditor {
     FileEditor[] fes = FileEditorManager.getInstance(project).getAllEditors();
     for (int i = fes.length - 1; i >= 0; i--) {
       FileEditor fe = fes[i];
-      if (!(fe instanceof StudyEditor)) {
-        continue;
-      }
-      else {
+      if (fe instanceof StudyEditor) {
         FileEditor defaultEditor = ((StudyEditor)fe).getDefaultEditor();
-        if (!(defaultEditor instanceof PsiAwareTextEditorImpl)) {
-          continue;
-        }
-        else {
+        if (defaultEditor instanceof PsiAwareTextEditorImpl) {
           return ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
         }
       }

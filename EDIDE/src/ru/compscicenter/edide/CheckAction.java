@@ -20,13 +20,13 @@ import java.io.InputStreamReader;
  * Date: 23.05.14
  * Time: 20:33
  */
-public class CheckAction extends AnAction {
+class CheckAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     FileDocumentManager.getInstance().saveAllDocuments();
     TaskManager tm = TaskManager.getInstance();
-    if (!project.isOpen()) {
+    if (!(project != null && project.isOpen())) {
       return;
     }
     String basePath = project.getBasePath();
@@ -38,7 +38,7 @@ public class CheckAction extends AnAction {
     VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
     //TODO: replace with platform independent path join
     String testFile = basePath +
-                      "/.idea/" + tm.getTest(tm.getTaskNumForFile(vfOpenedFile.getName()));
+                      "/.idea/" + tm.getTest(tm.getTaskNumForFile(vfOpenedFile != null ? vfOpenedFile.getName() : null));
     GeneralCommandLine cmd = new GeneralCommandLine();
     cmd.setWorkDirectory(basePath + "/.idea");
     cmd.setExePath("python");
@@ -58,19 +58,12 @@ public class CheckAction extends AnAction {
         System.out.println(line);
       }
       while ((line = bf_err.readLine()) != null) {
-        if (line == "OK") {
+        if (line.equals("OK")) {
           testResult = "test passed";
         }
         System.out.println(line);
       }
-      //TODO: replace with popup
-      JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.DEFAULT_OPTION);
-      if (testResult == "test passed") {
-        int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
-        if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
-          TaskManager.getInstance().incrementTask();
-        }
-      }
+      JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.INFORMATION_MESSAGE);
     }
     catch (ExecutionException e1) {
       e1.printStackTrace();

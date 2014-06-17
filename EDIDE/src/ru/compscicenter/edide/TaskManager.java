@@ -18,7 +18,7 @@ import java.util.ArrayList;
  */
 public class TaskManager {
   static private TaskManager instance = null;
-  private ArrayList<Task> tasks;
+  private final ArrayList<Task> tasks;
   private int currentTask = -1;
 
   private TaskManager() {
@@ -50,8 +50,8 @@ public class TaskManager {
       int startOffset = e.getAsJsonObject().get("start").getAsInt();
       String text = e.getAsJsonObject().get("text").getAsString();
       String docs = e.getAsJsonObject().get("docs").getAsString();
-      String possibleAnswer = e.getAsJsonObject().get("possible answer").getAsString();
-      TaskWindow window = new TaskWindow(line, startOffset, text, docs, possibleAnswer);
+      //String possibleAnswer = e.getAsJsonObject().get("possible answer").getAsString();
+      TaskWindow window = new TaskWindow(line, startOffset, text, docs);
       taskFile.addTaskWindow(window);
     }
     return taskFile;
@@ -68,7 +68,6 @@ public class TaskManager {
       int taskIndex = 0;
       for (com.google.gson.JsonElement e : tasks_list) {
         int n = e.getAsJsonObject().get("file_num").getAsInt();
-        //this.addTask(n);
         Task task = new Task(n);
         JsonArray files_in_task = e.getAsJsonObject().get("file_names").getAsJsonArray();
         for (com.google.gson.JsonElement fileName : files_in_task) {
@@ -104,19 +103,6 @@ public class TaskManager {
 
   public int getTasksNum() {
     return tasks.size();
-  }
-
-  public void addTask(int n) {
-    tasks.add(new Task(n));
-  }
-
-  public void addTaskTextLine(int index, String line) {
-    tasks.get(index).addTaskTextLine(line);
-  }
-
-
-  public void setTest(int index, String filename) {
-    tasks.get(index).setTest(filename);
   }
 
   public String getTest(int index) {
@@ -157,12 +143,12 @@ public class TaskManager {
   }
 
   public TaskFile getTaskFile(int index, String fileName) {
-    return tasks.get(index).getTaskFilebyName(fileName);
+    return tasks.get(index).getTaskFileByName(fileName);
   }
 
   public String getDocFileForTask(int taskNum, LogicalPosition pos, String name) {
     Task task = tasks.get(taskNum);
-    TaskFile file = task.getTaskFilebyName(name);
+    TaskFile file = task.getTaskFileByName(name);
     TaskWindow tw = file.getTaskWindow(pos);
     if (tw != null) {
       return tw.getDocsFile();

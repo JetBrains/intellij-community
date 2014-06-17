@@ -21,10 +21,10 @@ import java.io.*;
  */
 
 
-public class TaskToolWindowFactory implements ToolWindowFactory {
-  JButton nextTask = new JButton("next");
-  JLabel task;
-  JPanel panel = new JPanel(new BorderLayout());
+class TaskToolWindowFactory implements ToolWindowFactory {
+  private final JButton nextTask = new JButton("next");
+  private JLabel task;
+  private final JPanel panel = new JPanel(new BorderLayout());
 
   @Override
   public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
@@ -41,8 +41,6 @@ public class TaskToolWindowFactory implements ToolWindowFactory {
         if (basePath == null) return;
         String testFile = basePath +
                           "/.idea/" + tm.getTest(tm.getCurrentTask());
-        String test_runner = basePath +
-                             "/.idea/" + "study_utrunner.py";
         GeneralCommandLine cmd = new GeneralCommandLine();
         cmd.setWorkDirectory(basePath + "/.idea");
         cmd.setExePath("python");
@@ -62,13 +60,13 @@ public class TaskToolWindowFactory implements ToolWindowFactory {
             System.out.println(line);
           }
           while ((line = bf_err.readLine()) != null) {
-            if (line == "OK") {
+            if (line.equals("OK")) {
               testResult = "test passed";
             }
             System.out.println(line);
           }
-          JOptionPane.showMessageDialog(panel, testResult, "", JOptionPane.DEFAULT_OPTION);
-          if (testResult == "test passed") {
+          JOptionPane.showMessageDialog(panel, testResult, "", JOptionPane.INFORMATION_MESSAGE);
+          if (testResult.equals("test passed")) {
             int nextTaskNum = TaskManager.getInstance().getCurrentTask() + 1;
             if (nextTaskNum < TaskManager.getInstance().getTasksNum()) {
               TaskManager.getInstance().incrementTask();
@@ -86,20 +84,6 @@ public class TaskToolWindowFactory implements ToolWindowFactory {
         }
       }
     });
-        /*
-        int curTask = 0;
-        TaskManager tm = TaskManager.getInstance();
-        String taskText;
-        if (tm.getTasksNum() != 0){
-            System.out.println(curTask);
-            taskText = tm.getTaskText(curTask);
-        } else {
-            taskText = "no tasks yet";
-        }
-        if (project.isOpen()) {
-            task =  new JLabel();
-        }
-        */
     String taskText;
     if (project.isOpen()) {
       taskText = TaskManager.getInstance().getTaskText(TaskManager.getInstance().getCurrentTask());
@@ -110,11 +94,11 @@ public class TaskToolWindowFactory implements ToolWindowFactory {
     task = new JLabel(taskText);
     Font testFont = new Font("Courier", Font.BOLD, 16);
     task.setFont(testFont);
-    task.setForeground(new JBColor(Color.DARK_GRAY, Color.CYAN));
+    task.setForeground(new JBColor(JBColor.DARK_GRAY, JBColor.CYAN));
     panel.add(task, BorderLayout.NORTH);
     panel.add(nextTask, BorderLayout.SOUTH);
     panel.updateUI();
-    task.setVerticalAlignment(0);
+    task.setVerticalAlignment(SwingConstants.TOP);
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     Content content = contentFactory.createContent(panel, "", true);
     toolWindow.getContentManager().addContent(content);

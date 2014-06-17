@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by liana on 30.01.14.
+ * User: lia
+ * Date: 30.01.14
  */
-
 
 @State(
   name = "StudySettings",
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
     )}
 )
 
-public class StudyPlugin implements ApplicationComponent, PersistentStateComponent<Element> {
-  public static final String CURRENT_TASK = "currentTask";
+class StudyPlugin implements ApplicationComponent, PersistentStateComponent<Element> {
+  private static final String CURRENT_TASK = "currentTask";
   private final Application myApp;
 
   public StudyPlugin(final Application app) {

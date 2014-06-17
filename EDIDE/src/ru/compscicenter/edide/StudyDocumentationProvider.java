@@ -20,7 +20,7 @@ import java.util.List;
  * Date: 24.05.14
  * Time: 22:13
  */
-public class StudyDocumentationProvider extends DocumentationProviderEx {
+class StudyDocumentationProvider extends DocumentationProviderEx {
 
   @Nullable
   @Override
@@ -43,17 +43,17 @@ public class StudyDocumentationProvider extends DocumentationProviderEx {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     TaskManager tm = TaskManager.getInstance();
     int taskNum = tm.getTaskNumForFile(file);
-    String docsfile = tm.getDocFileForTask(taskNum, pos, file);
-    if (docsfile == null) {
-      docsfile = "empty_study.docs";
+    String docsFile = tm.getDocFileForTask(taskNum, pos, file);
+    if (docsFile == null) {
+      docsFile = "empty_study.docs";
     }
-    InputStream ip = StudyDocumentationProvider.class.getResourceAsStream(docsfile);
+    InputStream ip = StudyDocumentationProvider.class.getResourceAsStream(docsFile);
     BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
     StringBuilder text = new StringBuilder();
     try {
       while (bf.ready()) {
         String line = bf.readLine();
-        text.append(line + "\n");
+        text.append(line).append("\n");
       }
     }
     catch (IOException e) {

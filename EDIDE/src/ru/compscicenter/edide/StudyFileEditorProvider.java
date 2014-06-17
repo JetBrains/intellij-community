@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
  * Date: 10.05.14
  * Time: 12:45
  */
-public class StudyFileEditorProvider implements FileEditorProvider {
-  public static final String EDITOR_TYPE_ID = "StudyEditor";
-  private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
+class StudyFileEditorProvider implements FileEditorProvider {
+  static final private String EDITOR_TYPE_ID = "StudyEditor";
+  final private FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {

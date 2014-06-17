@@ -11,38 +11,26 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import gherkin.deps.net.iharder.Base64;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.Arrays;
 
 
 /**
  * User: lia
  */
-public class StudyEditorFactoryListener implements EditorFactoryListener {
+class StudyEditorFactoryListener implements EditorFactoryListener {
 
-  protected boolean fileChanged(VirtualFile file) throws IOException {
-    //TODO: surround with try-catch block
+    boolean fileChanged(VirtualFile file) throws IOException {
     File usual_file = new File(file.getPath());
     InputStream usual_file_stream = new FileInputStream(usual_file);
     InputStream metaIs = StudyEditorFactoryListener.class.getResourceAsStream(file.getName());
     BufferedReader bf_meta = new BufferedReader(new InputStreamReader(metaIs));
     BufferedReader bf_usual = new BufferedReader(new InputStreamReader(usual_file_stream));
-    /*
-    int sym;
-    while( (sym = metaIs.read()) != -1) {
-      int sym2 = usual_file_stream.read();
-      if (sym != sym2) {
-        return true;
-      }
-    }
-    return false;
-    */
     while(bf_meta.ready()) {
       String line1 = bf_meta.readLine();
       String line2 = bf_usual.readLine();
@@ -53,7 +41,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       }
     }
     bf_meta.close();
-    bf_usual.close();;
+    bf_usual.close();
     return false;
   }
 
@@ -113,7 +101,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
               }
               catch (Exception e) {
                 Log.print("Something wrong with meta file:" + e.getCause());
-                Log.print(String.valueOf(e.getStackTrace()));
+                Log.print(Arrays.toString(e.getStackTrace()));
                 Log.print(e.getMessage());
                 Log.flush();
               }
@@ -126,6 +114,7 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
 
   @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
-    System.out.println("Something else done!!!");
+      Log.print("Editor released\n");
+      Log.flush();
   }
 }

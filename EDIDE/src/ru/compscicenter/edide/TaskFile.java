@@ -10,8 +10,8 @@ import java.util.ArrayList;
  * Time: 20:30
  */
 public class TaskFile {
-  private String name;
-  private ArrayList<TaskWindow> taskWindows;
+  private final String name;
+  private final ArrayList<TaskWindow> taskWindows;
 
   public TaskFile(String name, int taskWindowsNum) {
     this.name = name;
