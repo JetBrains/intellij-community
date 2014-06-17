@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
   public void finishCommand(final Project project, final Object command, final Throwable throwable) {
-    super.finishCommand(project, command, throwable);
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
@@ -52,7 +51,7 @@ class CommandProcessorImpl extends CoreCommandProcessor {
       }
     }
     finally {
-      fireCommandFinished();
+      super.finishCommand(project, command, throwable);
     }
     if (failed) {
       if (project != null) {
