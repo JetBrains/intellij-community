@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.run;
 
-import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
 import com.intellij.ide.util.PropertiesComponent;
@@ -27,6 +26,7 @@ import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -58,7 +58,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private RawCommandLineEditor myInterpreterOptionsTextField;
   private JComboBox myInterpreterComboBox;
   private JRadioButton myUseModuleSdkRadioButton;
-  private JComboBox myModuleComboBox;
+  private ModulesComboBox myModuleComboBox;
   private JPanel myMainPanel;
   private JRadioButton myUseSpecifiedSdkRadioButton;
   private JBLabel myPythonInterpreterJBLabel;
@@ -77,8 +77,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final List<Module> validModules = data.getValidModules();
     Collections.sort(validModules, new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
-    myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
-    myModuleComboBox.setRenderer(new ModuleListCellRenderer());
+    myModuleComboBox.setModules(validModules);
+    myModuleComboBox.setSelectedModule(selection);
 
     myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
@@ -181,11 +181,11 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public Module getModule() {
-    return (Module)myModuleComboBox.getSelectedItem();
+    return myModuleComboBox.getSelectedModule();
   }
 
   public void setModule(Module module) {
-    myModuleComboBox.setSelectedItem(module);
+    myModuleComboBox.setSelectedModule(module);
   }
 
   public boolean isUseModuleSdk() {

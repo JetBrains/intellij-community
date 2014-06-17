@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.compiler.ModuleCompilerUtil;
@@ -22,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -32,13 +32,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -115,15 +113,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     }
     else {
       final JBList list = new JBList(myModules);
-      list.setCellRenderer(new ListCellRendererWrapper<Module>() {
-        @Override
-        public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
-          if (module != null) {
-            setIcon(ModuleType.get(module).getIcon());
-            setText(module.getName());
-          }
-        }
-      });
+      list.setCellRenderer(new ModuleListCellRenderer());
       final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle("Choose Module to Add Dependency on")
         .setMovable(false)
