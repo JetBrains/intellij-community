@@ -109,7 +109,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       customStartScript = "\n" + customStartScript;
     }
 
-    String selfPathAppend = constructPythonPathCommand(pythonPath, customStartScript);
+    String selfPathAppend = constructPythonPathCommand(pythonPath, customStartScript, settingsProvider);
 
     String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
@@ -225,13 +225,30 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     return Pair.create(sdk, module);
   }
 
-  public static String constructPythonPathCommand(Collection<String> pythonPath, String command) {
+  public static String constructPythonPathCommand(Collection<String> pythonPath, String command, PyConsoleOptions.PyConsoleSettings settingsProvider) {
+    String addAdditionalPathsCommand = "";
+
+    if (settingsProvider.addContentRoots() || settingsProvider.addSourceRoots()){
+      addAdditionalPathsCommand = "sys.path.extend([" + WORKING_DIR_ENV + "])";
+      if(!command.contains("import sys;") && !command.contains("import sys\n") && !command.endsWith("import sys") &&
+         !command.contains("from sys import path")){
+        addAdditionalPathsCommand = "import sys;" + addAdditionalPathsCommand;
+      }
+    }
+
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
         return "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'";
       }
     }));
+
+    if(addAdditionalPathsCommand.length() > 0){
+      if(!command.endsWith("\n")){
+        addAdditionalPathsCommand = "\n" + addAdditionalPathsCommand;
+      }
+      command = command + addAdditionalPathsCommand;
+    }
 
     return command.replace(WORKING_DIR_ENV, path);
   }
