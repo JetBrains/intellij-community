@@ -408,7 +408,8 @@ public class SvnUtil {
       final SVNInfo info = vcs.getInfo(url, SVNRevision.UNDEFINED);
 
       return (info == null) ? null : info.getRepositoryUUID();
-    } catch (SVNException e) {
+    }
+    catch (SvnBindException e) {
       return null;
     }
   }
@@ -422,15 +423,15 @@ public class SvnUtil {
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final String url) {
     try {
-      return getRepositoryRoot(vcs, SVNURL.parseURIEncoded(url));
+      return getRepositoryRoot(vcs, createUrl(url));
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SVNException {
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SvnBindException {
     SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
 
     return (info == null) ? null : info.getRepositoryRootURL();
@@ -693,14 +694,19 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SVNException {
+  public static SVNURL removePathTail(@NotNull SVNURL url) throws SvnBindException {
+    return createUrl(SVNPathUtil.removeTail(url.toDecodedString()));
+  }
+
+  @NotNull
+  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
     SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
 
     if (info == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get info for " + url));
+      throw new SvnBindException("Could not get info for " + url);
     }
     if (info.getRevision() == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get revision for " + url));
+      throw new SvnBindException("Could not get revision for " + url);
     }
 
     return info.getRevision();
@@ -775,12 +781,12 @@ public class SvnUtil {
     return SVNNodeKind.FILE.equals(status.getKind()) ? status.getChangelistName() : null;
   }
 
-  public static boolean isUnversionedOrNotFound(@NotNull SVNErrorCode code) {
-    return SVNErrorCode.WC_PATH_NOT_FOUND.equals(code) ||
-           SVNErrorCode.UNVERSIONED_RESOURCE.equals(code) ||
-           SVNErrorCode.WC_NOT_WORKING_COPY.equals(code) ||
+  public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {
+    return e.contains(SVNErrorCode.WC_PATH_NOT_FOUND) ||
+           e.contains(SVNErrorCode.UNVERSIONED_RESOURCE) ||
+           e.contains(SVNErrorCode.WC_NOT_WORKING_COPY) ||
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-           SVNErrorCode.ILLEGAL_TARGET.equals(code);
+           e.contains(SVNErrorCode.ILLEGAL_TARGET);
   }
 
   // TODO: Create custom Target class and implement append there

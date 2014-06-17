@@ -25,10 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.CommandExecutor;
-import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
+import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -64,7 +61,13 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
 
-    final SVNInfo infoBase = myFactory.createInfoClient().doInfo(base, revision);
+    final SVNInfo infoBase;
+    try {
+      infoBase = myFactory.createInfoClient().doInfo(base, revision);
+    }
+    catch (SvnBindException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+    }
     List<String> parameters = new ArrayList<String>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
@@ -174,7 +177,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
         try {
           return myFactory.createInfoClient().doInfo(o, revision);
         }
-        catch (SVNException e) {
+        catch (SvnBindException e) {
           throw new SvnExceptionWrapper(e);
         }
       }

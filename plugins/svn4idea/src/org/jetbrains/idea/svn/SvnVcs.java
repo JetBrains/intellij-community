@@ -69,6 +69,7 @@ import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -629,12 +630,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable
   public SVNInfo getInfo(@NotNull SVNURL url,
                          SVNRevision pegRevision,
-                         SVNRevision revision) throws SVNException {
+                         SVNRevision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(url, pegRevision, revision);
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SVNException {
+  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SvnBindException {
     return getInfo(url, SVNRevision.UNDEFINED, revision);
   }
 
@@ -675,6 +676,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         }
       }
       catch (SVNException e) {
+        handleInfoException(new SvnBindException(e));
+      }
+      catch (SvnBindException e) {
         handleInfoException(e);
       }
     }
@@ -687,21 +691,19 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     try {
       result = getFactory(ioFile).createInfoClient().doInfo(ioFile, revision);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       handleInfoException(e);
     }
 
     return result;
   }
 
-  private void handleInfoException(SVNException e) {
-    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-
+  private void handleInfoException(@NotNull SvnBindException e) {
     if (!myLogExceptions ||
-        SvnUtil.isUnversionedOrNotFound(errorCode) ||
+        SvnUtil.isUnversionedOrNotFound(e) ||
         // do not log working copy format vs client version inconsistencies as errors
-        SVNErrorCode.WC_UNSUPPORTED_FORMAT.equals(errorCode) ||
-        SVNErrorCode.WC_UPGRADE_REQUIRED.equals(errorCode)) {
+        e.contains(SVNErrorCode.WC_UNSUPPORTED_FORMAT) ||
+        e.contains(SVNErrorCode.WC_UPGRADE_REQUIRED)) {
       LOG.debug(e);
     }
     else {

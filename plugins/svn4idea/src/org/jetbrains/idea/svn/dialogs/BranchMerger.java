@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
@@ -110,7 +111,7 @@ public class BranchMerger implements IMerger {
     try {
       result = SvnUtil.getHeadRevision(myVcs, mySourceUrl);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
     }
 

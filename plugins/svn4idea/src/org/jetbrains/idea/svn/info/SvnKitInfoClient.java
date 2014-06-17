@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
@@ -41,17 +42,27 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
-    return getClient().doInfo(path, revision);
+  public SVNInfo doInfo(File path, SVNRevision revision) throws SvnBindException {
+    try {
+      return getClient().doInfo(path, revision);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
-  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    return getClient().doInfo(url, pegRevision, revision);
+  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+    try {
+      return getClient().doInfo(url, pegRevision, revision);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
-  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SVNException {
+  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SvnBindException {
     throw new UnsupportedOperationException();
   }
 }

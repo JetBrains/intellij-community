@@ -40,6 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -448,7 +449,7 @@ public class SvnHistoryProvider
       try {
         info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         return false;
       }
       return info != null && info.getURL() != null && info.getRevision().isValid();

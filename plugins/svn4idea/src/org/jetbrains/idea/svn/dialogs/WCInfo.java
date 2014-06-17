@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 public class WCInfo implements WCPaths {
@@ -70,7 +70,7 @@ public class WCInfo implements WCPaths {
 
   public String getErrorMessage() {
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    SVNException error = getRootInfo().getNode().getError();
+    SvnBindException error = getRootInfo().getNode().getError();
 
     return error != null ? error.getMessage() : "";
   }

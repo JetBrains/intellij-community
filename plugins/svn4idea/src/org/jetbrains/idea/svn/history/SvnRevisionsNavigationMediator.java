@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesNavigation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -64,11 +64,8 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
         try {
           infoRef.set(vcs.getInfo(location.toSvnUrl(), SVNRevision.HEAD));
         }
-        catch (VcsException e) {
+        catch (SvnBindException e) {
           exception[0] = e;
-        }
-        catch (SVNException e) {
-          exception[0] = new VcsException(e);
         }
       }
     };

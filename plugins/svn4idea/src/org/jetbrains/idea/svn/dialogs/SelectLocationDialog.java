@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -79,7 +79,7 @@ public class SelectLocationDialog extends DialogWrapper {
                                                  boolean showFiles,
                                                  String errorMessage) {
     try {
-      SVNURL svnUrl = SVNURL.parseURIEncoded(url);
+      SVNURL svnUrl = SvnUtil.createUrl(url);
       final SVNURL repositoryUrl = initRoot(project, svnUrl);
       if (repositoryUrl == null) {
         Messages.showErrorDialog(project, "Can not detect repository root for URL: " + url,
@@ -91,7 +91,7 @@ public class SelectLocationDialog extends DialogWrapper {
       dialog.show();
       return dialog;
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       Messages.showErrorDialog(project, errorMessage != null ? errorMessage : e.getMessage(),
                                SvnBundle.message("dialog.title.select.repository.location"));
       return null;
@@ -124,15 +124,15 @@ public class SelectLocationDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static SVNURL initRoot(final Project project, final SVNURL url) throws SVNException {
+  private static SVNURL initRoot(final Project project, final SVNURL url) throws SvnBindException {
     final Ref<SVNURL> result = new Ref<SVNURL>();
-    final Ref<SVNException> excRef = new Ref<SVNException>();
+    final Ref<SvnBindException> excRef = new Ref<SvnBindException>();
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
           result.set(SvnUtil.getRepositoryRoot(SvnVcs.getInstance(project), url));
-        } catch (SVNException e) {
+        } catch (SvnBindException e) {
           excRef.set(e);
         }
       }

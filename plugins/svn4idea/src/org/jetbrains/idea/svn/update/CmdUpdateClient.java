@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -48,7 +49,13 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   private static final String ourAuthenticationRealm = "Authentication realm:";
 
   private void checkWorkingCopy(@NotNull File path) throws SVNException {
-    final SVNInfo info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
+    final SVNInfo info;
+    try {
+      info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
+    }
+    catch (SvnBindException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+    }
 
     if (info == null || info.getURL() == null) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath()));

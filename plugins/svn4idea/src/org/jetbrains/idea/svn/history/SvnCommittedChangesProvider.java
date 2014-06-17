@@ -204,13 +204,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
     // TODO: So here we could get repository url without performing remote svn command
 
-    SVNURL rootUrl;
-    try {
-      rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+    SVNURL rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
 
     if (rootUrl == null) {
       throw new SvnBindException("Could not resolve repository root url for " + svnLocation);

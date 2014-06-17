@@ -25,6 +25,7 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -84,9 +85,6 @@ public class LatestExistentSearcher {
       myVcs.getFactory(target).createHistoryClient().doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null,
                                                            createHandler(latest));
     }
-    catch (SVNException e) {
-      LOG.info(e);
-    }
     catch (VcsException e) {
       LOG.info(e);
     }
@@ -125,7 +123,7 @@ public class LatestExistentSearcher {
         }
       }
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
     }
 
@@ -149,24 +147,24 @@ public class LatestExistentSearcher {
   }
 
   @Nullable
-  private SVNURL getExistingParent(SVNURL url) throws SVNException {
+  private SVNURL getExistingParent(SVNURL url) throws SvnBindException {
     while (url != null && !url.equals(myRepositoryUrl) && !existsInRevision(url, myEndNumber)) {
-      url = url.removePathTail();
+      url = SvnUtil.removePathTail(url);
     }
 
     return url;
   }
 
-  private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SVNException {
+  private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SvnBindException {
     SVNRevision revision = SVNRevision.create(revisionNumber);
     SVNInfo info = null;
 
     try {
       info = myVcs.getInfo(url, revision, revision);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       // throw error if not "does not exist" error code
-      if (!SVNErrorCode.RA_ILLEGAL_URL.equals(e.getErrorMessage().getErrorCode())) {
+      if (!e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {
         throw e;
       }
     }
@@ -174,7 +172,7 @@ public class LatestExistentSearcher {
     return info != null;
   }
 
-  private long getLatestRevision() throws SVNException {
+  private long getLatestRevision() throws SvnBindException {
     return SvnUtil.getHeadRevision(myVcs, myRepositoryUrl).getNumber();
   }
 }
