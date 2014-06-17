@@ -27,9 +27,11 @@ public class RemoteConnectionCredentialsWrapper {
   public static final String VAGRANT_PREFIX = "vagrant://";
   public static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
 
+  /**
+   * Connection types
+   */
   public final Key<VagrantBasedCredentialsHolder> VAGRANT_BASED_CREDENTIALS = Key.create("VAGRANT_BASED_CREDENTIALS");
   public final Key<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT_BASED_CREDENTIALS = Key.create("WEB_DEPLOYMENT_BASED_CREDENTIALS");
-
   public final Key<RemoteCredentialsHolder> PLAIN_SSH_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
 
   private UserDataHolderBase myCredentialsTypeHolder = new UserDataHolderBase();
@@ -91,17 +93,17 @@ public class RemoteConnectionCredentialsWrapper {
   public void save(final Element rootElement) {
     switchType(new RemoteSdkConnectionAcceptor() {
       @Override
-      public void ssh(RemoteCredentialsHolder cred) {
+      public void ssh(@NotNull RemoteCredentialsHolder cred) {
         cred.save(rootElement);
       }
 
       @Override
-      public void vagrant(VagrantBasedCredentialsHolder cred) {
+      public void vagrant(@NotNull VagrantBasedCredentialsHolder cred) {
         cred.save(rootElement);
       }
 
       @Override
-      public void deployment(WebDeploymentCredentialsHolder cred) {
+      public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
         cred.save(rootElement);
       }
     });
@@ -147,7 +149,7 @@ public class RemoteConnectionCredentialsWrapper {
     return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
   }
 
-  public void switchType(RemoteSdkConnectionAcceptor acceptor) {
+  public void switchType(@NotNull final RemoteSdkConnectionAcceptor acceptor) {
     if (isVagrantConnection()) {
       acceptor.vagrant(getVagrantCredentials());
     }

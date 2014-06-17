@@ -21,13 +21,14 @@ import com.intellij.util.Consumer;
 /**
  * @author traff
  */
-public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
+public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
   /**
    * Synchronously returns remote sdk credentials
    * @return
    * @throws InterruptedException
    * @deprecated
    */
+  @Deprecated
   T getRemoteSdkCredentials() throws InterruptedException;
 
   T getRemoteSdkCredentials(boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
@@ -38,6 +39,7 @@ public interface RemoteSdkProducer<T extends RemoteSdkCredentials> {
    * @param remoteSdkCredentialsConsumer
    * @deprecated
    */
+  @Deprecated
   void produceRemoteSdkCredentials(Consumer<T> remoteSdkCredentialsConsumer);
 
   Object getRemoteSdkDataKey();

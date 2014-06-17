@@ -15,14 +15,11 @@
  */
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.*;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
+public class UnusedSymbolLocalInspectionBase extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
   @NonNls public static final String UNUSED_PARAMETERS_SHORT_NAME = "UnusedParameters";
@@ -33,22 +30,4 @@ public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean CLASS = true;
   public boolean PARAMETER = true;
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
-
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
-    return isSuppressedFor(element, this);
-  }
-  public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
-    return BaseJavaBatchLocalInspectionTool.isSuppressedFor(element, tool);
-  }
-  @Override
-  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    String shortName = getShortName();
-    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null) {
-      throw new AssertionError("HighlightDisplayKey.find(" + shortName + ") is null. Inspection: "+getClass());
-    }
-    SuppressQuickFix[] batchSuppressActions = BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(key);
-    return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions);
-  }
 }

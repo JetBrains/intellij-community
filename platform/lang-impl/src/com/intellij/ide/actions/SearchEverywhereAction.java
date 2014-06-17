@@ -41,6 +41,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -155,8 +156,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private static AtomicBoolean showAll = new AtomicBoolean(false);
-  private ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
-  private ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<AnAction>();
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
@@ -255,7 +254,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }, null);
   }
 
-  private JBPopup myBalloon;
+  private volatile JBPopup myBalloon;
   private int myPopupActualWidth;
   private Component myFocusOwner;
   private ChooseByNamePopup myFileChooseByName;
@@ -497,7 +496,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       public void run() {
         if (myCalcThread != null) {
           myCalcThread.cancel();
-          myCalcThread = null;
+          //myCalcThread = null;
         }
         myAlarm.cancelAllRequests();
         if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
@@ -1199,9 +1198,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
-    private ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
+    private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
     private final ActionCallback myDone = new ActionCallback();
-    private SearchListModel myListModel = new SearchListModel();
+    private final SearchListModel myListModel = new SearchListModel();
+    private final ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
+    private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<AnAction>();
+
 
     public CalcThread(Project project, String pattern) {
       this.project = project;
@@ -1293,9 +1295,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
+      if (myBalloon == null || myBalloon.isDisposed()) throw new ProcessCanceledException();
     }
 
-    private void buildToolWindows(String pattern) {
+    private synchronized void buildToolWindows(String pattern) {
       if (myActions == null) {
         if (myActionModel == null) {
           myActionModel = createActionModel();
@@ -1331,7 +1334,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       });
     }
 
-    private void buildActionsAndSettings(String pattern) {
+    private synchronized void buildActionsAndSettings(String pattern) {
       final Set<Object> actions = new HashSet<Object>();
       final Set<Object> settings = new HashSet<Object>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
@@ -1384,7 +1387,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       });
     }
 
-    private void buildFiles(final String pattern) {
+    private synchronized void buildFiles(final String pattern) {
       int filesCounter = 0;
       final Set<Object> elements = new LinkedHashSet<Object>();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
@@ -1445,7 +1448,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void buildSymbols(final String pattern) {
+    private synchronized void buildSymbols(final String pattern) {
+      check();
       int symbolsCounter = 0;
       final Set<Object> elements = new LinkedHashSet<Object>();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
@@ -1508,7 +1512,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return null;
     }
 
-    private void buildRunConfigurations(String pattern) {
+    private synchronized void buildRunConfigurations(String pattern) {
       final List<Object> runConfigurations = new ArrayList<Object>();
       MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
       final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
@@ -1541,7 +1545,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     }
 
-    private void buildClasses(final String pattern, boolean includeLibraries) {
+    private synchronized void buildClasses(final String pattern, boolean includeLibraries) {
       if (pattern.indexOf('.') != -1) {
         //todo[kb] it's not a mistake. If we search for "*.png" or "index.xml" in SearchEverywhere
         //todo[kb] we don't want to see Java classes started with Png or Xml. This approach should be reworked someday.
@@ -1593,7 +1597,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void buildRecentFiles(String pattern) {
+    private synchronized void buildRecentFiles(String pattern) {
       final MinusculeMatcher matcher = new MinusculeMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       final List<VirtualFile> selected = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
@@ -1626,7 +1630,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return myProgressIndicator.isCanceled() || myDone.isRejected();
     }
 
-    private void buildTopHit(String pattern) {
+    private synchronized void buildTopHit(String pattern) {
       final List<Object> elements = new ArrayList<Object>();
       final HistoryItem history = myHistoryItem;
       if (history != null) {
@@ -1719,6 +1723,26 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           @Override
           public void run() {
             if (isCanceled()) return;
+
+
+            for (Object element : elements.toArray()) {
+              if (element instanceof AnAction) {
+                final AnAction action = (AnAction)element;
+                final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
+                                                          myActionEvent.getDataContext(),
+                                                          myActionEvent.getPlace(),
+                                                          action.getTemplatePresentation(),
+                                                          myActionEvent.getActionManager(),
+                                                          myActionEvent.getModifiers());
+                ActionUtil.performDumbAwareUpdate(action, e, false);
+                final Presentation presentation = e.getPresentation();
+                if (!presentation.isEnabled() || !presentation.isVisible() || StringUtil.isEmpty(presentation.getText())) {
+                  elements.remove(element);
+                }
+                if (isCanceled()) return;
+              }
+            }
+            if (isCanceled() || elements.isEmpty()) return;
             myListModel.myTitleIndexes.topHit = myListModel.size();
             for (Object element : elements) {
               myListModel.addElement(element);
@@ -1894,39 +1918,48 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  protected synchronized void resetFields() {
+  protected void resetFields() {
     if (myBalloon!= null) {
       myBalloon.cancel();
       myBalloon = null;
     }
-    myFileModel = null;
-    if (myFileChooseByName != null) {
-      myFileChooseByName.close(false);
-      myFileChooseByName = null;
-    }
-    if (myClassChooseByName != null) {
-      myClassChooseByName.close(false);
-      myClassChooseByName = null;
-    }
-    if (mySymbolsChooseByName != null) {
-      mySymbolsChooseByName.close(false);
-      mySymbolsChooseByName = null;
-    }
-    myClassModel = null;
-    myActionModel = null;
-    myActions = null;
-    mySymbolsModel = null;
-    myConfigurables.clear();
-    myFocusComponent = null;
-    myContextComponent = null;
-    myFocusOwner = null;
-    myRenderer.myProject = null;
-    myCalcThread = null;
-    myPopup = null;
-    myHistoryIndex = 0;
-    myPopupActualWidth = 0;
-    myCurrentWorker = ActionCallback.DONE;
-    showAll.set(false);
+    myCurrentWorker.doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        myFileModel = null;
+        if (myFileChooseByName != null) {
+          myFileChooseByName.close(false);
+          myFileChooseByName = null;
+        }
+        if (myClassChooseByName != null) {
+          myClassChooseByName.close(false);
+          myClassChooseByName = null;
+        }
+        if (mySymbolsChooseByName != null) {
+          mySymbolsChooseByName.close(false);
+          mySymbolsChooseByName = null;
+        }
+        if (myCalcThread != null) {
+          synchronized (myCalcThread) {
+            myClassModel = null;
+            myActionModel = null;
+            myActions = null;
+            mySymbolsModel = null;
+            myConfigurables.clear();
+            myFocusComponent = null;
+            myContextComponent = null;
+            myFocusOwner = null;
+            myRenderer.myProject = null;
+            myPopup = null;
+            myHistoryIndex = 0;
+            myPopupActualWidth = 0;
+            myCurrentWorker = ActionCallback.DONE;
+            showAll.set(false);
+            myCalcThread = null;
+          }
+        }
+      }
+    });
     mySkipFocusGain = false;
   }
 

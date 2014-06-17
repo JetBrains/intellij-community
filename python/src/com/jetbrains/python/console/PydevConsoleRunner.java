@@ -131,6 +131,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static Key<Sdk> CONSOLE_SDK = new Key<Sdk>("PYDEV_CONSOLE_SDK_KEY");
 
   private static final long APPROPRIATE_TO_WAIT = 60000;
+  private PyRemoteSdkCredentials myRemoteCredentials;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull Sdk sdk, @NotNull final PyConsoleType consoleType,
@@ -352,16 +353,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myCommandLine = commandLine.getCommandLineString();
 
     try {
-      PyRemoteSdkCredentials remoteCredentials = data.getRemoteSdkCredentials();
+      myRemoteCredentials = data.getRemoteSdkCredentials(true);
       PathMappingSettings mappings = manager.setupMappings(getProject(), data, null);
 
       RemoteSshProcess remoteProcess =
-        manager.createRemoteProcess(getProject(), remoteCredentials, mappings, commandLine, true);
+        manager.createRemoteProcess(getProject(), myRemoteCredentials, mappings, commandLine, true);
 
 
       Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
 
-      remoteProcess.addLocalTunnel(myPorts[0], remoteCredentials.getHost(), remotePorts.first);
+      remoteProcess.addLocalTunnel(myPorts[0], myRemoteCredentials.getHost(), remotePorts.first);
       remoteProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
 
 
@@ -425,15 +426,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       if (manager != null) {
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
         assert data != null;
-        try {
-          myProcessHandler =
-            manager.createConsoleProcessHandler(process, data.getRemoteSdkCredentials(), getConsoleView(), myPydevConsoleCommunication,
-                                                myCommandLine, CharsetToolkit.UTF8_CHARSET,
-                                                manager.setupMappings(getProject(), data, null));
-        }
-        catch (InterruptedException e) {
-          LOG.error("Error getting remote credentials");
-        }
+        myProcessHandler =
+          manager.createConsoleProcessHandler(process, myRemoteCredentials, getConsoleView(), myPydevConsoleCommunication,
+                                              myCommandLine, CharsetToolkit.UTF8_CHARSET,
+                                              manager.setupMappings(getProject(), data, null));
       }
       else {
         LOG.error("Can't create remote console process handler");

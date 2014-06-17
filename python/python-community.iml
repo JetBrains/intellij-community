@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="python-pydev" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="RegExpSupport" exported="" />

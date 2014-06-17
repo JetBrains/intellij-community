@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -84,6 +85,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
+  private String                            myOldPropertyName;
   private final ResourceBundle              myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
@@ -271,7 +273,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile) {
     final String currentValue = editor.getDocument().getText();
-    final String selectedProperty = getSelectedPropertyName();
+    final String currentSelectedProperty = getSelectedPropertyName();
+    final String selectedProperty = myOldPropertyName == null ? currentSelectedProperty : myOldPropertyName;
+
     assert selectedProperty != null;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -338,6 +342,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           writeEditorPropertyValue(editor, propertiesFile);
         }
       });
+      editor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
       gc.gridx = 0;
       gc.gridy = y++;
       gc.gridheight = 1;
@@ -505,10 +510,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
   private void selectionChanged() {
     myBackSlashPressed.clear();
+    final String currentSelectedPropertyName = getSelectedPropertyName();
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (myOldPropertyName != null && !myOldPropertyName.equals(currentSelectedPropertyName)) {
+          for (final Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
+            writeEditorPropertyValue(entry.getValue(), entry.getKey());
+          }
+        }
         updateEditorsFromProperties();
+        myOldPropertyName = currentSelectedPropertyName;
       }
     });
   }

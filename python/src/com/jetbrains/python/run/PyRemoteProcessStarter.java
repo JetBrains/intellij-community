@@ -74,7 +74,7 @@ public class PyRemoteProcessStarter {
     try {
       settings = manager.setupMappings(project, pyRemoteSdkAdditionalDataBase, settings);
 
-      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(), commandLine,
+      return manager.startRemoteProcess(project, pyRemoteSdkAdditionalDataBase.getRemoteSdkCredentials(true), commandLine,
                                         settings);
     }
     catch (InterruptedException e) {

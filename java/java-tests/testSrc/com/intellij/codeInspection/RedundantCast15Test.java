@@ -49,6 +49,7 @@ public class RedundantCast15Test extends InspectionTestCase {
   public void testGetClassProcessing() throws Exception { doTest();}
   public void testInstanceOfChecks() throws Exception { doTest();}
   public void testForEachValue() throws Exception { doTest();}
+  public void testForEachValueIDEA126166() throws Exception { doTest();}
   public void testCaseThrowable() throws Exception { doTest();}
   public void testSafeTempVarName() throws Exception { doTest();}
 

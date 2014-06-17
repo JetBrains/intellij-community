@@ -69,17 +69,19 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
     myNodeManager = nodeManager;
   }
 
-  private static JavaValue create(JavaValue parent, @NotNull ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext, NodeManagerImpl nodeManager) {
+  private static JavaValue create(JavaValue parent, @NotNull ValueDescriptorImpl valueDescriptor, EvaluationContextImpl evaluationContext, NodeManagerImpl nodeManager, boolean init) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    valueDescriptor.setContext(evaluationContext);
-    valueDescriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+    if (init) {
+      valueDescriptor.setContext(evaluationContext);
+      valueDescriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+    }
     return new JavaValue(parent, valueDescriptor, evaluationContext, nodeManager);
   }
 
   static JavaValue create(@NotNull ValueDescriptorImpl valueDescriptor,
                           EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager) {
-    return create(null, valueDescriptor, evaluationContext, nodeManager);
+    return create(null, valueDescriptor, evaluationContext, nodeManager, true);
   }
 
   public JavaValue getParent() {
@@ -205,7 +207,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
             for (DebuggerTreeNode node : nodes) {
               final NodeDescriptor descriptor = node.getDescriptor();
               if (descriptor instanceof ValueDescriptorImpl) {
-                children.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager));
+                // Value is calculated already in NodeManagerImpl
+                children.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
               }
               else if (descriptor instanceof MessageDescriptor) {
                 children.add("", new XValue() {

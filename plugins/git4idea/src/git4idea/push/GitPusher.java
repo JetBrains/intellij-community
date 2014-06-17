@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Collects information to push and performs the push.
@@ -478,9 +478,7 @@ public final class GitPusher {
           // and don't show the dialog again if user has chosen not to ask again
           updateSettings = readUpdateSettings();
           if (!mySettings.autoUpdateIfPushRejected()) {
-            final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet(), updateSettings);
-            final int exitCode = showDialogAndGetExitCode(dialog);
-            updateSettings = new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode));
+            updateSettings = showDialogAndGetExitCode(rejectedPushesForCurrentBranch, updateSettings);
             saveUpdateSettings(updateSettings);
           }
         } 
@@ -519,20 +517,23 @@ public final class GitPusher {
     return new UpdateSettings(updateAllRoots, updateMethod);
   }
 
-  private int showDialogAndGetExitCode(@NotNull final GitRejectedPushUpdateDialog dialog) {
-    final AtomicInteger exitCode = new AtomicInteger();
+  private UpdateSettings showDialogAndGetExitCode(final Map<GitRepository, GitBranch> rejectedPushesForCurrentBranch,
+                                                  final UpdateSettings initialSettings) {
+    final AtomicReference<UpdateSettings> updateSettings = new AtomicReference<UpdateSettings>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        final GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, rejectedPushesForCurrentBranch.keySet(), initialSettings);
         dialog.show();
-        exitCode.set(dialog.getExitCode());
-      }
+        final int exitCode = dialog.getExitCode();
+        if (exitCode != DialogWrapper.CANCEL_EXIT_CODE) {
+          mySettings.setAutoUpdateIfPushRejected(dialog.shouldAutoUpdateInFuture());
+        }
+        updateSettings.set(new UpdateSettings(dialog.shouldUpdateAll(), getUpdateMethodFromDialogExitCode(exitCode)));
+
+     }
     });
-    int code = exitCode.get();
-    if (code != DialogWrapper.CANCEL_EXIT_CODE) {
-      mySettings.setAutoUpdateIfPushRejected(dialog.shouldAutoUpdateInFuture());
-    }
-    return code;
+    return updateSettings.get();
   }
 
   /**

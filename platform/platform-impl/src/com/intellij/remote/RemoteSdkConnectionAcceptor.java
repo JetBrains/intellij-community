@@ -15,11 +15,13 @@
  */
 package com.intellij.remote;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
 * @author traff
 */
 public interface RemoteSdkConnectionAcceptor {
-  void ssh(RemoteCredentialsHolder cred);
-  void vagrant(VagrantBasedCredentialsHolder cred);
-  void deployment(WebDeploymentCredentialsHolder cred);
+  void ssh(@NotNull RemoteCredentialsHolder cred);
+  void vagrant(@NotNull VagrantBasedCredentialsHolder cred);
+  void deployment(@NotNull WebDeploymentCredentialsHolder cred);
 }

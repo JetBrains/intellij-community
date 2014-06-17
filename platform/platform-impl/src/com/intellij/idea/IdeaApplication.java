@@ -90,7 +90,7 @@ public class IdeaApplication {
     }
 
     if (Main.isCommandLine()) {
-      new CommandLineApplication(isInternal, false, headless);
+      new CommandLineApplication(isInternal, isUnitTest, headless);
     }
     else {
       Splash splash = null;

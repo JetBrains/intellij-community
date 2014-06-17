@@ -19,26 +19,22 @@ package org.jetbrains.plugins.groovy.runner;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.FieldPanel;
+import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements PanelWithAnchor {
-  private DefaultComboBoxModel myModulesModel;
-  private JComboBox myModulesBox;
+  private ModulesComboBox myModulesBox;
   private JPanel myMainPanel;
   private RawCommandLineEditor myVMParameters;
   private RawCommandLineEditor myParameters;
@@ -93,20 +89,15 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(configuration.isDebugEnabled());
 
-    myModulesModel.removeAllElements();
-    List<Module> modules = new ArrayList<Module>(configuration.getValidModules());
-    Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
-    for (Module module : modules) {
-      myModulesModel.addElement(module);
-    }
-    myModulesModel.setSelectedItem(configuration.getModule());
+    myModulesBox.setModules(configuration.getValidModules());
+    myModulesBox.setSelectedModule(configuration.getModule());
 
     myEnvVariables.setEnvs(configuration.getEnvs());
   }
 
   @Override
   public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
-    configuration.setModule((Module) myModulesBox.getSelectedItem());
+    configuration.setModule(myModulesBox.getSelectedModule());
     configuration.setVMParameters(myVMParameters.getText());
     configuration.setDebugEnabled(myDebugCB.isSelected());
     configuration.setScriptParameters(myParameters.getText());
@@ -118,27 +109,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   @Override
   @NotNull
   public JComponent createEditor() {
-    myModulesModel = new DefaultComboBoxModel();
-    myModulesBox.setModel(myModulesModel);
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(false);
-
-    myModulesBox.setRenderer(new ListCellRendererWrapper<Module>() {
-      @Override
-      public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
-        if (module != null) {
-          setIcon(ModuleType.get(module).getIcon());
-          setText(module.getName());
-        }
-      }
-    });
-    new ComboboxSpeedSearch(myModulesBox) {
-      @Override
-      protected String getElementText(Object element) {
-        return element instanceof Module ? ((Module)element).getName() : "";
-      }
-    };
-
     return myMainPanel;
   }
 

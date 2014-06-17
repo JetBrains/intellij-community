@@ -53,52 +53,41 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
 
-  private static final int IS_WRITABLE_FLAG = 0x01000000;
-  private static final int IS_HIDDEN_FLAG =   0x02000000;
+          static final int IS_WRITABLE_FLAG = 0x01000000;
+          static final int IS_HIDDEN_FLAG =   0x02000000;
   private static final int INDEXED_FLAG =     0x04000000;
           static final int CHILDREN_CACHED =  0x08000000; // makes sense for directory only
   private static final int DIRTY_FLAG =       0x10000000;
-  private static final int IS_SYMLINK_FLAG =  0x20000000;
+          static final int IS_SYMLINK_FLAG =  0x20000000;
   private static final int HAS_SYMLINK_FLAG = 0x40000000;
-  private static final int IS_SPECIAL_FLAG =  0x80000000;
+          static final int IS_SPECIAL_FLAG =  0x80000000;
           static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense only for non-directory file
 
-  private static final int ALL_FLAGS_MASK =
+  static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
-  private volatile int myNameId;
-  private volatile VirtualDirectoryImpl myParent;
-  private volatile int myFlags;
-  private volatile int myId;
-  
+  protected final VfsData.Segment mySegment;
+  private final VirtualDirectoryImpl myParent;
+  private final int myId;
+
   static {
+    //noinspection ConstantConditions
     assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
   }
 
-  public VirtualFileSystemEntry(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
-    myParent = parent;
+  public VirtualFileSystemEntry(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
+    mySegment = segment;
     myId = id;
-    myNameId = nameId;
-
-    if (parent != null && parent != VirtualDirectoryImpl.NULL_VIRTUAL_FILE) {
-      setFlagInt(IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
-      setFlagInt(IS_SPECIAL_FLAG, PersistentFS.isSpecialFile(attributes));
-      updateLinkStatus();
-    }
-
-    setFlagInt(IS_WRITABLE_FLAG, PersistentFS.isWritable(attributes));
-    setFlagInt(IS_HIDDEN_FLAG, PersistentFS.isHidden(attributes));
-
-    setModificationStamp(LocalTimeCounter.currentTime());
+    myParent = parent;
   }
 
-  private void updateLinkStatus() {
+  void updateLinkStatus() {
     boolean isSymLink = is(VFileProperty.SYMLINK);
     if (isSymLink) {
-      String target = myParent.getFileSystem().resolveSymLink(this);
+      String target = getParent().getFileSystem().resolveSymLink(this);
       setLinkTarget(target != null ? FileUtil.toSystemIndependentName(target) : null);
     }
-    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || myParent.getFlagInt(HAS_SYMLINK_FLAG));
+    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || getParent().getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   @Override
@@ -110,60 +99,35 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   @Override
   public CharSequence getNameSequence() {
-    return FileNameCache.getVFileName(myNameId);
-  }
-
-  public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
-    return FileNameCache.compareNameTo(myNameId, name, ignoreCase);
-  }
-
-  protected static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase) {
-    return compareNames(name1, name2, ignoreCase, 0);
-  }
-
-  static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase, int offset2) {
-    int d = name1.length() - name2.length() + offset2;
-    if (d != 0) return d;
-    for (int i=0; i<name1.length(); i++) {
-      // com.intellij.openapi.util.text.StringUtil.compare(String,String,boolean) inconsistent
-      d = StringUtil.compare(name1.charAt(i), name2.charAt(i + offset2), ignoreCase);
-      if (d != 0) return d;
-    }
-    return 0;
+    return FileNameCache.getVFileName(mySegment.getNameId(myId));
   }
 
   @Override
-  public VirtualFileSystemEntry getParent() {
-    return myParent;
+  public VirtualDirectoryImpl getParent() {
+    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(this);
+    return changedParent != null ? changedParent : myParent;
   }
 
   @Override
   public boolean isDirty() {
-    return (myFlags & DIRTY_FLAG) != 0;
+    return getFlagInt(DIRTY_FLAG);
   }
 
   @Override
   public long getModificationStamp() {
-    return myFlags & ~ALL_FLAGS_MASK;
+    return mySegment.getModificationStamp(myId);
   }
 
-  public synchronized void setModificationStamp(long modificationStamp) {
-    myFlags = (myFlags & ALL_FLAGS_MASK) | ((int)modificationStamp & ~ALL_FLAGS_MASK);
+  public void setModificationStamp(long modificationStamp) {
+    mySegment.setModificationStamp(myId, modificationStamp);
   }
 
   boolean getFlagInt(int mask) {
-    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-    return (myFlags & mask) != 0;
+    return mySegment.getFlag(myId, mask);
   }
 
-  synchronized void setFlagInt(int mask, boolean value) {
-    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-    if (value) {
-      myFlags |= mask;
-    }
-    else {
-      myFlags &= ~mask;
-    }
+  void setFlagInt(int mask, boolean value) {
+    mySegment.setFlag(myId, mask, value);
   }
 
   public boolean isFileIndexed() {
@@ -183,7 +147,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public void markDirty() {
     if (!isDirty()) {
       markDirtyInternal();
-      VirtualDirectoryImpl parent = myParent;
+      VirtualFileSystemEntry parent = getParent();
       if (parent != null) parent.markDirty();
     }
   }
@@ -201,7 +165,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
-    return FileNameCache.appendPathOnFileSystem(myNameId, myParent, accumulatedPathLength, positionRef);
+    return FileNameCache.appendPathOnFileSystem(mySegment.getNameId(myId), getParent(), accumulatedPathLength, positionRef);
   }
 
   protected static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
@@ -311,13 +275,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return myId;
+    return VfsData.isFileValid(myId) ? myId : -myId;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof VirtualFileSystemEntry && myId == ((VirtualFileSystemEntry)o).myId;
   }
 
   @Override
   public int hashCode() {
-    int id = myId;
-    return id >= 0 ? id : -id;
+    return myId;
   }
 
   @Override
@@ -353,15 +321,19 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IllegalArgumentException("Name of the virtual file cannot be set to empty string");
     }
 
-    myParent.removeChild(this);
-    myNameId = FileNameCache.storeName(newName);
-    myParent.addChild(this);
+    VirtualDirectoryImpl parent = (VirtualDirectoryImpl)getParent();
+    parent.removeChild(this);
+    mySegment.setNameId(myId, FileNameCache.storeName(newName));
+    parent.addChild(this);
   }
 
   public void setParent(@NotNull final VirtualFile newParent) {
-    myParent.removeChild(this);
-    myParent = (VirtualDirectoryImpl)newParent;
-    myParent.addChild(this);
+    VirtualDirectoryImpl parent = (VirtualDirectoryImpl)getParent();
+    parent.removeChild(this);
+
+    VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
+    VfsData.changeParent(this, directory);
+    directory.addChild(this);
     updateLinkStatus();
   }
 
@@ -371,7 +343,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void invalidate() {
-    myId = -Math.abs(myId);
+    VfsData.invalidateFile(myId);
   }
 
   @Override
@@ -443,7 +415,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       if (is(VFileProperty.SYMLINK)) {
         return getUserData(SYMLINK_TARGET);
       }
-      VirtualDirectoryImpl parent = myParent;
+      VirtualFileSystemEntry parent = getParent();
       if (parent != null) {
         return parent.getCanonicalPath() + "/" + getName();
       }

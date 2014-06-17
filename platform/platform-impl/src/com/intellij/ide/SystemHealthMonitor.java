@@ -62,7 +62,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     startDiskSpaceMonitoring();
-    checkPowerSaveMode();
   }
 
   private void checkJvm() {
@@ -210,25 +209,4 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }, 1, TimeUnit.SECONDS);
   }
 
-  private void checkPowerSaveMode() {
-    if (PowerSaveMode.isEnabled()) {
-      final String ignoreKey = "ignore.power.save.mode";
-      String message = "Power save mode is on. Code insight and other background tasks are disabled." +
-                       "<br/><a href=\"ignore\">Do not show again</a>" +
-                       "<br/><a href=\"turnOff\">Disable Power Save Mode</a>";
-
-      showNotification(ignoreKey, message, new HyperlinkAdapter() {
-        @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
-          final String description = e.getDescription();
-          if ("ignore".equals(description)) {
-            myProperties.setValue(ignoreKey, "true");
-          }
-          else if ("turnOff".equals(description)) {
-            PowerSaveMode.setEnabled(false);
-          }
-        }
-      });
-    }
-  }
 }

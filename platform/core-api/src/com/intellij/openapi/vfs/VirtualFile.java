@@ -31,9 +31,12 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
- * <code>VirtualFile</code> instance for the entire lifetime of the IntelliJ IDEA process, unless the file
- * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
+ * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by equal
+ * <code>VirtualFile</code> instances for the entire lifetime of the IntelliJ IDEA process, unless the file
+ * is deleted, in which case {@link #isValid()} will return <code>false</code>.
+ * <p/>
+ * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
+ * All of them are equal, have the same hashCode and use shared storage for all related data, including user data (see {@link com.intellij.openapi.util.UserDataHolder}).
  * <p/>
  * If an in-memory implementation of VirtualFile is required, {@link com.intellij.testFramework.LightVirtualFile}
  * can be used.

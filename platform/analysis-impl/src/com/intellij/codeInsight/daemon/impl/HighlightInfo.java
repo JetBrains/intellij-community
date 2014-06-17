@@ -835,16 +835,18 @@ public class HighlightInfo implements Segment {
           if (suppressActions != null) {
             ContainerUtil.addAll(newOptions, suppressActions);
           }
+        } else {
+          SuppressQuickFix[] suppressFixes = wrappedTool.getBatchSuppressActions(element);
+          if (suppressFixes.length > 0) {
+            ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, new Function<SuppressQuickFix, IntentionAction>() {
+              @Override
+              public IntentionAction fun(SuppressQuickFix fix) {
+                return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
+              }
+            }));
+          }
         }
-        if (wrappedTool instanceof BatchSuppressableTool) {
-          final SuppressQuickFix[] suppressActions = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
-          ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
-            @Override
-            public IntentionAction fun(SuppressQuickFix fix) {
-              return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
-            }
-          }));
-        }
+
       }
       if (myProblemGroup instanceof SuppressableProblemGroup) {
         final IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);

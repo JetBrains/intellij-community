@@ -42,11 +42,7 @@ public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalI
     return SuppressManager.getInstance().createSuppressActions(key);
   }
 
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
-    return isSuppressedFor(element, this);
-  }
-
+  @Deprecated
   public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
     return BaseJavaBatchLocalInspectionTool.isSuppressedFor(element, tool);
   }

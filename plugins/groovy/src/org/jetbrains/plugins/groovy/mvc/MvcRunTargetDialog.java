@@ -22,14 +22,17 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.mvc.util.ModuleCellRenderer;
 import org.jetbrains.plugins.groovy.mvc.util.MvcTargetDialogCompletionUtils;
 
 import javax.swing.*;
@@ -47,7 +50,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
   private JLabel myTargetLabel;
   private JPanel myFakePanel;
   private EditorTextField myVmOptionsField;
-  private JComboBox myModuleBox;
+  private ModulesComboBox myModuleBox;
   private JLabel myModuleLabel;
   private JLabel myVmOptionLabel;
   private ComboBox myTargetField;
@@ -114,18 +117,17 @@ public class MvcRunTargetDialog extends DialogWrapper {
     assert mvcModules.contains(myModule);
 
     myModuleLabel.setLabelFor(myModuleBox);
-    myModuleBox.setModel(new CollectionComboBoxModel(mvcModules, myModule));
+    myModuleBox.setModules(mvcModules);
+    myModuleBox.setSelectedModule(myModule);
     myModuleBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myModule = (Module)myModuleBox.getSelectedItem();
+        myModule = myModuleBox.getSelectedModule();
         if (myInteractiveRunAction != null) {
           myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupported(myModule));
         }
       }
     });
-
-    myModuleBox.setRenderer(new ModuleCellRenderer(myModuleBox.getRenderer()));
   }
 
   @NotNull

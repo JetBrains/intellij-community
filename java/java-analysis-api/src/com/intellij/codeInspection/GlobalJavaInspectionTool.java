@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool {
   @Override
   public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager,
                                              @NotNull final GlobalInspectionContext globalContext,
@@ -38,10 +38,10 @@ public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool impl
     return false;
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 
   @Override

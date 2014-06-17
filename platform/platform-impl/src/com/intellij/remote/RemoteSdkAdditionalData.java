@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
-  extends SdkAdditionalData, RemoteSdkProducer<T>, RemoteSdkProperties {
+  extends SdkAdditionalData, RemoteSdkCredentialsProducer<T>, RemoteSdkProperties {
   void completeInitialization();
 
   boolean isInitialized();
@@ -43,5 +43,5 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
 
   CredentialsType getRemoteConnectionType();
 
-  void switchOnConnectionType(RemoteSdkConnectionAcceptor acceptor);
+  void switchOnConnectionType(@NotNull RemoteSdkConnectionAcceptor acceptor);
 }
