@@ -191,7 +191,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       try {
         final SVNInfo info1 = new RepeatSvnActionThroughBusy() {
           @Override
-          protected void executeImpl() throws SVNException {
+          protected void executeImpl() {
             myT = myVcs.getInfo(new File(dir.getPath()));
           }
         }.compute();
@@ -207,7 +207,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         } else {
           return info1.getRepositoryUUID();
         }
-      } catch (SVNException e) {
+      }
+      catch (VcsException e) {
         // go to return default
       }
       return null;
@@ -289,10 +290,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
       dst.setLastModified(srcTime);
     }
-    catch (SVNException e) {
-      addToMoveExceptions(vcs.getProject(), e);
-      return false;
-    }
     catch(VcsException e) {
       addToMoveExceptions(vcs.getProject(), e);
       return false;
@@ -305,7 +302,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     ourStatusesForUndoMove.add(SVNStatusType.STATUS_ADDED);
   }
 
-  private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, SVNStatus srcStatus) throws SVNException {
+  private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, SVNStatus srcStatus) throws VcsException {
     if (srcStatus != null && srcStatus.getCopyFromURL() == null) {
       undo = false;
     }
@@ -328,7 +325,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           copyFileOrDir(src, dst);
         }
         catch (IOException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+          throw new SvnBindException(e);
         }
         createDeleteAction(vcs, src, true).execute();
         return false;
@@ -338,23 +335,18 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     return false;
   }
 
-  public static void moveFileWithSvn(final SvnVcs vcs, final File src, final File dst) throws SVNException {
+  public static void moveFileWithSvn(final SvnVcs vcs, final File src, final File dst) throws VcsException {
     new RepeatSvnActionThroughBusy() {
       @Override
-      protected void executeImpl() throws SVNException {
-        try {
-          vcs.getFactory(src).createCopyMoveClient().copy(src, dst, false, true);
-        }
-        catch (VcsException e) {
-          wrapAndThrow(e);
-        }
+      protected void executeImpl() throws VcsException {
+        vcs.getFactory(src).createCopyMoveClient().copy(src, dst, false, true);
       }
     }.execute();
   }
 
-  private void copyUnversionedMembersOfDirectory(final File src, final File dst) throws SVNException {
+  private void copyUnversionedMembersOfDirectory(final File src, final File dst) throws SvnBindException {
     if (src.isDirectory()) {
-      final SVNException[] exc = new SVNException[1];
+      final SvnBindException[] exc = new SvnBindException[1];
       FileUtil.processFilesRecursively(src, new Processor<File>() {
         @Override
         public boolean process(File file) {
@@ -365,7 +357,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               copyFileOrDir(src, dst);
             }
             catch (IOException e) {
-              exc[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+              exc[0] = new SvnBindException(e);
               return false;
             }
           }
@@ -398,15 +390,20 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     return false;
   }
 
-  private boolean for16move(SvnVcs vcs, final File src, final File dst, boolean undo) throws SVNException {
+  private boolean for16move(SvnVcs vcs, final File src, final File dst, boolean undo) throws VcsException {
     final SVNMoveClient mover = vcs.getSvnKitManager().createMoveClient();
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);
       new RepeatSvnActionThroughBusy() {
         @Override
-        protected void executeImpl() throws SVNException {
-          mover.undoMove(src, dst);
+        protected void executeImpl() throws VcsException {
+          try {
+            mover.undoMove(src, dst);
+          }
+          catch (SVNException e) {
+            throw new SvnBindException(e);
+          }
         }
       }.execute();
     }
@@ -415,8 +412,13 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       if (doUsualMove(vcs, src)) return true;
       new RepeatSvnActionThroughBusy() {
         @Override
-        protected void executeImpl() throws SVNException {
-          mover.doMove(src, dst);
+        protected void executeImpl() throws VcsException {
+          try {
+            mover.doMove(src, dst);
+          }
+          catch (SVNException e) {
+            throw new SvnBindException(e);
+          }
         }
       }.execute();
     }
@@ -513,7 +515,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           try {
             createRevertAction(vcs, ioFile, false).execute();
           }
-          catch (SVNException e) {
+          catch (VcsException e) {
             // ignore
           }
         }
@@ -531,13 +533,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   private RepeatSvnActionThroughBusy createRevertAction(@NotNull final SvnVcs vcs, @NotNull final File file, final boolean recursive) {
     return new RepeatSvnActionThroughBusy() {
       @Override
-      protected void executeImpl() throws SVNException {
-        try {
-          vcs.getFactory(file).createRevertClient().revert(new File[]{file}, SVNDepth.fromRecurse(recursive), null);
-        }
-        catch (VcsException e) {
-          wrapAndThrow(e);
-        }
+      protected void executeImpl() throws VcsException {
+        vcs.getFactory(file).createRevertClient().revert(new File[]{file}, SVNDepth.fromRecurse(recursive), null);
       }
     };
   }
@@ -546,20 +543,10 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   private RepeatSvnActionThroughBusy createDeleteAction(@NotNull final SvnVcs vcs, @NotNull final File file, final boolean force) {
     return new RepeatSvnActionThroughBusy() {
       @Override
-      protected void executeImpl() throws SVNException {
-        try {
-          vcs.getFactory(file).createDeleteClient().delete(file, force, false, null);
-        }
-        catch (VcsException e) {
-          wrapAndThrow(e);
-        }
+      protected void executeImpl() throws VcsException {
+        vcs.getFactory(file).createDeleteClient().delete(file, force, false, null);
       }
     };
-  }
-
-  private static void wrapAndThrow(VcsException e) throws SVNException {
-    // TODO: probably we should wrap into new exception only if e.getCause is not SVNException
-    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, e), e);
   }
 
   private boolean isAboveSourceOfCopyOrMove(final Project p, File ioFile) {
@@ -641,7 +628,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
         return false;
       }
-      catch (SVNException e) {
+      catch (VcsException e) {
         SVNFileUtil.deleteAll(targetFile, true);
         return false;
       }
@@ -794,23 +781,13 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               try {
                 new ActionWithTempFile(ioFile) {
                   protected void executeInternal() throws VcsException {
-                    try {
-                      // not recursive
-                      new RepeatSvnActionThroughBusy() {
-                        @Override
-                        protected void executeImpl() throws SVNException {
-                          try {
-                            vcs.getFactory(copyFrom).createCopyMoveClient().copy(copyFrom, ioFile, true, false);
-                          }
-                          catch (VcsException e) {
-                            wrapAndThrow(e);
-                          }
-                        }
-                      }.execute();
-                    }
-                    catch (SVNException e) {
-                      throw new VcsException(e);
-                    }
+                    // not recursive
+                    new RepeatSvnActionThroughBusy() {
+                      @Override
+                      protected void executeImpl() throws VcsException {
+                        vcs.getFactory(copyFrom).createCopyMoveClient().copy(copyFrom, ioFile, true, false);
+                      }
+                    }.execute();
                   }
                 }.execute();
               }
@@ -821,20 +798,15 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
             else {
               new RepeatSvnActionThroughBusy() {
                 @Override
-                protected void executeImpl() throws SVNException {
-                  try {
-                    vcs.getFactory(ioFile).createAddClient().add(ioFile, null, false, false, true, null);
-                  }
-                  catch (VcsException e) {
-                    wrapAndThrow(e);
-                  }
+                protected void executeImpl() throws VcsException {
+                  vcs.getFactory(ioFile).createAddClient().add(ioFile, null, false, false, true, null);
                 }
               }.execute();
             }
             VcsDirtyScopeManager.getInstance(project).fileDirty(file);
           }
-          catch (SVNException e) {
-            exceptions.add(new VcsException(e));
+          catch (VcsException e) {
+            exceptions.add(e);
           }
         }
       }
@@ -935,8 +907,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           FileUtil.delete(file.getIOFile());
         }
       }
-    } catch (SVNException e) {
-      exceptions.add(new VcsException(e));
+    } catch (VcsException e) {
+      exceptions.add(e);
     }
     if (! exceptions.isEmpty()) {
       vcsHelper.showErrors(exceptions, SvnBundle.message("delete.files.errors.title"));
@@ -962,8 +934,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               VcsDirtyScopeManager.getInstance(project).fileDirty(file);
             }
           }
-          catch (SVNException e) {
-            exceptions.add(new VcsException(e));
+          catch (VcsException e) {
+            exceptions.add(e);
           }
         }
       }
@@ -1004,14 +976,19 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private void fillDeletedFiles(Project project, List<Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<FilePath> deleteAnyway)
-    throws SVNException {
+    throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final Collection<File> files = myDeletedFiles.remove(project);
     for (final File file : files) {
       final SVNStatus status = new RepeatSvnActionThroughBusy() {
         @Override
-        protected void executeImpl() throws SVNException {
-          myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
+        protected void executeImpl() throws VcsException {
+          try {
+            myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
+          }
+          catch (SVNException e) {
+            throw new SvnBindException(e);
+          }
         }
       }.compute();
       boolean isAdded = SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus());
@@ -1063,12 +1040,17 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     try {
       return new RepeatSvnActionThroughBusy() {
         @Override
-        protected void executeImpl() throws SVNException {
-          myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
+        protected void executeImpl() throws VcsException {
+          try {
+            myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
+          }
+          catch (SVNException e) {
+            throw new SvnBindException(e);
+          }
         }
       }.compute();
     }
-    catch (SVNException e) {
+    catch (VcsException e) {
       return null;
     }
   }

@@ -225,8 +225,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         catch (IOException e) {
           exceptions.add(new VcsException(e));
         }
-        catch (SVNException e) {
-          exceptions.add(new VcsException(e));
+        catch (VcsException e) {
+          exceptions.add(e);
         }
       }
     }
