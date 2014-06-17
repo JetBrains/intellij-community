@@ -199,7 +199,9 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     compoundKey[0] = direction.directionId();
     compoundKey[1] = direction.paramId();
     compoundKey[2] = direction.valueId();
-    writeClass(compoundKey, 3, psiClass, 0);
+    if (!writeClass(compoundKey, 3, psiClass, 0)) {
+      return null;
+    }
 
     PsiType returnType = psiMethod.getReturnType();
     if (returnType == null) {
@@ -237,7 +239,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     }
   }
 
-  private void writeClass(int[] compoundKey, int i, PsiClass psiClass, int dimensions) throws IOException {
+  private boolean writeClass(int[] compoundKey, int i, PsiClass psiClass, int dimensions) throws IOException {
     String packageName = "";
 
     PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
@@ -245,14 +247,14 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       packageName = psiFile.getPackageName();
     }
     String qname = psiClass.getQualifiedName();
+    if (qname == null) {
+      return false;
+    }
     String className = qname;
     if (qname != null && packageName.length() > 0) {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
     }
     compoundKey[i] = myPackageEnumerator.enumerate(packageName);
-    if (className == null) {
-       LOG.info("className is null for " + psiClass + " " + qname);
-    }
     if (dimensions == 0) {
       compoundKey[i + 1] = myNamesEnumerator.enumerate(className);
     } else {
@@ -262,6 +264,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       }
       compoundKey[i + 1] = myNamesEnumerator.enumerate(sb.toString());
     }
+    return true;
   }
 
   private boolean writeType(int[] compoundKey, int i, PsiType psiType) throws IOException {
