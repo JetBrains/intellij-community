@@ -983,12 +983,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       final SVNStatus status = new RepeatSvnActionThroughBusy() {
         @Override
         protected void executeImpl() throws VcsException {
-          try {
-            myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
-          }
-          catch (SVNException e) {
-            throw new SvnBindException(e);
-          }
+          myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
         }
       }.compute();
       boolean isAdded = SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus());
@@ -1041,12 +1036,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       return new RepeatSvnActionThroughBusy() {
         @Override
         protected void executeImpl() throws VcsException {
-          try {
-            myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
-          }
-          catch (SVNException e) {
-            throw new SvnBindException(e);
-          }
+          myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
         }
       }.compute();
     }

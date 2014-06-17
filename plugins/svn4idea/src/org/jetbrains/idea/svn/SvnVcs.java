@@ -603,7 +603,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
                  svnStatusIs(status, SVNStatusType.STATUS_OBSTRUCTED));
       }
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.info(e);
     }
     return false;

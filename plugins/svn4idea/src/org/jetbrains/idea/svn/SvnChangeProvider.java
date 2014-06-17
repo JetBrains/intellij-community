@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -173,7 +174,8 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
+  public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder)
+    throws SVNException, SvnBindException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, ProgressManager.getInstance().getProgressIndicator());
     final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
@@ -251,7 +253,7 @@ public class SvnChangeProvider implements ChangeProvider {
       try {
         status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
       }
-      catch(SVNException ex) {
+      catch(SvnBindException ex) {
         LOG.info(ex);
         status = null;
       }

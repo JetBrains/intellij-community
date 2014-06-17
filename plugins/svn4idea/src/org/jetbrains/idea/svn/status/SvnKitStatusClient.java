@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -55,14 +56,24 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
                        boolean includeIgnored,
                        boolean collectParentExternals,
                        ISVNStatusHandler handler,
-                       Collection changeLists) throws SVNException {
-    return getStatusClient()
-      .doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
+                       Collection changeLists) throws SvnBindException {
+    try {
+      return getStatusClient().doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler,
+                                        changeLists);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @Override
-  public SVNStatus doStatus(File path, boolean remote) throws SVNException {
-    return getStatusClient().doStatus(path, remote);
+  public SVNStatus doStatus(File path, boolean remote) throws SvnBindException {
+    try {
+      return getStatusClient().doStatus(path, remote);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   @NotNull

@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.status;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -57,28 +59,16 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        boolean includeIgnored,
                        boolean collectParentExternals,
                        final ISVNStatusHandler handler,
-                       final Collection changeLists) throws SVNException {
+                       final Collection changeLists) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
 
-    final SVNInfo infoBase;
-    try {
-      infoBase = myFactory.createInfoClient().doInfo(base, revision);
-    }
-    catch (SvnBindException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
-    }
+    final SVNInfo infoBase = myFactory.createInfoClient().doInfo(base, revision);
     List<String> parameters = new ArrayList<String>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
 
-    CommandExecutor command;
-    try {
-      command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
-    }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
-    }
+    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
     parseResult(path, revision, handler, base, infoBase, command);
     return 0;
   }
@@ -88,12 +78,11 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                            ISVNStatusHandler handler,
                            File base,
                            SVNInfo infoBase,
-                           CommandExecutor command) throws SVNException {
+                           CommandExecutor command) throws SvnBindException {
     String result = command.getOutput();
 
     if (StringUtil.isEmptyOrSpaces(result)) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Status request returned nothing for command: " +
-                                                                             command.getCommandText()));
+      throw new SvnBindException("Status request returned nothing for command: " + command.getCommandText());
     }
 
     try {
@@ -103,8 +92,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
       parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
       if (!svnHandl[0].isAnythingReported()) {
         if (!SvnUtil.isSvnVersioned(myVcs, path)) {
-          throw new SVNException(
-            SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result));
+          throw new SvnBindException(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result);
         } else {
           // return status indicating "NORMAL" state
           // typical output would be like
@@ -122,25 +110,29 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
               return createInfoGetter(null).convert(path);
             }
           });
-          handler.handleStatus(status);
+          try {
+            handler.handleStatus(status);
+          }
+          catch (SVNException e) {
+            throw new SvnBindException(e);
+          }
         }
       }
     }
     catch (SvnExceptionWrapper e) {
-      throw (SVNException) e.getCause();
+      throw new SvnBindException(e.getCause());
     } catch (IOException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw new SvnBindException(e);
     }
     catch (ParserConfigurationException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw new SvnBindException(e);
     }
     catch (SAXException e) {
       // status parsing errors are logged separately as sometimes there are parsing errors connected to terminal output handling.
       // these errors primarily occur when status output is rather large.
       // and status output could be large, for instance, when working copy is locked (seems that each file is listed in status output).
       command.logCommand();
-
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+      throw new SvnBindException(e);
     }
   }
 
@@ -241,7 +233,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @Override
-  public SVNStatus doStatus(File path, boolean remote) throws SVNException {
+  public SVNStatus doStatus(File path, boolean remote) throws SvnBindException {
     final SVNStatus[] svnStatus = new SVNStatus[1];
     doStatus(path, SVNRevision.UNDEFINED, SVNDepth.EMPTY, remote, false, false, false, new ISVNStatusHandler() {
       @Override

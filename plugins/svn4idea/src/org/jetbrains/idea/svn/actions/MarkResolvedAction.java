@@ -33,11 +33,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -136,7 +136,7 @@ public class MarkResolvedAction extends BasicAction {
           }
         }, null);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         LOG.warn(e);
       }
     }

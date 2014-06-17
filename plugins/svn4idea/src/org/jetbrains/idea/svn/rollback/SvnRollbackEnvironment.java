@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -613,6 +614,9 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
           }
           catch (SVNException e) {
             myExceptions.add(new VcsException(e));
+          }
+          catch (SvnBindException e) {
+            myExceptions.add(e);
           }
         }
       }

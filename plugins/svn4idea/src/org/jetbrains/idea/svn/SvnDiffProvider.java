@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -200,7 +201,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     try {
       result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       LOG.debug(e);
     }
 

@@ -538,7 +538,7 @@ public class SvnUtil {
     try {
       return vcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }

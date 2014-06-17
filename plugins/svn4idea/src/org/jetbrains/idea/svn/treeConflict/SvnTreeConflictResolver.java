@@ -84,15 +84,10 @@ public class SvnTreeConflictResolver {
   private void revertAdditional() throws VcsException {
     if (myRevertPath == null) return;
     final File ioFile = myRevertPath.getIOFile();
-    try {
-      final SVNStatus status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
-      if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-        FileUtil.delete(ioFile);
-      }
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
+    final SVNStatus status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
+    myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+    if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      FileUtil.delete(ioFile);
     }
     pathDirty(myRevertPath);
   }

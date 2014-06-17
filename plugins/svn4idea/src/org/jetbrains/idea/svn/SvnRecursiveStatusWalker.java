@@ -31,6 +31,7 @@ import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -63,7 +64,7 @@ public class SvnRecursiveStatusWalker {
     myHandler = new MyHandler();
   }
 
-  public void go(final FilePath rootPath, final SVNDepth depth) throws SVNException {
+  public void go(final FilePath rootPath, final SVNDepth depth) throws SvnBindException {
     final MyItem root = createItem(rootPath, depth, false);
     myQueue.add(root);
 
@@ -81,23 +82,26 @@ public class SvnRecursiveStatusWalker {
           client.doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
           myHandler.checkIfCopyRootWasReported(null, ioFile);
         }
-        catch (SVNException e) {
+        catch (SvnBindException e) {
           handleStatusException(item, path, e);
         }
       } else {
         try {
           final SVNStatus status = item.getClient().doStatus(ioFile, false);
           myReceiver.process(path, status);
-        } catch (SVNException e) {
+        }
+        catch (SvnBindException e) {
           handleStatusException(item, path, e);
+        }
+        catch (SVNException e) {
+          handleStatusException(item, path, new SvnBindException(e));
         }
       }
     }
   }
 
-  private void handleStatusException(MyItem item, FilePath path, SVNException e) throws SVNException {
-    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-    if (SVNErrorCode.WC_NOT_DIRECTORY.equals(errorCode) || SVNErrorCode.WC_NOT_FILE.equals(errorCode)) {
+  private void handleStatusException(MyItem item, FilePath path, SvnBindException e) throws SvnBindException {
+    if (e.contains(SVNErrorCode.WC_NOT_DIRECTORY) || e.contains(SVNErrorCode.WC_NOT_FILE)) {
       final VirtualFile virtualFile = path.getVirtualFile();
       if (virtualFile != null) {
         if (! myPartner.isExcluded(virtualFile)) {
@@ -227,10 +231,9 @@ public class SvnRecursiveStatusWalker {
         myMetCurrentItem = true;
         SVNStatus statusInner;
         try {
-          statusInner = ioFileStatus != null ? ioFileStatus :
-                        myCurrentItem.getClient().doStatus(itemFile, false);
+          statusInner = ioFileStatus != null ? ioFileStatus : myCurrentItem.getClient().doStatus(itemFile, false);
         }
-        catch (SVNException e) {
+        catch (SvnBindException e) {
           LOG.info(e);
           statusInner = null;
         }

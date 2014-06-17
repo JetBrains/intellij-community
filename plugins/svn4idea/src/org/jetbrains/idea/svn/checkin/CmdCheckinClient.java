@@ -33,7 +33,6 @@ import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -61,12 +60,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
     // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
     // there at least some child-parent relationships in passed paths
-    try {
-      paths = filterCommittables(paths);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+    paths = filterCommittables(paths);
 
     return commit(ArrayUtil.toObjectArray(paths, File.class), message);
   }
@@ -106,7 +100,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return revision;
   }
 
-  private Collection<File> filterCommittables(@NotNull Collection<File> committables) throws SVNException {
+  private Collection<File> filterCommittables(@NotNull Collection<File> committables) throws SvnBindException {
     final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
     new AbstractFilterChildren<File>() {
       @Override
@@ -141,7 +135,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
               result.add(file);
             }
           }
-          catch (SVNException e) {
+          catch (SvnBindException e) {
             // not versioned
             LOG.info(e);
             throw e;

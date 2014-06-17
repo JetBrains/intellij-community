@@ -375,25 +375,20 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final Set<FilePath> result = ContainerUtil.newHashSet();
     File rootFile = root.getIOFile();
 
-    try {
-      myVcs.getFactory(rootFile).createStatusClient()
-        .doStatus(rootFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, true, false, false, false, new ISVNStatusHandler() {
-          @Override
-          public void handleStatus(SVNStatus status) throws SVNException {
-            File file = status.getFile();
-            boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
-                                      isNotNone(status.getRemoteNodeStatus()) ||
-                                      isNotNone(status.getRemotePropertiesStatus());
+    myVcs.getFactory(rootFile).createStatusClient()
+      .doStatus(rootFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, true, false, false, false, new ISVNStatusHandler() {
+        @Override
+        public void handleStatus(SVNStatus status) throws SVNException {
+          File file = status.getFile();
+          boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
+                                    isNotNone(status.getRemoteNodeStatus()) ||
+                                    isNotNone(status.getRemotePropertiesStatus());
 
-            if (file != null && changedOnServer) {
-              result.add(VcsUtil.getFilePath(file, file.isDirectory()));
-            }
+          if (file != null && changedOnServer) {
+            result.add(VcsUtil.getFilePath(file, file.isDirectory()));
           }
-        }, null);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+        }
+      }, null);
 
     return result;
   }
