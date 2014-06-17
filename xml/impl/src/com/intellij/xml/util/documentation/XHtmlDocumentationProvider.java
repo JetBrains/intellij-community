@@ -26,7 +26,7 @@ import com.intellij.psi.xml.XmlText;
 public class XHtmlDocumentationProvider extends HtmlDocumentationProvider {
 
   @Override
-  protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
+  protected String generateDocForHtml(PsiElement element, boolean omitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
     return super.generateDocForHtml(element, true, context, originalElement);
   }
 
