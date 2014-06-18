@@ -24,7 +24,6 @@ import java.beans.PropertyChangeListener;
 class StudyEditor implements FileEditor {
   private final FileEditor defaultEditor;
   private final JComponent comp;
-
   private String getTextForTask(VirtualFile file) {
     int taskNum = TaskManager.getInstance().getTaskNumForFile(file.getName());
     return TaskManager.getInstance().getTaskText(taskNum);

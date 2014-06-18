@@ -1,7 +1,7 @@
 {
    "windows_num":2,
    "windows_description":[
-    {"line":1, "start":0, "text":"type operator", "docs":"1.html", "possible answer":"print"},
+    {"line":1, "start":0, "text":"type operator", "docs":"hello-text.html", "possible answer":"print"},
     {"line":1, "start":33, "text":"type your name", "docs":"empty_study.docs","possible answer":"Liana"}
     ]
 }

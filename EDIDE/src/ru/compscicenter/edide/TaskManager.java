@@ -33,60 +33,28 @@ public class TaskManager {
     return instance;
   }
 
-  private TaskFile getTaskFile(String fileName) {
-    //String metaFileName = fileName.substring(0, fileName.length() - 2) + "json";
-    int of = fileName.indexOf(".");
-    String metaFileName = fileName.substring(0, of + 1) + "json";
-    InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(metaFileName);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
-    com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
-    JsonParser parser = new JsonParser();
-    com.google.gson.JsonElement el = parser.parse(r);
-    int windNum = el.getAsJsonObject().get("windows_num").getAsInt();
-    TaskFile taskFile = new TaskFile(fileName, windNum);
-    JsonArray windows = el.getAsJsonObject().get("windows_description").getAsJsonArray();
-    for (com.google.gson.JsonElement e : windows) {
-      int line = e.getAsJsonObject().get("line").getAsInt();
-      int startOffset = e.getAsJsonObject().get("start").getAsInt();
-      String text = e.getAsJsonObject().get("text").getAsString();
-      String docs = e.getAsJsonObject().get("docs").getAsString();
-      //String possibleAnswer = e.getAsJsonObject().get("possible answer").getAsString();
-      TaskWindow window = new TaskWindow(line, startOffset, text, docs);
-      taskFile.addTaskWindow(window);
-    }
-    return taskFile;
-  }
-
   private void load() {
     InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.json");
     BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
     com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
     JsonParser parser = new JsonParser();
-    com.google.gson.JsonElement el = parser.parse(r);
     try {
+      com.google.gson.JsonElement el = parser.parse(r);
       JsonArray tasks_list = el.getAsJsonObject().get("tasks_list").getAsJsonArray();
-      int taskIndex = 0;
       for (com.google.gson.JsonElement e : tasks_list) {
-        int n = e.getAsJsonObject().get("file_num").getAsInt();
-        Task task = new Task(n);
+        Task task = new Task(e.getAsJsonObject().get("file_num").getAsInt());
         JsonArray files_in_task = e.getAsJsonObject().get("file_names").getAsJsonArray();
         for (com.google.gson.JsonElement fileName : files_in_task) {
-          task.addTaskFile(this.getTaskFile(fileName.getAsString()));
+            task.addNewTaskFile(fileName.getAsString());
         }
-
         String testFileName = e.getAsJsonObject().get("test").getAsString();
         task.setTest(testFileName);
-        String taskTextFileName = Integer.toString(taskIndex + 1) + ".meta";
-        InputStream taskTextIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(taskTextFileName);
-        BufferedReader taskTextReader = new BufferedReader(new InputStreamReader(taskTextIS));
-        while (taskTextReader.ready()) {
-          task.addTaskTextLine(taskTextReader.readLine());
-        }
+        String taskTextFileName = e.getAsJsonObject().get("task text").getAsString();
+        task.setTaskTextFile(taskTextFileName);
         tasks.add(task);
-        taskIndex++;
       }
     }
-    catch (IOException e) {
+    catch (Exception e) {
       Log.print("Something wrong with meta file: " + e.getCause());
       Log.flush();
     }

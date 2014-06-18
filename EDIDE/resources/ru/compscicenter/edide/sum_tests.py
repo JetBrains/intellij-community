@@ -1,4 +1,4 @@
-import sys
+mport sys
 def test(a, b):
     if a == b:
         print "OK"
