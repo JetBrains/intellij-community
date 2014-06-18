@@ -36,11 +36,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
+import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -127,8 +127,9 @@ public class MarkResolvedAction extends BasicAction {
         File path = new File(file.getPath());
         StatusClient client = vcs.getFactory(path).createStatusClient();
 
-        client.doStatus(path, SVNRevision.UNDEFINED, SVNDepth.INFINITY, false, false, false, false, new ISVNStatusHandler() {
-          public void handleStatus(SVNStatus status) {
+        client.doStatus(path, SVNRevision.UNDEFINED, SVNDepth.INFINITY, false, false, false, false, new StatusConsumer() {
+          @Override
+          public void consume(Status status) {
             if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
                 status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
               target.add(status.getFile().getAbsolutePath());

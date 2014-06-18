@@ -46,13 +46,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import javax.swing.*;
@@ -200,7 +200,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private void addParents(File file, final Adder adder) {
-    SVNStatus status = getStatus(file);
+    Status status = getStatus(file);
 
     if (status != null &&
         (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) ||
@@ -215,8 +215,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Nullable
-  private SVNStatus getStatus(@NotNull File file) {
-    SVNStatus result = null;
+  private Status getStatus(@NotNull File file) {
+    Status result = null;
 
     try {
       result = mySvnVcs.getFactory(file).createStatusClient().doStatus(file, false);

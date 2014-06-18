@@ -50,10 +50,10 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -376,9 +376,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     File rootFile = root.getIOFile();
 
     myVcs.getFactory(rootFile).createStatusClient()
-      .doStatus(rootFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, true, false, false, false, new ISVNStatusHandler() {
+      .doStatus(rootFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, true, false, false, false, new StatusConsumer() {
         @Override
-        public void handleStatus(SVNStatus status) throws SVNException {
+        public void consume(Status status) throws SVNException {
           File file = status.getFile();
           boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
                                     isNotNone(status.getRemoteNodeStatus()) ||

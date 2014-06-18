@@ -59,7 +59,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       final ISVNStatusHandler handler,
+                       final StatusConsumer handler,
                        final Collection changeLists) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
@@ -76,7 +76,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   private void parseResult(final File path,
                            SVNRevision revision,
-                           ISVNStatusHandler handler,
+                           StatusConsumer handler,
                            File base,
                            Info infoBase,
                            CommandExecutor command) throws SvnBindException {
@@ -112,7 +112,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
             }
           });
           try {
-            handler.handleStatus(status);
+            handler.consume(status);
           }
           catch (SVNException e) {
             throw new SvnBindException(e);
@@ -155,7 +155,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   public SvnStatusHandler createStatusHandler(final SVNRevision revision,
-                                               final ISVNStatusHandler handler,
+                                               final StatusConsumer handler,
                                                final File base,
                                                final Info infoBase, final SvnStatusHandler[] svnHandl) {
     final SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, svnHandl);
@@ -177,7 +177,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     };
   }
 
-  public static SvnStatusHandler.ExternalDataCallback createStatusCallback(final ISVNStatusHandler handler,
+  public static SvnStatusHandler.ExternalDataCallback createStatusCallback(final StatusConsumer handler,
                                                                             final File base,
                                                                             final Info infoBase,
                                                                             final SvnStatusHandler[] svnHandl) {
@@ -219,7 +219,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           if (SVNStatusType.STATUS_EXTERNAL.equals(pending.getNodeStatus())) {
             externalsMap.put(pending.getFile(), pending.getInfo());
           }
-          handler.handleStatus(pending);
+          handler.consume(pending);
         }
         catch (SVNException e) {
           throw new SvnExceptionWrapper(e);
@@ -234,11 +234,11 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @Override
-  public SVNStatus doStatus(File path, boolean remote) throws SvnBindException {
-    final SVNStatus[] svnStatus = new SVNStatus[1];
-    doStatus(path, SVNRevision.UNDEFINED, SVNDepth.EMPTY, remote, false, false, false, new ISVNStatusHandler() {
+  public Status doStatus(File path, boolean remote) throws SvnBindException {
+    final Status[] svnStatus = new Status[1];
+    doStatus(path, SVNRevision.UNDEFINED, SVNDepth.EMPTY, remote, false, false, false, new StatusConsumer() {
       @Override
-      public void handleStatus(SVNStatus status) throws SVNException {
+      public void consume(Status status) throws SVNException {
         svnStatus[0] = status;
       }
     }, null);

@@ -32,15 +32,15 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
+import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -87,7 +87,7 @@ public class SvnRecursiveStatusWalker {
         }
       } else {
         try {
-          final SVNStatus status = item.getClient().doStatus(ioFile, false);
+          final Status status = item.getClient().doStatus(ioFile, false);
           myReceiver.process(path, status);
         }
         catch (SvnBindException e) {
@@ -216,7 +216,7 @@ public class SvnRecursiveStatusWalker {
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
   }
 
-  private class MyHandler implements ISVNStatusHandler {
+  private class MyHandler implements StatusConsumer {
     private MyItem myCurrentItem;
     private boolean myMetCurrentItem;
 
@@ -225,11 +225,11 @@ public class SvnRecursiveStatusWalker {
       myMetCurrentItem = false;
     }
 
-    public void checkIfCopyRootWasReported(@Nullable final SVNStatus ioFileStatus, final File ioFile) {
+    public void checkIfCopyRootWasReported(@Nullable final Status ioFileStatus, final File ioFile) {
       File itemFile = myCurrentItem.getPath().getIOFile();
       if (! myMetCurrentItem && FileUtil.filesEqual(ioFile, itemFile)) {
         myMetCurrentItem = true;
-        SVNStatus statusInner;
+        Status statusInner;
         try {
           statusInner = ioFileStatus != null ? ioFileStatus : myCurrentItem.getClient().doStatus(itemFile, false);
         }
@@ -267,7 +267,8 @@ public class SvnRecursiveStatusWalker {
       }
     }
 
-    public void handleStatus(final SVNStatus status) throws SVNException {
+    @Override
+    public void consume(final Status status) throws SVNException {
       myPartner.checkCanceled();
       final File ioFile = status.getFile();
       checkIfCopyRootWasReported(status, ioFile);

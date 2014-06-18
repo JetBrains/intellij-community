@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.PortableStatus;
-import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 public class SvnStatusConvertor {
@@ -37,7 +37,7 @@ public class SvnStatusConvertor {
   }
 
   @NotNull
-  public static FileStatus convertStatus(@Nullable final SVNStatus status) {
+  public static FileStatus convertStatus(@Nullable final Status status) {
     if (status == null) {
       return FileStatus.UNKNOWN;
     }

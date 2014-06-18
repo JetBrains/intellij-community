@@ -30,10 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -129,7 +129,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
         }
         else {
           try {
-            final SVNStatus status = statusClient.doStatus(file, false);
+            final Status status = statusClient.doStatus(file, false);
             if (status != null && !SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
                 !SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
               result.add(file);

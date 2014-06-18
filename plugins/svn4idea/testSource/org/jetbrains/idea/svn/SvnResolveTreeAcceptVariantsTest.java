@@ -27,10 +27,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.treeConflict.SvnTreeConflictResolver;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -162,13 +162,13 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
   }
 
   private void checkStatusesAfterMineFullResolve(TreeConflictData.Data data, File conflictIoFile) {
-    SVNStatus conflStatus = SvnUtil.getStatus(myVcs, conflictIoFile);
+    Status conflStatus = SvnUtil.getStatus(myVcs, conflictIoFile);
     Assert.assertTrue(createTestFailedComment(data, conflictIoFile.getPath()) + " tree conflict resolved",
                       conflStatus.getTreeConflict() == null);
     Collection<TreeConflictData.FileData> leftFiles = data.getLeftFiles();
     for (TreeConflictData.FileData file : leftFiles) {
       File exFile = new File(myWorkingCopyDir.getPath(), file.myRelativePath);
-      final SVNStatus status = SvnUtil.getStatus(myVcs, exFile);
+      final Status status = SvnUtil.getStatus(myVcs, exFile);
       boolean theirsExists = new File(myTheirs.getPath(), file.myRelativePath).exists();
 
       if (SVNStatusType.STATUS_UNVERSIONED.equals(file.myNodeStatus)) {

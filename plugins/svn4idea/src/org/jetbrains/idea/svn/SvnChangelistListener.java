@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -135,7 +135,7 @@ public class SvnChangelistListener implements ChangeListListener {
   @Nullable
   public static String getCurrentMapping(final SvnVcs vcs, final File file) {
     try {
-      final SVNStatus status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
+      final Status status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
       return status == null ? null : status.getChangelistName();
     }
     catch (SvnBindException e) {

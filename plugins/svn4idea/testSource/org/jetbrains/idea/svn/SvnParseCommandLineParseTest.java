@@ -24,18 +24,15 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.status.CmdStatusClient;
+import org.jetbrains.idea.svn.status.*;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
-import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.jetbrains.idea.svn.status.PortableStatus;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -670,9 +667,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
     final String basePath = "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main";
     final SvnStatusHandler[] handler = new SvnStatusHandler[1];
     final File baseFile = new File(basePath);
-    final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(new ISVNStatusHandler() {
+    final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(new StatusConsumer() {
       @Override
-      public void handleStatus(SVNStatus status) throws SVNException {
+      public void consume(Status status) throws SVNException {
         System.out.println(status.getURL());
         if (new File(
           "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java")

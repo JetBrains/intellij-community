@@ -418,7 +418,6 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
-      pending.setCommittedDate(SVNDate.parseDate(s));
     }
   }
 
@@ -441,7 +440,6 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
-      pending.setAuthor(s);
     }
   }
 

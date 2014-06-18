@@ -18,9 +18,7 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
 import java.util.Collection;
@@ -43,8 +41,8 @@ public interface StatusClient extends SvnClient {
                 boolean reportAll,
                 boolean includeIgnored,
                 boolean collectParentExternals,
-                ISVNStatusHandler handler,
+                StatusConsumer handler,
                 Collection changeLists) throws SvnBindException;
 
-  SVNStatus doStatus(File path, boolean remote) throws SvnBindException;
+  Status doStatus(File path, boolean remote) throws SvnBindException;
 }

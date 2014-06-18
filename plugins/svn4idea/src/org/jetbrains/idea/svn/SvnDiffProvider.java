@@ -36,6 +36,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -190,15 +191,15 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     }
 
     // not clear why we need it, with remote check..
-    SVNStatus svnStatus = getFileStatus(new File(selectedFile.getPresentableUrl()), false);
+    Status svnStatus = getFileStatus(new File(selectedFile.getPresentableUrl()), false);
     if (svnStatus != null && svnRevision.equals(svnStatus.getRevision())) {
         return SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision);
     }
     return SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
   }
 
-  private SVNStatus getFileStatus(File file, boolean remote) {
-    SVNStatus result = null;
+  private Status getFileStatus(File file, boolean remote) {
+    Status result = null;
 
     try {
       result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote);
@@ -220,7 +221,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private ItemLatestState getLastRevision(final File file) {
-    final SVNStatus svnStatus = getFileStatus(file, true);
+    final Status svnStatus = getFileStatus(file, true);
     if (svnStatus == null || itemExists(svnStatus) && SVNRevision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
       // IDEADEV-21785 (no idea why this can happen)
       final Info info = myVcs.getInfo(file, SVNRevision.HEAD);
@@ -257,7 +258,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     return createResult(svnStatus.getRevision(), exists, false);
   }
 
-  private boolean itemExists(SVNStatus svnStatus) {
+  private boolean itemExists(Status svnStatus) {
     return ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
       ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
   }

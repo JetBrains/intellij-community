@@ -20,9 +20,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -42,7 +42,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     mySet = new HashSet<NestedCopyInfo>();
   }
 
-  public void process(final FilePath path, final SVNStatus status) throws SVNException {
+  public void process(final FilePath path, final Status status) throws SVNException {
     VirtualFile file = path.getVirtualFile();
     if (file != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
       // We do not determine here url, repository url - because url, repository url in status will determine location in the

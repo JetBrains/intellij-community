@@ -36,12 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -187,7 +187,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                  ChangelistBuilder builder,
                                  SvnChangeProviderContext context, final VcsDirtyScope dirtyScope) throws SVNException {
     boolean foundRename = false;
-    final SVNStatus copiedStatus = copiedFile.getStatus();
+    final Status copiedStatus = copiedFile.getStatus();
     final String copyFromURL = copiedFile.getCopyFromURL();
     final FilePath copiedToPath = copiedFile.getFilePath();
 
@@ -205,7 +205,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
     for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
       SvnChangedFile deletedFile = iterator.next();
-      final SVNStatus deletedStatus = deletedFile.getStatus();
+      final Status deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
         final Change newChange = context.createMovedChange(createBeforeRevision(deletedFile, true),
@@ -214,7 +214,7 @@ public class SvnChangeProvider implements ChangeProvider {
         applyMovedChange(copiedFile.getFilePath(), builder, dirtyScope, deletedToDelete, deletedFile, clName, newChange);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
-          final SVNStatus childStatus = deletedChild.getStatus();
+          final Status childStatus = deletedChild.getStatus();
           if (childStatus == null) {
             continue;
           }
@@ -249,7 +249,7 @@ public class SvnChangeProvider implements ChangeProvider {
     // by building a relative url
     if (!foundRename && copiedStatus.getURL() != null) {
       File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copyFromURL);
-      SVNStatus status;
+      Status status;
       try {
         status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
       }

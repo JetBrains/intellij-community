@@ -49,6 +49,7 @@ import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
@@ -535,7 +536,7 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNStatus getStatus(@NotNull final SvnVcs vcs, @NotNull final File file) {
+  public static Status getStatus(@NotNull final SvnVcs vcs, @NotNull final File file) {
     try {
       return vcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
@@ -776,7 +777,7 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static String getChangelistName(@NotNull final SVNStatus status) {
+  public static String getChangelistName(@NotNull final Status status) {
     // no explicit check on working copy format supports change lists as they are supported from svn 1.5
     // and anyway status.getChangelistName() should just return null if change lists are not supported.
     return SVNNodeKind.FILE.equals(status.getKind()) ? status.getChangelistName() : null;
