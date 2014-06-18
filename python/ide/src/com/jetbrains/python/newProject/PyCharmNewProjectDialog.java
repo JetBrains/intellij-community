@@ -53,7 +53,7 @@ public class PyCharmNewProjectDialog extends DialogWrapper {
 
       @Override
       public Dimension getMinimumSize() {
-        return new Dimension(800, 500);
+        return new Dimension(650, 350);
       }
     };
   }

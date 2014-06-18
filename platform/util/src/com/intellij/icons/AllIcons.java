@@ -836,6 +836,7 @@ public class AllIcons {
     public static final Icon PinToolWindow = IconLoader.getIcon("/nodes/pinToolWindow.png"); // 13x13
     public static final Icon Plugin = IconLoader.getIcon("/nodes/plugin.png"); // 16x16
     public static final Icon PluginJB = IconLoader.getIcon("/nodes/pluginJB.png"); // 16x16
+    public static final Icon PluginLogo = IconLoader.getIcon("/nodes/pluginLogo.png"); // 32x32
     public static final Icon Pluginnotinstalled = IconLoader.getIcon("/nodes/pluginnotinstalled.png"); // 16x16
     public static final Icon Pluginobsolete = IconLoader.getIcon("/nodes/pluginobsolete.png"); // 16x16
     public static final Icon PluginRestart = IconLoader.getIcon("/nodes/pluginRestart.png"); // 16x16
