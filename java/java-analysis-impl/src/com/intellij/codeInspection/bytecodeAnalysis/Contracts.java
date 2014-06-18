@@ -88,6 +88,11 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     List<Conf> nextHistory = dfsTree.loopEnters.contains(insnIndex) ? append(history, conf) : history;
     Frame<BasicValue> nextFrame = execute(frame, insnNode);
 
+    if (interpreter.deReferenced) {
+      earlyResult = new Final<Key, Value>(Value.Bot);
+      return;
+    }
+
     int opcode = insnNode.getOpcode();
     switch (opcode) {
       case ARETURN:
@@ -129,7 +134,8 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
         }
         return;
       case ATHROW:
-        earlyResult = new Final<Key, Value>(Value.Top);
+        results.put(stateIndex, new Final<Key, Value>(Value.Bot));
+        computed.put(insnIndex, append(computed.get(insnIndex), state));
         return;
       default:
     }
@@ -201,7 +207,6 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     for (State nextState : nextStates) {
       pending.push(new ProceedState<Result<Key, Value>>(nextState));
     }
-
   }
 
   private Frame<BasicValue> execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
@@ -211,6 +216,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       case AbstractInsnNode.FRAME:
         return frame;
       default:
+        interpreter.deReferenced = false;
         Frame<BasicValue> nextFrame = new Frame<BasicValue>(frame);
         nextFrame.execute(insnNode, interpreter);
         return nextFrame;
@@ -250,11 +256,15 @@ class InOutInterpreter extends BasicInterpreter {
   final Direction direction;
   final InsnList insns;
   final TIntHashSet resultOrigins;
+  final boolean nullAnalysis;
+
+  boolean deReferenced = false;
 
   InOutInterpreter(Direction direction, InsnList insns, TIntHashSet resultOrigins) {
     this.direction = direction;
     this.insns = insns;
     this.resultOrigins = resultOrigins;
+    nullAnalysis = (direction instanceof InOut) && (((InOut)direction).inValue) == Value.Null;
   }
 
   @Override
@@ -298,6 +308,13 @@ class InOutInterpreter extends BasicInterpreter {
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
     boolean propagate = resultOrigins.contains(insns.indexOf(insn));
     switch (insn.getOpcode()) {
+      case GETFIELD:
+      case ARRAYLENGTH:
+      case MONITORENTER:
+        if (nullAnalysis && value instanceof ParamValue) {
+          deReferenced = true;
+        }
+        return super.unaryOperation(insn, value);
       case CHECKCAST:
         if (value instanceof ParamValue) {
           return new ParamValue(Type.getObjectType(((TypeInsnNode)insn).desc));
@@ -320,10 +337,61 @@ class InOutInterpreter extends BasicInterpreter {
   }
 
   @Override
+  public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
+    switch (insn.getOpcode()) {
+      case IALOAD:
+      case LALOAD:
+      case FALOAD:
+      case DALOAD:
+      case AALOAD:
+      case BALOAD:
+      case CALOAD:
+      case SALOAD:
+      case PUTFIELD:
+        if (nullAnalysis && value1 instanceof ParamValue) {
+          deReferenced = true;
+        }
+        break;
+      default:
+    }
+    return super.binaryOperation(insn, value1, value2);
+  }
+
+  @Override
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) throws AnalyzerException {
+    switch (insn.getOpcode()) {
+      case IASTORE:
+      case LASTORE:
+      case FASTORE:
+      case DASTORE:
+      case AASTORE:
+      case BASTORE:
+      case CASTORE:
+      case SASTORE:
+        if (nullAnalysis && value1 instanceof ParamValue) {
+          deReferenced = true;
+        }
+      default:
+    }
+    return super.ternaryOperation(insn, value1, value2, value3);
+  }
+
+  @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
     boolean propagate = resultOrigins.contains(insns.indexOf(insn));
     int opCode = insn.getOpcode();
     int shift = opCode == INVOKESTATIC ? 0 : 1;
+
+    switch (opCode) {
+      case INVOKESPECIAL:
+      case INVOKEINTERFACE:
+      case INVOKEVIRTUAL:
+        if (nullAnalysis && values.get(0) instanceof ParamValue) {
+          deReferenced = true;
+          return super.naryOperation(insn, values);
+        }
+    }
+
     if (propagate) {
       switch (opCode) {
         case INVOKESTATIC:
