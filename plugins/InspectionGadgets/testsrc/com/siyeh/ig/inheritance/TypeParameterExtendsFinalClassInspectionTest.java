@@ -1,10 +1,19 @@
 package com.siyeh.ig.inheritance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class TypeParameterExtendsFinalClassInspectionTest extends IGInspectionTestCase {
+/**
+ * @author bas
+ */
+public class TypeParameterExtendsFinalClassInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/inheritance/type_parameter_extends_final_class", new TypeParameterExtendsFinalClassInspection());
+  public void testTypeParameterExtendsFinalClass() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new TypeParameterExtendsFinalClassInspection();
   }
 }
