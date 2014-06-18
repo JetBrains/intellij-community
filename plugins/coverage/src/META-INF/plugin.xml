@@ -1,7 +1,7 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Coverage</name>
-  <depends optional="true">TestNG-J</depends>
-  <depends optional="true">JUnit</depends>
+  <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
+  <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.ultimate</depends>
   <depends optional="true" config-file="j2ee-plugin.xml">com.intellij.javaee</depends>
@@ -27,7 +27,6 @@
     <coverageRunner implementation="com.intellij.coverage.JaCoCoCoverageRunner"/>
     <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
-    <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
@@ -36,9 +35,6 @@
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.theoryinpractice.testng">
-    <listener implementation="com.intellij.coverage.listeners.IDEATestNGCoverageListener"/>
-  </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.javaCoverageEngineExtension" interface="com.intellij.coverage.JavaCoverageEngineExtension"/>
   </extensionPoints>
