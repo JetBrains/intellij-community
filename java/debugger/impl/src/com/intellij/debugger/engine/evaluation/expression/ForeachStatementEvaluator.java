@@ -17,6 +17,8 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
 /**
@@ -29,6 +31,9 @@ public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
 
   private Evaluator myConditionEvaluator;
   private Evaluator myNextEvaluator;
+
+  private int myArrayLength = -1;
+  private int myCurrentIndex = 0;
 
   private Modifier myModifier;
 
@@ -48,18 +53,50 @@ public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
 
   @Override
   protected Object evaluateInitialization(EvaluationContextImpl context, Object value) throws EvaluateException {
-    Object iterator = new MethodEvaluator(myIterableEvaluator, null, "iterator", null, new Evaluator[0]).evaluate(context);
-    IdentityEvaluator iteratorEvaluator = new IdentityEvaluator(((Value)iterator));
-    myConditionEvaluator = new MethodEvaluator(iteratorEvaluator, null, "hasNext", null, new Evaluator[0]);
-    myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator, new MethodEvaluator(iteratorEvaluator, null, "next", null, new Evaluator[0]));
+    final Object iterable = myIterableEvaluator.evaluate(context);
+    if (!(iterable instanceof ObjectReference)) {
+      throw new EvaluateException("Unable to do foreach for" + iterable);
+    }
+    IdentityEvaluator iterableEvaluator = new IdentityEvaluator((Value)iterable);
+    if (iterable instanceof ArrayReference) {
+      myArrayLength = ((ArrayReference)iterable).length();
+      myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
+                                                new Evaluator() {
+                                                  @Override
+                                                  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+                                                    return ((ArrayReference)iterable).getValue(myCurrentIndex++);
+                                                  }
+
+                                                  @Override
+                                                  public Modifier getModifier() {
+                                                    return null;
+                                                  }
+                                                });
+    }
+    else {
+      Object iterator = new MethodEvaluator(iterableEvaluator, null, "iterator", null, new Evaluator[0]).evaluate(context);
+      IdentityEvaluator iteratorEvaluator = new IdentityEvaluator((Value)iterator);
+      myConditionEvaluator = new MethodEvaluator(iteratorEvaluator, null, "hasNext", null, new Evaluator[0]);
+      myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
+                                                new MethodEvaluator(iteratorEvaluator, null, "next", null, new Evaluator[0]));
+    }
     return value;
+  }
+
+  private boolean isArray() {
+    return myArrayLength > -1;
   }
 
   @Override
   protected Object evaluateCondition(EvaluationContextImpl context) throws EvaluateException {
-    Object res = myConditionEvaluator.evaluate(context);
-    myModifier = myConditionEvaluator.getModifier();
-    return res;
+    if (isArray()) {
+      return myCurrentIndex < myArrayLength;
+    }
+    else {
+      Object res = myConditionEvaluator.evaluate(context);
+      myModifier = myConditionEvaluator.getModifier();
+      return res;
+    }
   }
 
   @Override

@@ -37,17 +37,15 @@ public abstract class ForStatementEvaluatorBase implements Evaluator {
 
     while (true) {
       // condition
-      value = evaluateCondition(context);
-      if (value instanceof Boolean && !(Boolean)value) {
-        break;
+      Object codition = evaluateCondition(context);
+      if (codition instanceof Boolean) {
+        if (!(Boolean)codition) break;
       }
-      if (!(value instanceof BooleanValue)) {
-        throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
+      else if (codition instanceof BooleanValue) {
+        if (!((BooleanValue)codition).booleanValue()) break;
       }
       else {
-        if (!((BooleanValue)value).booleanValue()) {
-          break;
-        }
+        throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
       }
 
       // body
