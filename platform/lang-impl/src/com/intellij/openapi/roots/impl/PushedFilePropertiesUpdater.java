@@ -164,14 +164,21 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
-  private void queueTask(Runnable task) {
-    myTasks.offer(task);
-    DumbService.getInstance(myProject).queueTask(new DumbModeTask() {
+  private void queueTask(Runnable action) {
+    myTasks.offer(action);
+    final DumbModeTask task = new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         performPushTasks();
       }
+    };
+    myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        DumbService.getInstance(myProject).cancelTask(task);
+      }
     });
+    DumbService.getInstance(myProject).queueTask(task);
   }
 
   private void performPushTasks() {

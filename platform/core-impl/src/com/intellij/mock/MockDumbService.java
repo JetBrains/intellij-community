@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,9 +51,13 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void queueTask(DumbModeTask task) {
+  public void queueTask(@NotNull DumbModeTask task) {
     task.performInDumbMode(new EmptyProgressIndicator());
+    Disposer.dispose(task);
   }
+
+  @Override
+  public void cancelTask(@NotNull DumbModeTask task) { }
 
   @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
