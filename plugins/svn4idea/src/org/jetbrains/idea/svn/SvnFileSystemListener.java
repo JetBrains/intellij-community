@@ -46,9 +46,9 @@ import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNMoveClient;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -189,7 +189,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     @Nullable
     public String getRepositoryUUID(final Project project, final VirtualFile dir) {
       try {
-        final SVNInfo info1 = new RepeatSvnActionThroughBusy() {
+        final Info info1 = new RepeatSvnActionThroughBusy() {
           @Override
           protected void executeImpl() {
             myT = myVcs.getInfo(new File(dir.getPath()));

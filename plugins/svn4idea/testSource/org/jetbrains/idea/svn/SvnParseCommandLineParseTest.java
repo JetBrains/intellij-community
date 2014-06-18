@@ -24,6 +24,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
@@ -33,7 +34,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 
@@ -83,10 +83,10 @@ public class SvnParseCommandLineParseTest extends TestCase {
                      "</entry>\n" +
                      "</info>";
 
-    final SVNInfo[] info = new SVNInfo[1];
-    final SvnInfoHandler handler = new SvnInfoHandler(new File("C:/base/"), new Consumer<SVNInfo>() {
+    final Info[] info = new Info[1];
+    final SvnInfoHandler handler = new SvnInfoHandler(new File("C:/base/"), new Consumer<Info>() {
       @Override
-      public void consume(SVNInfo info1) {
+      public void consume(Info info1) {
         info[0] = info1;
       }
     });
@@ -573,9 +573,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
       @Override
       public void switchChangeList(String newList) {
       }
-    }, new File(basePath), new Convertor<File, SVNInfo>() {
+    }, new File(basePath), new Convertor<File, Info>() {
       @Override
-      public SVNInfo convert(File o) {
+      public Info convert(File o) {
         try {
           o.getCanonicalFile();
         }
@@ -615,9 +615,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
     return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 
-  private SVNInfo createStubInfo(final String basePath, final String baseUrl) throws SVNException {
-    return new SVNInfo(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, SVNNodeKind.FILE, "",
-                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, SVNDepth.EMPTY, 1);
+  private Info createStubInfo(final String basePath, final String baseUrl) throws SVNException {
+    return new Info(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, SVNNodeKind.FILE, "",
+                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, SVNDepth.EMPTY);
   }
 
   public void testStatusInExternalMove() throws Exception {
@@ -685,9 +685,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
         }
       }
     }, baseFile, createStubInfo(basePath, "http://mainurl/"), handler);
-    handler[0] = new SvnStatusHandler(callback, baseFile, new Convertor<File, SVNInfo>() {
+    handler[0] = new SvnStatusHandler(callback, baseFile, new Convertor<File, Info>() {
       @Override
-      public SVNInfo convert(File o) {
+      public Info convert(File o) {
         try {
           if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
             return createStubInfo(o.getPath(), "http://external");
@@ -755,9 +755,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
       @Override
       public void switchChangeList(String newList) {
       }
-    }, new File(basePath), new Convertor<File, SVNInfo>() {
+    }, new File(basePath), new Convertor<File, Info>() {
       @Override
-      public SVNInfo convert(File o) {
+      public Info convert(File o) {
         try {
           o.getCanonicalFile();
         }
@@ -845,9 +845,9 @@ public class SvnParseCommandLineParseTest extends TestCase {
       public void switchChangeList(String newList) {
         clName[0] = newList;
       }
-    }, new File(basePath), new Convertor<File, SVNInfo>() {
+    }, new File(basePath), new Convertor<File, Info>() {
       @Override
-      public SVNInfo convert(File o) {
+      public Info convert(File o) {
         try {
           o.getCanonicalFile();
         }

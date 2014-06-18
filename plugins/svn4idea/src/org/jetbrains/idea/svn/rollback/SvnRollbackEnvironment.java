@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -299,7 +300,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private void revertFileOrDir(File file) throws SVNException, VcsException {
-    SVNInfo info = mySvnVcs.getInfo(file);
+    Info info = mySvnVcs.getInfo(file);
     if (info != null) {
       if (info.getKind() == SVNNodeKind.FILE) {
         doRevert(file, false);
@@ -325,7 +326,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     mySvnVcs.getFactory(path).createRevertClient().revert(new File[]{path}, SVNDepth.fromRecurse(recursive), null);
   }
 
-  private boolean is17OrGreaterCopy(final File file, final SVNInfo info) throws VcsException {
+  private boolean is17OrGreaterCopy(final File file, final Info info) throws VcsException {
     final RootsToWorkingCopies copies = mySvnVcs.getRootsToWorkingCopies();
     WorkingCopy copy = copies.getMatchingCopy(info.getURL());
 

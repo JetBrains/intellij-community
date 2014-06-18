@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -52,7 +52,7 @@ public class DefaultConfigLoader {
       final SvnVcs vcs = SvnVcs.getInstance(project);
 
       File rootFile = new File(vcsRoot.getPath());
-      final SVNInfo info = vcs.getInfo(rootFile);
+      final Info info = vcs.getInfo(rootFile);
       if (info == null || info.getURL() == null) {
         LOG.info("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
         return null;

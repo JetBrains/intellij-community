@@ -30,8 +30,6 @@ import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
@@ -93,7 +91,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Nullable
-  private static SVNInfo parseResult(@Nullable File base, @Nullable String result) throws SvnBindException {
+  private static Info parseResult(@Nullable File base, @Nullable String result) throws SvnBindException {
     CollectInfoHandler handler = new CollectInfoHandler();
 
     parseResult(handler, base, result);
@@ -101,17 +99,17 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     return handler.getInfo();
   }
 
-  private static void parseResult(@NotNull final ISVNInfoHandler handler, @Nullable File base, @Nullable String result)
+  private static void parseResult(@NotNull final InfoConsumer handler, @Nullable File base, @Nullable String result)
     throws SvnBindException {
     if (StringUtil.isEmptyOrSpaces(result)) {
       return;
     }
 
-    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, new Consumer<SVNInfo>() {
+    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, new Consumer<Info>() {
       @Override
-      public void consume(SVNInfo info) {
+      public void consume(Info info) {
         try {
-          handler.handleInfo(info);
+          handler.consume(info);
         }
         catch (SVNException e) {
           throw new SvnExceptionWrapper(e);
@@ -161,7 +159,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public SVNInfo doInfo(File path, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
     if (base == null) {
@@ -173,14 +171,14 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
     CommandExecutor command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toDecodedString(), pegRevision, revision, SVNDepth.EMPTY), null);
 
     return parseResult(null, command.getOutput());
   }
 
   @Override
-  public void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SvnBindException {
+  public void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) throws SvnBindException {
     File base = ContainerUtil.getFirstItem(paths);
 
     if (base != null) {
@@ -201,17 +199,17 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     }
   }
 
-  private static class CollectInfoHandler implements ISVNInfoHandler {
+  private static class CollectInfoHandler implements InfoConsumer {
 
-    @Nullable private SVNInfo myInfo;
+    @Nullable private Info myInfo;
 
     @Override
-    public void handleInfo(SVNInfo info) throws SVNException {
+    public void consume(Info info) throws SVNException {
       myInfo = info;
     }
 
     @Nullable
-    public SVNInfo getInfo() {
+    public Info getInfo() {
       return myInfo;
     }
   }

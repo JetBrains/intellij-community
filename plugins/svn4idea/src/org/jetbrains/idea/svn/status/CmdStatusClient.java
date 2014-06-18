@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -63,7 +64,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
 
-    final SVNInfo infoBase = myFactory.createInfoClient().doInfo(base, revision);
+    final Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
     List<String> parameters = new ArrayList<String>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
@@ -77,7 +78,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                            SVNRevision revision,
                            ISVNStatusHandler handler,
                            File base,
-                           SVNInfo infoBase,
+                           Info infoBase,
                            CommandExecutor command) throws SvnBindException {
     String result = command.getOutput();
 
@@ -104,9 +105,9 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           PortableStatus status = new PortableStatus();
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(SVNStatusType.STATUS_NORMAL);
-          status.setInfoGetter(new Getter<SVNInfo>() {
+          status.setInfoGetter(new Getter<Info>() {
             @Override
-            public SVNInfo get() {
+            public Info get() {
               return createInfoGetter(null).convert(path);
             }
           });
@@ -156,16 +157,16 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   public SvnStatusHandler createStatusHandler(final SVNRevision revision,
                                                final ISVNStatusHandler handler,
                                                final File base,
-                                               final SVNInfo infoBase, final SvnStatusHandler[] svnHandl) {
+                                               final Info infoBase, final SvnStatusHandler[] svnHandl) {
     final SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, svnHandl);
 
     return new SvnStatusHandler(callback, base, createInfoGetter(revision));
   }
 
-  private Convertor<File, SVNInfo> createInfoGetter(final SVNRevision revision) {
-    return new Convertor<File, SVNInfo>() {
+  private Convertor<File, Info> createInfoGetter(final SVNRevision revision) {
+    return new Convertor<File, Info>() {
       @Override
-      public SVNInfo convert(File o) {
+      public Info convert(File o) {
         try {
           return myFactory.createInfoClient().doInfo(o, revision);
         }
@@ -178,9 +179,9 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   public static SvnStatusHandler.ExternalDataCallback createStatusCallback(final ISVNStatusHandler handler,
                                                                             final File base,
-                                                                            final SVNInfo infoBase,
+                                                                            final Info infoBase,
                                                                             final SvnStatusHandler[] svnHandl) {
-    final Map<File, SVNInfo> externalsMap = new HashMap<File, SVNInfo>();
+    final Map<File, Info> externalsMap = new HashMap<File, Info>();
     final String[] changelistName = new String[1];
 
     return new SvnStatusHandler.ExternalDataCallback() {
@@ -190,7 +191,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
         pending.setChangelistName(changelistName[0]);
         try {
           //if (infoBase != null) {
-          SVNInfo baseInfo = infoBase;
+          Info baseInfo = infoBase;
           File baseFile = base;
           final File pendingFile = new File(pending.getPath());
           if (! externalsMap.isEmpty()) {

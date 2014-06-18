@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -64,7 +65,7 @@ public class SvnMergeProvider implements MergeProvider {
         File workingFile = null;
         boolean mergeCase = false;
         SvnVcs vcs = SvnVcs.getInstance(myProject);
-        SVNInfo info = vcs.getInfo(file);
+        Info info = vcs.getInfo(file);
 
         if (info != null) {
           oldFile = info.getConflictOldFile();

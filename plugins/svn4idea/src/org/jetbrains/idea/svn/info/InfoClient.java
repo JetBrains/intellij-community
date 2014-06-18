@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -35,9 +33,9 @@ import java.util.Collection;
  */
 public interface InfoClient extends SvnClient {
 
-  SVNInfo doInfo(File path, SVNRevision revision) throws SvnBindException;
+  Info doInfo(File path, SVNRevision revision) throws SvnBindException;
 
-  SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException;
+  Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException;
 
-  void doInfo(@NotNull Collection<File> paths, @Nullable ISVNInfoHandler handler) throws SvnBindException;
+  void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) throws SvnBindException;
 }

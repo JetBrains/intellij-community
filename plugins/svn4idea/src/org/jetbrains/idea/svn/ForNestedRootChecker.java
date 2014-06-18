@@ -22,9 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -108,7 +108,7 @@ public class ForNestedRootChecker {
     @NotNull private final SvnVcs myVcs;
     @NotNull private final VirtualFile myFile;
     @NotNull private final File myIoFile;
-    @Nullable private SVNInfo myInfo;
+    @Nullable private Info myInfo;
     @Nullable private SvnBindException myError;
 
     private VcsFileResolver(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {

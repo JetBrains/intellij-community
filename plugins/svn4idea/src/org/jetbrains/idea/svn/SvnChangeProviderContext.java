@@ -26,10 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -266,7 +266,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   public void addModifiedNotSavedChange(final VirtualFile file) throws SVNException {
     final FilePath filePath = new FilePathImpl(file);
-    final SVNInfo svnInfo = myVcs.getInfo(file);
+    final Info svnInfo = myVcs.getInfo(file);
 
     if (svnInfo != null) {
       final SVNStatus svnStatus = new SVNStatus();

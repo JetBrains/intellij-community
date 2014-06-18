@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
+import org.jetbrains.idea.svn.info.InfoConsumer;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -56,13 +58,13 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
-    final SVNInfo svnInfo = myVcs.getInfo(new File(file.getPresentableUrl()));
+    final Info svnInfo = myVcs.getInfo(new File(file.getPresentableUrl()));
 
     return getRevision(svnInfo);
   }
 
   @Nullable
-  private static VcsRevisionNumber getRevision(@Nullable SVNInfo info) {
+  private static VcsRevisionNumber getRevision(@Nullable Info info) {
     VcsRevisionNumber result = null;
 
     if (info != null) {
@@ -107,11 +109,11 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   @NotNull
-  private static ISVNInfoHandler createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
+  private static InfoConsumer createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
                                                    @NotNull final Map<String, VirtualFile> fileMap) {
-    return new ISVNInfoHandler() {
+    return new InfoConsumer() {
       @Override
-      public void handleInfo(SVNInfo info) throws SVNException {
+      public void consume(Info info) throws SVNException {
         if (info != null) {
           VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
 
@@ -133,7 +135,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private VcsRevisionDescription getCurrentRevisionDescription(File path) {
-    final SVNInfo svnInfo = myVcs.getInfo(path);
+    final Info svnInfo = myVcs.getInfo(path);
     if (svnInfo == null) {
       return null;
     }
@@ -221,7 +223,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     final SVNStatus svnStatus = getFileStatus(file, true);
     if (svnStatus == null || itemExists(svnStatus) && SVNRevision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
       // IDEADEV-21785 (no idea why this can happen)
-      final SVNInfo info = myVcs.getInfo(file, SVNRevision.HEAD);
+      final Info info = myVcs.getInfo(file, SVNRevision.HEAD);
       if (info == null || info.getURL() == null) {
         LOG.info("No SVN status returned for " + file.getPath());
         return defaultResult();

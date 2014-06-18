@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -38,7 +39,6 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -142,7 +142,7 @@ public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
     }
 
     private Collection<Change> run17Diff() throws SVNException {
-      final SVNInfo info1 = myVcs.getInfo(myTarget1.getFile(), SVNRevision.HEAD);
+      final Info info1 = myVcs.getInfo(myTarget1.getFile(), SVNRevision.HEAD);
 
       if (info1 == null) {
         SVNErrorMessage err =

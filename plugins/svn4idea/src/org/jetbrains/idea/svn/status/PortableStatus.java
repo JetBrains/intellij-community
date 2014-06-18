@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -37,8 +38,8 @@ public class PortableStatus extends SVNStatus {
   private static final Logger LOG = Logger.getInstance(PortableStatus.class);
 
   private boolean myConflicted;
-  private Getter<SVNInfo> myInfoGetter;
-  private SVNInfo myInfo;
+  private Getter<Info> myInfoGetter;
+  private Info myInfo;
   private String myPath;
   private boolean myFileExists;
 
@@ -100,23 +101,23 @@ public class PortableStatus extends SVNStatus {
                         String changelistName,
                         int wcFormatVersion,
                         boolean isConflicted,
-                        Getter<SVNInfo> infoGetter) {
+                        Getter<Info> infoGetter) {
     super(url, file, kind, revision, committedRevision, committedDate, author, contentsStatus, propertiesStatus, remoteContentsStatus,
           remotePropertiesStatus, isLocked, isCopied, isSwitched, isFileExternal, null, null, null, null, null, null, remoteLock,
           localLock, entryProperties, changelistName, wcFormatVersion, null);
     myConflicted = isConflicted;
-    myInfoGetter = infoGetter == null ? new Getter<SVNInfo>() {
+    myInfoGetter = infoGetter == null ? new Getter<Info>() {
       @Override
-      public SVNInfo get() {
+      public Info get() {
         return null;
       }
     } : infoGetter;
   }
 
   public PortableStatus() {
-    myInfoGetter = new Getter<SVNInfo>() {
+    myInfoGetter = new Getter<Info>() {
       @Override
-      public SVNInfo get() {
+      public Info get() {
         return null;
       }
     };
@@ -139,7 +140,7 @@ public class PortableStatus extends SVNStatus {
     myConflicted = conflicted;
   }
 
-  public void setInfoGetter(Getter<SVNInfo> infoGetter) {
+  public void setInfoGetter(Getter<Info> infoGetter) {
     myInfoGetter = infoGetter;
   }
 
@@ -148,7 +149,7 @@ public class PortableStatus extends SVNStatus {
     return myConflicted;
   }
 
-  private SVNInfo initInfo() {
+  private Info initInfo() {
     if (myInfo == null) {
       final SVNStatusType contentsStatus = getContentsStatus();
       if (contentsStatus == null || SVNStatusType.UNKNOWN.equals(contentsStatus)) {
@@ -159,14 +160,14 @@ public class PortableStatus extends SVNStatus {
     return myInfo;
   }
 
-  public SVNInfo getInfo() {
+  public Info getInfo() {
     return initInfo();
   }
 
   @Override
   public SVNNodeKind getKind() {
     if (myFileExists) return super.getKind();
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     if (info != null) {
       return info.getKind();
     }
@@ -184,7 +185,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public File getConflictNewFile() {
     if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getConflictNewFile();
   }
 
@@ -200,7 +201,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public File getConflictOldFile() {
     if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getConflictOldFile();
   }
 
@@ -217,7 +218,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public File getConflictWrkFile() {
     if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getConflictWrkFile();
   }
 
@@ -231,7 +232,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public File getPropRejectFile() {
     if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getPropConflictFile();
   }
 
@@ -244,7 +245,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public String getCopyFromURL() {
     if (! isCopied()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     if (info == null) return null;
     SVNURL url = initInfo().getCopyFromURL();
     return url == null ? null : url.toString();
@@ -255,7 +256,7 @@ public class PortableStatus extends SVNStatus {
     SVNURL url = super.getURL();
 
     if (url == null) {
-      SVNInfo info = initInfo();
+      Info info = initInfo();
       url = info != null ? info.getURL() : url;
     }
 
@@ -267,7 +268,7 @@ public class PortableStatus extends SVNStatus {
     SVNURL url = super.getRepositoryRootURL();
 
     if (url == null) {
-      SVNInfo info = initInfo();
+      Info info = initInfo();
       url = info != null ? info.getRepositoryRootURL() : url;
     }
 
@@ -279,7 +280,7 @@ public class PortableStatus extends SVNStatus {
     File file = super.getFile();
 
     if (file == null) {
-      SVNInfo info = initInfo();
+      Info info = initInfo();
       file = info != null ? info.getFile() : file;
     }
 
@@ -295,7 +296,7 @@ public class PortableStatus extends SVNStatus {
     if (SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
         SVNStatusType.STATUS_ADDED.equals(status)) return revision;
 
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? revision : info.getRevision();
   }
 
@@ -308,7 +309,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public SVNRevision getCopyFromRevision() {
     if (! isCopied()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getCopyFromRevision();
   }
 
@@ -322,7 +323,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public SVNTreeConflictDescription getTreeConflict() {
     if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getTreeConflict();
   }
 

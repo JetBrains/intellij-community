@@ -8,9 +8,9 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -266,7 +266,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
     // base should be resolved manually - could not set revision to BASE to get revision property
     if (SVNRevision.BASE.equals(revision)) {
-      SVNInfo info = myVcs.getInfo(path, SVNRevision.BASE);
+      Info info = myVcs.getInfo(path, SVNRevision.BASE);
 
       result = info != null ? info.getRevision().getNumber() : -1;
     }

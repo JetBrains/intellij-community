@@ -26,9 +26,9 @@ import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -136,7 +136,7 @@ public class LatestExistentSearcher {
       final RootUrlInfo rootUrlInfo = mapping.getWcRootForUrl(myUrl.toString());
       if (rootUrlInfo == null) return true;
       final VirtualFile vf = rootUrlInfo.getVirtualFile();
-      final SVNInfo info = myVcs.getInfo(vf);
+      final Info info = myVcs.getInfo(vf);
       if ((info == null) || (info.getRevision() == null)) {
         return false;
       }
@@ -157,7 +157,7 @@ public class LatestExistentSearcher {
 
   private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SvnBindException {
     SVNRevision revision = SVNRevision.create(revisionNumber);
-    SVNInfo info = null;
+    Info info = null;
 
     try {
       info = myVcs.getInfo(url, revision, revision);

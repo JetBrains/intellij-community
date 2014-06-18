@@ -41,9 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -394,7 +394,7 @@ public class SvnChangeList implements CommittedChangeList {
         // TODO: Logic with detecting "isDirectory" status is not clear enough. Why we can't just collect this info from logEntry and
         // TODO: if loading from disk - use cached values? Not to invoke separate call here.
         SVNRevision beforeRevision = SVNRevision.create(getRevision(idxData.second.booleanValue()));
-        SVNInfo info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
+        Info info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
         boolean isDirectory = info != null && SVNNodeKind.DIR.equals(info.getKind());
         Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision)sourceChange.getBeforeRevision(), isDirectory),
                                             createRevision((SvnRepositoryContentRevision)sourceChange.getAfterRevision(), isDirectory));

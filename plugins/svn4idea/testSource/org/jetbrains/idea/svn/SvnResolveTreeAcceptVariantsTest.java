@@ -26,10 +26,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import junit.framework.Assert;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.treeConflict.SvnTreeConflictResolver;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -271,8 +271,8 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
                           exists);
           }
           final File theirsFile = new File(file.getPath());
-          SVNInfo theirsInfo = myVcs.getInfo(theirsFile);
-          SVNInfo thisInfo = myVcs.getInfo(workingFile);
+          Info theirsInfo = myVcs.getInfo(theirsFile);
+          Info thisInfo = myVcs.getInfo(workingFile);
           if (theirsInfo != null) {
             Assert.assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
                                 ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),

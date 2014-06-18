@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
-import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -100,7 +100,7 @@ public class ConflictCreator {
         String subPath = "";
         for (String part : parts) {
           final String path = subPath + part;
-          SVNInfo info = vcs.getInfo(new File(myTheirsDir.getPath(), path));
+          Info info = vcs.getInfo(new File(myTheirsDir.getPath(), path));
           if (info == null || info.getURL() == null) {
             myClientRunner.add(myTheirsDir, path);
           }

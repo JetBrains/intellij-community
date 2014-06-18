@@ -28,6 +28,7 @@ import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
@@ -37,7 +38,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -255,7 +255,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3");
 
-    final SVNInfo f1info = myVcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
+    final Info f1info = myVcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
     assert f1info.getRevision().getNumber() == 2;
 
     final List<SvnChangeList> changeListList = getTrunkChangeLists();

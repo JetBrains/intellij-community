@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -42,14 +41,14 @@ import java.util.*;
  */
 public class SvnInfoHandler extends DefaultHandler {
   @Nullable private final File myBase;
-  private final Consumer<SVNInfo> myInfoConsumer;
-  private Map<File, SVNInfo> myResultsMap;
+  private final Consumer<org.jetbrains.idea.svn.info.Info> myInfoConsumer;
+  private Map<File, org.jetbrains.idea.svn.info.Info> myResultsMap;
   private SvnInfoStructure myPending;
   private final Map<String, Getter<ElementHandlerBase>> myElementsMap;
   private final List<ElementHandlerBase> myParseStack;
   private final StringBuilder mySb;
 
-  public SvnInfoHandler(@Nullable File base, final Consumer<SVNInfo> infoConsumer) {
+  public SvnInfoHandler(@Nullable File base, final Consumer<org.jetbrains.idea.svn.info.Info> infoConsumer) {
     myBase = base;
     myInfoConsumer = infoConsumer;
     myPending = createPending();
@@ -57,12 +56,12 @@ public class SvnInfoHandler extends DefaultHandler {
     fillElements();
     myParseStack = new ArrayList<ElementHandlerBase>();
     myParseStack.add(new Fake());
-    myResultsMap = new HashMap<File, SVNInfo>();
+    myResultsMap = new HashMap<File, org.jetbrains.idea.svn.info.Info>();
     mySb = new StringBuilder();
   }
 
   private void switchPending() throws SAXException {
-    final SVNInfo info;
+    final org.jetbrains.idea.svn.info.Info info;
     try {
       info = myPending.convert();
     }
@@ -345,7 +344,7 @@ public class SvnInfoHandler extends DefaultHandler {
     });
   }
 
-  public Map<File, SVNInfo> getResultsMap() {
+  public Map<File, org.jetbrains.idea.svn.info.Info> getResultsMap() {
     return myResultsMap;
   }
 

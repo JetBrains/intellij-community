@@ -41,10 +41,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -285,7 +285,7 @@ public class SvnHistoryProvider
   }
 
   private static class LocalLoader extends LogLoader {
-    private SVNInfo myInfo;
+    private Info myInfo;
 
     private LocalLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg, boolean showMergeSources) {
       super(vcs, file, from, to, limit, peg, showMergeSources);
@@ -420,7 +420,7 @@ public class SvnHistoryProvider
     private void loadBackwards(SVNURL svnurl) throws SVNException, VcsException {
       // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
       // command to get repository url
-      SVNInfo info = myVcs.getInfo(svnurl, myPeg, myPeg);
+      Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
       final SVNURL rootURL = info != null ? info.getRepositoryRootURL() : null;
       final String root = rootURL != null ? rootURL.toString() : "";
       String relativeUrl = myUrl;
@@ -445,7 +445,7 @@ public class SvnHistoryProvider
     }
 
     private boolean existsNow(SVNURL svnurl) {
-      final SVNInfo info;
+      final Info info;
       try {
         info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD);
       }

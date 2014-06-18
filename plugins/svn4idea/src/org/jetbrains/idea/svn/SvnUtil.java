@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
@@ -99,7 +100,7 @@ public class SvnUtil {
   }
 
   public static boolean isSvnVersioned(final @NotNull SvnVcs vcs, File parent) {
-    final SVNInfo info = vcs.getInfo(parent);
+    final Info info = vcs.getInfo(parent);
 
     return info != null;
   }
@@ -157,7 +158,7 @@ public class SvnUtil {
 
   @Nullable
   public static String getExactLocation(final SvnVcs vcs, File path) {
-    SVNInfo info = vcs.getInfo(path);
+    Info info = vcs.getInfo(path);
     return info != null && info.getURL() != null ? info.getURL().toString() : null;
   }
 
@@ -398,14 +399,14 @@ public class SvnUtil {
 
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final File file) {
-    final SVNInfo info = vcs.getInfo(file);
+    final Info info = vcs.getInfo(file);
     return info != null ? info.getRepositoryUUID() : null;
   }
 
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final SVNURL url) {
     try {
-      final SVNInfo info = vcs.getInfo(url, SVNRevision.UNDEFINED);
+      final Info info = vcs.getInfo(url, SVNRevision.UNDEFINED);
 
       return (info == null) ? null : info.getRepositoryUUID();
     }
@@ -416,7 +417,7 @@ public class SvnUtil {
 
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final File file) {
-    final SVNInfo info = vcs.getInfo(file);
+    final Info info = vcs.getInfo(file);
     return info != null ? info.getRepositoryRootURL() : null;
   }
 
@@ -432,7 +433,7 @@ public class SvnUtil {
 
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SvnBindException {
-    SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
+    Info info = vcs.getInfo(url, SVNRevision.HEAD);
 
     return (info == null) ? null : info.getRepositoryRootURL();
   }
@@ -544,7 +545,7 @@ public class SvnUtil {
   }
 
   public static SVNDepth getDepth(final SvnVcs vcs, final File file) {
-    SVNInfo info = vcs.getInfo(file);
+    Info info = vcs.getInfo(file);
 
     return info != null && info.getDepth() != null ? info.getDepth() : SVNDepth.UNKNOWN;
   }
@@ -580,7 +581,7 @@ public class SvnUtil {
   @Nullable
   public static SVNURL getUrl(final SvnVcs vcs, final File file) {
     // todo for moved items?
-    final SVNInfo info = vcs.getInfo(file);
+    final Info info = vcs.getInfo(file);
 
     return info == null ? null : info.getURL();
   }
@@ -700,7 +701,7 @@ public class SvnUtil {
 
   @NotNull
   public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
-    SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
+    Info info = vcs.getInfo(url, SVNRevision.HEAD);
 
     if (info == null) {
       throw new SvnBindException("Could not get info for " + url);

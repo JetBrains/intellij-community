@@ -23,12 +23,12 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 
 import java.io.File;
 import java.util.*;
@@ -221,7 +221,7 @@ public class SvnBranchConfigurationNew {
     private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) throws SVNException {
       myRoot = root;
       myBranchesUnder = new HashMap<String, String>();
-      final SVNInfo info = vcs.getInfo(myRoot.getPath());
+      final Info info = vcs.getInfo(myRoot.getPath());
       myRootUrl = info != null ? info.getURL() : null;
     }
 

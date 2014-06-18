@@ -82,10 +82,10 @@ public class SvnInfoStructure {
 
   public TreeConflictDescription myTreeConflict;
 
-  public SVNInfo convert() throws SAXException, SVNException {
-    return new SVNInfo(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
-                           myCopyFromURL, myCopyFromRevision, myTextTime, myPropTime, myChecksum, myConflictOld, myConflictNew, myConflictWorking,
-                           myPropRejectFile, getLock(), myDepth, myChangelistName, myWcSize, createTreeConflict());
+  public Info convert() throws SAXException, SVNException {
+    return new Info(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
+                           myCopyFromURL, myCopyFromRevision, myConflictOld, myConflictNew, myConflictWorking,
+                           myPropRejectFile, getLock(), myDepth, createTreeConflict());
   }
 
   private SVNLock getLock() {

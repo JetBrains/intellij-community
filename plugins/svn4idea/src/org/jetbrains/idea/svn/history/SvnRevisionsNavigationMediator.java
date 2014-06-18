@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
@@ -56,7 +56,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     myChunks = new LinkedList<List<Fragment>>();
 
     final VcsException[] exception = new VcsException[1];
-    final Ref<SVNInfo> infoRef = new Ref<SVNInfo>();
+    final Ref<Info> infoRef = new Ref<Info>();
 
     Runnable process = new Runnable() {
       @Override
@@ -71,7 +71,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     };
     underProgress(exception, process);
 
-    SVNInfo info = infoRef.get();
+    Info info = infoRef.get();
     if (info == null || info.getRevision() == null || info.getRepositoryRootURL() == null) {
       throw new VcsException("Could not get head info for " + location);
     }

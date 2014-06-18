@@ -38,6 +38,7 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -86,7 +87,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       public void run() {
         final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         final File ioFile = new File(file.getPath()).getAbsoluteFile();
-        SVNInfo info = null;
+        Info info = null;
         try {
 
           final String contents;
@@ -166,7 +167,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   }
 
   private void handleSvnException(File ioFile,
-                                  SVNInfo info,
+                                  Info info,
                                   SVNException e,
                                   VirtualFile file,
                                   VcsFileRevision revision,
@@ -221,7 +222,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   private SvnRemoteFileAnnotation annotateNonExisting(Pair<SvnChangeList, FilePath> pair,
                                                       VcsFileRevision revision,
-                                                      SVNInfo info,
+                                                      Info info,
                                                       Charset charset, final VirtualFile current) throws VcsException, SVNException, IOException {
     final File wasFile = pair.getSecond().getIOFile();
     final File root = getCommonAncestor(wasFile, info.getFile());
@@ -231,7 +232,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final String relativePath = FileUtil.getRelativePath(root.getPath(), wasFile.getPath(), File.separatorChar);
     if (relativePath == null) throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
 
-    SVNInfo wcRootInfo = myVcs.getInfo(root);
+    Info wcRootInfo = myVcs.getInfo(root);
     if (wcRootInfo == null || wcRootInfo.getURL() == null) {
         throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
     }

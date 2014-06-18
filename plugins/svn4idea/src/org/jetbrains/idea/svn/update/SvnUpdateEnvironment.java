@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -113,7 +113,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   @Nullable
   private static SVNURL getSourceUrl(final SvnVcs vcs, final File root) {
-    final SVNInfo svnInfo = vcs.getInfo(root);
+    final Info svnInfo = vcs.getInfo(root);
     return svnInfo != null ? svnInfo.getURL() : null;
   }
 
@@ -158,8 +158,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   // false - do not do update
   private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final SVNRevision targetRevision) throws SvnBindException {
-    final SVNInfo sourceSvnInfo = myVcs.getInfo(sourceFile);
-    final SVNInfo targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
+    final Info sourceSvnInfo = myVcs.getInfo(sourceFile);
+    final Info targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
 
     if (sourceSvnInfo == null || targetSvnInfo == null) {
       // cannot check

@@ -77,6 +77,8 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.info.InfoConsumer;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
@@ -628,33 +630,33 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull SVNURL url,
+  public Info getInfo(@NotNull SVNURL url,
                          SVNRevision pegRevision,
                          SVNRevision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(url, pegRevision, revision);
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SvnBindException {
+  public Info getInfo(@NotNull SVNURL url, SVNRevision revision) throws SvnBindException {
     return getInfo(url, SVNRevision.UNDEFINED, revision);
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull final VirtualFile file) {
+  public Info getInfo(@NotNull final VirtualFile file) {
     return getInfo(new File(file.getPath()));
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull String path) {
+  public Info getInfo(@NotNull String path) {
     return getInfo(new File(path));
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull File ioFile) {
+  public Info getInfo(@NotNull File ioFile) {
     return getInfo(ioFile, SVNRevision.UNDEFINED);
   }
 
-  public void collectInfo(@NotNull Collection<File> files, @Nullable ISVNInfoHandler handler) {
+  public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
     File first = ContainerUtil.getFirstItem(files);
 
     if (first != null) {
@@ -668,9 +670,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           // TODO: Generally this should be moved in SvnKit info client implementation.
           // TODO: Currently left here to have exception logic as in handleInfoException to be applied for each file separately.
           for (File file : files) {
-            SVNInfo info = getInfo(file);
+            Info info = getInfo(file);
             if (handler != null) {
-              handler.handleInfo(info);
+              handler.consume(info);
             }
           }
         }
@@ -685,8 +687,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public SVNInfo getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
-    SVNInfo result = null;
+  public Info getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
+    Info result = null;
 
     try {
       result = getFactory(ioFile).createInfoClient().doInfo(ioFile, revision);

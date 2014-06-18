@@ -25,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.info.SVNLockWrapper;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.xml.sax.Attributes;
@@ -92,7 +92,7 @@ public class SvnStatusHandler extends DefaultHandler {
   private final StringBuilder mySb;
   private boolean myAnythingReported;
 
-  public SvnStatusHandler(final ExternalDataCallback dataCallback, File base, final Convertor<File, SVNInfo> infoGetter) {
+  public SvnStatusHandler(final ExternalDataCallback dataCallback, File base, final Convertor<File, Info> infoGetter) {
     myBase = base;
     myParseStack = new ArrayList<ElementHandlerBase>();
     myParseStack.add(new Fake());
@@ -191,12 +191,12 @@ public class SvnStatusHandler extends DefaultHandler {
     return myAnythingReported;
   }
 
-  private void newPending(final Convertor<File, SVNInfo> infoGetter) {
+  private void newPending(final Convertor<File, Info> infoGetter) {
     final PortableStatus status = new PortableStatus();
     myPending = status;
-    status.setInfoGetter(new Getter<SVNInfo>() {
+    status.setInfoGetter(new Getter<Info>() {
       @Override
-      public SVNInfo get() {
+      public Info get() {
         return infoGetter.convert(status.getFile());
       }
     });
