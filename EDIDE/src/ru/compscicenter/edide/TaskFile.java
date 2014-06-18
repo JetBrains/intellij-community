@@ -1,15 +1,10 @@
 package ru.compscicenter.edide;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * User: lia
@@ -20,10 +15,15 @@ import java.util.Iterator;
 public class TaskFile {
     private final String name;
     private final ArrayList<TaskWindow> taskWindows;
+    private int myLastLength;
 
     public TaskFile(String name, int taskWindowsNum) {
         this.name = name;
         taskWindows = new ArrayList<TaskWindow>(taskWindowsNum);
+    }
+
+    public int getLastLength() {
+        return myLastLength;
     }
 
     public void addTaskWindow(TaskWindow taskWindow) {
@@ -58,6 +58,7 @@ public class TaskFile {
     }
 
     public void drawFirstUnresolved(final Editor editor) {
+        myLastLength = editor.getDocument().getTextLength();
         //TODO: maybe it's worth to find window with min startOffset
         for (TaskWindow tw : taskWindows) {
             if (!tw.getResolveStatus()) {
@@ -67,7 +68,7 @@ public class TaskFile {
         }
     }
 
-    public void resolveCurrentHighlighter(final Editor editor, final LogicalPosition pos) {
+    public int resolveCurrentHighlighter(final Editor editor, final LogicalPosition pos) {
         RangeHighlighter[] rm = editor.getMarkupModel().getAllHighlighters();
         RangeHighlighter tmp = rm[0];
         if (rm.length > 1) {
@@ -76,7 +77,7 @@ public class TaskFile {
             //Log.flush();
             //throw new IllegalArgumentException("too many range markers");
         }
-        for (TaskWindow tw: taskWindows) {
+        for (TaskWindow tw : taskWindows) {
             if (tw.getRangeHighlighter() != null) {
                 int startOffset = tw.getRangeHighlighter().getStartOffset();
                 int endOffset = tw.getRangeHighlighter().getEndOffset();
@@ -84,8 +85,21 @@ public class TaskFile {
 
                     tw.setResolved();
                     editor.getMarkupModel().removeAllHighlighters();
-                    return;
+                    return startOffset;
                 }
+            }
+        }
+        return -1;
+    }
+
+    public void incrementAllTaskWindows(Editor editor, int lastResolvedStartOffset, int delta) {
+        if (lastResolvedStartOffset == -1) {
+            return;
+        }
+        for (TaskWindow tw : taskWindows) {
+            int startOffset = editor.getDocument().getLineStartOffset(tw.getLine()) + tw.getStartOffset();
+            if (startOffset > lastResolvedStartOffset) {
+                tw.incrementStartOffset(delta);
             }
         }
     }

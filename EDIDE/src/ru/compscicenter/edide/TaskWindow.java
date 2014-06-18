@@ -17,7 +17,7 @@ import com.intellij.ui.JBColor;
  */
 public class TaskWindow {
     private final int myLine;
-    private final int myStartOffsetInLine;
+    private int myStartOffsetInLine;
     private final String myText;
     private final String myDocsFile;
     private boolean myResolveStatus;
@@ -73,5 +73,8 @@ public class TaskWindow {
         myRangeHighlighter = e.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myText.length(), HighlighterLayer.LAST + 1, ta, HighlighterTargetArea.EXACT_RANGE);
         myRangeHighlighter.setGreedyToLeft(true);
         myRangeHighlighter.setGreedyToRight(true);
+    }
+    public void incrementStartOffset(int delta) {
+        myStartOffsetInLine += delta;
     }
 }

@@ -2,6 +2,7 @@ package ru.compscicenter.edide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,12 +24,22 @@ public class ResolveAction extends AnAction {
         if (vfOpenedFile != null) {
             int currentTaskNum = TaskManager.getInstance().getTaskNumForFile(vfOpenedFile.getName());
             TaskFile tf = TaskManager.getInstance().getTaskFile(currentTaskNum, vfOpenedFile.getName());
+            int lastResolvedStartOffset;
             try {
-                tf.resolveCurrentHighlighter(editor, pos);
+                lastResolvedStartOffset = tf.resolveCurrentHighlighter(editor, pos);
             }
             catch(IllegalArgumentException ex) {
                 return;
             }
+            FileDocumentManager.getInstance().saveAllDocuments();
+            FileDocumentManager.getInstance().reloadFiles(vfOpenedFile);
+            int oldDocumentLength = tf.getLastLength();
+            int newDocumentLength = editor.getDocument().getTextLength();
+            int delta = newDocumentLength - oldDocumentLength;
+            tf.incrementAllTaskWindows(editor, lastResolvedStartOffset, delta);
+            Log.print(oldDocumentLength + "\n");
+            Log.print(newDocumentLength + "\n");
+            Log.flush();
             tf.drawFirstUnresolved(editor);
         }
     }
