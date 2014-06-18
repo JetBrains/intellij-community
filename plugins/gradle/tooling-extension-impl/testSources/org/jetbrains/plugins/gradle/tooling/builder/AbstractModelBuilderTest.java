@@ -58,7 +58,7 @@ public abstract class AbstractModelBuilderTest {
   public static final String GRADLE_v1_9 = "1.9";
   public static final String GRADLE_v1_10 = "1.10";
   public static final String GRADLE_v1_11 = "1.11";
-  public static final String GRADLE_v1_12 = "1.12-rc-1";
+  public static final String GRADLE_v1_12 = "1.12";
 
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
   private static final int DEFAULT_DAEMON_MAX_IDLE_TIME = 5;
