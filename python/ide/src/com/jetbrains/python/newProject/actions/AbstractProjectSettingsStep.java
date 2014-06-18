@@ -106,7 +106,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final JPanel mainPanel = new JPanel(new BorderLayout());
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
-    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 300));
+    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 400));
 
     final JPanel panel = createBasePanel();
     scrollPanel.add(panel, BorderLayout.NORTH);
@@ -128,7 +128,6 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.CENTER);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-
     return mainPanel;
   }
 
