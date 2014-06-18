@@ -127,7 +127,9 @@ public class PassExecutorService implements Disposable {
           TextEditorHighlightingPass textEditorHighlightingPass = convertToTextHighlightingPass(pass, document, nextPassId, prevId);
           document = textEditorHighlightingPass.getDocument();
           documentBoundPasses.putValue(fileEditor, textEditorHighlightingPass);
-          documentToEditors.putValue(document, fileEditor);
+          if (document != null) {
+            documentToEditors.putValue(document, fileEditor);
+          }
           prevId = textEditorHighlightingPass.getId();
         }
       }

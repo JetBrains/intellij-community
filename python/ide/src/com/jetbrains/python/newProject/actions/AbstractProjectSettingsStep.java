@@ -24,6 +24,7 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.CenteredIcon;
 import com.jetbrains.python.PythonSdkChooserCombo;
@@ -103,14 +104,20 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   @Override
   public JPanel createPanel() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 450));
+    final JPanel scrollPanel = new JPanel(new BorderLayout());
+
+    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 400));
 
     final JPanel panel = createBasePanel();
-    mainPanel.add(panel, BorderLayout.NORTH);
-
+    scrollPanel.add(panel, BorderLayout.NORTH);
     final JPanel advancedSettings = createAdvancedSettings();
-    if (advancedSettings != null)
-      mainPanel.add(advancedSettings, BorderLayout.CENTER);
+    if (advancedSettings != null) {
+      scrollPanel.add(advancedSettings, BorderLayout.CENTER);
+    }
+    final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
     myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
@@ -118,10 +125,9 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
-    bottomPanel.add(myErrorLabel, BorderLayout.SOUTH);
+    bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.CENTER);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-
     return mainPanel;
   }
 

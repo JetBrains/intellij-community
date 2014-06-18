@@ -146,7 +146,7 @@ public class ContentRootData extends AbstractExternalEntityData {
     }
   }
 
-  private static final class SourceRootComparator implements Comparator<SourceRoot> {
+  private static final class SourceRootComparator implements Comparator<SourceRoot>, Serializable {
     private static final SourceRootComparator INSTANCE = new SourceRootComparator();
 
     @Override

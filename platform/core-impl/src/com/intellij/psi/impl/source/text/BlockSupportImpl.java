@@ -315,7 +315,8 @@ public class BlockSupportImpl extends BlockSupport {
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
     event.setParent(scope);
     event.setFile(scope.getContainingFile());
-    event.setOffset(scope.getTextRange().getStartOffset());
+    TextRange range = scope.getTextRange();
+    event.setOffset(range == null ? 0 : range.getStartOffset());
     event.setOldLength(scope.getTextLength());
       // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
     event.setGenericChange(isGenericChange);

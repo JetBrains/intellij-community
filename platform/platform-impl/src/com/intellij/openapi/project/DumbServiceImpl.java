@@ -17,7 +17,6 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
-import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +27,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -37,9 +37,9 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,14 +48,27 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
-public class DumbServiceImpl extends DumbService {
+public class DumbServiceImpl extends DumbService implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private volatile boolean myDumb = false;
   private final DumbModeListener myPublisher;
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<DumbModeTask>(5);
+
+  /**
+   * Per-task progress indicators. Modified from EDT only.
+   * The task is removed from this map after it's finished or when the project is disposed. 
+   */
+  private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = ContainerUtil.newConcurrentMap();
+  
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
+
+  public DumbServiceImpl(Project project) {
+    myProject = project;
+    myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
+  }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DumbServiceImpl getInstance(@NotNull Project project) {
@@ -63,13 +76,27 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public void queueTask(final DumbModeTask task) {
+  public void queueTask(@NotNull final DumbModeTask task) {
     scheduleCacheUpdate(task, true);
   }
 
-  public DumbServiceImpl(Project project, MessageBus bus) {
-    myProject = project;
-    myPublisher = bus.syncPublisher(DUMB_MODE);
+  @Override
+  public void cancelTask(@NotNull DumbModeTask task) {
+    ProgressIndicatorEx indicator = myProgresses.get(task);
+    if (indicator != null) {
+      indicator.cancel();
+    }
+  }
+
+  @Override
+  public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myUpdatesQueue.clear();
+    myRunWhenSmartQueue.clear();
+    for (DumbModeTask task : new ArrayList<DumbModeTask>(myProgresses.keySet())) {
+      cancelTask(task);
+      Disposer.dispose(task);
+    }
   }
 
   @Override
@@ -134,6 +161,7 @@ public class DumbServiceImpl extends DumbService {
         if (indicator != null) {
           indicator.popState();
         }
+        Disposer.dispose(task);
       }
       return;
     }
@@ -145,6 +173,14 @@ public class DumbServiceImpl extends DumbService {
           return;
         }
         myUpdatesQueue.addLast(task);
+        myProgresses.put(task, new ProgressIndicatorBase());
+        Disposer.register(task, new Disposable() {
+          @Override
+          public void dispose() {
+            application.assertIsDispatchThread();
+            myProgresses.remove(task);
+          }
+        });
         // ok to test and set the flag like this, because the change is always done from dispatch thread
         if (!myDumb) {
           // always change dumb status inside write action.
@@ -294,14 +330,12 @@ public class DumbServiceImpl extends DumbService {
           ((ProgressIndicatorEx)indicator).addStateDelegate(new AppIconProgress());
         }
 
-        final ProgressIndicator proxy = new DelegatingProgressIndicator(indicator);
-
         final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
         final Thread self = Thread.currentThread();
         try {
           HeavyProcessLatch.INSTANCE.processStarted();
           shutdownTracker.registerStopperThread(self);
-          runTasks(proxy);
+          runTasks(indicator);
         }
         catch (RuntimeException e) {
           LOG.error(e);
@@ -313,16 +347,26 @@ public class DumbServiceImpl extends DumbService {
         }
       }
 
-      private void runTasks(ProgressIndicator indicator) {
+      private void runTasks(ProgressIndicator visibleIndicator) {
+        DumbModeTask prevTask = null;
         while (true) {
-          DumbModeTask task = getNextTask();
+          DumbModeTask task = getNextTask(prevTask);
           if (task == null) break;
 
           try {
             if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
+
+            final ProgressIndicatorEx indicator = myProgresses.get(task);
+            assert indicator != null;
             indicator.checkCanceled();
+
+            if (visibleIndicator instanceof ProgressIndicatorEx) {
+              indicator.addStateDelegate((ProgressIndicatorEx)visibleIndicator);
+            }
+
             indicator.setIndeterminate(true);
             indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+            
             task.performInDumbMode(indicator);
           }
           catch (ProcessCanceledException ignored) {
@@ -330,6 +374,7 @@ public class DumbServiceImpl extends DumbService {
           catch (Throwable unexpected) {
             LOG.error(unexpected);
           }
+          prevTask = task;
         }
       }
 
@@ -337,16 +382,30 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Nullable
-  private DumbModeTask getNextTask() {
+  private DumbModeTask getNextTask(@Nullable final DumbModeTask prevTask) {
     final Ref<DumbModeTask> nextTask = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        if (myUpdatesQueue.isEmpty()) {
-          updateFinished();
-        } else {
-          nextTask.set(myUpdatesQueue.pullFirst());
+        if (prevTask != null) {
+          Disposer.dispose(prevTask);
+        }
+
+        while (true) {
+          if (myUpdatesQueue.isEmpty()) {
+            updateFinished();
+            return;
+          }
+
+          DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
+          if (myProgresses.get(queuedTask).isCanceled()) {
+            Disposer.dispose(queuedTask);
+            continue;
+          }
+          
+          nextTask.set(queuedTask);
+          return;
         }
       }
     });
