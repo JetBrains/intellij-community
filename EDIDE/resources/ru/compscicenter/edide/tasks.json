@@ -1,5 +1,4 @@
 {
-"tasks_num":3,
 "tasks_list":[
     {"task text": "hello-text.html","file_num":1, "file_names":["helloworld.py"], "test":"task1_tests.py"},
     {"task text": "matchends-text.html", "file_num":1, "file_names":["match_ends.py"], "test":"task2_tests.py"},
