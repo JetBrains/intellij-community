@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class TooManyUsagesStatus {
   private static final Key<TooManyUsagesStatus> KEY = Key.create("TooManyUsagesStatus");
-  private static final Null NULL = new Null();
+  private static final NullStatus NULL_STATUS = new NullStatus();
 
   @NotNull
   public static TooManyUsagesStatus getFrom(@Nullable ProgressIndicator indicator) {
-    TooManyUsagesStatus data = null;
-    if (indicator instanceof UserDataHolder) {
-      data = ((UserDataHolder)indicator).getUserData(KEY);
-    }
-    if (data == null) data = NULL;
-    return data;
+    TooManyUsagesStatus data = indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(KEY) : null;
+    return data == null ? NULL_STATUS : data;
   }
+
   public static TooManyUsagesStatus createFor(@NotNull ProgressIndicator indicator) {
     TooManyUsagesStatus data = null;
     if (indicator instanceof UserDataHolder) {
@@ -76,7 +73,7 @@ public class TooManyUsagesStatus {
     }
   }
 
-  private static class Null extends TooManyUsagesStatus {
+  private static class NullStatus extends TooManyUsagesStatus {
     @Override
     public boolean switchTooManyUsagesStatus() {
       return false;
