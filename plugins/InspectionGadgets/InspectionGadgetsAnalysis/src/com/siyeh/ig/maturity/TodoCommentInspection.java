@@ -15,40 +15,38 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.PsiTodoSearchHelper;
+import com.intellij.psi.search.TodoItem;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class TodoCommentInspection extends BaseInspection {
+import java.util.ArrayList;
+import java.util.List;
 
+public class TodoCommentInspection extends BaseJavaBatchLocalInspectionTool {
+
+  @Nullable
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("todo.comment.display.name");
-  }
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    final PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
+    final TodoItem[] todoItems = searchHelper.findTodoItems(file);
 
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("todo.comment.problem.descriptor");
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ClassWithoutToStringVisitor();
-  }
-
-  private static class ClassWithoutToStringVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitComment(PsiComment comment) {
-      super.visitComment(comment);
-      if (TodoUtil.isTodoComment(comment)) {
-        registerError(comment);
+    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    for (TodoItem todoItem : todoItems) {
+      final PsiComment comment = PsiTreeUtil.getParentOfType(file.findElementAt(todoItem.getTextRange().getStartOffset()), PsiComment.class, false);
+      if (comment != null) {
+        result.add(manager.createProblemDescriptor(comment, InspectionGadgetsBundle.message("todo.comment.problem.descriptor"), isOnTheFly,
+                                                   null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
+    return result.toArray(new ProblemDescriptor[result.size()]);
   }
 }
