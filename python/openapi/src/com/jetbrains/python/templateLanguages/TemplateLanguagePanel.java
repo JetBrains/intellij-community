@@ -30,7 +30,8 @@ public class TemplateLanguagePanel extends JPanel {
                                               "Select template folder", null, descriptor);
     List<String> templateConfigurations = TemplatesService.getAllTemplateLanguages();
     for (String configuration : templateConfigurations) {
-      myTemplateLanguage.addItem(configuration);
+      if (!configuration.equals(TemplatesService.WEB2PY))
+        myTemplateLanguage.addItem(configuration);
     }
   }
 
