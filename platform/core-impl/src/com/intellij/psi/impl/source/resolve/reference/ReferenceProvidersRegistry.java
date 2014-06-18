@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,21 +44,25 @@ public abstract class ReferenceProvidersRegistry {
     return ServiceManager.getService(ReferenceProvidersRegistry.class);
   }
 
-  public abstract PsiReferenceRegistrar getRegistrar(Language language);
+  @NotNull
+  public abstract PsiReferenceRegistrar getRegistrar(@NotNull Language language);
 
   /**
    * @see #getReferencesFromProviders(com.intellij.psi.PsiElement)
    */
   @Deprecated
-  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz) {
+  @NotNull
+  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull Class clazz) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
   }
 
-  public static PsiReference[] getReferencesFromProviders(PsiElement context) {
+  @NotNull
+  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
   }
 
-  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull PsiReferenceService.Hints hints) {
+  @NotNull
+  public static PsiReference[] getReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints) {
     ProgressIndicatorProvider.checkCanceled();
     PsiUtilCore.ensureValid(context);
 
@@ -66,5 +70,6 @@ public abstract class ReferenceProvidersRegistry {
     return registry.doGetReferencesFromProviders(context, hints);
   }
 
-  protected abstract PsiReference[] doGetReferencesFromProviders(PsiElement context, PsiReferenceService.Hints hints);
+  @NotNull
+  protected abstract PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints);
 }
