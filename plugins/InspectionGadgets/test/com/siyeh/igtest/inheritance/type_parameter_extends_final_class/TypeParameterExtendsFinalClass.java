@@ -9,6 +9,10 @@ final class Usee {}
 class User {
   List<<warning descr="Wildcard type argument '?' extends 'final' class 'Usee'">?</warning> extends Usee> list;
   List<? extends List> l;
+  private static final Collection<? extends Class> ourStopSearch = Collections.singleton(String.class);
+  Collection<<warning descr="Wildcard type argument '?' extends 'final' class 'FieldIdentifier'">?</warning> extends FieldIdentifier<String>> a = Collections.singleton(new FieldIdentifier<String>());
+  Collection<? extends FieldIdentifier<?>> b = Collections.singleton(new FieldIdentifier<String>());
+  static final class FieldIdentifier<T> {}
 }
 abstract class MyList implements List<Integer> {
   @Override
