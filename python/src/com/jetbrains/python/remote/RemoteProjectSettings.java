@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.remote;
 
+import com.jetbrains.python.newProject.PyNewProjectSettings;
+
 /**
 * @author traff
 */
-public class RemoteProjectSettings {
+public class RemoteProjectSettings extends PyNewProjectSettings {
   private String myDeploymentName;
   private String myRemoteRoot;
 

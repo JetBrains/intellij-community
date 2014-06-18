@@ -8,6 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.remote.RemoteSdkCredentials;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.RemoteProjectSettings;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,13 +53,13 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator implement
   @Override
   public void generateProject(@NotNull final Project project, @NotNull VirtualFile baseDir, final Object settings,
                               @NotNull final Module module) {
-    /*if (settings instanceof RemoteProjectSettings) {
+    if (settings instanceof RemoteProjectSettings) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       assert manager != null;
       manager.createDeployment(project, baseDir, (RemoteProjectSettings)settings,
-                               (RemoteSdkCredentials)myProjectAction.getSdk().getSdkAdditionalData());
+                               (RemoteSdkCredentials)((RemoteProjectSettings)settings).getSdk().getSdkAdditionalData());
     }
-    else */if (settings instanceof PyNewProjectSettings) {
+    else if (settings instanceof PyNewProjectSettings) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
