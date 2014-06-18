@@ -268,6 +268,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
+    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return false;
+    
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }

@@ -30,8 +30,10 @@ import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -51,13 +53,7 @@ public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector
           public void run() {
             List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(m);
             if (requirements != null) {
-              Collection<String> packages;
-              try {
-                packages = new HashSet<String>(PyPIPackageUtil.INSTANCE.getPackageNames());
-              }
-              catch (IOException e) {
-                return;
-              }
+              Collection<String> packages = new HashSet<String>(PyPIPackageUtil.INSTANCE.getPackageNames());
               for (PyRequirement requirement : requirements) {
                 String name = requirement.getName();
                 if (packages.contains(name)) {

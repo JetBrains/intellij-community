@@ -71,6 +71,11 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return getShortName();
   }
 
+  @Override
+  protected String getSuppressId() {
+    return getID();
+  }
+
   @NonNls
   @Nullable
   public String getAlternativeID() {

@@ -84,6 +84,7 @@ public class FormBuilder {
     final int index = UIUtil.getDisplayMnemonicIndex(labelText);
     if (index != -1) {
       label.setDisplayedMnemonic(labelText.charAt(index + 1));
+      label.setDisplayedMnemonicIndex(index);
     }
     label.setLabelFor(component);
 

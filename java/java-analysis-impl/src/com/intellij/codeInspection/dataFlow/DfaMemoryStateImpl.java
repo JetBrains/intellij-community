@@ -583,7 +583,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (dfaLeft instanceof DfaVariableValue) {
         DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
         if (isUnknownState(dfaVar)) return true;
-        
+
+        if (!dfaRelation.isInstanceOf()) {
+          if (((DfaTypeValue)dfaRight).isNotNull() && isNull(dfaVar)) {
+            return isNegated;
+          }
+          return true;
+        }
+
         if (isNegated) {
           DfaVariableState newState = getVariableState(dfaVar).withNotInstanceofValue((DfaTypeValue)dfaRight);
           if (newState != null) {

@@ -259,8 +259,8 @@ public class PyPIPackageUtil {
     return packages;
   }
 
-  public Collection<String> getPackageNames() throws IOException {
-    Map<String, String> pyPIPackages = loadAndGetPackages();
+  public Collection<String> getPackageNames() {
+    Map<String, String> pyPIPackages = getPyPIPackages();
     ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
     Collections.sort(list);
     return list;

@@ -670,6 +670,7 @@ public class HighlightMethodUtil {
     registerChangeParameterClassFix(methodCall, list, highlightInfo);
     if (methodCandidates.length == 0) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createStaticImportMethodFix(methodCall));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.addMethodQualifierFix(methodCall));
     }
     for (IntentionAction action : QUICK_FIX_FACTORY.getVariableTypeFromCallFixes(methodCall, list)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, action);

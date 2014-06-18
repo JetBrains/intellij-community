@@ -59,7 +59,7 @@ public class PushedFilePropertiesUpdater {
   private final Project myProject;
   private final FilePropertyPusher[] myPushers;
   private final FilePropertyPusher[] myFilePushers;
-  private final Queue<DumbModeTask> myTasks = new ConcurrentLinkedQueue<DumbModeTask>();
+  private final Queue<Runnable> myTasks = new ConcurrentLinkedQueue<Runnable>();
   private final MessageBusConnection myConnection;
 
   public static PushedFilePropertiesUpdater getInstance(Project project) {
@@ -84,7 +84,6 @@ public class PushedFilePropertiesUpdater {
         myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
           @Override
           public void rootsChanged(final ModuleRootEvent event) {
-            pushAll(myPushers);
             for (FilePropertyPusher pusher : myPushers) {
               pusher.afterRootsChanged(project);
             }
@@ -123,8 +122,6 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void initializeProperties() {
-    pushAll(myPushers);
-
     for (final FilePropertyPusher pusher : myPushers) {
       pusher.initExtra(myProject, myProject.getMessageBus(), new FilePropertyPusher.Engine() {
         @Override
@@ -140,13 +137,18 @@ public class PushedFilePropertiesUpdater {
     }
   }
 
+  public void pushAllPropertiesNow() {
+    performPushTasks();
+    doPushAll(myPushers);
+  }
+
   private void schedulePushRecursively(final VirtualFile dir, final FilePropertyPusher... pushers) {
     if (pushers.length == 0) return;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (!fileIndex.isInContent(dir)) return;
-    queueTask(new DumbModeTask() {
+    queueTask(new Runnable() {
       @Override
-      public void performInDumbMode(@NotNull final ProgressIndicator indicator) {
+      public void run() {
         doPushRecursively(dir, pushers, fileIndex);
       }
     });
@@ -162,25 +164,25 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
-  private void queueTask(DumbModeTask task) {
+  private void queueTask(Runnable task) {
     myTasks.offer(task);
     DumbService.getInstance(myProject).queueTask(new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        performPushTasks(indicator);
+        performPushTasks();
       }
     });
   }
 
-  public void performPushTasks(ProgressIndicator indicator) {
+  private void performPushTasks() {
     boolean hadTasks = false;
     while (true) {
-      DumbModeTask task = myTasks.poll();
+      Runnable task = myTasks.poll();
       if (task == null) {
         break;
       }
       hadTasks = true;
-      task.performInDumbMode(indicator);
+      task.run();
     }
 
     if (hadTasks && !myProject.isDisposed()) {
@@ -213,9 +215,9 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void pushAll(final FilePropertyPusher... pushers) {
-    queueTask(new DumbModeTask() {
+    queueTask(new Runnable() {
       @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      public void run() {
         doPushAll(pushers);
       }
     });
