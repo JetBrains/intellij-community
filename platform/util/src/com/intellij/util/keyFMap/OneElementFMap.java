@@ -22,7 +22,7 @@ public class OneElementFMap<V> implements KeyFMap {
   private final Key myKey;
   private final V myValue;
 
-  public OneElementFMap(Key key, @NotNull V value) {
+  public OneElementFMap(@NotNull Key key, @NotNull V value) {
     myKey = key;
     myValue = value;
   }
@@ -71,7 +71,7 @@ public class OneElementFMap<V> implements KeyFMap {
 
     OneElementFMap map = (OneElementFMap)o;
 
-    if (!myKey.equals(map.myKey)) return false;
+    if (myKey != map.myKey) return false;
     if (!myValue.equals(map.myValue)) return false;
 
     return true;

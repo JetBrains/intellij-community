@@ -40,7 +40,7 @@ import java.util.List;
 public class GppReferenceContributor extends PsiReferenceContributor {
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrArgumentLabel.class), new PsiReferenceProvider() {
       @NotNull
       @Override

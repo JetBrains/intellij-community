@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,14 +80,16 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     }
   };
 
+  @NotNull
   @Override
-  public synchronized PsiReferenceRegistrarImpl getRegistrar(Language language) {
+  public synchronized PsiReferenceRegistrarImpl getRegistrar(@NotNull Language language) {
     return myRegistrars.get(language);
   }
 
+  @NotNull
   @Override
-  protected PsiReference[] doGetReferencesFromProviders(PsiElement context,
-                                                        PsiReferenceService.Hints hints) {
+  protected PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context,
+                                                        @NotNull PsiReferenceService.Hints hints) {
     List<ProviderBinding.ProviderInfo<PsiReferenceProvider, ProcessingContext>> providersForContextLanguage =
       getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
 

@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
  */
 public class GrLanguageReferenceProvider extends PsiReferenceContributor {
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
     registrar.registerReferenceProvider(
       GroovyPatterns.groovyLiteralExpression().annotationParam(StandardPatterns.string().with(isLanguageAnnotation(configuration)), "value").and(

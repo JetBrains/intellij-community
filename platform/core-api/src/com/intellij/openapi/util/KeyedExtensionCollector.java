@@ -51,7 +51,7 @@ public class KeyedExtensionCollector<T, KeyT> {
 
   public KeyedExtensionCollector(@NonNls @NotNull String epName) {
     myEpName = epName;
-    lock = new String("lock for KeyedExtensionCollector " + epName);
+    lock = "lock for KeyedExtensionCollector " + epName;
     resetAreaListener();
   }
 
@@ -181,47 +181,45 @@ public class KeyedExtensionCollector<T, KeyT> {
   @Nullable
   private ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
     ExtensionPoint<KeyedLazyInstance<T>> point = myPoint;
-    if (point == null) {
-      if (Extensions.getRootArea().hasExtensionPoint(myEpName)) {
-        ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
-        myPoint = point = Extensions.getRootArea().getExtensionPoint(typesafe);
-        myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
-          @Override
-          public void extensionAdded(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-            synchronized (lock) {
-              if (bean.getKey() == null) {
-                if (pluginDescriptor != null) {
-                  throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(),
-                                            pluginDescriptor.getPluginId());
-                }
-                LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
-                return;
+    if (point == null && Extensions.getRootArea().hasExtensionPoint(myEpName)) {
+      ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
+      myPoint = point = Extensions.getRootArea().getExtensionPoint(typesafe);
+      myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
+        @Override
+        public void extensionAdded(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+          synchronized (lock) {
+            if (bean.getKey() == null) {
+              if (pluginDescriptor != null) {
+                throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(),
+                                          pluginDescriptor.getPluginId());
               }
-              myCache.remove(bean.getKey());
-              for (ExtensionPointListener<T> listener : myListeners) {
-                listener.extensionAdded(bean.getInstance(), null);
-              }
+              LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
+              return;
+            }
+            myCache.remove(bean.getKey());
+            for (ExtensionPointListener<T> listener : myListeners) {
+              listener.extensionAdded(bean.getInstance(), null);
             }
           }
+        }
 
-          @Override
-          public void extensionRemoved(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-            synchronized (lock) {
-              myCache.remove(bean.getKey());
-              for (ExtensionPointListener<T> listener : myListeners) {
-                listener.extensionRemoved(bean.getInstance(), null);
-              }
+        @Override
+        public void extensionRemoved(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+          synchronized (lock) {
+            myCache.remove(bean.getKey());
+            for (ExtensionPointListener<T> listener : myListeners) {
+              listener.extensionRemoved(bean.getInstance(), null);
             }
           }
+        }
 
-          @Override
-          public void areaReplaced(final ExtensionsArea area) {
-            resetAreaListener();
-          }
-        };
+        @Override
+        public void areaReplaced(final ExtensionsArea area) {
+          resetAreaListener();
+        }
+      };
 
-        point.addExtensionPointListener(myListener);
-      }
+      point.addExtensionPointListener(myListener);
     }
     return point;
   }

@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -34,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author Max Medvedev
  */
-public class StaticChecker {
+public class GrStaticChecker {
   public static boolean isStaticsOK(@NotNull PsiModifierListOwner member,
                                     @NotNull PsiElement place,
                                     @Nullable PsiElement resolveContext,
@@ -114,7 +115,7 @@ public class StaticChecker {
       }
       else if (PsiUtil.isThisOrSuperRef(qualifier)) {
         //static members may be invoked from this.<...>
-        final boolean isInStatic = isInStaticContext((GrReferenceExpression)qualifier);
+        final boolean isInStatic = isInStaticContext(qualifier);
         if (PsiUtil.isThisReference(qualifier) && isInStatic) {
           return checkJavaLangClassMember(place, containingClass, member) || member.hasModifierProperty(PsiModifier.STATIC);
         }
@@ -187,37 +188,49 @@ public class StaticChecker {
     return null;
   }
 
-  public static boolean isInStaticContext(GrQualifiedReference refExpression) {
+  public static boolean isInStaticContext(@NotNull PsiElement place) {
     PsiClass targetClass = null;
-    if (PsiUtil.isThisReference(refExpression) && refExpression.getQualifier() != null) {
-      targetClass = (PsiClass)((GrReferenceExpression)refExpression.getQualifier()).resolve();
+    if (place instanceof GrReferenceExpression) {
+      PsiElement qualifier = ((GrQualifiedReference)place).getQualifier();
+      if (PsiUtil.isThisReference(place) && qualifier instanceof GrQualifiedReference) {
+        targetClass = (PsiClass)((GrQualifiedReference)qualifier).resolve();
+      }
     }
-    return isInStaticContext(refExpression, targetClass);
+    return isInStaticContext(place, targetClass);
   }
 
-  public static boolean isInStaticContext(GrQualifiedReference refExpression, @Nullable PsiClass targetClass) {
-    PsiElement qualifier = refExpression.getQualifier();
-    if (qualifier != null && !PsiUtil.isThisOrSuperRef(refExpression)) {
-      if (PsiUtil.isInstanceThisRef(qualifier) || PsiUtil.isSuperReference(qualifier)) {
-        return false;
+  public static boolean isInStaticContext(@NotNull PsiElement place, @Nullable PsiClass targetClass) {
+    if (place instanceof GrReferenceExpression) {
+      GrQualifiedReference reference = (GrQualifiedReference)place;
+      PsiElement qualifier = reference.getQualifier();
+      if (qualifier != null && !PsiUtil.isThisOrSuperRef(reference)) {
+        if (PsiUtil.isInstanceThisRef(qualifier) || PsiUtil.isSuperReference(qualifier)) {
+          return false;
+        }
+        else if (PsiUtil.isThisReference(qualifier)) { //instance 'this' already is processed. So it static 'this'
+          return true;
+        }
+        return qualifier instanceof GrQualifiedReference && ((GrQualifiedReference)qualifier).resolve() instanceof PsiClass;
       }
-      else if (PsiUtil.isThisReference(qualifier)) { //instance 'this' already is processed. So it static 'this'
-        return true;
-      }
-      return qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
+
+
+      if (PsiUtil.isSuperReference(reference)) return false;
+      //this reference should be checked as all other refs
     }
 
-
-    if (PsiUtil.isSuperReference(refExpression)) return false;
-    //this reference should be checked as all other refs
-
-
-    PsiElement run = refExpression;
+    PsiElement run = place;
     while (run != null && run != targetClass) {
       if (targetClass == null && run instanceof PsiClass) return false;
+      if (run instanceof GrClosableBlock) return false;
       if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner)run).hasModifierProperty(PsiModifier.STATIC)) return true;
       run = run.getParent();
     }
     return false;
+  }
+
+  public static boolean isPropertyAccessInStaticMethod(@NotNull GrReferenceExpression referenceExpression) {
+    return isInStaticContext(referenceExpression) &&
+           !(referenceExpression.getParent() instanceof GrMethodCall) &&
+           referenceExpression.getQualifier() == null;
   }
 }

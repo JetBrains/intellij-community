@@ -37,6 +37,7 @@ public class RemoteConnectionCredentialsWrapper {
   private UserDataHolderBase myCredentialsTypeHolder = new UserDataHolderBase();
 
   public void setVagrantConnectionType(VagrantBasedCredentialsHolder vagrantBasedCredentials) {
+    myCredentialsTypeHolder = new UserDataHolderBase();
     myCredentialsTypeHolder.putUserData(VAGRANT_BASED_CREDENTIALS, vagrantBasedCredentials);
   }
 
@@ -46,6 +47,7 @@ public class RemoteConnectionCredentialsWrapper {
   }
 
   public void setPlainSshCredentials(RemoteCredentialsHolder credentials) {
+    myCredentialsTypeHolder = new UserDataHolderBase();
     myCredentialsTypeHolder.putUserData(PLAIN_SSH_CREDENTIALS, credentials);
   }
 
@@ -55,6 +57,7 @@ public class RemoteConnectionCredentialsWrapper {
 
 
   public void setWebDeploymentCredentials(WebDeploymentCredentialsHolder webDeploymentCredentials) {
+    myCredentialsTypeHolder = new UserDataHolderBase();
     myCredentialsTypeHolder.putUserData(WEB_DEPLOYMENT_BASED_CREDENTIALS, webDeploymentCredentials);
   }
 

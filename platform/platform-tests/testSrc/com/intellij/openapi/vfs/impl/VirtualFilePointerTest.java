@@ -688,13 +688,14 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
   public void testMultipleCreationOfTheSamePointerPerformance() throws IOException {
     FilePointerPartNode.pushDebug(false, disposable);
     final LoggingListener listener = new LoggingListener();
-    final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
+    final String url = VfsUtilCore.pathToUrl("/a/b/c/d/e");
+    final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
     TempFileSystem.getInstance();
     PlatformTestUtil.startPerformanceTest("same url vfp create", 500, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         for (int i=0; i<1000000; i++) {
-          VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
+          VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
           assertSame(pointer, thePointer);
         }
       }

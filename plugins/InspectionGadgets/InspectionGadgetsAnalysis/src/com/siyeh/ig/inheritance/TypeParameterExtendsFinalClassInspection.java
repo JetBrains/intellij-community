@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -79,7 +80,8 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
-        replaceTypeParameterAndReferencesWithType(typeParameter);
+        replaceTypeParameterUsagesWithType(typeParameter);
+        typeParameter.delete();
       }
       else if (parent instanceof PsiTypeElement) {
         final PsiTypeElement typeElement = (PsiTypeElement)parent;
@@ -91,25 +93,18 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       }
     }
 
-    private static void replaceTypeParameterAndReferencesWithType(PsiTypeParameter typeParameter) {
-      final PsiReferenceList extendsList = typeParameter.getExtendsList();
-      final PsiClassType[] referenceElements = extendsList.getReferencedTypes();
-      if (referenceElements.length < 1) {
-        return;
-      }
-      final PsiClass finalClass = referenceElements[0].resolve();
-      if (finalClass == null) {
+    private static void replaceTypeParameterUsagesWithType(PsiTypeParameter typeParameter) {
+      final PsiClassType[] types = typeParameter.getExtendsList().getReferencedTypes();
+      if (types.length < 1) {
         return;
       }
       final Project project = typeParameter.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(finalClass);
+      final PsiJavaCodeReferenceElement classReference = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(types[0]);
       final Query<PsiReference> query = ReferencesSearch.search(typeParameter, typeParameter.getUseScope());
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElement.replace(classReference);
       }
-      typeParameter.delete();
     }
   }
 
@@ -123,6 +118,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     @Override
     public void visitTypeParameter(PsiTypeParameter classParameter) {
       super.visitTypeParameter(classParameter);
+      if (!PsiUtil.isLanguageLevel5OrHigher(classParameter)) {
+        return;
+      }
       final PsiClassType[] extendsListTypes = classParameter.getExtendsListTypes();
       if (extendsListTypes.length < 1) {
         return;
@@ -140,6 +138,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
     @Override
     public void visitTypeElement(PsiTypeElement typeElement) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(typeElement)) {
+        return;
+      }
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiWildcardType)) {
@@ -154,6 +155,17 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       final PsiClass aClass = classType.resolve();
       if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
+      }
+      if (aClass.hasTypeParameters() && !PsiUtil.isLanguageLevel8OrHigher(typeElement)) {
+        final PsiType[] parameters = classType.getParameters();
+        if (parameters.length == 0) {
+          return;
+        }
+        for (PsiType parameter : parameters) {
+          if (parameter instanceof PsiWildcardType) {
+            return;
+          }
+        }
       }
       if (!shouldReport(typeElement)) {
         return;

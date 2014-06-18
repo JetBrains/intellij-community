@@ -51,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
@@ -432,7 +431,7 @@ public class GdkMethodUtil {
               }
             }
             else {
-              PsiType qtype = GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)qualifier);
+              PsiType qtype = PsiImplUtil.getQualifierType((GrReferenceExpression)qualifier);
               if (qtype instanceof PsiClassType && ((PsiClassType)qtype).resolve() != null) {
                 return Pair.create((PsiClassType)qtype, (GrReferenceExpression)qualifier);
               }

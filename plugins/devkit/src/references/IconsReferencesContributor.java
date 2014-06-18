@@ -60,7 +60,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
  */
 public class IconsReferencesContributor extends PsiReferenceContributor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final StringPattern methodName = string().oneOf("findIcon", "getIcon");
     final PsiMethodPattern method = psiMethod().withName(methodName).definedInClass(IconLoader.class.getName());
     final PsiJavaElementPattern.Capture<PsiLiteralExpression> javaFile

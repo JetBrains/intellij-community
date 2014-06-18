@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -48,7 +48,7 @@ public class GrMethodCallInfo extends CallInfoBase<GrMethodCall> implements Call
   @Override
   public PsiType getQualifierInstanceType() {
     GrExpression invoked = getCall().getInvokedExpression();
-    return invoked instanceof GrReferenceExpression ? GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)invoked) : null;
+    return invoked instanceof GrReferenceExpression ? PsiImplUtil.getQualifierType((GrReferenceExpression)invoked) : null;
   }
 
   @NotNull

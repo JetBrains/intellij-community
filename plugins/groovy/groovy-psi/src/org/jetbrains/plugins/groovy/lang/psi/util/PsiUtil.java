@@ -740,11 +740,11 @@ public class PsiUtil {
     return findEnclosingInstanceClassInScope(clazz, scope, isSuperClassAccepted) != null;
   }
 
-  public static PsiClass findEnclosingInstanceClassInScope(@NotNull PsiClass clazz, @Nullable PsiElement scope, boolean isSuperClassAccepted) {
+  public static PsiClass findEnclosingInstanceClassInScope(@NotNull PsiClass clazz, @Nullable PsiElement scope, boolean isInheritorOfClazzAccepted) {
     PsiElement place = scope;
     while (place != null && place != clazz && !(place instanceof PsiFile && place.isPhysical())) {
       if (place instanceof PsiClass) {
-        if (isSuperClassAccepted) {
+        if (isInheritorOfClazzAccepted) {
           if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, clazz, true)) return (PsiClass)place;
         }
         else {

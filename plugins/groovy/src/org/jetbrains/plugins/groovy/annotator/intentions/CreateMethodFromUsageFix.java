@@ -33,9 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 /**
@@ -60,7 +60,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     PsiMethod method = factory.createMethod(getMethodName(), PsiType.VOID);
 
     final GrReferenceExpression ref = getRefExpr();
-    if (StaticChecker.isInStaticContext(ref, targetClass)) {
+    if (GrStaticChecker.isInStaticContext(ref, targetClass)) {
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
 

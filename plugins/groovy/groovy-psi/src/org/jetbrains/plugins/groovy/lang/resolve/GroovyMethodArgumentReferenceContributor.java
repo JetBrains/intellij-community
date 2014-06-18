@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public final class GroovyMethodArgumentReferenceContributor extends PsiReferenceContributor {
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(GroovyPatterns.stringLiteral(), new MyProvider());
   }
 

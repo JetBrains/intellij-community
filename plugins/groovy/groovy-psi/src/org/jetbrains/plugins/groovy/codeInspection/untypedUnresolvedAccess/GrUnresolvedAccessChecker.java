@@ -65,9 +65,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -146,7 +146,7 @@ public class GrUnresolvedAccessChecker {
 
     if (refElement.getParent() instanceof GrNewExpression) {
 
-      boolean inStaticContext = GrReferenceResolveUtil.isInStaticContext(refElement);
+      boolean inStaticContext = GrStaticChecker.isInStaticContext(refElement);
 
       if (!inStaticContext && GrUnresolvedAccessInspection.isSuppressed(refElement)) return null;
 
@@ -193,7 +193,7 @@ public class GrUnresolvedAccessChecker {
     PsiElement refNameElement = ref.getReferenceNameElement();
     if (refNameElement == null) return null;
 
-    boolean inStaticContext = PsiUtil.isCompileStatic(ref) || GrReferenceResolveUtil.isPropertyAccessInStaticMethod(ref);
+    boolean inStaticContext = PsiUtil.isCompileStatic(ref) || GrStaticChecker.isPropertyAccessInStaticMethod(ref);
     GroovyResolveResult resolveResult = getBestResolveResult(ref);
 
     if (resolveResult.getElement() != null) {
@@ -207,7 +207,7 @@ public class GrUnresolvedAccessChecker {
       return null;
     }
 
-    if (ResolveUtil.isKeyOfMap(ref) || GrReferenceResolveUtil.isClassReference(ref)) {
+    if (ResolveUtil.isKeyOfMap(ref) || ResolveUtil.isClassReference(ref)) {
       return null;
     }
 
@@ -245,7 +245,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {
-    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
+    PsiType qualifierType = PsiImplUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
     PsiClass resolved = ((PsiClassType)qualifierType).resolve();
@@ -325,7 +325,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean checkGroovyObjectMethodsByQualifier(GrReferenceExpression ref, PsiMethod patternMethod) {
-    PsiType qualifierType = GrReferenceResolveUtil.getQualifierType(ref);
+    PsiType qualifierType = PsiImplUtil.getQualifierType(ref);
     if (!(qualifierType instanceof PsiClassType)) return false;
 
     PsiClass resolved = ((PsiClassType)qualifierType).resolve();

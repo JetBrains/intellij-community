@@ -44,7 +44,7 @@ import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider
  */
 public class TestDataReferenceContributor extends PsiReferenceContributor {
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(literalExpression().annotationParam(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME),
                                         new TestDataReferenceProvider());
   }

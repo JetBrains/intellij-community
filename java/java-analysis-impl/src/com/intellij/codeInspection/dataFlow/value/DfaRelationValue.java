@@ -52,7 +52,6 @@ public class DfaRelationValue extends DfaValue {
     }
 
     public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
-      if (dfaRight instanceof DfaTypeValue && INSTANCEOF_KEYWORD != relation) return null;
       if (PLUS == relation) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
@@ -167,6 +166,10 @@ public class DfaRelationValue extends DfaValue {
 
   public boolean isNonEquality() {
     return myRelation == EQEQ && myIsNegated || myRelation == GT && !myIsNegated || myRelation == GE && myIsNegated;
+  }
+
+  public boolean isInstanceOf() {
+    return myRelation == INSTANCEOF_KEYWORD;
   }
 
   @NonNls public String toString() {

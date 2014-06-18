@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
       myPattern = null;
     }
 
+    @NotNull
     public PsiFile getFile() {
       return myFile;
     }
@@ -92,6 +93,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
    * @param pattern the pattern to search for.
    * @return the query instance.
    */
+  @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPattern pattern) {
     final SearchParameters parameters = new SearchParameters(file, pattern);
     return INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
@@ -107,9 +109,11 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
    * @param endOffset   the end offset of the range to search.
    * @return the query instance.
    */
+  @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file,
                                                      @NotNull IndexPattern pattern,
-                                                     int startOffset, int endOffset) {
+                                                     int startOffset,
+                                                     int endOffset) {
     final SearchParameters parameters = new SearchParameters(file, pattern, new TextRange(startOffset, endOffset));
     return INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
   }
@@ -123,6 +127,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
    * @param patternProvider the provider the patterns from which are searched.
    * @return the query instance.
    */
+  @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider) {
     final SearchParameters parameters = new SearchParameters(file, patternProvider);
     return INDEX_PATTERN_SEARCH_INSTANCE.createQuery(parameters);
@@ -139,6 +144,7 @@ public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurr
    * @param endOffset       the end offset of the range to search.
    * @return the query instance.
    */
+  @NotNull
   public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file, @NotNull IndexPatternProvider patternProvider,
                                                      int startOffset, int endOffset) {
     final SearchParameters parameters = new SearchParameters(file, patternProvider, new TextRange(startOffset, endOffset));

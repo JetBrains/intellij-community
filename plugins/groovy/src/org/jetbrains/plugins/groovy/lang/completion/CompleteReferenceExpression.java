@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -55,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
@@ -63,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
@@ -157,14 +154,7 @@ public class CompleteReferenceExpression {
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(myRefExpr, myProcessor, true);
 
-      for (PsiElement e = myRefExpr.getParent(); e != null; e = e.getParent()) {
-        if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, e);
-          for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
-            contributor.processMembers((GrClosableBlock)e, myProcessor, myRefExpr, state);
-          }
-        }
-      }
+      ClosureMissingMethodContributor.processMethodsFromClosures(myRefExpr, myProcessor);
 
       GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(myRefExpr);
       if (runtimeQualifier != null) {
@@ -394,7 +384,7 @@ public class CompleteReferenceExpression {
   }
 
   private boolean isMap() {
-    final PsiType qType = GrReferenceResolveUtil.getQualifierType(myRefExpr);
+    final PsiType qType = PsiImplUtil.getQualifierType(myRefExpr);
     return InheritanceUtil.isInheritor(qType, CommonClassNames.JAVA_UTIL_MAP);
   }
 
@@ -436,7 +426,7 @@ public class CompleteReferenceExpression {
       myFieldPointerOperator = myRefExpr.hasAt();
       myMethodPointerOperator = myRefExpr.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap();
-      final PsiType thisType = GrReferenceResolveUtil.getQualifierType(myRefExpr);
+      final PsiType thisType = PsiImplUtil.getQualifierType(myRefExpr);
       mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, myRefExpr, myRefExpr.getParent());
     }
 

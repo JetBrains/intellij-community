@@ -118,7 +118,9 @@ public class DumbServiceImpl extends DumbService {
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
     final Application application = ApplicationManager.getApplication();
 
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment() || !forceDumbMode && !myDumb && application.isReadAccessAllowed()) {
+    if (application.isUnitTestMode() ||
+        application.isHeadlessEnvironment() ||
+        !forceDumbMode && !myDumb && application.isReadAccessAllowed()) {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.pushState();
@@ -133,6 +135,7 @@ public class DumbServiceImpl extends DumbService {
           indicator.popState();
         }
       }
+      return;
     }
 
     UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {

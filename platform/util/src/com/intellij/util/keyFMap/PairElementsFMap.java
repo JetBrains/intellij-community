@@ -24,7 +24,7 @@ class PairElementsFMap implements KeyFMap {
   private final Object value1;
   private final Object value2;
 
-  PairElementsFMap(Key key1, @NotNull Object value1, Key key2, @NotNull Object value2) {
+  PairElementsFMap(@NotNull Key key1, @NotNull Object value1, @NotNull Key key2, @NotNull Object value2) {
     this.key1 = key1;
     this.value1 = value1;
     this.key2 = key2;

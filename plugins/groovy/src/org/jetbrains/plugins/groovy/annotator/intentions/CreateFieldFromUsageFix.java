@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 
 /**
  * @author ven
@@ -49,7 +49,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
 
   private String[] generateModifiers(@NotNull PsiClass targetClass) {
     final GrReferenceExpression myRefExpression = getRefExpr();
-    if (myRefExpression != null && StaticChecker.isInStaticContext(myRefExpression, targetClass)) {
+    if (myRefExpression != null && GrStaticChecker.isInStaticContext(myRefExpression, targetClass)) {
       return new String[]{PsiModifier.STATIC};
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;

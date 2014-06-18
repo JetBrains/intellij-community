@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -44,7 +44,7 @@ public class GdslClosureCompleter extends ClosureCompleter {
                                                          PsiElement place) {
     final ArrayList<ClosureDescriptor> descriptors = new ArrayList<ClosureDescriptor>();
     GrReferenceExpression ref = (GrReferenceExpression)place;
-    PsiType qtype = GrReferenceResolveUtil.getQualifierType(ref);
+    PsiType qtype = PsiImplUtil.getQualifierType(ref);
     if (qtype == null) return null;
 
     GrExpression qualifier = ref.getQualifier();

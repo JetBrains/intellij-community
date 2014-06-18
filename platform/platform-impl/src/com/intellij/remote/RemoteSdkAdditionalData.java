@@ -29,8 +29,6 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
 
   void setInitialized(boolean initialized);
 
-  String getFullInterpreterPath();
-
   void setVagrantConnectionType(@NotNull VagrantBasedCredentialsHolder vagrantBasedCredentials);
 
   /**

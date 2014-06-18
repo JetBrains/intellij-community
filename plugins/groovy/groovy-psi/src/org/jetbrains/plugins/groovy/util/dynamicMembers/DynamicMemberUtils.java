@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -77,7 +77,7 @@ public class DynamicMemberUtils {
   }
 
   public static boolean process(PsiScopeProcessor processor, PsiClass psiClass, GrReferenceExpression ref, String classSource) {
-    return process(processor, StaticChecker.isInStaticContext(ref, psiClass), ref, classSource);
+    return process(processor, GrStaticChecker.isInStaticContext(ref, psiClass), ref, classSource);
   }
 
   public static boolean process(PsiScopeProcessor processor, boolean isInStaticContext, PsiElement place, String classSource) {
