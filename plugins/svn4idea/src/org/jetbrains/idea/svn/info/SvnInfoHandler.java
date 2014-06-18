@@ -514,8 +514,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      final SVNDate date = SVNDate.parseDate(s);
-      structure.myCommittedDate = date;
+      structure.myCommittedDate = s;
     }
   }
 
@@ -600,8 +599,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      final SVNDate date = SVNDate.parseDate(s);
-      structure.myTextTime = date;
+      structure.myTextTime = s;
     }
   }
 

@@ -61,12 +61,12 @@ public class SvnInfoStructure {
   public SVNNodeKind myKind;
   public String myUuid;
   public long myCommittedRevision;
-  public Date myCommittedDate;
+  public String myCommittedDate;
   public String myAuthor;
   public String mySchedule;
   public SVNURL myCopyFromURL;
   public long myCopyFromRevision;
-  public Date myTextTime;
+  public String myTextTime;
   public String myPropTime;
   public String myChecksum;
   public String myConflictOld;
@@ -83,7 +83,7 @@ public class SvnInfoStructure {
   public TreeConflictDescription myTreeConflict;
 
   public SVNInfo convert() throws SAXException, SVNException {
-    return new IdeaSVNInfo(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
+    return new SVNInfo(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
                            myCopyFromURL, myCopyFromRevision, myTextTime, myPropTime, myChecksum, myConflictOld, myConflictNew, myConflictWorking,
                            myPropRejectFile, getLock(), myDepth, myChangelistName, myWcSize, createTreeConflict());
   }

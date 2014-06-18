@@ -27,7 +27,6 @@ import junit.framework.TestCase;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.jetbrains.idea.svn.info.IdeaSVNInfo;
 import org.jetbrains.idea.svn.status.PortableStatus;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -616,8 +615,8 @@ public class SvnParseCommandLineParseTest extends TestCase {
     return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 
-  private IdeaSVNInfo createStubInfo(final String basePath, final String baseUrl) throws SVNException {
-    return new IdeaSVNInfo(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, SVNNodeKind.FILE, "",
+  private SVNInfo createStubInfo(final String basePath, final String baseUrl) throws SVNException {
+    return new SVNInfo(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, SVNNodeKind.FILE, "",
                            SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, SVNDepth.EMPTY, 1);
   }
 
