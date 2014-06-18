@@ -641,8 +641,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(AnActionEvent e) {
       super.actionPerformed(e);
-      if (myHint.isVisible()) {
-        myHint.cancel();
+      final JBPopup hint = myHint;
+      if (hint != null && hint.isVisible()) {
+        hint.cancel();
       }
     }
 
