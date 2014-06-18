@@ -19,7 +19,6 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -30,8 +29,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
@@ -131,7 +128,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   @Override
   public void disposeComponent() {
-    // done mostly for tests. In real life this is no-op, because the set was removed on project closing
+    // done mostly for tests. In real life this is noop, because the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
 
@@ -143,7 +140,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       return null;
     }
 
-    final DumbModeTask task = new DumbModeTask() {
+    return new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         final Collection<VirtualFile> files = index.getFilesToUpdate(project);
@@ -152,13 +149,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
         reindexRefreshedFiles(indicator, files, project, index);
       }
     };
-    project.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        DumbService.getInstance(project).cancelTask(task);
-      }
-    });
-    return task;
   }
 
   private static void reindexRefreshedFiles(ProgressIndicator indicator,
