@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -155,20 +156,23 @@ public class CollectClassMembersUtil {
 
     if (!visitedClasses.add(aClass)) return;
 
-    for (PsiField field : getFields(aClass, includeSynthetic)) {
-      String name = field.getName();
+    if (visitedClasses.size() == 1 || !GrTraitUtil.isTrait(aClass)) {
+      for (PsiField field : getFields(aClass, includeSynthetic)) {
+        String name = field.getName();
 
-      if (!allFields.containsKey(name)) {
-        allFields.put(name, new CandidateInfo(field, substitutor));
-      }
-      else if (hasExplicitVisibilityModifiers(field)) {
-        final CandidateInfo candidateInfo = allFields.get(name);
-        final PsiElement element = candidateInfo.getElement();
-        if (element instanceof GrField) {
-          final GrModifierList modifierList = ((GrField)element).getModifierList();
-          if ((modifierList == null || !modifierList.hasExplicitVisibilityModifiers()) && aClass == ((GrField)element).getContainingClass()) {
-            //replace property-field with field with explicit visibilityModifier
-            allFields.put(name, new CandidateInfo(field, substitutor));
+        if (!allFields.containsKey(name)) {
+          allFields.put(name, new CandidateInfo(field, substitutor));
+        }
+        else if (hasExplicitVisibilityModifiers(field)) {
+          final CandidateInfo candidateInfo = allFields.get(name);
+          final PsiElement element = candidateInfo.getElement();
+          if (element instanceof GrField) {
+            final GrModifierList modifierList = ((GrField)element).getModifierList();
+            if ((modifierList == null || !modifierList.hasExplicitVisibilityModifiers()) &&
+                aClass == ((GrField)element).getContainingClass()) {
+              //replace property-field with field with explicit visibilityModifier
+              allFields.put(name, new CandidateInfo(field, substitutor));
+            }
           }
         }
       }
