@@ -97,6 +97,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
           IntIdPending pendResult = (IntIdPending)rhs;
           out.writeBoolean(false);
           DataInputOutputUtil.writeINT(out, pendResult.infinum.ordinal());
+          out.writeBoolean(pendResult.rigid);
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
           for (IntIdComponent component : pendResult.delta) {
@@ -127,6 +128,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
         } else {
           int ordinal = DataInputOutputUtil.readINT(in);
           Value value = Value.values()[ordinal];
+          boolean rigid = in.readBoolean();
           int deltaLength = DataInputOutputUtil.readINT(in);
           IntIdComponent[] components = new IntIdComponent[deltaLength];
 
@@ -138,7 +140,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
             }
             components[i] = new IntIdComponent(ids);
           }
-          result.add(new IntIdEquation(equationId, new IntIdPending(value, components)));
+          result.add(new IntIdEquation(equationId, new IntIdPending(value, rigid, components)));
         }
       }
 

@@ -170,18 +170,18 @@ class ResultUtil<Id, T extends Enum<T>> {
     }
     if (r1 instanceof Final && r2 instanceof Pending) {
       Pending<Id, T> pending = (Pending<Id, T>) r2;
-      return new Pending<Id, T>(lattice.join(((Final<Id, T>) r1).value, pending.infinum), pending.delta);
+      return new Pending<Id, T>(lattice.join(((Final<Id, T>) r1).value, pending.infinum), true, pending.delta);
     }
     if (r1 instanceof Pending && r2 instanceof Final) {
       Pending<Id, T> pending = (Pending<Id, T>) r1;
-      return new Pending<Id, T>(lattice.join(((Final<Id, T>) r2).value, pending.infinum), pending.delta);
+      return new Pending<Id, T>(lattice.join(((Final<Id, T>) r2).value, pending.infinum), true, pending.delta);
     }
     Pending<Id, T> pending1 = (Pending<Id, T>) r1;
     Pending<Id, T> pending2 = (Pending<Id, T>) r2;
     Set<Set<Id>> delta = new HashSet<Set<Id>>();
     delta.addAll(pending1.delta);
     delta.addAll(pending2.delta);
-    return new Pending<Id, T>(lattice.join(pending1.infinum, pending2.infinum), delta);
+    return new Pending<Id, T>(lattice.join(pending1.infinum, pending2.infinum), pending1.rigid || pending2.rigid, delta);
   }
 }
 
@@ -200,16 +200,18 @@ final class Final<Id, T> implements Result<Id, T> {
 
 final class Pending<Id, T> implements Result<Id, T> {
   final T infinum;
+  final boolean rigid;
   final Set<Set<Id>> delta;
 
-  Pending(T infinum, Set<Set<Id>> delta) {
+  Pending(T infinum, boolean rigid, Set<Set<Id>> delta) {
     this.infinum = infinum;
+    this.rigid = rigid;
     this.delta = delta;
   }
 
   @Override
   public String toString() {
-    return "Pending{" + "infinum=" + infinum + ", delta=" + delta + '}';
+    return "Pending{" + "infinum=" + infinum + ", rigid=" + rigid + ", delta=" + delta + '}';
   }
 }
 
@@ -223,10 +225,12 @@ final class IntIdFinal implements IntIdResult {
 }
 final class IntIdPending implements IntIdResult {
   final Value infinum;
+  final boolean rigid;
   final IntIdComponent[] delta;
 
-  IntIdPending(Value infinum, IntIdComponent[] delta) {
+  IntIdPending(Value infinum, boolean rigid, IntIdComponent[] delta) {
     this.infinum = infinum;
+    this.rigid = rigid;
     this.delta = delta;
   }
 
@@ -238,6 +242,7 @@ final class IntIdPending implements IntIdResult {
     IntIdPending pending = (IntIdPending)o;
 
     if (!Arrays.equals(delta, pending.delta)) return false;
+    if (rigid != pending.rigid) return false;
     if (infinum != pending.infinum) return false;
 
     return true;
@@ -246,6 +251,7 @@ final class IntIdPending implements IntIdResult {
   @Override
   public int hashCode() {
     int result = infinum.ordinal();
+    result = 31 * result + (rigid ? 1 : 0);
     result = 31 * result + Arrays.hashCode(delta);
     return result;
   }
@@ -384,15 +390,16 @@ final class IntIdSolver {
         }
       }
       if (delta.isEmpty()) {
-        return new IntIdFinal(pending.infinum);
+        return pending.rigid ? new IntIdFinal(pending.infinum) : new IntIdFinal(lattice.bot);
       }
       else {
-        return new IntIdPending(pending.infinum, toArray(delta));
+        return new IntIdPending(pending.infinum, pending.rigid, toArray(delta));
       }
     }
     else if (value.equals(lattice.top)) {
       ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
       // remove top from components
+      boolean removed = false;
       for (IntIdComponent component : pending.delta) {
         component.remove(id);
         if (!component.isEmptyAndTouched()) {
@@ -402,12 +409,15 @@ final class IntIdSolver {
             delta.add(component);
           }
         }
+        else {
+          removed = true;
+        }
       }
       if (delta.isEmpty()) {
         return new IntIdFinal(pending.infinum);
       }
       else {
-        return new IntIdPending(pending.infinum, toArray(delta));
+        return new IntIdPending(pending.infinum, pending.rigid || removed, toArray(delta));
       }
     }
     else {
@@ -416,17 +426,21 @@ final class IntIdSolver {
         return new IntIdFinal(lattice.top);
       }
       ArrayList<IntIdComponent> delta = new ArrayList<IntIdComponent>();
+      boolean removed = false;
       for (IntIdComponent component : pending.delta) {
         component.removeAndTouch(id);
         if (!component.isEmpty()) {
           delta.add(component);
+        }
+        else {
+          removed = true;
         }
       }
       if (delta.isEmpty()) {
         return new IntIdFinal(infinum);
       }
       else {
-        return new IntIdPending(infinum, toArray(delta));
+        return new IntIdPending(infinum, pending.rigid || removed, toArray(delta));
       }
     }
   }

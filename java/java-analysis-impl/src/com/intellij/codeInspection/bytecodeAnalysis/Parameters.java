@@ -157,7 +157,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       for (Set<Key> prod : condNpe.sop) {
         components.add(prod);
       }
-      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(Value.NotNull, components));
+      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(Value.NotNull, false, components));
     }
   }
 

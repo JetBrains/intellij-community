@@ -118,7 +118,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new IntIdPending(pending.infinum, components);
+      result = new IntIdPending(pending.infinum, pending.rigid, components);
     }
 
     int rawKey = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));
