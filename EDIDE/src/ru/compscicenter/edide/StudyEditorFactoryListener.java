@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,7 +69,10 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   TaskManager taskManager = TaskManager.getInstance();
                   int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
                   TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
+                  editor.getMarkupModel().removeAllHighlighters();
                   tf.drawFirstUnresolved(editor);
+                    RangeHighlighter[] rm = editor.getMarkupModel().getAllHighlighters();
+                    System.out.println("Smth");
                 }
               }
               catch (Exception e) {

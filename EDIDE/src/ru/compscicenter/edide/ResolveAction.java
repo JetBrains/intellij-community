@@ -15,11 +15,21 @@ public class ResolveAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Editor editor = StudyEditor.getRecentOpenedEditor(e.getProject());
+        if (editor == null) {
+            return;
+        }
         LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
         VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        int currentTaskNum  = TaskManager.getInstance().getTaskNumForFile(vfOpenedFile.getName());
-        TaskFile tf = TaskManager.getInstance().getTaskFile(currentTaskNum, vfOpenedFile.getName());
-        tf.resolveCurrentHighlighter(editor, pos);
-        tf.drawFirstUnresolved(editor);
+        if (vfOpenedFile != null) {
+            int currentTaskNum = TaskManager.getInstance().getTaskNumForFile(vfOpenedFile.getName());
+            TaskFile tf = TaskManager.getInstance().getTaskFile(currentTaskNum, vfOpenedFile.getName());
+            try {
+                tf.resolveCurrentHighlighter(editor, pos);
+            }
+            catch(IllegalArgumentException ex) {
+                return;
+            }
+            tf.drawFirstUnresolved(editor);
+        }
     }
 }
