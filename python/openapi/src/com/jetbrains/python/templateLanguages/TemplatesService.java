@@ -70,6 +70,6 @@ public abstract class TemplatesService {
 
   public abstract void generateTemplates(@NotNull final TemplateSettingsHolder settings, VirtualFile baseDir);
   public abstract void installTemplateEngine(@NotNull final TemplateSettingsHolder settings, @NotNull final PyPackageManager packageManager,
-                                    @NotNull final Project project);
+                                             @NotNull final Project project, boolean isDjango);
 }
 
