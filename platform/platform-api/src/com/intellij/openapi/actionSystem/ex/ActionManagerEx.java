@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 
 public abstract class ActionManagerEx extends ActionManager {
@@ -99,16 +97,6 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract boolean isActionPopupStackEmpty();
 
   public abstract boolean isTransparentOnlyActionsUpdateNow();
-
-  @NotNull
-  public List<String> getAbbreviations() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  public List<String> findActionIdsByAbbreviation(String abbreviation) {
-    return Collections.emptyList();
-  }
 
   public void fireBeforeActionPerformed(String actionId, InputEvent event) {
     final AnAction action = getAction(actionId);
