@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  */
 public class PyStdReferenceContributor extends PsiReferenceContributor {
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerClassAttributeReference(registrar, PyNames.ALL, new PsiReferenceProvider() {
       @NotNull
       @Override

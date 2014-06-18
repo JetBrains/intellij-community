@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,13 +49,13 @@ public class XsltReferenceContributor {
   }
 
   public static class XPath extends PsiReferenceContributor {
-    public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
       registrar.registerReferenceProvider(psiElement(XPath2TypeElement.class), SchemaTypeProvider.INSTANCE);
     }
   }
 
   public static class XML extends PsiReferenceContributor {
-    public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
       registrar.registerReferenceProvider(
         psiElement(XmlAttributeValue.class).withParent(
           xmlAttribute().withLocalName("name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix").withParent(

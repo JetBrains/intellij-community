@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import static org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo.ParamInf
 public class MavenPluginParamReferenceContributor extends PsiReferenceContributor {
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(XmlTokenType.XML_DATA_CHARACTERS).withParent(
         XmlPatterns.xmlText().inFile(XmlPatterns.xmlFile().withName("pom.xml"))

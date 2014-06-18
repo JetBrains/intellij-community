@@ -39,7 +39,7 @@ import static com.intellij.patterns.XmlPatterns.*;
  */
 public class XmlReferenceContributor extends PsiReferenceContributor {
   @Override
-  public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
 
     final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
 

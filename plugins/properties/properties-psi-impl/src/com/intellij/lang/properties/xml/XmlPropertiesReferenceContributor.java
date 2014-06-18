@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("key"),
                                         new PsiReferenceProvider() {
       @NotNull

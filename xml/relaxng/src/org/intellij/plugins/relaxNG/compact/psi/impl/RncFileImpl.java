@@ -115,6 +115,7 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     return false;
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());

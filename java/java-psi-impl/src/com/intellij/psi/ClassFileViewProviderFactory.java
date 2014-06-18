@@ -28,6 +28,7 @@ import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
  * @author max
  */
 public class ClassFileViewProviderFactory implements FileViewProviderFactory {
+  @NotNull
   @Override
   public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, Language language, @NotNull PsiManager manager, boolean eventSystemEnabled) {
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
