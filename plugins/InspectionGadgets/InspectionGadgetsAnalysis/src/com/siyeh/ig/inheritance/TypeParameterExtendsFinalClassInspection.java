@@ -80,7 +80,8 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
-        replaceTypeParameterAndReferencesWithType(typeParameter);
+        replaceTypeParameterUsagesWithType(typeParameter);
+        typeParameter.delete();
       }
       else if (parent instanceof PsiTypeElement) {
         final PsiTypeElement typeElement = (PsiTypeElement)parent;
@@ -92,25 +93,18 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       }
     }
 
-    private static void replaceTypeParameterAndReferencesWithType(PsiTypeParameter typeParameter) {
-      final PsiReferenceList extendsList = typeParameter.getExtendsList();
-      final PsiClassType[] referenceElements = extendsList.getReferencedTypes();
-      if (referenceElements.length < 1) {
-        return;
-      }
-      final PsiClass finalClass = referenceElements[0].resolve();
-      if (finalClass == null) {
+    private static void replaceTypeParameterUsagesWithType(PsiTypeParameter typeParameter) {
+      final PsiClassType[] types = typeParameter.getExtendsList().getReferencedTypes();
+      if (types.length < 1) {
         return;
       }
       final Project project = typeParameter.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(finalClass);
+      final PsiJavaCodeReferenceElement classReference = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(types[0]);
       final Query<PsiReference> query = ReferencesSearch.search(typeParameter, typeParameter.getUseScope());
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElement.replace(classReference);
       }
-      typeParameter.delete();
     }
   }
 
