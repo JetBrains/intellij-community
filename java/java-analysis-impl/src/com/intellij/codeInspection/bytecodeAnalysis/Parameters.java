@@ -104,11 +104,11 @@ abstract class PResults {
 
   static PResult meet(PResult r1, PResult r2) {
     if (Identity == r1) return r2;
-    if (Identity == r2) return r1;
     if (Return == r1) return r2;
     if (Return == r2) return r1;
     if (NPE == r1) return NPE;
     if (NPE == r2) return NPE;
+    if (Identity == r2) return Identity;
     ConditionalNPE cnpe1 = (ConditionalNPE) r1;
     ConditionalNPE cnpe2 = (ConditionalNPE) r2;
     return new ConditionalNPE(meet(cnpe1.sop, cnpe2.sop));
