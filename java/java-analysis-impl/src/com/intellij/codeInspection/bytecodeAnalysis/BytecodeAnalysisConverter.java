@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -36,8 +37,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author lambdamix
@@ -250,7 +250,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       return false;
     }
     String className = qname;
-    if (qname != null && packageName.length() > 0) {
+    if (packageName.length() > 0) {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
     }
     compoundKey[i] = myPackageEnumerator.enumerate(packageName);
@@ -310,7 +310,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     final TIntObjectHashMap<AnnotationData> params = new TIntObjectHashMap<AnnotationData>();
     final TIntObjectHashMap<AnnotationData> contracts = new TIntObjectHashMap<AnnotationData>();
 
-    TIntObjectHashMap<StringBuilder> contractBuilders = new TIntObjectHashMap<StringBuilder>();
+    TIntObjectHashMap<List<String>> contractClauses = new TIntObjectHashMap<List<String>>();
     TIntObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
 
     for (int i = internalIdSolutions.size(); i-- > 0;) {
@@ -345,16 +345,13 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
           try {
             // TODO - sort (normalize) contract clauses
             int baseKey = myCompoundKeyEnumerator.enumerate(compoundKey);
-            StringBuilder sb = contractBuilders.get(baseKey);
-            if (sb == null) {
-              sb = new StringBuilder("\"");
-              contractBuilders.put(baseKey, sb);
-            }
-            else {
-              sb.append(';');
+            List<String> clauses = contractClauses.get(baseKey);
+            if (clauses == null) {
+              clauses = new ArrayList<String>();
+              contractClauses.put(baseKey, clauses);
             }
             int arity = compoundKey[8];
-            contractElement(sb, arity, (InOut)direction, value);
+            clauses.add(contractElement(arity, (InOut)direction, value));
           }
           catch (IOException e) {
             // TODO
@@ -363,13 +360,18 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       }
     }
 
-    TIntObjectIterator<StringBuilder> buildersIterator = contractBuilders.iterator();
-    for (int i = contractBuilders.size(); i-- > 0;) {
+    TIntObjectIterator<List<String>> buildersIterator = contractClauses.iterator();
+    for (int i = contractClauses.size(); i-- > 0;) {
       buildersIterator.advance();
       int key = buildersIterator.key();
-      StringBuilder value = buildersIterator.value();
+      List<String> clauses = buildersIterator.value();
+      Collections.sort(clauses);
+
       if (!outs.contains(key)) {
-        contracts.put(key, new AnnotationData("org.jetbrains.annotations.Contract", value.append('"').toString()));
+        StringBuilder sb = new StringBuilder("\"");
+        StringUtil.join(clauses, ";", sb);
+        sb.append('"');
+        contracts.put(key, new AnnotationData("org.jetbrains.annotations.Contract", sb.toString()));
       }
     }
 
@@ -386,7 +388,8 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     }
   }
 
-  static String contractElement(StringBuilder sb, int arity, InOut inOut, Value value) {
+  static String contractElement(int arity, InOut inOut, Value value) {
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < arity; i++) {
       Value currentValue = Value.Top;
       if (i == inOut.paramIndex) {
