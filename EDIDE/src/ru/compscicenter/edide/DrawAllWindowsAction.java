@@ -27,6 +27,10 @@ public class DrawAllWindowsAction extends AnAction {
         int num = tm.getTaskNumForFile(vfOpenedFile.getName());
         TaskFile tf = tm.getTaskFile(num, vfOpenedFile.getName());
         int tw_num = tf.getTaskWindowNum();
+        if (editor.getMarkupModel().getAllHighlighters().length >= tw_num) {
+            editor.getMarkupModel().removeAllHighlighters();
+            return;
+        }
         for (int i = 0; i < tw_num; i++) {
             tf.getTaskWindowByIndex(i).draw(editor);
         }

@@ -1,6 +1,5 @@
 package ru.compscicenter.edide;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -22,6 +21,7 @@ public class TaskWindow {
     private final String myText;
     private final String myDocsFile;
     private boolean myResolveStatus;
+    private RangeHighlighter myRangeHighlighter;
 
     public TaskWindow(int line, int startOffset, String text,
                       String docsFile) {
@@ -30,8 +30,12 @@ public class TaskWindow {
         myText = text;
         myDocsFile = docsFile;
         myResolveStatus = false;
+        myRangeHighlighter = null;
     }
 
+    public RangeHighlighter getRangeHighlighter() {
+        return myRangeHighlighter;
+    }
     public boolean getResolveStatus() {
         return myResolveStatus;
     }
@@ -56,7 +60,7 @@ public class TaskWindow {
         return myDocsFile;
     }
 
-    public RangeHighlighter draw(final Editor e) {
+    public void draw(final Editor e) {
         JBColor color = JBColor.YELLOW;
         if (myResolveStatus) {
             color = JBColor.GREEN;
@@ -66,9 +70,8 @@ public class TaskWindow {
         final int startOffset = e.getDocument().getLineStartOffset(myLine) + myStartOffsetInLine;
         e.getCaretModel().moveToOffset(startOffset);
         final RangeHighlighter rh;
-
-        rh = e.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myText.length(), HighlighterLayer.LAST + 1, ta, HighlighterTargetArea.EXACT_RANGE);
-
-        return rh;
+        myRangeHighlighter = e.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myText.length(), HighlighterLayer.LAST + 1, ta, HighlighterTargetArea.EXACT_RANGE);
+        myRangeHighlighter.setGreedyToLeft(true);
+        myRangeHighlighter.setGreedyToRight(true);
     }
 }
