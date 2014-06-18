@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.remote;
 
+import com.google.common.base.Function;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
@@ -145,13 +145,15 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
-  public abstract boolean testConnection(@NotNull RemoteCredentials credentials);
-
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(Process process,
                                                                       PyRemoteSdkCredentials data,
                                                                       PythonConsoleView view,
                                                                       PydevConsoleCommunication consoleCommunication,
                                                                       String commandLine, Charset charset, PathMappingSettings settings);
+
+  @NotNull
+  public abstract RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
+                                                                                              RemoteConnectionCredentialsWrapper connectionWrapper);
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
@@ -167,15 +169,6 @@ public abstract class PythonRemoteInterpreterManager {
     }
   }
 
-  @Nullable
-  public abstract RemoteCredentials getVagrantRemoteCredentials(@NotNull VagrantBasedCredentialsHolder data) throws IOException;
-
-  public abstract boolean checkVagrantStatus(@NotNull final String vagrantFolder, boolean runIfDown);
-
   public abstract void runVagrant(String vagrantFolder) throws ExecutionException;
-
-  public abstract void checkVagrantStatus(VagrantBasedCredentialsHolder data);
-
-  public abstract RemoteCredentials getCredentialsBySftpServerId(String id);
 }
 
