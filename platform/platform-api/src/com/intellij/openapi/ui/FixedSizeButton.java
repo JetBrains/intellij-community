@@ -111,5 +111,18 @@ public class FixedSizeButton extends JButton {
   public void setSize(int size) {
     mySize = size;
   }
-}
 
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    int size = Math.min(width, height);
+    super.setBounds(x, y, size, size);
+  }
+
+  @Override
+  public void setBounds(Rectangle r) {
+    int size = Math.min(r.width, r.height);
+    r.width = size;
+    r.height = size;
+    super.setBounds(r);
+  }
+}
