@@ -133,24 +133,20 @@ class IdUtils {
     return result;
   }
 
-  static boolean remove(int[] ids, int id) {
+  static void remove(int[] ids, int id) {
     for (int i = 0; i < ids.length; i++) {
       if (ids[i] == id) {
         ids[i] = nullId;
-        return true;
       }
     }
-    return false;
   }
 
-  static boolean removeAndTouch(int[] ids, int id) {
+  static void removeAndTouch(int[] ids, int id) {
     for (int i = 0; i < ids.length; i++) {
       if (ids[i] == id) {
         ids[i] = touchedId;
-        return true;
       }
     }
-    return false;
   }
 }
 
@@ -343,22 +339,24 @@ final class IntIdSolver {
     }
   }
 
-  // TODO - to int
   TIntObjectHashMap<Value> solve() {
     while (!moving.empty()) {
       int id = moving.pop();
       Value value = solved.get(id);
-      int[] dIds = dependencies.get(id);
 
       boolean stable = id > 0;
       int[] pIds  = stable ? new int[]{id, -id} : new int[]{-id, id};
       Value[] pVals = stable ? new Value[]{value, value} : new Value[]{value, lattice.top};
 
       for (int i = 0; i < pIds.length; i++) {
+        int pId = pIds[i];
+        Value pVal = pVals[i];
+        // todo - remove
+        int[] dIds = dependencies.get(pId);
         for (int dId : dIds) {
           IntIdPending pend = pending.remove(dId);
           if (pend != null) {
-            IntIdResult pend1 = substitute(pend, pIds[i], pVals[i]);
+            IntIdResult pend1 = substitute(pend, pId, pVal);
             if (pend1 instanceof IntIdFinal) {
               IntIdFinal fi = (IntIdFinal)pend1;
               solved.put(dId, fi.value);

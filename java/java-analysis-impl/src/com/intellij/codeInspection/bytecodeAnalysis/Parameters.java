@@ -118,10 +118,10 @@ abstract class PResults {
 
 class NonNullInAnalysis extends Analysis<PResult> {
 
-  private static final NonNullInInterpreter interpreter = new NonNullInInterpreter();
+  private final NonNullInInterpreter interpreter = new NonNullInInterpreter();
 
   protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
-    super(richControlFlow, direction, true);
+    super(richControlFlow, direction, stable);
   }
 
   @Override

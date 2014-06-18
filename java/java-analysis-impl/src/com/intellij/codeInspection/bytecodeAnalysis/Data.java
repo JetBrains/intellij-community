@@ -219,7 +219,7 @@ final class Key {
 
   @Override
   public String toString() {
-    return "" + method + ' ' + direction;
+    return "" + method + ' ' + direction + ' ' + stable;
   }
 }
 

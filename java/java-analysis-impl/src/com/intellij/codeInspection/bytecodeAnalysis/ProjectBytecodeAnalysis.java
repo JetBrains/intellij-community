@@ -20,12 +20,14 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -57,6 +59,13 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   private final PsiManager myPsiManager;
 
   private Annotations myAnnotations = null;
+
+  private static final NotNullLazyKey<ProjectBytecodeAnalysis, Project>
+    INSTANCE_KEY = ServiceManager.createLazyKey(ProjectBytecodeAnalysis.class);
+
+  public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
+    return INSTANCE_KEY.getValue(project);
+  }
 
   public ProjectBytecodeAnalysis(Project project, PsiManager psiManager) {
     super(project);
@@ -94,9 +103,9 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         }
       }, ProjectScope.getLibrariesScope(myProject));
     LOG.info("parameter equations are constructed");
-    TIntObjectHashMap<Value> contractSolutions = solver.solve();
+    TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("parameter equations are solved");
-    return BytecodeAnalysisConverter.getInstance().makeAnnotations(contractSolutions);
+    return BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
   }
 
   private Annotations loadContractAnnotations() {
@@ -113,9 +122,9 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         }
       }, ProjectScope.getLibrariesScope(myProject));
     LOG.info("contract equations are constructed");
-    TIntObjectHashMap<Value> contractSolutions = solver.solve();
+    TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("contract equations are solved");
-    return BytecodeAnalysisConverter.getInstance().makeAnnotations(contractSolutions);
+    return BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
   }
 
 
@@ -173,7 +182,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     }
   }
 
-  protected static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {
+  public static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {
     if (owner instanceof PsiMethod) {
       return BytecodeAnalysisConverter.getInstance().mkKey((PsiMethod)owner, new Out());
     }

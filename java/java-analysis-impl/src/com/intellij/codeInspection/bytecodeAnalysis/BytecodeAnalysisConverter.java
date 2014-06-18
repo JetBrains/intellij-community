@@ -108,6 +108,9 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         for (Key id : keyComponent) {
           int[] compoundKey = mkCompoundKey(id);
           int rawId = myCompoundKeyEnumerator.enumerate(compoundKey);
+          if (rawId <= 0) {
+            LOG.error("raw key is not positive");
+          }
           ids[idI] = id.stable ? rawId : -rawId;
           idI++;
         }
@@ -119,6 +122,10 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     }
 
     int rawKey = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));
+    if (rawKey <= 0) {
+      LOG.error("raw key is not positive");
+    }
+
     int key = equation.id.stable ? rawKey : -rawKey;
     return new IntIdEquation(key, result);
   }
@@ -240,11 +247,11 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
   private boolean writeClass(int[] compoundKey, int i, PsiClass psiClass, int dimensions) throws IOException {
     String packageName = "";
-
     PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
-    if (psiFile != null) {
-      packageName = psiFile.getPackageName();
+    if (psiFile == null) {
+      return false;
     }
+    packageName = psiFile.getPackageName();
     String qname = psiClass.getQualifiedName();
     if (qname == null) {
       return false;
@@ -325,8 +332,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         compoundKey = myCompoundKeyEnumerator.valueOf(key);
       }
       catch (IOException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
+        LOG.error(e);
       }
 
       if (compoundKey != null) {
@@ -354,7 +360,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
             clauses.add(contractElement(arity, (InOut)direction, value));
           }
           catch (IOException e) {
-            // TODO
+            LOG.error(e);
           }
         }
       }
@@ -367,12 +373,12 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       List<String> clauses = buildersIterator.value();
       Collections.sort(clauses);
 
-      if (!outs.contains(key)) {
+      //if (!outs.contains(key)) {
         StringBuilder sb = new StringBuilder("\"");
         StringUtil.join(clauses, ";", sb);
         sb.append('"');
         contracts.put(key, new AnnotationData("org.jetbrains.annotations.Contract", sb.toString()));
-      }
+      //}
     }
 
     return new Annotations(outs, params, contracts);

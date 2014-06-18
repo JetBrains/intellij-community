@@ -36,11 +36,13 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
   private final InOutInterpreter interpreter;
   private final Value inValue;
+  private boolean  nullAnalysis;
 
   protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, TIntHashSet resultOrigins, boolean stable) {
-    super(richControlFlow, direction, true);
+    super(richControlFlow, direction, stable);
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
+    nullAnalysis = (direction instanceof InOut) && (((InOut)direction).inValue) == Value.Null;
   }
 
   @Override
