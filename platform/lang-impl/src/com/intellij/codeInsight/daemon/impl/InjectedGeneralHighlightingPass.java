@@ -220,6 +220,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     Place places = InjectedLanguageUtil.getShreds(injectedPsi);
     for (PsiLanguageInjectionHost.Shred place : places) {
       PsiLanguageInjectionHost host = place.getHost();
+      if (host == null) continue;
       TextRange textRange = place.getRangeInsideHost().shiftRight(host.getTextRange().getStartOffset());
       if (textRange.isEmpty()) continue;
       String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
