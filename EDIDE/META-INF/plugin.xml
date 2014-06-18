@@ -41,6 +41,16 @@
           <add-to-group group-id="MainToolBar" anchor="last"/>
           <keyboard-shortcut first-keystroke="shift C"  keymap="$default"/>
       </action>
+      <action id="ru.compscicenter.edide.ResolveAction" class="ru.compscicenter.edide.ResolveAction" text="Resolve Window"
+              description="Resolve Current Window" icon="/ru/compscicenter/edide/icon.jpg">
+          <add-to-group group-id="MainToolBar" anchor="last"/>
+          <keyboard-shortcut first-keystroke="shift R"  keymap="$default"/>
+      </action>
+      <action id="ru.compscicenter.edide.DrawAllWindowsAction" class="ru.compscicenter.edide.DrawAllWindowsAction" text="Draw Windows"
+              description="Draws All Windows" icon="/ru/compscicenter/edide/icon.jpg">
+          <add-to-group group-id="MainToolBar" anchor="last"/>
+          <keyboard-shortcut first-keystroke="shift A"  keymap="$default"/>
+      </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
