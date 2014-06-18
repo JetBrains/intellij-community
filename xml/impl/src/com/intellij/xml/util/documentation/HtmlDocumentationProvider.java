@@ -65,7 +65,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false));
     DocumentationProvider styleProvider = getStyleProvider();
-    if (result == null && styleProvider !=null) {
+    if (result == null && styleProvider != null) {
       return styleProvider.getUrlFor(element, originalElement);
     }
 
