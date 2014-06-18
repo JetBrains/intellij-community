@@ -350,17 +350,23 @@ final class IntIdSolver {
       Value value = solved.get(id);
       int[] dIds = dependencies.get(id);
 
-      for (int dId : dIds) {
-        IntIdPending pend = pending.remove(dId);
-        if (pend != null) {
-          IntIdResult pend1 = substitute(pend, id, value);
-          if (pend1 instanceof IntIdFinal) {
-            IntIdFinal fi = (IntIdFinal)pend1;
-            solved.put(dId, fi.value);
-            moving.push(dId);
-          }
-          else {
-            pending.put(dId, (IntIdPending)pend1);
+      boolean stable = id > 0;
+      int[] pIds  = stable ? new int[]{id, -id} : new int[]{-id, id};
+      Value[] pVals = stable ? new Value[]{value, value} : new Value[]{value, lattice.top};
+
+      for (int i = 0; i < pIds.length; i++) {
+        for (int dId : dIds) {
+          IntIdPending pend = pending.remove(dId);
+          if (pend != null) {
+            IntIdResult pend1 = substitute(pend, pIds[i], pVals[i]);
+            if (pend1 instanceof IntIdFinal) {
+              IntIdFinal fi = (IntIdFinal)pend1;
+              solved.put(dId, fi.value);
+              moving.push(dId);
+            }
+            else {
+              pending.put(dId, (IntIdPending)pend1);
+            }
           }
         }
       }

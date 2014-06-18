@@ -81,6 +81,14 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
     final List<Equation<Key, Value>> contractEquations = new ArrayList<Equation<Key, Value>>();
 
     classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+      private boolean stableClass;
+
+      @Override
+      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        stableClass = (access & Opcodes.ACC_FINAL) != 0;
+        super.visit(version, access, name, signature, superName, interfaces);
+      }
+
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
@@ -88,13 +96,21 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
           @Override
           public void visitEnd() {
             super.visitEnd();
-            processMethod(classReader.getClassName(), node);
+            processMethod(classReader.getClassName(), node, stableClass);
           }
         };
       }
 
-      void processMethod(String className, MethodNode methodNode) {
+      void processMethod(String className, MethodNode methodNode, boolean stableClass) {
         Method method = new Method(className, methodNode.name, methodNode.desc);
+
+        int access = methodNode.access;
+        boolean stable =
+          stableClass ||
+          (access & Opcodes.ACC_FINAL) != 0 ||
+          (access & Opcodes.ACC_PRIVATE) != 0 ||
+          (access & Opcodes.ACC_STATIC) != 0 ||
+          "<init>".equals(methodNode.name);
 
         ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
         boolean added = false;
@@ -117,21 +133,21 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
                 boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
                 if (isReferenceArg) {
-                  parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i)).analyze());
+                  parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze());
                 }
                 if (isReferenceResult || isBooleanResult) {
                   if (isReferenceArg) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins, stable).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins, stable).analyze());
                   }
                   if (isBooleanArg) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins, stable).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins, stable).analyze());
                   }
                 }
               }
               if (isReferenceResult) {
-                contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins).analyze());
+                contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze());
               }
               added = true;
             } catch (AnalyzerException e) {
@@ -150,21 +166,21 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
             boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
 
             if (isReferenceArg) {
-              contractEquations.add(new Equation<Key, Value>(new Key(method, new In(i)), new Final<Key, Value>(Value.Top)));
+              contractEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
               if (isReferenceResult || isBooleanResult) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null)), new Final<Key, Value>(Value.Top)));
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull)), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
               }
             }
             if (Type.BOOLEAN_TYPE.equals(argType)) {
               if (isReferenceResult || isBooleanResult) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False)), new Final<Key, Value>(Value.Top)));
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True)), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
               }
             }
           }
           if (isReferenceResult) {
-            parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out()), new Final<Key, Value>(Value.Top)));
+            parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
           }
         }
       }

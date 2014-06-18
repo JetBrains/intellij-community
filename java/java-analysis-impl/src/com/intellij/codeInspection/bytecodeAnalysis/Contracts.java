@@ -37,8 +37,8 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   private final InOutInterpreter interpreter;
   private final Value inValue;
 
-  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, TIntHashSet resultOrigins) {
-    super(richControlFlow, direction);
+  protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, TIntHashSet resultOrigins, boolean stable) {
+    super(richControlFlow, direction, true);
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
   }
@@ -328,6 +328,9 @@ class InOutInterpreter extends BasicInterpreter {
       switch (opCode) {
         case INVOKESTATIC:
         case INVOKESPECIAL:
+        case INVOKEVIRTUAL:
+        case INVOKEINTERFACE:
+          boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = (MethodInsnNode)insn;
           Method method = new Method(mNode.owner, mNode.name, mNode.desc);
           Type retType = Type.getReturnType(mNode.desc);
@@ -338,11 +341,11 @@ class InOutInterpreter extends BasicInterpreter {
               HashSet<Key> keys = new HashSet<Key>();
               for (int i = shift; i < values.size(); i++) {
                 if (values.get(i) instanceof ParamValue) {
-                  keys.add(new Key(method, new InOut(i - shift, inOut.inValue)));
+                  keys.add(new Key(method, new InOut(i - shift, inOut.inValue), stable));
                 }
               }
               if (isRefRetType) {
-                keys.add(new Key(method, new Out()));
+                keys.add(new Key(method, new Out(), stable));
               }
               if (!keys.isEmpty()) {
                 return new CallResultValue(retType, keys);
@@ -350,10 +353,9 @@ class InOutInterpreter extends BasicInterpreter {
             }
             else if (isRefRetType) {
               HashSet<Key> keys = new HashSet<Key>();
-              keys.add(new Key(method, new Out()));
+              keys.add(new Key(method, new Out(), stable));
               return new CallResultValue(retType, keys);
             }
-
           }
           break;
         case MULTIANEWARRAY:

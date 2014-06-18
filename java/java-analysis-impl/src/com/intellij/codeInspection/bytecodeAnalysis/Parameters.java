@@ -119,11 +119,9 @@ abstract class PResults {
 class NonNullInAnalysis extends Analysis<PResult> {
 
   private static final NonNullInInterpreter interpreter = new NonNullInInterpreter();
-  private final Key parameter;
 
-  protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction) {
-    super(richControlFlow, direction);
-    parameter = new Key(method, direction);
+  protected NonNullInAnalysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
+    super(richControlFlow, direction, true);
   }
 
   @Override
@@ -148,10 +146,10 @@ class NonNullInAnalysis extends Analysis<PResult> {
   @Override
   Equation<Key, Value> mkEquation(PResult result) {
     if (Identity == result || Return == result) {
-      return new Equation<Key, Value>(parameter, new Final<Key, Value>(Value.Top));
+      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.Top));
     }
     else if (NPE == result) {
-      return new Equation<Key, Value>(parameter, new Final<Key, Value>(Value.NotNull));
+      return new Equation<Key, Value>(aKey, new Final<Key, Value>(Value.NotNull));
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
@@ -159,7 +157,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
       for (Set<Key> prod : condNpe.sop) {
         components.add(prod);
       }
-      return new Equation<Key, Value>(parameter, new Pending<Key, Value>(Value.NotNull, components));
+      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(Value.NotNull, components));
     }
   }
 
@@ -373,11 +371,14 @@ class NonNullInInterpreter extends BasicInterpreter {
     switch (opcode) {
       case INVOKESTATIC:
       case INVOKESPECIAL:
+      case INVOKEVIRTUAL:
+      case INVOKEINTERFACE:
+        boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
         MethodInsnNode methodNode = (MethodInsnNode) insn;
         for (int i = shift; i < values.size(); i++) {
           if (values.get(i) instanceof ParamValue) {
             Method method = new Method(methodNode.owner, methodNode.name, methodNode.desc);
-            subResult = meet(subResult, new ConditionalNPE(new Key(method, new In(i - shift))));
+            subResult = meet(subResult, new ConditionalNPE(new Key(method, new In(i - shift), stable)));
           }
         }
       default:

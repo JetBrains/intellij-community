@@ -188,10 +188,12 @@ final class Out implements Direction {
 final class Key {
   final Method method;
   final Direction direction;
+  final boolean stable;
 
-  Key(Method method, Direction direction) {
+  Key(Method method, Direction direction, boolean stable) {
     this.method = method;
     this.direction = direction;
+    this.stable = stable;
   }
 
   @Override
@@ -203,7 +205,7 @@ final class Key {
 
     if (!direction.equals(key.direction)) return false;
     if (!method.equals(key.method)) return false;
-
+    if (stable != key.stable) return false;
     return true;
   }
 
@@ -211,6 +213,7 @@ final class Key {
   public int hashCode() {
     int result = method.hashCode();
     result = 31 * result + direction.hashCode();
+    result = 31 * result + (stable ? 1 : 0);
     return result;
   }
 

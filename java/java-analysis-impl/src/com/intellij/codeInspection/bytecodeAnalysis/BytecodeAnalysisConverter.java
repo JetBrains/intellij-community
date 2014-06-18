@@ -107,7 +107,8 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         int idI = 0;
         for (Key id : keyComponent) {
           int[] compoundKey = mkCompoundKey(id);
-          ids[idI] = myCompoundKeyEnumerator.enumerate(compoundKey);
+          int rawId = myCompoundKeyEnumerator.enumerate(compoundKey);
+          ids[idI] = id.stable ? rawId : -rawId;
           idI++;
         }
         IntIdComponent intIdComponent = new IntIdComponent(ids);
@@ -117,13 +118,11 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       result = new IntIdPending(pending.infinum, components);
     }
 
-    int key = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));
+    int rawKey = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));
+    int key = equation.id.stable ? rawKey : -rawKey;
     return new IntIdEquation(key, result);
   }
 
-  // FIXME - (for all mkXXX) what is the best practice to write such kind of boilerplate?
-  // 1) On one side, this is a very "hot" method, so, extract small operations to make it readable may be expensive
-  // 2) On the other side, current code in unreadable
   @NotNull
   public int[] mkCompoundKey(@NotNull Key key) throws IOException {
     Direction direction = key.direction;
@@ -316,7 +315,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
     for (int i = internalIdSolutions.size(); i-- > 0;) {
       solutionsIterator.advance();
-      int key = solutionsIterator.key();
+      int key = Math.abs(solutionsIterator.key());
       Value value = solutionsIterator.value();
       if (value == Value.Top || value == Value.Bot) {
         continue;
@@ -326,7 +325,8 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         compoundKey = myCompoundKeyEnumerator.valueOf(key);
       }
       catch (IOException e) {
-        // TODO
+        e.printStackTrace();
+        throw new RuntimeException(e);
       }
 
       if (compoundKey != null) {

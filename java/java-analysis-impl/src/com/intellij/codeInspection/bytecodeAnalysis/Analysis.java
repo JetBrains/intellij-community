@@ -193,14 +193,14 @@ abstract class Analysis<Res> {
   abstract Equation<Key, Value> mkEquation(Res result);
   abstract void processState(State state) throws AnalyzerException;
 
-  protected Analysis(RichControlFlow richControlFlow, Direction direction) {
+  protected Analysis(RichControlFlow richControlFlow, Direction direction, boolean stable) {
     this.richControlFlow = richControlFlow;
     this.direction = direction;
     controlFlow = richControlFlow.controlFlow;
     methodNode = controlFlow.methodNode;
     method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
-    aKey = new Key(method, direction);
+    aKey = new Key(method, direction, stable);
     myIdentity = identity();
   }
 
