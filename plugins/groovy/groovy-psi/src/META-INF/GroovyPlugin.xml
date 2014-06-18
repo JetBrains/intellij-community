@@ -25,7 +25,6 @@
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true">AntSupport</depends>
-  <depends optional="true">cucumber</depends>
   <depends optional="true">ByteCodeViewer</depends>
 
   <extensionPoints>
