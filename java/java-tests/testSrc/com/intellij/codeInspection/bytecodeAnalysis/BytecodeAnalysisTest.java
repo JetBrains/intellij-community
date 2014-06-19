@@ -16,17 +16,8 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.InferredAnnotationsManager;
-import com.intellij.codeInspection.bytecodeAnalysis.data.Test01;
-import com.intellij.codeInspection.bytecodeAnalysis.data.TestAnnotation;
-import com.intellij.codeInspection.bytecodeAnalysis.data.TestConverterData;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.codeInspection.bytecodeAnalysis.data.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,8 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.AsynchConsumer;
-import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.junit.Assert;
@@ -45,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
 
 /**
  * @author lambdamix
@@ -55,131 +43,22 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   private final String myClassesProjectRelativePath = "/classes/" + Test01.class.getPackage().getName().replace('.', '/');
   private JavaPsiFacade myJavaPsiFacade;
   private InferredAnnotationsManager myInferredAnnotationsManager;
-  private ExternalAnnotationsManager myExternalAnnotationsManager;
   private BytecodeAnalysisConverter myBytecodeAnalysisConverter;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    /*
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        myBytecodeAnalysisConverter.disposeComponent();
-      }
-    }); */
-
-    setUpDataClasses();
-    setUpVelocityLibrary();
-    setUpAnnotations();
-
     myJavaPsiFacade = JavaPsiFacade.getInstance(myModule.getProject());
     myInferredAnnotationsManager = InferredAnnotationsManager.getInstance(myModule.getProject());
-    myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myModule.getProject());
-
     myBytecodeAnalysisConverter = BytecodeAnalysisConverter.getInstance();
-  }
 
-  public void testVelocityJar() {
-    PsiClass psiClass = myJavaPsiFacade.findClass(SystemUtils.class.getName(), GlobalSearchScope.moduleWithLibrariesScope(myModule));
-    assertNotNull(psiClass);
-    PsiMethod getJavaHomeMethod = psiClass.findMethodsByName("getJavaHome", false)[0];
-    assertNotNull(InferredAnnotationsManager.getInstance(myModule.getProject()).findInferredAnnotation(getJavaHomeMethod, AnnotationUtil.NOT_NULL));
-  }
-
-  private void setUpVelocityLibrary() {
-    VirtualFile lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib");
-    assertNotNull(lib);
-    PsiTestUtil.addLibrary(myModule, "velocity", lib.getPath(), new String[]{"/velocity.jar!/"}, new String[]{});
-  }
-
-  private void setUpAnnotations() {
-    final VirtualFile annotationsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/codeInspection/bytecodeAnalysis/annotations");
-    ModuleRootModificationUtil.updateModel(myModule, new AsynchConsumer<ModifiableRootModel>() {
-      @Override
-      public void finished() {
-
-      }
-      @Override
-      public void consume(ModifiableRootModel modifiableRootModel) {
-        final LibraryTable libraryTable = modifiableRootModel.getModuleLibraryTable();
-        Library[] libs = libraryTable.getLibraries();
-        for (Library library : libs) {
-          final Library.ModifiableModel libraryModel = library.getModifiableModel();
-          libraryModel.addRoot(annotationsDir, AnnotationOrderRootType.getInstance());
-          libraryModel.commit();
-        }
-        Sdk sdk = modifiableRootModel.getSdk();
-        if (sdk != null) {
-          SdkModificator sdkModificator = sdk.getSdkModificator();
-          sdkModificator.addRoot(annotationsDir, AnnotationOrderRootType.getInstance());
-          sdkModificator.commitChanges();
-        }
-      }
-    });
-  }
-
-
-  public void testIntegration() {
-
-
-    PsiClass psiClass = myJavaPsiFacade.findClass(String.class.getName(), GlobalSearchScope.moduleWithLibrariesScope(myModule));
-    assertNotNull(psiClass);
-    PsiMethod[] methods = psiClass.getMethods();
-    for (PsiMethod method : methods) {
-      PsiAnnotation externalAnnotation = myExternalAnnotationsManager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL);
-      PsiAnnotation inferredAnnotation = myInferredAnnotationsManager.findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
-      System.out.println(method);
-      System.out.println(externalAnnotation);
-      System.out.println(inferredAnnotation);
-    }
-    //psiClass
-
-    final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
-    assert rootPackage != null;
-
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitPackage(PsiPackage aPackage) {
-        for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
-          visitPackage(subPackage);
-        }
-        for (PsiClass aClass : aPackage.getClasses(scope)) {
-          visitClass(aClass);
-        }
-      }
-
-      @Override
-      public void visitClass(PsiClass aClass) {
-        for (PsiMethod method : aClass.getMethods()) {
-          visitMethod(method);
-        }
-      }
-
-      @Override
-      public void visitMethod(PsiMethod method) {
-        System.out.println(method);
-      }
-    };
-
-    rootPackage.accept(visitor);
+    setUpDataClasses();
   }
 
   public void testInference() throws IOException {
-
-    for (OrderEntry entry : ModuleRootManager.getInstance(myModule).getOrderEntries()) {
-      System.out.println(entry);
-      final VirtualFile[] files = AnnotationOrderRootType.getFiles(entry);
-      for (VirtualFile file : files) {
-        System.out.println("FOUND:" + file.getPath());
-      }
-    }
-
-
-
     checkAnnotations(Test01.class);
+    checkAnnotations(Test02.class);
+    checkAnnotations(Test03.class);
   }
 
   public void testConverter() throws IOException {
@@ -210,13 +89,14 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
             continue params;
           }
         }
-        assertNull(inferredAnnotation);
+        assertNull(javaMethod.toString() + " " + i, inferredAnnotation);
       }
 
       // not-null result
       ExpectNotNull expectedAnnotation = javaMethod.getAnnotation(ExpectNotNull.class);
       PsiAnnotation actualAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiMethod, AnnotationUtil.NOT_NULL);
-      assertEquals(expectedAnnotation == null, actualAnnotation == null);
+      assertEquals(javaMethod.toString(), expectedAnnotation == null, actualAnnotation == null);
+
 
       // contracts
       ExpectContract expectedContract = javaMethod.getAnnotation(ExpectContract.class);
@@ -227,19 +107,18 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       if (expectedContract != null) {
         String expectedContractValue = expectedContract.value();
         String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContractAnnotation, null);
-        assertEquals(expectedContractValue, actualContractValue);
+        assertEquals(javaMethod.toString(), expectedContractValue, actualContractValue);
       }
+
     }
   }
 
   private void checkCompoundIds(Class<?> javaClass) throws IOException {
     String javaClassName = javaClass.getCanonicalName();
-    System.out.println(javaClassName);
     PsiClass psiClass = myJavaPsiFacade.findClass(javaClassName, GlobalSearchScope.moduleWithLibrariesScope(myModule));
     assertNotNull(psiClass);
 
     for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
-      System.out.println(javaMethod.getName());
       Method method = new Method(Type.getType(javaClass).getInternalName(), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
       boolean noKey = javaMethod.getAnnotation(ExpectNoPsiKey.class) != null;
       PsiMethod psiMethod = psiClass.findMethodsByName(javaMethod.getName(), false)[0];
@@ -266,13 +145,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       assertNotNull(psiKey);
     }
 
-    int[] asmKey = myBytecodeAnalysisConverter.mkCompoundKey(new Key(method, direction));
-
-    System.out.println(Arrays.toString(asmKey));
-    System.out.println(Arrays.toString(psiKey));
-
-    System.out.println(myBytecodeAnalysisConverter.debugCompoundKey(asmKey));
-    System.out.println(myBytecodeAnalysisConverter.debugCompoundKey(psiKey));
+    int[] asmKey = myBytecodeAnalysisConverter.mkCompoundKey(new Key(method, direction, true));
 
     Assert.assertArrayEquals(asmKey, psiKey);
   }

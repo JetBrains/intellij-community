@@ -1,0 +1,17 @@
+<root>
+  <item name="org.apache.velocity.exception.MethodInvocationException java.lang.String getMessage()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(java.lang.String, org.apache.velocity.util.introspection.Info) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(java.lang.String, org.apache.velocity.util.introspection.Info, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(org.apache.velocity.exception.VelocityException, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.exception.ParseErrorException ParseErrorException(org.apache.velocity.runtime.parser.ParseException, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

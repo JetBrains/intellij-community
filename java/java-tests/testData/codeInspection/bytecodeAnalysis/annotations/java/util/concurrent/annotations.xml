@@ -1,0 +1,5 @@
+<root>
+  <item name="java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

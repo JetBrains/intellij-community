@@ -60,8 +60,19 @@ public class Test01 {
     return "s";
   }
 
+  @ExpectContract("!null->!null;null->null")
+  static String idString(String s) {
+    return s;
+  }
+
   @ExpectNotNull
   public Test01 getThis() {
     return this;
   }
+
+  @ExpectNotNull
+  protected Test01 createRoot() {
+    return new Test01();
+  }
+
 }

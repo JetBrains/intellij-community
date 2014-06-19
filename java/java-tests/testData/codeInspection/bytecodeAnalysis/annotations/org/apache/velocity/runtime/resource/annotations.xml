@@ -1,0 +1,5 @@
+<root>
+  <item name="org.apache.velocity.runtime.resource.ResourceManagerImpl org.apache.velocity.runtime.resource.Resource refreshResource(org.apache.velocity.runtime.resource.Resource, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>

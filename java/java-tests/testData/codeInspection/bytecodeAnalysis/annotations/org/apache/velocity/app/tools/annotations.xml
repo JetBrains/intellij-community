@@ -1,0 +1,57 @@
+<root>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.Object isNull(java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String formatArray(java.lang.Object, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null;_,_,null-&gt;!null;_,null,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
+    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String formatVector(java.util.List, java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String formatVector(java.util.List, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null;_,_,null-&gt;!null;_,null,_-&gt;!null&quot;"/>
+    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String limitLen(int, java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String limitLen(int, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,!null,_-&gt;!null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String makeAlternator(java.lang.String, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null;_,_,null-&gt;!null;_,null,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
+    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String makeAlternator(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_,_-&gt;!null;_,!null,_,_-&gt;!null;_,_,!null,_-&gt;!null;_,_,_,!null-&gt;!null;_,_,_,null-&gt;!null;_,_,null,_-&gt;!null;_,null,_,_-&gt;!null;null,_,_,_-&gt;!null&quot;"/>
+    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String makeAlternator(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_,_,_-&gt;!null;_,!null,_,_,_-&gt;!null;_,_,!null,_,_-&gt;!null;_,_,_,!null,_-&gt;!null;_,_,_,_,!null-&gt;!null;_,_,_,_,null-&gt;!null;_,_,_,null,_-&gt;!null;_,_,null,_,_-&gt;!null;_,null,_,_,_-&gt;!null;null,_,_,_,_-&gt;!null&quot;"/>
+    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter java.lang.String makeAutoAlternator(java.lang.String, java.lang.String, java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null;_,_,null-&gt;!null;_,null,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
+    </annotation>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.app.tools.VelocityFormatter.VelocityAlternator java.lang.String alternate()">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+</root>
