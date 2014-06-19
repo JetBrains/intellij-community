@@ -19,11 +19,8 @@
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="duplicates" />
-    <orderEntry type="module" module-name="CSS" />
     <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="css-api" />
   </component>
   <component name="copyright">
     <Base>

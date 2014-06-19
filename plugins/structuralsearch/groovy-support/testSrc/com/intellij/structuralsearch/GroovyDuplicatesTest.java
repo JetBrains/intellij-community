@@ -3,14 +3,18 @@ package com.intellij.structuralsearch;
 import com.intellij.dupLocator.DefaultDuplocatorState;
 import com.intellij.dupLocator.DuplicatesTestCase;
 import com.intellij.dupLocator.util.DuplocatorUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
+import java.util.Calendar;
+
 /**
  * @author Eugene.Kudelevsky
  */
+@Bombed(day = 23, month = Calendar.JUNE)
 public class GroovyDuplicatesTest extends DuplicatesTestCase {
 
   @NotNull

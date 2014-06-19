@@ -1,9 +1,0 @@
-<idea-plugin url="http://www.jetbrains.com/idea">
-  <extensions defaultExtensionNs="com.intellij">
-    <tokenindex.tokenizer language="JavaScript" implementationClass="com.intellij.tokenindex.JavaScriptTokenizer"/>
-    <structuralsearch.profile implementation="com.intellij.structuralsearch.JSStructuralSearchProfile"/>
-
-    <!--testing mode-->
-    <structuralsearch.profile implementation="com.intellij.structuralsearch.extenders.JSStructuralSearchProfile2" order="last"/>
-  </extensions>
-</idea-plugin>

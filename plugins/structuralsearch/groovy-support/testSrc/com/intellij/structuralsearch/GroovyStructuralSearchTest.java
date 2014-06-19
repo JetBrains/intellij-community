@@ -1,13 +1,16 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.idea.Bombed;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
+@Bombed(day = 23, month = Calendar.JUNE)
 public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
   public void test1() throws Exception {
