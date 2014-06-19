@@ -25,27 +25,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author lambdamix
@@ -53,7 +48,14 @@ import java.util.List;
 public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis");
-  private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(0);
+  private static final CharTableImpl charTable = new CharTableImpl();
+  private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
+    }
+  };
+  private final PsiAnnotation notNullAnnotation;
 
   private final PsiManager myPsiManager;
 
@@ -77,12 +79,14 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         unloadAnnotations();
       }
     });
+    notNullAnnotation = createAnnotationFromText("@org.jetbrains.annotations.NotNull");
   }
 
   private void loadAnnotations() {
-    Annotations parameterAnnotations = loadParameterAnnotations();
-    Annotations contractAnnotations = loadContractAnnotations();
-    myAnnotations = new Annotations(contractAnnotations.outs, parameterAnnotations.params, contractAnnotations.contracts);
+    Annotations annotations = new Annotations();
+    loadParameterAnnotations(annotations);
+    loadContractAnnotations(annotations);
+    myAnnotations = annotations;
   }
 
   private void unloadAnnotations() {
@@ -90,7 +94,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     LOG.info("unloaded");
   }
 
-  private Annotations loadParameterAnnotations() {
+  private void loadParameterAnnotations(Annotations annotations) {
     LOG.info("initializing parameter annotations");
     final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.NotNull, Value.Top));
     FileBasedIndex.getInstance().processValues(
@@ -106,10 +110,10 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     LOG.info("parameter equations are constructed");
     TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("parameter equations are solved");
-    return BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
+    BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, annotations);
   }
 
-  private Annotations loadContractAnnotations() {
+  private void loadContractAnnotations(Annotations annotations) {
     LOG.info("initializing contract annotations");
     final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.Bot, Value.Top));
     FileBasedIndex.getInstance().processValues(
@@ -125,61 +129,98 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     LOG.info("contract equations are constructed");
     TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("contract equations are solved");
-    return BytecodeAnalysisConverter.getInstance().makeAnnotations(solutions);
+    BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, annotations);
   }
 
-
-  // TODO: what follows was just copied/modified from BaseExternalAnnotationsManager
   @Nullable
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    List<AnnotationData> list = collectInferredAnnotations(listOwner);
-    AnnotationData data = findByFQN(list, annotationFQN);
-    if (data == null) {
+    if (annotationFQN.equals("org.jetbrains.annotations.NotNull")) {
+      return findNotNullAnnotation(listOwner);
+    }
+    else if (annotationFQN.equals("org.jetbrains.annotations.Contract")) {
+      return findContractAnnotation(listOwner);
+    }
+    else {
       return null;
     }
-    return data.getAnnotation(this);
   }
 
   @Nullable
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    List<AnnotationData> result = collectInferredAnnotations(listOwner);
-    if (result == null || result.isEmpty()) return null;
-    return ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
-      @Override
-      public PsiAnnotation fun(AnnotationData data) {
-        return data.getAnnotation(ProjectBytecodeAnalysis.this);
-      }
-    });
-  }
-
-  @Nullable
-  private static AnnotationData findByFQN(@NotNull List<AnnotationData> map, @NotNull final String annotationFQN) {
-    return ContainerUtil.find(map, new Condition<AnnotationData>() {
-      @Override
-      public boolean value(AnnotationData data) {
-        return data.annotationClassFqName.equals(annotationFQN);
-      }
-    });
+    return collectInferredAnnotations(listOwner);
   }
 
   // TODO the best way to synchronize?
-  private synchronized List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
+  @Nullable
+  private synchronized PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     if (myAnnotations == null) {
       loadAnnotations();
     }
     try {
       int key = getKey(listOwner);
       if (key == -1) {
-        return NO_DATA;
+        return null;
       }
-      SmartList<AnnotationData> result = new SmartList<AnnotationData>();
-      ContainerUtil.addIfNotNull(result, myAnnotations.contracts.get(key));
-      ContainerUtil.addIfNotNull(result, myAnnotations.outs.get(key));
-      ContainerUtil.addIfNotNull(result, myAnnotations.params.get(key));
-      return result;
+      boolean notNull = myAnnotations.notNulls.contains(key);
+      String contractValue = myAnnotations.contracts.get(key);
+
+      if (notNull && contractValue != null) {
+        return new PsiAnnotation[]{
+          notNullAnnotation,
+          createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")")
+        };
+      }
+      else if (notNull) {
+        return new PsiAnnotation[]{
+          notNullAnnotation
+        };
+      }
+      else if (contractValue != null) {
+        return new PsiAnnotation[]{
+          createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")")
+        };
+      }
+      else {
+        return null;
+      }
     }
     catch (IOException e) {
-      return NO_DATA;
+      return null;
+    }
+  }
+
+  @Nullable
+  private synchronized PsiAnnotation findNotNullAnnotation(PsiModifierListOwner listOwner) {
+    if (myAnnotations == null) {
+      loadAnnotations();
+    }
+    try {
+      int key = getKey(listOwner);
+      if (key == -1) {
+        return null;
+      }
+      return myAnnotations.notNulls.contains(key) ? notNullAnnotation : null;
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  private synchronized PsiAnnotation findContractAnnotation(PsiModifierListOwner listOwner) {
+    if (myAnnotations == null) {
+      loadAnnotations();
+    }
+    try {
+      int key = getKey(listOwner);
+      if (key == -1) {
+        return null;
+      }
+      String contractValue = myAnnotations.contracts.get(key);
+      return contractValue != null ? createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")") : null;
+    }
+    catch (IOException e) {
+      return null;
     }
   }
 
@@ -200,76 +241,21 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     }
   }
 
-  // interner for storing annotation FQN
-  private final CharTableImpl charTable = new CharTableImpl();
-  private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
-    }
-  };
   @NotNull
   PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
-    // synchronize during interning in charTable
     synchronized (charTable) {
       final DummyHolder holder = DummyHolderFactory.createHolder(myPsiManager,
                                                                  new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null,
                                                                  charTable);
       final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-      if (!(element instanceof PsiAnnotation)) {
-        throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
-      }
-      return (PsiAnnotation)element;
+      return (PsiAnnotation) element;
     }
   }
 }
 
 class Annotations {
-  final TIntObjectHashMap<AnnotationData> outs;
-  final TIntObjectHashMap<AnnotationData> params;
-  final TIntObjectHashMap<AnnotationData> contracts;
-
-  Annotations(TIntObjectHashMap<AnnotationData> outs, TIntObjectHashMap<AnnotationData> params, TIntObjectHashMap<AnnotationData> contracts) {
-    this.outs = outs;
-    this.params = params;
-    this.contracts = contracts;
-  }
-}
-
-class AnnotationData {
-  @NotNull final String annotationClassFqName;
-  @NotNull final String annotationParameters;
-  private volatile PsiAnnotation annotation;
-
-  AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationParameters) {
-    this.annotationClassFqName = annotationClassFqName;
-    this.annotationParameters = annotationParameters;
-  }
-
-  @NotNull
-  PsiAnnotation getAnnotation(@NotNull ProjectBytecodeAnalysis context) {
-    PsiAnnotation a = annotation;
-    if (a == null) {
-      annotation = a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
-    }
-    return a;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    AnnotationData data = (AnnotationData)o;
-
-    return annotationClassFqName.equals(data.annotationClassFqName) && annotationParameters.equals(data.annotationParameters);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = annotationClassFqName.hashCode();
-    result = 31 * result + annotationParameters.hashCode();
-    return result;
-  }
-
+  // @NotNull keys
+  final TIntHashSet notNulls = new TIntHashSet();
+  // @Contracts
+  final TIntObjectHashMap<String> contracts = new TIntObjectHashMap<String>();
 }

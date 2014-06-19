@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.io.*;
+import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
@@ -325,14 +326,13 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return false;
   }
 
-  // FIXME - how to handle errors here? - this is called after indexing is complete
-  public Annotations makeAnnotations(TIntObjectHashMap<Value> internalIdSolutions) {
-    final TIntObjectHashMap<AnnotationData> outs = new TIntObjectHashMap<AnnotationData>();
-    final TIntObjectHashMap<AnnotationData> params = new TIntObjectHashMap<AnnotationData>();
-    final TIntObjectHashMap<AnnotationData> contracts = new TIntObjectHashMap<AnnotationData>();
+  public void addAnnotations(TIntObjectHashMap<Value> internalIdSolutions, Annotations annotations) {
 
     TIntObjectHashMap<List<String>> contractClauses = new TIntObjectHashMap<List<String>>();
     TIntObjectIterator<Value> solutionsIterator = internalIdSolutions.iterator();
+
+    TIntHashSet notNulls = annotations.notNulls;
+    TIntObjectHashMap<String> contracts = annotations.contracts;
 
     for (int i = internalIdSolutions.size(); i-- > 0;) {
       solutionsIterator.advance();
@@ -351,19 +351,14 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
       if (compoundKey != null) {
         Direction direction = extractDirection(compoundKey);
-
-        if (direction instanceof In && value == Value.NotNull) {
-          params.put(key, new AnnotationData("org.jetbrains.annotations.NotNull", ""));
-        }
-        else if (direction instanceof Out && value == Value.NotNull) {
-          outs.put(key, new AnnotationData("org.jetbrains.annotations.NotNull", ""));
+        if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
+          notNulls.add(key);
         }
         else if (direction instanceof InOut) {
           compoundKey[0] = 0;
           compoundKey[1] = 0;
           compoundKey[2] = 0;
           try {
-            // TODO - sort (normalize) contract clauses
             int baseKey = myCompoundKeyEnumerator.enumerate(compoundKey);
             List<String> clauses = contractClauses.get(baseKey);
             if (clauses == null) {
@@ -388,14 +383,11 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       Collections.sort(clauses);
 
       //if (!outs.contains(key)) {
-        StringBuilder sb = new StringBuilder("\"");
-        StringUtil.join(clauses, ";", sb);
-        sb.append('"');
-        contracts.put(key, new AnnotationData("org.jetbrains.annotations.Contract", sb.toString()));
-      //}
+      StringBuilder sb = new StringBuilder("\"");
+      StringUtil.join(clauses, ";", sb);
+      sb.append('"');
+      contracts.put(key, sb.toString().intern());
     }
-
-    return new Annotations(outs, params, contracts);
   }
 
   static String contractValueString(Value v) {
@@ -425,37 +417,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return sb.toString();
   }
 
-  public String debugCompoundKey(@NotNull int[] key) throws IOException {
-    StringBuilder sb = new StringBuilder();
-    sb.append(key[0]);
-    sb.append(", ");
-    sb.append(key[1]);
-    sb.append(", ");
-    sb.append(key[2]);
-    sb.append(", ");
-    sb.append(myPackageEnumerator.valueOf(key[3]));
-    sb.append(", ");
-    sb.append(myNamesEnumerator.valueOf(key[4]));
-    sb.append(", ");
-    sb.append(myPackageEnumerator.valueOf(key[5]));
-    sb.append(", ");
-    sb.append(myNamesEnumerator.valueOf(key[6]));
-    sb.append(", ");
-    sb.append(myNamesEnumerator.valueOf(key[7]));
-    sb.append(", ");
-    sb.append(key[8]);
-    sb.append(", ");
-
-    for (int i = 0; i < key[8]; i++) {
-      sb.append(myPackageEnumerator.valueOf(key[9 + 2*i]));
-      sb.append(", ");
-      sb.append(myNamesEnumerator.valueOf(key[9 + 2*i + 1]));
-      sb.append(", ");
-
-    }
-    return sb.toString();
-  }
-
   public int getVersion() {
     return version;
   }
@@ -475,7 +436,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       int[] value = new int[DataInputOutputUtil.readINT(in)];
       for (int i = 0; i < value.length; i++) {
         value[i] = DataInputOutputUtil.readINT(in);
-        
       }
       return value;
     }
