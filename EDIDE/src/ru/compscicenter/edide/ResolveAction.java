@@ -24,23 +24,12 @@ public class ResolveAction extends AnAction {
         if (vfOpenedFile != null) {
             int currentTaskNum = TaskManager.getInstance().getTaskNumForFile(vfOpenedFile.getName());
             TaskFile tf = TaskManager.getInstance().getTaskFile(currentTaskNum, vfOpenedFile.getName());
-            int lastResolvedStartOffset;
             try {
-                lastResolvedStartOffset = tf.resolveCurrentHighlighter(editor, pos);
+                tf.resolveCurrentHighlighter(editor, pos);
             }
             catch(IllegalArgumentException ex) {
                 return;
             }
-            FileDocumentManager.getInstance().saveAllDocuments();
-            FileDocumentManager.getInstance().reloadFiles(vfOpenedFile);
-            int oldDocumentLength = tf.getLastLength();
-            int newDocumentLength = editor.getDocument().getTextLength();
-            int delta = newDocumentLength - oldDocumentLength;
-            tf.incrementAllTaskWindows(editor, lastResolvedStartOffset, delta);
-            Log.print(oldDocumentLength + "\n");
-            Log.print(newDocumentLength + "\n");
-            Log.flush();
-            tf.drawFirstUnresolved(editor);
         }
     }
 }

@@ -3,10 +3,7 @@ package ru.compscicenter.edide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.ui.JBColor;
 
 /**
@@ -16,26 +13,46 @@ import com.intellij.ui.JBColor;
  * Frame with task implementation
  */
 public class TaskWindow {
-    private final int myLine;
+    private int myLine;
     private int myStartOffsetInLine;
+    private int myOffsetInLine;
     private final String myText;
     private final String myDocsFile;
     private boolean myResolveStatus;
-    private RangeHighlighter myRangeHighlighter;
+    private int myRangeHighlighterStartOffset;
+    private int myRangeHighlighterEndOffset;
+
+    public int getOffsetInLine() {
+        return myOffsetInLine;
+    }
 
     public TaskWindow(int line, int startOffset, String text,
                       String docsFile) {
         myLine = line - 1;
         myStartOffsetInLine = startOffset;
+        myOffsetInLine = text.length();
         myText = text;
         myDocsFile = docsFile;
         myResolveStatus = false;
-        myRangeHighlighter = null;
+        myRangeHighlighterStartOffset = -1;
+        myRangeHighlighterEndOffset = -1;
+    }
+    public int getRealStartOffset(Editor editor) {
+        return editor.getDocument().getLineStartOffset(myLine) + myStartOffsetInLine;
+    }
+    public int getRangeHighlighterStartOffset() {
+        return myRangeHighlighterStartOffset;
     }
 
-    public RangeHighlighter getRangeHighlighter() {
-        return myRangeHighlighter;
+    public int getRangeHighlighterEndOffset() {
+        return myRangeHighlighterEndOffset;
     }
+
+    public void setOffsets(int startOffset, int endOffset) {
+        myRangeHighlighterStartOffset = startOffset;
+        myRangeHighlighterEndOffset = endOffset;
+    }
+
     public boolean getResolveStatus() {
         return myResolveStatus;
     }
@@ -60,21 +77,35 @@ public class TaskWindow {
         return myDocsFile;
     }
 
-    public void draw(final Editor e) {
-        JBColor color = JBColor.YELLOW;
+    public void draw(final Editor e, boolean drawSelection) {
+        JBColor color = JBColor.RED;
         if (myResolveStatus) {
             color = JBColor.GREEN;
         }
         final TextAttributes ta = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
         ta.setEffectColor(color);
         final int startOffset = e.getDocument().getLineStartOffset(myLine) + myStartOffsetInLine;
-        e.getCaretModel().moveToOffset(startOffset);
-        final RangeHighlighter rh;
-        myRangeHighlighter = e.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myText.length(), HighlighterLayer.LAST + 1, ta, HighlighterTargetArea.EXACT_RANGE);
-        myRangeHighlighter.setGreedyToLeft(true);
-        myRangeHighlighter.setGreedyToRight(true);
+
+        RangeHighlighter rh = e.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myOffsetInLine, HighlighterLayer.LAST + 1, ta, HighlighterTargetArea.EXACT_RANGE);
+
+        setOffsets(rh.getStartOffset(), rh.getEndOffset());
+        if (drawSelection) {
+            e.getSelectionModel().setSelection(startOffset, startOffset + myOffsetInLine);
+            e.getCaretModel().moveToOffset(startOffset);
+        }
+
+        rh.setGreedyToLeft(true);
+        rh.setGreedyToRight(true);
     }
+
+    public void setOffsetInLine(int offsetInLine) {
+        myOffsetInLine = offsetInLine;
+    }
+
     public void incrementStartOffset(int delta) {
         myStartOffsetInLine += delta;
+    }
+    public  void incrementLine(int delta) {
+        myLine += delta;
     }
 }

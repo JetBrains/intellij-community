@@ -1,14 +1,15 @@
 package ru.compscicenter.edide;
 
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,24 @@ import static com.intellij.ui.JBColor.*;
 /**
  * User: lia
  */
+
+class MyMouseListener extends EditorMouseAdapter {
+   private final TaskFile myTaskFile;
+
+    MyMouseListener(TaskFile taskFile) {
+        myTaskFile = taskFile;
+    }
+
+    @Override
+   public void mouseClicked(EditorMouseEvent e){
+        Editor editor = e.getEditor();
+        LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+        editor.getMarkupModel().removeAllHighlighters();
+        myTaskFile.drawWindowByPos(editor, pos);
+        //myTaskFile.drawFirstUnresolved(editor, true);
+   }
+
+}
 class StudyEditorFactoryListener implements EditorFactoryListener {
 
     boolean fileChanged(VirtualFile file) throws IOException {
@@ -52,7 +71,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
   @Override
   public void editorCreated(@NotNull final EditorFactoryEvent event) {
-    ApplicationManager.getApplication().invokeLater(
+      ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
         public void run() {
@@ -61,18 +80,20 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
             public void run() {
               try {
                 final Editor editor = event.getEditor();
+
                 VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
                 if (vfOpenedFile != null) {
                   if (fileChanged(vfOpenedFile)) {
                     return;
                   }
-                  TaskManager taskManager = TaskManager.getInstance();
-                  int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
-                  TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
-                  editor.getMarkupModel().removeAllHighlighters();
-                  tf.drawFirstUnresolved(editor);
-                    RangeHighlighter[] rm = editor.getMarkupModel().getAllHighlighters();
-                    System.out.println("Smth");
+                    HintManager.getInstance().showInformationHint(editor, "Нажмите на любое окошко с заданием");
+                    TaskManager taskManager = TaskManager.getInstance();
+                   int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
+                   TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
+                    editor.addEditorMouseListener(new MyMouseListener(tf));
+                    editor.getMarkupModel().removeAllHighlighters();
+                    //tf.drawFirstUnresolved(editor, false);
+                    tf.drawAllWindows(editor);
                 }
               }
               catch (Exception e) {

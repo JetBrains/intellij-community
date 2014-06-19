@@ -31,8 +31,6 @@ public class DrawAllWindowsAction extends AnAction {
             editor.getMarkupModel().removeAllHighlighters();
             return;
         }
-        for (int i = 0; i < tw_num; i++) {
-            tf.getTaskWindowByIndex(i).draw(editor);
-        }
+        tf.drawAllWindows(editor);
     }
 }
