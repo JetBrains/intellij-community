@@ -154,6 +154,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   @Override
   protected final void doOKAction() {
+    if (!doFinishAction()) return;
+    super.doOKAction();
+  }
+
+  public boolean doFinishAction() {
     int idx = getCurrentStep();
     try {
       do {
@@ -162,7 +167,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
           step.updateStep();
         }
         if (!commitStepData(step)) {
-          return;
+          return false;
         }
         step.onStepLeaving();
         try {
@@ -170,18 +175,19 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
         }
         catch (CommitStepException e) {
           handleCommitException(e);
-          return;
+          return false;
         }
         if (!isLastStep(idx)) {
           idx = getNextStep(idx);
-        } else {
+        }
+        else {
           for (ModuleWizardStep wizardStep : mySteps) {
             try {
               wizardStep.onWizardFinished();
             }
             catch (CommitStepException e) {
               handleCommitException(e);
-              return;
+              return false;
             }
           }
           break;
@@ -192,7 +198,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       myCurrentStep = idx;
       updateStep();
     }
-    super.doOKAction();
+    return true;
   }
 
   private void handleCommitException(CommitStepException e) {
