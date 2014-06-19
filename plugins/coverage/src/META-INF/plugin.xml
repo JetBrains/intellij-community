@@ -4,7 +4,6 @@
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.ultimate</depends>
-  <depends optional="true" config-file="j2ee-plugin.xml">com.intellij.javaee</depends>
   <description>
       <![CDATA[
      This plugin supports gathering coverage information and presenting it right in

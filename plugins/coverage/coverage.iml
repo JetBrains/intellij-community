@@ -8,8 +8,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="coverage-common" exported="" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="execution-openapi" exported="" />
+    <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="idea" />
@@ -30,8 +30,6 @@
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="platform-ultimate" />
-    <orderEntry type="module" module-name="javaee-api" />
-    <orderEntry type="module" module-name="web-openapi" />
     <orderEntry type="library" name="JaCoCo" level="project" />
     <orderEntry type="module" module-name="coverage_rt" />
   </component>
