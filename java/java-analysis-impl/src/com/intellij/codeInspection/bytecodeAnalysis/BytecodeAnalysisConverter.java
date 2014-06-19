@@ -15,18 +15,17 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentEnumeratorDelegate;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.*;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +44,7 @@ import java.util.*;
 public class BytecodeAnalysisConverter implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter");
+  private static final String VERSION = "BytecodeAnalysisConverter.Enumerators";
 
   public static BytecodeAnalysisConverter getInstance() {
     return ApplicationManager.getApplication().getComponent(BytecodeAnalysisConverter.class);
@@ -53,24 +53,39 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   private PersistentStringEnumerator myPackageEnumerator;
   private PersistentStringEnumerator myNamesEnumerator;
   private PersistentEnumeratorDelegate<int[]> myCompoundKeyEnumerator;
+  private int version;
 
   @Override
   public void initComponent() {
+    version = PropertiesComponent.getInstance().getOrInitInt(VERSION, 0);
+    final File keysDir = new File(PathManager.getIndexRoot(), "bytecodekeys");
+    final File packageKeysFile = new File(keysDir, "packages");
+    final File namesFile = new File(keysDir, "names");
+    final File compoundKeysFile = new File(keysDir, "compound");
+
     try {
-      File keysDir = new File(PathManager.getIndexRoot(), "bytecodeKeys");
-      final File packageKeysFile = new File(keysDir, "packages");
-      final File namesFile = new File(keysDir, "names");
-      final File compoundKeysFile = new File(keysDir, "compound");
-      myPackageEnumerator = new PersistentStringEnumerator(packageKeysFile);
-      myNamesEnumerator = new PersistentStringEnumerator(namesFile);
-      myCompoundKeyEnumerator = new PersistentEnumeratorDelegate<int[]>(compoundKeysFile, new IntArrayKeyDescriptor(), 1024 * 4);
+      IOUtil.openCleanOrResetBroken(new ThrowableComputable<Void, IOException>() {
+        @Override
+        public Void compute() throws IOException {
+          myPackageEnumerator = new PersistentStringEnumerator(packageKeysFile);
+          myNamesEnumerator = new PersistentStringEnumerator(namesFile);
+          myCompoundKeyEnumerator = new PersistentEnumeratorDelegate<int[]>(compoundKeysFile, new IntArrayKeyDescriptor(), 1024 * 4);
+          return null;
+        }
+      }, new Runnable() {
+        @Override
+        public void run() {
+          LOG.error("Error during initialization of enumerators");
+          IOUtil.deleteAllFilesStartingWith(keysDir);
+          version ++;
+        }
+      });
     }
     catch (IOException e) {
-      // FIXME - what is a simple and idiomatic way to handle this??
-      // 1) "restart" enumerators
-      // 2) inform indexer to "rebuild" my indices
       LOG.error(e);
     }
+    // TODO: is it enough for rebuilding indices?
+    PropertiesComponent.getInstance().setValue(VERSION, String.valueOf(version));
   }
 
   @Override
@@ -81,7 +96,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       myCompoundKeyEnumerator.close();
     }
     catch (IOException e) {
-      // FIXME - what to do when there is an error during disposal of enumerator?
       LOG.error(e);
     }
   }
@@ -440,6 +454,10 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
     }
     return sb.toString();
+  }
+
+  public int getVersion() {
+    return version;
   }
 
   private static class IntArrayKeyDescriptor implements KeyDescriptor<int[]> {

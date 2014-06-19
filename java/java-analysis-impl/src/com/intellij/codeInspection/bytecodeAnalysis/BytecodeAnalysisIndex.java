@@ -78,7 +78,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
 
   @Override
   public int getVersion() {
-    return 0;
+    return BytecodeAnalysisConverter.getInstance().getVersion();
   }
 
   public static class EquationExternalizer implements DataExternalizer<Collection<IntIdEquation>> {
