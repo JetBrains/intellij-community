@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static java.util.Arrays.asList;
@@ -129,9 +130,9 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
   private static File prepare() throws IOException {
     final String homePath = PathManager.getHomePath();
-    assert homePath != null && new File(homePath).isDirectory() : "Invalid home path: '" + homePath + "'";
+    assert new File(homePath).isDirectory() : "Invalid home path: '" + homePath + "'";
     final String binPath = homePath + "/bin";
-    assert new File(binPath).isDirectory() : "Invalid bin/ path: '" + binPath + "'";
+    assert new File(binPath).isDirectory() : "Invalid bin path: '" + binPath + "'";
 
     String name = ApplicationNamesInfo.getInstance().getFullProductName();
     if (PlatformUtils.isIdeaCommunity()) name += " Community Edition";
@@ -166,7 +167,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     String execPath = binPath + '/' + productName + ".sh";
     if (new File(execPath).canExecute()) return execPath;
 
-    execPath = binPath + '/' + productName.toLowerCase() + ".sh";
+    execPath = binPath + '/' + productName.toLowerCase(Locale.US) + ".sh";
     if (new File(execPath).canExecute()) return execPath;
 
     return null;
