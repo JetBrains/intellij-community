@@ -757,6 +757,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   }
 
+  @NotNull
   @Override
   public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, @NotNull final SearchScope searchScope) {
     if (target instanceof PsiMethod) {

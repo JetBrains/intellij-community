@@ -25,8 +25,7 @@
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true">AntSupport</depends>
-  <depends optional="true">cucumber</depends>
-  <depends optional="true">ByteCodeViewer</depends>
+  <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
 
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
@@ -1508,10 +1507,6 @@
 
   <extensions defaultExtensionNs="com.intellij.debugger">
     <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="ByteCodeViewer">
-    <classSearcher implementation="org.jetbrains.plugins.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
   </extensions>
 
   <actions>

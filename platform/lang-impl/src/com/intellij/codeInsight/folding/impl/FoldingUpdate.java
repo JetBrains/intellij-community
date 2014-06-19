@@ -159,17 +159,24 @@ public class FoldingUpdate {
     final List<EditorWindow> injectedEditors = new ArrayList<EditorWindow>();
     final List<PsiFile> injectedFiles = new ArrayList<PsiFile>();
     final List<FoldingMap> maps = new ArrayList<FoldingMap>();
-    for (DocumentWindow injectedDocument : injectedDocuments) {
-      PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
-      if (injectedFile == null || !injectedFile.isValid() || !injectedDocument.isValid()) continue;
-      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
-      if (!(injectedEditor instanceof EditorWindow)) continue;
+    for (final DocumentWindow injectedDocument : injectedDocuments) {
+      if (!injectedDocument.isValid()) {
+        continue;
+      }
+      InjectedLanguageUtil.enumerate(injectedDocument, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        @Override
+        public void visit(@NotNull PsiFile injectedFile, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+          if (!injectedFile.isValid()) return;
+          Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+          if (!(injectedEditor instanceof EditorWindow)) return;
 
-      injectedEditors.add((EditorWindow)injectedEditor);
-      injectedFiles.add(injectedFile);
-      final FoldingMap map = new FoldingMap();
-      maps.add(map);
-      getFoldingsFor(injectedFile, injectedDocument, map, false);
+          injectedEditors.add((EditorWindow)injectedEditor);
+          injectedFiles.add(injectedFile);
+          final FoldingMap map = new FoldingMap();
+          maps.add(map);
+          getFoldingsFor(injectedFile, injectedDocument, map, false);
+        }
+      });
     }
 
     return new Runnable() {

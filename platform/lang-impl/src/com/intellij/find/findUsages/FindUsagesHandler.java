@@ -47,6 +47,7 @@ import java.util.Collections;
  */
 public abstract class FindUsagesHandler {
   // return this handler if you want to cancel the search
+  @NotNull
   public static final FindUsagesHandler NULL_HANDLER = new FindUsagesHandler(PsiUtilCore.NULL_PSI_ELEMENT){};
 
   private final PsiElement myPsiElement;
@@ -204,6 +205,7 @@ public abstract class FindUsagesHandler {
     return false;
   }
 
+  @NotNull
   public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     return ReferencesSearch.search(target, searchScope, false).findAll();
   }

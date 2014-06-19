@@ -15,11 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
@@ -43,14 +40,7 @@ public class FoldingExceptionTest extends LightCodeInsightTestCase {
   }
 
   private static void runFoldingPass() {
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
-    psiDocumentManager.commitAllDocuments();
-    PsiFile psiFile = psiDocumentManager.getPsiFile(myEditor.getDocument());
-    assertNotNull(psiFile);
-
-    CodeFoldingPassFactory factory = getProject().getComponent(CodeFoldingPassFactory.class);
-    TextEditorHighlightingPass highlightingPass = factory.createHighlightingPass(psiFile, myEditor);
-    highlightingPass.collectInformation(new MockProgressIndicator());
-    highlightingPass.doApplyInformationToEditor();
+    PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
+    EditorTestUtil.runTextEditorHighlightingPass(myEditor, CodeFoldingPassFactory.class);
   }
 }
