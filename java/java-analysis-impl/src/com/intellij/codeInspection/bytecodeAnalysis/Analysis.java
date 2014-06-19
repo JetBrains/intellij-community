@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
@@ -181,8 +182,8 @@ abstract class Analysis<Res> {
   final Res myIdentity;
 
   final Deque<PendingAction<Res>> pending = new LinkedList<PendingAction<Res>>();
-  final Map<Integer, List<State>> computed = new HashMap<Integer, List<State>>();
-  final Map<Integer, Res> results = new HashMap<Integer, Res>();
+  final TIntObjectHashMap<List<State>> computed = new TIntObjectHashMap<List<State>>();
+  final TIntObjectHashMap<Res> results = new TIntObjectHashMap<Res>();
   final Key aKey;
 
   Res earlyResult = null;
