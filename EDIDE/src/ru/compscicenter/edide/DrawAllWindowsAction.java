@@ -10,8 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * author: liana
  * data: 6/18/14.
+ * Action for drawing all task windows in task file.
+ * If there is some task window already drawn, action removes task windows.
  */
-public class DrawAllWindowsAction extends AnAction {
+class DrawAllWindowsAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getProject();
@@ -24,8 +26,13 @@ public class DrawAllWindowsAction extends AnAction {
             return;
         }
         VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        int num = tm.getTaskNumForFile(vfOpenedFile.getName());
-        TaskFile tf = tm.getTaskFile(num, vfOpenedFile.getName());
+        if (vfOpenedFile == null) {
+            return;
+        }
+
+        String fileName = vfOpenedFile.getName();
+        int num = tm.getTaskNumForFile(fileName);
+        TaskFile tf = tm.getTaskFile(num, fileName);
         int tw_num = tf.getTaskWindowNum();
         if (editor.getMarkupModel().getAllHighlighters().length >= tw_num) {
             editor.getMarkupModel().removeAllHighlighters();

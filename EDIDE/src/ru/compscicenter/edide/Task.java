@@ -42,7 +42,7 @@ class Task {
 
     public boolean contains(String filename) {
         for (TaskFile f : files) {
-            if (f.getName().equals(filename)) {
+            if (f.getMyName().equals(filename)) {
                 return true;
             }
         }
@@ -65,7 +65,7 @@ class Task {
 
     public TaskFile getTaskFileByName(String name) {
         for (TaskFile f : files) {
-            if (f.getName().equals(name)) {
+            if (f.getMyName().equals(name)) {
                 return f;
             }
         }

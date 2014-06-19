@@ -82,7 +82,7 @@ public class TaskManager {
   }
 
   public String getFileName(int taskIndex, int fileIndex) {
-    return tasks.get(taskIndex).getTaskFile(fileIndex).getName();
+    return tasks.get(taskIndex).getTaskFile(fileIndex).getMyName();
   }
 
   public String getTaskText(int index) {

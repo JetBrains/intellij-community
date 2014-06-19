@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.ui.JBColor;
 
 /**
  * User: lia
@@ -16,7 +15,6 @@ public class TaskWindow {
     private int myLine;
     private int myStartOffsetInLine;
     private int myOffsetInLine;
-    private final String myText;
     private final String myDocsFile;
     private boolean myResolveStatus;
     private int myRangeHighlighterStartOffset;
@@ -31,7 +29,6 @@ public class TaskWindow {
         myLine = line - 1;
         myStartOffsetInLine = startOffset;
         myOffsetInLine = text.length();
-        myText = text;
         myDocsFile = docsFile;
         myResolveStatus = false;
         myRangeHighlighterStartOffset = -1;
@@ -48,7 +45,7 @@ public class TaskWindow {
         return myRangeHighlighterEndOffset;
     }
 
-    public void setOffsets(int startOffset, int endOffset) {
+   void setOffsets(int startOffset, int endOffset) {
         myRangeHighlighterStartOffset = startOffset;
         myRangeHighlighterEndOffset = endOffset;
     }
@@ -67,10 +64,6 @@ public class TaskWindow {
 
     public int getStartOffset() {
         return myStartOffsetInLine;
-    }
-
-    public String getText() {
-        return myText;
     }
 
     public String getDocsFile() {

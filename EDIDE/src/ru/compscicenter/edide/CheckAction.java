@@ -7,7 +7,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -63,6 +68,11 @@ class CheckAction extends AnAction {
         }
         System.out.println(line);
       }
+//        BalloonBuilder builder =
+//                JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(testResult, MessageType.INFO, null);
+//        Balloon balloon = builder.createBalloon();
+//        RelativePoint where = new RelativePoint(e.getInputEvent().getComponent(), e.getInputEvent().getComponent().getLocationOnScreen());
+//        balloon.show(where, Balloon.Position.above);
       JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.INFORMATION_MESSAGE);
     }
     catch (ExecutionException e1) {

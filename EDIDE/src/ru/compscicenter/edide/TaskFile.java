@@ -13,25 +13,25 @@ import java.util.ArrayList;
  * User: lia
  * Date: 30.05.14
  * Time: 20:30
+ * Implementation of task file. Task file contains task windows.
  */
 
 public class TaskFile {
-    private final String name;
-    private final ArrayList<TaskWindow> taskWindows;
-    private int myLastLength;
+    private final String myName;
+    private final ArrayList<TaskWindow> myTaskWindows;
     private int myLastLineNum;
 
     public TaskFile(String name, int taskWindowsNum) {
-        this.name = name;
-        taskWindows = new ArrayList<TaskWindow>(taskWindowsNum);
+        myName = name;
+        myTaskWindows = new ArrayList<TaskWindow>(taskWindowsNum);
     }
 
     public void addTaskWindow(TaskWindow taskWindow) {
-        taskWindows.add(taskWindow);
+        myTaskWindows.add(taskWindow);
     }
 
-    public String getName() {
-        return name;
+    public String getMyName() {
+        return myName;
     }
 
 
@@ -39,37 +39,21 @@ public class TaskFile {
         int line = pos.line + 1;
         int offset = pos.column;
         int i = 0;
-        while (i < taskWindows.size() && (taskWindows.get(i).getLine() < line ||
-                (taskWindows.get(i).getLine() == line && taskWindows.get(i).getStartOffset() < offset))) {
+        while (i < myTaskWindows.size() && (myTaskWindows.get(i).getLine() < line ||
+                (myTaskWindows.get(i).getLine() == line && myTaskWindows.get(i).getStartOffset() < offset))) {
             i++;
         }
         if (i == 0) {
             return null;
         }
-        return taskWindows.get(i - 1);
+        return myTaskWindows.get(i - 1);
     }
 
     public int getTaskWindowNum() {
-        return taskWindows.size();
+        return myTaskWindows.size();
     }
 
-    public TaskWindow getTaskWindowByIndex(int index) {
-        return taskWindows.get(index);
-    }
-
-    public void drawFirstUnresolved(final Editor editor, boolean drawSelection) {
-        myLastLength = editor.getDocument().getTextLength();
-        myLastLineNum = editor.getDocument().getLineCount();
-        //TODO: maybe it's worth to find window with min startOffset
-        for (TaskWindow tw : taskWindows) {
-            if (!tw.getResolveStatus()) {
-                tw.draw(editor, drawSelection);
-                return;
-            }
-        }
-    }
-
-    public void resolveCurrentHighlighter(final Editor editor, final LogicalPosition pos) {
+    public void resolveCurrentHighlighter(final Editor editor) {
         RangeHighlighter[] rm = editor.getMarkupModel().getAllHighlighters();
         int highlighterStartOffset = -1;
         int highlighterEndOffset = -1;
@@ -86,7 +70,7 @@ public class TaskFile {
         }
         VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
         boolean toBeDrawn = false;
-        for (TaskWindow tw : taskWindows) {
+        for (TaskWindow tw : myTaskWindows) {
             if (toBeDrawn) {
                 if (tw.getResolveStatus()) {
                     return;
@@ -97,7 +81,6 @@ public class TaskFile {
             int startOffset = tw.getRangeHighlighterStartOffset();
             int endOffset = tw.getRangeHighlighterEndOffset();
             if (startOffset != -1 && endOffset != -1) {
-                //TODO:писать можно не только вправо
                 if (startOffset == highlighterStartOffset) {
                     tw.setResolved();
                     int newLineNum = editor.getDocument().getLineCount();
@@ -106,14 +89,13 @@ public class TaskFile {
                     if (newLineNum != myLastLineNum) {
                         int deltaLines = newLineNum - myLastLineNum;
                         myLastLineNum = newLineNum;
-                        incrementAllLines(editor, highlighterStartLine - deltaLines, deltaLines);
+                        incrementAllLines(highlighterStartLine - deltaLines, deltaLines);
                         tw.incrementLine(-deltaLines);
                         incrementAllInLine(editor, highlighterEndLine, endOffset);
                     } else {
                         int delta = highlighterEndOffset - endOffset;
-                        incrementAllInLineAfterOffset(editor, highlighterEndLine, tw.getStartOffset(), delta);
+                        incrementAllInLineAfterOffset(highlighterEndLine, tw.getStartOffset(), delta);
                     }
-                    //TODO:update tw end offset
                     tw.setOffsetInLine(highlighterEndOffset - highlighterStartOffset);
                     toBeDrawn = true;
                     FileDocumentManager.getInstance().saveAllDocuments();
@@ -123,8 +105,8 @@ public class TaskFile {
         }
     }
 
-    private void incrementAllInLineAfterOffset(Editor editor, int highlighterEndLine, int offset, int delta) {
-        for (TaskWindow tw : taskWindows) {
+    private void incrementAllInLineAfterOffset(int highlighterEndLine, int offset, int delta) {
+        for (TaskWindow tw : myTaskWindows) {
             if (tw.getLine() == highlighterEndLine) {
                 if (tw.getStartOffset() > offset) {
                     tw.incrementStartOffset(delta);
@@ -135,7 +117,7 @@ public class TaskFile {
 
     private void incrementAllInLine(Editor editor, int highlighterLine, int endOffset) {
         int delta = endOffset - editor.getDocument().getLineStartOffset(highlighterLine);
-        for (TaskWindow tw : taskWindows) {
+        for (TaskWindow tw : myTaskWindows) {
             if (tw.getLine() == highlighterLine) {
                 tw.incrementStartOffset(delta);
             }
@@ -154,8 +136,8 @@ public class TaskFile {
         return i - 1;
     }
 
-    private void incrementAllLines(Editor editor, int highlighterLine, int delta) {
-        for (TaskWindow tw : taskWindows) {
+    private void incrementAllLines(int highlighterLine, int delta) {
+        for (TaskWindow tw : myTaskWindows) {
             if (tw.getLine() >= highlighterLine) {
                 tw.incrementLine(delta);
             }
@@ -163,16 +145,16 @@ public class TaskFile {
     }
 
     public void drawAllWindows(Editor editor) {
-        for (TaskWindow tw:taskWindows){
+        for (TaskWindow tw: myTaskWindows){
             tw.draw(editor, false);
         }
     }
 
-    public TaskWindow getTaskWindowByPos(Editor editor, LogicalPosition pos) {
+    TaskWindow getTaskWindowByPos(Editor editor, LogicalPosition pos) {
         int line = pos.line;
         int column = pos.column;
         int realOffset = editor.getDocument().getLineStartOffset(line) + column;
-        for (TaskWindow tw:taskWindows) {
+        for (TaskWindow tw: myTaskWindows) {
             if (line == tw.getLine()) {
                 int twStartOffset = tw.getRealStartOffset(editor);
                 int twEndOffset = twStartOffset + tw.getOffsetInLine();

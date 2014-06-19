@@ -6,47 +6,44 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 
-import java.awt.*;
 import java.io.*;
 import java.util.Arrays;
-
-import static com.intellij.openapi.editor.markup.EffectType.*;
-import static com.intellij.ui.JBColor.*;
 
 
 /**
  * User: lia
  */
 
-class MyMouseListener extends EditorMouseAdapter {
-   private final TaskFile myTaskFile;
 
-    MyMouseListener(TaskFile taskFile) {
-        myTaskFile = taskFile;
-    }
-
-    @Override
-   public void mouseClicked(EditorMouseEvent e){
-        Editor editor = e.getEditor();
-        LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-        editor.getMarkupModel().removeAllHighlighters();
-        myTaskFile.drawWindowByPos(editor, pos);
-   }
-
-}
 class StudyEditorFactoryListener implements EditorFactoryListener {
+
+    class MyMouseListener extends EditorMouseAdapter {
+        private final TaskFile myTaskFile;
+
+        MyMouseListener(TaskFile taskFile) {
+            myTaskFile = taskFile;
+        }
+
+        @Override
+        public void mouseClicked(EditorMouseEvent e){
+            Editor editor = e.getEditor();
+            LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+            editor.getMarkupModel().removeAllHighlighters();
+            myTaskFile.drawWindowByPos(editor, pos);
+        }
+
+    }
 
     boolean fileChanged(VirtualFile file) throws IOException {
     File usual_file = new File(file.getPath());
@@ -91,7 +88,6 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                    TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
                     editor.addEditorMouseListener(new MyMouseListener(tf));
                     editor.getMarkupModel().removeAllHighlighters();
-                    //tf.drawFirstUnresolved(editor, false);
                     tf.drawAllWindows(editor);
                 }
               }
