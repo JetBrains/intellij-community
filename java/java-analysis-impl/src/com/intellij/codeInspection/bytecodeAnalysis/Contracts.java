@@ -36,13 +36,11 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
   private final InOutInterpreter interpreter;
   private final Value inValue;
-  private boolean  nullAnalysis;
 
   protected InOutAnalysis(RichControlFlow richControlFlow, Direction direction, TIntHashSet resultOrigins, boolean stable) {
     super(richControlFlow, direction, stable);
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof InOut ? ((InOut)direction).inValue : null;
-    nullAnalysis = (direction instanceof InOut) && (((InOut)direction).inValue) == Value.Null;
   }
 
   @Override
@@ -65,8 +63,10 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
 
   @Override
   boolean isEarlyResult(Result<Key, Value> res) {
-    Value value = res instanceof Final ? ((Final<?, Value>)res).value : ((Pending<?, Value>)res).infinum;
-    return value == Value.Top;
+    if (res instanceof Final) {
+      return ((Final<?, Value>)res).value == Value.Top;
+    }
+    return false;
   }
 
   @Override
@@ -126,9 +126,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
         }
         else if (stackTop instanceof CallResultValue) {
           Set<Key> keys = ((CallResultValue) stackTop).inters;
-          Set<Set<Key>> components = new HashSet<Set<Key>>();
-          components.add(keys);
-          results.put(stateIndex, new Pending<Key, Value>(Value.Bot, false, components));
+          results.put(stateIndex, new Pending<Key, Value>(Collections.singleton(new Product<Key, Value>(Value.Top, keys))));
           computed.put(insnIndex, append(computed.get(insnIndex), state));
         }
         else {

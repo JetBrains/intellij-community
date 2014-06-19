@@ -91,19 +91,17 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
         IntIdResult rhs = equation.rhs;
         if (rhs instanceof IntIdFinal) {
           IntIdFinal finalResult = (IntIdFinal)rhs;
-          out.writeBoolean(true);
+          out.writeBoolean(true); // final flag
           DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
         } else {
           IntIdPending pendResult = (IntIdPending)rhs;
-          out.writeBoolean(false);
-          DataInputOutputUtil.writeINT(out, pendResult.infinum.ordinal());
-          out.writeBoolean(pendResult.rigid);
+          out.writeBoolean(false); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
           for (IntIdComponent component : pendResult.delta) {
+            DataInputOutputUtil.writeINT(out, component.value.ordinal());
             int[] ids = component.ids;
             DataInputOutputUtil.writeINT(out, ids.length);
-
             for (int id : ids) {
               out.writeInt(id);
             }
@@ -120,27 +118,27 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
 
       for (int x = 0; x < size; x++) {
         int equationId = in.readInt();
-        boolean isFinal = in.readBoolean();
+        boolean isFinal = in.readBoolean(); // flag
         if (isFinal) {
           int ordinal = DataInputOutputUtil.readINT(in);
           Value value = Value.values()[ordinal];
           result.add(new IntIdEquation(equationId, new IntIdFinal(value)));
         } else {
-          int ordinal = DataInputOutputUtil.readINT(in);
-          Value value = Value.values()[ordinal];
-          boolean rigid = in.readBoolean();
-          int deltaLength = DataInputOutputUtil.readINT(in);
-          IntIdComponent[] components = new IntIdComponent[deltaLength];
 
-          for (int i = 0; i < deltaLength; i++) {
+          int sumLength = DataInputOutputUtil.readINT(in);
+          IntIdComponent[] components = new IntIdComponent[sumLength];
+
+          for (int i = 0; i < sumLength; i++) {
+            int ordinal = DataInputOutputUtil.readINT(in);
+            Value value = Value.values()[ordinal];
             int componentSize = DataInputOutputUtil.readINT(in);
             int[] ids = new int[componentSize];
             for (int j = 0; j < componentSize; j++) {
               ids[j] = in.readInt();
             }
-            components[i] = new IntIdComponent(ids);
+            components[i] = new IntIdComponent(value, ids);
           }
-          result.add(new IntIdEquation(equationId, new IntIdPending(value, rigid, components)));
+          result.add(new IntIdEquation(equationId, new IntIdPending(components)));
         }
       }
 

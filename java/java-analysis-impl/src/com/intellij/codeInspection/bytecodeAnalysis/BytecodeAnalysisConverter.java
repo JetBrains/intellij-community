@@ -99,13 +99,13 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       result = new IntIdFinal(((Final<Key, Value>)rhs).value);
     } else {
       Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
-      Set<Set<Key>> deltaOrig = pending.delta;
-      IntIdComponent[] components = new IntIdComponent[deltaOrig.size()];
+      Set<Product<Key, Value>> sumOrigin = pending.sum;
+      IntIdComponent[] components = new IntIdComponent[sumOrigin.size()];
       int componentI = 0;
-      for (Set<Key> keyComponent : deltaOrig) {
-        int[] ids = new int[keyComponent.size()];
+      for (Product<Key, Value> prod : sumOrigin) {
+        int[] ids = new int[prod.ids.size()];
         int idI = 0;
-        for (Key id : keyComponent) {
+        for (Key id : prod.ids) {
           int[] compoundKey = mkCompoundKey(id);
           int rawId = myCompoundKeyEnumerator.enumerate(compoundKey);
           if (rawId <= 0) {
@@ -114,11 +114,11 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
           ids[idI] = id.stable ? rawId : -rawId;
           idI++;
         }
-        IntIdComponent intIdComponent = new IntIdComponent(ids);
+        IntIdComponent intIdComponent = new IntIdComponent(prod.value, ids);
         components[componentI] = intIdComponent;
         componentI++;
       }
-      result = new IntIdPending(pending.infinum, pending.rigid, components);
+      result = new IntIdPending(components);
     }
 
     int rawKey = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));

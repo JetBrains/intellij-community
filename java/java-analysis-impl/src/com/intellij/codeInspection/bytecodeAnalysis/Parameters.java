@@ -153,11 +153,11 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Set<Key>> components = new HashSet<Set<Key>>();
+      Set<Product<Key, Value>> components = new HashSet<Product<Key, Value>>();
       for (Set<Key> prod : condNpe.sop) {
-        components.add(prod);
+        components.add(new Product<Key, Value>(Value.Top, prod));
       }
-      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(Value.NotNull, false, components));
+      return new Equation<Key, Value>(aKey, new Pending<Key, Value>(components));
     }
   }
 
