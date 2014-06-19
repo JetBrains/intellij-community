@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,15 +70,12 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     super(project);
     myPsiManager = psiManager;
 
-    // FIXME - the main question, the best way to "aggregate" my indices and "re-aggregate" them on change
-    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {}
-    });
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {}
+      public void rootsChanged(ModuleRootEvent event) {
+        unloadAnnotations();
+      }
     });
   }
 
@@ -87,6 +83,11 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     Annotations parameterAnnotations = loadParameterAnnotations();
     Annotations contractAnnotations = loadContractAnnotations();
     myAnnotations = new Annotations(contractAnnotations.outs, parameterAnnotations.params, contractAnnotations.contracts);
+  }
+
+  private void unloadAnnotations() {
+    myAnnotations = null;
+    LOG.info("unloaded");
   }
 
   private Annotations loadParameterAnnotations() {
@@ -161,7 +162,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     });
   }
 
-  // FIXME - the main question, again
+  // TODO the best way to synchronize?
   private synchronized List<AnnotationData> collectInferredAnnotations(PsiModifierListOwner listOwner) {
     if (myAnnotations == null) {
       loadAnnotations();
