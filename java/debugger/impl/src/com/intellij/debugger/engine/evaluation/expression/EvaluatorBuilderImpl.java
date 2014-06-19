@@ -257,7 +257,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Nullable
     private Evaluator accept(@Nullable PsiElement element) {
-      if (element == null) {
+      if (element == null || element instanceof PsiEmptyStatement) {
         return null;
       }
       element.accept(this);
