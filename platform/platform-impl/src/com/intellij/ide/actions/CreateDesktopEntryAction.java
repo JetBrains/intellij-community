@@ -161,13 +161,17 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String findScript(final String binPath) {
-    final String productName = ApplicationNamesInfo.getInstance().getProductName();
+  private static String findScript(String binPath) {
+    String productName = ApplicationNamesInfo.getInstance().getProductName();
 
     String execPath = binPath + '/' + productName + ".sh";
     if (new File(execPath).canExecute()) return execPath;
 
     execPath = binPath + '/' + productName.toLowerCase(Locale.US) + ".sh";
+    if (new File(execPath).canExecute()) return execPath;
+
+    String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    execPath = binPath + '/' + scriptName + ".sh";
     if (new File(execPath).canExecute()) return execPath;
 
     return null;
