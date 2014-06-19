@@ -58,7 +58,6 @@ import java.util.List;
  */
 @SuppressWarnings("unchecked")
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
-
   protected static final String DEFAULT_SDK = "default";
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected T myWizard;
@@ -133,6 +132,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         throw new RuntimeException(currentStep + " is not validated");
       }
     }
+    myWizard.doFinishAction();
   }
 
   protected void createWizard(Project project) throws IOException {

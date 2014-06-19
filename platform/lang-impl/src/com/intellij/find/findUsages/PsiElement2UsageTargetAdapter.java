@@ -116,6 +116,7 @@ public class PsiElement2UsageTargetAdapter
     return getElement();
   }
 
+  @Override
   public String toString() {
     return getPresentableText();
   }
@@ -209,7 +210,7 @@ public class PsiElement2UsageTargetAdapter
   @Override
   public String getLongDescriptiveName() {
     SearchScope searchScope = myOptions.searchScope;
-    String scopeString = searchScope == null ? null : searchScope.getDisplayName();
+    String scopeString = searchScope.getDisplayName();
     PsiElement psiElement = getElement();
 
     return psiElement == null ? UsageViewBundle.message("node.invalid") :
