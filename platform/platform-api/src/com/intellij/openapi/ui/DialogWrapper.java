@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -73,6 +74,8 @@ import java.util.Set;
  */
 @SuppressWarnings({"SSBasedInspection", "MethodMayBeStatic", "UnusedDeclaration"})
 public abstract class DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
+
   public static enum IdeModalityType {
     IDE,
     PROJECT,
@@ -874,7 +877,7 @@ public abstract class DialogWrapper {
           for (KeyStroke eachStroke : strokes) {
             boolean remove = true;
             if (actionMap != null) {
-              for (int i = 0; i < 3; i++) {
+              for (int i : new int[]{JComponent.WHEN_FOCUSED, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, JComponent.WHEN_IN_FOCUSED_WINDOW}) {
                 final InputMap inputMap = eachComp.getInputMap(i);
                 final Object key = inputMap.get(eachStroke);
                 if (key != null) {
@@ -1160,7 +1163,9 @@ public abstract class DialogWrapper {
   }
 
   protected void init() {
-    assert SwingUtilities.isEventDispatchThread() : "Dialog must be init in EDT only: "+Thread.currentThread();
+    if (!SwingUtilities.isEventDispatchThread()) {
+      LOG.error("Dialog must be init in EDT only: "+Thread.currentThread());
+    }
     myErrorText = new ErrorText();
     myErrorText.setVisible(false);
 
