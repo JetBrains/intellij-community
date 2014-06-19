@@ -166,7 +166,9 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
 
-  private void initLastSearchElement(@NotNull FindUsagesOptions findUsagesOptions, @NotNull PsiElement[] primaryElements,@NotNull PsiElement[] secondaryElements) {
+  private void initLastSearchElement(@NotNull FindUsagesOptions findUsagesOptions,
+                                     @NotNull PsiElement[] primaryElements,
+                                     @NotNull PsiElement[] secondaryElements) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myLastSearchInFileData = new PsiElement2UsageTargetComposite(primaryElements, secondaryElements, findUsagesOptions);
@@ -251,9 +253,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     PsiElement[] secondaryElements = handler.getSecondaryElements();
     checkNotNull(secondaryElements, handler, "getSecondaryElements()");
     if (singleFile) {
-      findUsagesOptions = findUsagesOptions.clone();
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
-      findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
+      findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions.clone(), editor);
     }
     else {
       boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
@@ -361,7 +362,13 @@ public class FindUsagesManager implements JDOMExternalizable {
         final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
 
         optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
-
+        Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+          @Override
+          public Project compute() {
+            return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
+          }
+        });
+        //optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
         try {
           for (final PsiElement element : elements) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -384,12 +391,6 @@ public class FindUsagesManager implements JDOMExternalizable {
             }
           }
 
-          Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-            @Override
-            public Project compute() {
-              return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
-            }
-          });
           PsiSearchHelper.SERVICE.getInstance(project)
             .processRequests(optionsClone.fastTrack, new Processor<PsiReference>() {
               @Override
