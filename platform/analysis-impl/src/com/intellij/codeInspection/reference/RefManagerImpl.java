@@ -100,6 +100,12 @@ public class RefManagerImpl extends RefManager {
         myLanguageExtensions.put(extension.getLanguage(), extension);
       }
     }
+    for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+      //init all ref modules in scope
+      if (scope.containsModule(module)) {
+        getRefModule(module);
+      }
+    }
   }
 
   @NotNull
@@ -297,12 +303,6 @@ public class RefManagerImpl extends RefManager {
       long before = System.currentTimeMillis();
       final AnalysisScope scope = getScope();
       scope.accept(myProjectIterator);
-      for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-        //init all ref modules in scope
-        if (scope.containsModule(module)) {
-          getRefModule(module);
-        }
-      }
       myDeclarationsFound = true;
 
       LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before));
