@@ -16,8 +16,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
-import org.jetbrains.asm4.Type;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;

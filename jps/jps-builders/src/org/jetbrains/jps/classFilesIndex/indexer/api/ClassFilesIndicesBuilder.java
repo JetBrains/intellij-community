@@ -17,26 +17,22 @@ package org.jetbrains.jps.classFilesIndex.indexer.api;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 

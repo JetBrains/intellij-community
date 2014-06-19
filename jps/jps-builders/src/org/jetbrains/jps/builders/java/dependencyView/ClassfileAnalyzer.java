@@ -19,9 +19,9 @@ import com.intellij.openapi.util.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.asm4.*;
-import org.jetbrains.asm4.signature.SignatureReader;
-import org.jetbrains.asm4.signature.SignatureVisitor;
+import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
+import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.EnumSet;
@@ -55,7 +55,7 @@ class ClassfileAnalyzer {
   private class ClassCrawler extends ClassVisitor {
     private class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
       private AnnotationRetentionPolicyCrawler() {
-        super(Opcodes.ASM4);
+        super(Opcodes.ASM5);
       }
 
       public void visit(String name, Object value) {
@@ -79,7 +79,7 @@ class ClassfileAnalyzer {
 
     private class AnnotationTargetCrawler extends AnnotationVisitor {
       private AnnotationTargetCrawler() {
-        super(Opcodes.ASM4);
+        super(Opcodes.ASM5);
       }
 
       public void visit(String name, Object value) {
@@ -108,7 +108,7 @@ class ClassfileAnalyzer {
       private final TIntHashSet myUsedArguments = new TIntHashSet();
 
       private AnnotationCrawler(final TypeRepr.ClassType type, final ElemType target) {
-        super(Opcodes.ASM4);
+        super(Opcodes.ASM5);
         this.myType = type;
         this.myTarget = target;
         final Set<ElemType> targets = myAnnotationTargets.get(type);
@@ -160,9 +160,7 @@ class ClassfileAnalyzer {
           return "()D;";
         }
 
-        final String s = "()L" + name + ";";
-
-        return s;
+        return "()L" + name + ";";
       }
 
       public void visit(String name, Object value) {
@@ -171,10 +169,7 @@ class ClassfileAnalyzer {
 
         if (value instanceof Type) {
           final String className = ((Type)value).getClassName().replace('.', '/');
-
-          if (className != null) {
-            myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(className)));
-          }
+          myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(className)));
         }
 
         myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
@@ -220,9 +215,8 @@ class ClassfileAnalyzer {
       }
     }
 
-    private final SignatureVisitor mySignatureCrawler = new SignatureVisitor(Opcodes.ASM4) {
+    private final SignatureVisitor mySignatureCrawler = new SignatureVisitor(Opcodes.ASM5) {
       public void visitFormalTypeParameter(String name) {
-        return;
       }
 
       public SignatureVisitor visitClassBound() {
@@ -254,11 +248,9 @@ class ClassfileAnalyzer {
       }
 
       public void visitBaseType(char descriptor) {
-        return;
       }
 
       public void visitTypeVariable(String name) {
-        return;
       }
 
       public SignatureVisitor visitArrayType() {
@@ -266,11 +258,9 @@ class ClassfileAnalyzer {
       }
 
       public void visitInnerClassType(String name) {
-        return;
       }
 
       public void visitTypeArgument() {
-        return;
       }
 
       public SignatureVisitor visitTypeArgument(char wildcard) {
@@ -316,7 +306,7 @@ class ClassfileAnalyzer {
     final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<TypeRepr.ClassType, Set<ElemType>>();
 
     public ClassCrawler(final int fn) {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
       myFileName = fn;
     }
 
@@ -407,7 +397,7 @@ class ClassfileAnalyzer {
         myFields.add(new FieldRepr(myContext, access, myContext.get(n), myContext.get(desc), myContext.get(signature), value));
       }
 
-      return new FieldVisitor(Opcodes.ASM4) {
+      return new FieldVisitor(Opcodes.ASM5) {
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), ElemType.FIELD);
@@ -421,7 +411,7 @@ class ClassfileAnalyzer {
 
       processSignature(signature);
 
-      return new MethodVisitor(Opcodes.ASM4) {
+      return new MethodVisitor(Opcodes.ASM5) {
         @Override
         public void visitEnd() {
           if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
@@ -438,7 +428,7 @@ class ClassfileAnalyzer {
 
         @Override
         public AnnotationVisitor visitAnnotationDefault() {
-          return new AnnotationVisitor(Opcodes.ASM4) {
+          return new AnnotationVisitor(Opcodes.ASM5) {
             public void visit(String name, Object value) {
               defaultValue.set(value);
             }
@@ -531,7 +521,7 @@ class ClassfileAnalyzer {
         }
 
         @Override
-        public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
           final int methodName = myContext.get(name);
           final int methodOwner = myContext.get(owner);
 
@@ -539,7 +529,7 @@ class ClassfileAnalyzer {
           myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner, desc));
           addClassUsage(TypeRepr.getType(myContext, Type.getReturnType(desc)));
 
-          super.visitMethodInsn(opcode, owner, name, desc);
+          super.visitMethodInsn(opcode, owner, name, desc, itf);
         }
 
         private void addClassUsage(final TypeRepr.AbstractType type) {

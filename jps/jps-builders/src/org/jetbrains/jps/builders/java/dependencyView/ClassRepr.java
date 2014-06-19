@@ -20,8 +20,8 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;

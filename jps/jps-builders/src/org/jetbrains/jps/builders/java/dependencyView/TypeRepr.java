@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.asm4.Type;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;
