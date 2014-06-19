@@ -15,7 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.util.Collection;
