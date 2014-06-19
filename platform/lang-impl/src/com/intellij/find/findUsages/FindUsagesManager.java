@@ -91,8 +91,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   private final com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = true;
 
-
-  private PsiElement2UsageTargetComposite myLastSearchInFileData;
+  private PsiElement2UsageTargetComposite myLastSearchInFileData; // EDT only
   private final UsageHistory myHistory = new UsageHistory();
 
   public FindUsagesManager(@NotNull Project project, @NotNull com.intellij.usages.UsageViewManager anotherManager) {
@@ -118,6 +117,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public void clearFindingNextUsageInFile() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myLastSearchInFileData = null;
   }
 
@@ -140,6 +140,8 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private boolean findUsageInFile(@NotNull FileEditor editor, @NotNull FileSearchScope direction) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     if (myLastSearchInFileData == null) return false;
     PsiElement[] primaryElements = myLastSearchInFileData.getPrimaryElements();
     PsiElement[] secondaryElements = myLastSearchInFileData.getSecondaryElements();
@@ -165,6 +167,8 @@ public class FindUsagesManager implements JDOMExternalizable {
 
 
   private void initLastSearchElement(@NotNull FindUsagesOptions findUsagesOptions, @NotNull PsiElement[] primaryElements,@NotNull PsiElement[] secondaryElements) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myLastSearchInFileData = new PsiElement2UsageTargetComposite(primaryElements, secondaryElements, findUsagesOptions);
   }
 
@@ -234,10 +238,10 @@ public class FindUsagesManager implements JDOMExternalizable {
     startFindUsages(findUsagesOptions, handler, scopeFile, editor);
   }
 
-  void startFindUsages(@NotNull FindUsagesOptions findUsagesOptions,
-                       @NotNull FindUsagesHandler handler,
-                       PsiFile scopeFile,
-                       FileEditor editor) {
+  private void startFindUsages(@NotNull FindUsagesOptions findUsagesOptions,
+                               @NotNull FindUsagesHandler handler,
+                               PsiFile scopeFile,
+                               FileEditor editor) {
     boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
@@ -426,7 +430,6 @@ public class FindUsagesManager implements JDOMExternalizable {
                          @NotNull final FindUsagesHandler handler,
                          @NotNull final FindUsagesOptions findUsagesOptions,
                          final boolean toSkipUsagePanelWhenOneUsage) {
-
     if (primaryElements.length == 0) {
       throw new AssertionError(handler + " " + findUsagesOptions);
     }
@@ -440,7 +443,6 @@ public class FindUsagesManager implements JDOMExternalizable {
       }
     }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), null);
     myHistory.add((ConfigurableUsageTarget)targets[0]);
-    //addToHistory(allElements, findUsagesOptions);
   }
 
   private static void dropResolveCacheRegularly(ProgressIndicator indicator, final Project project) {
@@ -468,7 +470,7 @@ public class FindUsagesManager implements JDOMExternalizable {
                                                           @NotNull FindUsagesOptions options,
                                                           boolean toOpenInNewTab) {
     UsageViewPresentation presentation = new UsageViewPresentation();
-    String scopeString = options.searchScope == null ? null : options.searchScope.getDisplayName();
+    String scopeString = options.searchScope.getDisplayName();
     presentation.setScopeText(scopeString);
     String usagesString = generateUsagesString(options);
     presentation.setUsagesString(usagesString);
