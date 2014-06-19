@@ -26,7 +26,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
-  protected void processUsages(final @NotNull Processor<Usage> processor, Project project) {
+  protected void processUsages(final @NotNull Processor<Usage> processor, @NotNull Project project) {
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
     final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
