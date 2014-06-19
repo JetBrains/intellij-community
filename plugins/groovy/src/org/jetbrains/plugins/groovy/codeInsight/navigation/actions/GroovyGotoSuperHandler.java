@@ -56,18 +56,21 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
     return new GotoData(e, findTargets(e), Collections.<AdditionalAction>emptyList());
   }
 
+  @NotNull
   @Override
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.super.method.chooser.title");
   }
 
+  @NotNull
   @Override
   protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.super.method.findUsages.title", name);
   }
 
+  @NotNull
   @Override
-  protected String getNotFoundMessage(Project project, Editor editor, PsiFile file) {
+  protected String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final PsiMember source = findSource(editor, file);
     if (source instanceof PsiClass) {
       return GroovyBundle.message("no.super.classes.found");
@@ -87,7 +90,8 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, GrField.class, PsiClass.class);
   }
 
-  private static PsiElement[] findTargets(PsiMember e) {
+  @NotNull
+  private static PsiElement[] findTargets(@NotNull PsiMember e) {
     if (e instanceof PsiClass) {
       PsiClass aClass = (PsiClass)e;
       List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
