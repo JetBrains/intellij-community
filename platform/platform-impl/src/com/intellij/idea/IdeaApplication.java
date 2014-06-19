@@ -216,7 +216,13 @@ public class IdeaApplication {
 
     @Nullable
     private SplashScreen getSplashScreen() {
-      return SplashScreen.getSplashScreen();
+      try {
+        return SplashScreen.getSplashScreen();
+      }
+      catch (Throwable t) {
+        LOG.warn(t);
+        return null;
+      }
     }
 
     @Override
