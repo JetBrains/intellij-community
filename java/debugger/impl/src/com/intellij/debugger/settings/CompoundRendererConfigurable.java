@@ -25,12 +25,14 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -141,10 +143,17 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
         }
       }
     }, myProject);
-    myClassNameField.getEditorTextField().addFocusListener(new FocusAdapter() {
+    final EditorTextField textField = myClassNameField.getEditorTextField();
+    final FocusAdapter updateContextListener = new FocusAdapter() {
       public void focusLost(FocusEvent e) {
-        final String qName = myClassNameField.getText();
-        updateContext(qName);
+        updateContext(myClassNameField.getText());
+      }
+    };
+    textField.addFocusListener(updateContextListener);
+    Disposer.register(myClassNameField, new Disposable() {
+      @Override
+      public void dispose() {
+        textField.removeFocusListener(updateContextListener);
       }
     });
 
@@ -388,10 +397,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable {
     myChildrenEditor.dispose();
     myChildrenExpandedEditor.dispose();
     myListChildrenEditor.dispose();
+    Disposer.dispose(myClassNameField);
     myLabelEditor = null;
     myChildrenEditor = null;
     myChildrenExpandedEditor = null;
     myListChildrenEditor = null;
+    myClassNameField = null;
     myProject = null;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.psi.formatter;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory;
 import com.intellij.lang.Language;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -42,6 +40,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -199,7 +198,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
         assertEquals(file.getText(), document.getText());
 
         if (false && doCheckDocumentUpdate()) {
-          makeFolding(file, editor);
+          EditorTestUtil.runTextEditorHighlightingPass(editor, CodeFoldingPassFactory.class);
         }
         try {
           if (doReformatRangeTest) {
@@ -223,13 +222,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     assertEquals(textAfter, document.getText());
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
     assertEquals(textAfter, file.getText());
-  }
-
-  protected static void makeFolding(final PsiFile file, final EditorImpl editor) {
-    final CodeFoldingPassFactory factory = getProject().getComponent(CodeFoldingPassFactory.class);
-    final TextEditorHighlightingPass highlightingPass = factory.createHighlightingPass(file, editor);
-    highlightingPass.collectInformation(new MockProgressIndicator());
-    highlightingPass.doApplyInformationToEditor();
   }
 
   @SuppressWarnings({"UNUSED_SYMBOL"})

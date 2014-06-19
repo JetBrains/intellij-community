@@ -92,6 +92,17 @@ public class InjectedLanguageUtil {
     return ((DocumentWindowImpl)myFileViewProvider.getDocument()).getShreds();
   }
 
+  public static void enumerate(@NotNull DocumentWindow documentWindow,
+                               @NotNull PsiFile hostPsiFile,
+                               @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    Segment[] ranges = documentWindow.getHostRanges();
+    Segment rangeMarker = ranges.length > 0 ? ranges[0] : null;
+    PsiElement element = rangeMarker == null ? null : hostPsiFile.findElementAt(rangeMarker.getStartOffset());
+    if (element != null) {
+      enumerate(element, hostPsiFile, true, visitor);
+    }
+  }
+
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
     return enumerate(host, containingFile, true, visitor);

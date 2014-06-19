@@ -27,6 +27,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
 
   List<PyClass> getTopLevelClasses();
 
+  @NotNull
   List<PyFunction> getTopLevelFunctions();
 
   List<PyTargetExpression> getTopLevelAttributes();

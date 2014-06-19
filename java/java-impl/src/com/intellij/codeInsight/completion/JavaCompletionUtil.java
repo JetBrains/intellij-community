@@ -446,8 +446,10 @@ public class JavaCompletionUtil {
 
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
             PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
+            PsiType returnType = method.getReturnType();
             if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
-                Comparing.equal(plainSub.substitute(method.getReturnType()), castSub.substitute(method.getReturnType())) &&
+                returnType != null &&
+                castSub.substitute(returnType).isAssignableFrom(plainSub.substitute(returnType)) &&
                 processor.isAccessible(plainClass.findMethodBySignature(method, true))
               ) {
               return item;

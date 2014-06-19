@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="library" name="TestNG" level="project" />
+    <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="idea-ui" scope="TEST" />

@@ -43,7 +43,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -141,18 +140,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         if (indicator != null && indicator.isCanceled()) return false;
         if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return false; // will be committed later
 
-        Segment[] ranges = documentWindow.getHostRanges();
-        Segment rangeMarker = ranges.length > 0 ? ranges[0] : null;
-        PsiElement element = rangeMarker == null ? null : hostPsiFile.findElementAt(rangeMarker.getStartOffset());
-        if (element == null) {
-          synchronized (PsiLock.LOCK) {
-            injected.remove(documentWindow);
-          }
-          return true;
-        }
         final DocumentWindow[] stillInjectedDocument = {null};
         // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        InjectedLanguageUtil.enumerate(documentWindow, hostPsiFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();

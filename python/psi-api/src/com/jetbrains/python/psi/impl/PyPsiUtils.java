@@ -236,6 +236,7 @@ public class PyPsiUtils {
     }
   }
 
+  @NotNull
   static <T, U extends PsiElement> List<T> collectStubChildren(U e,
                                                                final StubElement<U> stub, final IElementType elementType,
                                                                final Class<T> itemClass) {

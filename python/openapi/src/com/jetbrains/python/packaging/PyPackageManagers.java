@@ -18,6 +18,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -26,10 +27,13 @@ import java.util.List;
  * @author yole
  */
 public abstract class PyPackageManagers {
+
+  @NotNull
   public static PyPackageManagers getInstance() {
     return ServiceManager.getService(PyPackageManagers.class);
   }
 
+  @NotNull
   public abstract PyPackageManager forSdk(Sdk sdk);
 
   /**

@@ -110,7 +110,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         DeploymentSource source = task.getSource();
-        String deploymentName = instance.getDeploymentName(source);
+        String deploymentName = instance.getDeploymentName(source, task.getConfiguration());
         DeploymentImpl deployment;
         synchronized (myLocalDeployments) {
           deployment = new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null, task);

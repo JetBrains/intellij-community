@@ -603,6 +603,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return packages != null ? findPackageByName(name, packages) : null;
   }
 
+  @Nullable
   private static PyPackage findPackageByName(String name, List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
       if (name.equalsIgnoreCase(pkg.getName())) {
