@@ -43,7 +43,6 @@ class MyMouseListener extends EditorMouseAdapter {
         LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
         editor.getMarkupModel().removeAllHighlighters();
         myTaskFile.drawWindowByPos(editor, pos);
-        //myTaskFile.drawFirstUnresolved(editor, true);
    }
 
 }

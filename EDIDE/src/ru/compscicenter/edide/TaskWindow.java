@@ -78,12 +78,8 @@ public class TaskWindow {
     }
 
     public void draw(final Editor e, boolean drawSelection) {
-        JBColor color = JBColor.RED;
-        if (myResolveStatus) {
-            color = JBColor.GREEN;
-        }
         final TextAttributes ta = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-        ta.setEffectColor(color);
+        //ta.setEffectColor(color);
         final int startOffset = e.getDocument().getLineStartOffset(myLine) + myStartOffsetInLine;
 
         RangeHighlighter rh = e.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myOffsetInLine, HighlighterLayer.LAST + 1, ta, HighlighterTargetArea.EXACT_RANGE);
