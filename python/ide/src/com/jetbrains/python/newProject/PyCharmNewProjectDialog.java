@@ -29,7 +29,7 @@ import java.awt.*;
 public class PyCharmNewProjectDialog extends DialogWrapper {
   public PyCharmNewProjectDialog() {
     super(ProjectManager.getInstance().getDefaultProject());
-    setTitle(null);
+    setTitle(" "); // hack to make native fileChooser work on Mac. See MacFileChooserDialogImpl.MAIN_THREAD_RUNNABLE
     init();
   }
 
