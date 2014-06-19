@@ -174,7 +174,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(myProject, usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
-    final ProgressIndicator progressIndicator = progressIndicatorFactory != null ? progressIndicatorFactory.create() : null;
+    final ProgressIndicator progressIndicator = progressIndicatorFactory == null ? null : progressIndicatorFactory.create();
 
     final AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

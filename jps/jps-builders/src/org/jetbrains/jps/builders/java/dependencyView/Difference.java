@@ -16,7 +16,7 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 

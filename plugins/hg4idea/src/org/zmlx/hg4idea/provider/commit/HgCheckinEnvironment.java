@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -108,6 +109,11 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
           if (!mayCommitEverything(filesNotIncludedString.toString())) {
             //abort
             return exceptions;
+          }
+          //firstly selected changes marked dirty in CommitHelper -> postRefresh, so we need to mark others
+          VcsDirtyScopeManager dirtyManager = VcsDirtyScopeManager.getInstance(myProject);
+          for (HgFile hgFile : changedFilesNotInCommit) {
+            dirtyManager.fileDirty(hgFile.toFilePath());
           }
         }
         // else : all was included, or it was OK to commit everything,

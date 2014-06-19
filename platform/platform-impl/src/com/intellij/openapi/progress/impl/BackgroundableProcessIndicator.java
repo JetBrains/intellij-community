@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,12 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     if (myDumbModeAction == DumbModeAction.CANCEL) {
       task.getProject().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
+        @Override
         public void enteredDumbMode() {
           cancel();
         }
 
+        @Override
         public void exitDumbMode() {
         }
       });
@@ -69,6 +71,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     super(info.isCancellable(), true, project, info.getCancelText());
     if (project != null) {
       final ProjectManagerAdapter myListener = new ProjectManagerAdapter() {
+        @Override
         public void projectClosing(Project closingProject) {
           if (isRunning()) {
             cancel();
@@ -107,23 +110,28 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
                                         @Nls final String cancelButtonText,
                                         @Nls final String backgroundStopTooltip, final boolean cancellable) {
     this(project, new TaskInfo() {
+      @Override
       public String getProcessId() {
         return "<unknown>";
       }
 
+      @Override
       @NotNull
       public String getTitle() {
         return progressTitle;
       }
 
+      @Override
       public String getCancelText() {
         return cancelButtonText;
       }
 
+      @Override
       public String getCancelTooltipText() {
         return backgroundStopTooltip;
       }
 
+      @Override
       public boolean isCancellable() {
         return cancellable;
       }
@@ -134,6 +142,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     return myDumbModeAction;
   }
 
+  @Override
   protected void showDialog() {
     if (myDisposed) return;
 
@@ -144,6 +153,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     super.showDialog();
   }
 
+  @Override
   public void background() {
     if (myDisposed) return;
 
@@ -158,6 +168,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     }
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myDisposed = true;

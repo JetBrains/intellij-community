@@ -16,6 +16,11 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
   public abstract void computeDeployments(@NotNull ComputeDeploymentsCallback callback);
 
   @NotNull
+  public String getDeploymentName(@NotNull DeploymentSource source, D configuration) {
+    return getDeploymentName(source);
+  }
+
+  @NotNull
   public String getDeploymentName(@NotNull DeploymentSource source) {
     return source.getPresentableName();
   }

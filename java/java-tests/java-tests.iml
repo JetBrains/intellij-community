@@ -16,7 +16,7 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="java-i18n" exported="" />
     <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="asm5" level="project" />
     <orderEntry type="module" module-name="instrumentation-util" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />

@@ -521,7 +521,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     @Override
     @NotNull
     public ConfigurationType getType() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return UnknownConfigurationType.INSTANCE;
     }
 
     @Override
