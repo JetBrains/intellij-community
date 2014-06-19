@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -922,8 +923,22 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  private String getWatchesKey() {
+    if (myEnvironment != null) {
+      RunProfile profile = myEnvironment.getRunProfile();
+      if (profile instanceof RunConfiguration) {
+        return ((RunConfiguration)profile).getType().getId();
+      }
+    }
+    return getSessionName();
+  }
+
   public void setWatchExpressions(@NotNull XExpression[] watchExpressions) {
     mySessionData.setWatchExpressions(watchExpressions);
-    myDebuggerManager.getWatchesManager().setWatches(getSessionName(), watchExpressions);
+    myDebuggerManager.getWatchesManager().setWatches(getWatchesKey(), watchExpressions);
+  }
+
+  XExpression[] getWatchExpressions() {
+    return myDebuggerManager.getWatchesManager().getWatches(getWatchesKey());
   }
 }

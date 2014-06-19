@@ -209,7 +209,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
     XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.get(contentToReuse) : null;
     if (oldSessionData == null) {
-      oldSessionData = new XDebugSessionData(myWatchesManager.getWatches(session.getSessionName()));
+      oldSessionData = new XDebugSessionData(session.getWatchExpressions());
     }
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
