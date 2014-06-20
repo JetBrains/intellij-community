@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public abstract class UsageViewManager {
   @NotNull
   public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation);
 
-  @Nullable ("in case no usages found or usage view not shown for one usage")
+  @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(@NotNull UsageTarget[] searchFor,
                                                 @NotNull Factory<UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,

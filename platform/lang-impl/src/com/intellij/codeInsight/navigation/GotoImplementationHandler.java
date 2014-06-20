@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
   @Override
   @Nullable
-  public GotoData getSourceAndTargetElements(Editor editor, PsiFile file) {
+  public GotoData getSourceAndTargetElements(@NotNull Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
@@ -83,18 +83,21 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return gotoData;
   }
 
+  @NotNull
   @Override
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.chooserTitle", name, length);
   }
 
+  @NotNull
   @Override
   protected String getFindUsagesTitle(PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.findUsages.title", name, length);
   }
 
+  @NotNull
   @Override
-  protected String getNotFoundMessage(Project project, Editor editor, PsiFile file) {
+  protected String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
@@ -105,7 +108,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<Object, PsiElementListCellRenderer>();
     private final PsiReference myReference;
 
-    public ImplementationsUpdaterTask(GotoData gotoData, Editor editor, int offset, final PsiReference reference) {
+    public ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
       super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
       myEditor = editor;
       myOffset = offset;
