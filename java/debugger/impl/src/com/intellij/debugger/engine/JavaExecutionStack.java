@@ -69,7 +69,7 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   @NotNull
-  public ThreadReferenceProxyImpl getThreadProxy() {
+  ThreadReferenceProxyImpl getThreadProxy() {
     return myThreadProxy;
   }
 

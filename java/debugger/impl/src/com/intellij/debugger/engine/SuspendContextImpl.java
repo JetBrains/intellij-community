@@ -33,9 +33,7 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -246,12 +244,31 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public void initExecutionStacks(ThreadReferenceProxyImpl newThread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Collection<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
+    myThread = newThread;
+    List<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
     Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
+    JavaExecutionStack currentStack = null;
     for (ThreadReferenceProxyImpl thread : threads) {
-      res.add(new JavaExecutionStack(thread, myDebugProcess, thread == myThread));
+      boolean current = thread == myThread;
+      JavaExecutionStack stack = new JavaExecutionStack(thread, myDebugProcess, current);
+      if (!current) {
+        res.add(stack);
+      }
+      else {
+        currentStack = stack;
+      }
+    }
+    Collections.sort(res, THREADS_COMPARATOR);
+    if (currentStack != null) {
+      res.add(0, currentStack);
     }
     myExecutionStacks = res.toArray(new JavaExecutionStack[res.size()]);
-    myThread = newThread;
   }
+
+  private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = new Comparator<JavaExecutionStack>() {
+    @Override
+    public int compare(JavaExecutionStack th1, JavaExecutionStack th2) {
+      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
+    }
+  };
 }
