@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
@@ -99,6 +100,13 @@ public class XFramesView implements XDebugView {
     //noinspection unchecked
     myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
     myThreadComboBox.addItemListener(new MyItemListener());
+    new ComboboxSpeedSearch(myThreadComboBox) {
+      @Override
+      protected String getElementText(Object element) {
+        return ((XExecutionStack)element).getDisplayName();
+      }
+    };
+
     myToolbar = createToolbar();
     myThreadsPanel = new Wrapper();
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0);
