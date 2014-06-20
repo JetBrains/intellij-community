@@ -40,11 +40,11 @@ public class TaskManager {
     JsonParser parser = new JsonParser();
     try {
       com.google.gson.JsonElement el = parser.parse(r);
-      JsonArray tasks_list = el.getAsJsonObject().get("tasks_list").getAsJsonArray();
-      for (com.google.gson.JsonElement e : tasks_list) {
+      JsonArray tasksList = el.getAsJsonObject().get("tasks_list").getAsJsonArray();
+      for (com.google.gson.JsonElement e : tasksList) {
         Task task = new Task(e.getAsJsonObject().get("file_num").getAsInt());
-        JsonArray files_in_task = e.getAsJsonObject().get("file_names").getAsJsonArray();
-        for (com.google.gson.JsonElement fileName : files_in_task) {
+        JsonArray filesInTask = e.getAsJsonObject().get("file_names").getAsJsonArray();
+        for (com.google.gson.JsonElement fileName : filesInTask) {
             task.addNewTaskFile(fileName.getAsString());
         }
         String testFileName = e.getAsJsonObject().get("test").getAsString();

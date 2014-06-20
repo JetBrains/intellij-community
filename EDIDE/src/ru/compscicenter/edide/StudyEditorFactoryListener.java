@@ -6,16 +6,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
-
 
 import java.io.*;
 import java.util.Arrays;
