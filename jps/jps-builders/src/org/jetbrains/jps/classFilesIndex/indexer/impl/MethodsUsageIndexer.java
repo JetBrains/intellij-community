@@ -46,7 +46,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
       new HashMap<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>>();
     final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.ASM5) {
       @Override
-      public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         final Type returnType = Type.getReturnType(desc);
         if (AsmUtil.isPrimitiveOrArrayOfPrimitives(returnType.getDescriptor()) || "<init>".equals(name)) {
           return;

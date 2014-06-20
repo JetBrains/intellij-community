@@ -978,7 +978,7 @@ public class AsmCodeGenerator {
         super(Opcodes.ASM5, new MethodVisitor(Opcodes.ASM5){});
       }
 
-      public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (name.equals(SETUP_METHOD_NAME)) {
           myExplicitSetupCall = true;
         }
