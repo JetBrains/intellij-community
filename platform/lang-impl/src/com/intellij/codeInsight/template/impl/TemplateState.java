@@ -291,8 +291,6 @@ public class TemplateState implements Disposable {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
     myTemplate = template;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
     myProcessor = processor;
 
     DocumentReference[] refs = myDocument != null 
