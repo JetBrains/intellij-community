@@ -965,7 +965,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       if (!hasPrevious()) {
         throw new NoSuchElementException();
       }
-      return (E)snapshot[--cursor];
+      return (E)snapshot[lastRet = --cursor];
     }
 
     @Override
@@ -981,7 +981,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     @Override
     public void remove() {
       if (lastRet < 0) {
-          throw new IllegalStateException();
+        throw new NoSuchElementException();
       }
       @SuppressWarnings("unchecked")
       E e = (E)snapshot[lastRet];
