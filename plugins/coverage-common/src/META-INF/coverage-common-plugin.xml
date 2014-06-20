@@ -1,0 +1,26 @@
+<idea-plugin version="2">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
+    <extensionPoint qualifiedName="com.intellij.coverageEngine" interface="com.intellij.coverage.CoverageEngine"/>
+    <extensionPoint qualifiedName="com.intellij.coverageOptions" interface="com.intellij.coverage.CoverageOptions" area="IDEA_PROJECT"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
+    <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewDirectoryNodeDecorator"/>
+    <projectConfigurable instance="com.intellij.coverage.CoverageOptionsConfigurable" id="coverage" displayName="Coverage" />
+    <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
+    <projectService serviceImplementation="com.intellij.coverage.view.CoverageViewManager"/>
+    <executor implementation="com.intellij.coverage.CoverageExecutor" />
+  </extensions>
+  <actions>
+    <group id="CoverageMenu">
+      <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Show Co_verage Data..."/>
+      <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
+              text="_Generate Coverage Report..." icon="AllIcons.Actions.Export"/>
+      <action id="HideCoverage" class="com.intellij.coverage.actions.HideCoverageInfoAction"/>
+      <separator/>
+    </group>
+  </actions>
+
+</idea-plugin>
