@@ -23,6 +23,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testSimpleRunnableOnArrow() {
+    doTest();
+  }
+
   public void testWithSubstitution() {
     doTest();
   }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ExpressionStatement.js</file>
+    <line>1</line>
+    <problem_class>Structural Search Inspection</problem_class>
+    <description/>
+  </problem>
+</problems>

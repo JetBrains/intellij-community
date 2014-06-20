@@ -295,8 +295,9 @@ public class TemplateState implements Disposable {
 
     myProcessor = processor;
 
-    DocumentReference[] refs =
-      myDocument == null ? null : new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)};
+    DocumentReference[] refs = myDocument != null 
+                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)} 
+                               : null;
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
       public void undo() {

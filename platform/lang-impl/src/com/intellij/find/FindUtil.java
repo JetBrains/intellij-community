@@ -923,7 +923,7 @@ public class FindUtil {
   }
 
   @Nullable
-  public static UsageView showInUsageView(PsiElement sourceElement, @NotNull final PsiElement[] targets, String title, Project project) {
+  public static UsageView showInUsageView(PsiElement sourceElement, @NotNull final PsiElement[] targets, @NotNull String title, @NotNull Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);

@@ -1,0 +1,5 @@
+occurence 0:
+{def a = 1;}
+
+occurence 1:
+{def int a = 1}

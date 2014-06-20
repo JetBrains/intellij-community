@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -31,8 +30,9 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;

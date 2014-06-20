@@ -19,10 +19,10 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import org.jetbrains.asm4.*;
-import org.jetbrains.asm4.Label;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -235,7 +235,7 @@ public class AsmCodeGenerator {
     private final boolean myExplicitSetupCall;
 
     public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
-      super(Opcodes.ASM4, cv);
+      super(Opcodes.ASM5, cv);
       myExplicitSetupCall = explicitSetupCall;
     }
 
@@ -307,7 +307,7 @@ public class AsmCodeGenerator {
       if (haveCustomCreateComponents && myHaveCreateComponentsMethod) {
         generator.visitVarInsn(Opcodes.ALOAD, 0);
         int opcode = myCreateComponentsAccess == Opcodes.ACC_PRIVATE ? Opcodes.INVOKESPECIAL : Opcodes.INVOKEVIRTUAL;
-        generator.visitMethodInsn(opcode, myClassName, CREATE_COMPONENTS_METHOD_NAME, "()V");
+        generator.visitMethodInsn(opcode, myClassName, CREATE_COMPONENTS_METHOD_NAME, "()V", false);
       }
       buildSetupMethod(generator);
 
@@ -902,7 +902,7 @@ public class AsmCodeGenerator {
     private boolean mySuperCalled = false;
 
     public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
-      super(Opcodes.ASM4, mv);
+      super(Opcodes.ASM5, mv);
       myClassName = className;
       mySuperName = superName;
     }
@@ -914,7 +914,7 @@ public class AsmCodeGenerator {
       super.visitFieldInsn(opcode, owner, name, desc);
     }
 
-    public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+    public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc, boolean itf) {
       if (opcode == Opcodes.INVOKESPECIAL && name.equals(CONSTRUCTOR_NAME)) {
         if (owner.equals(myClassName)) {
           callsSelfConstructor = true;
@@ -929,7 +929,7 @@ public class AsmCodeGenerator {
       else if (mySuperCalled) {
         callSetupUI();
       }
-      super.visitMethodInsn(opcode, owner, name, desc);
+      super.visitMethodInsn(opcode, owner, name, desc, itf);
     }
 
     public void visitJumpInsn(final int opcode, final Label label) {
@@ -942,7 +942,7 @@ public class AsmCodeGenerator {
     private void callSetupUI() {
       if (!mySetupCalled) {
         mv.visitVarInsn(Opcodes.ALOAD, 0);
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, SETUP_METHOD_NAME, "()V");
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, SETUP_METHOD_NAME, "()V", false);
         mySetupCalled = true;
       }
     }
@@ -959,7 +959,7 @@ public class AsmCodeGenerator {
     private boolean myExplicitSetupCall = false;
 
     public FirstPassClassVisitor() {
-      super(Opcodes.ASM4, new ClassVisitor(Opcodes.ASM4){});
+      super(Opcodes.ASM5, new ClassVisitor(Opcodes.ASM5){});
     }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -975,10 +975,10 @@ public class AsmCodeGenerator {
 
     private class FirstPassConstructorVisitor extends MethodVisitor {
       public FirstPassConstructorVisitor() {
-        super(Opcodes.ASM4, new MethodVisitor(Opcodes.ASM4){});
+        super(Opcodes.ASM5, new MethodVisitor(Opcodes.ASM5){});
       }
 
-      public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (name.equals(SETUP_METHOD_NAME)) {
           myExplicitSetupCall = true;
         }

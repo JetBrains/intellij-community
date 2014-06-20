@@ -244,7 +244,7 @@ public class ContainerUtilTest extends TestCase {
         iterator.remove();
         fail("must not be able to remove before next() call");
       }
-      catch (IllegalStateException ignored) {
+      catch (NoSuchElementException ignored) {
       }
     }
     int size = my.size();
@@ -268,7 +268,7 @@ public class ContainerUtilTest extends TestCase {
       iterator.remove();
       fail("must not be able to double remove()");
     }
-    catch (IllegalStateException ignored) {
+    catch (NoSuchElementException ignored) {
     }
   }
 

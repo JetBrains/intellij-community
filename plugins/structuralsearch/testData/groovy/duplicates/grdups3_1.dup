@@ -1,0 +1,8 @@
+occurence 0:
+if (a == b)
+  System.out.println("hi")
+
+occurence 1:
+if (a == b) {
+  System.out.println("hi");
+}

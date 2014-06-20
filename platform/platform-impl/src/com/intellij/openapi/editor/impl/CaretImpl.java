@@ -185,7 +185,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
         CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, false);
         final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(myOffset);
-        if (!myEditor.getCaretModel().myIgnoreWrongMoves && !positionByOffsetAfterMove.equals(logicalPosition)) {
+        if (!positionByOffsetAfterMove.equals(logicalPosition)) {
           StringBuilder debugBuffer = new StringBuilder();
           moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, true);
           int textStart = Math.max(0, Math.min(offset, myOffset) - 1);

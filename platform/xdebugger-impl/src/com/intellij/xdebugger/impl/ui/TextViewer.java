@@ -46,6 +46,8 @@ public final class TextViewer extends EditorTextField {
     editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
     editor.getComponent().setPreferredSize(null);
     editor.getSettings().setUseSoftWraps(myUseSoftWraps);
+
+    editor.setColorsScheme(DebuggerUIUtil.getColorScheme());
     return editor;
   }
 }

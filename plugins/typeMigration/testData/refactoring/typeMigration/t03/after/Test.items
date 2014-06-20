@@ -1,0 +1,10 @@
+Types:
+PsiMethod:sum : java.lang.Integer
+PsiMethodCallExpression:sum(i, k) : java.lang.Integer
+
+Conversions:
+a -> $
+i + j -> $
+
+New expression type changes:
+Fails:

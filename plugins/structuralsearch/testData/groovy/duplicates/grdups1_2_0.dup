@@ -1,0 +1,14 @@
+occurence 0:
+{def a = 1;}
+
+occurence 1:
+{def d = 10;}
+
+occurence 2:
+{def int a = 1}
+
+occurence 3:
+{def int b = 1;}
+
+occurence 4:
+{int c = 1}

@@ -1,0 +1,21 @@
+occurence 0:
+{
+    private int g() {
+      System.out.println("hello")
+    }
+
+    private void f() {
+      System.out.println("hello")
+    }
+}
+
+occurence 1:
+{
+    private int g() {
+      System.out.println("hello")
+    }
+
+    private void f() {
+      System.out.println("hello")
+    }
+}

@@ -509,11 +509,9 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     if (entry instanceof LibraryOrderEntry) {
       Library library = ((LibraryOrderEntry)entry).getLibrary();
       LOG.assertTrue(library != null);
-      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
       final Library.ModifiableModel model = library.getModifiableModel();
       model.addRoot(vFile, AnnotationOrderRootType.getInstance());
       model.commit();
-      rootModel.commit();
     }
     else if (entry instanceof ModuleSourceOrderEntry) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
@@ -558,7 +556,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                       annotation.delete();
                       break;
                     }
-                    if (compare < 0) break;
                     anchor = annotation;
                   }
                   XmlTag newTag = XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(

@@ -19,9 +19,6 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassWriter;
-import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -30,6 +27,9 @@ import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 

@@ -110,7 +110,7 @@ public abstract class ArchiveHandler {
           }
           else {
             try {
-              map = createEntriesMap();
+              map = Collections.unmodifiableMap(createEntriesMap());
             }
             catch (IOException e) {
               myCorrupted = true;
@@ -119,7 +119,7 @@ public abstract class ArchiveHandler {
             }
           }
 
-          myEntries = new SoftReference<Map<String, EntryInfo>>(Collections.unmodifiableMap(map));
+          myEntries = new SoftReference<Map<String, EntryInfo>>(map);
         }
       }
     }

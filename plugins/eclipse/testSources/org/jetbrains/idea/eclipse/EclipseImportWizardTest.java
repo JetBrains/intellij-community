@@ -65,7 +65,6 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
     File dir = createTempDirectory();
     File file = new File(dir, "Foo.java");
     FileUtil.writeToFile(file, "class Foo {}");
-    System.out.println("file = " + file);
     Module module = importProjectFrom(file.getParent(), null, new ImportFromSourcesProvider(),
                                       new EclipseProjectImportProvider(new EclipseImportBuilder()));
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();

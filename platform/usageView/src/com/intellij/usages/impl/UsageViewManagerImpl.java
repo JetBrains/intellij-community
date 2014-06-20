@@ -26,12 +26,11 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -135,12 +134,18 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                        final boolean showNotFoundMessage,
                                        @NotNull final UsageViewPresentation presentation,
                                        @Nullable final UsageViewStateListener listener) {
-    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
-
     final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
     processPresentation.setShowNotFoundMessage(showNotFoundMessage);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
 
+    return doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener);
+  }
+
+  private UsageView doSearchAndShow(final UsageTarget[] searchFor,
+                                    final Factory<UsageSearcher> searcherFactory,
+                                    final UsageViewPresentation presentation,
+                                    final FindUsagesProcessPresentation processPresentation, final UsageViewStateListener listener) {
+    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -170,32 +175,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                   @NotNull FindUsagesProcessPresentation processPresentation,
                                   @NotNull UsageViewPresentation presentation,
                                   @Nullable UsageViewStateListener listener) {
-    final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
-    final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(myProject, usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
-    final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
-
-    final ProgressIndicator progressIndicator = progressIndicatorFactory == null ? null : progressIndicatorFactory.create();
-
-    final AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            @Override
-            public void run() {
-              runnable.searchUsages(findUsagesStartedShown);
-            }
-          }, progressIndicator);
-        }
-        catch (ProcessCanceledException e) {
-          //ignore
-        }
-        finally {
-          runnable.endSearchForUsages(findUsagesStartedShown);
-        }
-      }
-    });
+    doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener);
   }
 
   @Override

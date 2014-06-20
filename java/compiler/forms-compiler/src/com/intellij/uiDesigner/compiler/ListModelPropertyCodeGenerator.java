@@ -16,9 +16,9 @@
 
 package com.intellij.uiDesigner.compiler;
 
-import org.jetbrains.asm4.Type;
-import org.jetbrains.asm4.commons.GeneratorAdapter;
-import org.jetbrains.asm4.commons.Method;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 /**
  * @author yole

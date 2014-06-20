@@ -288,9 +288,15 @@ public class LineStatusTracker {
   }
 
   private class MyDocumentListener extends DocumentAdapter {
+    // We have 3 document versions:
+    // * VCS version - upToDate*
+    // * before change - my*
+    // * after change - current*
+
     private int myFirstChangedLine;
     private int myLastChangedLine;
-    private int myLinesBeforeChange;
+    private int myChangedLines;
+    private int myTotalLines;
     private final VcsDirtyScopeManager myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     @Override
@@ -303,8 +309,9 @@ public class LineStatusTracker {
         try {
           myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
           myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
-          myLinesBeforeChange = myLastChangedLine - myFirstChangedLine;
+          myChangedLines = myLastChangedLine - myFirstChangedLine;
           if (StringUtil.endsWithChar(e.getOldFragment(), '\n')) myLastChangedLine++;
+          myTotalLines = e.getDocument().getLineCount();
         }
         catch (ProcessCanceledException ignore) {
         }
@@ -319,11 +326,9 @@ public class LineStatusTracker {
         if (myReleased) return;
         if (myBulkUpdate || myAnathemaThrown || BaseLoadState.LOADED != myBaseLoaded) return;
         try {
-          int upToDateFirstLine;
-          int upToDateLastLine;
-
-          int linesAfterChange = myDocument.getLineNumber(e.getOffset() + e.getNewLength()) - myDocument.getLineNumber(e.getOffset());
-          int linesShift = linesAfterChange - myLinesBeforeChange;
+          int currentChangedLines = myDocument.getLineNumber(e.getOffset() + e.getNewLength()) - myDocument.getLineNumber(e.getOffset());
+          int linesShift = currentChangedLines - myChangedLines;
+          int upToDateTotalLine = myUpToDateDocument.getLineCount();
 
           List<Range> rangesBeforeChange = new ArrayList<Range>();
           List<Range> rangesAfterChange = new ArrayList<Range>();
@@ -333,6 +338,7 @@ public class LineStatusTracker {
           Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
           Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
           Range lastRangeBefore = ContainerUtil.getLastItem(rangesBeforeChange);
+          Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfterChange);
 
           if (firstChangedRange != null && firstChangedRange.getOffset1() < myFirstChangedLine) {
             myFirstChangedLine = firstChangedRange.getOffset1();
@@ -341,18 +347,13 @@ public class LineStatusTracker {
             myLastChangedLine = lastChangedRange.getOffset2();
           }
 
-          upToDateFirstLine = getUpToDateLine(lastRangeBefore, myFirstChangedLine);
+          int currentFirstLine = myFirstChangedLine;
+          int currentLastLine = myLastChangedLine + linesShift;
 
-          if (lastChangedRange == null) {
-            upToDateLastLine = getUpToDateLine(lastRangeBefore, myLastChangedLine);
-          }
-          else {
-            upToDateLastLine = getUpToDateLine(lastChangedRange, myLastChangedLine);
-          }
+          int upToDateFirstLine = getUpToDateLine1(lastRangeBefore, myFirstChangedLine);
+          int upToDateLastLine = getUpToDateLine2(firstRangeAfter, myLastChangedLine, myTotalLines, upToDateTotalLine);
 
-          myLastChangedLine += linesShift;
-
-          List<Range> newChangedRanges = getNewChangedRanges(upToDateFirstLine, upToDateLastLine);
+          List<Range> newChangedRanges = getNewChangedRanges(currentFirstLine, currentLastLine, upToDateFirstLine, upToDateLastLine);
 
           shiftRanges(rangesAfterChange, linesShift);
 
@@ -398,14 +399,19 @@ public class LineStatusTracker {
       }
     }
 
-    private int getUpToDateLine(@Nullable Range range, int line) {
+    private int getUpToDateLine1(@Nullable Range range, int line) {
       return range == null ? line : line + range.getUOffset2() - range.getOffset2();
     }
 
-    private List<Range> getNewChangedRanges(int upToDateFirstLine, int upToDateLastLine) throws FilesTooBigForDiffException {
-      List<String> lines = new DocumentWrapper(myDocument).getLines(myFirstChangedLine, myLastChangedLine);
+    private int getUpToDateLine2(@Nullable Range range, int line, int totalLinesBefore, int totalLinesAfter) {
+      return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getUOffset1() - range.getOffset1();
+    }
+
+    private List<Range> getNewChangedRanges(int firstChangedLine, int lastChangedLine, int upToDateFirstLine, int upToDateLastLine)
+      throws FilesTooBigForDiffException {
+      List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine);
       List<String> uLines = new DocumentWrapper(myUpToDateDocument).getLines(upToDateFirstLine, upToDateLastLine);
-      return new RangesBuilder(lines, uLines, myFirstChangedLine, upToDateFirstLine).getRanges();
+      return new RangesBuilder(lines, uLines, firstChangedLine, upToDateFirstLine).getRanges();
     }
 
     @NotNull
@@ -460,7 +466,7 @@ public class LineStatusTracker {
                                 @NotNull List<Range> changedRanges,
                                 @NotNull List<Range> rangesAfterChange) {
     for (Range range : ranges) {
-      int offset1 = range.getType() == Range.DELETED ? range.getOffset1() - 1 : range.getOffset1();
+      int offset1 = range.getOffset1() - 1;
       int offset2 = range.getOffset2();
 
       if (offset2 < firstChangedLine) {

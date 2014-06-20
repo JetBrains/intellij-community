@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,6 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-
     PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, String.valueOf(myAnnotateLocalVariablesCb.isSelected()));
 
     final ProgressManager progressManager = ProgressManager.getInstance();
@@ -174,7 +173,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
               final String path = dialog.getResultingLibraryPath();
               new WriteCommandAction(project) {
                 @Override
-                protected void run(final Result result) throws Throwable {
+                protected void run(@NotNull final Result result) throws Throwable {
                   for (Module module : modulesWithoutAnnotations) {
                     OrderEntryFix.addBundledJarToRoots(project, null, module, null, AnnotationUtil.NOT_NULL, path);
                   }
@@ -206,8 +205,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     }
   }
 
-  private UsageInfo[] findUsages(final Project project,
-                               final AnalysisScope scope) {
+  private UsageInfo[] findUsages(@NotNull final Project project,
+                                 @NotNull final AnalysisScope scope) {
     final NullityInferrer inferrer = new NullityInferrer(myAnnotateLocalVariablesCb.isSelected(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final Runnable searchForUsages = new Runnable() {
@@ -257,7 +256,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         try {
           new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
             @Override
-            protected void run(Result result) throws Throwable {
+            protected void run(@NotNull Result result) throws Throwable {
               final UsageInfo[] infos = computable.compute();
               if (infos.length > 0) {
                 final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
@@ -287,7 +286,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
 
-  private void showUsageView(final Project project, final UsageInfo[] usageInfos, AnalysisScope scope) {
+  private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
     final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -326,7 +325,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     usageView.addPerformOperationAction(refactoringRunnable, INFER_NULLITY_ANNOTATIONS, canNotMakeString, INFER_NULLITY_ANNOTATIONS, false);
   }
 
-  private Factory<UsageSearcher> rerunFactory(final Project project, final AnalysisScope scope) {
+  @NotNull
+  private Factory<UsageSearcher> rerunFactory(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     return new Factory<UsageSearcher>() {
       @Override
       public UsageSearcher create() {

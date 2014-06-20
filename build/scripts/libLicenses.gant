@@ -177,7 +177,6 @@ libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http:/
 libraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant_groovy2.0-1.9.8.jar", license: "Apache 2.0", url: "http://gant.codehaus.org/", licenseUrl: "http://gant.codehaus.org/Licence")
 libraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)", url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
-libraryLicense(name: "javahl", version: "1.7.2", libraryName: "javahl.jar", license: "Apache", url: "http://subversion.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Antlr", libraryName: "antlr.jar", version: "3.4", license: "BSD", url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html")
 libraryLicense(name: "Guava", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Guava", libraryName: "guava-tools", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")

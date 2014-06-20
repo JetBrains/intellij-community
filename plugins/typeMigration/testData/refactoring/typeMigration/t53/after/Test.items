@@ -1,0 +1,8 @@
+Types:
+PsiField:f : java.util.Set<java.lang.String>[]
+
+Conversions:
+
+New expression type changes:
+Fails:
+new double[0]->java.util.Set<java.lang.String>[]

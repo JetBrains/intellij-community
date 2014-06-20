@@ -1,0 +1,7 @@
+Types:
+PsiField:myField : boolean
+
+Conversions:
+
+New expression type changes:
+Fails:

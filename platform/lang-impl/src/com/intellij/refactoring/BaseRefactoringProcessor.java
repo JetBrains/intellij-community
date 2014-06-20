@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,17 +75,18 @@ import java.util.*;
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
 
+  @NotNull
   protected final Project myProject;
 
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
   protected Runnable myPrepareSuccessfulSwingThreadCallback = EmptyRunnable.INSTANCE;
 
-  protected BaseRefactoringProcessor(Project project) {
+  protected BaseRefactoringProcessor(@NotNull Project project) {
     this(project, null);
   }
 
-  protected BaseRefactoringProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback) {
+  protected BaseRefactoringProcessor(@NotNull Project project, @Nullable Runnable prepareSuccessfulCallback) {
     myProject = project;
     myPrepareSuccessfulSwingThreadCallback = prepareSuccessfulCallback;
   }
