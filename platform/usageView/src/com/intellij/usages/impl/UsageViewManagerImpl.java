@@ -141,10 +141,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener);
   }
 
-  private UsageView doSearchAndShow(final UsageTarget[] searchFor,
-                                    final Factory<UsageSearcher> searcherFactory,
-                                    final UsageViewPresentation presentation,
-                                    final FindUsagesProcessPresentation processPresentation, final UsageViewStateListener listener) {
+  private UsageView doSearchAndShow(@NotNull final UsageTarget[] searchFor,
+                                    @NotNull final Factory<UsageSearcher> searcherFactory,
+                                    @NotNull final UsageViewPresentation presentation,
+                                    @NotNull final FindUsagesProcessPresentation processPresentation,
+                                    @Nullable final UsageViewStateListener listener) {
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
@@ -192,9 +193,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public static String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     final String scopeText = presentation.getScopeText();
     String usagesString = StringUtil.capitalize(presentation.getUsagesString());
-    String result = scopeText == null
-                    ? UsageViewBundle.message("progress.searching.for", usagesString)
-                    : UsageViewBundle.message("progress.searching.for.in", usagesString, scopeText);
+    String result = UsageViewBundle.message("progress.searching.for.in", usagesString, scopeText);
     return StringUtil.escapeXml(result);
   }
 
@@ -323,9 +322,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
       findUsagesStartedBalloon.addRequest(new Runnable() {
         @Override
         public void run() {
-          String balloon = UsageViewBundle.message("progress.searching.for", StringUtil.escapeXml(myPresentation.getUsagesString()));
           notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, UsageViewManagerImpl.this.myProject,
-                              balloon);
+                              getProgressTitle(myPresentation));
           findStartedBalloonShown.set(true);
         }
       }, 300, ModalityState.NON_MODAL);

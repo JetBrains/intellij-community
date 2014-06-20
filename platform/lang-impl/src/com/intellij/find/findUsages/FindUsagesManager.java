@@ -368,7 +368,9 @@ public class FindUsagesManager implements JDOMExternalizable {
         final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
 
         optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
-        //optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
+        //if (optionsClone.searchScope instanceof GlobalSearchScope) {
+        //  optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
+        //}
         try {
           for (final PsiElement element : elements) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -474,10 +476,8 @@ public class FindUsagesManager implements JDOMExternalizable {
     presentation.setScopeText(scopeString);
     String usagesString = generateUsagesString(options);
     presentation.setUsagesString(usagesString);
-    String title = scopeString == null
-                   ? FindBundle.message("find.usages.of.element.panel.title", usagesString, UsageViewUtil.getLongName(psiElement))
-                   : FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, UsageViewUtil.getLongName(psiElement),
-                                        scopeString);
+    String title = FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, UsageViewUtil.getLongName(psiElement),
+                         scopeString);
     presentation.setTabText(title);
     presentation.setTabName(FindBundle.message("find.usages.of.element.tab.name", usagesString, UsageViewUtil.getShortName(psiElement)));
     presentation.setTargetsNodeText(StringUtil.capitalize(UsageViewUtil.getType(psiElement)));
