@@ -51,12 +51,12 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,7 +70,7 @@ import java.util.*;
  */
 public class MergeFromTheirsResolver {
   private final SvnVcs myVcs;
-  private final SVNTreeConflictDescription myDescription;
+  private final TreeConflictDescription myDescription;
   private final Change myChange;
   private final FilePath myOldFilePath;
   private final FilePath myNewFilePath;
@@ -85,7 +85,7 @@ public class MergeFromTheirsResolver {
   private List<TextFilePatch> myTextPatches;
   private VirtualFile myBaseForPatch;
 
-  public MergeFromTheirsResolver(SvnVcs vcs, SVNTreeConflictDescription description, Change change, SvnRevisionNumber revision) {
+  public MergeFromTheirsResolver(SvnVcs vcs, TreeConflictDescription description, Change change, SvnRevisionNumber revision) {
     myVcs = vcs;
     myDescription = description;
     myChange = change;
@@ -563,7 +563,7 @@ public class MergeFromTheirsResolver {
     }
   }
 
-  private List<CommittedChangeList> loadSvnChangeListsForPatch(SVNTreeConflictDescription description) throws VcsException {
+  private List<CommittedChangeList> loadSvnChangeListsForPatch(TreeConflictDescription description) throws VcsException {
     long max = description.getSourceRightVersion().getPegRevision();
     long min = description.getSourceLeftVersion().getPegRevision();
 

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
@@ -60,7 +61,7 @@ public class SvnTreeConflictResolver {
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myVcs.getProject());
   }
 
-  public void resolveSelectTheirsFull(SVNTreeConflictDescription d) throws VcsException {
+  public void resolveSelectTheirsFull(TreeConflictDescription d) throws VcsException {
     final LocalHistory localHistory = LocalHistory.getInstance();
     localHistory.putSystemLabel(myVcs.getProject(), "Before accepting theirs for " + TreeConflictRefreshablePanel.filePath(myPath));
     try {
@@ -95,7 +96,7 @@ public class SvnTreeConflictResolver {
     pathDirty(myRevertPath);
   }
 
-  public void resolveSelectMineFull(SVNTreeConflictDescription d) throws VcsException {
+  public void resolveSelectMineFull(TreeConflictDescription d) throws VcsException {
     final File ioFile = myPath.getIOFile();
 
     myVcs.getFactory(ioFile).createConflictClient().resolve(ioFile, SVNDepth.INFINITY, true, true, true);

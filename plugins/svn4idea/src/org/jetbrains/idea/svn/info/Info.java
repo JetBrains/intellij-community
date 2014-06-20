@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -24,7 +25,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 import java.util.Date;
@@ -54,7 +54,7 @@ public class Info {
   private final File myConflictWrkFile;
   private final File myPropConflictFile;
   private final SVNDepth myDepth;
-  private final SVNTreeConflictDescription myTreeConflict;
+  private final TreeConflictDescription myTreeConflict;
 
   @NotNull
   public static Info create(@NotNull SVNInfo info) {
@@ -71,7 +71,7 @@ public class Info {
                            info.getAuthor(), info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(),
                            info.getConflictOldFile().getPath(), info.getConflictNewFile().getPath(), info.getConflictWrkFile().getPath(),
                            info.getPropConflictFile().getPath(), info.getLock(), info.getDepth(),
-                           info.getTreeConflict());
+                           TreeConflictDescription.create(info.getTreeConflict()));
     }
 
     return result;
@@ -95,7 +95,7 @@ public class Info {
               String propRejectFile,
               SVNLock lock,
               SVNDepth depth,
-              SVNTreeConflictDescription treeConflict) {
+              TreeConflictDescription treeConflict) {
     myFile = file;
     myURL = url;
     myRevision = SVNRevision.create(revision);
@@ -187,7 +187,7 @@ public class Info {
     return myConflictWrkFile;
   }
 
-  public SVNTreeConflictDescription getTreeConflict() {
+  public TreeConflictDescription getTreeConflict() {
     return myTreeConflict;
   }
 

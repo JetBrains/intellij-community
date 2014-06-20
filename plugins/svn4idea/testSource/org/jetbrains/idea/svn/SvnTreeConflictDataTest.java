@@ -23,17 +23,15 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import junit.framework.Assert;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNOperation;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
-
-import static com.intellij.util.TimeoutUtil.sleep;
 
 /**
  * @author Irina.Chernushina
@@ -71,10 +69,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -99,10 +97,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.DELETE, beforeDescription.getConflictAction());
@@ -138,10 +136,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.EDIT, beforeDescription.getConflictAction());
@@ -168,10 +166,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.DELETE, beforeDescription.getConflictAction());
@@ -198,10 +196,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -229,10 +227,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.EDIT, beforeDescription.getConflictAction());
@@ -261,10 +259,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -292,10 +290,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -322,10 +320,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.DELETE, beforeDescription.getConflictAction());
@@ -350,10 +348,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final Change change = changeListManager.getChange(new FilePathImpl(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.EDIT, beforeDescription.getConflictAction());
@@ -380,10 +378,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.DELETE, beforeDescription.getConflictAction());
@@ -410,10 +408,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -437,10 +435,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final Change change = changeListManager.getChange(new FilePathImpl(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.EDIT, beforeDescription.getConflictAction());
@@ -465,10 +463,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final Change change = changeListManager.getChange(new FilePathImpl(new File(myWorkingCopyDir.getPath(), conflictFile), true));
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -498,10 +496,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -530,10 +528,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -562,10 +560,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -594,10 +592,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -626,10 +624,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -659,10 +657,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -691,10 +689,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -723,10 +721,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -755,10 +753,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());
@@ -787,10 +785,10 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
     Assert.assertTrue(change instanceof ConflictedSvnChange);
-    SVNTreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
+    TreeConflictDescription beforeDescription = ((ConflictedSvnChange)change).getBeforeDescription();
     Assert.assertNotNull(beforeDescription);
 
-    final SVNTreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
+    final TreeConflictDescription afterDescription = ((ConflictedSvnChange)change).getAfterDescription();
     Assert.assertNull(afterDescription);
     Assert.assertEquals(SVNOperation.UPDATE, beforeDescription.getOperation());
     Assert.assertEquals(SVNConflictAction.ADD, beforeDescription.getConflictAction());

@@ -43,6 +43,7 @@ import gnu.trove.TLongArrayList;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnHistorySession;
 import org.tmatesoft.svn.core.SVNException;
@@ -52,7 +53,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import javax.swing.*;
 import java.awt.*;
@@ -96,7 +96,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return true;
   }
 
-  private static boolean descriptionsEqual(SVNTreeConflictDescription d1, SVNTreeConflictDescription d2) {
+  private static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
     if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
     if (d1.isTextConflict() != d2.isTextConflict()) return false;
     if (d1.isTreeConflict() != d2.isTreeConflict()) return false;
@@ -131,7 +131,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                                      processDescription(myChange.getAfterDescription()));
   }
 
-  private BeforeAfter<ConflictSidePresentation> processDescription(SVNTreeConflictDescription description) throws VcsException {
+  private BeforeAfter<ConflictSidePresentation> processDescription(TreeConflictDescription description) throws VcsException {
     if (description == null) return null;
     if (myChange.getBeforeRevision() != null) {
       myCommittedRevision = (SvnRevisionNumber)SvnHistorySession.getCurrentCommittedRevision(myVcs,
@@ -180,7 +180,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return new BeforeAfter<ConflictSidePresentation>(leftSide, rightSide);
   }
 
-  private static boolean isDifferentURLs(SVNTreeConflictDescription description) {
+  private static boolean isDifferentURLs(TreeConflictDescription description) {
     return description.getSourceLeftVersion() != null && description.getSourceRightVersion() != null &&
                 ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
   }
@@ -226,12 +226,12 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return wrapper;
   }
 
-  private void appendDescription(SVNTreeConflictDescription description,
+  private void appendDescription(TreeConflictDescription description,
                                  JPanel main,
                                  GridBagConstraints gb,
                                  BeforeAfter<ConflictSidePresentation> ba, boolean directory) {
     if (description == null) return;
-    JLabel descriptionLbl = new JLabel(SVNTreeConflictUtil.getHumanReadableConflictDescription(description));
+    JLabel descriptionLbl = new JLabel(description.toPresentableString());
     descriptionLbl.setForeground(Color.red);
     main.add(descriptionLbl, gb);
     ++ gb.gridy;
@@ -243,7 +243,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     addSide(main, gb, ba.getAfter(), description.getSourceRightVersion(), "Right", directory);
   }
 
-  private void addResolveButtons(SVNTreeConflictDescription description, JPanel main, GridBagConstraints gb) {
+  private void addResolveButtons(TreeConflictDescription description, JPanel main, GridBagConstraints gb) {
     final FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT, 5, 5);
     JPanel wrapper = new JPanel(flowLayout);
     final JButton both = new JButton("Both");
@@ -266,7 +266,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     ++ gb.gridy;
   }
 
-  private ActionListener createRight(final SVNTreeConflictDescription description) {
+  private ActionListener createRight(final TreeConflictDescription description) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -276,11 +276,11 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<SVNTreeConflictDescription>(myVcs.getProject(), "Accepting theirs for: " + filePath(paths.myMainPath),
+          new VcsBackgroundTask<TreeConflictDescription>(myVcs.getProject(), "Accepting theirs for: " + filePath(paths.myMainPath),
                                                             BackgroundFromStartOption.getInstance(), Collections.singletonList(description),
                                                             true) {
             @Override
-            protected void process(SVNTreeConflictDescription d) throws VcsException {
+            protected void process(TreeConflictDescription d) throws VcsException {
               new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectTheirsFull(d);
             }
 
@@ -296,7 +296,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     };
   }
 
-  private Paths getPaths(final SVNTreeConflictDescription description) {
+  private Paths getPaths(final TreeConflictDescription description) {
     FilePath mainPath = new FilePathImpl(description.getPath(), SVNNodeKind.DIR.equals(description.getNodeKind()));
     FilePath additionalPath = null;
     if (myChange.isMoved() || myChange.isRenamed()) {
@@ -323,7 +323,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     }
   }
 
-  private ActionListener createLeft(final SVNTreeConflictDescription description) {
+  private ActionListener createLeft(final TreeConflictDescription description) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -333,11 +333,11 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<SVNTreeConflictDescription>(myVcs.getProject(), "Accepting yours for: " + filePath(paths.myMainPath),
+          new VcsBackgroundTask<TreeConflictDescription>(myVcs.getProject(), "Accepting yours for: " + filePath(paths.myMainPath),
                                                             BackgroundFromStartOption.getInstance(), Collections.singletonList(description),
                                                             true) {
             @Override
-            protected void process(SVNTreeConflictDescription d) throws VcsException {
+            protected void process(TreeConflictDescription d) throws VcsException {
               new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectMineFull(d);
             }
 
@@ -353,7 +353,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     };
   }
 
-  private ActionListener createMerge(final SVNTreeConflictDescription description) {
+  private ActionListener createMerge(final TreeConflictDescription description) {
     if (isDifferentURLs(description)) {
       return null;
     }
@@ -368,7 +368,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return null;
   }
 
-  private ActionListener createMergeTheirsForFile(final SVNTreeConflictDescription description) {
+  private ActionListener createMergeTheirsForFile(final TreeConflictDescription description) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -381,7 +381,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return newFilePath.getName() + " (" + newFilePath.getParentPath().getPath() + ")";
   }
 
-  private static ActionListener createBoth(SVNTreeConflictDescription description) {
+  private static ActionListener createBoth(TreeConflictDescription description) {
     return null;
   }
 

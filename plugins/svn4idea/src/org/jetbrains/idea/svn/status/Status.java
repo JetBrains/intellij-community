@@ -16,13 +16,13 @@
 package org.jetbrains.idea.svn.status;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 
@@ -48,7 +48,7 @@ public class Status {
   private SVNLock myLocalLock;
   private SVNRevision myRemoteRevision;
   private String myChangelistName;
-  private SVNTreeConflictDescription myTreeConflict;
+  private TreeConflictDescription myTreeConflict;
   private boolean myIsConflicted;
 
   private SVNStatusType myNodeStatus;
@@ -62,7 +62,7 @@ public class Status {
                       status.isSwitched(),
                       status.getCopyFromURL(),
                       status.getRemoteLock(), status.getLocalLock(), status.getChangelistName(),
-                      status.getTreeConflict());
+                      TreeConflictDescription.create(status.getTreeConflict()));
   }
 
   public Status(SVNURL url,
@@ -81,7 +81,7 @@ public class Status {
                 SVNLock remoteLock,
                 SVNLock localLock,
                 String changelistName,
-                SVNTreeConflictDescription treeConflict) {
+                TreeConflictDescription treeConflict) {
     myURL = url;
     myFile = file;
     myKind = kind == null ? SVNNodeKind.NONE : kind;
@@ -176,7 +176,7 @@ public class Status {
     return myChangelistName;
   }
 
-  public SVNTreeConflictDescription getTreeConflict() {
+  public TreeConflictDescription getTreeConflict() {
     return myTreeConflict;
   }
 

@@ -99,7 +99,7 @@ public class SvnInfoStructure {
     return lock;
   }
 
-  private SVNTreeConflictDescription createTreeConflict() throws SAXException, SVNException {
+  private org.jetbrains.idea.svn.conflict.TreeConflictDescription createTreeConflict() throws SAXException, SVNException {
     if (myTreeConflict == null) {
       return null;
     }
@@ -110,7 +110,7 @@ public class SvnInfoStructure {
       final SVNConflictReason reason = parseConflictReason(myTreeConflict.myReason);
       SVNOperation operation = SVNOperation.fromString(myTreeConflict.myOperation);
       operation = operation == null ? SVNOperation.NONE : operation;
-      return new SVNTreeConflictDescription(myFile, myKind, action, reason, operation,
+      return new org.jetbrains.idea.svn.conflict.TreeConflictDescription(myFile, myKind, action, reason, operation,
                                             createVersion(myTreeConflict.mySourceLeft),
                                             createVersion(myTreeConflict.mySourceRight));
     }
