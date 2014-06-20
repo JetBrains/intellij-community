@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-
-<idea-plugin version="2">
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.intellij.plugins.intelliLang.inject.config.JspSupportProxy"
-                        serviceImplementation="org.intellij.plugins.intelliLang.inject.config.JspSupportProxyImpl"/>
-  </extensions>
-</idea-plugin>

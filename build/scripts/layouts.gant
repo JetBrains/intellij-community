@@ -236,7 +236,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
             module("IntelliLang")
             module("IntelliLang-java")
             module("IntelliLang-xml")
-            module("IntelliLang-javaee")
           }
           jar("intellilang-jps-plugin.jar") {
             module("intellilang-jps-plugin")
