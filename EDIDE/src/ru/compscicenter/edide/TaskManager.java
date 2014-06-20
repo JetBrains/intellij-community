@@ -36,7 +36,7 @@ public class TaskManager {
   }
 
   private void load() {
-    InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("introduction_course/tasks.json");
+    InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.json");
     BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
     JsonReader r = new JsonReader(reader);
     JsonParser parser = new JsonParser();

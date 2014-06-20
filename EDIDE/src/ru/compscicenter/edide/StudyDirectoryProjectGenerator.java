@@ -37,7 +37,6 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     @NonNls String jarPath = PathUtil.getJarPathForClass(StudyDirectoryProjectGenerator.class);
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
-
       return jarFile.getParentFile().getParentFile();
     }
 
