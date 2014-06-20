@@ -281,16 +281,13 @@ public class FindUsagesManager implements JDOMExternalizable {
 
 
   @NotNull
-  public static ProgressIndicator startProcessUsages(@NotNull FindUsagesHandler handler,
+  public static ProgressIndicator startProcessUsages(@NotNull final FindUsagesHandler handler,
                                                      @NotNull final PsiElement[] primaryElements,
                                                      @NotNull final PsiElement[] secondaryElements,
                                                      @NotNull final Processor<Usage> processor,
-                                                     @NotNull FindUsagesOptions findUsagesOptions,
+                                                     @NotNull final FindUsagesOptions findUsagesOptions,
                                                      @NotNull final Runnable onComplete) {
-    final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
-
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-    dropResolveCacheRegularly(indicator, handler.getProject());
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -298,6 +295,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           ProgressManager.getInstance().runProcess(new Runnable() {
             @Override
             public void run() {
+              final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
               usageSearcher.generate(processor);
             }
           }, indicator);
@@ -344,6 +342,14 @@ public class FindUsagesManager implements JDOMExternalizable {
     return new UsageSearcher() {
       @Override
       public void generate(@NotNull final Processor<Usage> processor) {
+        Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+          @Override
+          public Project compute() {
+            return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
+          }
+        });
+        dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
+        
         if (scopeFile != null) {
           optionsClone.searchScope = new LocalSearchScope(scopeFile);
         }
@@ -362,12 +368,6 @@ public class FindUsagesManager implements JDOMExternalizable {
         final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
 
         optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
-        Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-          @Override
-          public Project compute() {
-            return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
-          }
-        });
         //optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
         try {
           for (final PsiElement element : elements) {
@@ -439,14 +439,13 @@ public class FindUsagesManager implements JDOMExternalizable {
     myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
       @Override
       public UsageSearcher create() {
-        dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), myProject);
         return createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
       }
     }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), null);
     myHistory.add((ConfigurableUsageTarget)targets[0]);
   }
 
-  private static void dropResolveCacheRegularly(ProgressIndicator indicator, final Project project) {
+  private static void dropResolveCacheRegularly(ProgressIndicator indicator, @NotNull final Project project) {
     if (indicator instanceof ProgressIndicatorEx) {
       ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
         volatile long lastCleared = System.currentTimeMillis();
