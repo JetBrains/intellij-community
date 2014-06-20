@@ -1,7 +1,10 @@
 package ru.compscicenter.edide;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,13 +80,13 @@ class Task {
         String metaFileName = fileName.substring(0, of + 1) + "json";
         InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(metaFileName);
         BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
-        com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
+        JsonReader r = new com.google.gson.stream.JsonReader(reader);
         JsonParser parser = new JsonParser();
-        com.google.gson.JsonElement el = parser.parse(r);
+        JsonElement el = parser.parse(r);
         int windNum = el.getAsJsonObject().get("windows_num").getAsInt();
         TaskFile taskFile = new TaskFile(fileName, windNum);
         JsonArray windows = el.getAsJsonObject().get("windows_description").getAsJsonArray();
-        for (com.google.gson.JsonElement e : windows) {
+        for (JsonElement e : windows) {
             int line = e.getAsJsonObject().get("line").getAsInt();
             int startOffset = e.getAsJsonObject().get("start").getAsInt();
             String text = e.getAsJsonObject().get("text").getAsString();

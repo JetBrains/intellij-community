@@ -43,22 +43,22 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     }
 
     boolean fileChanged(VirtualFile file) throws IOException {
-    File usual_file = new File(file.getPath());
-    InputStream usual_file_stream = new FileInputStream(usual_file);
+    File usualFile = new File(file.getPath());
+    InputStream usualFileStream = new FileInputStream(usualFile);
     InputStream metaIs = StudyEditorFactoryListener.class.getResourceAsStream(file.getName());
-    BufferedReader bf_meta = new BufferedReader(new InputStreamReader(metaIs));
-    BufferedReader bf_usual = new BufferedReader(new InputStreamReader(usual_file_stream));
-    while(bf_meta.ready()) {
-      String line1 = bf_meta.readLine();
-      String line2 = bf_usual.readLine();
+    BufferedReader bfMeta = new BufferedReader(new InputStreamReader(metaIs));
+    BufferedReader bfUsual = new BufferedReader(new InputStreamReader(usualFileStream));
+    while(bfMeta.ready()) {
+      String line1 = bfMeta.readLine();
+      String line2 = bfUsual.readLine();
       if (!line1.equals(line2)) {
-        bf_meta.close();
-        bf_usual.close();
+        bfMeta.close();
+        bfUsual.close();
         return true;
       }
     }
-    bf_meta.close();
-    bf_usual.close();
+    bfMeta.close();
+    bfUsual.close();
     return false;
   }
 
@@ -79,7 +79,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   if (fileChanged(vfOpenedFile)) {
                     return;
                   }
-                    HintManager.getInstance().showInformationHint(editor, "Нажмите на любое окошко с заданием");
+                    HintManager.getInstance().showInformationHint(editor, "Select any task window");
                     TaskManager taskManager = TaskManager.getInstance();
                    int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
                    TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
