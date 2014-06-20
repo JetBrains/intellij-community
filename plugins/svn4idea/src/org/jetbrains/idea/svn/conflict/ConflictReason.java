@@ -39,7 +39,13 @@ public enum ConflictReason {
   /**
    * @since 1.7
    */
-  REPLACED("replace", "replaced");
+  REPLACED("replace", "replaced"),
+
+  /**
+   * @since 1.8
+   */
+  MOVED_AWAY("moved-away"),
+  MOVED_HERE("moved-here");
 
   @NotNull private static final Map<String, ConflictReason> ourAllReasons = ContainerUtil.newHashMap();
 
