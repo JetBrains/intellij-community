@@ -474,15 +474,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private void doubleClick(final Object object) {
     if (object instanceof Navigatable) {
-      final Navigatable navigatable = (Navigatable)object;
+      Navigatable navigatable = (Navigatable)object;
       if (navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
     }
     else if (object instanceof Module) {
-      final ProjectView projectView = ProjectView.getInstance(myProject);
-      final AbstractProjectViewPane projectViewPane = projectView.getProjectViewPaneById(projectView.getCurrentViewId());
-      projectViewPane.selectModule((Module)object, true);
+      ProjectView projectView = ProjectView.getInstance(myProject);
+      AbstractProjectViewPane projectViewPane = projectView.getProjectViewPaneById(projectView.getCurrentViewId());
+      if (projectViewPane != null) {
+        projectViewPane.selectModule((Module)object, true);
+      }
     }
     else if (object instanceof Project) {
       return;
