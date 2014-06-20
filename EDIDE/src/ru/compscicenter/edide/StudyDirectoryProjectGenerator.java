@@ -3,27 +3,45 @@ package ru.compscicenter.edide;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * User: lia
  */
 class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
+  private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
 
   @Nls
   @NotNull
   @Override
   public String getName() {
     return "Study project";
+  }
+
+  public static File getResourcesRoot() {
+    @NonNls String jarPath = PathUtil.getJarPathForClass(StudyDirectoryProjectGenerator.class);
+    if (jarPath.endsWith(".jar")) {
+      final File jarFile = new File(jarPath);
+
+      return jarFile.getParentFile().getParentFile();
+    }
+
+    return new File(jarPath);
   }
 
   @Nullable
@@ -33,29 +51,15 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   }
 
   //should be invoked in invokeLater method
-  void createFile(String name, VirtualFile directory) throws IOException {
-    VirtualFile currentFile = directory.createChildData(this, name);
-    currentFile.setWritable(true);
-    InputStream ip = StudyDirectoryProjectGenerator.class.getResourceAsStream(name);
-    BufferedReader bf = new BufferedReader(new InputStreamReader(ip));
-    OutputStream os = currentFile.getOutputStream(this);
-    PrintWriter printWriter = new PrintWriter(os);
-    try {
-      while (bf.ready()) {
-        String line = bf.readLine();
-        if (bf.ready()) {
-          printWriter.println(line);
-        } else {
-          printWriter.print(line);
-        }
-      }
-    } catch (Exception e) {
-      Log.print(e.getMessage());
-      Log.flush();
-    } finally {
-      bf.close();
-      printWriter.close();
+  void createFile(@NotNull final String name, @NotNull final VirtualFile directory) throws IOException {
+    final File root = getResourcesRoot();
+    String systemIndependentName = FileUtil.toSystemIndependentName(name);
+    final int index = systemIndependentName.lastIndexOf("/");
+    if (index > 0) {
+      systemIndependentName = systemIndependentName.substring(index + 1);
     }
+    FileUtil.copy(new File(root, name), new File(directory.getPath(), systemIndependentName));
+
   }
 
   @Override
@@ -79,16 +83,18 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
                       final String curFileName = taskManager.getFileName(task, file);
                       createFile(curFileName, taskDirectory);
                     }
-                    createFile(taskManager.getTest(task), baseDir.findChild(".idea"));
+                    final VirtualFile ideaDir = baseDir.findChild(".idea");
+                    if (ideaDir != null)
+                      createFile(taskManager.getTest(task), ideaDir);
+                    else
+                      LOG.error("Could not find .idea directory");
                   }
-                  createFile("sum-input.txt", baseDir.findChild(".idea"));
-                  createFile("sum-input2.txt", baseDir.findChild(".idea"));
-                  createFile("sum-input3.txt", baseDir.findChild(".idea"));
                 } catch (IOException e) {
                   Log.print("Problems with creating files");
                   Log.print(e.toString());
                   Log.flush();
                 }
+                LocalFileSystem.getInstance().refresh(false);
               }
             });
           }

@@ -19,24 +19,24 @@ import java.util.ArrayList;
  * Time: 20:37
  */
 public class TaskManager {
-  static private TaskManager instance = null;
-  private final ArrayList<Task> tasks;
-  private int currentTask = -1;
+  static private TaskManager ourInstance = null;
+  private final ArrayList<Task> myTasks;
+  private int myCurrentTask = -1;
 
   private TaskManager() {
-    tasks = new ArrayList<Task>(10);
+    myTasks = new ArrayList<Task>(10);
   }
 
   static public TaskManager getInstance() {
-    if (instance == null) {
-      instance = new TaskManager();
-      instance.load();
+    if (ourInstance == null) {
+      ourInstance = new TaskManager();
+      ourInstance.load();
     }
-    return instance;
+    return ourInstance;
   }
 
   private void load() {
-    InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.json");
+    InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("introduction_course/tasks.json");
     BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
     JsonReader r = new JsonReader(reader);
     JsonParser parser = new JsonParser();
@@ -53,7 +53,7 @@ public class TaskManager {
         task.setTest(testFileName);
         String taskTextFileName = e.getAsJsonObject().get("task text").getAsString();
         task.setTaskTextFile(taskTextFileName);
-        tasks.add(task);
+        myTasks.add(task);
       }
     }
     catch (Exception e) {
@@ -72,40 +72,40 @@ public class TaskManager {
 
 
   public int getTasksNum() {
-    return tasks.size();
+    return myTasks.size();
   }
 
   public String getTest(int index) {
-    return tasks.get(index).getTest();
+    return myTasks.get(index).getTest();
   }
 
   public int getTaskFileNum(int index) {
-    return tasks.get(index).getFileNum();
+    return myTasks.get(index).getFileNum();
   }
 
   public String getFileName(int taskIndex, int fileIndex) {
-    return tasks.get(taskIndex).getTaskFile(fileIndex).getMyName();
+    return myTasks.get(taskIndex).getTaskFile(fileIndex).getMyName();
   }
 
   public String getTaskText(int index) {
-    return tasks.get(index).getTaskText();
+    return myTasks.get(index).getTaskText();
   }
 
   public int getCurrentTask() {
-    return currentTask;
+    return myCurrentTask;
   }
 
   public void setCurrentTask(int currentTask) {
-    this.currentTask = currentTask;
+    this.myCurrentTask = currentTask;
   }
 
   public void incrementTask() {
-    currentTask++;
+    myCurrentTask++;
   }
 
   public int getTaskNumForFile(String filename) {
-    for (int i = 0; i < tasks.size(); i++) {
-      if (tasks.get(i).contains(filename)) {
+    for (int i = 0; i < myTasks.size(); i++) {
+      if (myTasks.get(i).contains(filename)) {
         return i;
       }
     }
@@ -113,11 +113,11 @@ public class TaskManager {
   }
 
   public TaskFile getTaskFile(int index, String fileName) {
-    return tasks.get(index).getTaskFileByName(fileName);
+    return myTasks.get(index).getTaskFileByName(fileName);
   }
 
   public String getDocFileForTask(int taskNum, LogicalPosition pos, String name) {
-    Task task = tasks.get(taskNum);
+    Task task = myTasks.get(taskNum);
     TaskFile file = task.getTaskFileByName(name);
     TaskWindow tw = file.getTaskWindow(pos);
     if (tw != null) {
