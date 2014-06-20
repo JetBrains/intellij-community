@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent;
-import com.intellij.ultimate.PluginVerifier;
-import com.intellij.ultimate.UltimateVerifier;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,10 +40,6 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
 
   public void setDialogVisible(boolean dialogVisible) {
     myDialogVisible = dialogVisible;
-  }
-
-  public StructuralSearchPlugin(UltimateVerifier verifier) {
-    PluginVerifier.verifyUltimatePlugin(verifier);
   }
 
   /**
