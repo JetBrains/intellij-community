@@ -107,7 +107,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (parent instanceof PsiThisExpression) {
       expression = parent;
     }
-    else if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiBinaryExpression) {
+    else if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiBinaryExpression || parent instanceof PsiPolyadicExpression) {
       if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
         expression = parent;
       }
