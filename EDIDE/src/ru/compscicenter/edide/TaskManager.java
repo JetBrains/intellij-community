@@ -1,7 +1,9 @@
 package ru.compscicenter.edide;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.LogicalPosition;
 
@@ -36,15 +38,15 @@ public class TaskManager {
   private void load() {
     InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.json");
     BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
-    com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
+    JsonReader r = new JsonReader(reader);
     JsonParser parser = new JsonParser();
     try {
-      com.google.gson.JsonElement el = parser.parse(r);
+      JsonElement el = parser.parse(r);
       JsonArray tasksList = el.getAsJsonObject().get("tasks_list").getAsJsonArray();
-      for (com.google.gson.JsonElement e : tasksList) {
+      for (JsonElement e : tasksList) {
         Task task = new Task(e.getAsJsonObject().get("file_num").getAsInt());
         JsonArray filesInTask = e.getAsJsonObject().get("file_names").getAsJsonArray();
-        for (com.google.gson.JsonElement fileName : filesInTask) {
+        for (JsonElement fileName : filesInTask) {
             task.addNewTaskFile(fileName.getAsString());
         }
         String testFileName = e.getAsJsonObject().get("test").getAsString();
