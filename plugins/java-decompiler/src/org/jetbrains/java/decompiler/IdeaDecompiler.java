@@ -114,7 +114,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     @Override
     public InputStream getBytecodeStream(String externalPath, String internalPath) {
       try {
-        return myFiles.get(externalPath).getInputStream();
+        VirtualFile file = myFiles.get(externalPath);
+        assert file != null : externalPath;
+        return file.getInputStream();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
