@@ -1,0 +1,22 @@
+Types:
+PsiBinaryExpression:i == 0 : boolean
+PsiField:i : java.lang.ThreadLocal<java.lang.Integer>
+PsiPostfixExpression:i++ : java.lang.ThreadLocal<java.lang.Integer>
+PsiPostfixExpression:i-- : java.lang.ThreadLocal<java.lang.Integer>
+PsiPrefixExpression:++i : java.lang.ThreadLocal<java.lang.Integer>
+PsiPrefixExpression:--i : java.lang.ThreadLocal<java.lang.Integer>
+PsiReferenceExpression:i : java.lang.ThreadLocal<java.lang.Integer>
+PsiReferenceExpression:i : java.lang.ThreadLocal<java.lang.Integer>
+PsiReferenceExpression:i : java.lang.ThreadLocal<java.lang.Integer>
+PsiReferenceExpression:i : java.lang.ThreadLocal<java.lang.Integer>
+PsiReferenceExpression:i : java.lang.ThreadLocal<java.lang.Integer>
+
+Conversions:
+++i -> $qualifier$.set($qualifier$.get() + 1) ++$qualifier$
+--i -> $qualifier$.set($qualifier$.get() - 1) --$qualifier$
+i == 0 -> $qualifier$.get() == $val$ $qualifier$==$val$
+i++ -> $qualifier$.set($qualifier$.get() + 1) $qualifier$++
+i-- -> $qualifier$.set($qualifier$.get() - 1) $qualifier$--
+
+New expression type changes:
+Fails:

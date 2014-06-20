@@ -1,0 +1,39 @@
+<idea-plugin>
+  <name>Type Migration</name>
+  <description>
+      <![CDATA[
+      This plugin adds the type migration refactoring.
+      The following features are available:
+      <ul>
+      <li>Dedicated Refactoring Dialog. (Refactor | Type Migration)</li>
+      <li>Ability to review type migration results. (Refactor | Migration | Preview)</li>
+      <li>Ability to automatically change a member type or data flow dependent type entries.</li>
+      <li>Ability to convert variable or method return type between arrays and collections.</li>
+      </ul>
+      ]]>
+  </description>
+  <vendor>JetBrains</vendor>
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <codeInsight.changeVariableTypeQuickFixProvider
+        implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ListArrayConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.AtomicConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.BoxingTypeConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ElementToArrayConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule"/>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
+       <category>Concurrency</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
+      <category>Concurrency</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ChangeClassParametersIntention</className>
+      <category>Declaration</category>
+    </intentionAction>
+  </extensions>
+  <depends>Structural Search</depends>
+</idea-plugin>
