@@ -16,8 +16,6 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="ultimate-verifier" />
-    <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="java-indexing-api" />

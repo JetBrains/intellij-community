@@ -15,8 +15,6 @@
     <orderEntry type="module" module-name="structuralsearch" />
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="ultimate-verifier" />
-    <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="idea-tests" scope="TEST" />
     <orderEntry type="module" module-name="IntelliLang-js" scope="TEST" />

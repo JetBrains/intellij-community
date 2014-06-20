@@ -67,6 +67,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "compiler-impl",
     "debugger-impl",
     "dom-impl",
+    "duplicates-analysis",
     "execution-impl",
     "external-system-impl",
     "idea-ui",
@@ -243,6 +244,47 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         }
       }
     }
+
+    dir("plugins") {
+      pluginDir("coverage") {
+        dir("lib") {
+          jar("coverage.jar") {
+            noResources("coverage-common")
+            noResources("coverage")
+            noResources("ultimate-verifier")
+          }
+
+          jar("coverage_rt.jar") {
+            noResources("coverage_rt")
+          }
+
+          jar("resources_en.jar") {
+            module("coverage-common") {
+              patternset(refid: "resources.included")
+            }
+            module("coverage") {
+              patternset(refid: "resources.included")
+            }
+          }
+
+          fileset(dir: "${home}/plugins/coverage-common/lib") {
+            exclude(name: "finder.jar")
+            exclude(name: "**/coverage-src.zip")
+          }
+
+          fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
+        }
+      }
+
+      pluginDir("structuralsearch") {
+        dir("lib") {
+          jar("structuralsearch.jar") {
+            module("structuralsearch")
+            moduleOptional("structuralsearch-groovy")
+          }
+        }
+      }
+    }
   }
 
   printUnusedModules(info.usedModules)
@@ -256,7 +298,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github", "typeMigration"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it

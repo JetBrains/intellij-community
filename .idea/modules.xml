@@ -9,6 +9,14 @@
       <module fileurl="file://$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" filepath="$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" group="plugins/IntelliLang" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/duplicates-analysis/duplicates-analysis.iml" filepath="$PROJECT_DIR$/platform/duplicates-analysis/duplicates-analysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/typeMigration/typeMigration.iml" filepath="$PROJECT_DIR$/plugins/typeMigration/typeMigration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/groovy-support/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/groovy-support/structuralsearch-groovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" filepath="$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" filepath="$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" group="platform" />
