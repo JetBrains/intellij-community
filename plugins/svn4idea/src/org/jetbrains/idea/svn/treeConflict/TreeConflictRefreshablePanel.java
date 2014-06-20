@@ -43,6 +43,8 @@ import gnu.trove.TLongArrayList;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.conflict.ConflictAction;
+import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnHistorySession;
@@ -50,8 +52,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -300,7 +300,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     FilePath mainPath = new FilePathImpl(description.getPath(), SVNNodeKind.DIR.equals(description.getNodeKind()));
     FilePath additionalPath = null;
     if (myChange.isMoved() || myChange.isRenamed()) {
-      if (SVNConflictAction.ADD.equals(description.getConflictAction())) {
+      if (ConflictAction.ADD.equals(description.getConflictAction())) {
         mainPath = myChange.getAfterRevision().getFile();
         additionalPath = myChange.getBeforeRevision().getFile();
       } else {
@@ -358,8 +358,8 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       return null;
     }
     // my edit, theirs move or delete
-    if (SVNConflictAction.EDIT.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null &&
-        SVNConflictReason.DELETED.equals(description.getConflictReason()) && (myChange.isMoved() || myChange.isRenamed()) &&
+    if (ConflictAction.EDIT.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null &&
+        ConflictReason.DELETED.equals(description.getConflictReason()) && (myChange.isMoved() || myChange.isRenamed()) &&
         myCommittedRevision != null) {
       if (myPath.isDirectory() == SVNNodeKind.DIR.equals(description.getSourceRightVersion().getKind())) {
         return createMergeTheirsForFile(description);

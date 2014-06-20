@@ -18,9 +18,6 @@ package org.jetbrains.idea.svn.conflict;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
@@ -32,22 +29,29 @@ public class TreeConflictDescription {
 
   private final File myPath;
   private final SVNNodeKind myNodeKind;
-  private final SVNConflictAction myConflictAction;
-  private final SVNConflictReason myConflictReason;
+  private final ConflictAction myConflictAction;
+  private final ConflictReason myConflictReason;
 
-  private final SVNOperation myOperation;
+  private final ConflictOperation myOperation;
   private final SVNConflictVersion mySourceLeftVersion;
   private final SVNConflictVersion mySourceRightVersion;
 
   @NotNull
   public static TreeConflictDescription create(@NotNull SVNTreeConflictDescription conflict) {
-    return new TreeConflictDescription(conflict.getPath(), conflict.getNodeKind(), conflict.getConflictAction(),
-                                       conflict.getConflictReason(), conflict.getOperation(), conflict.getSourceLeftVersion(),
-                                       conflict.getSourceRightVersion());
+    return new TreeConflictDescription(conflict.getPath(), conflict.getNodeKind(),
+                                       ConflictAction.from(conflict.getConflictAction().getName()),
+                                       ConflictReason.from(conflict.getConflictReason().getName()),
+                                       ConflictOperation.from(conflict.getOperation().getName()),
+                                       conflict.getSourceLeftVersion(), conflict.getSourceRightVersion());
   }
 
-  public TreeConflictDescription(File path, SVNNodeKind nodeKind, SVNConflictAction conflictAction, SVNConflictReason conflictReason,
-                                 SVNOperation operation, SVNConflictVersion sourceLeftVersion, SVNConflictVersion sourceRightVersion) {
+  public TreeConflictDescription(File path,
+                                 SVNNodeKind nodeKind,
+                                 ConflictAction conflictAction,
+                                 ConflictReason conflictReason,
+                                 ConflictOperation operation,
+                                 SVNConflictVersion sourceLeftVersion,
+                                 SVNConflictVersion sourceRightVersion) {
     myPath = path;
     myNodeKind = nodeKind;
     myConflictAction = conflictAction;
@@ -75,11 +79,11 @@ public class TreeConflictDescription {
     return myPath;
   }
 
-  public SVNConflictAction getConflictAction() {
+  public ConflictAction getConflictAction() {
     return myConflictAction;
   }
 
-  public SVNConflictReason getConflictReason() {
+  public ConflictReason getConflictReason() {
     return myConflictReason;
   }
 
@@ -87,7 +91,7 @@ public class TreeConflictDescription {
     return myNodeKind;
   }
 
-  public SVNOperation getOperation() {
+  public ConflictOperation getOperation() {
     return myOperation;
   }
 
@@ -101,7 +105,6 @@ public class TreeConflictDescription {
 
   @NotNull
   public String toPresentableString() {
-    // TODO: In SVNTreeConflictUtil.getHumanReadableConflictDescription "ed" ending was also removed from action and reason.
     return "local " + getConflictReason() + ", incoming " + getConflictAction() + " upon " + getOperation();
   }
 }
