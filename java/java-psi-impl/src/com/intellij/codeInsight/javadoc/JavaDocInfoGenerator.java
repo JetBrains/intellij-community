@@ -699,11 +699,14 @@ public class JavaDocInfoGenerator {
   private static void generateAnnotations(@NonNls @NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
-    PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
+    generateAnnotations(buffer, owner, ownerModifierList.getAnnotations(), false);
     final PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
     if (externalAnnotations != null) {
-      annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.ARRAY_FACTORY);
+      generateAnnotations(buffer, owner, externalAnnotations, true);
     }
+  }
+
+  private static void generateAnnotations(StringBuilder buffer, PsiModifierListOwner owner, PsiAnnotation[] annotations, boolean external) {
     PsiManager manager = owner.getManager();
 
     for (PsiAnnotation annotation : annotations) {
@@ -737,7 +740,11 @@ public class JavaDocInfoGenerator {
           }
           buffer.append("&nbsp;");
         }
-      } else {
+      } else if (external) {
+        buffer.append(annotation.getText());
+        buffer.append("&nbsp;");
+      }
+      else {
         buffer.append("<font color=red>");
         buffer.append(annotation.getText());
         buffer.append("</font>");
