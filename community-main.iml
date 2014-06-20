@@ -100,6 +100,7 @@
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="community-tests" scope="TEST" />
     <orderEntry type="module" module-name="jira" />
+    <orderEntry type="module" module-name="java-decompiler" />
   </component>
 </module>
 
