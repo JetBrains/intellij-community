@@ -556,7 +556,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                       annotation.delete();
                       break;
                     }
-                    if (compare < 0) break;
                     anchor = annotation;
                   }
                   XmlTag newTag = XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
