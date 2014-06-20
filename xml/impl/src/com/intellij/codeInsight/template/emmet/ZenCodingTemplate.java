@@ -204,11 +204,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     List<ZenCodingFilter> filters = getFilters(node, context);
     filters.addAll(extraFilters);
 
-
     if (surroundedText == null) {
       callback.deleteTemplateKey(key);
-      // commit is required. otherwise injections placed after caret will be broken
-      PsiDocumentManager.getInstance(callback.getProject()).commitDocument(callback.getEditor().getDocument());
     }
     expand(node, generator, filters, surroundedText, callback, expandPrimitiveAbbreviations, segmentsLimit);
   }
@@ -403,14 +400,14 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (file == null) {
       return false;
     }
-    PsiElement element = CustomTemplateCallback.getContext(file, offset);
+    PsiElement element = CustomTemplateCallback.getContext(file, offset, true);
     final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, wrapping);
     return applicableGenerator != null && applicableGenerator.isEnabled();
   }
 
   @Override
   public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
-    PsiElement element = CustomTemplateCallback.getContext(file, offset);
+    PsiElement element = CustomTemplateCallback.getContext(file, offset, true);
     final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, false);
     return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
   }
@@ -482,7 +479,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     int offset = parameters.getOffset();
     Editor editor = parameters.getEditor();
 
-    ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false);
+    ZenCodingGenerator generator = findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset, true), false);
     if (generator != null && generator.hasCompletionItem()) {
       final Ref<TemplateImpl> generatedTemplate = new Ref<TemplateImpl>();
       final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file) {
