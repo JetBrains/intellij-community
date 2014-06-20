@@ -67,7 +67,7 @@
                 public protected *;
             }
 
-            -keep public class de.fernflower.main.decompiler.EclipseDecompiler {
+            -keep public class de.fernflower.main.decompiler.IdeDecompiler {
                 public protected *;
             }
 
@@ -127,7 +127,7 @@
 	  	    public protected *;
 	  	}
 
-	  	-keep public class de.fernflower.main.decompiler.EclipseDecompiler {
+	  	-keep public class de.fernflower.main.decompiler.IdeDecompiler {
 	  	    public protected *;
 	  	}
 

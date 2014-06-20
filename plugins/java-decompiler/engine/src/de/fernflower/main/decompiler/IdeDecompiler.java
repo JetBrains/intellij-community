@@ -25,13 +25,13 @@ import de.fernflower.main.extern.IDecompilatSaver;
 import de.fernflower.main.extern.IFernflowerLogger;
 
 
-public class EclipseDecompiler {
+public class IdeDecompiler {
 
 	private Fernflower fernflower;
 	
-	public EclipseDecompiler(IBytecodeProvider provider,
-			IDecompilatSaver saver, IFernflowerLogger logger,
-			HashMap<String, Object> propertiesCustom) {
+	public IdeDecompiler(IBytecodeProvider provider,
+                       IDecompilatSaver saver, IFernflowerLogger logger,
+                       HashMap<String, Object> propertiesCustom) {
 
 		fernflower = new Fernflower(provider, saver, propertiesCustom);
 		
