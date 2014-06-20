@@ -9,7 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="structuralsearch" />
-    <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="openapi" />

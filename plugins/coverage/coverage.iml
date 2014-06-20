@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="testRunner" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module-library" exported="">
       <library name="CoverageReport">
         <CLASSES>
