@@ -34,6 +34,7 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     isUsages = true;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!super.equals(this)) return false;
@@ -42,6 +43,7 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     return isSkipImportStatements == ((JavaFindUsagesOptions)o).isSkipImportStatements;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (isSkipImportStatements ? 1 : 0);

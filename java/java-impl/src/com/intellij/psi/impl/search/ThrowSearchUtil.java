@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -34,34 +33,29 @@ import java.util.Set;
  * Author: msk
  */
 public class ThrowSearchUtil {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.ThrowSearchUtil");
 
   private ThrowSearchUtil() {
   }
 
   public static class Root {
-    final PsiElement myElement;
-    final PsiType myType;
-    final boolean isExact;
+    @NotNull private final PsiElement myElement;
+    @NotNull private final PsiType myType;
+    private final boolean isExact;
 
-    public Root(final PsiElement root, final PsiType type, final boolean exact) {
+    public Root(@NotNull PsiElement root, @NotNull PsiType type, final boolean exact) {
       myElement = root;
       myType = type;
       isExact = exact;
     }
 
+    @Override
     public String toString() {
       return PsiFormatUtil.formatType(myType, PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, PsiSubstitutor.EMPTY);
     }
   }
 
-  public static Key<Root> THROW_SEARCH_ROOT_KEY = Key.create("ThrowSearchUtil.root");
-
   /**
-   * @param aCatch
-   * @param processor
-   * @param root
    * @return true, if we should continue processing
    */
   private static boolean processExn(@NotNull PsiParameter aCatch, @NotNull Processor<UsageInfo> processor, @NotNull Root root) {
@@ -123,7 +117,6 @@ public class ThrowSearchUtil {
   }
 
   /**
-   * @param exn
    * @return is type of exn exactly known
    */
 
