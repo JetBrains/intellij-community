@@ -85,7 +85,7 @@ public class RefManagerImpl extends RefManager {
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public RefManagerImpl(@NotNull Project project, AnalysisScope scope, @NotNull GlobalInspectionContext context) {
+  public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
@@ -100,10 +100,12 @@ public class RefManagerImpl extends RefManager {
         myLanguageExtensions.put(extension.getLanguage(), extension);
       }
     }
-    for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-      //init all ref modules in scope
-      if (scope.containsModule(module)) {
-        getRefModule(module);
+    if (scope != null) {
+      for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+        //init all ref modules in scope
+        if (scope.containsModule(module)) {
+          getRefModule(module);
+        }
       }
     }
   }
