@@ -1,0 +1,11 @@
+occurence 0:
+def h() {System.out.println("Hello!");}
+
+occurence 1:
+def int g() {System.out.println("Hello!");}
+
+occurence 2:
+int f() {System.out.println("Hello!");}
+
+occurence 3:
+public static def int f1() {System.out.println("Hello!");}

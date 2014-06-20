@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml">
+  <mx:Button>
+    <mx:Script><![CDATA[
+
+      function processClick() {
+      }
+
+      function f(n:int) {
+        for (var i:int = 0; i < n; i++) {
+        }
+        for (var j:int = 0; j < n; j++) {
+        }
+
+        processClick();
+      }
+      ]]></mx:Script>
+  </mx:Button>
+</mx:Application>
