@@ -19,6 +19,8 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
@@ -27,8 +29,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
@@ -259,6 +263,18 @@ public class DebuggerUIUtil {
     BreakpointsDialogFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
 
     return balloon;
+  }
+
+  @NotNull
+  public static EditorColorsScheme getColorScheme() {
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    if (UIUtil.isUnderDarcula() != ColorUtil.isDark(globalScheme.getDefaultBackground())) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      if (scheme != null) {
+        return scheme;
+      }
+    }
+    return globalScheme;
   }
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
