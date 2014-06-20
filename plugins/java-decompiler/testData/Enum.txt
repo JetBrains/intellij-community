@@ -1,0 +1,33 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
+
+
+public enum Enum {
+
+    E1,
+    E2 {
+        public void m() {
+        }
+    },
+    E3("-"),
+    E4("+") {
+        public void m() {
+        }
+    };
+    private String s;
+
+
+    public void m() {
+    }
+
+    private Enum() {
+        this((String)"?");
+    }
+
+    private Enum(@Deprecated String var3) {
+        this.s = var3;
+    }
+
+}

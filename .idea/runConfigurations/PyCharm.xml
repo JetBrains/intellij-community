@@ -18,7 +18,9 @@
       <option name="TRANSPORT" value="0" />
       <option name="LOCAL" value="true" />
     </RunnerSettings>
-    <RunnerSettings RunnerId="Profile " />
+    <RunnerSettings RunnerId="Profile ">
+      <option name="myExternalizedOptions" />
+    </RunnerSettings>
     <ConfigurationWrapper RunnerId="Debug" />
     <method />
   </configuration>

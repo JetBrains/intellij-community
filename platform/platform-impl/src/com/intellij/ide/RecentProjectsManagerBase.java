@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -169,9 +168,7 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
   }
 
   /**
-   * @param addClearListItem - used for detecting whether the "Clear List" action should be added
-   * to the end of the returned list of actions
-   * @return
+   * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
    */
   public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
     final Set<String> paths;
@@ -188,10 +185,10 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
     paths.remove(null);
     paths.removeAll(openedPaths);
 
-    ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<AnAction>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
     for (final String path : paths) {
-      final String projectName = getProjectName(path);
+      String projectName = getProjectName(path);
       String displayName;
       synchronized (myStateLock) {
         displayName = myState.names.get(path);
@@ -212,19 +209,13 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
       return AnAction.EMPTY_ARRAY;
     }
 
-    ArrayList<AnAction> list = new ArrayList<AnAction>();
-    for (AnAction action : actions) {
-      list.add(action);
-    }
     if (addClearListItem) {
       AnAction clearListAction = new DumbAwareAction(IdeBundle.message("action.clear.list")) {
+        @Override
         public void actionPerformed(AnActionEvent e) {
-          final int rc = Messages.showOkCancelDialog(e.getData(CommonDataKeys.PROJECT),
-                                                     "Would you like to clear the list of recent projects?",
-                                                     "Clear Recent Projects List",
-                                                     Messages.getQuestionIcon());
-
-          if (rc == Messages.OK) {
+          String message = IdeBundle.message("action.clear.list.message");
+          String title = IdeBundle.message("action.clear.list.title");
+          if (Messages.showOkCancelDialog(e.getProject(), message, title, Messages.getQuestionIcon()) == Messages.OK) {
             synchronized (myStateLock) {
               myState.recentPaths.clear();
             }
@@ -233,11 +224,11 @@ public abstract class RecentProjectsManagerBase implements ProjectManagerListene
         }
       };
       
-      list.add(Separator.getInstance());
-      list.add(clearListAction);
+      actions.add(Separator.getInstance());
+      actions.add(clearListAction);
     }
 
-    return list.toArray(new AnAction[list.size()]);
+    return actions.toArray(new AnAction[actions.size()]);
   }
 
   private void markPathRecent(String path) {
