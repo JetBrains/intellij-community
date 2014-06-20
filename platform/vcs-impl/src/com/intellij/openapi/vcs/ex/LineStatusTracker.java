@@ -460,7 +460,7 @@ public class LineStatusTracker {
                                 @NotNull List<Range> changedRanges,
                                 @NotNull List<Range> rangesAfterChange) {
     for (Range range : ranges) {
-      int offset1 = range.getType() == Range.DELETED ? range.getOffset1() - 1 : range.getOffset1();
+      int offset1 = range.getOffset1() - 1;
       int offset2 = range.getOffset2();
 
       if (offset2 < firstChangedLine) {
