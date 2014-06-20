@@ -333,10 +333,6 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("gradle") {
-      jar("gradle.jar") {
-        module("gradle")
-      }
-
       jar("gradle-tooling-extension-api.jar") {
         module("gradle-tooling-extension-api")
       }
@@ -506,9 +502,6 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("terminal") {
-      jar("terminal.jar") {
-        module("terminal")
-      }
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
         include(name: "*.in")
