@@ -70,6 +70,7 @@
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
       </action>
+      <reference id="ShowColorPicker" />
     </group>
     <group id="Images.EditorPopupMenu">
       <reference id="CutCopyPasteGroup"/>
@@ -85,7 +86,6 @@
       <separator/>
       <reference id="VersionControlsGroup"/>
       <separator/>
-      <reference id="ShowColorPicker" />
       <reference id="Images.EditExternally"/>
       <reference id="ExternalToolsGroup"/>
     </group>
