@@ -306,7 +306,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  public static FindUsagesProcessPresentation setupProcessPresentation(final Project project,
+  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull final Project project,
                                                                        final boolean showPanelIfOnlyOneUsage,
                                                                        @NotNull final UsageViewPresentation presentation) {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);

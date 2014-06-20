@@ -56,11 +56,12 @@ public class UsageViewPresentation {
     myTabText = tabText;
   }
 
+  @NotNull
   public String getScopeText() {
     return myScopeText;
   }
 
-  public void setScopeText(String scopeText) {
+  public void setScopeText(@NotNull String scopeText) {
     myScopeText = scopeText;
   }
 
