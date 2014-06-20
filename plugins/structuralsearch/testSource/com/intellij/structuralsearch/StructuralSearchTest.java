@@ -1,9 +1,11 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -2578,8 +2580,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Static / instance initializers", 3, findMatchesCount(s1,s2_2));
   }
 
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("structuralsearch") + "/testData/java/";
+  }
+
   public void testDoNotFindReturn() throws IOException {
-    String s1 = TestUtils.loadFile(getTestName(false) + ".java");
+    String s1 = loadFile(getTestName(false) + ".java");
     String s2 = "ApplicationManager.getApplication().runReadAction(new Runnable() {\n" +
                 "      public void run() {\n" +
                 "        't*:[ !regex( .*return.* ) ];\n" +

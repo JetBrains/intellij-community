@@ -1,11 +1,13 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -1455,8 +1457,14 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("structuralsearch") + "/testData/";
+  }
+
   public void testClassReplacement9() throws IOException {
-    String s1 = TestUtils.loadFile("before1.java");
+    String s1 = loadFile("before1.java");
     String s2 = "class 'A extends 'TestCaseCass:[regex( .*TestCase ) ] {\n" +
                 "  'OtherStatement*;\n" +
                 "  public void 'testMethod*:[regex( test.* )] () {\n" +
@@ -1467,7 +1475,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "    $OtherStatement$;\n" +
                 "    $OtherStatement2$;\n" +
                 "}";
-    String expectedResult = TestUtils.loadFile("after1.java");
+    String expectedResult = loadFile("after1.java");
 
     options.setToReformatAccordingToStyle(true);
     actualResult = replacer.testReplace(s1,s2,s3,options,true);
@@ -1495,7 +1503,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void _testClassReplacement10() throws IOException {
-    String s1 = TestUtils.loadFile("before2.java");
+    String s1 = loadFile("before2.java");
     String s2 = "class '_Class {\n" +
                 "  '_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*){\n" +
                 "    '_content*;\n" +
@@ -1508,7 +1516,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "    $content$;\n" +
                 "  }\n" +
                 "}";
-    String expectedResult = TestUtils.loadFile("after2.java");
+    String expectedResult = loadFile("after2.java");
 
     options.setToReformatAccordingToStyle(true);
     actualResult = replacer.testReplace(s1,s2,s3,options,true);
@@ -1767,8 +1775,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testJspExpressionReplacement() throws Exception {
-    String jsp = TestUtils.loadFile(getTestName(false)+".jsp");
-    String jspResultExpected = TestUtils.loadFile(getTestName(false)+"_after.jsp");
+    String jsp = loadFile(getTestName(false)+".jsp");
+    String jspResultExpected = loadFile(getTestName(false)+"_after.jsp");
     String toReplace = "jspHelper.composeTag('tag, 'a)";
     String replacement = "jspHelper.composeTag($tag$, $a$, Boolean.getBoolean($a$))";
 
@@ -1843,10 +1851,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   private void doTest(final String testName, final String ext, final String message) {
     try {
-      String source = TestUtils.loadFile(testName + "_source." + ext);
-      String pattern = TestUtils.loadFile(testName + "_pattern." + ext);
-      String replacement = TestUtils.loadFile(testName + "_replacement." + ext);
-      String expected = TestUtils.loadFile(testName + "_result." + ext);
+      String source = loadFile(testName + "_source." + ext);
+      String pattern = loadFile(testName + "_pattern." + ext);
+      String replacement = loadFile(testName + "_replacement." + ext);
+      String expected = loadFile(testName + "_result." + ext);
 
       actualResult = replacer.testReplace(source,pattern,replacement,options);
 
