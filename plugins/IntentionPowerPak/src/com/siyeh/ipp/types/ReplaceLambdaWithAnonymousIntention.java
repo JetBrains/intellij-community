@@ -141,7 +141,8 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     @Override
     public boolean satisfiedBy(PsiElement element) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-      if (lambdaExpression != null && PsiTreeUtil.isAncestor(lambdaExpression.getParameterList(), element, false)) {
+      if (lambdaExpression != null && (element.getParent() == lambdaExpression && element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.ARROW || 
+                                       PsiTreeUtil.isAncestor(lambdaExpression.getParameterList(), element, false))) {
         final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
         if (thisClass == null || thisClass instanceof PsiAnonymousClass) {
           final PsiElement body = lambdaExpression.getBody();
