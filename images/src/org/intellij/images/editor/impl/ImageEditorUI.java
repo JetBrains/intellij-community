@@ -27,6 +27,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
@@ -191,12 +192,24 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     return zoomModel;
   }
 
-  private static final class ImageContainerPane extends JBLayeredPane {
+  private final class ImageContainerPane extends JBLayeredPane {
     private final ImageComponent imageComponent;
 
-    public ImageContainerPane(ImageComponent imageComponent) {
+    public ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
       add(imageComponent);
+
+      putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
+        @Override
+        public Point magnify(double scale, Point at) {
+          Point locationBefore = imageComponent.getLocation();
+          ImageZoomModel model = editor.getZoomModel();
+          double factor = model.getZoomFactor();
+          model.setZoomFactor(scale * factor);
+          return new Point(((int)((at.x - Math.max(scale > 1.0 ? locationBefore.x : 0, 0)) * scale)), 
+                           ((int)((at.y - Math.max(scale > 1.0 ? locationBefore.y : 0, 0)) * scale)));
+        }
+      });
     }
 
     private void centerComponents() {
