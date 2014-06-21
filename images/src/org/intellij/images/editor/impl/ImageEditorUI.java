@@ -38,6 +38,7 @@ import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,6 +51,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.util.Locale;
 
 /**
  * Image editor UI
@@ -160,7 +162,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
       if (format == null) {
         format = ImagesBundle.message("unknown.format");
       } else {
-        format = format.toUpperCase();
+        format = format.toUpperCase(Locale.ENGLISH);
       }
       VirtualFile file = editor.getFile();
       infoLabel.setText(
@@ -230,7 +232,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(@NotNull Graphics g) {
       super.paintComponent(g);
       if (UIUtil.isUnderDarcula()) {
         g.setColor(UIUtil.getControlColor().brighter());
@@ -335,7 +337,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
   }
 
   private class DocumentChangeListener implements ChangeListener {
-    public void stateChanged(ChangeEvent e) {
+    public void stateChanged(@NotNull ChangeEvent e) {
       ImageDocument document = imageComponent.getDocument();
       BufferedImage value = document.getValue();
 
@@ -350,7 +352,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
   }
 
   private class FocusRequester extends MouseAdapter {
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(@NotNull MouseEvent e) {
       requestFocus();
     }
   }
