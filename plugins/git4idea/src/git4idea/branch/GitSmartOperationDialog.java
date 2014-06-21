@@ -76,8 +76,10 @@ public class GitSmartOperationDialog extends DialogWrapper {
     myChanges = changes;
     myOperationTitle = operationTitle;
     myShowForceButton = showForceButton;
-    setOKButtonText("Smart " + capitalize(myOperationTitle));
-    setCancelButtonText("Don't " + capitalize(myOperationTitle));
+    String capitalizedOperation = capitalize(myOperationTitle);
+    setTitle("Git " + capitalizedOperation + " Problem");
+    setOKButtonText("Smart " + capitalizedOperation);
+    setCancelButtonText("Don't " + capitalizedOperation);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
