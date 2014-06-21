@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
@@ -145,6 +146,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(toolbarPanel, BorderLayout.WEST);
     infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
+    infoLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
     topPanel.add(infoLabel, BorderLayout.EAST);
 
     add(topPanel, BorderLayout.NORTH);
