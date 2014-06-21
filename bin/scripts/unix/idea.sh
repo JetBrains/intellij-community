@@ -166,9 +166,17 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH
 
 # ---------------------------------------------------------------------
+# Escape args passed to this script so they'll survive the eval call.
+# ---------------------------------------------------------------------
+EXTRA_ARGS=""
+for ARG in "$@"; do
+  EXTRA_ARGS="$EXTRA_ARGS \"$ARG\""
+done
+
+# ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
 while true ; do
-  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME "$@"
+  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME $EXTRA_ARGS
   test $? -ne 88 && break
 done
