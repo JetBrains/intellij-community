@@ -70,10 +70,10 @@ public interface GitBranchUiHandler {
    * @param project
    * @param changes   local changes that would be overwritten by checkout or merge.
    * @param operation operation name
-   * @param force     can the operation be executed force (force checkout is possible, force merge - not).
+   * @param isForcePossible     can the operation be executed force (force checkout is possible, force merge - not).
    * @return the code of the decision.
    */
-  int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force);
+  int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean isForcePossible);
 
   boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull Map<GitRepository, List<GitCommit>> history,
                                            @NotNull String unmergedBranch, @NotNull List<String> mergedToBranches,
