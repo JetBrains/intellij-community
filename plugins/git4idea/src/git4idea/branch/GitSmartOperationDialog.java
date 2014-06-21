@@ -78,7 +78,9 @@ public class GitSmartOperationDialog extends DialogWrapper {
     myShowForceButton = showForceButton;
     String capitalizedOperation = capitalize(myOperationTitle);
     setTitle("Git " + capitalizedOperation + " Problem");
+
     setOKButtonText("Smart " + capitalizedOperation);
+    getOKAction().putValue(Action.SHORT_DESCRIPTION, "Stash local changes, " + operationTitle + ", unstash");
     setCancelButtonText("Don't " + capitalizedOperation);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
@@ -88,7 +90,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
   @Override
   protected Action[] createLeftSideActions() {
     if (myShowForceButton) {
-      return new Action[] {new ForceCheckoutAction(myOperationTitle) };
+      return new Action[]  {new ForceCheckoutAction(myOperationTitle) };
     }
     return new Action[0];
   }
@@ -120,6 +122,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
     
     ForceCheckoutAction(@NotNull String operationTitle) {
       super("&Force " + capitalize(operationTitle));
+      putValue(Action.SHORT_DESCRIPTION, capitalize(operationTitle) + " and overwrite local changes");
     }
     
     @Override
