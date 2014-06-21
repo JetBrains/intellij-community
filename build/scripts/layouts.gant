@@ -447,7 +447,6 @@ public def layoutCommunityPlugins(String home) {
           module("groovy-psi") {
             exclude(name: "standardDsls/**")
           }
-          module("structuralsearch-groovy")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
         jar("groovy-jps-plugin.jar") {
@@ -542,6 +541,7 @@ public def layoutCommunityPlugins(String home) {
       dir("lib") {
         jar("structuralsearch.jar") {
           module("structuralsearch")
+          moduleOptional("structuralsearch-groovy")
         }
       }
     }
