@@ -150,7 +150,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @Override
   public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation,
                                       boolean isForcePossible) {
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, changes, operation, true);
+    return GitSmartOperationDialog.showAndGetAnswer(myProject, changes, operation, isForcePossible);
   }
 
   @Override
