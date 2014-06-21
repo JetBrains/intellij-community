@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -114,8 +115,9 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
     @Override
     public InputStream getBytecodeStream(String externalPath, String internalPath) {
       try {
-        VirtualFile file = myFiles.get(externalPath);
-        assert file != null : externalPath;
+        String path = FileUtil.toSystemIndependentName(externalPath);
+        VirtualFile file = myFiles.get(path);
+        assert file != null : path;
         return file.getInputStream();
       }
       catch (IOException e) {

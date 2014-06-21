@@ -83,7 +83,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
 
   public void testStubCompatibilityIdea() {
     String path = PathManager.getHomePath() + "/out/classes/production";
-    VirtualFile dir = StandardFileSystems.local().findFileByPath(path);
+    VirtualFile dir = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull(path, dir);
     doTestStubCompatibility(dir);
   }
