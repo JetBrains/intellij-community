@@ -50,18 +50,18 @@ public class GitSmartOperationDialog extends DialogWrapper {
   private final Project myProject;
   private final List<Change> myChanges;
   @NotNull private final String myOperationTitle;
-  private final boolean myForceButton;
+  private final boolean myShowForceButton;
 
   /**
    * Shows the dialog with the list of local changes preventing merge/checkout and returns the dialog exit code.
    */
   static int showAndGetAnswer(@NotNull final Project project, @NotNull final List<Change> changes, @NotNull final String operationTitle,
-                              final boolean forceButton) {
+                              final boolean showForceButton) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, changes, operationTitle, forceButton);
+        GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, changes, operationTitle, showForceButton);
         ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
         exitCode.set(dialog.getExitCode());
       }
@@ -70,12 +70,12 @@ public class GitSmartOperationDialog extends DialogWrapper {
   }
 
   private GitSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operationTitle,
-                                  boolean forceButton) {
+                                  boolean showForceButton) {
     super(project);
     myProject = project;
     myChanges = changes;
     myOperationTitle = operationTitle;
-    myForceButton = forceButton;
+    myShowForceButton = showForceButton;
     setOKButtonText("Smart " + capitalize(myOperationTitle));
     setCancelButtonText("Don't " + capitalize(myOperationTitle));
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
@@ -85,7 +85,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createLeftSideActions() {
-    if (myForceButton) {
+    if (myShowForceButton) {
       return new Action[] {new ForceCheckoutAction(myOperationTitle) };
     }
     return new Action[0];
