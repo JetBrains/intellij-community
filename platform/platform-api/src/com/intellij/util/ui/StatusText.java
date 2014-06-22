@@ -65,14 +65,21 @@ public abstract class StatusText {
     };
 
     myMouseMotionListener = new MouseAdapter() {
+
+      private Cursor myOriginalCursor;
+
       @Override
       public void mouseMoved(final MouseEvent e) {
         if (isStatusVisible()) {
           if (findActionListenerAt(e.getPoint()) != null) {
-            myMouseTarget.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            if (myOriginalCursor == null) {
+              myOriginalCursor = myMouseTarget.getCursor();
+              myMouseTarget.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
           }
-          else {
-            myMouseTarget.setCursor(Cursor.getDefaultCursor());
+          else if (myOriginalCursor != null) {
+            myMouseTarget.setCursor(myOriginalCursor);
+            myOriginalCursor = null;
           }
         }
       }
