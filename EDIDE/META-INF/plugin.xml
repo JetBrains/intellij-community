@@ -27,7 +27,7 @@
 
   <application-components>
           <component>
-              <implementation-class>ru.compscicenter.edide.StudyPlugin</implementation-class>
+              <implementation-class>ru.compscicenter.edide.StudyApplicationComponent</implementation-class>
           </component>
    </application-components>
 
@@ -58,5 +58,6 @@
     <fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/>
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <documentationProvider implementation="ru.compscicenter.edide.StudyDocumentationProvider"/>
+    <projectService  serviceImplementation="ru.compscicenter.edide.StudyPlugin"/>
   </extensions>
 </idea-plugin>

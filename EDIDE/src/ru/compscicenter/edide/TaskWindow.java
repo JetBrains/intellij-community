@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
+import org.jdom.Element;
 
 /**
  * User: lia
@@ -19,6 +20,7 @@ public class TaskWindow {
     private boolean myResolveStatus;
     private int myRangeHighlighterStartOffset;
     private int myRangeHighlighterEndOffset;
+    private String myText;
 
     public int getOffsetInLine() {
         return myOffsetInLine;
@@ -33,6 +35,15 @@ public class TaskWindow {
         myResolveStatus = false;
         myRangeHighlighterStartOffset = -1;
         myRangeHighlighterEndOffset = -1;
+        myText = text;
+    }
+
+    public String getMyText() {
+        return myText;
+    }
+
+    public void setText(String text) {
+        myText = text;
     }
     public int getRealStartOffset(Editor editor) {
         return editor.getDocument().getLineStartOffset(myLine) + myStartOffsetInLine;
@@ -96,5 +107,16 @@ public class TaskWindow {
     }
     public  void incrementLine(int delta) {
         myLine += delta;
+    }
+
+    public Element saveState() {
+        Element taskWindowElement = new Element("TaskWindow");
+        taskWindowElement.setAttribute("line", Integer.toString(myLine + 1));
+        taskWindowElement.setAttribute("startOffsetInLine", Integer.toString(myStartOffsetInLine));
+        taskWindowElement.setAttribute("offsetInLine", Integer.toString(myOffsetInLine));
+        taskWindowElement.setAttribute("docsFile", myDocsFile);
+        taskWindowElement.setAttribute("resolveStatus", Boolean.toString(myResolveStatus));
+        taskWindowElement.setAttribute("text", myText);
+        return taskWindowElement;
     }
 }

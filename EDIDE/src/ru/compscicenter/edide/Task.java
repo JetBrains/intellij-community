@@ -4,12 +4,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
+import org.jdom.DataConversionException;
+import org.jdom.Element;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * author: liana
@@ -20,6 +23,7 @@ import java.util.ArrayList;
 class Task {
     private final ArrayList<TaskFile> files;
     private final StringBuilder taskText;
+    private String taskTextFileName;
     private String test;
 
     public String getTest() {
@@ -28,6 +32,10 @@ class Task {
 
     public void setTest(String test) {
         this.test = test;
+    }
+
+    public String getTaskTextFileName() {
+        return taskTextFileName;
     }
 
     public Task(int n) {
@@ -101,6 +109,28 @@ class Task {
         return taskText.toString();
     }
     public void setTaskTextFile(String taskTextFileName) {
-       generateTaskText(taskTextFileName);
+        this.taskTextFileName = taskTextFileName;
+        generateTaskText(taskTextFileName);
+    }
+
+    public Element saveState() {
+       Element task = new Element("Task");
+       task.setAttribute("taskText", getTaskTextFileName());
+       task.setAttribute("testFile", test);
+       for (TaskFile taskFile:files) {
+           task.addContent(taskFile.saveState());
+       }
+        return task;
+    }
+
+    public void loadState(List<Element> taskFileElements) throws DataConversionException {
+        for (Element taskFileElement: taskFileElements) {
+            List<Element> taskWindowElements = taskFileElement.getChildren();
+            String name = taskFileElement.getName();
+            TaskFile taskFile = new TaskFile(name, taskWindowElements.size());
+            taskFile.setMyLastLineNum(taskFileElement.getAttribute("lineNum").getIntValue());
+            taskFile.loadState(taskWindowElements);
+            files.add(taskFile);
+        }
     }
 }

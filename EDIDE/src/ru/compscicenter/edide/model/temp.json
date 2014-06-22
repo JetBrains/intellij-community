@@ -1,0 +1,24 @@
+{"lessons": [
+  {
+    "name": "массивы",
+    "task_list": [
+      {
+        "name": "Задание 1",
+        "text": "Научитесь пользоваться массивами",
+        "test_file": "some_file.py",
+        "task_files": [
+          {
+            "name": "1.py",
+            "windows": [
+              {
+                "line": 1,
+                "offset": 2,
+                "text": "ололо"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]}

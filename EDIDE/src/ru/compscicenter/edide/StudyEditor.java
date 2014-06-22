@@ -24,15 +24,15 @@ import java.beans.PropertyChangeListener;
 class StudyEditor implements FileEditor {
   private final FileEditor defaultEditor;
   private final JComponent comp;
-  private String getTextForTask(VirtualFile file) {
-    int taskNum = TaskManager.getInstance().getTaskNumForFile(file.getName());
-    return TaskManager.getInstance().getTaskText(taskNum);
+  private String getTextForTask(VirtualFile file, Project project) {
+    int taskNum = StudyPlugin.getTaskManager(project.getName()).getTaskNumForFile(file.getName());
+    return StudyPlugin.getTaskManager(project.getName()).getTaskText(taskNum);
   }
 
   public StudyEditor(Project project, VirtualFile file) {
     defaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
     comp = defaultEditor.getComponent();
-    JLabel taskText = new JLabel(getTextForTask(file));
+    JLabel taskText = new JLabel(getTextForTask(file, project));
     taskText.setFont(new Font("Arial", Font.PLAIN, 16));
     comp.add(taskText, BorderLayout.NORTH);
   }

@@ -6,8 +6,11 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.DataConversionException;
+import org.jdom.Element;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: lia
@@ -24,6 +27,10 @@ public class TaskFile {
     public TaskFile(String name, int taskWindowsNum) {
         myName = name;
         myTaskWindows = new ArrayList<TaskWindow>(taskWindowsNum);
+    }
+
+    public void setMyLastLineNum(int myLastLineNum) {
+        myLastLineNum = myLastLineNum;
     }
 
     public void addTaskWindow(TaskWindow taskWindow) {
@@ -177,5 +184,31 @@ public class TaskFile {
             tw.draw(editor, true);
         }
         myLastLineNum = editor.getDocument().getLineCount();
+    }
+
+    public Element saveState() {
+        Element taskFileElement = new Element(myName);
+        taskFileElement.setAttribute("lineNum", Integer.toString(myLastLineNum));
+        for (TaskWindow taskWindow : myTaskWindows) {
+            taskFileElement.addContent(taskWindow.saveState());
+        }
+        return taskFileElement;
+    }
+
+    public void loadState(List<Element> taskWindowElements) throws DataConversionException {
+        for (Element taskWindowElement :taskWindowElements) {
+            int line = taskWindowElement.getAttribute("line").getIntValue();
+            int startOffset = taskWindowElement.getAttribute("startOffsetInLine").getIntValue();
+            int offsetInLine = taskWindowElement.getAttribute("offsetInLine").getIntValue();
+            String docsFile = taskWindowElement.getAttributeValue("docsFile");
+            Boolean resolveStatus = taskWindowElement.getAttribute("resolveStatus").getBooleanValue();
+            String text = taskWindowElement.getAttributeValue("text");
+            TaskWindow taskWindow =  new TaskWindow(line, startOffset, text, docsFile);
+            if (resolveStatus) {
+                taskWindow.setResolved();
+            }
+            taskWindow.setOffsetInLine(offsetInLine);
+            myTaskWindows.add(taskWindow);
+        }
     }
 }

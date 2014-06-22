@@ -3,6 +3,7 @@ package ru.compscicenter.edide;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,6 +66,11 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
   @Override
   public void editorCreated(@NotNull final EditorFactoryEvent event) {
+    Project project = event.getEditor().getProject();
+    if (project == null) {
+      return;
+    }
+    ServiceManager.getService(project, StudyPlugin.class);
       ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
@@ -79,8 +86,8 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   if (fileChanged(vfOpenedFile)) {
                     return;
                   }
-                    HintManager.getInstance().showInformationHint(editor, "Select any task window");
-                    TaskManager taskManager = TaskManager.getInstance();
+                  HintManager.getInstance().showInformationHint(editor, "Нажмите на любое окошко с заданием");
+                    TaskManager taskManager = StudyPlugin.getTaskManager(editor.getProject().getName());
                    int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
                    TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
                     editor.addEditorMouseListener(new MyMouseListener(tf));
