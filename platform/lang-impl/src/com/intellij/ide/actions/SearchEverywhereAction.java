@@ -149,7 +149,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
-  private CalcThread myCalcThread;
+  private Object myCalcThread;
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
   private final static Couple<AtomicBoolean> ourPressed = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
   private final static Couple<AtomicBoolean> ourReleased = Couple.of(new AtomicBoolean(false), new AtomicBoolean(false));
@@ -549,7 +549,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
     final String pattern = getField().getText();
-    final Object value = myList.getSelectedValue();
+    final java.lang.Object value = myList.getSelectedValue();
     saveHistory(project, pattern, value);
     IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(getField().getTextEditor());
     if (myPopup != null && myPopup.isVisible()) {
@@ -638,7 +638,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myCurrentWorker.doWhenProcessed(new Runnable() {
       @Override
       public void run() {
-        myCalcThread = new CalcThread(project, pattern);
+        myCalcThread = new Object(project, pattern);
         myPopupActualWidth = 0;
         myCurrentWorker = myCalcThread.start();
       }
@@ -784,7 +784,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
 
-  private static void saveHistory(Project project, String text, Object value) {
+  private static void saveHistory(Project project, String text, java.lang.Object value) {
     if (project == null || project.isDisposed() || !project.isInitialized()) {
       return;
     }
@@ -838,8 +838,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
-        final Object value = myList.getSelectedValue();
+      public java.lang.Object getData(@NonNls String dataId) {
+        final java.lang.Object value = myList.getSelectedValue();
         if (CommonDataKeys.PSI_ELEMENT.is(dataId) && value instanceof PsiElement) {
           return value;
         } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId) && value instanceof VirtualFile) {
@@ -938,7 +938,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public java.lang.Object getData(@NonNls String dataId) {
       if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
         return getTextEditor().getText();
       }
@@ -953,7 +953,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private class MyListRenderer extends ColoredListCellRenderer {
     ColoredListCellRenderer myLocation = new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(JList list, java.lang.Object value, int index, boolean selected, boolean hasFocus) {
         setPaintFocusBorder(false);
         append(myLocationString, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(myLocationIcon);
@@ -983,7 +983,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList list, java.lang.Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp;
       PsiFile file = null;
       myLocationString = null;
@@ -1042,7 +1042,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(JList list, java.lang.Object value, int index, boolean selected, boolean hasFocus) {
       setPaintFocusBorder(false);
       setIcon(EmptyIcon.ICON_16);
       AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
@@ -1174,19 +1174,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }, 50);
   }
 
-  private static boolean isActionValue(Object o) {
+  private static boolean isActionValue(java.lang.Object o) {
     return o instanceof GotoActionModel.ActionWrapper || o instanceof AnAction;
   }
 
-  private static boolean isSetting(Object o) {
+  private static boolean isSetting(java.lang.Object o) {
     return o instanceof OptionDescription;
   }
 
-  private static boolean isRunConfiguration(Object o) {
+  private static boolean isRunConfiguration(java.lang.Object o) {
     return o instanceof ChooseRunConfigurationPopup.ItemWrapper;
   }
 
-  private static boolean isVirtualFile(Object o) {
+  private static boolean isVirtualFile(java.lang.Object o) {
     return o instanceof VirtualFile;
   }
 
@@ -1195,7 +1195,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private class CalcThread implements Runnable {
+  private class Object implements Runnable {
     private final Project project;
     private final String pattern;
     private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
@@ -1205,7 +1205,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private final ArrayList<AnAction> myAlreadyAddedActions = new ArrayList<AnAction>();
 
 
-    public CalcThread(Project project, String pattern) {
+    public Object(Project project, String pattern) {
       this.project = project;
       this.pattern = pattern;
     }
@@ -1309,8 +1309,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
       for (MatchResult o : matches) {
         check();
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
+        java.lang.Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
+        for (java.lang.Object object : objects) {
           check();
           if (isToolWindowAction(object) && toolWindows.size() < MAX_TOOL_WINDOWS) {
             toolWindows.add(((GotoActionModel.ActionWrapper)object).getAction());
@@ -1326,7 +1326,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (isCanceled()) return;
           if (toolWindows.size() > 0) {
             myListModel.myTitleIndexes.toolWindows = myListModel.size();
-            for (Object toolWindow : toolWindows) {
+            for (java.lang.Object toolWindow : toolWindows) {
               myListModel.addElement(toolWindow);
             }
           }
@@ -1335,8 +1335,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildActionsAndSettings(String pattern) {
-      final Set<Object> actions = new HashSet<Object>();
-      final Set<Object> settings = new HashSet<Object>();
+      final Set<java.lang.Object> actions = new HashSet<java.lang.Object>();
+      final Set<java.lang.Object> settings = new HashSet<java.lang.Object>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       if (myActions == null) {
         if (myActionModel == null) {
@@ -1349,8 +1349,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       for (MatchResult o : matches) {
         check();
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
+        java.lang.Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
+        for (java.lang.Object object : objects) {
           check();
           if (isSetting(object) && settings.size() < MAX_SETTINGS) {
             if (matcher.matches(getSettingText((OptionDescription)object))) {
@@ -1371,14 +1371,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (isCanceled()) return;
           if (actions.size() > 0) {
             myListModel.myTitleIndexes.actions = myListModel.size();
-            for (Object action : actions) {
+            for (java.lang.Object action : actions) {
               myListModel.addElement(action);
             }
           }
           myListModel.myMoreActionsIndex = actions.size() >= MAX_ACTIONS ? myListModel.size() - 1 : -1;
           if (settings.size() > 0) {
             myListModel.myTitleIndexes.settings = myListModel.size();
-            for (Object setting : settings) {
+            for (java.lang.Object setting : settings) {
               myListModel.addElement(setting);
             }
           }
@@ -1389,12 +1389,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private synchronized void buildFiles(final String pattern) {
       int filesCounter = 0;
-      final Set<Object> elements = new LinkedHashSet<Object>();
+      final Set<java.lang.Object> elements = new LinkedHashSet<java.lang.Object>();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
       myFileChooseByName.getProvider().filterElements(myFileChooseByName, pattern, true,
-                                                      myProgressIndicator, new Processor<Object>() {
+                                                      myProgressIndicator, new Processor<java.lang.Object>() {
         @Override
-        public boolean process(Object o) {
+        public boolean process(java.lang.Object o) {
           VirtualFile file = null;
           if (o instanceof VirtualFile) {
             file = (VirtualFile)o;
@@ -1411,8 +1411,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           return elements.size() < 30;
         }
       });
-      final List<Object> files = new ArrayList<Object>();
-      for (Object object : elements) {
+      final List<java.lang.Object> files = new ArrayList<java.lang.Object>();
+      for (java.lang.Object object : elements) {
         if (filesCounter > MAX_FILES) break;
         if (!myListModel.contains(object)) {
           if (object instanceof PsiFile) {
@@ -1439,7 +1439,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (isCanceled()) return;
             myListModel.myTitleIndexes.files = myListModel.size();
-            for (Object file : files) {
+            for (java.lang.Object file : files) {
               myListModel.addElement(file);
             }
             myListModel.myMoreFilesIndex = files.size() >= MAX_FILES ? myListModel.size() - 1 : -1;
@@ -1451,12 +1451,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private synchronized void buildSymbols(final String pattern) {
       check();
       int symbolsCounter = 0;
-      final Set<Object> elements = new LinkedHashSet<Object>();
+      final Set<java.lang.Object> elements = new LinkedHashSet<java.lang.Object>();
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
       mySymbolsChooseByName.getProvider().filterElements(mySymbolsChooseByName, pattern, false,
-                                                      myProgressIndicator, new Processor<Object>() {
+                                                      myProgressIndicator, new Processor<java.lang.Object>() {
           @Override
-          public boolean process(Object o) {
+          public boolean process(java.lang.Object o) {
             if (o instanceof PsiElement) {
               final PsiElement element = (PsiElement)o;
               final PsiFile file = element.getContainingFile();
@@ -1467,8 +1467,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             return elements.size() < 30;
           }
         });
-      final List<Object> symbols = new ArrayList<Object>();
-      for (Object object : elements) {
+      final List<java.lang.Object> symbols = new ArrayList<java.lang.Object>();
+      for (java.lang.Object object : elements) {
         if (symbolsCounter > MAX_SYMBOLS) break;
         if (!myListModel.contains(object)) {
           symbols.add(object);
@@ -1485,7 +1485,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (isCanceled()) return;
             myListModel.myTitleIndexes.symbols = myListModel.size();
-            for (Object file : symbols) {
+            for (java.lang.Object file : symbols) {
               myListModel.addElement(file);
             }
             myListModel.myMoreSymbolsIndex = symbols.size() >= MAX_SYMBOLS ? myListModel.size() - 1 : -1;
@@ -1513,7 +1513,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildRunConfigurations(String pattern) {
-      final List<Object> runConfigurations = new ArrayList<Object>();
+      final List<java.lang.Object> runConfigurations = new ArrayList<java.lang.Object>();
       MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
       final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
         ChooseRunConfigurationPopup.createSettingsList(project, new ExecutorProvider() {
@@ -1536,7 +1536,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (isCanceled()) return;
             myListModel.myTitleIndexes.runConfigurations = myListModel.size();
-            for (Object runConfiguration : runConfigurations) {
+            for (java.lang.Object runConfiguration : runConfigurations) {
               myListModel.addElement(runConfiguration);
             }
           }
@@ -1554,17 +1554,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       check();
       boolean includeLibs = includeLibraries || showAll.get();
       int filesCounter = 0;
-      final Set<Object> elements = new LinkedHashSet<Object>();
+      final Set<java.lang.Object> elements = new LinkedHashSet<java.lang.Object>();
       myClassChooseByName.getProvider().filterElements(myClassChooseByName, pattern, includeLibs,
-                                                      myProgressIndicator, new Processor<Object>() {
+                                                      myProgressIndicator, new Processor<java.lang.Object>() {
           @Override
-          public boolean process(Object o) {
+          public boolean process(java.lang.Object o) {
             elements.add(o);
             return elements.size() < 30;
           }
         });
-      final List<Object> classes = new ArrayList<Object>();
-      for (Object object : elements) {
+      final List<java.lang.Object> classes = new ArrayList<java.lang.Object>();
+      for (java.lang.Object object : elements) {
         check();
         if (filesCounter > MAX_FILES) break;
         if (!myListModel.contains(object)) {
@@ -1584,7 +1584,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (isCanceled()) return;
             myListModel.myTitleIndexes.classes = myListModel.size();
-            for (Object file : classes) {
+            for (java.lang.Object file : classes) {
               myListModel.addElement(file);
             }
             myListModel.myMoreClassesIndex = classes.size() >= MAX_CLASSES ? myListModel.size() - 1 : -1;
@@ -1618,7 +1618,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           public void run() {
             if (isCanceled()) return;
             myListModel.myTitleIndexes.recentFiles = myListModel.size();
-            for (Object file : files) {
+            for (java.lang.Object file : files) {
               myListModel.addElement(file);
             }
           }
@@ -1631,7 +1631,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildTopHit(String pattern) {
-      final List<Object> elements = new ArrayList<Object>();
+      final List<java.lang.Object> elements = new ArrayList<java.lang.Object>();
       final HistoryItem history = myHistoryItem;
       if (history != null) {
         final HistoryType type = parseHistoryType(history.type);
@@ -1696,9 +1696,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
       }
-      final Consumer<Object> consumer = new Consumer<Object>() {
+      final Consumer<java.lang.Object> consumer = new Consumer<java.lang.Object>() {
         @Override
-        public void consume(Object o) {
+        public void consume(java.lang.Object o) {
           if (isSetting(o) || isVirtualFile(o) || isActionValue(o) || o instanceof PsiElement) {
             if (o instanceof AnAction && myAlreadyAddedActions.contains(o)) {
               return;
@@ -1725,7 +1725,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             if (isCanceled()) return;
 
 
-            for (Object element : elements.toArray()) {
+            for (java.lang.Object element : elements.toArray()) {
               if (element instanceof AnAction) {
                 final AnAction action = (AnAction)element;
                 final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
@@ -1744,7 +1744,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
             if (isCanceled() || elements.isEmpty()) return;
             myListModel.myTitleIndexes.topHit = myListModel.size();
-            for (Object element : elements) {
+            for (java.lang.Object element : elements) {
               myListModel.addElement(element);
             }
           }
@@ -1939,8 +1939,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           mySymbolsChooseByName.close(false);
           mySymbolsChooseByName = null;
         }
-        if (myCalcThread != null) {
-          synchronized (myCalcThread) {
+        final Object lock = myCalcThread;
+        if (lock != null) {
+          synchronized (lock) {
             myClassModel = null;
             myActionModel = null;
             myActions = null;
@@ -2038,7 +2039,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   }
 
-  private static boolean isToolWindowAction(Object o) {
+  private static boolean isToolWindowAction(java.lang.Object o) {
     return isActionValue(o)
            && o instanceof GotoActionModel.ActionWrapper
            && ((GotoActionModel.ActionWrapper)o).getAction() instanceof ActivateToolWindowAction;
@@ -2168,7 +2169,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Override
-    public void addElement(Object obj) {
+    public void addElement(java.lang.Object obj) {
       myDelegate.add(obj);
     }
 
@@ -2236,7 +2237,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(java.lang.Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
