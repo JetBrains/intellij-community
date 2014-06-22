@@ -41,7 +41,7 @@ class StudyDocumentationProvider extends DocumentationProviderEx {
     String file = element.getContainingFile().getName();
     Editor editor = StudyEditor.getRecentOpenedEditor(element.getProject());
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-    TaskManager tm = StudyPlugin.getTaskManager(element.getProject().getName());
+    TaskManager tm = TaskManager.getInstance(element.getProject());
     int taskNum = tm.getTaskNumForFile(file);
     String docsFile = tm.getDocFileForTask(taskNum, pos, file);
     if (docsFile == null) {

@@ -3,6 +3,10 @@ package ru.compscicenter.edide;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +22,6 @@ public class StudyApplicationComponent implements ApplicationComponent{
 
   @Override
   public void initComponent() {
-    EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), myApp);
   }
 
   @Override

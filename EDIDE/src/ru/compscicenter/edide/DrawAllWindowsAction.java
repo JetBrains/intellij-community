@@ -17,7 +17,7 @@ class DrawAllWindowsAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getProject();
-        TaskManager tm = StudyPlugin.getTaskManager(project.getName());
+        TaskManager tm = TaskManager.getInstance(project);
         if (!(project != null && project.isOpen())) {
             return;
         }

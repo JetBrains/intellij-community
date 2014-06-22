@@ -22,8 +22,8 @@ class ResolveAction extends AnAction {
         VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (vfOpenedFile != null) {
             String fileName = vfOpenedFile.getName();
-            int currentTaskNum = StudyPlugin.getTaskManager(e.getProject().getName()).getTaskNumForFile(fileName);
-            TaskFile tf = StudyPlugin.getTaskManager(e.getProject().getName()).getTaskFile(currentTaskNum, fileName);
+            int currentTaskNum = TaskManager.getInstance(e.getProject()).getTaskNumForFile(fileName);
+            TaskFile tf = TaskManager.getInstance(e.getProject()).getTaskFile(currentTaskNum, fileName);
             try {
                 tf.resolveCurrentHighlighter(editor);
             }

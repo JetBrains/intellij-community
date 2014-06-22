@@ -4,28 +4,51 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.project.Project;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: lia
  * Date: 26.12.13
  * Time: 20:37
  */
-public class TaskManager {
 
+
+@State(
+  name = "StudySettings",
+  storages = {
+    @Storage(
+      id = "main",
+      file = "$PROJECT_CONFIG_DIR$/study.xml"
+    )}
+)
+public class TaskManager implements ProjectComponent, PersistentStateComponent<Element>{
+    private static Map<String, TaskManager> myTaskManagers = new HashMap<String, TaskManager>();
     private final ArrayList<Task> tasks;
+  private final Project myProject;
 
-    public TaskManager() {
+  public TaskManager(Project project) {
+        myTaskManagers.put(project.getBasePath(), this);
+        myProject = project;
         Log.print("Creating new TaskManager\n");
         Log.flush();
         tasks = new ArrayList<Task>(10);
@@ -114,7 +137,13 @@ public class TaskManager {
         return taskManagerElement;
     }
 
-    public void loadState(Element el) throws DataConversionException {
+  @Nullable
+  @Override
+  public Element getState() {
+    return saveState(myProject.getName());
+  }
+
+  public void loadState(Element el) {
         List<Element> taskElements = el.getChildren();
         for (Element taskElement:taskElements) {
             List<Element> taskFileElements = taskElement.getChildren();
@@ -122,9 +151,44 @@ public class TaskManager {
             Task task = new Task(n);
             task.setTest(taskElement.getAttributeValue("testFile"));
             task.setTaskTextFile(taskElement.getAttributeValue("taskText"));
+          try {
             task.loadState(taskFileElements);
-            tasks.add(task);
+          }
+          catch (DataConversionException e) {
+            e.printStackTrace();
+          }
+          tasks.add(task);
 
         }
     }
+
+  @Override
+  public void projectOpened() {
+
+  }
+
+  @Override
+  public void projectClosed() {
+
+  }
+
+  @Override
+  public void initComponent() {
+    EditorFactory.getInstance().addEditorFactoryListener(new StudyEditorFactoryListener(), myProject);
+  }
+
+  @Override
+  public void disposeComponent() {
+
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "taskManager";
+  }
+
+  public static TaskManager getInstance(Project project) {
+    return myTaskManagers.get(project.getBasePath());
+  }
 }

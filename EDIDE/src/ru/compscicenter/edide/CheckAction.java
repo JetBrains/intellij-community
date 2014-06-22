@@ -25,7 +25,7 @@ class CheckAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     FileDocumentManager.getInstance().saveAllDocuments();
-    TaskManager tm = StudyPlugin.getTaskManager(project.getName());
+    TaskManager tm = TaskManager.getInstance(project);
     if (!(project != null && project.isOpen())) {
       return;
     }

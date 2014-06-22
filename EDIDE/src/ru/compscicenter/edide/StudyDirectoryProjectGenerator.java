@@ -85,8 +85,9 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
             @Override
             public void run() {
               try {
-                StudyPlugin.createTaskManager(project.getName());
-                TaskManager taskManager = StudyPlugin.getTaskManager(project.getName());
+                //StudyPlugin.createTaskManager(project.getName());
+                //TaskManager taskManager = TaskManager.getInstance(project);
+                TaskManager taskManager = TaskManager.getInstance(project);
                 int tasksNumber = taskManager.getTasksNum();
                 for (int task = 0; task < tasksNumber; task++) {
                   VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));

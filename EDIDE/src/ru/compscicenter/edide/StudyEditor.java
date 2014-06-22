@@ -25,8 +25,8 @@ class StudyEditor implements FileEditor {
   private final FileEditor defaultEditor;
   private final JComponent comp;
   private String getTextForTask(VirtualFile file, Project project) {
-    int taskNum = StudyPlugin.getTaskManager(project.getName()).getTaskNumForFile(file.getName());
-    return StudyPlugin.getTaskManager(project.getName()).getTaskText(taskNum);
+    int taskNum = TaskManager.getInstance(project).getTaskNumForFile(file.getName());
+    return TaskManager.getInstance(project).getTaskText(taskNum);
   }
 
   public StudyEditor(Project project, VirtualFile file) {

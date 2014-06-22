@@ -70,7 +70,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     if (project == null) {
       return;
     }
-    ServiceManager.getService(project, StudyPlugin.class);
+    //ServiceManager.getService(project, StudyPlugin.class);
       ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
@@ -87,7 +87,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                     return;
                   }
                   HintManager.getInstance().showInformationHint(editor, "Нажмите на любое окошко с заданием");
-                    TaskManager taskManager = StudyPlugin.getTaskManager(editor.getProject().getName());
+                    TaskManager taskManager = TaskManager.getInstance(editor.getProject());
                    int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
                    TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
                     editor.addEditorMouseListener(new MyMouseListener(tf));
