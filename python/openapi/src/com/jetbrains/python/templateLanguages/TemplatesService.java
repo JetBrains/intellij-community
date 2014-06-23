@@ -44,6 +44,9 @@ public abstract class TemplatesService {
                                                                                   WEB2PY,
                                                                                   CHAMELEON);
 
+  public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja", "django-chameleon",
+                                                                                  "flask-mako", "pyramid_jinja2");
+
   public abstract Language getSelectedTemplateLanguage();
 
   public static TemplatesService getInstance(Module module) {
