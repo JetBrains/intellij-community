@@ -14,10 +14,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -126,8 +123,9 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     @XmlElement(name = "msg")
     public String message;
 
-    @XmlElement(name = "paths")
-    public ChangedPaths changedPaths;
+    @XmlElementWrapper(name = "paths")
+    @XmlElement(name = "path")
+    public List<ChangedPath> changedPaths = new ArrayList<ChangedPath>();
 
     @XmlElement(name = "logentry")
     public List<LogEntry> childEntries = new ArrayList<LogEntry>();
@@ -145,23 +143,13 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
 
     public Map<String, SVNLogEntryPath> toChangedPathsMap() {
-      return changedPaths != null ? changedPaths.toMap() : ContainerUtil.<String, SVNLogEntryPath>newHashMap();
-    }
-  }
-
-  public static class ChangedPaths {
-
-    @XmlElement(name = "path")
-    public List<ChangedPath> changedPaths = new ArrayList<ChangedPath>();
-
-    public Map<String, SVNLogEntryPath> toMap() {
-      Map<String, SVNLogEntryPath> changes = ContainerUtil.newHashMap();
+      Map<String, SVNLogEntryPath> result = ContainerUtil.newHashMap();
 
       for (ChangedPath path : changedPaths) {
-        changes.put(path.path, path.toLogEntryPath());
+        result.put(path.path, path.toLogEntryPath());
       }
 
-      return changes;
+      return result;
     }
   }
 

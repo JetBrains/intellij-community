@@ -41,10 +41,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -104,8 +101,8 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
       DiffInfo diffInfo = CommandUtil.parse(executor.getOutput(), DiffInfo.class);
       List<Change> result = ContainerUtil.newArrayList();
 
-      if (diffInfo != null && diffInfo.paths != null) {
-        for (DiffPath path : diffInfo.paths.diffPaths) {
+      if (diffInfo != null) {
+        for (DiffPath path : diffInfo.diffPaths) {
           result.add(createChange(target1, target2, path));
         }
       }
@@ -194,12 +191,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
   @XmlRootElement(name = "diff")
   public static class DiffInfo {
 
-    @XmlElement(name = "paths")
-    public DiffPaths paths;
-  }
-
-  public static class DiffPaths {
-
+    @XmlElementWrapper(name = "paths")
     @XmlElement(name = "path")
     public List<DiffPath> diffPaths = new ArrayList<DiffPath>();
   }
