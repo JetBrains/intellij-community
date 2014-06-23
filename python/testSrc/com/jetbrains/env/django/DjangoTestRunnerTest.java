@@ -53,7 +53,7 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
       protected void configure(AbstractPythonRunConfiguration config) {
         String target = "myapp.SimpleTest";
         try {
-          final PyPackage django = ((PyPackageManagerImpl)PyPackageManager.getInstance(config.getSdk())).findPackage("django");
+          final PyPackage django = PyPackageManager.getInstance(config.getSdk()).findInstalledPackage("django");
           if (django != null) {
             if (django.matches(PyRequirement.fromStringGuaranteed("django>=1.6a"))) {
               target = "myapp.tests.SimpleTest";
