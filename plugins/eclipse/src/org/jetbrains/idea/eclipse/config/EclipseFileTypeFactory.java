@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +24,8 @@ import org.jetbrains.idea.eclipse.EclipseXml;
  * Author: Vladislav.Kaznacheev
  */
 public class EclipseFileTypeFactory extends FileTypeFactory {
-  private final static FileType fileType = new EclipseFileType();
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    consumer.consume(fileType, EclipseXml.CLASSPATH_EXT + ";" + EclipseXml.PROJECT_EXT);
+    consumer.consume(EclipseFileType.INSTANCE, EclipseXml.CLASSPATH_EXT + ";" + EclipseXml.PROJECT_EXT);
   }
 }
