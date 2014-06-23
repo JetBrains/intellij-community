@@ -33,6 +33,6 @@ public class SvnProgressCanceller implements ProgressTracker {
     }
   }
 
-  public void handleEvent(final ProgressEvent event, final double progress) throws SVNException {
+  public void consume(final ProgressEvent event) throws SVNException {
   }
 }

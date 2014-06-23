@@ -71,7 +71,7 @@ public class CleanupWorker {
             indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path));
             ProgressTracker handler = new ProgressTracker() {
               @Override
-              public void handleEvent(ProgressEvent event, double progress) throws SVNException {
+              public void consume(ProgressEvent event) throws SVNException {
               }
 
               @Override

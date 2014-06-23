@@ -81,7 +81,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
     myProgress.setText2(SvnBundle.message("status.text.comitted.revision", revNum));
   }
 
-  public void handleEvent(ProgressEvent event, double p) {
+  public void consume(ProgressEvent event) {
     final String path = SvnUtil.getPathForProgress(event);
     if (path != null) {
       CommitEventType eventType = convert(event.getAction());

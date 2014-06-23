@@ -50,7 +50,7 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
 
   private void callHandler(ProgressEvent event) throws SVNException {
     if (handler != null) {
-      handler.handleEvent(event, 0.5);
+      handler.consume(event);
     }
   }
 

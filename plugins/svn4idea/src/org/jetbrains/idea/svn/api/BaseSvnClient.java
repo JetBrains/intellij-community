@@ -113,7 +113,7 @@ public abstract class BaseSvnClient implements SvnClient {
   protected static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws VcsException {
     if (handler != null) {
       try {
-        handler.handleEvent(event, 0);
+        handler.consume(event);
       }
       catch (SVNException e) {
         throw new SvnBindException(e);
@@ -134,7 +134,7 @@ public abstract class BaseSvnClient implements SvnClient {
       result = new ISVNEventHandler() {
         @Override
         public void handleEvent(SVNEvent event, double progress) throws SVNException {
-          handler.handleEvent(ProgressEvent.create(event), progress);
+          handler.consume(ProgressEvent.create(event));
         }
 
         @Override

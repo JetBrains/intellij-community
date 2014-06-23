@@ -15,15 +15,14 @@
  */
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.util.ThrowableConsumer;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @author Konstantin Kolosovsky.
  */
-public interface ProgressTracker {
+public interface ProgressTracker extends ThrowableConsumer<ProgressEvent, SVNException> {
 
   void checkCancelled() throws SVNCancelException;
-
-  void handleEvent(ProgressEvent event, double progress) throws SVNException;
 }

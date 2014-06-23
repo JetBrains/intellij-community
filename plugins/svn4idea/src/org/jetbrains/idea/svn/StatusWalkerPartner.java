@@ -52,7 +52,7 @@ public class StatusWalkerPartner {
   @NotNull
   public ProgressTracker getEventHandler() {
     return new ProgressTracker() {
-      public void handleEvent(ProgressEvent event, double progress) throws SVNException {
+      public void consume(ProgressEvent event) throws SVNException {
         //
       }
 

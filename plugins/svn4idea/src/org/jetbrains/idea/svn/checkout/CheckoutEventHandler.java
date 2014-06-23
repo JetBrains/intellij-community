@@ -46,7 +46,7 @@ public class CheckoutEventHandler implements ProgressTracker {
     myCnt = 0;
   }
 
-  public void handleEvent(ProgressEvent event, double progress) {
+  public void consume(ProgressEvent event) {
     final String path = SvnUtil.getPathForProgress(event);
     if (path == null) {
       return;

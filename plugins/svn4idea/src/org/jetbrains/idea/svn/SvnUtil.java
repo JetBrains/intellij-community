@@ -187,7 +187,7 @@ public class SvnUtil {
     final Collection<String> failedLocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
-      public void handleEvent(ProgressEvent event, double progress) {
+      public void consume(ProgressEvent event) {
         if (event.getAction() == SVNEventAction.LOCK_FAILED) {
           failedLocks.add(event.getErrorMessage() != null ?
                           event.getErrorMessage().getFullMessage() :
@@ -252,7 +252,7 @@ public class SvnUtil {
     final Collection<String> failedUnlocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
-      public void handleEvent(ProgressEvent event, double progress) {
+      public void consume(ProgressEvent event) {
         if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
           failedUnlocks.add(event.getErrorMessage() != null ?
                             event.getErrorMessage().getFullMessage() :

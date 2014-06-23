@@ -103,7 +103,7 @@ public class CreateExternalAction extends DumbAwareAction {
         final UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
         client.setEventHandler(new ProgressTracker() {
           @Override
-          public void handleEvent(ProgressEvent event, double progress) throws SVNException {
+          public void consume(ProgressEvent event) throws SVNException {
           }
 
           @Override

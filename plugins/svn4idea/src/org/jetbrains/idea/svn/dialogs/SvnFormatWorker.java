@@ -160,7 +160,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
                                                        @NotNull final String upgradeMessage) {
     return new ProgressTracker() {
       @Override
-      public void handleEvent(ProgressEvent event, double progress) throws SVNException {
+      public void consume(ProgressEvent event) throws SVNException {
         if (event.getFile() != null) {
           if (SVNEventAction.UPGRADED_PATH.equals(event.getAction())) {
             indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));

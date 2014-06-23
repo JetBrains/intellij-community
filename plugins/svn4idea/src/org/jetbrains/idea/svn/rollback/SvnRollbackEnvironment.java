@@ -80,7 +80,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     exceptions.addAll(checker.getExceptions());
 
     ProgressTracker revertHandler = new ProgressTracker() {
-      public void handleEvent(ProgressEvent event, double progress) {
+      public void consume(ProgressEvent event) {
         if (event.getAction() == SVNEventAction.REVERT) {
           final File file = event.getFile();
           if (file != null) {

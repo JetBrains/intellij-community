@@ -74,7 +74,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
                                     @Nullable SVNErrorMessage error)
     throws SVNException {
     if (handler != null) {
-      handler.handleEvent(createEvent(file, action, error), 1);
+      handler.consume(createEvent(file, action, error));
     }
   }
 

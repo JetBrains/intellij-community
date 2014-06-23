@@ -15,8 +15,6 @@ import java.util.regex.Pattern;
  */
 public class FileStatusResultParser {
 
-  private static final double DEFAULT_PROGRESS = 0.0;
-
   @NotNull
   private Pattern myLinePattern;
 
@@ -57,7 +55,7 @@ public class FileStatusResultParser {
   public void process(@NotNull Matcher matcher) throws VcsException {
     if (handler != null) {
       try {
-        handler.handleEvent(myConvertor.convert(matcher), DEFAULT_PROGRESS);
+        handler.consume(myConvertor.convert(matcher));
       } catch (SVNException e) {
         throw new VcsException(e);
       }

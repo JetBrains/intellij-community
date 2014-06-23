@@ -68,7 +68,7 @@ public class UpdateEventHandler implements ProgressTracker {
     myUpdatedFiles = updatedFiles;
   }
 
-  public void handleEvent(final ProgressEvent event, double progress) {
+  public void consume(final ProgressEvent event) {
     if (event == null || event.getFile() == null) {
       return;
     }
