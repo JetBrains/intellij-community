@@ -437,8 +437,12 @@ public static void main(String[] args) {
     debugProcess.managerThread.invoke(new DebuggerContextCommandImpl(ctx) {
       @Override
       void threadAction() {
-        result = cl()
-        semaphore.up()
+        try {
+          result = cl()
+        }
+        finally {
+          semaphore.up()
+        }
       }
 
       @Override
