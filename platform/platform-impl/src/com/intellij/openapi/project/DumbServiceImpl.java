@@ -82,6 +82,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   @Override
   public void cancelTask(@NotNull DumbModeTask task) {
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
     ProgressIndicatorEx indicator = myProgresses.get(task);
     if (indicator != null) {
       indicator.cancel();
@@ -143,6 +144,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("schedule " + task);
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() ||
