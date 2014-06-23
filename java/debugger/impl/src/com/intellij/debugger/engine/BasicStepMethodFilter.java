@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: 10/26/13
  */
-public class BasicStepMethodFilter implements MethodFilter {
+public class BasicStepMethodFilter implements NamedMethodFilter {
   @NotNull
   protected final JVMName myDeclaringClassName;
   @NotNull
