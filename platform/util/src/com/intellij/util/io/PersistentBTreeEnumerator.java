@@ -99,6 +99,23 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         initBtree(false);
         storeBTreeVars(false);
       }
+      catch (IOException e) {
+        try {
+          close();  // cleanup already initialized state
+        }
+        catch (Throwable ignored) {
+        }
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+        try {
+          close();  // cleanup already initialized state
+        }
+        catch (Throwable ignored) {
+        }
+        throw new CorruptedException(file);
+      }
       finally {
         unlockStorage();
       }
@@ -132,9 +149,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void storeBTreeVars(boolean toDisk) {
-    if (btree != null) {
+    final IntToIntBtree tree = btree;
+    if (tree != null) {
       final int BTREE_DATA_START = DATA_START + 36;
-      btree.persistVars(new IntToIntBtree.BtreeDataStorage() {
+      tree.persistVars(new IntToIntBtree.BtreeDataStorage() {
         @Override
         public int persistInt(int offset, int value, boolean toDisk) {
           return store(BTREE_DATA_START + offset, value, toDisk);
@@ -170,7 +188,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       super.doClose();
     }
     finally {
-      btree.doClose();
+      final IntToIntBtree tree = btree;
+      if (tree != null) {
+        tree.doClose();
+      }
     }
   }
 
@@ -182,7 +203,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   public boolean processAllDataObject(@NotNull final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
-    if(myInlineKeysNoMapping) {
+    if (myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
         @Override
         public boolean process(final int record) throws IOException {
