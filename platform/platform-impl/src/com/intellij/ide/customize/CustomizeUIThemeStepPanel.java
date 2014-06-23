@@ -149,7 +149,9 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       }
       Window window = SwingUtilities.getWindowAncestor(component);
       if (window != null) {
-        window.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+        if (SystemInfo.isMac) {
+          window.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+        }
         SwingUtilities.updateComponentTreeUI(window);
       }
       if (ApplicationManager.getApplication() != null) {
