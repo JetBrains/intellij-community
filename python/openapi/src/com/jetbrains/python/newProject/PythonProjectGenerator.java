@@ -22,7 +22,7 @@ public abstract class PythonProjectGenerator {
     return new PyNewProjectSettings();
   }
 
-  public ValidationResult warningValitation() {
+  public ValidationResult warningValidation() {
     return ValidationResult.OK;
   }
 

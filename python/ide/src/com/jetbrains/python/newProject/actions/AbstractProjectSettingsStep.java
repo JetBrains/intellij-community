@@ -242,7 +242,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         return false;
       }
       if (myProjectGenerator instanceof PythonProjectGenerator) {
-        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValitation();
+        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation();
         if (!warningResult.isOk()) {
           setWarningText(warningResult.getErrorMessage());
         }
