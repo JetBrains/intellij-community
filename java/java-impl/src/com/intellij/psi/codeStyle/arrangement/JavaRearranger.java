@@ -254,16 +254,14 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     return parseInfo.getEntries();
   }
 
-
-  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> list) {
-    for (ArrangementEntryDependencyInfo info : list) {
-      JavaElementArrangementEntry anchorField = info.getAnchorEntry();
-      for (ArrangementEntryDependencyInfo fieldUsedInInitialization : info.getDependentEntriesInfos()) {
-        anchorField.addDependency(fieldUsedInInitialization.getAnchorEntry());
+  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> fieldDependencyRoots) {
+    for (ArrangementEntryDependencyInfo root : fieldDependencyRoots) {
+      JavaElementArrangementEntry anchorField = root.getAnchorEntry();
+      for (ArrangementEntryDependencyInfo fieldInInitializerInfo : root.getDependentEntriesInfos()) {
+        anchorField.addDependency(fieldInInitializerInfo.getAnchorEntry());
       }
     }
   }
-
 
   @Override
   public int getBlankLines(@NotNull CodeStyleSettings settings,
