@@ -406,7 +406,7 @@ public static void main(String[] args) {
   }
 
   private def resume() {
-    debugProcess.managerThread.invokeAndWait(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
@@ -434,7 +434,7 @@ public static void main(String[] args) {
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
     Semaphore semaphore = new Semaphore()
     semaphore.down()
-    debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
+    debugProcess.managerThread.invoke(new DebuggerContextCommandImpl(ctx) {
       @Override
       void threadAction() {
         result = cl()
