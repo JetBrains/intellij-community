@@ -105,6 +105,11 @@ public class ProgressEvent {
     return myURL;
   }
 
+  @Nullable
+  public String getPath() {
+    return myFile != null ? myFile.getName() : myURL != null ? myURL.toString() : null;
+  }
+
   public String toString() {
     return getAction() + " " + getFile() + " " + getURL();
   }

@@ -501,17 +501,6 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static String getPathForProgress(final ProgressEvent event) {
-    if (event.getFile() != null) {
-      return event.getFile().getName();
-    }
-    if (event.getURL() != null) {
-      return event.getURL().toString();
-    }
-    return null;
-  }
-
-  @Nullable
   public static VirtualFile correctRoot(final Project project, final VirtualFile file) {
     if (file.getPath().length() == 0) {
       // project root

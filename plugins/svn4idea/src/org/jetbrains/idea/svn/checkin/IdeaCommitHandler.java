@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -82,7 +81,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
   }
 
   public void consume(ProgressEvent event) {
-    final String path = SvnUtil.getPathForProgress(event);
+    final String path = event.getPath();
     if (path != null) {
       CommitEventType eventType = convert(event.getAction());
 

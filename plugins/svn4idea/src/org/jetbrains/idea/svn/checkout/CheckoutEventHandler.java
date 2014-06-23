@@ -22,7 +22,6 @@ import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
@@ -47,8 +46,7 @@ public class CheckoutEventHandler implements ProgressTracker {
   }
 
   public void consume(ProgressEvent event) {
-    final String path = SvnUtil.getPathForProgress(event);
-    if (path == null) {
+    if (event.getPath() == null) {
       return;
     }
     if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
@@ -71,9 +69,9 @@ public class CheckoutEventHandler implements ProgressTracker {
         }
       }
     } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-      progress2((SvnBundle.message("progress.text2.adding", path)));
+      progress2((SvnBundle.message("progress.text2.adding", event.getPath())));
     } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-      progress2((SvnBundle.message("progress.text2.transmitting.delta", path)));
+      progress2((SvnBundle.message("progress.text2.transmitting.delta", event.getPath())));
     }
   }
 
