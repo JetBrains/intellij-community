@@ -64,6 +64,11 @@ public class Status {
                           status.getRemoteContentsStatus(), status.getRemotePropertiesStatus(), status.isLocked(),
                           status.isCopied(), status.isSwitched(), status.getCopyFromURL(), status.getRemoteLock(),
                           status.getLocalLock(), status.getChangelistName(), TreeConflictDescription.create(status.getTreeConflict()));
+      result.setIsConflicted(status.isConflicted());
+      result.setNodeStatus(status.getNodeStatus());
+      result.setRemoteNodeStatus(status.getRemoteNodeStatus());
+      result.setRemoteRevision(status.getRemoteRevision());
+      result.setRepositoryRootURL(status.getRepositoryRootURL());
     }
 
     return result;
@@ -266,5 +271,21 @@ public class Status {
 
   public void setIsConflicted(boolean isConflicted) {
     myIsConflicted = isConflicted;
+  }
+
+  public void setRemoteNodeStatus(SVNStatusType remoteNodeStatus) {
+    myRemoteNodeStatus = remoteNodeStatus;
+  }
+
+  public void setNodeStatus(SVNStatusType nodeStatus) {
+    myNodeStatus = nodeStatus;
+  }
+
+  public void setRepositoryRootURL(SVNURL repositoryRootURL) {
+    myRepositoryRootURL = repositoryRootURL;
+  }
+
+  public void setRemoteRevision(SVNRevision remoteRevision) {
+    myRemoteRevision = remoteRevision;
   }
 }
