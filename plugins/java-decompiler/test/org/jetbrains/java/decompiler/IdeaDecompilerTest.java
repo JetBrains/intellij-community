@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +68,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
       CharSequence text = new IdeaDecompiler().getText(file);
       assertNotNull(text);
       String expected = FileUtil.loadFile(new File(name + ".txt"));
-      assertEquals(expected, text.toString());
+      assertEquals(StringUtil.convertLineSeparators(expected), text.toString());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -82,7 +83,8 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testStubCompatibilityIdea() {
-    String path = PathManager.getHomePath() + "/out/classes/production";
+    String path = PathManager.getHomePath() + "/out/production";
+    if (!new File(path).exists()) path = PathManager.getHomePath() + "/out/classes/production";
     VirtualFile dir = StandardFileSystems.local().refreshAndFindFileByPath(path);
     assertNotNull(path, dir);
     doTestStubCompatibility(dir);
