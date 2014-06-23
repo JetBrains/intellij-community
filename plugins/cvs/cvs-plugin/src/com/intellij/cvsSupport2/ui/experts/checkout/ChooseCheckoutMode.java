@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,23 @@ package com.intellij.cvsSupport2.ui.experts.checkout;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.config.CvsRootConfiguration;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsFile;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsLog.LogOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -33,6 +43,8 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
@@ -55,6 +67,7 @@ public class ChooseCheckoutMode extends WizardStep {
   private final JCheckBox myMakeNewFilesReadOnly = new JCheckBox(CvsBundle.message("checkbox.make.new.files.read.only"));
   private final JCheckBox myPruneEmptyDirectories = new JCheckBox(CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
+  private final DateOrRevisionOrTagSettings myDateOrRevisionOrTagSettings;
 
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
 
@@ -62,7 +75,9 @@ public class ChooseCheckoutMode extends WizardStep {
   @NonNls public static final String MESSAGE = "MESSSAGE";
   @NonNls private final JLabel myMessage = new JLabel("XXX");
 
-  public ChooseCheckoutMode(CheckoutWizard wizard) {
+  private CvsRootConfiguration myConfiguration = null;
+
+  public ChooseCheckoutMode(Project project, CheckoutWizard wizard) {
     super("###", wizard);
     myCheckoutModeList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
@@ -93,7 +108,65 @@ public class ChooseCheckoutMode extends WizardStep {
     myMessage.setBackground(UIUtil.getTableBackground());
     myCenterPanel.add(MESSAGE, ScrollPaneFactory.createScrollPane(messagePanel));
 
+    myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
+      @Nullable
+      @Override
+      protected CvsEnvironment getCvsEnvironment() {
+        return getWizard().getSelectedConfiguration();
+      }
+
+      @Override
+      public String getModule() {
+        final CvsElement[] selectedElements = getWizard().getSelectedElements();
+        String module = null;
+        for (CvsElement element : selectedElements) {
+          final String checkoutPath = element.getCheckoutPath();
+          if (module == null) {
+            module = checkoutPath;
+            continue;
+          }
+          final String commonParentModule = findCommonParentModule(module, checkoutPath);
+          if (commonParentModule == null) {
+            return super.getModule();
+          }
+          module = commonParentModule;
+        }
+        return module;
+      }
+    }, project);
+
     init();
+  }
+
+  private static String findCommonParentModule(String module1, String module2) {
+    int diff = indexOfFirstDifference(module1, module2);
+    if (diff == 0) {
+      return null;
+    }
+    if (diff == module1.length()) {
+      return module1;
+    }
+    if (module1.charAt(diff - 1) == '/') {
+      return module1.substring(0, diff);
+    }
+    else {
+      int index = module1.lastIndexOf('/', diff);
+      if (index < 0) {
+        return null;
+      }
+      return module1.substring(0, index);
+    }
+  }
+
+  private static int indexOfFirstDifference(@NotNull String a, @NotNull String b) {
+    int max = Math.min(a.length(), b.length());
+    for (int i = 0; i < max; i++) {
+      final char c = a.charAt(i);
+      if (c != b.charAt(i)) {
+        return i;
+      }
+    }
+    return max;
   }
 
   @Override
@@ -122,6 +195,7 @@ public class ChooseCheckoutMode extends WizardStep {
     result.add(myMakeNewFilesReadOnly);
     result.add(myPruneEmptyDirectories);
     result.add(myChangeKeywordSubstitutionPanel.getComponent());
+    result.add(myDateOrRevisionOrTagSettings.getPanel());
     return result;
   }
 
@@ -154,6 +228,11 @@ public class ChooseCheckoutMode extends WizardStep {
     }
     else if (selectedLocation == null) {
       getWizard().updateButtons();
+    }
+    final CvsRootConfiguration configuration = getWizard().getSelectedConfiguration();
+    if (myConfiguration != configuration) {
+      myDateOrRevisionOrTagSettings.updateFrom(configuration.DATE_OR_REVISION_SETTINGS);
+      myConfiguration = configuration;
     }
   }
 
@@ -256,5 +335,9 @@ public class ChooseCheckoutMode extends WizardStep {
 
   public KeywordSubstitution getKeywordSubstitution() {
     return myChangeKeywordSubstitutionPanel.getKeywordSubstitution();
+  }
+
+  public void saveDateOrRevisionSettings(CvsRootConfiguration configuration) {
+    myDateOrRevisionOrTagSettings.saveTo(configuration.DATE_OR_REVISION_SETTINGS);
   }
 }
