@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -42,7 +43,7 @@ import java.util.List;
  *         Date: 3/16/11
  *         Time: 2:41 PM
  */
-public class ShowAllAffectedGenericAction extends AnAction {
+public class ShowAllAffectedGenericAction extends AnAction implements DumbAware {
 
   private static final String ACTION_ID = "VcsHistory.ShowAllAffected";
 
