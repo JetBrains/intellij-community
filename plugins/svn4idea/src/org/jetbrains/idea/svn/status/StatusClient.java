@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.status;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -44,5 +45,6 @@ public interface StatusClient extends SvnClient {
                 StatusConsumer handler,
                 Collection changeLists) throws SvnBindException;
 
+  @Nullable
   Status doStatus(File path, boolean remote) throws SvnBindException;
 }

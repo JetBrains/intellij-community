@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.status;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -48,21 +48,25 @@ public class Status {
   private SVNLock myLocalLock;
   private SVNRevision myRemoteRevision;
   private String myChangelistName;
-  private TreeConflictDescription myTreeConflict;
+  @Nullable private TreeConflictDescription myTreeConflict;
   private boolean myIsConflicted;
 
   private SVNStatusType myNodeStatus;
   private SVNURL myRepositoryRootURL;
 
-  @NotNull
-  public static Status create(@NotNull SVNStatus status) {
-    return new Status(status.getURL(), status.getFile(), status.getKind(), status.getRevision(), status.getCommittedRevision(),
-                      status.getContentsStatus(), status.getPropertiesStatus(),
-                      status.getRemoteContentsStatus(), status.getRemotePropertiesStatus(), status.isLocked(), status.isCopied(),
-                      status.isSwitched(),
-                      status.getCopyFromURL(),
-                      status.getRemoteLock(), status.getLocalLock(), status.getChangelistName(),
-                      TreeConflictDescription.create(status.getTreeConflict()));
+  @Nullable
+  public static Status create(@Nullable SVNStatus status) {
+    Status result = null;
+
+    if (status != null) {
+      result = new Status(status.getURL(), status.getFile(), status.getKind(), status.getRevision(),
+                          status.getCommittedRevision(), status.getContentsStatus(), status.getPropertiesStatus(),
+                          status.getRemoteContentsStatus(), status.getRemotePropertiesStatus(), status.isLocked(),
+                          status.isCopied(), status.isSwitched(), status.getCopyFromURL(), status.getRemoteLock(),
+                          status.getLocalLock(), status.getChangelistName(), TreeConflictDescription.create(status.getTreeConflict()));
+    }
+
+    return result;
   }
 
   public Status(SVNURL url,
@@ -81,7 +85,7 @@ public class Status {
                 SVNLock remoteLock,
                 SVNLock localLock,
                 String changelistName,
-                TreeConflictDescription treeConflict) {
+                @Nullable TreeConflictDescription treeConflict) {
     myURL = url;
     myFile = file;
     myKind = kind == null ? SVNNodeKind.NONE : kind;
@@ -176,6 +180,7 @@ public class Status {
     return myChangelistName;
   }
 
+  @Nullable
   public TreeConflictDescription getTreeConflict() {
     return myTreeConflict;
   }

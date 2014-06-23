@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -36,13 +37,19 @@ public class TreeConflictDescription {
   private final SVNConflictVersion mySourceLeftVersion;
   private final SVNConflictVersion mySourceRightVersion;
 
-  @NotNull
-  public static TreeConflictDescription create(@NotNull SVNTreeConflictDescription conflict) {
-    return new TreeConflictDescription(conflict.getPath(), conflict.getNodeKind(),
-                                       ConflictAction.from(conflict.getConflictAction().getName()),
-                                       ConflictReason.from(conflict.getConflictReason().getName()),
-                                       ConflictOperation.from(conflict.getOperation().getName()),
-                                       conflict.getSourceLeftVersion(), conflict.getSourceRightVersion());
+  @Nullable
+  public static TreeConflictDescription create(@Nullable SVNTreeConflictDescription conflict) {
+    TreeConflictDescription result = null;
+
+    if (conflict != null) {
+      result =
+        new TreeConflictDescription(conflict.getPath(), conflict.getNodeKind(), ConflictAction.from(conflict.getConflictAction().getName()),
+                                    ConflictReason.from(conflict.getConflictReason().getName()),
+                                    ConflictOperation.from(conflict.getOperation().getName()), conflict.getSourceLeftVersion(),
+                                    conflict.getSourceRightVersion());
+    }
+
+    return result;
   }
 
   public TreeConflictDescription(File path,

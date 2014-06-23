@@ -54,7 +54,7 @@ public class Info {
   private final File myConflictWrkFile;
   private final File myPropConflictFile;
   private final SVNDepth myDepth;
-  private final TreeConflictDescription myTreeConflict;
+  @Nullable private final TreeConflictDescription myTreeConflict;
 
   @NotNull
   public static Info create(@NotNull SVNInfo info) {
@@ -67,11 +67,11 @@ public class Info {
     }
     else {
       result = new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), info.getKind(),
-                           info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), info.getCommittedDate().toString(),
-                           info.getAuthor(), info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(),
-                           info.getConflictOldFile().getPath(), info.getConflictNewFile().getPath(), info.getConflictWrkFile().getPath(),
-                           info.getPropConflictFile().getPath(), info.getLock(), info.getDepth(),
-                           TreeConflictDescription.create(info.getTreeConflict()));
+                        info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()),
+                        info.getAuthor(), info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(),
+                        getPath(info.getConflictOldFile()), getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()),
+                        getPath(info.getPropConflictFile()), info.getLock(), info.getDepth(),
+                        TreeConflictDescription.create(info.getTreeConflict()));
     }
 
     return result;
@@ -95,7 +95,7 @@ public class Info {
               String propRejectFile,
               SVNLock lock,
               SVNDepth depth,
-              TreeConflictDescription treeConflict) {
+              @Nullable TreeConflictDescription treeConflict) {
     myFile = file;
     myURL = url;
     myRevision = SVNRevision.create(revision);
@@ -187,6 +187,7 @@ public class Info {
     return myConflictWrkFile;
   }
 
+  @Nullable
   public TreeConflictDescription getTreeConflict() {
     return myTreeConflict;
   }
@@ -250,5 +251,15 @@ public class Info {
   @Nullable
   private static File resolveConflictFile(@Nullable File file, @Nullable String path) {
     return file != null && path != null ? new File(file.getParentFile(), path) : null;
+  }
+
+  @Nullable
+  private static String getPath(@Nullable File file) {
+    return file != null ? file.getPath() : null;
+  }
+
+  @Nullable
+  private static String toString(@Nullable Date date) {
+    return date != null ? date.toString() : null;
   }
 }

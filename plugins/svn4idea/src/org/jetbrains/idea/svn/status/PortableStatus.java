@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNLock;
@@ -236,6 +237,7 @@ public class PortableStatus extends Status {
    * @since 1.3
    */
   @Override
+  @Nullable
   public TreeConflictDescription getTreeConflict() {
     if (! isConflicted()) return null;
     final Info info = initInfo();

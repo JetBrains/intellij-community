@@ -72,6 +72,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @Override
+  @Nullable
   public Status doStatus(File path, boolean remote) throws SvnBindException {
     try {
       return Status.create(getStatusClient().doStatus(path, remote));
