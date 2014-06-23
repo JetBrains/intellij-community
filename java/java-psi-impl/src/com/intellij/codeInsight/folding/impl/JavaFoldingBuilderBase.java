@@ -703,6 +703,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     else if (element instanceof PsiComment) {
       return settings.isCollapseEndOfLineComments();
     }
+    else if (element instanceof PsiLiteralExpression
+             && element.getParent() instanceof PsiExpressionList
+             && (element.getParent().getParent() instanceof PsiCallExpression
+                 || element.getParent().getParent() instanceof PsiAnonymousClass)) {
+      return settings.isInlineParameterNamesForLiteralCallArguments();
+    }
     else {
       LOG.error("Unknown element:" + element);
       return false;
@@ -725,6 +731,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         if (!dumb) {
           addMethodGenericParametersFolding(expression, foldElements, document, quick);
+          inlineLiteralArgumentsNames(expression, foldElements, quick);
         }
 
         super.visitMethodCallExpression(expression);
@@ -734,6 +741,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       public void visitNewExpression(PsiNewExpression expression) {
         if (!dumb) {
           addGenericParametersFolding(expression, foldElements, document, quick);
+          inlineLiteralArgumentsNames(expression, foldElements, quick);
         }
 
         super.visitNewExpression(expression);
@@ -745,6 +753,50 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         super.visitComment(comment);
       }
     });
+  }
+
+  private static void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression,
+                                                  @NotNull List<FoldingDescriptor> foldElements,
+                                                  boolean quick)
+  {
+    if (quick || !JavaCodeFoldingSettings.getInstance().isInlineParameterNamesForLiteralCallArguments()) {
+      return;
+    }
+    PsiExpressionList callArgumentsList = expression.getArgumentList();
+    if (callArgumentsList == null) {
+      return;
+    }
+
+    PsiExpression[] callArguments = callArgumentsList.getExpressions();
+    if (callArguments.length > 1) {
+      PsiParameter[] parameters = null;
+      boolean isResolved = false;
+
+      for (int i = 0; i < callArguments.length; i++) {
+        PsiExpression callArgument = callArguments[i];
+
+        if (callArgument instanceof PsiLiteralExpression) {
+          if (!isResolved) {
+            PsiMethod method = expression.resolveMethod();
+            isResolved = true;
+            if (method == null) {
+              return;
+            }
+            parameters = method.getParameterList().getParameters();
+            if (parameters.length != callArguments.length) {
+              return;
+            }
+          }
+
+          PsiParameter methodParam = parameters[i];
+          if (PsiType.NULL.equals(callArgument.getType()) || methodParam.getType().equals(callArgument.getType())) {
+            TextRange range = callArgument.getTextRange();
+            String placeholderText = methodParam.getName() + ": " + callArgument.getText();
+            foldElements.add(new NamedFoldingDescriptor(callArgument, range.getStartOffset(), range.getEndOffset(), null, placeholderText));
+          }
+        }
+      }
+    }
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,

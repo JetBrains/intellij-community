@@ -14,6 +14,7 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_END_OF_LINE_COMMENTS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = true;
 
   @Override
   public boolean isCollapseImports() {
@@ -147,5 +148,15 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   @Override
   public void setCollapseEndOfLineComments(boolean value) {
     COLLAPSE_END_OF_LINE_COMMENTS = value;
+  }
+
+  @Override
+  public boolean isInlineParameterNamesForLiteralCallArguments() {
+    return INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS;
+  }
+
+  @Override
+  public void setInlineParameterNamesForLiteralCallArguments(boolean value) {
+    INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS = value;
   }
 }
