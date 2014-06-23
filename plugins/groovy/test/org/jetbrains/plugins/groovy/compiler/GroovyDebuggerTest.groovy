@@ -37,6 +37,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.OSProcessManager
 import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -95,7 +96,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      def listener = [onTextAvailable: { evt, type -> }] as ProcessAdapter
+      def listener = [onTextAvailable: { ProcessEvent evt, type -> println evt.text}] as ProcessAdapter
       runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
     }
     try {
@@ -405,7 +406,7 @@ public static void main(String[] args) {
   }
 
   private def resume() {
-    debugProcess.managerThread.invokeAndWait(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
@@ -433,11 +434,15 @@ public static void main(String[] args) {
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
     Semaphore semaphore = new Semaphore()
     semaphore.down()
-    debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
+    debugProcess.managerThread.invoke(new DebuggerContextCommandImpl(ctx) {
       @Override
       void threadAction() {
-        result = cl()
-        semaphore.up()
+        try {
+          result = cl()
+        }
+        finally {
+          semaphore.up()
+        }
       }
 
       @Override

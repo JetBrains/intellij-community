@@ -27,6 +27,7 @@ import com.intellij.openapi.options.BeanConfigurable;
 public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFoldingSettings> implements CodeFoldingOptionsProvider {
   public JavaCodeFoldingOptionsProvider() {
     super(JavaCodeFoldingSettings.getInstance());
+    checkBox("INLINE_PARAMETER_NAMES_FOR_LITERAL_CALL_ARGUMENTS", ApplicationBundle.message("checkbox.collapse.boolean.parameters"));
     checkBox("COLLAPSE_ONE_LINE_METHODS", ApplicationBundle.message("checkbox.collapse.one.line.methods"));
     checkBox("COLLAPSE_ACCESSORS", ApplicationBundle.message("checkbox.collapse.simple.property.accessors"));
     checkBox("COLLAPSE_INNER_CLASSES", ApplicationBundle.message("checkbox.collapse.inner.classes"));

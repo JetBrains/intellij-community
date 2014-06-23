@@ -271,6 +271,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     PsiToDocumentSynchronizer synchronizer =((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
     TextRange changedPsiRange = DocumentCommitProcessor.getChangedPsiRange(file, oldText, newText);
+    if (changedPsiRange == null) return;
+
     final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, changedPsiRange, newText, new EmptyProgressIndicator());
     synchronizer.setIgnorePsiEvents(true);
     try {

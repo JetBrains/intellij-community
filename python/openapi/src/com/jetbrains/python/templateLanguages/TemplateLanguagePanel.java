@@ -1,11 +1,15 @@
 package com.jetbrains.python.templateLanguages;
 
+import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 public class TemplateLanguagePanel extends JPanel {
@@ -50,7 +54,20 @@ public class TemplateLanguagePanel extends JPanel {
     holder.setTemplateLanguage((String)templateLanguage);
   }
 
+  public void setTemplatesFolder(@NotNull final String folder) {
+    myTemplatesFolder.setText(folder);
+  }
+
   public Dimension getLabelSize() {
     return new JBLabel("Template language:").getPreferredSize();
+  }
+
+  public void registerValidators(final FacetValidatorsManager validatorsManager) {
+    myTemplateLanguage.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validatorsManager.validate();
+      }
+    });
   }
 }

@@ -425,6 +425,21 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(String requirementString) throws PyExternalProcessException {
+    boolean hasSetuptools = false;
+    boolean hasPip = false;
+    try {
+      hasSetuptools = findInstalledPackage(SETUPTOOLS) != null;
+    }
+    catch (PyExternalProcessException ignored) {
+    }
+    try {
+      hasPip = findInstalledPackage(PIP) != null;
+    }
+    catch (PyExternalProcessException ignored) {
+    }
+
+    if (!hasSetuptools) installManagement(SETUPTOOLS);
+    if (!hasPip) installManagement(PIP);
     install(Collections.singletonList(PyRequirement.fromString(requirementString)), Collections.<String>emptyList());
   }
 
@@ -593,8 +608,20 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   @Nullable
-  public PyPackage findPackage(String name) throws PyExternalProcessException {
+  public PyPackage findInstalledPackage(String name) throws PyExternalProcessException {
     return findPackageByName(name, getPackages());
+  }
+
+  @Override
+  public boolean findPackage(@NotNull final String name) {
+    try {
+      final String output = runPythonHelper(PACKAGING_TOOL, list("search", name));
+      return StringUtil.containsIgnoreCase(output, name + " ");
+    }
+    catch (PyExternalProcessException e) {
+      LOG.error(e.getMessage());
+      return false;
+    }
   }
 
   @Nullable

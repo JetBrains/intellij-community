@@ -107,6 +107,9 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     final JPanel scrollPanel = new JPanel(new BorderLayout());
 
     mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 400));
+    myErrorLabel = new JLabel("");
+    myErrorLabel.setForeground(JBColor.RED);
+    myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
 
     final JPanel panel = createBasePanel();
     scrollPanel.add(panel, BorderLayout.NORTH);
@@ -120,11 +123,9 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
-    myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
+
 
     myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
-    myErrorLabel = new JLabel("");
-    myErrorLabel.setForeground(JBColor.RED);
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
     bottomPanel.add(myCreateButton, BorderLayout.CENTER);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
@@ -242,7 +243,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         return false;
       }
       if (myProjectGenerator instanceof PythonProjectGenerator) {
-        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValitation();
+        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getSdk());
         if (!warningResult.isOk()) {
           setWarningText(warningResult.getErrorMessage());
         }
@@ -271,14 +272,21 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
         final boolean onlyWithCache =
           PythonSdkFlavor.getFlavor(sdk) instanceof JythonSdkFlavor || PythonSdkFlavor.getFlavor(sdk) instanceof PyPySdkFlavor;
+        String warningText = frameworkName + " will be installed on selected interpreter";
         try {
           if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
-            final PyPackage pip = packageManager.findPackage("pip");
-            myInstallFramework = pip != null;
-            setWarningText(frameworkName + " will be installed on selected interpreter");
+            final PyPackage pip = packageManager.findInstalledPackage("pip");
+            myInstallFramework = true;
+            if (pip == null) {
+              warningText = "pip and " + warningText;
+            }
+            setWarningText(warningText);
           }
         }
         catch (PyExternalProcessException ignored) {
+          myInstallFramework = true;
+          warningText = "pip and " + warningText;
+          setWarningText(warningText);
         }
         if (!myInstallFramework) {
           setErrorText("No " + frameworkName + " support installed in selected interpreter");

@@ -1,3 +1,3 @@
 class Foo {
- <caret>   int field;
+    <caret>int field;
 }

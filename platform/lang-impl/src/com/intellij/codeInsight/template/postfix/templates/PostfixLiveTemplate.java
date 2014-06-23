@@ -128,7 +128,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
           int offset = deleteTemplateKey(file, editor, key);
           try {
             provider.preExpand(file, editor);
-            PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset), true);
+            PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset));
             expandTemplate(postfixTemplate, editor, context);
           }
           finally {
@@ -274,7 +274,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       return Condition.FALSE;
     }
 
-    final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset), true);
+    final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
     return new Condition<PostfixTemplate>() {
       @Override

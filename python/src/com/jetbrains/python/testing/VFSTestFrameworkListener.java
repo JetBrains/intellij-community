@@ -133,7 +133,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent {
     }
     final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
     try {
-      return packageManager.findPackage(testPackageName) != null;
+      return packageManager.findInstalledPackage(testPackageName) != null;
     }
     catch (PyExternalProcessException e) {
       LOG.info("Can't load package list " + e.getMessage());

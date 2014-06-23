@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   public RecentProjectsGroup() {
-    super();
-
-    final Presentation templatePresentation = getTemplatePresentation();
-    // Let's make tile more macish
-    if (SystemInfo.isMac) {
-      templatePresentation.setText(ActionsBundle.message("group.reopen.mac.text"));
-    } else {
-      templatePresentation.setText(ActionsBundle.message("group.reopen.win.text"));
-    }
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(ActionsBundle.message(SystemInfo.isMac ? "group.reopen.mac.text": "group.reopen.win.text"));
   }
 
   @NotNull

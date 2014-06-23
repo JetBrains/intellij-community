@@ -126,18 +126,6 @@ public class TemplateSegments {
     }
   }
 
-  public int getSegmentWithTheSameStart(int segmentNumber, int start) {
-    for (int i = segmentNumber + 1; i < mySegments.size(); i++) {
-      final RangeMarker segment = mySegments.get(i);
-      final int startOffset2 = segment.getStartOffset();
-      if (start == startOffset2) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
   public int getSegmentsCount() {
     return mySegments.size();
   }

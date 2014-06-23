@@ -88,11 +88,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         PyExternalProcessException exc = null;
         try {
           PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk);
-          myHasSetuptools = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          myHasSetuptools = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
           if (!myHasSetuptools) {
-            myHasSetuptools = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
+            myHasSetuptools = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
           }
-          myHasPip = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
+          myHasPip = packageManager.findInstalledPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
         }
         catch (PyExternalProcessException e) {
           exc = e;

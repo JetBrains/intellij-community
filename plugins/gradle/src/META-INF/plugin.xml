@@ -40,7 +40,6 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
   <depends>JUnit</depends>
-  <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
   <extensionPoints>

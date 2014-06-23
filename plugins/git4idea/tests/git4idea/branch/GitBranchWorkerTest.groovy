@@ -711,7 +711,8 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
 
     @Override
-    int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force) {
+    int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation,
+                                 boolean isForcePossible) {
       GitSmartOperationDialog.SMART_EXIT_CODE
     }
 

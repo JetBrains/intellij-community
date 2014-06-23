@@ -22334,6 +22334,9 @@
     <option name="end" hit="End (on blank line)" />
     <option name="line" hit="End (on blank line)" />
     <option name="on" hit="End (on blank line)" />
+    <option name="backspace" hit="Backspace smart indent" />
+    <option name="smart" hit="Backspace smart indent" />
+    <option name="indent" hit="Backspace smart indent" />
     <option name="enter" hit="Enter" />
     <option name="home" hit="Home" />
     <option name="a" hit="Insert 'self' when defining a method" />

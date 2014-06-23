@@ -1,10 +1,15 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
-import com.intellij.testFramework.LightIdeaTestCase;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +18,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
  * Time: 10:10:48 PM
  * To change this template use File | Settings | File Templates.
  */
-abstract class StructuralReplaceTestCase extends LightIdeaTestCase {
+abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   protected Replacer replacer;
   protected ReplaceOptions options;
   protected String actualResult;
@@ -31,4 +36,7 @@ abstract class StructuralReplaceTestCase extends LightIdeaTestCase {
     replacer = new Replacer(getProject(), null);
   }
 
+  protected String loadFile(String fileName) throws IOException {
+    return FileUtilRt.loadFile(new File(getTestDataPath() + FileUtilRt.getExtension(fileName) + "/" + fileName), CharsetToolkit.UTF8, true);
+  }
 }

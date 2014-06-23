@@ -34,6 +34,7 @@ public class PlatformUtils {
   public static final String RUBY_PREFIX = PlatformUtilsCore.RUBY_PREFIX;
   public static final String PHP_PREFIX = PlatformUtilsCore.PHP_PREFIX;
   public static final String WEB_PREFIX = PlatformUtilsCore.WEB_PREFIX;
+  public static final String DBE_PREFIX = PlatformUtilsCore.DBE_PREFIX;
 
   private PlatformUtils() { }
 

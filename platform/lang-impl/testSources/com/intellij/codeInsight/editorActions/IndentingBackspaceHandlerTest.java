@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
@@ -23,8 +22,6 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,19 +29,6 @@ import org.junit.runner.RunWith;
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/indentingBackspace/")
 public class IndentingBackspaceHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
-  private boolean mySavedConfigurationState;
-
-  @Before
-  public void enableIndentingBackspace() {
-    mySavedConfigurationState = CodeInsightSettings.getInstance().INDENTING_BACKSPACE;
-    CodeInsightSettings.getInstance().INDENTING_BACKSPACE = true;
-  }
-
-  @After
-  public void restoreSettings() {
-    CodeInsightSettings.getInstance().INDENTING_BACKSPACE = mySavedConfigurationState;
-  }
-
   @Test
   public void testAction() {
     new WriteCommandAction<Void>(null) {

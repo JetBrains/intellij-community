@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.usageView.UsageInfo;
@@ -29,7 +30,7 @@ import java.io.PrintWriter;
 public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/typeMigration/testData";
+    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
   }
 
   protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) {
@@ -41,7 +42,6 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       @Override
       public TypeMigrationRules provide() throws Exception {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
-        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -66,7 +66,6 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       @Override
       public TypeMigrationRules provide() throws Exception {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
-        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -89,7 +88,6 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
       @Override
       public TypeMigrationRules provide() throws Exception {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
-        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -121,7 +119,9 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     assertNotNull("Class " + className + " not found", aClass);
 
-    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), provider.victims(aClass), provider.provide());
+    final TypeMigrationRules rules = provider.provide();
+    rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
+    final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), provider.victims(aClass), rules);
 
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();

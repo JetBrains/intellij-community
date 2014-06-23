@@ -236,51 +236,9 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
             module("IntelliLang")
             module("IntelliLang-java")
             module("IntelliLang-xml")
-            module("IntelliLang-javaee")
           }
           jar("intellilang-jps-plugin.jar") {
             module("intellilang-jps-plugin")
-          }
-        }
-      }
-    }
-
-    dir("plugins") {
-      pluginDir("coverage") {
-        dir("lib") {
-          jar("coverage.jar") {
-            noResources("coverage-common")
-            noResources("coverage")
-            noResources("ultimate-verifier")
-          }
-
-          jar("coverage_rt.jar") {
-            noResources("coverage_rt")
-          }
-
-          jar("resources_en.jar") {
-            module("coverage-common") {
-              patternset(refid: "resources.included")
-            }
-            module("coverage") {
-              patternset(refid: "resources.included")
-            }
-          }
-
-          fileset(dir: "${home}/plugins/coverage-common/lib") {
-            exclude(name: "finder.jar")
-            exclude(name: "**/coverage-src.zip")
-          }
-
-          fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
-        }
-      }
-
-      pluginDir("structuralsearch") {
-        dir("lib") {
-          jar("structuralsearch.jar") {
-            module("structuralsearch")
-            moduleOptional("structuralsearch-groovy")
           }
         }
       }
@@ -489,6 +447,7 @@ public def layoutCommunityPlugins(String home) {
           module("groovy-psi") {
             exclude(name: "standardDsls/**")
           }
+          module("structuralsearch-groovy")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
         jar("groovy-jps-plugin.jar") {
@@ -547,6 +506,52 @@ public def layoutCommunityPlugins(String home) {
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
         include(name: "*.in")
+      }
+    }
+
+    pluginDir("coverage") {
+      dir("lib") {
+        jar("coverage.jar") {
+          noResources("coverage-common")
+          noResources("coverage")
+        }
+
+        jar("coverage_rt.jar") {
+          noResources("coverage_rt")
+        }
+
+        jar("resources_en.jar") {
+          module("coverage-common") {
+            patternset(refid: "resources.included")
+          }
+          module("coverage") {
+            patternset(refid: "resources.included")
+          }
+        }
+
+        fileset(dir: "${home}/plugins/coverage-common/lib") {
+          exclude(name: "finder.jar")
+          exclude(name: "**/coverage-src.zip")
+        }
+
+        fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
+      }
+    }
+
+    pluginDir("structuralsearch") {
+      dir("lib") {
+        jar("structuralsearch.jar") {
+          module("structuralsearch")
+        }
+      }
+    }
+
+    pluginDir("java-decompiler") {
+      dir("lib") {
+        jar("java-decompiler.jar") {
+          module("java-decompiler")
+        }
+        fileset(file: "$home/plugins/java-decompiler/lib/fernflower.jar")
       }
     }
   }

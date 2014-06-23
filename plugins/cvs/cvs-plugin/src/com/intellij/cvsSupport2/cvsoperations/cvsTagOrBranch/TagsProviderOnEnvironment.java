@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,20 @@ import org.jetbrains.annotations.Nullable;
 /**
  * author: lesya
  */
-public abstract class TagsProviderOnEnvironment implements TagsProvider{
+public abstract class TagsProviderOnEnvironment implements TagsProvider {
+
   @Override
   @Nullable
   public CvsCommandOperation getOperation() throws VcsException {
     final CvsEnvironment env = getCvsEnvironment();
     if (env == null) return null;
-    return new GetAllBranchesOperation(env);
+    return new GetAllBranchesOperation(env, getModule());
   }
 
   @Nullable
   protected abstract CvsEnvironment getCvsEnvironment();
+
+  public String getModule() {
+    return ".";
+  }
 }

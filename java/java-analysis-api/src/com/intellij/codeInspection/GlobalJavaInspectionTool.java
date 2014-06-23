@@ -20,11 +20,8 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool {
   @Override
@@ -36,16 +33,5 @@ public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool {
 
   protected boolean queryExternalUsagesRequests(@NotNull RefManager manager, @NotNull GlobalJavaInspectionContext globalContext, @NotNull ProblemDescriptionsProcessor processor) {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(getShortName()));
-  }
-
-  @Override
-  public boolean isSuppressedFor(@NotNull final PsiElement element) {
-    return SuppressManager.getInstance().isSuppressedFor(element, getShortName());
   }
 }
