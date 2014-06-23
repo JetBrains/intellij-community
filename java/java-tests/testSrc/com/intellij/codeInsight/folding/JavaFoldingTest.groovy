@@ -672,6 +672,28 @@ public class VarArgTest {
     assert regions[1].placeholderText == "test: 13"
   }
 
+  public void "test do not inline if argument length is one (EA-57555)"() {
+    def text = """
+public class CharSymbol {
+
+  public void main() {
+    System.out.println("AAA");
+    count(1, false);
+  }
+
+  public void count(int test, boolean fast) {
+    int temp = test;
+    boolean isFast = fast;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 3
+    checkRangeOffsetByPositionInText(regions[1], text, "false")
+    assert regions[1].placeholderText == "fast: false"
+  }
+
   public void "test inline constructor literal arguments names"() {
     def text = """
 public class Test {

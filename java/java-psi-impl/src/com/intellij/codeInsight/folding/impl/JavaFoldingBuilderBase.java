@@ -791,8 +791,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
           PsiParameter methodParam = parameters[i];
           if (PsiType.NULL.equals(callArgument.getType()) || methodParam.getType().equals(callArgument.getType())) {
             TextRange range = callArgument.getTextRange();
-            String placeholderText = methodParam.getName() + ": " + callArgument.getText();
-            foldElements.add(new NamedFoldingDescriptor(callArgument, range.getStartOffset(), range.getEndOffset(), null, placeholderText));
+            if (range.getLength() > 1) {
+              String placeholderText = methodParam.getName() + ": " + callArgument.getText();
+              foldElements.add(new NamedFoldingDescriptor(callArgument, range.getStartOffset(), range.getEndOffset(), null, placeholderText));
+            }
           }
         }
       }
