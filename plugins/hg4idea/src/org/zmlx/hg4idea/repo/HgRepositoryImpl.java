@@ -108,6 +108,11 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myInfo.getCurrentRevision();
   }
 
+  @Nullable
+  public String getTipRevision() {
+    return myInfo.getTipRevision();
+  }
+
   @Override
   @NotNull
   public Map<String, Set<Hash>> getBranches() {
@@ -185,7 +190,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     myIsFresh = myIsFresh && myReader.isFresh();
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
-      new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readState(), myReader.readBranches(),
+      new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),
+                     myReader.readBranches(),
                      myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags());
   }
 

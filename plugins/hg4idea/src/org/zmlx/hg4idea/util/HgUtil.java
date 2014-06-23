@@ -73,6 +73,7 @@ public abstract class HgUtil {
   private static final Logger LOG = Logger.getInstance(HgUtil.class);
   public static final String DOT_HG = ".hg";
   public static final String TIP_REFERENCE = "tip";
+  public static final String HEAD_REFERENCE = "HEAD";
 
   public static File copyResourceToTempFile(String basename, String extension) throws IOException {
     final InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
