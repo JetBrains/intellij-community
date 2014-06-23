@@ -190,18 +190,19 @@ public class HgLogProvider implements VcsLogProvider {
     if (filterCollection.getDateFilter() != null) {
       StringBuilder args = new StringBuilder();
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-      filterParameters.add("-r");
+      filterParameters.add("-d");
       VcsLogDateFilter filter = filterCollection.getDateFilter();
       if (filter.getAfter() != null) {
-        args.append("date('>").append(dateFormatter.format(filter.getAfter())).append("')");
+        if (filter.getBefore() != null) {
+          args.append(dateFormatter.format(filter.getAfter())).append(" to ").append(dateFormatter.format(filter.getBefore()));
+        }
+        else {
+          args.append('>').append(dateFormatter.format(filter.getAfter()));
+        }
       }
 
-      if (filter.getBefore() != null) {
-        if (args.length() > 0) {
-          args.append(" and ");
-        }
-
-        args.append("date('<").append(dateFormatter.format(filter.getBefore())).append("')");
+      else if (filter.getBefore() != null) {
+        args.append('<').append(dateFormatter.format(filter.getBefore()));
       }
       filterParameters.add(args.toString());
     }
