@@ -72,7 +72,7 @@ public class PluginDescriptorChooser {
     List<DomFileElement<IdeaPlugin>> elements =
       DomService.getInstance().getFileElements(IdeaPlugin.class,
                                                project,
-                                               module.getModuleContentWithDependenciesScope());
+                                               module.getModuleWithDependenciesScope());
 
     elements = ContainerUtil.filter(elements, new Condition<DomFileElement<IdeaPlugin>>() {
       @Override
