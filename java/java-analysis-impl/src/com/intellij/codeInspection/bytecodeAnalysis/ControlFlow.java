@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnList;
@@ -158,7 +159,7 @@ final class cfg {
 
   // Graphs: Theory and Algorithms. by K. Thulasiraman , M. N. S. Swamy (1992)
   // 11.7.2 DFS of a directed graph
-  static DFSTree buildDFSTree(List<Integer>[] transitions) {
+  static DFSTree buildDFSTree(int[][] transitions) {
     Set<Edge> tree = new HashSet<Edge>();
     Set<Edge> forward = new HashSet<Edge>();
     Set<Edge> back = new HashSet<Edge>();
@@ -307,10 +308,10 @@ final class Edge {
 final class ControlFlowGraph {
   final String className;
   final MethodNode methodNode;
-  final List<Integer>[] transitions;
+  final int[][] transitions;
   final Set<Edge> errorTransitions;
 
-  ControlFlowGraph(String className, MethodNode methodNode, List<Integer>[] transitions, Set<Edge> errorTransitions) {
+  ControlFlowGraph(String className, MethodNode methodNode, int[][] transitions, Set<Edge> errorTransitions) {
     this.className = className;
     this.methodNode = methodNode;
     this.transitions = transitions;
@@ -340,34 +341,42 @@ final class ControlFlowBuilder extends Analyzer<BasicValue> {
   static final BasicInterpreter INTERPRETER = new BasicInterpreter();
   final String className;
   final MethodNode methodNode;
-  final LinkedList<Integer>[] transitions;
+  final TIntArrayList[] transitions;
   final Set<Edge> errorTransitions;
 
   ControlFlowBuilder(String className, MethodNode methodNode) {
     super(INTERPRETER);
     this.className = className;
     this.methodNode = methodNode;
-    transitions = new LinkedList[methodNode.instructions.size()];
+    transitions = new TIntArrayList[methodNode.instructions.size()];
     for (int i = 0; i < transitions.length; i++) {
-      transitions[i] = new LinkedList<Integer>();
+      transitions[i] = new TIntArrayList();
     }
     errorTransitions = new HashSet<Edge>();
   }
 
   final ControlFlowGraph buildCFG() throws AnalyzerException {
     analyze(className, methodNode);
-    return new ControlFlowGraph(className, methodNode, transitions, errorTransitions);
+    int[][] resultTransitions = new int[transitions.length][];
+    for (int i = 0; i < resultTransitions.length; i++) {
+      resultTransitions[i] = transitions[i].toNativeArray();
+    }
+    return new ControlFlowGraph(className, methodNode, resultTransitions, errorTransitions);
   }
 
   @Override
   protected final void newControlFlowEdge(int insn, int successor) {
-    transitions[insn].addFirst(successor);
+    if (!transitions[insn].contains(successor)) {
+      transitions[insn].add(successor);
+    }
   }
 
   @Override
   protected final boolean newControlFlowExceptionEdge(int insn, int successor) {
-    transitions[insn].addFirst(successor);
-    errorTransitions.add(new Edge(insn, successor));
+    if (!transitions[insn].contains(successor)) {
+      transitions[insn].add(successor);
+      errorTransitions.add(new Edge(insn, successor));
+    }
     return true;
   }
 }

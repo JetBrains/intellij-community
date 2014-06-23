@@ -205,10 +205,9 @@ class ProceedState<Res> implements PendingAction<Res> {
 class MakeResult<Res> implements PendingAction<Res> {
   final State state;
   final Res subResult;
-  final List<Integer> indices;
+  final int[] indices;
 
-  // TODO - indices array
-  MakeResult(State state, Res subResult, List<Integer> indices) {
+  MakeResult(State state, Res subResult, int[] indices) {
     this.state = state;
     this.subResult = subResult;
     this.indices = indices;

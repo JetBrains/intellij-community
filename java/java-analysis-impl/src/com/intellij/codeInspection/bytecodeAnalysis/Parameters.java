@@ -217,7 +217,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, Collections.singletonList(nextState.index)));
+      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
       pending.push(new ProceedState<PResult>(nextState));
       return;
     }
@@ -225,7 +225,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, Collections.singletonList(nextState.index)));
+      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
       pending.push(new ProceedState<PResult>(nextState));
       return;
     }
@@ -233,7 +233,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, Collections.singletonList(nextState.index)));
+      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
       pending.push(new ProceedState<PResult>(nextState));
       return;
     }
@@ -241,16 +241,18 @@ class NonNullInAnalysis extends Analysis<PResult> {
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = insnIndex + 1;
       State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
-      pending.push(new MakeResult<PResult>(state, subResult, Collections.singletonList(nextState.index)));
+      pending.push(new MakeResult<PResult>(state, subResult, new int[]{nextState.index}));
       pending.push(new ProceedState<PResult>(nextState));
       return;
     }
 
     // general case
-    List<Integer> nextInsnIndices = controlFlow.transitions[insnIndex];
-    List<State> nextStates = new ArrayList<State>();
-    List<Integer> subIndices = new ArrayList<Integer>();
-    for (int nextInsnIndex : nextInsnIndices) {
+    int[] nextInsnIndices = controlFlow.transitions[insnIndex];
+    List<State> nextStates = new ArrayList<State>(nextInsnIndices.length);
+    int[] subIndices = new int[nextInsnIndices.length];
+
+    for (int i = 0; i < nextInsnIndices.length; i++) {
+      int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
         nextFrame1 = new Frame<BasicValue>(frame);
@@ -258,7 +260,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         nextFrame1.push(new BasicValue(Type.getType("java/lang/Throwable")));
       }
       nextStates.add(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult));
-      subIndices.add(id);
+      subIndices[i] = (id);
     }
 
     pending.push(new MakeResult<PResult>(state, subResult, subIndices));
