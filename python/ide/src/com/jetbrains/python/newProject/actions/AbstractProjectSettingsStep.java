@@ -273,7 +273,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
           PythonSdkFlavor.getFlavor(sdk) instanceof JythonSdkFlavor || PythonSdkFlavor.getFlavor(sdk) instanceof PyPySdkFlavor;
         try {
           if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
-            final PyPackage pip = packageManager.findPackage("pip");
+            final PyPackage pip = packageManager.findInstalledPackage("pip");
             myInstallFramework = pip != null;
             setWarningText(frameworkName + " will be installed on selected interpreter");
           }

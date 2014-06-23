@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -29,7 +29,7 @@ import java.io.PrintWriter;
 public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/typeMigration/testData";
+    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
   }
 
   protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) {

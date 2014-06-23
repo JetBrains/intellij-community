@@ -105,13 +105,17 @@ public abstract class DocumentCommitProcessor {
     final long startDocModificationTimeStamp = document.getModificationStamp();
     final FileElement myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
     final CharSequence chars = document.getImmutableCharSequence();
+    final CharSequence oldPsiText = myTreeElementBeingReparsedSoItWontBeCollected.getChars();
+    final TextRange changedPsiRange = getChangedPsiRange(file, oldPsiText, chars);
+    if (changedPsiRange == null) {
+      return null;
+    }
+
     final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) {
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
-    final CharSequence oldPsiText = myTreeElementBeingReparsedSoItWontBeCollected.getChars();
-    final TextRange changedPsiRange = getChangedPsiRange(file, oldPsiText, chars);
 
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
     final DiffLog diffLog = blockSupport.reparseRange(file, changedPsiRange, chars, task.indicator);
@@ -135,6 +139,7 @@ public abstract class DocumentCommitProcessor {
     };
   }
 
+  @Nullable
   public static TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull CharSequence oldPsiText, @NotNull CharSequence newDocumentText) {
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, newDocumentText.length());
@@ -142,7 +147,7 @@ public abstract class DocumentCommitProcessor {
 
     int commonPrefixLength = StringUtil.commonPrefixLength(oldPsiText, newDocumentText);
     if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == oldPsiText.length()) {
-      return new TextRange(0, newDocumentText.length());
+      return null;
     }
 
     int commonSuffixLength = StringUtil.commonSuffixLength(oldPsiText, newDocumentText);

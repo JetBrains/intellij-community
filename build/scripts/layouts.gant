@@ -541,7 +541,6 @@ public def layoutCommunityPlugins(String home) {
       dir("lib") {
         jar("structuralsearch.jar") {
           module("structuralsearch")
-          moduleOptional("structuralsearch-groovy")
         }
       }
     }

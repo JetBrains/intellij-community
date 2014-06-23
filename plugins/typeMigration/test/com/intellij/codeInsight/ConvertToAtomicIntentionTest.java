@@ -1,7 +1,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,7 +21,7 @@ public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTest
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/typeMigration/testData";
+    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
   }
 
   public void test() throws Exception {
