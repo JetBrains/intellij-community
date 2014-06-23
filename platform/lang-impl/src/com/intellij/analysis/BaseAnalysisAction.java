@@ -181,7 +181,7 @@ public abstract class BaseAnalysisAction extends AnAction {
             files.add(vFile);
             vFile = ((VirtualFileWindow)vFile).getDelegate();
           }
-          collectFilesUnder(vFile, files);
+          collectFilesUnder(vFile, fileIndex, files);
         }
       }
       return new AnalysisScope(project, files);
@@ -208,15 +208,19 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
-  private static void collectFilesUnder(@NotNull VirtualFile vFile, @NotNull final Set<VirtualFile> files) {
+  private static void collectFilesUnder(@NotNull VirtualFile vFile,
+                                        @NotNull final ProjectFileIndex fileIndex,
+                                        @NotNull final Set<VirtualFile> files) {
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
       @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory()) {
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        boolean ignored = fileIndex.isIgnored(file);
+        if (!ignored && !file.isDirectory()) {
           files.add(file);
         }
-        return true;
+        return ignored ? SKIP_CHILDREN : CONTINUE;
       }
     });
   }
+
 }
