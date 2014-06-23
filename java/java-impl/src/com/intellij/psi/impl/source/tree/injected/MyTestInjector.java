@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,6 +160,7 @@ public class MyTestInjector {
   private static void injectVariousStuffEverywhere(Disposable parent, final PsiManager psiManager) {
     final Language ql = Language.findLanguageByID("JPAQL");
     final Language js = Language.findLanguageByID("JavaScript");
+    final Language html = Language.findLanguageByID("HTML");
     if (ql == null || js == null) return;
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");
 
@@ -216,6 +217,7 @@ public class MyTestInjector {
               inject(host, placesToInject, js);
               return;
             }
+            
             if ("jsprefix".equals(attrName)) {
               inject(host, placesToInject, js, "function foo(doc, window){", "}");
               return;
@@ -233,6 +235,10 @@ public class MyTestInjector {
           }
           if ("js".equals(tag.getLocalName())) {
             inject(host, placesToInject, js);
+            return;
+          }
+          if ("htmlInject".equals(tag.getLocalName())) {
+            inject(host, placesToInject, html);
             return;
           }
           if (ecma4 != null && "ecma4".equals(tag.getLocalName())) {
