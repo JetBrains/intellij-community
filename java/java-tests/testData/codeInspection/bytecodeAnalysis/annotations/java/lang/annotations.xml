@@ -321,6 +321,11 @@
   <item name="java.lang.ClassLoader boolean compareCerts(java.security.cert.Certificate[], java.security.cert.Certificate[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.lang.ClassLoader boolean loadLibrary0(java.lang.Class, java.io.File)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null-&gt;false&quot;"/>
+    </annotation>
+  </item>
   <item name="java.lang.ClassLoader java.lang.Package definePackage(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.net.URL)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null,_,_,_,_,_,_,_-&gt;!null;_,!null,_,_,_,_,_,_-&gt;!null;_,_,!null,_,_,_,_,_-&gt;!null;_,_,_,!null,_,_,_,_-&gt;!null;_,_,_,_,!null,_,_,_-&gt;!null;_,_,_,_,_,!null,_,_-&gt;!null;_,_,_,_,_,_,!null,_-&gt;!null;_,_,_,_,_,_,_,!null-&gt;!null;_,_,_,_,_,_,_,null-&gt;!null;_,_,_,_,_,_,null,_-&gt;!null;_,_,_,_,_,null,_,_-&gt;!null;_,_,_,_,null,_,_,_-&gt;!null;_,_,_,null,_,_,_,_-&gt;!null;_,_,null,_,_,_,_,_-&gt;!null;_,null,_,_,_,_,_,_-&gt;!null;null,_,_,_,_,_,_,_-&gt;!null&quot;"/>

@@ -91,7 +91,8 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     Frame<BasicValue> nextFrame = execute(frame, insnNode);
 
     if (interpreter.deReferenced) {
-      earlyResult = new Final<Key, Value>(Value.Bot);
+      results.put(stateIndex, new Final<Key, Value>(Value.Bot));
+      computed.put(insnIndex, append(computed.get(insnIndex), state));
       return;
     }
 
@@ -210,13 +211,13 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
   }
 
   private Frame<BasicValue> execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
+    interpreter.deReferenced = false;
     switch (insnNode.getType()) {
       case AbstractInsnNode.LABEL:
       case AbstractInsnNode.LINE:
       case AbstractInsnNode.FRAME:
         return frame;
       default:
-        interpreter.deReferenced = false;
         Frame<BasicValue> nextFrame = new Frame<BasicValue>(frame);
         nextFrame.execute(insnNode, interpreter);
         return nextFrame;

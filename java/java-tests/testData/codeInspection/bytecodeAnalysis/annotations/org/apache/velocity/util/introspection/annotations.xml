@@ -82,6 +82,11 @@
   <item name="org.apache.velocity.util.introspection.MethodMap int compare(java.lang.Class[], java.lang.Class[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.util.introspection.MethodMap java.lang.reflect.Method find(java.lang.String, java.lang.Object[])">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null-&gt;null&quot;"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.util.introspection.MethodMap java.lang.reflect.Method getBestMatch(java.util.List, java.lang.Class[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -90,7 +95,7 @@
   </item>
   <item name="org.apache.velocity.util.introspection.SecureIntrospectorImpl java.lang.reflect.Method getMethod(java.lang.Class, java.lang.String, java.lang.Object[])">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,null-&gt;null&quot;"/>
+      <val val="&quot;_,_,null-&gt;null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.util.introspection.SecureUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info)">

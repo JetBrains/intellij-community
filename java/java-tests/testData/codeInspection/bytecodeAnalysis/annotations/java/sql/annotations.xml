@@ -58,6 +58,11 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="java.sql.Timestamp boolean equals(java.sql.Timestamp)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
   <item name="java.sql.Timestamp int compareTo(java.sql.Timestamp) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

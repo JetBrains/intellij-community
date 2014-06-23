@@ -2,6 +2,16 @@
   <item name="org.apache.commons.collections.map.AbstractHashedMap AbstractHashedMap(java.util.Map) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap boolean isEqualKey(java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.collections.map.AbstractHashedMap boolean isEqualValue(java.lang.Object, java.lang.Object)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.collections.map.AbstractHashedMap int entryHashCode(org.apache.commons.collections.map.AbstractHashedMap.HashEntry) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

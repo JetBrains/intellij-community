@@ -66,6 +66,11 @@
   <item name="org.apache.velocity.runtime.directive.Foreach boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="org.apache.velocity.runtime.directive.Foreach boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
   <item name="org.apache.velocity.runtime.directive.Foreach java.lang.String getName()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -88,7 +93,7 @@
   </item>
   <item name="org.apache.velocity.runtime.directive.Include boolean renderOutput(org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.context.InternalContextAdapter, java.io.Writer)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_,_-&gt;false&quot;"/>
+      <val val="&quot;_,null,_-&gt;false;null,_,_-&gt;false&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.directive.Include java.lang.String getName()">

@@ -26,8 +26,18 @@
   <item name="javax.swing.JComponent boolean isLightweightComponent(java.awt.Component) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.JComponent boolean processKeyBinding(javax.swing.KeyStroke, java.awt.event.KeyEvent, int, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null,_,_-&gt;false&quot;"/>
+    </annotation>
+  </item>
   <item name="javax.swing.JComponent boolean processKeyBindings(java.awt.event.KeyEvent, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="javax.swing.JComponent boolean processKeyBindings(java.awt.event.KeyEvent, boolean)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;false&quot;"/>
+    </annotation>
   </item>
   <item name="javax.swing.JComponent byte getWriteObjCounter(javax.swing.JComponent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -39,7 +49,7 @@
   </item>
   <item name="javax.swing.JComponent java.awt.Graphics getComponentGraphics(java.awt.Graphics)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
     </annotation>
   </item>
   <item name="javax.swing.JComponent java.awt.Point getLocation(java.awt.Point)">
@@ -304,6 +314,11 @@
   <item name="javax.swing.JTable void writeObject(java.io.ObjectOutputStream) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="javax.swing.SwingUtilities boolean isDescendingFrom(java.awt.Component, java.awt.Component)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;true&quot;"/>
+    </annotation>
+  </item>
   <item name="javax.swing.SwingUtilities boolean isLeftMouseButton(java.awt.event.MouseEvent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -327,7 +342,7 @@
   </item>
   <item name="javax.swing.SwingUtilities boolean notifyAction(javax.swing.Action, javax.swing.KeyStroke, java.awt.event.KeyEvent, java.lang.Object, int)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;null,_,_,_,_-&gt;false&quot;"/>
+      <val val="&quot;_,_,null,_,_-&gt;false;null,_,_,_,_-&gt;false&quot;"/>
     </annotation>
   </item>
   <item name="javax.swing.SwingUtilities boolean processKeyBindings(java.awt.event.KeyEvent)">
@@ -417,7 +432,7 @@
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Rectangle[] computeDifference(java.awt.Rectangle, java.awt.Rectangle)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

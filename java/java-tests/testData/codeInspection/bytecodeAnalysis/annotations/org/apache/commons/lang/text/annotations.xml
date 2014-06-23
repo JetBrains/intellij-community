@@ -12,7 +12,7 @@
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.lang.String insertFormats(java.lang.String, java.util.ArrayList)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.lang.String parseFormatDescription(java.lang.String, java.text.ParsePosition) 0">
@@ -35,7 +35,12 @@
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.lang.StringBuffer appendQuotedString(java.lang.String, java.text.ParsePosition, java.lang.StringBuffer, boolean)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,!null,_-&gt;!null&quot;"/>
+      <val val="&quot;_,_,!null,_-&gt;!null;_,_,null,_-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.text.Format getFormat(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.text.ExtendedMessageFormat java.text.ParsePosition next(java.text.ParsePosition) 0">
@@ -66,6 +71,16 @@
   <item name="org.apache.commons.lang.text.StrBuilder boolean equals(java.lang.Object)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder boolean equals(org.apache.commons.lang.text.StrBuilder)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;true&quot;"/>
+    </annotation>
+  </item>
+  <item name="org.apache.commons.lang.text.StrBuilder boolean equalsIgnoreCase(org.apache.commons.lang.text.StrBuilder)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;true&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.text.StrBuilder boolean startsWith(java.lang.String)">

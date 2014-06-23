@@ -77,6 +77,16 @@
   <item name="java.awt.Component java.awt.AWTEvent coalesceEvents(java.awt.AWTEvent, java.awt.AWTEvent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.awt.Component java.awt.AWTEvent coalesceEvents(java.awt.AWTEvent, java.awt.AWTEvent)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;_,null-&gt;null&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.awt.Component java.awt.Component findUnderMouseInWindow(java.awt.PointerInfo)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
   <item name="java.awt.Component java.awt.Component getComponentAt(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -185,7 +195,7 @@
   </item>
   <item name="java.awt.Container boolean isRemoveNotifyNeeded(java.awt.Component, java.awt.Container, java.awt.Container)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null,_-&gt;false&quot;"/>
+      <val val="&quot;_,_,null-&gt;false;_,null,_-&gt;false;null,_,_-&gt;false&quot;"/>
     </annotation>
   </item>
   <item name="java.awt.Container java.awt.Component add(java.awt.Component)">
@@ -208,11 +218,6 @@
   </item>
   <item name="java.awt.Container java.awt.Component getComponentAt(java.awt.Point) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.awt.Container java.awt.Component getMouseEventTarget(int, int, boolean, java.awt.Container.EventTargetFilter, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,_,null,_-&gt;null&quot;"/>
-    </annotation>
   </item>
   <item name="java.awt.Container java.awt.Component[] getComponents()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -310,6 +315,11 @@
   </item>
   <item name="java.awt.Window boolean eventEnabled(java.awt.AWTEvent) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="java.awt.Window boolean postEvent(java.awt.Event)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
   </item>
   <item name="java.awt.Window java.lang.Object access$000(java.awt.Window) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>

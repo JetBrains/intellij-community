@@ -28,7 +28,7 @@
   </item>
   <item name="org.apache.velocity.texen.util.PropertiesUtil java.util.Properties loadFromTemplatePath(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

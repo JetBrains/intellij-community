@@ -37,7 +37,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTDirective boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+      <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTDirective java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)">
@@ -50,11 +50,6 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTDivNode java.lang.Number perform(java.lang.Number, java.lang.Number, org.apache.velocity.context.InternalContextAdapter) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.runtime.parser.node.ASTDivNode java.lang.Number perform(java.lang.Number, java.lang.Number, org.apache.velocity.context.InternalContextAdapter)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null,_-&gt;null;null,_,_-&gt;null&quot;"/>
-    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTEQNode java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -218,11 +213,6 @@
   <item name="org.apache.velocity.runtime.parser.node.ASTModNode java.lang.Number perform(java.lang.Number, java.lang.Number, org.apache.velocity.context.InternalContextAdapter) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="org.apache.velocity.runtime.parser.node.ASTModNode java.lang.Number perform(java.lang.Number, java.lang.Number, org.apache.velocity.context.InternalContextAdapter)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,null,_-&gt;null;null,_,_-&gt;null&quot;"/>
-    </annotation>
-  </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTMulNode java.lang.Number perform(java.lang.Number, java.lang.Number, org.apache.velocity.context.InternalContextAdapter) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -246,7 +236,7 @@
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTReference boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+      <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.parser.node.ASTReference java.lang.Object getVariableValue(org.apache.velocity.context.Context, java.lang.String) 0">

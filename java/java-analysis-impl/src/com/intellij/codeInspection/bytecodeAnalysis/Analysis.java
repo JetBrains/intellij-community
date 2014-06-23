@@ -121,6 +121,49 @@ class AbstractValues {
     }
     return true;
   }
+
+  static boolean equiv(Conf curr, Conf prev) {
+    if (curr.insnIndex != prev.insnIndex) {
+      return false;
+    }
+    Frame<BasicValue> currFr = curr.frame;
+    Frame<BasicValue> prevFr = prev.frame;
+    for (int i = 0; i < currFr.getLocals(); i++) {
+      if (!equiv(currFr.getLocal(i), prevFr.getLocal(i))) {
+        return false;
+      }
+    }
+    for (int i = 0; i < currFr.getStackSize(); i++) {
+      if (!equiv(currFr.getStack(i), prevFr.getStack(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static boolean equiv(BasicValue curr, BasicValue prev) {
+    if (InstanceOfCheckValue == prev) {
+      return InstanceOfCheckValue == curr;
+    }
+    if (TrueValue == prev) {
+      return TrueValue == curr;
+    }
+    if (FalseValue == prev) {
+      return FalseValue == curr;
+    }
+    if (NullValue == prev) {
+      return NullValue == curr;
+    }
+    if (curr.getClass() == prev.getClass()) {
+      if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
+        Set<Key> keys1 = ((CallResultValue)prev).inters;
+        Set<Key> keys2 = ((CallResultValue)curr).inters;
+        return keys1.equals(keys2);
+      }
+      else return true;
+    }
+    else return false;
+  }
 }
 
 final class Conf {
@@ -209,18 +252,18 @@ abstract class Analysis<Res> {
     return new State(0, new Conf(0, createStartFrame()), new ArrayList<Conf>(), false, false);
   }
 
-  static boolean stateInstance(State curr, State prev) {
+  static boolean stateEquiv(State curr, State prev) {
     if (curr.taken != prev.taken) {
       return false;
     }
-    if (!AbstractValues.isInstance(curr.conf, prev.conf)) {
+    if (!AbstractValues.equiv(curr.conf, prev.conf)) {
       return false;
     }
     if (curr.history.size() != prev.history.size()) {
       return false;
     }
     for (int i = 0; i < curr.history.size(); i++) {
-      if (!AbstractValues.isInstance(curr.history.get(i), prev.history.get(i))) {
+      if (!AbstractValues.equiv(curr.history.get(i), prev.history.get(i))) {
         return false;
       }
     }
@@ -281,7 +324,7 @@ abstract class Analysis<Res> {
           List<State> thisComputed = computed.get(insnIndex);
           if (thisComputed != null) {
             for (State prevState : thisComputed) {
-              if (stateInstance(state, prevState)) {
+              if (stateEquiv(state, prevState)) {
                 baseState = prevState;
                 break;
               }

@@ -322,11 +322,19 @@ final class IntIdSolver {
       moving.push(equation.id);
     } else if (rhs instanceof IntIdPending) {
       IntIdPending pendResult = (IntIdPending)rhs;
-      for (IntIdComponent component : pendResult.delta) {
-        for (int trigger : component.ids) {
-          dependencies.addOccurence(trigger, equation.id);
+      IntIdResult norm = normalize(pendResult.delta);
+      if (norm instanceof IntIdFinal) {
+        solved.put(equation.id, ((IntIdFinal) norm).value);
+        moving.push(equation.id);
+      }
+      else {
+        IntIdPending pendResult1 = (IntIdPending)rhs;
+        for (IntIdComponent component : pendResult1.delta) {
+          for (int trigger : component.ids) {
+            dependencies.addOccurence(trigger, equation.id);
+          }
+          pending.put(equation.id, pendResult1);
         }
-        pending.put(equation.id, pendResult);
       }
     }
   }
@@ -367,24 +375,26 @@ final class IntIdSolver {
 
   // substitute id -> value into pending
   IntIdResult substitute(IntIdPending pending, int id, Value value) {
-    for (IntIdComponent intIdComponent : pending.delta) {
+    IntIdComponent[] sum = pending.delta;
+    for (IntIdComponent intIdComponent : sum) {
       if (intIdComponent.remove(id)) {
         intIdComponent.value = lattice.meet(intIdComponent.value, value);
       }
     }
-    // normalized?
+    return normalize(sum);
+  }
+
+  IntIdResult normalize(IntIdComponent[] sum) {
     Value acc = lattice.bot;
-    for (IntIdComponent intIdComponent : pending.delta) {
-      if (intIdComponent.value == lattice.top && intIdComponent.isEmpty()) {
-        return new IntIdFinal(lattice.top);
-      }
-      else if (intIdComponent.value != lattice.bot) {
-        if (intIdComponent.isEmpty())
-          acc = lattice.join(acc, intIdComponent.value);
-        else
-          return pending;
+    boolean computableNow = true;
+    for (IntIdComponent prod : sum) {
+      if (prod.isEmpty() || prod.value == lattice.bot) {
+        acc = lattice.join(acc, prod.value);
+      } else {
+        computableNow = false;
       }
     }
-    return new IntIdFinal(acc);
+    return (acc == lattice.top || computableNow) ? new IntIdFinal(acc) : new IntIdPending(sum);
   }
+
 }

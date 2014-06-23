@@ -244,7 +244,7 @@
   </item>
   <item name="java.net.URI java.lang.String normalize(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="java.net.URI java.lang.String quote(java.lang.String, long, long) 0">

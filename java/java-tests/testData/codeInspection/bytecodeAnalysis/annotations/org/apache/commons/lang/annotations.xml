@@ -383,12 +383,12 @@
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String squeeze(java.lang.String, java.lang.String[])">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils java.lang.String translate(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.CharSetUtils org.apache.commons.lang.CharSet evaluateSet(java.lang.String[])">
@@ -404,6 +404,11 @@
   </item>
   <item name="org.apache.commons.lang.CharUtils int toIntValue(java.lang.Character) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.CharUtils java.lang.Character toCharacterObject(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.CharUtils java.lang.String toString(java.lang.Character)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -499,7 +504,7 @@
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.String toCanonicalName(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
+      <val val="&quot;!null-&gt;!null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.ClassUtils java.lang.reflect.Method getPublicMethod(java.lang.Class, java.lang.String, java.lang.Class[]) 0">
@@ -631,6 +636,11 @@
       <val val="&quot;null-&gt;false&quot;"/>
     </annotation>
   </item>
+  <item name="org.apache.commons.lang.NumberUtils boolean isNumber(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
+  </item>
   <item name="org.apache.commons.lang.NumberUtils java.lang.Double createDouble(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
@@ -733,7 +743,7 @@
   </item>
   <item name="org.apache.commons.lang.RandomStringUtils java.lang.String random(int, int, int, boolean, boolean, char[], java.util.Random)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,_,_,_,!null,_-&gt;!null;_,_,_,_,_,_,!null-&gt;!null;_,_,_,_,_,null,_-&gt;!null;_,_,_,_,false,_,_-&gt;!null;_,_,_,_,true,_,_-&gt;!null;_,_,_,false,_,_,_-&gt;!null;_,_,_,true,_,_,_-&gt;!null&quot;"/>
+      <val val="&quot;_,_,_,_,_,!null,_-&gt;!null;_,_,_,_,_,_,!null-&gt;!null;_,_,_,_,_,_,null-&gt;!null;_,_,_,_,_,null,_-&gt;!null;_,_,_,_,false,_,_-&gt;!null;_,_,_,_,true,_,_-&gt;!null;_,_,_,false,_,_,_-&gt;!null;_,_,_,true,_,_,_-&gt;!null&quot;"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -830,6 +840,11 @@
   </item>
   <item name="org.apache.commons.lang.StringEscapeUtils void unescapeXml(java.io.Writer, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.commons.lang.StringUtils boolean contains(java.lang.String, char)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null,_-&gt;false&quot;"/>
+    </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils boolean contains(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
@@ -969,12 +984,12 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chomp(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chomp(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String chompLast(java.lang.String) 0">
@@ -1034,7 +1049,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String deleteWhitespace(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
+      <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String difference(java.lang.String, java.lang.String)">
@@ -1076,7 +1091,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String getPrechomp(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1188,7 +1203,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String remove(java.lang.String, char)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String remove(java.lang.String, java.lang.String)">
@@ -1198,22 +1213,22 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String removeEnd(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String removeEndIgnoreCase(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String removeStart(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String removeStartIgnoreCase(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String repeat(java.lang.String, int)">
@@ -1223,12 +1238,12 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replace(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replace(java.lang.String, java.lang.String, java.lang.String, int)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_,_,_-&gt;!null;null,_,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, char, char)">
@@ -1238,7 +1253,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceChars(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceEach(java.lang.String, java.lang.String[], java.lang.String[])">
@@ -1258,7 +1273,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String replaceOnce(java.lang.String, java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String reverse(java.lang.String)">
@@ -1343,7 +1358,7 @@
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substringBeforeLast(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
     </annotation>
   </item>
   <item name="org.apache.commons.lang.StringUtils java.lang.String substringBetween(java.lang.String, java.lang.String)">

@@ -41,7 +41,7 @@
   </item>
   <item name="org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.File getFile(java.lang.String, java.lang.String)">
     <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;null,_-&gt;!null&quot;"/>
+      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
     </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -96,6 +96,11 @@
   </item>
   <item name="org.apache.velocity.runtime.resource.loader.StringResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name="org.apache.velocity.runtime.resource.loader.URLResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;true&quot;"/>
+    </annotation>
   </item>
   <item name="org.apache.velocity.runtime.resource.loader.URLResourceLoader long getLastModified(org.apache.velocity.runtime.resource.Resource) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
