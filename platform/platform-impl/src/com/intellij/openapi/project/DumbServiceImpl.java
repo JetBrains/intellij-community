@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,7 +83,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   @Override
   public void cancelTask(@NotNull DumbModeTask task) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task);
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("cancel " + task + "\n" + DebugUtil.currentStackTrace());
     ProgressIndicatorEx indicator = myProgresses.get(task);
     if (indicator != null) {
       indicator.cancel();
