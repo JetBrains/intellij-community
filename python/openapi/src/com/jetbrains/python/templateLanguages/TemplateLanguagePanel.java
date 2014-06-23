@@ -3,6 +3,7 @@ package com.jetbrains.python.templateLanguages;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +49,10 @@ public class TemplateLanguagePanel extends JPanel {
     holder.setTemplatesFolder(getTemplatesFolder());
     final Object templateLanguage = getTemplateLanguage();
     holder.setTemplateLanguage((String)templateLanguage);
+  }
+
+  public void setTemplatesFolder(@NotNull final String folder) {
+    myTemplatesFolder.setText(folder);
   }
 
   public Dimension getLabelSize() {
