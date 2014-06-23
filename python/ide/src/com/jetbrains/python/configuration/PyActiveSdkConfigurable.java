@@ -188,7 +188,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       }
     };
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    mySdkCombo.setRenderer(new PySdkListCellRenderer());
+    mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
 
     final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
     final JComponent notificationsComponent = notificationsArea.getComponent();
@@ -407,7 +407,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(PySdkListCellRenderer.SEPARATOR);
     items.add(SHOW_ALL);
 
-    mySdkCombo.setRenderer(new PySdkListCellRenderer());
+    mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
     //noinspection unchecked
     mySdkCombo.setModel(new CollectionComboBoxModel(items, selection));
   }
