@@ -5,6 +5,7 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -36,6 +37,22 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testHighlighting() throws Exception {
     myFixture.testHighlighting("foo.xml");
+  }
+
+  public void testAddProperty() {
+    final PsiFile psiFile = myFixture.configureByFile("foo.xml");
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
+    assertNotNull(propertiesFile);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      public void run() {
+        propertiesFile.addProperty("kkk", "vvv");
+      }
+    });
+
+    final IProperty property = propertiesFile.findPropertyByKey("kkk");
+    assertNotNull(property);
+    assertEquals("vvv", property.getValue());
   }
 
   @Override
