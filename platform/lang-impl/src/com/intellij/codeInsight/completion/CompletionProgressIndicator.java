@@ -759,8 +759,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         catch (ProcessCanceledException ignore) {
         }
         catch (Throwable t) {
-          LOG.error(t);
           cancel();
+          LOG.error(t);
         }
       }
     }

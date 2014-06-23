@@ -92,8 +92,11 @@ public class TipUIUtil {
       updateShortcuts(text);
       updateImages(text, tipLoader);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
-      replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
-      replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
+      String major = ApplicationInfo.getInstance().getMajorVersion();
+      replaced = replaced.replace("&majorVersion;", major);
+      String minor = ApplicationInfo.getInstance().getMinorVersion();
+      replaced = replaced.replace("&minorVersion;", minor);
+      replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
       if (UIUtil.isUnderDarcula()) {
         replaced = replaced.replace("css/tips.css", "css/tips_darcula.css");
       }
