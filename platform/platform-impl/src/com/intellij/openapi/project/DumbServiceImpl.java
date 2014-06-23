@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
@@ -43,7 +42,6 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -175,8 +173,8 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         if (myProject.isDisposed()) {
           return;
         }
-        myUpdatesQueue.addLast(task);
-        myProgresses.put(task, new ProgressIndicatorBase());
+        final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+        myProgresses.put(task, indicator);
         Disposer.register(task, new Disposable() {
           @Override
           public void dispose() {
@@ -201,7 +199,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
                 }
 
                 try {
-                  startBackgroundProcess();
+                  startBackgroundProcess(task, indicator);
                 }
                 catch (Throwable e) {
                   LOG.error("Failed to start background index update task", e);
@@ -213,6 +211,9 @@ public class DumbServiceImpl extends DumbService implements Disposable {
           if (!startSuccess) {
             updateFinished();
           }
+        }
+        else {
+          myUpdatesQueue.addLast(task);
         }
       }
     });
@@ -324,76 +325,51 @@ public class DumbServiceImpl extends DumbService implements Disposable {
     }, modalityState, myProject.getDisposed());
   }
 
-  private void startBackgroundProcess() {
+  private void startBackgroundProcess(@NotNull final DumbModeTask task, @NotNull final ProgressIndicatorEx indicator) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
 
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        if (indicator instanceof ProgressIndicatorEx) {
-          ((ProgressIndicatorEx)indicator).addStateDelegate(new AppIconProgress());
-        }
-
+      public void run(@NotNull final ProgressIndicator visibleIndicator) {
+        if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
+        
         final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
         final Thread self = Thread.currentThread();
         try {
           HeavyProcessLatch.INSTANCE.processStarted();
           shutdownTracker.registerStopperThread(self);
-          runTasks(indicator);
+
+          indicator.checkCanceled();
+
+          if (visibleIndicator instanceof ProgressIndicatorEx) {
+            indicator.addStateDelegate((ProgressIndicatorEx)visibleIndicator);
+          }
+          indicator.addStateDelegate(new AppIconProgress());
+
+          indicator.setIndeterminate(true);
+          indicator.setText(IdeBundle.message("progress.indexing.scanning"));
+
+          task.performInDumbMode(indicator);
         }
-        catch (RuntimeException e) {
-          LOG.error(e);
-          throw e;
+        catch (ProcessCanceledException ignored) {
+        }
+        catch (Throwable unexpected) {
+          LOG.error(unexpected);
         }
         finally {
           shutdownTracker.unregisterStopperThread(self);
           HeavyProcessLatch.INSTANCE.processFinished();
+          taskFinished(task);
         }
       }
-
-      private void runTasks(ProgressIndicator visibleIndicator) {
-        DumbModeTask prevTask = null;
-        while (true) {
-          DumbModeTask task = getNextTask(prevTask);
-          if (task == null) break;
-
-          try {
-            if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
-
-            final ProgressIndicatorEx indicator = myProgresses.get(task);
-            assert indicator != null;
-            indicator.checkCanceled();
-
-            if (visibleIndicator instanceof ProgressIndicatorEx) {
-              indicator.addStateDelegate((ProgressIndicatorEx)visibleIndicator);
-            }
-
-            indicator.setIndeterminate(true);
-            indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-            
-            task.performInDumbMode(indicator);
-          }
-          catch (ProcessCanceledException ignored) {
-          }
-          catch (Throwable unexpected) {
-            LOG.error(unexpected);
-          }
-          prevTask = task;
-        }
-      }
-
     });
   }
 
-  @Nullable
-  private DumbModeTask getNextTask(@Nullable final DumbModeTask prevTask) {
-    final Ref<DumbModeTask> nextTask = Ref.create();
+  private void taskFinished(@NotNull final DumbModeTask prevTask) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        if (prevTask != null) {
-          Disposer.dispose(prevTask);
-        }
+        Disposer.dispose(prevTask);
 
         while (true) {
           if (myUpdatesQueue.isEmpty()) {
@@ -402,17 +378,17 @@ public class DumbServiceImpl extends DumbService implements Disposable {
           }
 
           DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
-          if (myProgresses.get(queuedTask).isCanceled()) {
+          ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
+          if (indicator.isCanceled()) {
             Disposer.dispose(queuedTask);
             continue;
           }
           
-          nextTask.set(queuedTask);
+          startBackgroundProcess(queuedTask, indicator);
           return;
         }
       }
     });
-    return nextTask.get();
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {
