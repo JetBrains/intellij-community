@@ -134,7 +134,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     artifactsTimingLog.run();
 
     if (hasRunConfigurationSerializers()) {
-      Runnable runConfTimingLog = TimingLog.startActivity("loading artifacts");
+      Runnable runConfTimingLog = TimingLog.startActivity("loading run configurations");
       for (File configurationFile : listXmlFiles(new File(dir, "runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
       }
