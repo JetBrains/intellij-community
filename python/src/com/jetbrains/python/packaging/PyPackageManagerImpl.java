@@ -425,6 +425,21 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(String requirementString) throws PyExternalProcessException {
+    boolean hasSetuptools = false;
+    boolean hasPip = false;
+    try {
+      hasSetuptools = findInstalledPackage(SETUPTOOLS) != null;
+    }
+    catch (PyExternalProcessException ignored) {
+    }
+    try {
+      hasPip = findInstalledPackage(PIP) != null;
+    }
+    catch (PyExternalProcessException ignored) {
+    }
+
+    if (!hasSetuptools) installManagement(SETUPTOOLS);
+    if (!hasPip) installManagement(PIP);
     install(Collections.singletonList(PyRequirement.fromString(requirementString)), Collections.<String>emptyList());
   }
 
