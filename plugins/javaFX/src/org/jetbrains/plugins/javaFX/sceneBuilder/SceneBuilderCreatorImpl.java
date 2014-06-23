@@ -96,6 +96,13 @@ public class SceneBuilderCreatorImpl implements SceneBuilderCreator {
         urls.add(new File(home, "plugins/JavaFX/FxBuilderEmbedder/lib/embedder.jar").toURI().toURL());
       }
     }
+
+    final String rtPath = PathUtil.getJarPathForClass(String.class);
+    final File javaFxJar = new File(new File(new File(rtPath).getParentFile(), "ext"), "jfxrt.jar");
+    if (javaFxJar.isFile()) {
+      urls.add(javaFxJar.toURI().toURL());
+    }
+
     return new URLClassLoader(urls.toArray(new URL[urls.size()]), SceneBuilderCreatorImpl.class.getClassLoader());
   }
 }
