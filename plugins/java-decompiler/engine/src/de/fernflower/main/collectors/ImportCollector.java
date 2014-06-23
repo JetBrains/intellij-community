@@ -117,8 +117,10 @@ public class ImportCollector {
 	public void writeImports(BufferedWriter writer) throws IOException {
 
 		for(String s: packImports()) {
-			writer.write("import "+s+";");
-			writer.newLine();
+            writer.write("import ");
+            writer.write(s);
+            writer.write(";");
+            writer.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 	}

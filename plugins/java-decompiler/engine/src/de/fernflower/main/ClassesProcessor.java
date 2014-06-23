@@ -268,29 +268,30 @@ public class ClassesProcessor {
 			
 			if(DecompilerContext.getOption(IFernflowerPreferences.OUTPUT_COPYRIGHT_COMMENT)) {
 				outwriter.write("// Decompiled by:       Fernflower "+Fernflower.version);
-				outwriter.newLine();
+				outwriter.write(DecompilerContext.getNewLineSeparator());
 				outwriter.write("// Date:                "+new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date()));
-				outwriter.newLine();
+				outwriter.write(DecompilerContext.getNewLineSeparator());
 				outwriter.write("// Copyright:           2008-2010, Stiver");
-				outwriter.newLine();
+				outwriter.write(DecompilerContext.getNewLineSeparator());
 				outwriter.write("// Home page:           http://www.reversed-java.com");
-				outwriter.newLine();
-				outwriter.newLine();
+				outwriter.write(DecompilerContext.getNewLineSeparator());
+				outwriter.write(DecompilerContext.getNewLineSeparator());
 			}
 			
 			int index = cl.qualifiedName.lastIndexOf("/");
 			if(index >= 0) {
-				String strpackage = cl.qualifiedName.substring(0, index).replaceAll("/",".");
-				
-				outwriter.write("package "+strpackage+";");
-				outwriter.newLine();
-				outwriter.newLine();
+				String packageName = cl.qualifiedName.substring(0, index).replaceAll("/",".");
+                outwriter.write("package ");
+                outwriter.write(packageName);
+                outwriter.write(";");
+                outwriter.write(DecompilerContext.getNewLineSeparator());
+                outwriter.write(DecompilerContext.getNewLineSeparator());
 			}
 			
 			DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, root);
 
 			DecompilerContext.getImpcollector().writeImports(outwriter);
-			outwriter.newLine();
+			outwriter.write(DecompilerContext.getNewLineSeparator());
 			
 			outwriter.write(strwriter.toString());
 			outwriter.flush();

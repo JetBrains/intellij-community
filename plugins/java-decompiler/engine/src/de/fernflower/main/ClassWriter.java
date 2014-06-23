@@ -184,7 +184,7 @@ public class ClassWriter {
 		
 		// closing up class definition
 		writer.write(" {");
-		writer.newLine();
+		writer.write(DecompilerContext.getNewLineSeparator());
 
 		writer.write(strwriter.toString());
 
@@ -230,7 +230,7 @@ public class ClassWriter {
 					(!isBridge || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_BRIDGE)) &&
 					!wrapper.getHideMembers().contains(InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()))) {
 				if(!mthidden && (!firstmt || node.type != ClassNode.CLASS_ANONYMOUS)) {
-					bufstrwriter.newLine();
+					bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 					firstmt = false;
 				}
 
@@ -257,14 +257,14 @@ public class ClassWriter {
 				if(isEnum) {
 					if(enumfields) {
 						bufstrwriter1.write(",");
-						bufstrwriter1.newLine();
+						bufstrwriter1.write(DecompilerContext.getNewLineSeparator());
 					} else {
 						enumfields = true;
 					}
 				} else {
 					if(enumfields) {
 						bufstrwriter1.write(";");
-						bufstrwriter1.newLine();
+						bufstrwriter1.write(DecompilerContext.getNewLineSeparator());
 						enumfields = false;
 					}
 				}
@@ -276,15 +276,15 @@ public class ClassWriter {
 		
 		if(enumfields) {
 			bufstrwriter1.write(";");
-			bufstrwriter1.newLine();
+			bufstrwriter1.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 		bufstrwriter1.flush();
 		
 		if(fields_count > 0) {
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 			writer.write(strwriter1.toString());
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 
@@ -299,7 +299,7 @@ public class ClassWriter {
 				boolean isSynthetic = (innercl.access_flags & CodeConstants.ACC_SYNTHETIC) != 0 || innercl.getAttributes().containsKey("Synthetic");
 				if((!isSynthetic || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC))
 						&& !wrapper.getHideMembers().contains(innercl.qualifiedName)) {
-					writer.newLine();
+					writer.write(DecompilerContext.getNewLineSeparator());
 					classToJava(inner, writer, indent+1);
 				}
 			}
@@ -308,7 +308,7 @@ public class ClassWriter {
 		writer.write(InterpreterUtil.getIndentString(indent));
 		writer.write("}");
 		if(node.type != ClassNode.CLASS_ANONYMOUS) {
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 		}
 		writer.flush();
 
@@ -321,7 +321,7 @@ public class ClassWriter {
 
 		if(node.type == ClassNode.CLASS_ANONYMOUS) {
 			writer.write(" {");
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 		} else {
 			
 			String indstr = InterpreterUtil.getIndentString(indent);
@@ -341,21 +341,21 @@ public class ClassWriter {
 				if(oldname != null) {
 					writer.write(indstr);
 					writer.write("// $FF: renamed from: "+getDescriptorPrintOut(oldname, 0));
-					writer.newLine();
+					writer.write(DecompilerContext.getNewLineSeparator());
 				}
 			}
 
       if(isDeprecated) {
         writer.write(indstr);
         writer.write("/** @deprecated */");
-        writer.newLine();
+        writer.write(DecompilerContext.getNewLineSeparator());
       }
 
 			// class annotations
       List<AnnotationExprent> lstAnn = getAllAnnotations(cl.getAttributes());
       for(AnnotationExprent annexpr : lstAnn) {
         writer.write(annexpr.toJava(indent));
-        writer.newLine();
+        writer.write(DecompilerContext.getNewLineSeparator());
       }
 
 			boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic");
@@ -363,7 +363,7 @@ public class ClassWriter {
 			if(isSynthetic) {
 				writer.write(indstr);
 				writer.write("// $FF: synthetic class");
-				writer.newLine();
+				writer.write(DecompilerContext.getNewLineSeparator());
 			}
 
 			writer.write(indstr);
@@ -456,7 +456,7 @@ public class ClassWriter {
 			}
 			
 			writer.write("{");
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 	}
@@ -475,7 +475,7 @@ public class ClassWriter {
 				
 				writer.write(indstr);
 				writer.write("// $FF: renamed from: "+element[1]+" "+getDescriptorPrintOut(element[2], 1));
-				writer.newLine();
+				writer.write(DecompilerContext.getNewLineSeparator());
 			}
 		}
 		
@@ -484,14 +484,14 @@ public class ClassWriter {
     if(isDeprecated) {
       writer.write(indstr);
       writer.write("/** @deprecated */");
-      writer.newLine();
+      writer.write(DecompilerContext.getNewLineSeparator());
     }
 
 		// field annotations
     List<AnnotationExprent> lstAnn = getAllAnnotations(fd.getAttributes());
     for(AnnotationExprent annexpr : lstAnn) {
       writer.write(annexpr.toJava(indent));
-      writer.newLine();
+      writer.write(DecompilerContext.getNewLineSeparator());
     }
 
 		boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || fd.getAttributes().containsKey("Synthetic");
@@ -500,7 +500,7 @@ public class ClassWriter {
 		if(isSynthetic) {
 			writer.write(indstr);
 			writer.write("// $FF: synthetic field");
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 		}
 
 		writer.write(indstr);
@@ -563,7 +563,7 @@ public class ClassWriter {
 		
 		if(!isEnum) {
 			writer.write(";");
-			writer.newLine();
+			writer.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 	}
@@ -627,7 +627,7 @@ public class ClassWriter {
 			bufstrwriter.write(")");
 			bufstrwriter.write(" ");
 			bufstrwriter.write("{");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 		RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
@@ -645,12 +645,12 @@ public class ClassWriter {
 		if(meth.decompiledWithErrors) {
 			bufstrwriter.write(InterpreterUtil.getIndentString(indent+1));
 			bufstrwriter.write("// $FF: Couldn't be decompiled");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		}
 
 		if(!code_only) {
 			bufstrwriter.write(indstr+"}");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 		bufstrwriter.flush();
@@ -701,21 +701,21 @@ public class ClassWriter {
 				
 				bufstrwriter.write(indstr);
 				bufstrwriter.write("// $FF: renamed from: "+element[1]+" "+getDescriptorPrintOut(element[2], 2));
-				bufstrwriter.newLine();
+				bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 			}
 		}
 
     if(isDeprecated) {
       writer.write(indstr);
       writer.write("/** @deprecated */");
-      writer.newLine();
+      writer.write(DecompilerContext.getNewLineSeparator());
     }
 
     // method annotations
     List<AnnotationExprent> lstAnn = getAllAnnotations(mt.getAttributes());
     for(AnnotationExprent annexpr : lstAnn) {
       bufstrwriter.write(annexpr.toJava(indent));
-      bufstrwriter.newLine();
+      bufstrwriter.write(DecompilerContext.getNewLineSeparator());
     }
 
 		boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || mt.getAttributes().containsKey("Synthetic");
@@ -724,13 +724,13 @@ public class ClassWriter {
 		if(isSynthetic) {
 			bufstrwriter.write(indstr);
 			bufstrwriter.write("// $FF: synthetic method");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		}
 
 		if(isBridge) {
 			bufstrwriter.write(indstr);
 			bufstrwriter.write("// $FF: bridge method");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		}
 
 		bufstrwriter.write(indstr);
@@ -843,7 +843,7 @@ public class ClassWriter {
 						for(int j=0;j<annotations.size();j++) {
 							AnnotationExprent annexpr = annotations.get(j);
 							if(annexpr.getAnnotationType() == AnnotationExprent.ANNOTATION_NORMAL) {
-								bufstrwriter.newLine();
+								bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 								bufstrwriter.write(annexpr.toJava(indent+1));
 							} else {
 								bufstrwriter.write(annexpr.toJava(0));
@@ -945,13 +945,13 @@ public class ClassWriter {
 			}
 			
 			bufstrwriter.write(";");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		} else {
 			if(!clinit && !dinit) {
 				bufstrwriter.write(" ");
 			}
 			bufstrwriter.write("{");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 			
 			RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
 			
@@ -982,11 +982,11 @@ public class ClassWriter {
 			if(meth.decompiledWithErrors) {
 				bufstrwriter.write(InterpreterUtil.getIndentString(indent+1));
 				bufstrwriter.write("// $FF: Couldn't be decompiled");
-				bufstrwriter.newLine();
+				bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 			}
 			
 			bufstrwriter.write(indstr+"}");
-			bufstrwriter.newLine();
+			bufstrwriter.write(DecompilerContext.getNewLineSeparator());
 		}
 		
 		bufstrwriter.flush();

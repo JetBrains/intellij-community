@@ -190,6 +190,7 @@ public class DecompilerContext {
 	}
 	
 	public static String getNewLineSeparator() {
-		return getOption(IFernflowerPreferences.NEW_LINE_SEPARATOR) ? IFernflowerPreferences.LINE_SEPARATOR_LIN : IFernflowerPreferences.LINE_SEPARATOR_WIN ;
+		return getOption(IFernflowerPreferences.NEW_LINE_SEPARATOR) ?
+               IFernflowerPreferences.LINE_SEPARATOR_LIN : IFernflowerPreferences.LINE_SEPARATOR_WIN ;
 	}
 }
