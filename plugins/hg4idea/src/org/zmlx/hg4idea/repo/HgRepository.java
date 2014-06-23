@@ -65,6 +65,9 @@ public interface HgRepository extends Repository {
   @Nullable
   String getCurrentBookmark();
 
+  @Nullable
+  String getTipRevision();
+
   @NotNull
   HgConfig getRepositoryConfig();
 

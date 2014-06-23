@@ -70,8 +70,8 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     myLocalTags = readRefs(testLocalTagFile);
   }
 
-  public void testHEAD() {
-    assertEquals("25e44c95b2612e3cdf29a704dabf82c77066cb67", myRepositoryReader.readCurrentRevision());
+  public void testTip() {
+    assertEquals("25e44c95b2612e3cdf29a704dabf82c77066cb67", myRepositoryReader.readCurrentTipRevision());
   }
 
   public void testCurrentBranch() {

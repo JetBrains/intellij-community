@@ -38,6 +38,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.zmlx.hg4idea.util.HgUtil.HEAD_REFERENCE;
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
 public class HgLogProvider implements VcsLogProvider {
@@ -118,7 +119,11 @@ public class HgLogProvider implements VcsLogProvider {
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), TIP_REFERENCE, HgRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), HEAD_REFERENCE, HgRefManager.HEAD, root));
+    }
+    String tipRevision = repository.getTipRevision();
+    if (tipRevision != null) { // null => fresh repository
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tipRevision), TIP_REFERENCE, HgRefManager.TIP, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
       refs.add(myVcsObjectsFactory.createRef(tagInfo.getHash(), tagInfo.getName(), HgRefManager.TAG, root));
@@ -173,6 +178,12 @@ public class HgLogProvider implements VcsLogProvider {
       for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
         if (branchName.equals(TIP_REFERENCE) || branchExists(repository, branchName)) {
           filterParameters.add(prepareParameter("branch", branchName));
+          atLeastOneBranchExists = true;
+        }
+        else if (branchName.equals(HEAD_REFERENCE)) {
+          filterParameters.add(prepareParameter("branch", "."));
+          filterParameters.add("-r");
+          filterParameters.add("::."); //all ancestors for current revision;
           atLeastOneBranchExists = true;
         }
       }
