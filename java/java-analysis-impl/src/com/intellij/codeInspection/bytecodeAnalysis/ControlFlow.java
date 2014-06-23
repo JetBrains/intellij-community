@@ -44,19 +44,22 @@ final class cfg {
       TIntHashSet result = new TIntHashSet();
       for (int i = 0; i < frames.length; i++) {
         AbstractInsnNode insnNode = insns.get(i);
-        switch (insnNode.getOpcode()) {
-          case ARETURN:
-          case IRETURN:
-          case LRETURN:
-          case FRETURN:
-          case DRETURN:
-            for (AbstractInsnNode sourceInsn : frames[i].pop().insns) {
-              result.add(insns.indexOf(sourceInsn));
-            }
-            break;
+        Frame<SourceValue> frame = frames[i];
+        if (frame != null) {
+          switch (insnNode.getOpcode()) {
+            case ARETURN:
+            case IRETURN:
+            case LRETURN:
+            case FRETURN:
+            case DRETURN:
+              for (AbstractInsnNode sourceInsn : frame.pop().insns) {
+                result.add(insns.indexOf(sourceInsn));
+              }
+              break;
 
-          default:
-            break;
+            default:
+              break;
+          }
         }
       }
       return result;
