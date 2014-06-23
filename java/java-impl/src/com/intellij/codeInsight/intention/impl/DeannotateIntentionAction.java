@@ -48,7 +48,7 @@ public class DeannotateIntentionAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " " + myAnnotationName : "");
+    return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " " + myAnnotationName : "...");
   }
 
   @Override
@@ -59,6 +59,7 @@ public class DeannotateIntentionAction implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    myAnnotationName = null;
     PsiModifierListOwner listOwner = getContainer(editor, file);
     if (listOwner != null) {
       final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);

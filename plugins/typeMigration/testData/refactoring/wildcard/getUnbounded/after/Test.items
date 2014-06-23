@@ -1,0 +1,9 @@
+Types:
+PsiParameter:p : java.util.ArrayList<?>
+PsiReferenceExpression:p : java.util.ArrayList<?>
+
+Conversions:
+
+New expression type changes:
+Fails:
+p[0]->java.util.ArrayList<?>

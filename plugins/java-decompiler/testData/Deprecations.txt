@@ -1,0 +1,42 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
+
+
+public class Deprecations {
+
+    /** @deprecated */
+    public int byComment;
+    /** @deprecated */
+    @Deprecated
+    public int byAnno;
+
+
+    public Deprecations() {
+    }
+
+    /** @deprecated */
+    public void byComment() {
+    }
+
+    /** @deprecated */
+    @Deprecated
+    public void byAnno() {
+    }
+
+    /** @deprecated */
+    @Deprecated
+    public static class ByAnno {
+
+        public ByAnno() {
+        }
+    }
+
+    /** @deprecated */
+    public static class ByComment {
+
+        public ByComment() {
+        }
+    }
+}

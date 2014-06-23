@@ -92,12 +92,10 @@ public class FixedSizeButton extends JButton {
       }
       return new Dimension(size, size);
     }
-    else if (mySize != -1) {
+    if (mySize != -1) {
       return new Dimension(mySize, mySize);
     }
-    else {
-      return super.getPreferredSize();
-    }
+    return super.getPreferredSize();
   }
 
   public void setAttachedComponent(JComponent component) {
@@ -120,9 +118,12 @@ public class FixedSizeButton extends JButton {
 
   @Override
   public void setBounds(Rectangle r) {
-    int size = Math.min(r.width, r.height);
-    r.width = size;
-    r.height = size;
+    if (r.width != r.height) {
+      int size = Math.min(r.width, r.height);
+      r = new Rectangle(r);
+      r.width = size;
+      r.height = size;
+    }
     super.setBounds(r);
   }
 }

@@ -1,0 +1,10 @@
+Types:
+PsiField:myField : Descendant[]
+PsiParameter:p : Descendant[]
+PsiReferenceExpression:myField : Descendant[]
+PsiReferenceExpression:p : Descendant[]
+
+Conversions:
+
+New expression type changes:
+Fails:

@@ -1,0 +1,11 @@
+Types:
+PsiField:str : java.lang.Integer
+PsiMethod:get : java.lang.Integer
+PsiReferenceExpression:str : java.lang.Integer
+PsiReferenceExpression:str : java.lang.Integer
+PsiReferenceExpression:str : java.lang.Integer
+
+Conversions:
+
+New expression type changes:
+Fails:

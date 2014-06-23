@@ -15,8 +15,11 @@
  */
 package com.intellij.xml.util.documentation;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
@@ -36,21 +39,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author maxim
  */
 public class HtmlDocumentationProvider implements DocumentationProvider {
-  private static DocumentationProvider ourStyleProvider;
+  private DocumentationProvider myStyleProvider = null;
   private static DocumentationProvider ourScriptProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
   @NonNls public static final String NBSP = ":&nbsp;";
   @NonNls public static final String BR = "<br>";
-
-  public static void registerStyleDocumentationProvider(DocumentationProvider documentationProvider) {
-    ourStyleProvider = documentationProvider;
-  }
 
   @Override
   @Nullable
@@ -63,10 +63,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement,XmlTag.class,false));
-
-    if (result == null && ourStyleProvider !=null) {
-      return ourStyleProvider.getUrlFor(element, originalElement);
+    String result = getUrlForHtml(element, PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false));
+    DocumentationProvider styleProvider = getStyleProvider();
+    if (result == null && styleProvider != null) {
+      return styleProvider.getUrlFor(element, originalElement);
     }
 
     return result != null ? Collections.singletonList(result) : null;
@@ -126,7 +126,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       key = nameElement.getText();
     }
 
-    key = (key != null)?key.toLowerCase():"";
+    key = StringUtil.notNullize(key).toLowerCase(Locale.US);
 
     int dotIndex = key.indexOf('.');
     if (dotIndex > 0) {
@@ -155,8 +155,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     final XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, false);
     String result = generateDocForHtml(element, false, tag, originalElement);
 
-    if (result == null && ourStyleProvider !=null) {
-      result = ourStyleProvider.generateDoc(element, originalElement);
+    DocumentationProvider styleProvider = getStyleProvider();
+    if (result == null && styleProvider !=null) {
+      result = styleProvider.generateDoc(element, originalElement);
     }
 
     if (result == null && ourScriptProvider !=null) {
@@ -170,15 +171,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
-  public String generateDocForHtml(PsiElement element) {
-    return generateDocForHtml(element,true, null, null);
-  }
-
-  protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
+  protected String generateDocForHtml(PsiElement element, boolean omitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
     final EntityDescriptor descriptor = findDocumentationDescriptor(element,context);
 
     if (descriptor!=null) {
-      return generateJavaDoc(descriptor, ommitHtmlSpecifics, originalElement);
+      return generateJavaDoc(descriptor, omitHtmlSpecifics, originalElement);
     }
     if (element instanceof XmlEntityDecl) {
       final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
@@ -188,11 +185,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics, PsiElement element) {
+  private static String generateJavaDoc(EntityDescriptor descriptor, boolean omitHtmlSpecifics, PsiElement element) {
     StringBuilder buf = new StringBuilder();
-    final boolean istag = descriptor instanceof HtmlTagDescriptor;
+    final boolean isTag = descriptor instanceof HtmlTagDescriptor;
 
-    if (istag) {
+    if (isTag) {
       DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
     } else {
       DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.attribute.name.message"),descriptor.getName(),buf);
@@ -200,10 +197,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
     buf.append(XmlBundle.message("xml.javadoc.description.message")).append(NBSP).append(descriptor.getDescription()).append(BR);
 
-    if (istag) {
+    if (isTag) {
       final HtmlTagDescriptor tagDescriptor = (HtmlTagDescriptor)descriptor;
 
-      if (!ommitHtmlSpecifics) {
+      if (!omitHtmlSpecifics) {
         boolean hasStartTag = tagDescriptor.isHasStartTag();
         if (!hasStartTag) {
           buf.append(XmlBundle.message("xml.javadoc.start.tag.could.be.omitted.message")).append(BR);
@@ -227,7 +224,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     char dtdId = descriptor.getDtd();
     boolean deprecated = dtdId == EntityDescriptor.LOOSE_DTD;
     if (deprecated) {
-      buf.append(XmlBundle.message("xml.javadoc.deprecated.message", deprecated)).append(BR);
+      buf.append(XmlBundle.message("xml.javadoc.deprecated.message", true)).append(BR);
     }
 
     if (dtdId == EntityDescriptor.LOOSE_DTD) {
@@ -240,7 +237,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       buf.append(XmlBundle.message("xml.javadoc.defined.in.any.dtd.message"));
     }
 
-    if (!istag) {
+    if (!isTag) {
       ColorSampleLookupValue.addColorPreviewAndCodeToLookup(element,buf);
     }
 
@@ -255,8 +252,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     PsiElement result = createNavigationElementHTML(psiManager, object.toString(),element);
 
-    if (result== null && ourStyleProvider !=null) {
-      result = ourStyleProvider.getDocumentationElementForLookupItem(psiManager, object, element);
+    DocumentationProvider styleProvider = getStyleProvider();
+    if (result== null && styleProvider !=null) {
+      result = styleProvider.getDocumentationElementForLookupItem(psiManager, object, element);
     }
     if (result== null && ourScriptProvider !=null) {
       result = ourScriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
@@ -271,8 +269,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     PsiElement result = createNavigationElementHTML(psiManager, link, context);
 
-    if (result== null && ourStyleProvider !=null) {
-      result = ourStyleProvider.getDocumentationElementForLink(psiManager, link,context);
+    DocumentationProvider styleProvider = getStyleProvider();
+    if (result== null && styleProvider !=null) {
+      result = styleProvider.getDocumentationElementForLink(psiManager, link, context);
     }
     if (result== null && ourScriptProvider !=null) {
       result = ourScriptProvider.getDocumentationElementForLink(psiManager, link,context);
@@ -281,7 +280,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   }
 
   public PsiElement createNavigationElementHTML(PsiManager psiManager, String text, PsiElement context) {
-    String key = text.toLowerCase();
+    String key = text.toLowerCase(Locale.US);
     final HtmlTagDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(key);
 
     if (descriptor != null && !isAttributeContext(context) ) {
@@ -331,5 +330,16 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {
     ourScriptProvider = provider;
+  }
+  
+  @Nullable
+  private DocumentationProvider getStyleProvider() {
+    if (myStyleProvider == null) {
+      Language cssLanguage = Language.findLanguageByID("CSS");
+      if (cssLanguage != null) {
+        myStyleProvider = LanguageDocumentation.INSTANCE.forLanguage(cssLanguage);
+      }
+    }
+    return myStyleProvider;
   }
 }

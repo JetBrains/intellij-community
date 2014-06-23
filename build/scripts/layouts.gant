@@ -67,6 +67,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "compiler-impl",
     "debugger-impl",
     "dom-impl",
+    "duplicates-analysis",
     "execution-impl",
     "external-system-impl",
     "idea-ui",
@@ -235,7 +236,6 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
             module("IntelliLang")
             module("IntelliLang-java")
             module("IntelliLang-xml")
-            module("IntelliLang-javaee")
           }
           jar("intellilang-jps-plugin.jar") {
             module("intellilang-jps-plugin")
@@ -256,7 +256,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github", "typeMigration"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -333,10 +333,6 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("gradle") {
-      jar("gradle.jar") {
-        module("gradle")
-      }
-
       jar("gradle-tooling-extension-api.jar") {
         module("gradle-tooling-extension-api")
       }
@@ -506,12 +502,55 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("terminal") {
-      jar("terminal.jar") {
-        module("terminal")
-      }
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
         include(name: "*.in")
+      }
+    }
+
+    pluginDir("coverage") {
+      dir("lib") {
+        jar("coverage.jar") {
+          noResources("coverage-common")
+          noResources("coverage")
+        }
+
+        jar("coverage_rt.jar") {
+          noResources("coverage_rt")
+        }
+
+        jar("resources_en.jar") {
+          module("coverage-common") {
+            patternset(refid: "resources.included")
+          }
+          module("coverage") {
+            patternset(refid: "resources.included")
+          }
+        }
+
+        fileset(dir: "${home}/plugins/coverage-common/lib") {
+          exclude(name: "finder.jar")
+          exclude(name: "**/coverage-src.zip")
+        }
+
+        fileset(dir: "${home}/plugins/coverage/lib", excludes: "**/jacoco_src.zip")
+      }
+    }
+
+    pluginDir("structuralsearch") {
+      dir("lib") {
+        jar("structuralsearch.jar") {
+          module("structuralsearch")
+        }
+      }
+    }
+
+    pluginDir("java-decompiler") {
+      dir("lib") {
+        jar("java-decompiler.jar") {
+          module("java-decompiler")
+        }
+        fileset(file: "$home/plugins/java-decompiler/lib/fernflower.jar")
       }
     }
   }

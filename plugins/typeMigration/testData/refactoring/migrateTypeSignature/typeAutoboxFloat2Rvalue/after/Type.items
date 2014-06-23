@@ -1,0 +1,9 @@
+Types:
+PsiField:myField : float
+PsiReferenceExpression:myField : float
+
+Conversions:
+p -> $
+
+New expression type changes:
+Fails:

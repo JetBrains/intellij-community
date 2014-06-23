@@ -50,6 +50,7 @@ public abstract class FindUsagesHandler {
   @NotNull
   public static final FindUsagesHandler NULL_HANDLER = new FindUsagesHandler(PsiUtilCore.NULL_PSI_ELEMENT){};
 
+  @NotNull
   private final PsiElement myPsiElement;
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 the original author or authors.
+ * Copyright 2001-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,14 @@ package org.jetbrains.generate.tostring.inspection;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.RegExFormatter;
+import com.intellij.codeInspection.ui.RegExInputVerifier;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
@@ -31,6 +36,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Inspection to check if the current class overrides the toString() method.
@@ -42,6 +49,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
     /** User options for classes to exclude. Must be a regexp pattern */
     public String excludeClassNames = "";  // must be public for JDOMSerialization
+    private Pattern excludeClassNamesPattern;
+
     /** User options for excluded exception classes */
     public boolean excludeException = true; // must be public for JDOMSerialization
     /** User options for excluded deprecated classes */
@@ -55,7 +64,14 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
     public boolean excludeInnerClasses = false;
 
-    @Override
+  public ClassHasNoToStringMethodInspection() {
+    try {
+      excludeClassNamesPattern = Pattern.compile(excludeClassNames);
+    } catch (PatternSyntaxException e) {
+    }
+  }
+
+  @Override
     @NotNull
     public String getDisplayName() {
         return "Class does not override 'toString()' method";
@@ -101,11 +117,13 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // if it is an excluded class - then skip
-                if (StringUtil.isNotEmpty(excludeClassNames)) {
-                    String name = clazz.getName();
-                    if (name != null && name.matches(excludeClassNames)) {
-                        return;
-                    }
+                if (excludeClassNamesPattern != null) {
+                    try {
+                        String name = clazz.getName();
+                        if (name != null && excludeClassNamesPattern.matcher(name).matches()) {
+                            return;
+                        }
+                    } catch (PatternSyntaxException ignore) {}
                 }
 
                 // must have fields
@@ -170,27 +188,23 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         constraints.fill = GridBagConstraints.NONE;
         panel.add(new JLabel("Exclude classes (reg exp):"), constraints);
 
-        final JTextField excludeClassNamesField = new JTextField(excludeClassNames, 40);
-        excludeClassNamesField.setMinimumSize(new Dimension(140, 20));
+        final JFormattedTextField excludeClassNamesField = new JFormattedTextField(new RegExFormatter());
+        excludeClassNamesField.setValue(excludeClassNamesPattern);
+        excludeClassNamesField.setColumns(25);
+        excludeClassNamesField.setInputVerifier(new RegExInputVerifier());
+        excludeClassNamesField.setFocusLostBehavior(JFormattedTextField.COMMIT);
+        excludeClassNamesField.setMinimumSize(excludeClassNamesField.getPreferredSize());
+        UIUtil.fixFormattedField(excludeClassNamesField);
         Document document = excludeClassNamesField.getDocument();
-        document.addDocumentListener(new DocumentListener() {
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                textChanged();
-            }
+        document.addDocumentListener(new DocumentAdapter() {
 
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                textChanged();
-            }
-
-            private void textChanged() {
-                excludeClassNames = excludeClassNamesField.getText();
+            protected void textChanged(DocumentEvent e) {
+                try {
+                    excludeClassNamesField.commitEdit();
+                    excludeClassNamesPattern = (Pattern)excludeClassNamesField.getValue();
+                    excludeClassNames = excludeClassNamesPattern.pattern();
+                } catch (final Exception ignore) {}
             }
         });
         constraints.gridx = 1;

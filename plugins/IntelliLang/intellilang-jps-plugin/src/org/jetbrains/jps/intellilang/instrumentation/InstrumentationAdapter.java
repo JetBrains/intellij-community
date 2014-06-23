@@ -17,7 +17,7 @@ package org.jetbrains.jps.intellilang.instrumentation;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.*;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
                                 Type returnType,
                                 int access,
                                 String name) {
-    super(Opcodes.ASM4, methodvisitor);
+    super(Opcodes.ASM5, methodvisitor);
     myInstrumenter = instrumenter;
     myArgTypes = argTypes;
     myReturnType = returnType;
@@ -180,8 +180,8 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
     mv.visitIntInsn(BIPUSH, patternIndex);
     mv.visitInsn(AALOAD);
     mv.visitVarInsn(ALOAD, varIndex);
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/regex/Pattern", "matcher", "(Ljava/lang/CharSequence;)Ljava/util/regex/Matcher;");
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/regex/Matcher", "matches", "()Z");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/regex/Pattern", "matcher", "(Ljava/lang/CharSequence;)Ljava/util/regex/Matcher;", false);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/regex/Matcher", "matches", "()Z", false);
 
     mv.visitJumpInsn(Opcodes.IFNE, label);
   }
@@ -206,7 +206,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
     mv.visitTypeInsn(Opcodes.NEW, throwableClass);
     mv.visitInsn(Opcodes.DUP);
     mv.visitLdcInsn(message);
-    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, throwableClass, "<init>", ctorSignature);
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, throwableClass, "<init>", ctorSignature, false);
     mv.visitInsn(Opcodes.ATHROW);
   }
 
@@ -215,7 +215,7 @@ class InstrumentationAdapter extends MethodVisitor implements Opcodes {
     private final PatternValue myPatternValue;
 
     public MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
       av = annotationvisitor;
       myPatternValue = v;
     }

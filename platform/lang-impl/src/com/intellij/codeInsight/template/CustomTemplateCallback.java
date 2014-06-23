@@ -69,7 +69,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public PsiElement getContext() {
-    return getContext(myFile, myOffset);
+    return getContext(myFile, getOffset(), myInInjectedFragment);
   }
 
   public int getOffset() {
@@ -145,8 +145,13 @@ public class CustomTemplateCallback {
 
   @NotNull
   public static PsiElement getContext(@NotNull PsiFile file, int offset) {
+    return getContext(file, offset, true);
+  }
+
+  @NotNull
+  public static PsiElement getContext(@NotNull PsiFile file, int offset, boolean searchInInjectedFragment) {
     PsiElement element = null;
-    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+    if (searchInInjectedFragment && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     }
     if (element == null) {

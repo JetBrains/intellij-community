@@ -51,7 +51,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   private TextAttributes myTextAttributes;
 
-  boolean myIgnoreWrongMoves = false;
   boolean myIsInUpdate;
   boolean isDocumentChanged;
 
@@ -120,10 +119,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     for (CaretImpl caret : myCarets) {
       Disposer.dispose(caret);
     }
-  }
-
-  public void setIgnoreWrongMoves(boolean ignoreWrongMoves) {
-    myIgnoreWrongMoves = ignoreWrongMoves;
   }
 
   public void updateVisualPosition() {

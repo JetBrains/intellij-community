@@ -19,7 +19,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.pattern.compiler.InstrumentationException;
 import org.intellij.plugins.intelliLang.pattern.compiler.Instrumenter;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.asm4.*;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -140,7 +140,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
       mv.visitFieldInsn(GETSTATIC, myClassName, PATTERN_CACHE_NAME, JAVA_UTIL_REGEX_PATTERN);
       mv.visitIntInsn(BIPUSH, i++);
       mv.visitLdcInsn(pattern);
-      mv.visitMethodInsn(INVOKESTATIC, "java/util/regex/Pattern", "compile", "(Ljava/lang/String;)Ljava/util/regex/Pattern;");
+      mv.visitMethodInsn(INVOKESTATIC, "java/util/regex/Pattern", "compile", "(Ljava/lang/String;)Ljava/util/regex/Pattern;", false);
       mv.visitInsn(AASTORE);
     }
   }
@@ -148,7 +148,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
   // add assert startup code
   private void initAssertions(MethodVisitor mv) {
     mv.visitLdcInsn(Type.getType("L" + myClassName + ";"));
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z", false);
     Label l0 = new Label();
     mv.visitJumpInsn(IFNE, l0);
     mv.visitInsn(ICONST_1);
@@ -167,7 +167,7 @@ public class PatternValidationInstrumenter extends Instrumenter implements Opcod
     if ((access & ACC_STATIC) != 0 && name.equals("<clinit>")) {
       myHasStaticInitializer = true;
 
-      return new MethodVisitor(Opcodes.ASM4, methodvisitor) {
+      return new MethodVisitor(Opcodes.ASM5, methodvisitor) {
         public void visitCode() {
           super.visitCode();
           patchStaticInitializer(mv);

@@ -29,6 +29,9 @@ import java.util.List;
 public class BekSorter {
 
   public static boolean isBekEnabled() { // todo drop later
+    if (Registry.is("vcs.log.bek.sort.disabled")) {
+      return false;
+    }
     boolean isInternal = Boolean.valueOf(System.getProperty("idea.is.internal"));
     boolean isBekEnabled = Registry.is("vcs.log.bek.sort");
     return isBekEnabled || isInternal;

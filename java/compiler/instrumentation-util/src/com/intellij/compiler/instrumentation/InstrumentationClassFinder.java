@@ -1,9 +1,9 @@
 package com.intellij.compiler.instrumentation;
 
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.MethodVisitor;
-import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import sun.misc.Resource;
 
 import java.io.*;
@@ -415,7 +415,7 @@ public class InstrumentationClassFinder {
     private final List<PseudoMethod> myMethods = new ArrayList<PseudoMethod>();
 
     private V() {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
     }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {

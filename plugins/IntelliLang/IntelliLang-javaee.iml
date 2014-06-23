@@ -2,8 +2,9 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/javaee-support">
-      <sourceFolder url="file://$MODULE_DIR$/javaee-support" isTestSource="false" />
+    <content url="file://$MODULE_DIR$/../../../plugins/javaee/IntelliLang">
+      <sourceFolder url="file://$MODULE_DIR$/../../../plugins/javaee/IntelliLang/src" isTestSource="false" packagePrefix="org.intellij.plugins.intelliLang" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../plugins/javaee/IntelliLang/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

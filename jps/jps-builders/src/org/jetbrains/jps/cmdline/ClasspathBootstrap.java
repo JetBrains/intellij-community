@@ -30,14 +30,14 @@ import io.netty.util.NetUtil;
 import jsr166e.extra.SequenceLock;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassVisitor;
-import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.JavacServer;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import javax.tools.*;
 import java.io.File;

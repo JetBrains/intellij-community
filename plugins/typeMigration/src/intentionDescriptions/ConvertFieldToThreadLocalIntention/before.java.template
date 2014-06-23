@@ -1,0 +1,10 @@
+import java.text.*;
+import java.util.Date;
+
+public class X {
+  private static DateFormat <spot>dateFormat</spot> = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+
+  public String getDateString() {
+    return dateFormat.format(new Date());
+  }
+}

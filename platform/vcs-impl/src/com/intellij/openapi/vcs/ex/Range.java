@@ -31,6 +31,10 @@ public class Range {
   public static final byte INSERTED = 2;
   public static final byte DELETED = 3;
 
+  // offset1/offset2 - line numbers
+  // (2,3) - modified 2nd line
+  // (2,2) - empty range between 1 and 2 lines
+  // index of first line is 0
   private int myOffset1;
   private int myOffset2;
   private final int myUpToDateOffset1;

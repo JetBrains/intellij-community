@@ -92,7 +92,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     int currentOffset = editor.getCaretModel().getOffset();
-    int startOffset = editor.getDocument().getLineStartOffset(editor.getCaretModel().getLogicalPosition().line);
+    int startOffset = editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(currentOffset));
 
     CharSequence documentText = editor.getDocument().getCharsSequence();
     PsiElement prevVisibleLeaf = callback.getContext();

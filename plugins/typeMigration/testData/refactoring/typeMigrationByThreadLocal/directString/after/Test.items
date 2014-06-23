@@ -1,0 +1,11 @@
+Types:
+PsiField:myS : java.lang.ThreadLocal<java.lang.String>
+PsiReferenceExpression:myS : java.lang.ThreadLocal<java.lang.String>
+PsiReferenceExpression:myS : java.lang.ThreadLocal<java.lang.String>
+
+Conversions:
+myS -> $qualifier$.get() $qualifier$ myS
+
+New expression type changes:
+Fails:
+""->java.lang.ThreadLocal<java.lang.String>

@@ -1,0 +1,8 @@
+Types:
+PsiField:myField : Subject[]
+PsiReferenceExpression:myField : Subject[]
+
+Conversions:
+
+New expression type changes:
+Fails:
