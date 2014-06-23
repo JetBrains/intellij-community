@@ -593,8 +593,20 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   @Nullable
-  public PyPackage findPackage(String name) throws PyExternalProcessException {
+  public PyPackage findInstalledPackage(String name) throws PyExternalProcessException {
     return findPackageByName(name, getPackages());
+  }
+
+  @Override
+  public boolean findPackage(@NotNull final String name) {
+    try {
+      final String output = runPythonHelper(PACKAGING_TOOL, list("search", name));
+      return StringUtil.containsIgnoreCase(output, name + " ");
+    }
+    catch (PyExternalProcessException e) {
+      LOG.error(e.getMessage());
+      return false;
+    }
   }
 
   @Nullable
