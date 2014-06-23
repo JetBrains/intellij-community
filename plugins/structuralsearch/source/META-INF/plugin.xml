@@ -6,7 +6,6 @@
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.ultimate</depends>
   <depends optional="true" config-file="java.xml">com.intellij.java-i18n</depends>
-  <!--<depends optional="true" config-file="groovy.xml">org.intellij.groovy</depends>-->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"

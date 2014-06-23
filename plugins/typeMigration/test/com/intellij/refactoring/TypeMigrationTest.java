@@ -796,7 +796,6 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
       @Override
       public TypeMigrationRules provide() {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
-        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -862,7 +861,6 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
       @Override
       public TypeMigrationRules provide() {
         final TypeMigrationRules rules = new TypeMigrationRules(rootType);
-        rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
         rules.setMigrationRootType(migrationType);
         return rules;
       }
