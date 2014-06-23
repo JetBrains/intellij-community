@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -38,6 +37,8 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
 import org.jetbrains.idea.svn.update.UpdateClient;
@@ -100,9 +101,9 @@ public class CreateExternalAction extends DumbAwareAction {
       if (checkout) {
         // +-
         final UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
-        client.setEventHandler(new ISVNEventHandler() {
+        client.setEventHandler(new ProgressTracker() {
           @Override
-          public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          public void handleEvent(ProgressEvent event, double progress) throws SVNException {
           }
 
           @Override

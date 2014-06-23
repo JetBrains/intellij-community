@@ -25,6 +25,8 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -38,7 +40,7 @@ import java.util.Map;
 /**
  * @author lesya
 */
-public class UpdateEventHandler implements ISVNEventHandler {
+public class UpdateEventHandler implements ProgressTracker {
   private ProgressIndicator myProgressIndicator;
   private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
@@ -66,7 +68,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     myUpdatedFiles = updatedFiles;
   }
 
-  public void handleEvent(final SVNEvent event, double progress) {
+  public void handleEvent(final ProgressEvent event, double progress) {
     if (event == null || event.getFile() == null) {
       return;
     }
@@ -179,7 +181,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     updateProgressIndicator();
   }
 
-  private void possiblySwitched(SVNEvent event) {
+  private void possiblySwitched(ProgressEvent event) {
     final File file = event.getFile();
     if (file == null) return;
     final SVNURL wasUrl = myUrlToCheckForSwitch.get(file);
@@ -189,7 +191,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
   }
 
-  private boolean itemSwitched(final SVNEvent event) {
+  private boolean itemSwitched(final ProgressEvent event) {
     final File file = event.getFile();
     final SvnFileUrlMapping urlMapping = myVCS.getSvnFileUrlMapping();
     final SVNURL currentUrl = urlMapping.getUrlForFile(file);
@@ -207,11 +209,11 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
   }
 
-  protected boolean handleInDescendants(final SVNEvent event) {
+  protected boolean handleInDescendants(final ProgressEvent event) {
     return false;
   }
 
-  protected void addFileToGroup(final String id, final SVNEvent event) {
+  protected void addFileToGroup(final String id, final ProgressEvent event) {
     final FileGroup fileGroup = myUpdatedFiles.getGroupById(id);
     final String path = event.getFile().getAbsolutePath();
     fileGroup.add(path, SvnVcs.getKey(), new SvnRevisionNumber(SVNRevision.create(event.getRevision())));

@@ -44,6 +44,7 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
@@ -108,7 +109,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         SvnWorkingCopyFormatHolder.setPresetFormat(format);
 
         SvnVcs vcs = SvnVcs.getInstance(project);
-        ISVNEventHandler handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
+        ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
         try {
           getFactory(vcs, format).createCheckoutClient()
@@ -199,7 +200,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          ISVNEventHandler handler = new CheckoutEventHandler(vcs, true, progressIndicator);
+          ProgressTracker handler = new CheckoutEventHandler(vcs, true, progressIndicator);
           try {
             progressIndicator.setText(SvnBundle.message("progress.text.export", target.getAbsolutePath()));
 

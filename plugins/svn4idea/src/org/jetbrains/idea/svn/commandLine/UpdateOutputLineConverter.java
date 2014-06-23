@@ -18,10 +18,9 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -80,7 +79,7 @@ public class UpdateOutputLineConverter {
     myCurrentFile = base;
   }
 
-  public SVNEvent convert(final String line) {
+  public ProgressEvent convert(final String line) {
     // TODO: Add direct processing of "Summary of conflicts" lines at the end of "svn update" output (if there are conflicts).
     // TODO: Now it works ok because parseNormalLine could not determine necessary statuses from that and further lines
     if (StringUtil.isEmptyOrSpaces(line)) return null;
@@ -89,23 +88,19 @@ public class UpdateOutputLineConverter {
       return null;
     } else if (line.startsWith(UPDATING)) {
       myCurrentFile = parseForPath(line);
-      return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
-                    null, -1, null, null, null, null, SVNEventAction.UPDATE_NONE, SVNEventAction.UPDATE_NONE, null, null, null, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.UPDATE_NONE, null, null);
     } else if (line.startsWith(RESTORED)) {
       myCurrentFile = parseForPath(line);
-      return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
-                          null, -1, null, null, null, null, SVNEventAction.RESTORE, SVNEventAction.RESTORE, null, null, null, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.RESTORE, null, null);
     } else if (line.startsWith(SKIPPED)) {
       // called, for instance, when folder is not working copy
       myCurrentFile = parseForPath(line);
       final String comment = parseComment(line);
-      return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
-                    null, -1, null, null, null, null, SVNEventAction.SKIP, SVNEventAction.SKIP,
-                    comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment), null, null, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.SKIP,
+                               comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment), null);
     } else if (line.startsWith(FETCHING_EXTERNAL)) {
       myCurrentFile = parseForPath(line);
-      return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
-                          null, -1, null, null, null, null, SVNEventAction.UPDATE_EXTERNAL, SVNEventAction.UPDATE_EXTERNAL, null, null, null, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.UPDATE_EXTERNAL, null, null);
     }
 
     for (int i = 0; i < ourCompletePatterns.length; i++) {
@@ -114,10 +109,7 @@ public class UpdateOutputLineConverter {
       if (revision != -1) {
         // TODO: seems that myCurrentFile will not always be correct - complete update message could be right after complete externals update
         // TODO: check this and use Stack instead
-        return new SVNEvent(myCurrentFile,
-                            myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
-                            null, revision, null, null, null, null, SVNEventAction.UPDATE_COMPLETED, SVNEventAction.UPDATE_COMPLETED, null,
-                            null, null, null, null);
+        return new ProgressEvent(myCurrentFile, revision, null, null, SVNEventAction.UPDATE_COMPLETED, null, null);
       }
     }
 
@@ -127,7 +119,7 @@ public class UpdateOutputLineConverter {
   private final static Set<Character> ourActions = new HashSet<Character>(Arrays.asList(new Character[] {'A', 'D', 'U', 'C', 'G', 'E', 'R'}));
 
   @Nullable
-  private SVNEvent parseNormalString(final String line) {
+  private ProgressEvent parseNormalString(final String line) {
     if (line.length() < 5) return null;
     final char first = line.charAt(0);
     if (' ' != first && ! ourActions.contains(first)) return null;
@@ -145,9 +137,7 @@ public class UpdateOutputLineConverter {
     final File file = createFile(path);
     if (SVNStatusType.STATUS_OBSTRUCTED.equals(contentsStatus)) {
       // obstructed
-      return new SVNEvent(file, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE,
-                    null, -1, contentsStatus, propertiesStatus, null, null, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, SVNEventAction.UPDATE_ADD,
-                    null, null, null, null, null);
+      return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
     }
     
     SVNEventAction action;
@@ -164,8 +154,7 @@ public class UpdateOutputLineConverter {
       action = SVNEventAction.TREE_CONFLICT;
     }
 
-    return new SVNEvent(file, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE, null, -1, contentsStatus, propertiesStatus, null,
-                        null, action, expectedAction, null, null, null, null, null);
+    return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, action, null, null);
   }
 
   private File createFile(String path) {

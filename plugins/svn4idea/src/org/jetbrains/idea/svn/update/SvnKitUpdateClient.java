@@ -18,11 +18,11 @@ package org.jetbrains.idea.svn.update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
@@ -36,7 +36,7 @@ import java.io.File;
  */
 public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
 
-  @Nullable protected ISVNEventHandler myDispatcher;
+  @Nullable protected ProgressTracker myDispatcher;
   protected boolean myIgnoreExternals;
   protected boolean myLocksOnDemand;
 
@@ -72,7 +72,7 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
   }
 
   @Override
-  public void setEventHandler(ISVNEventHandler dispatcher) {
+  public void setEventHandler(ProgressTracker dispatcher) {
     myDispatcher = dispatcher;
   }
 
@@ -85,7 +85,7 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
   private SVNUpdateClient getClient() {
     SVNUpdateClient client = myVcs.getSvnKitManager().createUpdateClient();
 
-    client.setEventHandler(myDispatcher);
+    client.setEventHandler(toEventHandler(myDispatcher));
     client.setIgnoreExternals(myIgnoreExternals);
     client.setUpdateLocksOnDemand(myLocksOnDemand);
 

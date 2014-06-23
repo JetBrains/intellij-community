@@ -8,6 +8,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -109,7 +110,7 @@ public abstract class BaseSvnClient implements SvnClient {
     return runtime.runWithAuthenticationAttempt(command);
   }
 
-  protected static void callHandler(@Nullable ISVNEventHandler handler, @NotNull SVNEvent event) throws VcsException {
+  protected static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws VcsException {
     if (handler != null) {
       try {
         handler.handleEvent(event, 0);
@@ -121,7 +122,28 @@ public abstract class BaseSvnClient implements SvnClient {
   }
 
   @NotNull
-  protected static SVNEvent createEvent(@NotNull File path, @Nullable SVNEventAction action) {
-    return new SVNEvent(path, null, null, 0, null, null, null, null, action, null, null, null, null, null, null);
+  protected static ProgressEvent createEvent(@NotNull File path, @Nullable SVNEventAction action) {
+    return new ProgressEvent(path, 0, null, null, action, null, null);
+  }
+
+  @Nullable
+  protected static ISVNEventHandler toEventHandler(@Nullable final ProgressTracker handler) {
+    ISVNEventHandler result = null;
+
+    if (handler != null) {
+      result = new ISVNEventHandler() {
+        @Override
+        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          handler.handleEvent(ProgressEvent.create(event), progress);
+        }
+
+        @Override
+        public void checkCancelled() throws SVNCancelException {
+          handler.checkCancelled();
+        }
+      };
+    }
+
+    return result;
   }
 }

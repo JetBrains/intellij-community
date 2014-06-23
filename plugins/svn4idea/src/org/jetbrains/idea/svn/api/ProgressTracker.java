@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.checkin;
+package org.jetbrains.idea.svn.api;
 
-import org.jetbrains.idea.svn.api.ProgressTracker;
-
-import java.io.File;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
- * Used to listen to commit events to display progress to user
- *
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 10:12 AM
+ * @author Konstantin Kolosovsky.
  */
-public interface CommitEventHandler extends ProgressTracker {
-  void commitEvent(final CommitEventType type, final File target);
-  void committedRevision(final long revNum);
+public interface ProgressTracker {
+
+  void checkCancelled() throws SVNCancelException;
+
+  void handleEvent(ProgressEvent event, double progress) throws SVNException;
 }

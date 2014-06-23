@@ -18,13 +18,13 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -76,7 +76,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
       final long[] myRevisions = new long[paths.length];
 
       @Override
-      protected void beforeHandler(@NotNull SVNEvent event) {
+      protected void beforeHandler(@NotNull ProgressEvent event) {
         if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
           final long eventRevision = event.getRevision();
           for (int i = 0; i < paths.length; i++) {

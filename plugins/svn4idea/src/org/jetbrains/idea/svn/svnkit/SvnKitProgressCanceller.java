@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.svnkit;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
 
 /**
- * @author yole
+ * @author Konstantin Kolosovsky.
  */
-public class SvnProgressCanceller implements ProgressTracker {
+public class SvnKitProgressCanceller implements ISVNCanceller {
+
   public void checkCancelled() throws SVNCancelException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null && indicator.isCanceled()) {
       throw new SVNCancelException();
     }
-  }
-
-  public void handleEvent(final ProgressEvent event, final double progress) throws SVNException {
   }
 }

@@ -19,8 +19,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.update.FileGroup;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -29,7 +29,7 @@ public class IntegrateEventHandler extends UpdateEventHandler {
     super(vcs, progressIndicator, null);
   }
 
-  protected boolean handleInDescendants(final SVNEvent event) {
+  protected boolean handleInDescendants(final ProgressEvent event) {
     if ((event.getAction() == SVNEventAction.UPDATE_UPDATE) && (event.getContentsStatus() == SVNStatusType.UNCHANGED) &&
           (event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
         myText2 = SvnBundle.message("progres.text2.updated", event.getFile().getName());

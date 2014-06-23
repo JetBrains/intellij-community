@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -44,7 +45,7 @@ import java.util.List;
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  @Nullable private final ISVNEventHandler myHandler;
+  @Nullable private final ProgressTracker myHandler;
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
   protected CommittedChangeList myLatestProcessed;

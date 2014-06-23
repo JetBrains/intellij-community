@@ -29,7 +29,7 @@ public class SvnKitImportClient extends BaseSvnClient implements ImportClient {
                        @Nullable ISVNCommitHandler commitHandler) throws VcsException {
     SVNCommitClient client = myVcs.getSvnKitManager().createCommitClient();
 
-    client.setEventHandler(handler);
+    client.setEventHandler(toEventHandler(handler));
     client.setCommitHandler(commitHandler);
 
     try {

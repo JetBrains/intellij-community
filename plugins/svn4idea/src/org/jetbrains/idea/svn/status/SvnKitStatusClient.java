@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -36,13 +37,13 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   private SVNStatusClient myStatusClient;
   @Nullable private final ISVNStatusFileProvider myProvider;
-  @Nullable private final ISVNEventHandler myHandler;
+  @Nullable private final ProgressTracker myHandler;
 
   public SvnKitStatusClient() {
     this(null, null);
   }
 
-  public SvnKitStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ISVNEventHandler handler) {
+  public SvnKitStatusClient(@Nullable ISVNStatusFileProvider provider, @Nullable ProgressTracker handler) {
     myProvider = provider;
     myHandler = handler;
   }
@@ -93,7 +94,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
     if (myStatusClient == null) {
       myStatusClient = myVcs.getSvnKitManager().createStatusClient();
       myStatusClient.setFilesProvider(myProvider);
-      myStatusClient.setEventHandler(myHandler);
+      myStatusClient.setEventHandler(toEventHandler(myHandler));
     }
 
     return myStatusClient;

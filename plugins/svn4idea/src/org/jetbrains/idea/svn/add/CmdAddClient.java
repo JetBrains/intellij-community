@@ -6,12 +6,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -37,7 +37,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
                   boolean makeParents,
                   boolean includeIgnored,
                   boolean force,
-                  @Nullable ISVNEventHandler handler) throws VcsException {
+                  @Nullable ProgressTracker handler) throws VcsException {
     List<String> parameters = prepareParameters(file, depth, makeParents, includeIgnored, force);
 
     // TODO: handler should be called in parallel with command execution, but this will be in other thread
@@ -60,14 +60,13 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
     return parameters;
   }
 
-  private static class AddStatusConvertor implements Convertor<Matcher, SVNEvent> {
+  private static class AddStatusConvertor implements Convertor<Matcher, ProgressEvent> {
     @Override
-    public SVNEvent convert(Matcher o) {
+    public ProgressEvent convert(Matcher o) {
       SVNStatusType contentStatus = CommandUtil.getStatusType(o.group(1));
       String path = o.group(3);
 
-      return new SVNEvent(new File(path), null, null, 0, contentStatus, null, null, null, null, null, null, null,
-                          null, null, null);
+      return new ProgressEvent(new File(path), 0, contentStatus, null, null, null, null);
     }
   }
 }

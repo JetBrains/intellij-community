@@ -28,6 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
@@ -77,8 +79,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     checker.gather(changes);
     exceptions.addAll(checker.getExceptions());
 
-    ISVNEventHandler revertHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
+    ProgressTracker revertHandler = new ProgressTracker() {
+      public void handleEvent(ProgressEvent event, double progress) {
         if (event.getAction() == SVNEventAction.REVERT) {
           final File file = event.getFile();
           if (file != null) {
@@ -250,10 +252,10 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
   private static class Reverter {
     @NotNull private final SvnVcs myVcs;
-    private ISVNEventHandler myHandler;
+    private ProgressTracker myHandler;
     private final List<VcsException> myExceptions;
 
-    private Reverter(@NotNull SvnVcs vcs, ISVNEventHandler handler, List<VcsException> exceptions) {
+    private Reverter(@NotNull SvnVcs vcs, ProgressTracker handler, List<VcsException> exceptions) {
       myVcs = vcs;
       myHandler = handler;
       myExceptions = exceptions;

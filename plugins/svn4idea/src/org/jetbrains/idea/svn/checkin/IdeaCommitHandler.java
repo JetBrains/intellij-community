@@ -28,9 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 import java.io.File;
@@ -42,7 +42,7 @@ import java.util.List;
  * Date: 2/26/13
  * Time: 11:13 AM
  */
-public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
+public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
 
   private static final Logger LOG = Logger.getInstance(IdeaCommitHandler.class);
 
@@ -81,7 +81,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
     myProgress.setText2(SvnBundle.message("status.text.comitted.revision", revNum));
   }
 
-  public void handleEvent(SVNEvent event, double p) {
+  public void handleEvent(ProgressEvent event, double p) {
     final String path = SvnUtil.getPathForProgress(event);
     if (path != null) {
       CommitEventType eventType = convert(event.getAction());
@@ -120,7 +120,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
     }
   }
 
-  private void trackDeletedFile(@NotNull SVNEvent event) {
+  private void trackDeletedFile(@NotNull ProgressEvent event) {
     @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
     VirtualFile virtualFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Nullable

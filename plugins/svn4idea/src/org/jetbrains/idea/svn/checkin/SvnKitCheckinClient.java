@@ -49,7 +49,7 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
     SVNCommitClient committer = myVcs.getSvnKitManager().createCommitClient();
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator(), true, true);
 
-    committer.setEventHandler(handler);
+    committer.setEventHandler(toEventHandler(handler));
     try {
       commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, true, SVNDepth.EMPTY, true, null);
       results = committer.doCommit(commitPackets, keepLocks, comment);

@@ -45,14 +45,14 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import javax.swing.*;
@@ -288,9 +288,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files, final boolean recursive) {
     Collections.sort(files, FilePathComparator.getInstance());
 
-    ISVNEventHandler eventHandler = new SvnProgressCanceller() {
+    ProgressTracker eventHandler = new SvnProgressCanceller() {
       @Override
-      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+      public void handleEvent(ProgressEvent event, double progress) throws SVNException {
         // TODO: indicator is null here when invoking "Add" action
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         File file = event.getFile();

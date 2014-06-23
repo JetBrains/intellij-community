@@ -4,9 +4,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -24,7 +24,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     @NotNull File destination,
                     boolean dryRun,
                     @Nullable SVNDiffOptions diffOptions,
-                    @Nullable final ISVNEventHandler handler) throws VcsException {
+                    @Nullable final ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
     List<String> parameters = new ArrayList<String>();
@@ -43,7 +43,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     boolean recordOnly,
                     boolean force,
                     @Nullable SVNDiffOptions diffOptions,
-                    @Nullable ISVNEventHandler handler) throws VcsException {
+                    @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
     List<String> parameters = new ArrayList<String>();
@@ -66,7 +66,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     boolean recordOnly,
                     boolean force,
                     @Nullable SVNDiffOptions diffOptions,
-                    @Nullable ISVNEventHandler handler) throws VcsException {
+                    @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source1);
     assertUrl(source2);
 
@@ -102,7 +102,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
     CommandUtil.put(parameters, reintegrate, "--reintegrate");
   }
 
-  private void run(File destination, ISVNEventHandler handler, List<String> parameters) throws VcsException {
+  private void run(File destination, ProgressTracker handler, List<String> parameters) throws VcsException {
     BaseUpdateCommandListener listener = new BaseUpdateCommandListener(CommandUtil.correctUpToExistingParent(destination), handler);
 
     execute(myVcs, SvnTarget.fromFile(destination), SvnCommandName.merge, parameters, listener);

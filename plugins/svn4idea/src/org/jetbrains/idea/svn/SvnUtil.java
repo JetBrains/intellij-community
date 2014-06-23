@@ -45,6 +45,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
@@ -184,8 +186,8 @@ public class SvnUtil {
     final VcsException[] exception = new VcsException[1];
     final Collection<String> failedLocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
-    final ISVNEventHandler eventHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
+    final ProgressTracker eventHandler = new ProgressTracker() {
+      public void handleEvent(ProgressEvent event, double progress) {
         if (event.getAction() == SVNEventAction.LOCK_FAILED) {
           failedLocks.add(event.getErrorMessage() != null ?
                           event.getErrorMessage().getFullMessage() :
@@ -249,8 +251,8 @@ public class SvnUtil {
     final VcsException[] exception = new VcsException[1];
     final Collection<String> failedUnlocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
-    final ISVNEventHandler eventHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
+    final ProgressTracker eventHandler = new ProgressTracker() {
+      public void handleEvent(ProgressEvent event, double progress) {
         if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
           failedUnlocks.add(event.getErrorMessage() != null ?
                             event.getErrorMessage().getFullMessage() :
@@ -499,7 +501,7 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static String getPathForProgress(final SVNEvent event) {
+  public static String getPathForProgress(final ProgressEvent event) {
     if (event.getFile() != null) {
       return event.getFile().getName();
     }

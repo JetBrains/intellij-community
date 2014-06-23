@@ -9,11 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -34,7 +34,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH);
 
   @Override
-  public void upgrade(@NotNull File path, @NotNull WorkingCopyFormat format, @Nullable ISVNEventHandler handler) throws VcsException {
+  public void upgrade(@NotNull File path, @NotNull WorkingCopyFormat format, @Nullable ProgressTracker handler) throws VcsException {
     validateFormat(format, getSupportedFormats());
 
     // fake event indicating upgrade start
@@ -64,9 +64,9 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     return result;
   }
 
-  private static class UpgradeStatusConvertor implements Convertor<Matcher, SVNEvent> {
+  private static class UpgradeStatusConvertor implements Convertor<Matcher, ProgressEvent> {
 
-    public SVNEvent convert(@NotNull Matcher matcher) {
+    public ProgressEvent convert(@NotNull Matcher matcher) {
       String statusMessage = matcher.group(1);
       String path = matcher.group(2);
 

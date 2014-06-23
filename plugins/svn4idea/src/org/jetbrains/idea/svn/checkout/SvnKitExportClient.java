@@ -4,10 +4,10 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -27,10 +27,10 @@ public class SvnKitExportClient extends BaseSvnClient implements ExportClient {
                      @Nullable String nativeLineEnd,
                      boolean force,
                      boolean ignoreExternals,
-                     @Nullable ISVNEventHandler handler) throws VcsException {
+                     @Nullable ProgressTracker handler) throws VcsException {
     SVNUpdateClient client = myVcs.getSvnKitManager().createUpdateClient();
 
-    client.setEventHandler(handler);
+    client.setEventHandler(toEventHandler(handler));
     client.setIgnoreExternals(ignoreExternals);
 
     try {

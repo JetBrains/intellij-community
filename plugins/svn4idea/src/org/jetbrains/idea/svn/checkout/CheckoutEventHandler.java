@@ -24,14 +24,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
-public class CheckoutEventHandler implements ISVNEventHandler {
+public class CheckoutEventHandler implements ProgressTracker {
   @Nullable private final ProgressIndicator myIndicator;
   private int myExternalsCount;
   @NotNull private final SvnVcs myVCS;
@@ -46,7 +46,7 @@ public class CheckoutEventHandler implements ISVNEventHandler {
     myCnt = 0;
   }
 
-  public void handleEvent(SVNEvent event, double progress) {
+  public void handleEvent(ProgressEvent event, double progress) {
     final String path = SvnUtil.getPathForProgress(event);
     if (path == null) {
       return;
