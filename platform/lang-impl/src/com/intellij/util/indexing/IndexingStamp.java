@@ -166,7 +166,7 @@ public class IndexingStamp {
           int[] outdatedIndices = null;
           long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
           long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
-          if (diff != 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
+          if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
             int numberOfOutdatedIndices = (int)diff;
             outdatedIndices = new int[numberOfOutdatedIndices];
             while(numberOfOutdatedIndices > 0) {

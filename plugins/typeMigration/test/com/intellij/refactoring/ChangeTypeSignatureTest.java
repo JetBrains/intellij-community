@@ -4,7 +4,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,7 +19,7 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/plugins/typeMigration/testData";
+    return PluginPathManager.getPluginHomePath("typeMigration") + "/testData";
   }
 
   private void doTest(boolean success, String migrationTypeText) throws Exception {
