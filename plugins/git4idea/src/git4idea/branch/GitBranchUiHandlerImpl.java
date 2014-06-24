@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -125,20 +126,21 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
-                                                      @NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Could not " + StringUtil.capitalize(operationName);
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
+  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal,
+                                                      @NotNull final Collection<VirtualFile> untrackedFiles) {
+    final String title = "Could not " + StringUtil.capitalize(operationName);
+    final String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
 
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, StringUtil.stripHtml(description, true), rollbackProposal);
-    dialog.setTitle(title);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    return UIUtil.invokeAndWaitIfNeeded(new Computable<Boolean>() {
       @Override
-      public void run() {
+      public Boolean compute() {
+        SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles,
+                                                            StringUtil.stripHtml(description, true), rollbackProposal);
+        dialog.setTitle(title);
         myFacade.showDialog(dialog);
+        return dialog.isOK();
       }
     });
-    return dialog.isOK();
   }
 
   @NotNull
