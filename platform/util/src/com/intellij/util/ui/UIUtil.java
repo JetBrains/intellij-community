@@ -908,20 +908,24 @@ public class UIUtil {
     return UIManager.getBorder("Button.border");
   }
 
+  @NotNull
   public static Icon getErrorIcon() {
-    return UIManager.getIcon("OptionPane.errorIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
   }
 
+  @NotNull
   public static Icon getInformationIcon() {
-    return UIManager.getIcon("OptionPane.informationIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
   }
 
+  @NotNull
   public static Icon getQuestionIcon() {
-    return UIManager.getIcon("OptionPane.questionIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
   }
 
+  @NotNull
   public static Icon getWarningIcon() {
-    return UIManager.getIcon("OptionPane.warningIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
   }
 
   public static Icon getBalloonInformationIcon() {
