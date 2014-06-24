@@ -31,7 +31,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -79,7 +78,7 @@ public class SvnFileRevision implements VcsFileRevision {
 
   public SvnFileRevision(SvnVcs vcs,
                          SVNRevision pegRevision,
-                         SVNLogEntry logEntry,
+                         LogEntry logEntry,
                          String url,
                          String copyFromPath, Charset charset) {
     myCharset = charset;

@@ -34,7 +34,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                     boolean includeMergedRevisions,
                     long limit,
                     @Nullable String[] revisionProperties,
-                    @Nullable ISVNLogEntryHandler handler) throws VcsException {
+                    @Nullable LogEntryConsumer handler) throws VcsException {
     // TODO: add revision properties parameter if necessary
 
     List<String> parameters =
@@ -51,7 +51,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static void parseOutput(@NotNull CommandExecutor command, @Nullable ISVNLogEntryHandler handler)
+  private static void parseOutput(@NotNull CommandExecutor command, @Nullable LogEntryConsumer handler)
     throws VcsException, SVNException {
     try {
       LogInfo log = CommandUtil.parse(command.getOutput(), LogInfo.class);
@@ -67,8 +67,8 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static void iterateRecursively(@NotNull LogEntry entry, @NotNull ISVNLogEntryHandler handler) throws SVNException {
-    handler.handleLogEntry(entry.toLogEntry());
+  private static void iterateRecursively(@NotNull LogEntry entry, @NotNull LogEntryConsumer handler) throws SVNException {
+    handler.consume(entry.toLogEntry());
 
     for (LogEntry childEntry : entry.childEntries) {
       iterateRecursively(childEntry, handler);
@@ -76,7 +76,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
 
     if (entry.hasChildren()) {
       // empty log entry passed to handler to fully correspond to SVNKit behavior.
-      handler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
+      handler.consume(org.jetbrains.idea.svn.history.LogEntry.EMPTY);
     }
   }
 
@@ -134,12 +134,9 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       return !childEntries.isEmpty();
     }
 
-    public SVNLogEntry toLogEntry() {
-      SVNLogEntry entry = new SVNLogEntry(toChangedPathsMap(), revision, author, date, message);
-
-      entry.setHasChildren(hasChildren());
-
-      return entry;
+    @NotNull
+    public org.jetbrains.idea.svn.history.LogEntry toLogEntry() {
+      return new org.jetbrains.idea.svn.history.LogEntry(toChangedPathsMap(), revision, author, date, message, hasChildren());
     }
 
     public Map<String, SVNLogEntryPath> toChangedPathsMap() {

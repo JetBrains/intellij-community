@@ -35,9 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.history.HistoryClient;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnFileRevision;
+import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -454,8 +452,9 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     private void doLog(final boolean includeMerged, final SVNRevision truncateTo, final int max) throws VcsException {
       myClient.doLog(SvnTarget.fromFile(myIoFile), myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
                      false, false, includeMerged, max, null,
-                     new ISVNLogEntryHandler() {
-                       public void handleLogEntry(SVNLogEntry logEntry) {
+                     new LogEntryConsumer() {
+                       @Override
+                       public void consume(LogEntry logEntry) {
                          if (SVNRevision.UNDEFINED.getNumber() == logEntry.getRevision()) {
                            return;
                          }

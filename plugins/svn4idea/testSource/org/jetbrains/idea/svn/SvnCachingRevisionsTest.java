@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.svn.history.*;
-import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -37,7 +37,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   private SvnChangeList createList(final long revision) {
     return new SvnChangeList(null, myLocation,
-                             new SVNLogEntry(Collections.emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), ""), ROOT.toDecodedString());
+                             new LogEntry(Collections.<String, SVNLogEntryPath>emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), "", false), ROOT.toDecodedString());
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {

@@ -17,9 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -33,7 +31,7 @@ import java.util.Map;
  *
  * We consider here, that history is traversed "from now to past"
  */
-public class SvnPathThroughHistoryCorrection implements ISVNLogEntryHandler {
+public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
   private String myBefore;
   private String myPath;
   private SVNLogEntryPath myDirectlyMentioned;
@@ -46,7 +44,7 @@ public class SvnPathThroughHistoryCorrection implements ISVNLogEntryHandler {
   }
 
   @Override
-  public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+  public void consume(LogEntry logEntry) throws SVNException {
     if (myRoot) {
       return;
     }

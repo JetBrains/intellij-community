@@ -93,9 +93,10 @@ public class LatestExistentSearcher {
   }
 
   @NotNull
-  private ISVNLogEntryHandler createHandler(@NotNull final Ref<Long> latest) {
-    return new ISVNLogEntryHandler() {
-      public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
+  private LogEntryConsumer createHandler(@NotNull final Ref<Long> latest) {
+    return new LogEntryConsumer() {
+      @Override
+      public void consume(final LogEntry logEntry) throws SVNException {
         final Map changedPaths = logEntry.getChangedPaths();
         for (Object o : changedPaths.values()) {
           final SVNLogEntryPath path = (SVNLogEntryPath)o;

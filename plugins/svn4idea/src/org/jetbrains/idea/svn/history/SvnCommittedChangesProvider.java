@@ -139,8 +139,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       final String repositoryRoot = getRepositoryRoot(svnLocation);
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
 
-      getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
-        public void consume(final SVNLogEntry svnLogEntry) {
+      getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+        public void consume(final LogEntry svnLogEntry) {
           final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot);
           if (filter.accepts(cl)) {
             consumer.consume(cl);
@@ -158,8 +158,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
-      public void consume(final SVNLogEntry svnLogEntry) {
+    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+      public void consume(final LogEntry svnLogEntry) {
         result.add(new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot));
       }
     }, false, true);
@@ -169,24 +169,24 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public void getCommittedChangesWithMergedRevisons(final ChangeBrowserSettings settings,
                                                                    final RepositoryLocation location, final int maxCount,
-                                                                   final PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>> finalConsumer)
+                                                                   final PairConsumer<SvnChangeList, TreeStructureNode<LogEntry>> finalConsumer)
     throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<TreeStructureNode<SVNLogEntry>>() {
-      public void consume(TreeStructureNode<SVNLogEntry> node) {
+    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<TreeStructureNode<LogEntry>>() {
+      public void consume(TreeStructureNode<LogEntry> node) {
         finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node);
       }
     });
-    final SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
-      public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+    final SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<LogEntry, Integer>, SVNException>() {
+      public void consume(Pair<LogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
         builder.consume(svnLogEntryIntegerPair);
       }
     });
 
-    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<SVNLogEntry>() {
-      public void consume(final SVNLogEntry svnLogEntry) {
+    getCommittedChangesImpl(settings, svnLocation, maxCount, new Consumer<LogEntry>() {
+      public void consume(final LogEntry svnLogEntry) {
         try {
           mergeSourceTracker.consume(svnLogEntry);
         }
@@ -214,7 +214,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, final SvnRepositoryLocation location,
-                                       final int maxCount, final Consumer<SVNLogEntry> resultConsumer, final boolean includeMergedRevisions,
+                                       final int maxCount, final Consumer<LogEntry> resultConsumer, final boolean includeMergedRevisions,
                                        final boolean filterOutByDate) throws VcsException {
     setCollectingChangesProgress(location);
 
@@ -252,11 +252,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private ISVNLogEntryHandler createLogHandler(final Consumer<SVNLogEntry> resultConsumer,
+  private LogEntryConsumer createLogHandler(final Consumer<LogEntry> resultConsumer,
                                                final boolean filterOutByDate,
                                                final String author) {
-    return new ISVNLogEntryHandler() {
-      public void handleLogEntry(SVNLogEntry logEntry) {
+    return new LogEntryConsumer() {
+      @Override
+      public void consume(LogEntry logEntry) {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
 
         ProgressManager.progress2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));

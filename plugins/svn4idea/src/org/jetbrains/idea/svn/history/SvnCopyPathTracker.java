@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -45,7 +44,7 @@ public class SvnCopyPathTracker {
     myCurrentPath = relativeUrl;
   }
 
-  public void accept(@NotNull final SVNLogEntry entry) {
+  public void accept(@NotNull final LogEntry entry) {
     final Map changedPaths = entry.getChangedPaths();
     if (changedPaths == null) return;
 

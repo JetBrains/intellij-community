@@ -125,7 +125,7 @@ public class FirstInBranch implements Runnable {
     }
   }
 
-  private static class MyLogEntryHandler implements ISVNLogEntryHandler {
+  private static class MyLogEntryHandler implements LogEntryConsumer {
 
     @NotNull private final SvnPathThroughHistoryCorrection myTrunkCorrector;
     @NotNull private final SvnPathThroughHistoryCorrection myBranchCorrector;
@@ -137,15 +137,16 @@ public class FirstInBranch implements Runnable {
       myBranchCorrector = new SvnPathThroughHistoryCorrection(branchUrl);
     }
 
-    public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+    @Override
+    public void consume(LogEntry logEntry) throws SVNException {
       final Map map = logEntry.getChangedPaths();
       checkEntries(logEntry, map);
-      myTrunkCorrector.handleLogEntry(logEntry);
-      myBranchCorrector.handleLogEntry(logEntry);
+      myTrunkCorrector.consume(logEntry);
+      myBranchCorrector.consume(logEntry);
       checkEntries(logEntry, map);
     }
 
-    private void checkEntries(SVNLogEntry logEntry, Map map) throws SVNCancelException {
+    private void checkEntries(LogEntry logEntry, Map map) throws SVNCancelException {
       for (Object o : map.values()) {
         final SVNLogEntryPath path = (SVNLogEntryPath) o;
         final String localPath = path.getPath();
@@ -159,7 +160,7 @@ public class FirstInBranch implements Runnable {
       }
     }
 
-    private boolean checkForCopyCase(SVNLogEntry logEntry, SVNLogEntryPath path, String localPath, String copyPath,
+    private boolean checkForCopyCase(LogEntry logEntry, SVNLogEntryPath path, String localPath, String copyPath,
                                      final String trunkUrl, final String branchUrl) {
       if (equalOrParent(localPath, branchUrl) && equalOrParent(copyPath, trunkUrl)) {
         myCopyDataConsumer.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), true));

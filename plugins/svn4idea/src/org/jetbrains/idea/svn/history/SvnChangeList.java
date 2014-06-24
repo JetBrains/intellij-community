@@ -102,7 +102,7 @@ public class SvnChangeList implements CommittedChangeList {
     myKnownAsDirectories = new HashSet<String>(0);
   }
 
-  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
+  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final LogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
     myRevision = logEntry.getRevision();
