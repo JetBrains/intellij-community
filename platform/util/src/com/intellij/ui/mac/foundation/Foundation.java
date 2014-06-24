@@ -311,6 +311,8 @@ public class Foundation {
     public int count() {
       return invoke(myDelegate, "count").intValue();
     }
+
+    public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
   }
 
   public static class NSArray {
