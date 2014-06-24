@@ -105,7 +105,11 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       }
       else {
         path = matcher.group(4);
-        name = matcher.group(3) + " .." + path.substring(path.lastIndexOf("/"));
+        final int index = path.lastIndexOf(File.separator);
+        if (index > 0) {
+          path = path.substring(index);
+        }
+        name = matcher.group(3) + " .." + path;
       }
     }
     else if (new File(name).exists()) {
