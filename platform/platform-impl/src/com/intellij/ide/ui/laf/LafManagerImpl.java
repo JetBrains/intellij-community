@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -76,9 +77,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -692,16 +691,20 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void patchOptionPaneIcons(final UIDefaults defaults) {
-    if (UIUtil.isUnderGTKLookAndFeel() && defaults.get(ourOptionPaneIconKeys[0]) == null) {
-      // GTK+ L&F keeps icons hidden in style
-      final SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
-      if (style != null) {
-        for (final String key : ourOptionPaneIconKeys) {
-          final Object icon = style.get(null, key);
-          if (icon != null) defaults.put(key, icon);
-        }
-      }
+  private static void patchOptionPaneIcons(UIDefaults defaults) {
+    if (!UIUtil.isUnderGTKLookAndFeel()) return;
+
+    Map<String, Icon> map = ContainerUtil.newHashMap(
+      Arrays.asList("OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"),
+      Arrays.asList(AllIcons.General.ErrorDialog, AllIcons.General.InformationDialog, AllIcons.General.WarningDialog, AllIcons.General.QuestionDialog));
+
+    // GTK+ L&F keeps icons hidden in style
+    SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
+    for (String key : map.keySet()) {
+      if (defaults.get(key) != null) continue;
+
+      Object icon = style == null ? null : style.get(null, key);
+      defaults.put(key, icon instanceof Icon ? icon : map.get(key));
     }
   }
 
