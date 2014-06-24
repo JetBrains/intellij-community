@@ -1339,9 +1339,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       });
     }
 
-    private synchronized void buildActionsAndSettings(String pattern) {
-      final Set<Object> actions = new HashSet<Object>();
-      final Set<Object> settings = new HashSet<Object>();
+    private SearchResult getActionsOrSettings(final String pattern, final int max, final boolean actions) {
+      final SearchResult result = new SearchResult();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       if (myActions == null) {
         if (myActionModel == null) {
@@ -1357,16 +1356,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
           check();
-          if (isSetting(object) && settings.size() < MAX_SETTINGS) {
+          if (myListModel.contains(object)) continue;
+
+          if (!actions && isSetting(object)) {
             if (matcher.matches(getSettingText((OptionDescription)object))) {
-              settings.add(object);
+              result.add(object);
             }
+          } else if (actions && !isToolWindowAction(object) && isActionValue(object)) {
+            result.add(object);
           }
-          else if (!isToolWindowAction(object) && isActionValue(object) && actions.size() < MAX_ACTIONS) {
-            actions.add(object);
-          }
+          if (result.size() == max) return result;
         }
       }
+      return result;
+    }
+
+    private synchronized void buildActionsAndSettings(String pattern) {
+      final SearchResult actions = getActionsOrSettings(pattern, MAX_ACTIONS, true);
+      final SearchResult settings = getActionsOrSettings(pattern, MAX_SETTINGS, false);
 
       check();
 
@@ -1929,6 +1936,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   : id == WidgetID.FILES ? getFiles(pattern, DEFAULT_MORE_STEP_COUNT)
                   : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
                   : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT)
+                  : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
+                  : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
                   : new SearchResult();
 
                 check();
