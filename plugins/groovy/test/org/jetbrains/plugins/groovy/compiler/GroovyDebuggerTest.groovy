@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,7 +339,7 @@ foo()
     }
   }
 
-  public void "test navigation to script outside source root"() {
+  public void "test_navigation_outside_source"() {
     def module1 = addModule("module1", false)
     def module2 = addModule("module2", true)
     addGroovyLibrary(module1)
