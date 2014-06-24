@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
+import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextUtil
 import com.intellij.debugger.impl.DebuggerManagerImpl
@@ -410,6 +411,18 @@ public static void main(String[] args) {
   }
 
   private SuspendContextImpl waitForBreakpoint() {
+    Semaphore semaphore = new Semaphore()
+    semaphore.down()
+    // wait for all events processed
+    debugProcess.managerThread.schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        semaphore.up();
+      }
+    });
+    def finished = semaphore.waitFor(10000);
+    assert finished : 'Too long debugger actions'
+
     int i = 0
     def suspendManager = debugProcess.suspendManager
     while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.executionResult.processHandler.processTerminated) {
