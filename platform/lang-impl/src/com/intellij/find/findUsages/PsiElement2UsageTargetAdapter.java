@@ -199,6 +199,9 @@ public class PsiElement2UsageTargetAdapter
         sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
       }
     }
+    else if (key == UsageView.USAGE_SCOPE) {
+      sink.put(UsageView.USAGE_SCOPE, myOptions.searchScope);
+    }
   }
 
   @Override

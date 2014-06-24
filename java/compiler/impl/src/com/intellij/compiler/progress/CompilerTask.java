@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,15 +120,18 @@ public class CompilerTask extends Task.Backgroundable {
     mySessionId = sessionId;
   }
 
+  @Override
   public String getProcessId() {
     return "compilation";
   }
 
+  @NotNull
   @Override
   public DumbModeAction getDumbModeAction() {
     return DumbModeAction.WAIT;
   }
 
+  @Override
   public boolean shouldStartInBackground() {
     return true;
   }
@@ -137,6 +140,7 @@ public class CompilerTask extends Task.Backgroundable {
     return myIndicator;
   }
 
+  @Override
   @Nullable
   public NotificationInfo getNotificationInfo() {
     return new NotificationInfo(myErrorCount > 0? "Compiler (errors)" : "Compiler (success)", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
@@ -144,6 +148,7 @@ public class CompilerTask extends Task.Backgroundable {
 
   private CloseListener myCloseListener;
 
+  @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
 
@@ -197,6 +202,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final Project project = myProject;
         if (project == null || project.isDisposed()) {
@@ -218,12 +224,14 @@ public class CompilerTask extends Task.Backgroundable {
     if (!(indicator instanceof ProgressIndicatorEx)) return;
     ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
 
+      @Override
       public void cancel() {
         super.cancel();
         closeUI();
         stopAppIconProgress();
       }
 
+      @Override
       public void stop() {
         super.stop();
         if (!isCanceled()) {
@@ -234,6 +242,7 @@ public class CompilerTask extends Task.Backgroundable {
 
       private void stopAppIconProgress() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             AppIcon appIcon = AppIcon.getInstance();
             if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
@@ -249,26 +258,31 @@ public class CompilerTask extends Task.Backgroundable {
         });
       }
 
+      @Override
       public void setText(final String text) {
         super.setText(text);
         updateProgressText();
       }
 
+      @Override
       public void setText2(final String text) {
         super.setText2(text);
         updateProgressText();
       }
 
+      @Override
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
         updateProgressText();
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
           }
         });
       }
 
+      @Override
       protected void onProgressChange() {
         prepareMessageView();
       }
@@ -301,6 +315,7 @@ public class CompilerTask extends Task.Backgroundable {
       final Window window = getWindow();
       final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (!myProject.isDisposed()) {
             openMessageView();
@@ -409,10 +424,12 @@ public class CompilerTask extends Task.Backgroundable {
       );
       
       myErrorTreeView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
+        @Override
         public void stopProcess() {
           cancel();
         }
 
+        @Override
         public boolean isProcessStopped() {
           return !myIndicator.isRunning();
         }
@@ -485,6 +502,7 @@ public class CompilerTask extends Task.Backgroundable {
     ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
+      @Override
       public void run() {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
@@ -508,6 +526,7 @@ public class CompilerTask extends Task.Backgroundable {
     return null;
   }
 
+  @Override
   public boolean isHeadless() {
     return myHeadlessMode && !myForceAsyncExecution;
   }
@@ -542,6 +561,7 @@ public class CompilerTask extends Task.Backgroundable {
     private boolean myIsApplicationExitingOrProjectClosing = false;
     private boolean myUserAcceptedCancel = false;
 
+    @Override
     public boolean canCloseProject(final Project project) {
       assert project != null;
       if (!project.equals(myProject)) {
@@ -561,6 +581,7 @@ public class CompilerTask extends Task.Backgroundable {
 
         final MessageBusConnection connection = project.getMessageBus().connect();
         connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
+          @Override
           public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
             connection.disconnect();
             ProjectUtil.closeAndDispose(project);
@@ -578,6 +599,7 @@ public class CompilerTask extends Task.Backgroundable {
       contentManager.addContentManagerListener(this);
     }
 
+    @Override
     public void contentRemoved(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
@@ -598,6 +620,7 @@ public class CompilerTask extends Task.Backgroundable {
       }
     }
 
+    @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myIndicator.isCanceled() && shouldAskUser()) {
@@ -620,15 +643,18 @@ public class CompilerTask extends Task.Backgroundable {
       return !myUserAcceptedCancel && !myIsApplicationExitingOrProjectClosing && myIndicator.isRunning();
     }
 
+    @Override
     public void projectOpened(Project project) {
     }
 
+    @Override
     public void projectClosed(Project project) {
       if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
     }
 
+    @Override
     public void projectClosing(Project project) {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
@@ -643,6 +669,7 @@ public class CompilerTask extends Task.Backgroundable {
       myDisplayName = displayName;
     }
   
+    @Override
     public String toString() {
       return myDisplayName;
     }

@@ -34,6 +34,7 @@ public abstract class SearchScope {
     return myHashCode;
   }
 
+  @NotNull
   public String getDisplayName() {
     return PsiBundle.message("search.scope.unknown");
   }

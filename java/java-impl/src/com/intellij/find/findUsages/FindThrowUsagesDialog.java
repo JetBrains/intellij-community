@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,9 +33,13 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
   private boolean myHasFindWhatPanel;
   private ThrowSearchUtil.Root [] myRoots;
 
-  public FindThrowUsagesDialog(final PsiElement element, final Project project,
-                               final FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
-                               boolean isSingleFile, FindUsagesHandler handler){
+  public FindThrowUsagesDialog(@NotNull PsiElement element,
+                               @NotNull Project project,
+                               @NotNull JavaThrowFindUsagesOptions findUsagesOptions,
+                               boolean toShowInNewTab,
+                               boolean mustOpenInNewTab,
+                               boolean isSingleFile,
+                               @NotNull FindUsagesHandler handler) {
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
@@ -92,7 +97,7 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
 
   @Override
   protected void doOKAction() {
-    myFindUsagesOptions.putUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY, (ThrowSearchUtil.Root)myCbExns.getSelectedItem());
+    getFindUsagesOptions().setRoot((ThrowSearchUtil.Root)myCbExns.getSelectedItem());
     super.doOKAction();
   }
 
@@ -102,7 +107,7 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
       setOKActionEnabled(true);
     }
     else{
-      myFindUsagesOptions.putUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY, (ThrowSearchUtil.Root)myCbExns.getSelectedItem());
+      getFindUsagesOptions().setRoot((ThrowSearchUtil.Root)myCbExns.getSelectedItem());
       final boolean hasSelected = isSelected(myCbUsages);
       setOKActionEnabled(hasSelected);
     }

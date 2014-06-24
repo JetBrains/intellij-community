@@ -82,6 +82,7 @@ public class GlobalSearchScopesCore {
       return false;
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
       return mySet.getName();
@@ -137,6 +138,7 @@ public class GlobalSearchScopesCore {
       return false;
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
       return PsiBundle.message("psi.search.scope.production.files");
@@ -176,6 +178,7 @@ public class GlobalSearchScopesCore {
       return false;
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
       return PsiBundle.message("psi.search.scope.test.files");

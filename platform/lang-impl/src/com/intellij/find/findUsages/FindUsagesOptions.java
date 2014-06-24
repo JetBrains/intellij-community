@@ -21,7 +21,6 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
+public class FindUsagesOptions implements Cloneable {
   @NotNull
   public SearchScope searchScope;
 
@@ -66,7 +65,12 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
 
   @Override
   public FindUsagesOptions clone() {
-    return (FindUsagesOptions)super.clone();
+    try {
+      return (FindUsagesOptions)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

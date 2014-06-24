@@ -83,6 +83,7 @@ public class SearchScope implements JDOMExternalizable {
         myCustomScope = customScope;
     }
 
+  @NotNull
     public String getName() {
         switch (getScopeType()) {
             case PROJECT:

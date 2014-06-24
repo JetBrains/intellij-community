@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ public interface UsageView extends Disposable {
   @Deprecated String USAGE_VIEW = USAGE_VIEW_KEY.getName();
 
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
+  DataKey<SearchScope> USAGE_SCOPE = DataKey.create("UsageScope");
 
   DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 

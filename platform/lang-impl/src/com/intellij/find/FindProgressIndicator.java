@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package com.intellij.find;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public class FindProgressIndicator extends BackgroundableProcessIndicator {
-  public FindProgressIndicator(Project project, String scopeString) {
+  public FindProgressIndicator(@NotNull Project project, String scopeString) {
     super(project,
          FindBundle.message("find.progress.searching.message", scopeString),
          new SearchInBackgroundOption(),

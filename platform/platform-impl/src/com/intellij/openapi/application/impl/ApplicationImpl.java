@@ -1049,7 +1049,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void assertReadAccessAllowed() {
-    if (myHeadlessMode) return;
     if (!isReadAccessAllowed()) {
       LOG.error(
         "Read access is allowed from event dispatch thread or inside read-action only" +
