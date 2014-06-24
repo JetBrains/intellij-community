@@ -171,7 +171,6 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         return GrTraitUtil.getTraitFieldPrefix(prototype.getContainingClass()) + newPrototypeName;
       }
 
-      LOG.error(element);
       return null;
     }
 
@@ -202,7 +201,6 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
         return getNewElement(prototype);
       }
 
-      LOG.error(element);
       return null;
     }
   }
