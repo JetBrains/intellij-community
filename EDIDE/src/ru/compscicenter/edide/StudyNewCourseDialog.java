@@ -34,6 +34,13 @@ public class StudyNewCourseDialog extends DialogWrapper {
 
     final FileChooserDescriptor fileChooser = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     myCourseLocationField.addBrowseFolderListener("Select course file", null, project, fileChooser);
+    myCourseLocationField.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        String text = myCourseLocationField.getText();
+        StudyDirectoryProjectGenerator.setMyLocalCourseBaseFileName(text);
+      }
+    });
 
 
 
@@ -41,8 +48,8 @@ public class StudyNewCourseDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         JComboBox cb = (JComboBox)e.getSource();
-        String testString = (String)cb.getSelectedItem();
-        StudyDirectoryProjectGenerator.setMyBaseCourseFile(testString);
+        String selectedFileName = (String)cb.getSelectedItem();
+        StudyDirectoryProjectGenerator.setMyDefaultSelectedCourseName(selectedFileName);
       }
     });
     myRefreshButton.addActionListener(new ActionListener() {

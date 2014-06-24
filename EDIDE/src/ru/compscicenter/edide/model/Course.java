@@ -8,8 +8,10 @@ import java.util.List;
  * Time: 19:00
  */
 public class Course {
-  private List<Lesson> lessons;
 
+  private List<Lesson> lessons;
+  private String description;
+  private String name;
   public List<Lesson> getLessons() {
     return lessons;
   }

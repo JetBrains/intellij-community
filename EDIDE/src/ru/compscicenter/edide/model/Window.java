@@ -7,8 +7,10 @@ package ru.compscicenter.edide.model;
  */
 public class Window {
   private int line;
-  private int offset;
+  private int start;
   private String text;
+  private String hint;
+  private String possibleAnswer;
 
   public int getLine() {
     return line;
@@ -18,13 +20,6 @@ public class Window {
     this.line = line;
   }
 
-  public int getOffset() {
-    return offset;
-  }
-
-  public void setOffset(int offset) {
-    this.offset = offset;
-  }
 
   public String getText() {
     return text;

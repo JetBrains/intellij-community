@@ -6,16 +6,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.lang.javascript.boilerplate.GithubDownloadUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.templates.github.ZipUtil;
@@ -43,6 +39,8 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   private static File myDefaultCoursesBaseDir;
   private static Map<String, File> myDefaultCourseFiles =  new HashMap<String, File>();
   private Map<String, File> myDefaultCourses;
+  private static String myLocalCourseBaseFileName;
+  private static String myDefaultSelectedCourseName;
 
   @Nls
   @NotNull
@@ -52,15 +50,42 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   }
 
 
+  public static void setMyLocalCourseBaseFileName(String fileName) {
+    myLocalCourseBaseFileName = fileName;
+  }
 
+  public static void setMyDefaultSelectedCourseName(String defaultSelectedCourseName) {
+    myDefaultSelectedCourseName = defaultSelectedCourseName;
+  }
 
   public StudyDirectoryProjectGenerator() {
     myDefaultCoursesBaseDir = new File(PathManager.getLibPath() + "/courses");
   }
 
-  public static File getMyDefaultCoursesBaseDir() {
-    return myDefaultCoursesBaseDir;
+
+  public File getBaseCourseFile() {
+    if (myLocalCourseBaseFileName != null) {
+      File file = new File(myLocalCourseBaseFileName);
+      if (file.exists()) {
+        return file;
+      } else {
+        LOG.error("such course file doesn't exist");
+      }
+    } else {
+      if (myDefaultSelectedCourseName != null) {
+        File file = myDefaultCourses.get(myDefaultSelectedCourseName);
+        if (file!=null && file.exists()) {
+          return file;
+        }
+      } else {
+        if (myDefaultCourses.size() > 0) {
+          return myDefaultCourses.entrySet().iterator().next().getValue();
+        }
+      }
+    }
+    return null;
   }
+
 
   public static File getResourcesRoot() {
     @NonNls String jarPath = PathUtil.getJarPathForClass(StudyDirectoryProjectGenerator.class);
@@ -112,16 +137,21 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     ////select course window
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, myDefaultCourses.keySet());
     dlg.show();
-    //InputStream file = null;
-    //try {
-    //  file = new FileInputStream(myBaseCourseFile);
-    //}
-    //catch (FileNotFoundException e) {
-    //  e.printStackTrace();
-    //}
-    //Reader reader = new InputStreamReader(file);
-    //Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-    //Course course = gson.fromJson(reader, Course.class);
+
+    myBaseCourseFile = getBaseCourseFile();
+    if (myBaseCourseFile == null) {
+      LOG.error("user didn't choose any course files");
+      return;
+    }
+    try {
+      Reader reader = new InputStreamReader(new FileInputStream(myBaseCourseFile));
+      Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+      Course course = gson.fromJson(reader, Course.class);
+    }
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+
     //System.out.println();
     //
     //ApplicationManager.getApplication().invokeLater(
@@ -204,9 +234,9 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
                     String tmp = name;
                     while(item!= null && !FileUtil.filesEqual(item, courseFile)) {
                       if (i>2)  {
-                        name = name.substring(0, name.length() - 3);
+                        name = name.substring(0, name.length() - 2);
                       }
-                      name = tmp + Integer.toString(i);
+                      name = name + Integer.toString(i);
                       i++;
                       item = defaultCourses.get(name);
                     }
