@@ -281,12 +281,12 @@ public class ClassesProcessor {
 			int index = cl.qualifiedName.lastIndexOf("/");
 			if(index >= 0) {
         String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
-                outwriter.write("package ");
-                outwriter.write(packageName);
-                outwriter.write(";");
-                outwriter.write(DecompilerContext.getNewLineSeparator());
-                outwriter.write(DecompilerContext.getNewLineSeparator());
-			}
+        outwriter.write("package ");
+        outwriter.write(packageName);
+        outwriter.write(";");
+        outwriter.write(DecompilerContext.getNewLineSeparator());
+        outwriter.write(DecompilerContext.getNewLineSeparator());
+      }
 			
 			DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASSNODE, root);
 
