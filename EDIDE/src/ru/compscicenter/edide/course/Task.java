@@ -1,5 +1,9 @@
-package ru.compscicenter.edide.model;
+package ru.compscicenter.edide.course;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -39,5 +43,12 @@ public class Task {
 
   public void setText(String text) {
     this.text = text;
+  }
+
+  public void create(Project project, VirtualFile baseDir, int index, String resourseRoot) throws IOException {
+    VirtualFile taskDir = baseDir.createChildDirectory(this, "task" + Integer.toString(index));
+    for (int i = 0; i < taskFiles.size(); i++) {
+      taskFiles.get(i).create(project, taskDir, resourseRoot+"/"+taskDir.getName());
+    }
   }
 }

@@ -1,4 +1,4 @@
-package ru.compscicenter.edide.model;
+package ru.compscicenter.edide.course;
 
 /**
  * User: lia

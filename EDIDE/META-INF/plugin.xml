@@ -33,9 +33,9 @@
 
   <project-components>
     <!-- Add your project components here -->
-    <component>
+    <!--component>
       <implementation-class>ru.compscicenter.edide.TaskManager</implementation-class>
-    </component>
+    </component-->
   </project-components>
 
   <actions>
@@ -59,7 +59,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
-    <fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/>
+    <!--fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/-->
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
     <documentationProvider implementation="ru.compscicenter.edide.StudyDocumentationProvider"/>
     <!--projectService  serviceImplementation="ru.compscicenter.edide.StudyPlugin"/-->

@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.PathUtil;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.compscicenter.edide.model.Course;
+import ru.compscicenter.edide.course.Course;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,6 +148,8 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
       Reader reader = new InputStreamReader(new FileInputStream(myBaseCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
+      course.create(project, baseDir, myBaseCourseFile.getParent());
+      VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     }
     catch (FileNotFoundException e) {
       e.printStackTrace();
