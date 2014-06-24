@@ -73,7 +73,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!AFTER_NUMBER_LITERAL.accepts(parameters.getPosition())) {
       super.fillCompletionVariants(parameters, result);
     }

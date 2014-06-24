@@ -34,7 +34,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   private static final InsertHandler<LookupElement> INSERT_HANDLER = new MyInsertHandler();
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), true));
     }

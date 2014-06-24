@@ -66,7 +66,7 @@ public class DefaultCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+  public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     final LookupElement[] items = context.getItems();
     if (items.length == 1) {
       final LookupElement item = items[0];
