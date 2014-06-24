@@ -19,11 +19,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import git4idea.GitPlatformFacade;
@@ -351,12 +351,11 @@ abstract class GitBranchOperation {
                                              @NotNull Collection<String> affectedPaths, boolean relativePaths) {
     List<Change> affectedChanges = new ArrayList<Change>();
     for (String path : affectedPaths) {
-      VirtualFile file;
-      if (relativePaths) {
-        file = repository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(path));
-      }
-      else {
-        file = myFacade.getVirtualFileByPath(path);
+      String absolutePath = relativePaths ? joinPaths(repository.getRoot(), path) : path;
+
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absolutePath);
+      if (file == null) {
+        file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
       }
 
       if (file != null) {
@@ -364,9 +363,19 @@ abstract class GitBranchOperation {
         if (change != null) {
           affectedChanges.add(change);
         }
+        else {
+          LOG.warn("Change is not found for " + file.getPath());
+        }
+      }
+      else {
+        LOG.warn("VirtualFile not found for " + path);
       }
     }
     return affectedChanges;
   }
 
+  @NotNull
+  private static String joinPaths(@NotNull VirtualFile root, @NotNull String relativePath) {
+    return StringUtil.trimEnd(root.getPath(), "/") + "/" + StringUtil.trimStart(relativePath, "/");
+  }
 }
