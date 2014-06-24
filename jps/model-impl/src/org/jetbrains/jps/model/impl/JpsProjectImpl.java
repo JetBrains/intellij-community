@@ -134,6 +134,12 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
 
   @NotNull
   @Override
+  public List<JpsRunConfiguration> getRunConfigurations() {
+    return getRunConfigurationsCollection().getElements();
+  }
+
+  @NotNull
+  @Override
   public <P extends JpsElement> JpsTypedRunConfiguration<P> addRunConfiguration(@NotNull String name,
                                                                                 @NotNull JpsRunConfigurationType<P> type,
                                                                                 @NotNull P properties) {

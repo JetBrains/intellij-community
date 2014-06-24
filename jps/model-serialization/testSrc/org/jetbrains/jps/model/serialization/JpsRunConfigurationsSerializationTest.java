@@ -16,9 +16,13 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.util.containers.ContainerUtil;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationType;
+import org.jetbrains.jps.model.runConfiguration.JpsRunConfiguration;
+import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
+import org.jetbrains.jps.model.serialization.runConfigurations.JpsUnknownRunConfigurationType;
 
 import java.util.List;
 
@@ -47,5 +51,19 @@ public class JpsRunConfigurationsSerializationTest extends JpsSerializationTestC
     JpsTypedRunConfiguration<JpsApplicationRunConfigurationProperties> main = configurations.get(1);
     assertEquals("Main", main.getName());
     assertEquals("xxx.Main", main.getProperties().getMainClass());
+
+    List<JpsRunConfiguration> all = myProject.getRunConfigurations();
+    JpsRunConfiguration junit = findByName(all, "test");
+    JpsRunConfigurationType type = ((JpsTypedRunConfiguration)junit).getType();
+    assertEquals("JUnit", assertInstanceOf(type, JpsUnknownRunConfigurationType.class).getTypeId());
+  }
+
+  private static JpsRunConfiguration findByName(List<JpsRunConfiguration> configurations, String name) {
+    for (JpsRunConfiguration configuration : configurations) {
+      if (configuration.getName().equals(name)) {
+        return configuration;
+      }
+    }
+    throw new AssertionFailedError("'" + name + "' run configuration not found");
   }
 }
