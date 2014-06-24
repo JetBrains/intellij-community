@@ -76,7 +76,7 @@ public class AtomicFieldUpdater<T,V> {
 
   @NotNull
   public static <T> AtomicIntegerFieldUpdater<T> forIntFieldIn(@NotNull Class<T> ownerClass) {
-    Field field = getTheOnlyVolatileFieldOfClass(ownerClass, long.class);
+    Field field = getTheOnlyVolatileFieldOfClass(ownerClass, int.class);
     return AtomicIntegerFieldUpdater.newUpdater(ownerClass, field.getName());
   }
 

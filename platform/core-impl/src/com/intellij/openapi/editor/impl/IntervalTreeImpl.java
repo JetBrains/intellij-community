@@ -23,7 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.WalkingState;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -303,7 +302,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
      *     N        - 1bit flag.  if set then all deltas up to root are null
      *     MMMMMMMM - 32bit int containing this node modification count
      */
-    private static final AtomicLongFieldUpdater<IntervalNode> cachedDeltaUpdater = AtomicFieldUpdater.forLongFieldIn(IntervalNode.class);
+    private static final AtomicLongFieldUpdater<IntervalNode> cachedDeltaUpdater = AtomicLongFieldUpdater.newUpdater(IntervalNode.class, "cachedDeltaUpToRoot");
 
     private void setCachedValues(int deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
       cachedDeltaUpToRoot = packValues(deltaUpToRoot, allDeltaUpToRootAreNull, modCount);
