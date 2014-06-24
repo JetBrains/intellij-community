@@ -49,6 +49,8 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
   protected void afterTestConnection(boolean connectionSuccessful) {
     if (connectionSuccessful) {
       new FetchProjectsTask().queue();
+    } else {
+      myProjectCombo.removeAllItems();
     }
   }
 
