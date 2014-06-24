@@ -220,8 +220,15 @@ public class ChangeBufferingList implements Cloneable {
 
   public boolean isEmpty() {
     if (randomAccessContainer == null) {
-      if (changes == null) return true;
-      if (removals == 0) return length == 0;
+      if (changes == null) {
+        if (DEBUG) DebugAssertions.assertTrue(checkSet.isEmpty());
+        return true;
+      }
+      if (removals == 0) {
+        boolean b = length == 0;
+        if (DEBUG) DebugAssertions.assertTrue(b == checkSet.isEmpty());
+        return b;
+      }
     }
     // todo we can calculate isEmpty in more cases (without container)
     RandomAccessIntContainer intContainer = getRandomAccessContainer();
