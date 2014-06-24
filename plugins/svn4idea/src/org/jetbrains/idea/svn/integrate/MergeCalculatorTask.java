@@ -116,13 +116,13 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     String relativeBranch = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl());
     relativeBranch = (relativeBranch.startsWith("/") ? relativeBranch : "/" + relativeBranch);
 
-    final LinkedList<Pair<SvnChangeList, TreeStructureNode<LogEntry>>> list =
-      new LinkedList<Pair<SvnChangeList, TreeStructureNode<LogEntry>>>();
+    final LinkedList<Pair<SvnChangeList, LogHierarchyNode>> list =
+      new LinkedList<Pair<SvnChangeList, LogHierarchyNode>>();
     try {
       committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()), 0,
-                                                                     new PairConsumer<SvnChangeList, TreeStructureNode<LogEntry>>() {
+                                                                     new PairConsumer<SvnChangeList, LogHierarchyNode>() {
                                                                        public void consume(SvnChangeList svnList,
-                                                                                           TreeStructureNode<LogEntry> tree) {
+                                                                                           LogHierarchyNode tree) {
                                                                          indicator.checkCanceled();
                                                                          if (sourceLatest >= svnList.getNumber()) return;
                                                                          list.add(
@@ -139,7 +139,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
     indicator.setText("Checking merge information...");
     // to do not go into file system while asking something on the net
-    for (Pair<SvnChangeList, TreeStructureNode<LogEntry>> pair : list) {
+    for (Pair<SvnChangeList, LogHierarchyNode> pair : list) {
       final SvnChangeList svnList = pair.getFirst();
       final SvnMergeInfoCache.MergeCheckResult checkResult = myMergeChecker.checkList(svnList);
       indicator.setText2("Processing revision " + svnList.getNumber());
@@ -199,7 +199,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
   // true if errors found
   static boolean checkListForPaths(String relativeLocal,
-                                   String relativeBranch, Pair<SvnChangeList, TreeStructureNode<LogEntry>> pair) {
+                                   String relativeBranch, Pair<SvnChangeList, LogHierarchyNode> pair) {
     // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
     // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
     // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
@@ -207,9 +207,9 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
     // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
     // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
-    final List<TreeStructureNode<LogEntry>> children = pair.getSecond().getChildren();
+    final List<LogHierarchyNode> children = pair.getSecond().getChildren();
     boolean localChange = false;
-    for (TreeStructureNode<LogEntry> child : children) {
+    for (LogHierarchyNode child : children) {
       if (checkForSubtree(child, relativeLocal, relativeBranch)) {
         localChange = true;
         break;
@@ -223,13 +223,13 @@ public class MergeCalculatorTask extends BaseMergeTask implements
   }
 
   // true if errors found
-  private static boolean checkForSubtree(final TreeStructureNode<LogEntry> tree,
+  private static boolean checkForSubtree(final LogHierarchyNode tree,
                                          String relativeBranch, final String localURL) {
-    final LinkedList<TreeStructureNode<LogEntry>> queue = new LinkedList<TreeStructureNode<LogEntry>>();
+    final LinkedList<LogHierarchyNode> queue = new LinkedList<LogHierarchyNode>();
     queue.addLast(tree);
 
     while (!queue.isEmpty()) {
-      final TreeStructureNode<LogEntry> element = queue.removeFirst();
+      final LogHierarchyNode element = queue.removeFirst();
       ProgressManager.checkCanceled();
 
       if (checkForEntry(element.getMe(), localURL, relativeBranch)) return true;

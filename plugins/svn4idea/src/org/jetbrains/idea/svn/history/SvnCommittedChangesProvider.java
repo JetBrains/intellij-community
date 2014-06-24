@@ -169,13 +169,13 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
   public void getCommittedChangesWithMergedRevisons(final ChangeBrowserSettings settings,
                                                                    final RepositoryLocation location, final int maxCount,
-                                                                   final PairConsumer<SvnChangeList, TreeStructureNode<LogEntry>> finalConsumer)
+                                                                   final PairConsumer<SvnChangeList, LogHierarchyNode> finalConsumer)
     throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final String repositoryRoot = getRepositoryRoot(svnLocation);
 
-    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<TreeStructureNode<LogEntry>>() {
-      public void consume(TreeStructureNode<LogEntry> node) {
+    final MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(new Consumer<LogHierarchyNode>() {
+      public void consume(LogHierarchyNode node) {
         finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node);
       }
     });

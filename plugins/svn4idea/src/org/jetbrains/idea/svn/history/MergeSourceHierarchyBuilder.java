@@ -28,10 +28,10 @@ import java.util.List;
 */
 public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> {
 
-  private TreeStructureNode<LogEntry> myCurrentHierarchy;
-  @NotNull private final Consumer<TreeStructureNode<LogEntry>> myConsumer;
+  private LogHierarchyNode myCurrentHierarchy;
+  @NotNull private final Consumer<LogHierarchyNode> myConsumer;
 
-  public MergeSourceHierarchyBuilder(@NotNull Consumer<TreeStructureNode<LogEntry>> consumer) {
+  public MergeSourceHierarchyBuilder(@NotNull Consumer<LogHierarchyNode> consumer) {
     myConsumer = consumer;
   }
 
@@ -44,11 +44,11 @@ public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEn
         myConsumer.consume(myCurrentHierarchy);
       }
       if (logEntry.hasChildren()) {
-        myCurrentHierarchy = new TreeStructureNode<LogEntry>(logEntry);
+        myCurrentHierarchy = new LogHierarchyNode(logEntry);
       } else {
         // just pass
         myCurrentHierarchy = null;
-        myConsumer.consume(new TreeStructureNode<LogEntry>(logEntry));
+        myConsumer.consume(new LogHierarchyNode(logEntry));
       }
     } else {
       addToLevel(myCurrentHierarchy, logEntry, mergeLevel);
@@ -61,12 +61,12 @@ public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEn
     }
   }
 
-  private static void addToLevel(final TreeStructureNode<LogEntry> tree, final LogEntry entry, final int left) {
+  private static void addToLevel(final LogHierarchyNode tree, final LogEntry entry, final int left) {
     assert tree != null;
     if (left == 0) {
       tree.add(entry);
     } else {
-      final List<TreeStructureNode<LogEntry>> children = tree.getChildren();
+      final List<LogHierarchyNode> children = tree.getChildren();
       assert ! children.isEmpty();
       addToLevel(children.get(children.size() - 1), entry, left - 1);
     }

@@ -18,24 +18,24 @@ package org.jetbrains.idea.svn.history;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TreeStructureNode<T> {
-  private final T myMe;
-  private final List<TreeStructureNode<T>> myChildren;
+public class LogHierarchyNode {
+  private final LogEntry myMe;
+  private final List<LogHierarchyNode> myChildren;
 
-  public TreeStructureNode(final T me) {
-    myChildren = new LinkedList<TreeStructureNode<T>>();
+  public LogHierarchyNode(final LogEntry me) {
+    myChildren = new LinkedList<LogHierarchyNode>();
     myMe = me;
   }
 
-  public void add(final T child) {
-    myChildren.add(new TreeStructureNode<T>(child));
+  public void add(final LogEntry child) {
+    myChildren.add(new LogHierarchyNode(child));
   }
 
-  public List<TreeStructureNode<T>> getChildren() {
+  public List<LogHierarchyNode> getChildren() {
     return myChildren;
   }
 
-  public T getMe() {
+  public LogEntry getMe() {
     return myMe;
   }
 }

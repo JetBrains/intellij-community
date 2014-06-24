@@ -90,12 +90,12 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
 
     ProgressManager.progress2(
       SvnBundle.message("progress.text2.collecting.history", myMergeContext.getSourceUrl() + (myFirst > 0 ? ("@" + myFirst) : "")));
-    final List<Pair<SvnChangeList, TreeStructureNode<LogEntry>>> list = new ArrayList<Pair<SvnChangeList, TreeStructureNode<LogEntry>>>();
+    final List<Pair<SvnChangeList, LogHierarchyNode>> list = new ArrayList<Pair<SvnChangeList, LogHierarchyNode>>();
     try {
       committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()),
                                                                      myBunchSize + (myFirst > 0 ? 2 : 1),
-                                                                     new PairConsumer<SvnChangeList, TreeStructureNode<LogEntry>>() {
-                                                                       public void consume(SvnChangeList svnList, TreeStructureNode<LogEntry> tree) {
+                                                                     new PairConsumer<SvnChangeList, LogHierarchyNode>() {
+                                                                       public void consume(SvnChangeList svnList, LogHierarchyNode tree) {
                                                                          indicator.setText2(SvnBundle.message("progress.text2.processing.revision", svnList.getNumber()));
                                                                          list.add(Pair.create(svnList, tree));
                                                                        }
@@ -105,7 +105,7 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
       return;
     }
     myCommittedChangeLists = new ArrayList<CommittedChangeList>();
-    for (Pair<SvnChangeList, TreeStructureNode<LogEntry>> pair : list) {
+    for (Pair<SvnChangeList, LogHierarchyNode> pair : list) {
       // do not take first since it's equal
       if (myFirst > 0 && myFirst == pair.getFirst().getNumber()) continue;
       // TODO: Currently path filtering with QuickMerge.checkListForPaths is not applied as it removes some necessary revisions
