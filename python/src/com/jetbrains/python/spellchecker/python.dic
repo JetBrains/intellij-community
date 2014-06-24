@@ -1264,6 +1264,7 @@ memp
 memset
 menubutton
 menudefs
+metaclass
 metas
 metastrings
 metavar
