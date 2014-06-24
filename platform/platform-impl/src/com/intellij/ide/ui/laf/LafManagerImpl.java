@@ -106,9 +106,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
-  @NonNls private static final String[] ourOptionPaneIconKeys = {"OptionPane.errorIcon", "OptionPane.informationIcon",
-    "OptionPane.warningIcon", "OptionPane.questionIcon"};
-
   private static final String[] ourAlloyComponentsToPatchSelection = {"Tree", "MenuItem", "Menu", "List",
     "ComboBox", "Table", "TextArea", "EditorPane", "TextPane", "FormattedTextField", "PasswordField",
     "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
@@ -333,7 +330,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         if (laf != null) {
           return laf;
         }
-        LOG.info("Could not find system look and feel: " + laf);
+        LOG.info("Could not find system look and feel: " + systemLafClassName);
       }
     }
     // Default
@@ -547,7 +544,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
       // MagicBackgroundColor always reports current Frame background.
       // So we need to set frames background to exact and correct value.
-      frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+      if (SystemInfo.isMac) {
+        //noinspection UseJBColor
+        frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+      }
 
       updateUI(frame);
     }
@@ -590,7 +590,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
       final Color bg = new ColorUIResource(56, 117, 215);
-      final Color fg = new ColorUIResource(Color.WHITE);
+      final Color fg = new ColorUIResource(255, 255, 255);
       uiDefaults.put("info", bg);
       uiDefaults.put("textHighlight", bg);
       for (String key : ourAlloyComponentsToPatchSelection) {
@@ -615,7 +615,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = property.toLowerCase().trim();
+    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
