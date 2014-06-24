@@ -21,6 +21,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,8 +40,14 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstrain
 public class ContractInference {
 
   @NotNull
-  public static List<MethodContract> inferContracts(@NotNull PsiMethod method) {
-    return new ContractInferenceInterpreter(method).inferContracts();
+  public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
+    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
+      @Nullable
+      @Override
+      public Result<List<MethodContract>> compute() {
+        return Result.create(new ContractInferenceInterpreter(method).inferContracts(), method);
+      }
+    });
   }
 }
 
