@@ -72,9 +72,6 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     return new File(jarPath);
   }
 
-  public static String getMyBaseCourseFile() {
-    return myBaseCourseFile.getName();
-  }
 
   public static void setMyBaseCourseFile(String mymyBaseCouseFile) {
     myBaseCourseFile = myDefaultCourseFiles.get(mymyBaseCouseFile);
