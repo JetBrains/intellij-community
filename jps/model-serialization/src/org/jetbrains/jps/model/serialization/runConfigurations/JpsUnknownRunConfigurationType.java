@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.tooling;
+package org.jetbrains.jps.model.serialization.runConfigurations;
 
-import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.Serializable;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
+import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 
 /**
- * @author Vladislav.Soroka
- * @since 11/5/13
+ * @author nik
  */
-public interface ModelBuilderService extends Serializable {
-  boolean canBuild(String modelName);
+public class JpsUnknownRunConfigurationType extends JpsElementTypeWithDummyProperties implements JpsRunConfigurationType<JpsDummyElement> {
+  private final String myTypeId;
 
-  Object buildAll(String modelName, Project project);
+  public JpsUnknownRunConfigurationType(@NotNull String typeId) {
+    myTypeId = typeId;
+  }
 
   @NotNull
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e);
+  public String getTypeId() {
+    return myTypeId;
+  }
 }

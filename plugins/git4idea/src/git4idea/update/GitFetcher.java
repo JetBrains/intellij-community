@@ -34,7 +34,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.commands.GitLineHandlerListener;
-import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -132,9 +131,6 @@ public class GitFetcher {
                                      @NotNull GitRemote remote,
                                      @NotNull String url,
                                      @Nullable String branch) {
-    if (GitHttpAdapter.shouldUseJGit(url)) {
-      return GitHttpAdapter.fetch(repository, remote, url, branch);
-    }
     return fetchNatively(repository, remote, url, branch);
   }
 
@@ -150,9 +146,6 @@ public class GitFetcher {
     GitRemote remote = fetchParams.getRemote();
     String remoteBranch = fetchParams.getRemoteBranch().getNameForRemoteOperations();
     String url = fetchParams.getUrl();
-    if (GitHttpAdapter.shouldUseJGit(url)) {
-      return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
-    }
     return fetchNatively(repository, remote, url, remoteBranch);
   }
 
@@ -191,22 +184,11 @@ public class GitFetcher {
         LOG.error("URL is null for remote " + remote.getName());
         continue;
       }
-      if (GitHttpAdapter.shouldUseJGit(url)) {
-        GitFetchResult res = GitHttpAdapter.fetch(repository, remote, url, null);
-        res.addPruneInfo(fetchResult.getPrunedRefs());
-        fetchResult = res;
-        myErrors.addAll(fetchResult.getErrors());
-        if (!fetchResult.isSuccess()) {
-          break;
-        }
-      }
-      else {
-        GitFetchResult res = fetchNatively(repository, remote, url, null);
-        res.addPruneInfo(fetchResult.getPrunedRefs());
-        fetchResult = res;
-        if (!fetchResult.isSuccess()) {
-          break;
-        }
+      GitFetchResult res = fetchNatively(repository, remote, url, null);
+      res.addPruneInfo(fetchResult.getPrunedRefs());
+      fetchResult = res;
+      if (!fetchResult.isSuccess()) {
+        break;
       }
     }
     return fetchResult;

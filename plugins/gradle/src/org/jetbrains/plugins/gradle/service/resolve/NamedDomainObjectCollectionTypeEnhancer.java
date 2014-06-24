@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 
 /**
@@ -68,7 +69,7 @@ public class NamedDomainObjectCollectionTypeEnhancer extends GrReferenceTypeEnha
 
     if (namedDomainCollectionType instanceof PsiClassReferenceType) {
       final PsiClassReferenceType referenceType = (PsiClassReferenceType)namedDomainCollectionType;
-      final String fqName = referenceType.getCanonicalText();
+      final String fqName = TypesUtil.getQualifiedName(referenceType);
       if (GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER.equals(fqName)) {
         final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(ref.getProject());
         return psiManager.createTypeByFQClassName(GradleCommonClassNames.GRADLE_API_SOURCE_SET, ref.getResolveScope());

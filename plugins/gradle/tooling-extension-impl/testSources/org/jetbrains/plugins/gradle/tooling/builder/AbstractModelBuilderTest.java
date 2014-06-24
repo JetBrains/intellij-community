@@ -15,16 +15,23 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -39,13 +46,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -58,7 +64,7 @@ public abstract class AbstractModelBuilderTest {
   public static final String GRADLE_v1_9 = "1.9";
   public static final String GRADLE_v1_10 = "1.10";
   public static final String GRADLE_v1_11 = "1.11";
-  public static final String GRADLE_v1_12 = "1.12-rc-1";
+  public static final String GRADLE_v1_12 = "1.12";
 
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
 
@@ -136,11 +142,29 @@ public abstract class AbstractModelBuilderTest {
     final ProjectImportAction projectImportAction = new ProjectImportAction(false);
     projectImportAction.addExtraProjectModelClasses(getModels());
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-    File initScript = GradleExecutionHelper.generateInitScript(false);
+    File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
     assertNotNull(initScript);
     buildActionExecutor.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     allModels = buildActionExecutor.run();
     assertNotNull(allModels);
+  }
+
+  @NotNull
+  private Set<Class> getToolingExtensionClasses() {
+    final Set<Class> classes = ContainerUtil.<Class>set(
+      // gradle-tooling-extension-api jar
+      ProjectImportAction.class,
+      // gradle-tooling-extension-impl jar
+      ModelBuildScriptClasspathBuilderImpl.class
+    );
+
+    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
+    return classes;
+  }
+
+  @NotNull
+  protected Set<Class> doGetToolingExtensionClasses() {
+    return Collections.emptySet();
   }
 
   @After
@@ -151,6 +175,43 @@ public abstract class AbstractModelBuilderTest {
   }
 
   protected abstract Set<Class> getModels();
+
+
+  protected <T> Map<String, T> getModulesMap(final Class<T> aClass) {
+    final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
+
+    final String filterKey = "to_filter";
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
+      @Override
+      public Pair<String, T> fun(IdeaModule module) {
+        final T value = allModels.getExtraProject(module, aClass);
+        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+        return Pair.create(key, value);
+      }
+    });
+
+    map.remove(filterKey);
+    return map;
+  }
+
+  protected void assertBuildClasspath(String projectPath, String... classpath) {
+    final Map<String, BuildScriptClasspathModel> classpathModelMap = getModulesMap(BuildScriptClasspathModel.class);
+    final BuildScriptClasspathModel classpathModel = classpathModelMap.get(projectPath);
+
+    assertNotNull(classpathModel);
+
+    final List<? extends ClasspathEntryModel> classpathEntryModels = classpathModel.getClasspath().getAll();
+    assertEquals(classpath.length, classpathEntryModels.size());
+
+    for (int i = 0, length = classpath.length; i < length; i++) {
+      String classpathEntry = classpath[i];
+      final ClasspathEntryModel classpathEntryModel = classpathEntryModels.get(i);
+      assertNotNull(classpathEntryModel);
+      assertEquals(1, classpathEntryModel.getClasses().size());
+      final String path = classpathEntryModel.getClasses().iterator().next();
+      assertEquals(classpathEntry, new File(path).getName());
+    }
+  }
 
   private static void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;

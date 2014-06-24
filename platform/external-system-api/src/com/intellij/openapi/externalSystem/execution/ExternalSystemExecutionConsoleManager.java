@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
@@ -50,4 +51,6 @@ public interface ExternalSystemExecutionConsoleManager<ExternalSystemRunConfigur
   void onOutput(@NotNull String text, @NotNull Key processOutputType);
 
   boolean isApplicableFor(@NotNull ExternalSystemTask task);
+
+  AnAction[] getRestartActions();
 }

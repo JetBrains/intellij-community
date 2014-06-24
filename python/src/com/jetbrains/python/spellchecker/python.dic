@@ -1072,6 +1072,7 @@ itemcget
 itemconfigure
 itemgetter
 itemre
+iter
 iterable
 iterdecode
 iterdump
@@ -1264,6 +1265,7 @@ memp
 memset
 menubutton
 menudefs
+metaclass
 metas
 metastrings
 metavar

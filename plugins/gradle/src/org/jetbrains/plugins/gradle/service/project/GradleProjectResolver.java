@@ -87,33 +87,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                   @Nullable final GradleExecutionSettings settings,
                                                   @NotNull final ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
-    final GradleProjectResolverExtension projectResolverChain;
     if (settings != null) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-      List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
-
-      Deque<GradleProjectResolverExtension> extensions = new ArrayDeque<GradleProjectResolverExtension>();
-      for (ClassHolder<? extends GradleProjectResolverExtension> holder : extensionClasses) {
-        final GradleProjectResolverExtension extension;
-        try {
-          extension = holder.getTargetClass().newInstance();
-        }
-        catch (Throwable e) {
-          throw new IllegalArgumentException(
-            String.format("Can't instantiate project resolve extension for class '%s'", holder.getTargetClassName()), e);
-        }
-        final GradleProjectResolverExtension previous = extensions.peekLast();
-        if (previous != null) {
-          previous.setNext(extension);
-        }
-        extensions.add(extension);
-      }
-      projectResolverChain = extensions.peekFirst();
-    }
-    else {
-      projectResolverChain = new BaseGradleProjectResolverExtension();
     }
 
+    final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(settings);
     final DataNode<ProjectData> resultProjectDataNode = myHelper.execute(
       projectPath, settings,
       new ProjectConnectionDataNodeFunction(
@@ -145,6 +123,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final List<KeyValue<String, String>> extraJvmArgs = new ArrayList<KeyValue<String, String>>();
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
+    final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -159,6 +138,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
       // collect extra command-line arguments
       commandLineArgs.addAll(resolverExtension.getExtraCommandLineArgs());
+      // collect tooling extensions classes
+      toolingExtensionClasses.addAll(resolverExtension.getToolingExtensionsClasses());
     }
 
     final ParametersList parametersList = new ParametersList();
@@ -171,7 +152,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     // TODO [vlad] remove the check
     if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
-      File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject);
+      File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
       if (initScript != null) {
         ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       }
@@ -260,7 +241,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
-      if(!isBuildSrcProject) {
+      if (!isBuildSrcProject) {
         final Collection<TaskData> moduleTasks = projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
         allTasks.addAll(moduleTasks);
       }
@@ -299,8 +280,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
-    if (projectConnectionDataNodeFunction.myIsPreviewMode || GradleEnvironment.DISABLE_ENHANCED_TOOLING_API ||
-        !new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) return;
+    if (projectConnectionDataNodeFunction.myIsPreviewMode
+        || GradleEnvironment.DISABLE_ENHANCED_TOOLING_API
+        || !new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) {
+      return;
+    }
 
     final DataNode<ModuleData> buildSrcModuleDataNode =
       ExternalSystemApiUtil.find(resultProjectDataNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
@@ -368,5 +352,49 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw myProjectResolverChain.getUserFriendlyError(e, myProjectPath, null);
       }
     }
+  }
+
+
+  @NotNull
+  public static GradleProjectResolverExtension createProjectResolverChain(@Nullable final GradleExecutionSettings settings) {
+    GradleProjectResolverExtension projectResolverChain;
+    if (settings != null) {
+      List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
+
+      Deque<GradleProjectResolverExtension> extensions = new ArrayDeque<GradleProjectResolverExtension>();
+      for (ClassHolder<? extends GradleProjectResolverExtension> holder : extensionClasses) {
+        final GradleProjectResolverExtension extension;
+        try {
+          extension = holder.getTargetClass().newInstance();
+        }
+        catch (Throwable e) {
+          throw new IllegalArgumentException(
+            String.format("Can't instantiate project resolve extension for class '%s'", holder.getTargetClassName()), e);
+        }
+        final GradleProjectResolverExtension previous = extensions.peekLast();
+        if (previous != null) {
+          previous.setNext(extension);
+          if (previous.getNext() != extension) {
+            throw new AssertionError("Illegal next resolver got, current resolver class is " + previous.getClass().getName());
+          }
+        }
+        extensions.add(extension);
+      }
+      projectResolverChain = extensions.peekFirst();
+
+      GradleProjectResolverExtension resolverExtension = projectResolverChain;
+      assert resolverExtension != null;
+      while (resolverExtension.getNext() != null) {
+        resolverExtension = resolverExtension.getNext();
+      }
+      if (!(resolverExtension instanceof BaseGradleProjectResolverExtension)) {
+        throw new AssertionError("Illegal last resolver got of class " + resolverExtension.getClass().getName());
+      }
+    }
+    else {
+      projectResolverChain = new BaseGradleProjectResolverExtension();
+    }
+
+    return projectResolverChain;
   }
 }

@@ -69,6 +69,7 @@
     <extensionPoint name="groovySourceFolderDetector" interface="org.jetbrains.plugins.groovy.actions.GroovySourceFolderDetector"/>
 
     <extensionPoint name="mvc.framework" interface="org.jetbrains.plugins.groovy.mvc.MvcFramework"/>
+    <extensionPoint name="mvc.command.executor" interface="org.jetbrains.plugins.groovy.mvc.MvcCommandExecutor"/>
 
     <extensionPoint name="closureCompleter" interface="org.jetbrains.plugins.groovy.lang.completion.ClosureCompleter"/>
 

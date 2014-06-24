@@ -198,6 +198,7 @@ public class GradleResolverUtil {
                                          @NotNull PsiElement place,
                                          @NotNull String... fqNames) {
     for (String fqName : fqNames) {
+      if(fqName == null) continue;
       PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
       if (psiClass != null) {
         psiClass.processDeclarations(processor, state, null, place);

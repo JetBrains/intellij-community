@@ -43,8 +43,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -236,12 +235,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
           });
         }
       });
-      return new DefaultExecutionResult(consoleView, processHandler);
+      DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
+      result.setRestartActions(consoleManager.getRestartActions());
+      return result;
     }
   }
 
   private static class MyProcessHandler extends ProcessHandler {
     private final ExternalSystemExecuteTaskTask myTask;
+    @Nullable private volatile OutputStream myOutputStream;
 
     public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
       myTask = task;

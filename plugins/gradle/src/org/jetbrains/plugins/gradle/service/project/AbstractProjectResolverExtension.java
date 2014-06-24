@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.KeyValue;
+import com.intellij.util.Consumer;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
   }
 
   @Override
-  public void setNext(@Nullable GradleProjectResolverExtension next) {
+  public void setNext(@NotNull GradleProjectResolverExtension next) {
     // there always should be at least gradle basic resolver further in the chain
     //noinspection ConstantConditions
     assert next != null;
@@ -133,6 +134,12 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @NotNull
   @Override
+  public Set<Class> getToolingExtensionsClasses() {
+    return Collections.emptySet();
+  }
+
+  @NotNull
+  @Override
   public List<KeyValue<String, String>> getExtraJvmArgs() {
     return Collections.emptyList();
   }
@@ -161,5 +168,11 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
 
   @Override
   public void preImportCheck() {
+  }
+
+  @Override
+  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
+                                    @Nullable String debuggerSetup,
+                                    @NotNull Consumer<String> initScriptConsumer) {
   }
 }

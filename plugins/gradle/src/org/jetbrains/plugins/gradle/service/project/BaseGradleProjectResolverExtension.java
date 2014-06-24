@@ -37,10 +37,7 @@ import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.HttpConfigurable;
@@ -59,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
+import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -91,7 +89,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @Override
-  public void setNext(@Nullable GradleProjectResolverExtension next) {
+  public void setNext(@NotNull GradleProjectResolverExtension next) {
     // should be the last extension in the chain
   }
 
@@ -326,6 +324,17 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
+  public Set<Class> getToolingExtensionsClasses() {
+    return ContainerUtil.<Class>set(
+      // gradle-tooling-extension-api jar
+      ProjectImportAction.class,
+      // gradle-tooling-extension-impl jar
+      ModelBuildScriptClasspathBuilderImpl.class
+    );
+  }
+
+  @NotNull
+  @Override
   public List<KeyValue<String, String>> getExtraJvmArgs() {
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       final List<KeyValue<String, String>> extraJvmArgs = ContainerUtil.newArrayList();
@@ -358,6 +367,23 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void preImportCheck() {
+  }
+
+  @Override
+  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
+                                    @Nullable String debuggerSetup,
+                                    @NotNull Consumer<String> initScriptConsumer) {
+    if (!StringUtil.isEmpty(debuggerSetup)) {
+      final String[] lines = {
+        "gradle.taskGraph.beforeTask { Task task ->",
+        "    if (task instanceof JavaForkOptions) {",
+        "        task.jvmArgs '" + debuggerSetup.trim() + '\'',
+        "    }" +
+        "}",
+      };
+      final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
+      initScriptConsumer.consume(script);
+    }
   }
 
   @Override

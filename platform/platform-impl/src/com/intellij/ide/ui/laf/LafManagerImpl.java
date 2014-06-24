@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -76,9 +77,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -107,9 +106,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
-  @NonNls private static final String[] ourOptionPaneIconKeys = {"OptionPane.errorIcon", "OptionPane.informationIcon",
-    "OptionPane.warningIcon", "OptionPane.questionIcon"};
-
   private static final String[] ourAlloyComponentsToPatchSelection = {"Tree", "MenuItem", "Menu", "List",
     "ComboBox", "Table", "TextArea", "EditorPane", "TextPane", "FormattedTextField", "PasswordField",
     "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
@@ -117,11 +113,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private final EventListenerList myListenerList;
   private final UIManager.LookAndFeelInfo[] myLaFs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
-  private final HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
+  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
   private final UISettings myUiSettings;
   private String myLastWarning = null;
   private PropertyChangeListener myThemeChangeListener = null;
-  private static final HashMap<String, String> ourLafClassesAliases = new HashMap<String, String>();
+  private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
+
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
@@ -141,16 +138,17 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     else {
       if (isIntelliJLafEnabled()) {
         lafList.add(new IntelliJLookAndFeelInfo());
-      } else {
+      }
+      else {
         lafList.add(new IdeaLookAndFeelInfo());
       }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
-        if ( !"Metal".equalsIgnoreCase(name)
-          && !"CDE/Motif".equalsIgnoreCase(name)
-          && !"Nimbus".equalsIgnoreCase(name)
-          && !"Windows Classic".equalsIgnoreCase(name)
-          && !name.startsWith("JGoodies")) {
+        if (!"Metal".equalsIgnoreCase(name)
+            && !"CDE/Motif".equalsIgnoreCase(name)
+            && !"Nimbus".equalsIgnoreCase(name)
+            && !"Windows Classic".equalsIgnoreCase(name)
+            && !name.startsWith("JGoodies")) {
           lafList.add(laf);
         }
       }
@@ -165,7 +163,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (!SystemInfo.isMac) {
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
-      
+
       Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
         @Override
         public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
@@ -291,8 +289,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     Element element = new Element("state");
     if (myCurrentLaf != null) {
       String className = myCurrentLaf.getClassName();
-      if (className != null){
-        Element child=new Element(ELEMENT_LAF);
+      if (className != null) {
+        Element child = new Element(ELEMENT_LAF);
         child.setAttribute(ATTRIBUTE_CLASS_NAME, className);
         element.addContent(child);
       }
@@ -301,12 +299,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels(){
+  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
     return myLaFs.clone();
   }
 
   @Override
-  public UIManager.LookAndFeelInfo getCurrentLookAndFeel(){
+  public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
     return myCurrentLaf;
   }
 
@@ -330,11 +328,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (PlatformUtils.isRubyMine() || PlatformUtils.isPyCharm()) {
       final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
       if ("gnome".equals(desktop)) {
-        UIManager.LookAndFeelInfo laf=findLaf(systemLafClassName);
+        UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
         if (laf != null) {
           return laf;
         }
-        LOG.info("Could not find system look and feel: " + laf);
+        LOG.info("Could not find system look and feel: " + systemLafClassName);
       }
     }
     // Default
@@ -449,14 +447,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
     if (!UIUtil.isUnderAquaLookAndFeel()) return null;
-    final Icon arrow = (Icon) UIManager.get("Menu.arrowIcon");
+    final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
     if (arrow == null) return null;
 
     try {
       final Method method = arrow.getClass().getMethod("getInvertedIcon");
       if (method != null) {
         method.setAccessible(true);
-        return (Icon) method.invoke(arrow);
+        return (Icon)method.invoke(arrow);
       }
 
       return null;
@@ -548,7 +546,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
       // MagicBackgroundColor always reports current Frame background.
       // So we need to set frames background to exact and correct value.
-      frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+      if (SystemInfo.isMac) {
+        //noinspection UseJBColor
+        frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+      }
 
       updateUI(frame);
     }
@@ -591,7 +592,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
       final Color bg = new ColorUIResource(56, 117, 215);
-      final Color fg = new ColorUIResource(Color.WHITE);
+      final Color fg = new ColorUIResource(255, 255, 255);
       uiDefaults.put("info", bg);
       uiDefaults.put("textHighlight", bg);
       for (String key : ourAlloyComponentsToPatchSelection) {
@@ -616,7 +617,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = property.toLowerCase().trim();
+    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
@@ -656,27 +657,28 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     final SynthStyleFactory original = SynthLookAndFeel.getStyleFactory();
 
     SynthLookAndFeel.setStyleFactory(new SynthStyleFactory() {
-        @Override
-        public SynthStyle getStyle(final JComponent c, final Region id) {
-          final SynthStyle style = original.getStyle(c, id);
-          if (id == Region.POPUP_MENU) {
-            try {
-              Field f = style.getClass().getDeclaredField("xThickness");
+      @Override
+      public SynthStyle getStyle(final JComponent c, final Region id) {
+        final SynthStyle style = original.getStyle(c, id);
+        if (id == Region.POPUP_MENU) {
+          try {
+            Field f = style.getClass().getDeclaredField("xThickness");
+            f.setAccessible(true);
+            final Object x = f.get(style);
+            if (x instanceof Integer && (Integer)x == 0) {
+              // workaround for Sun bug #6636964
+              f.set(style, 1);
+              f = style.getClass().getDeclaredField("yThickness");
               f.setAccessible(true);
-              final Object x = f.get(style);
-              if (x instanceof Integer && (Integer)x == 0) {
-                // workaround for Sun bug #6636964
-                f.set(style, 1);
-                f = style.getClass().getDeclaredField("yThickness");
-                f.setAccessible(true);
-                f.set(style, 3);
-              }
+              f.set(style, 3);
             }
-            catch (Exception ignore) { }
           }
-          return style;
+          catch (Exception ignore) {
+          }
         }
-      });
+        return style;
+      }
+    });
 
     new JBPopupMenu();  // invokes updateUI() -> updateStyle()
 
@@ -692,16 +694,20 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void patchOptionPaneIcons(final UIDefaults defaults) {
-    if (UIUtil.isUnderGTKLookAndFeel() && defaults.get(ourOptionPaneIconKeys[0]) == null) {
-      // GTK+ L&F keeps icons hidden in style
-      final SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
-      if (style != null) {
-        for (final String key : ourOptionPaneIconKeys) {
-          final Object icon = style.get(null, key);
-          if (icon != null) defaults.put(key, icon);
-        }
-      }
+  private static void patchOptionPaneIcons(UIDefaults defaults) {
+    if (!UIUtil.isUnderGTKLookAndFeel()) return;
+
+    Map<String, Icon> map = ContainerUtil.newHashMap(
+      Arrays.asList("OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"),
+      Arrays.asList(AllIcons.General.ErrorDialog, AllIcons.General.InformationDialog, AllIcons.General.WarningDialog, AllIcons.General.QuestionDialog));
+
+    // GTK+ L&F keeps icons hidden in style
+    SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
+    for (String key : map.keySet()) {
+      if (defaults.get(key) != null) continue;
+
+      Object icon = style == null ? null : style.get(null, key);
+      defaults.put(key, icon instanceof Icon ? icon : map.get(key));
     }
   }
 
@@ -737,12 +743,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void updateUI(Window window){
-    if(!window.isDisplayable()){
+  private static void updateUI(Window window) {
+    if (!window.isDisplayable()) {
       return;
     }
     IJSwingUtilities.updateComponentTreeUI(window);
-    Window[] children=window.getOwnedWindows();
+    Window[] children = window.getOwnedWindows();
     for (Window aChildren : children) {
       updateUI(aChildren);
     }
@@ -752,19 +758,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * Repaints all displayable window.
    */
   @Override
-  public void repaintUI(){
-    Frame[] frames=Frame.getFrames();
+  public void repaintUI() {
+    Frame[] frames = Frame.getFrames();
     for (Frame frame : frames) {
       repaintUI(frame);
     }
   }
 
-  private static void repaintUI(Window window){
-    if(!window.isDisplayable()){
+  private static void repaintUI(Window window) {
+    if (!window.isDisplayable()) {
       return;
     }
     window.repaint();
-    Window[] children=window.getOwnedWindows();
+    Window[] children = window.getOwnedWindows();
     for (Window aChildren : children) {
       repaintUI(aChildren);
     }
@@ -785,30 +791,30 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void initInputMapDefaults(UIDefaults defaults){
+  public static void initInputMapDefaults(UIDefaults defaults) {
     // Make ENTER work in JTrees
     InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
-    if(treeInputMap!=null){ // it's really possible. For example,  GTK+ doesn't have such map
-      treeInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0),"toggle");
+    if (treeInputMap != null) { // it's really possible. For example,  GTK+ doesn't have such map
+      treeInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle");
     }
     // Cut/Copy/Paste in JTextAreas
-    InputMap textAreaInputMap=(InputMap)defaults.get("TextArea.focusInputMap");
-    if(textAreaInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    InputMap textAreaInputMap = (InputMap)defaults.get("TextArea.focusInputMap");
+    if (textAreaInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(textAreaInputMap, false);
     }
     // Cut/Copy/Paste in JTextFields
-    InputMap textFieldInputMap=(InputMap)defaults.get("TextField.focusInputMap");
-    if(textFieldInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    InputMap textFieldInputMap = (InputMap)defaults.get("TextField.focusInputMap");
+    if (textFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(textFieldInputMap, false);
     }
     // Cut/Copy/Paste in JPasswordField
-    InputMap passwordFieldInputMap=(InputMap)defaults.get("PasswordField.focusInputMap");
-    if(passwordFieldInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    InputMap passwordFieldInputMap = (InputMap)defaults.get("PasswordField.focusInputMap");
+    if (passwordFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(passwordFieldInputMap, false);
     }
     // Cut/Copy/Paste in JTables
-    InputMap tableInputMap=(InputMap)defaults.get("Table.ancestorInputMap");
-    if(tableInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+    InputMap tableInputMap = (InputMap)defaults.get("Table.ancestorInputMap");
+    if (tableInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(tableInputMap, true);
     }
   }
@@ -899,7 +905,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           }
           break;
         }
-        catch (Exception ignored) { }
+        catch (Exception ignored) {
+        }
       }
     }
   }

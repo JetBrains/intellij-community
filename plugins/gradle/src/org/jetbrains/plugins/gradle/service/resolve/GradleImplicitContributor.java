@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -120,7 +121,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
         if (psiType != null) {
           final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
           GradleResolverUtil.processDeclarations(
-            psiManager, processor, state, place, psiType.getCanonicalText());
+            psiManager, processor, state, place, TypesUtil.getQualifiedName(psiType));
         }
       }
     }

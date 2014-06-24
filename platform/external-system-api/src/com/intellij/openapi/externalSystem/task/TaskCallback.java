@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.tooling;
-
-import org.gradle.api.Project;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.Serializable;
+package com.intellij.openapi.externalSystem.task;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
+ * @since 6/19/2014
  */
-public interface ModelBuilderService extends Serializable {
-  boolean canBuild(String modelName);
+public interface TaskCallback {
+  void onSuccess();
 
-  Object buildAll(String modelName, Project project);
-
-  @NotNull
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e);
+  void onFailure();
 }

@@ -27,6 +27,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -192,5 +193,10 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
       }) != null;
     }
     return false;
+  }
+
+  @Override
+  public AnAction[] getRestartActions() {
+    return new AnAction[0];
   }
 }
