@@ -80,10 +80,10 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       oldFeature.cancel(true);
     }
 
-    if (!myAlarm.isDisposed()) {
-      myAlarm.addRequest(future, DELAY_PERIOD);
+    if (myAlarm.isDisposed()) {
       return false;
     }
+    myAlarm.addRequest(future, DELAY_PERIOD);
 
     try {
       List<Task> tasks = future.get();

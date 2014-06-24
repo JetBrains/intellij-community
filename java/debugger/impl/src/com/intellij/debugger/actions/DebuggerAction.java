@@ -123,14 +123,14 @@ public abstract class DebuggerAction extends AnAction {
         return true;
       }
     };
-    //listener.installOn(tree);
+    listener.installOn(tree);
 
     final AnAction action = ActionManager.getInstance().getAction(actionName);
     action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), tree);
 
     return new Disposable() {
       public void dispose() {
-        //listener.uninstall(tree);
+        listener.uninstall(tree);
         action.unregisterCustomShortcutSet(tree);
       }
     };

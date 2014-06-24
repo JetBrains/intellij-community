@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,12 +91,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   public static String createStringRepresentationOn(CvsMethod method, String user, String host, int port, String repository) {
     if (method == CvsMethod.LOCAL_METHOD) {
-      final StringBuilder result = new StringBuilder();
-      result.append(SEPARATOR);
-      result.append(method.getName());
-      result.append(SEPARATOR);
-      result.append(repository);
-      return result.toString();
+      return SEPARATOR + method.getName() + SEPARATOR + repository;
     }
     final StringBuilder result = new StringBuilder();
     result.append(SEPARATOR);
@@ -136,15 +131,6 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   private boolean useBranch() {
     return DATE_OR_REVISION_SETTINGS.USE_BRANCH && !DATE_OR_REVISION_SETTINGS.BRANCH.isEmpty();
-  }
-
-  public CvsRootConfiguration getMyCopy() {
-    try {
-      return (CvsRootConfiguration)clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public void testConnection(Project project) throws AuthenticationException, IOException {
@@ -267,15 +253,20 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   @Override
-  public Object clone() throws CloneNotSupportedException {
-    final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
-    result.DATE_OR_REVISION_SETTINGS = DATE_OR_REVISION_SETTINGS.clone();
-    result.PROXY_SETTINGS = PROXY_SETTINGS.clone();
-    result.EXT_CONFIGURATION = EXT_CONFIGURATION.clone();
-    result.SSH_CONFIGURATION = SSH_CONFIGURATION.clone();
-    result.SSH_FOR_EXT_CONFIGURATION = SSH_FOR_EXT_CONFIGURATION.clone();
-    result.LOCAL_CONFIGURATION = LOCAL_CONFIGURATION.clone();
-    return result;
+  public CvsRootConfiguration clone() {
+    try {
+      final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
+      result.DATE_OR_REVISION_SETTINGS = DATE_OR_REVISION_SETTINGS.clone();
+      result.PROXY_SETTINGS = PROXY_SETTINGS.clone();
+      result.EXT_CONFIGURATION = EXT_CONFIGURATION.clone();
+      result.SSH_CONFIGURATION = SSH_CONFIGURATION.clone();
+      result.SSH_FOR_EXT_CONFIGURATION = SSH_FOR_EXT_CONFIGURATION.clone();
+      result.LOCAL_CONFIGURATION = LOCAL_CONFIGURATION.clone();
+      return result;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

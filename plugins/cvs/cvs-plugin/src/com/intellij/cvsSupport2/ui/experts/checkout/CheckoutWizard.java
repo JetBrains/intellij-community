@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class CheckoutWizard extends CvsWizard {
                                                       TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, true, true);
 
     mySelectLocationStep = new MySelectLocationStep(project);
-    myChooseModeStep = new ChooseCheckoutMode(this);
+    myChooseModeStep = new ChooseCheckoutMode(project, this);
 
     addStep(mySelectCVSConfigurationStep);
     addStep(mySelectCvsElementStep);
@@ -79,6 +79,12 @@ public class CheckoutWizard extends CvsWizard {
 
   public CvsRootConfiguration getSelectedConfiguration() {
     return mySelectCVSConfigurationStep.getSelectedConfiguration();
+  }
+
+  public CvsRootConfiguration getConfigurationWithDateOrRevisionSettings() {
+    final CvsRootConfiguration configuration = getSelectedConfiguration().clone();
+    myChooseModeStep.saveDateOrRevisionSettings(configuration);
+    return configuration;
   }
 
   public boolean useAlternativeCheckoutLocation() {

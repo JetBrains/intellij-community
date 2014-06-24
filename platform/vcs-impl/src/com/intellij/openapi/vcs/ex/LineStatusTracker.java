@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -344,7 +343,7 @@ public class LineStatusTracker {
             myFirstChangedLine = firstChangedRange.getOffset1();
           }
           if (lastChangedRange != null && lastChangedRange.getOffset2() > myLastChangedLine) {
-            myLastChangedLine = lastChangedRange.getOffset2();
+            myLastChangedLine = lastChangedRange.getOffset2() - 1;
           }
 
           int currentFirstLine = myFirstChangedLine;
@@ -360,13 +359,11 @@ public class LineStatusTracker {
           if (!changedRanges.equals(newChangedRanges)) {
             replaceRanges(changedRanges, newChangedRanges);
 
-            myRanges = new ArrayList<Range>();
+            myRanges = new ArrayList<Range>(rangesBeforeChange.size() + newChangedRanges.size() + rangesAfterChange.size());
 
             myRanges.addAll(rangesBeforeChange);
             myRanges.addAll(newChangedRanges);
             myRanges.addAll(rangesAfterChange);
-
-            myRanges = mergeRanges(myRanges);
 
             for (Range range : myRanges) {
               if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
@@ -412,32 +409,6 @@ public class LineStatusTracker {
       List<String> lines = new DocumentWrapper(myDocument).getLines(firstChangedLine, lastChangedLine);
       List<String> uLines = new DocumentWrapper(myUpToDateDocument).getLines(upToDateFirstLine, upToDateLastLine);
       return new RangesBuilder(lines, uLines, firstChangedLine, upToDateFirstLine).getRanges();
-    }
-
-    @NotNull
-    private List<Range> mergeRanges(@NotNull List<Range> ranges) {
-      ArrayList<Range> result = new ArrayList<Range>();
-      Iterator<Range> iterator = ranges.iterator();
-      if (!iterator.hasNext()) return result;
-      Range prev = iterator.next();
-      while (iterator.hasNext()) {
-        Range range = iterator.next();
-        if (prev.canBeMergedWith(range)) {
-          if (range.getHighlighter() != null) {
-            range.getHighlighter().dispose();
-          }
-          if (prev.getHighlighter() != null) {
-            prev.getHighlighter().dispose();
-          }
-          prev = prev.mergeWith(range);
-        }
-        else {
-          result.add(prev);
-          prev = range;
-        }
-      }
-      result.add(prev);
-      return result;
     }
 
     private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {

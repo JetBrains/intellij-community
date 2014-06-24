@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -140,7 +141,11 @@ public class CustomTemplateCallback {
 
   public void deleteTemplateKey(@NotNull String key) {
     int caretAt = myEditor.getCaretModel().getOffset();
-    myEditor.getDocument().deleteString(caretAt - key.length(), caretAt);
+    int templateStart = caretAt - key.length();
+    myEditor.getDocument().deleteString(templateStart, caretAt);
+    myEditor.getCaretModel().moveToOffset(templateStart);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    myEditor.getSelectionModel().removeSelection();
   }
 
   @NotNull

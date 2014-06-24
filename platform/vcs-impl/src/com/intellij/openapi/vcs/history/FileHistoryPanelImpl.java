@@ -794,18 +794,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     result.add(new RefreshFileHistoryAction());
     if (! myIsStaticAndEmbedded) {
-      result.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.Preview) {
-        @Override
-        public boolean isSelected(AnActionEvent e) {
-          return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
-        }
-
-        @Override
-        public void setSelected(AnActionEvent e, boolean state) {
-          getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
-          setupDetails();
-        }
-      });
+      result.add(new MyToggleAction());
     }
 
     if (!popup && supportsTree()) {
@@ -1119,7 +1108,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   }
 
-  private class MyAnnotateAction extends AnAction {
+  private class MyAnnotateAction extends AnAction implements DumbAware {
     public MyAnnotateAction() {
       super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"),
             AllIcons.Actions.Annotate);
@@ -1825,4 +1814,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
+  private class MyToggleAction extends ToggleAction implements DumbAware {
+
+    public MyToggleAction() {
+      super("Show Details", "Display details panel", AllIcons.Actions.Preview);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
+      setupDetails();
+    }
+  }
 }

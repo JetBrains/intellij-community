@@ -168,6 +168,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
             else if (buildNumber.startsWith("CP")) {
               prefix = PlatformUtils.CPP_PREFIX;
             }
+            else if (buildNumber.startsWith("DB")) {
+              prefix = PlatformUtils.DBE_PREFIX;
+            }
 
             if (prefix != null) {
               vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
