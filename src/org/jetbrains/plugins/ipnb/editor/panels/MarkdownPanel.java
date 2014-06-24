@@ -66,6 +66,8 @@ public class MarkdownPanel extends JPanel {
     boolean isEscaped = false;
     boolean inFormula = false;
     for (String string : text) {
+      string = StringUtil.replace(string, "\\(", "(");
+      string = StringUtil.replace(string, "\\)", ")");
       if (string.startsWith("```") && !isEscaped) {
         isEscaped = true;
       }
@@ -104,8 +106,13 @@ public class MarkdownPanel extends JPanel {
 
         }
         else {
-          final String s = IpnbUtils.markdown2Html(string);
-          final JLabel comp = new JLabel("<html><body style='width: 900px'" + s + "</body></html>");
+          string = StringUtil.trimStart(string, "```");
+          string = StringUtil.trimEnd(string, "```");
+          if (!isEscaped)
+            string = IpnbUtils.markdown2Html(string);
+          else
+            string = "<p>"+string+"</p>";
+          final JLabel comp = new JLabel("<html><body style='width: 900px'" + string + "</body></html>");
           final Font font = new Font(Font.SERIF, Font.PLAIN, 16);
           comp.setFont(font);
           add(comp);
