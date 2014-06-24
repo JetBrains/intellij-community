@@ -362,7 +362,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       return;
     }
     final PsiMethod method = (PsiMethod)myCodeFragmentMember;
-    if (!method.isConstructor() || myReturnType != PsiType.VOID) {
+    if (!method.isConstructor()) {
       return;
     }
     final PsiCodeBlock body = method.getBody();
