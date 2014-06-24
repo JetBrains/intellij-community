@@ -102,10 +102,17 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
       public void threadAction() {
         Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor);
         final String[] strings = splitValue(myValueDescriptor.getValueLabel());
-        String value = StringUtil.notNullize(strings[1]);
-        XValuePresentation presentation = new XRegularValuePresentation(value, strings[0]);
-        if (myValueDescriptor.isString() || myValueDescriptor.getLastRenderer() instanceof ToStringRenderer) {
-          presentation = new TypedStringValuePresentation(StringUtil.unquoteString(value), strings[0]);
+        final String value = StringUtil.notNullize(strings[1]);
+        String type = strings[0];
+        XValuePresentation presentation;
+        if (myValueDescriptor.isString()) {
+          presentation = new TypedStringValuePresentation(StringUtil.unquoteString(value), type);
+        }
+        else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer) {
+          presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value), type);
+        }
+        else {
+          presentation = new XRegularValuePresentation(value, type);
         }
         if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
           node.setFullValueEvaluator(new XFullValueEvaluator() {

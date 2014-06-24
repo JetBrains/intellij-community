@@ -244,8 +244,6 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myOutputVariables = myControlFlowWrapper.getOutputVariables();
 
-    checkCanBeChainedConstructor();
-
     return chooseTargetClass(codeFragment, pass);
   }
 
@@ -1287,6 +1285,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (!checkExitPoints()){
       return false;
     }
+
+    checkCanBeChainedConstructor();
+
     if (extractPass != null) {
       extractPass.pass(this);
     }

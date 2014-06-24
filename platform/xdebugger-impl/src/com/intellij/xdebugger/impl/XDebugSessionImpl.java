@@ -42,6 +42,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -787,7 +788,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private void adjustMouseTrackingCounter(@NotNull XSourcePosition position, int increment) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    Editor editor = XDebuggerUtilImpl.createEditor(XSourcePositionImpl.createOpenFileDescriptor(myProject, position));
+    Editor editor = XDebuggerUtilImpl.createEditor(new OpenFileDescriptor(myProject, position.getFile()));
     if (editor != null) {
       JComponent component = editor.getComponent();
       Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
