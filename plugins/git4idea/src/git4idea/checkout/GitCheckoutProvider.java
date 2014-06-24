@@ -30,9 +30,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.commands.GitStandardProgressAnalyzer;
-import git4idea.jgit.GitHttpAdapter;
-import git4idea.update.GitFetchResult;
-import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,26 +106,13 @@ public class GitCheckoutProvider implements CheckoutProvider {
 
   public static boolean doClone(@NotNull Project project, @NotNull ProgressIndicator indicator, @NotNull Git git,
                                 @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
-    if (GitHttpAdapter.shouldUseJGit(sourceRepositoryURL)) {
-      GitFetchResult result = GitHttpAdapter.cloneRepository(project, new File(parentDirectory, directoryName), sourceRepositoryURL);
-      GitFetcher.displayFetchResult(project, result, "Clone failed", result.getErrors());
-      return result.isSuccess();
-    }
-    else {
-      return cloneNatively(project, indicator, git, new File(parentDirectory), sourceRepositoryURL, directoryName);
-    }
-  }
-
-  private static boolean cloneNatively(@NotNull Project project, @NotNull final ProgressIndicator indicator,
-                                       @NotNull Git git, @NotNull File directory, @NotNull String url, @NotNull String cloneDirectoryName) {
     indicator.setIndeterminate(false);
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
-    GitCommandResult result = git.clone(project, directory, url, cloneDirectoryName, progressListener);
+    GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
     if (result.success()) {
       return true;
     }
     VcsNotifier.getInstance(project).notifyError("Clone failed", result.getErrorOutputAsHtmlString());
     return false;
   }
-
 }
