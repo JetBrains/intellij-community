@@ -135,10 +135,14 @@ public class IpnbFilePanel extends JPanel {
       }
     }
     else if (cell instanceof MarkdownCell) {
-      add(new MarkdownPanel(myProject, (MarkdownCell)cell), c);
+      final MarkdownPanel comp = new MarkdownPanel(myProject, (MarkdownCell)cell);
+      add(comp, c);
+      myRenderedCells.add(RenderedCell.create(comp));
     }
     else if (cell instanceof HeadingCell) {
-      add(new HeadingPanel(myProject, (HeadingCell)cell), c);
+      final HeadingPanel comp = new HeadingPanel(myProject, (HeadingCell)cell);
+      add(comp, c);
+      myRenderedCells.add(RenderedCell.create(comp));
     }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
