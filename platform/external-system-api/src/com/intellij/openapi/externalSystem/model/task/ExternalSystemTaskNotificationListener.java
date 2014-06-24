@@ -48,6 +48,14 @@ public interface ExternalSystemTaskNotificationListener {
    */
   void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut);
 
+  ///**
+  // * Notifies about stdin during the task execution
+  // *
+  // * @param id      id of the task being executed
+  // * @param text    text produced by external system during the target task execution
+  // */
+  //void onTaskInput(@NotNull ExternalSystemTaskId id, @NotNull String text);
+
   /**
    * Notifies that task with the given id is finished.
    *

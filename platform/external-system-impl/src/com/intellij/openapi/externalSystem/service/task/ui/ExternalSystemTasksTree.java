@@ -208,6 +208,8 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
           taskExecutionSettings.setExternalProjectPath(executionSettings.getExternalProjectPath());
           taskExecutionSettings.setExternalSystemIdString(executionSettings.getExternalSystemIdString());
           taskExecutionSettings.setVmOptions(executionSettings.getVmOptions());
+          taskExecutionSettings.setScriptParameters(executionSettings.getScriptParameters());
+          taskExecutionSettings.setExecutionName(executionSettings.getExecutionName());
           executionInfo = new ExternalTaskExecutionInfo(taskExecutionSettings, taskExecutionInfo.getExecutorId());
           map.put(key, executionInfo);
         }
