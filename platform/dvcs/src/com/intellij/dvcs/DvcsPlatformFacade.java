@@ -92,9 +92,6 @@ public interface DvcsPlatformFacade {
 
   void saveAllDocuments();
 
-  @Nullable
-  VirtualFile getVirtualFileByPath(@NotNull String path);
-
   @NotNull
   ProjectManagerEx getProjectManager();
 
