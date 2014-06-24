@@ -9,7 +9,8 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -139,8 +140,9 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       return new org.jetbrains.idea.svn.history.LogEntry(toChangedPathsMap(), revision, author, date, message, hasChildren());
     }
 
-    public Map<String, SVNLogEntryPath> toChangedPathsMap() {
-      Map<String, SVNLogEntryPath> result = ContainerUtil.newHashMap();
+    @NotNull
+    public Map<String, LogEntryPath> toChangedPathsMap() {
+      Map<String, LogEntryPath> result = ContainerUtil.newHashMap();
 
       for (ChangedPath path : changedPaths) {
         result.put(path.path, path.toLogEntryPath());
@@ -167,8 +169,9 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     @XmlValue
     public String path;
 
-    public SVNLogEntryPath toLogEntryPath() {
-      return new SVNLogEntryPath(path, CommandUtil.getStatusChar(action), copyFromPath, copyFromRevision);
+    @NotNull
+    public LogEntryPath toLogEntryPath() {
+      return new LogEntryPath(path, CommandUtil.getStatusChar(action), copyFromPath, copyFromRevision, SVNNodeKind.parseKind(kind));
     }
   }
 }

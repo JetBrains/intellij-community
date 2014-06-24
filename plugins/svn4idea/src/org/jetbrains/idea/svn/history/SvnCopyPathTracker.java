@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
@@ -49,7 +48,7 @@ public class SvnCopyPathTracker {
     if (changedPaths == null) return;
 
     for (Object o : changedPaths.values()) {
-      final SVNLogEntryPath entryPath = (SVNLogEntryPath) o;
+      final LogEntryPath entryPath = (LogEntryPath) o;
       if (entryPath != null && 'A' == entryPath.getType() && entryPath.getCopyPath() != null) {
         if (myCurrentPath.equals(entryPath.getPath())) {
           myHadChanged = true;

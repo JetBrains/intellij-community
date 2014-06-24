@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.util.Map;
@@ -34,7 +33,7 @@ import java.util.Map;
 public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
   private String myBefore;
   private String myPath;
-  private SVNLogEntryPath myDirectlyMentioned;
+  private LogEntryPath myDirectlyMentioned;
   private boolean myRoot;
 
   public SvnPathThroughHistoryCorrection(String path) {
@@ -50,8 +49,8 @@ public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
     }
     myBefore = myPath;
     myDirectlyMentioned = null;
-    final Map<String,SVNLogEntryPath> paths = logEntry.getChangedPaths();
-    final SVNLogEntryPath entryPath = paths.get(myPath);
+    final Map<String,LogEntryPath> paths = logEntry.getChangedPaths();
+    final LogEntryPath entryPath = paths.get(myPath);
     if (entryPath != null) {
       myDirectlyMentioned = entryPath;
       // exact match
@@ -60,7 +59,7 @@ public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
         return;
       }
     }
-    for (SVNLogEntryPath path : paths.values()) {
+    for (LogEntryPath path : paths.values()) {
       // "the origin path *from where* the item, ..."
       // TODO: this could incorrectly handle case when parent folder was replaced - see IDEA-103042
       // TODO: or several parent folder renames occur IDEA-96825
@@ -87,7 +86,7 @@ public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
     return myBefore;
   }
 
-  public SVNLogEntryPath getDirectlyMentioned() {
+  public LogEntryPath getDirectlyMentioned() {
     return myDirectlyMentioned;
   }
 

@@ -32,13 +32,13 @@ import java.util.Map;
 public class LogEntry {
 
   public static final LogEntry EMPTY =
-    new LogEntry(Collections.<String, SVNLogEntryPath>emptyMap(), SVNRepository.INVALID_REVISION, null, null, null, false);
+    new LogEntry(Collections.<String, LogEntryPath>emptyMap(), SVNRepository.INVALID_REVISION, null, null, null, false);
 
   private final long myRevision;
   private final Date myDate;
   private final String myMessage;
   private final String myAuthor;
-  @NotNull private final Map<String, SVNLogEntryPath> myChangedPaths;
+  @NotNull private final Map<String, LogEntryPath> myChangedPaths;
   private boolean myHasChildren;
 
   @Nullable
@@ -46,14 +46,20 @@ public class LogEntry {
     LogEntry result = null;
 
     if (entry != null) {
-      result = new LogEntry(entry.getChangedPaths(), entry.getRevision(), entry.getAuthor(), entry.getDate(), entry.getMessage(),
-                            entry.hasChildren());
+      Map<String, LogEntryPath> paths = ContainerUtil.newHashMap();
+      if (entry.getChangedPaths() != null) {
+        for (Map.Entry<String, SVNLogEntryPath> pathEntry : entry.getChangedPaths().entrySet()) {
+          paths.put(pathEntry.getKey(), LogEntryPath.create(pathEntry.getValue()));
+        }
+      }
+
+      result = new LogEntry(paths, entry.getRevision(), entry.getAuthor(), entry.getDate(), entry.getMessage(), entry.hasChildren());
     }
 
     return result;
   }
 
-  public LogEntry(@Nullable Map<String, SVNLogEntryPath> changedPaths,
+  public LogEntry(@NotNull Map<String, LogEntryPath> changedPaths,
                   long revision,
                   String author,
                   Date date,
@@ -68,20 +74,18 @@ public class LogEntry {
   }
 
   @NotNull
-  private static Map<String, SVNLogEntryPath> toImmutable(@Nullable Map<String, SVNLogEntryPath> paths) {
-    ContainerUtil.ImmutableMapBuilder<String, SVNLogEntryPath> builder = ContainerUtil.immutableMapBuilder();
+  private static Map<String, LogEntryPath> toImmutable(@NotNull Map<String, LogEntryPath> paths) {
+    ContainerUtil.ImmutableMapBuilder<String, LogEntryPath> builder = ContainerUtil.immutableMapBuilder();
 
-    if (paths != null) {
-      for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
-        builder.put(entry.getKey(), entry.getValue());
-      }
+    for (Map.Entry<String, LogEntryPath> entry : paths.entrySet()) {
+      builder.put(entry.getKey(), entry.getValue());
     }
 
     return builder.build();
   }
 
   @NotNull
-  public Map<String, SVNLogEntryPath> getChangedPaths() {
+  public Map<String, LogEntryPath> getChangedPaths() {
     return myChangedPaths;
   }
 

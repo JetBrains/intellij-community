@@ -38,7 +38,6 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -248,7 +247,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     boolean atLeastOneUnderBranch = false;
     final Map map = entry.getChangedPaths();
     for (Object o : map.values()) {
-      final SVNLogEntryPath path = (SVNLogEntryPath)o;
+      final LogEntryPath path = (LogEntryPath)o;
       if (SVNPathUtil.isAncestor(localURL, path.getPath())) {
         return true;
       }

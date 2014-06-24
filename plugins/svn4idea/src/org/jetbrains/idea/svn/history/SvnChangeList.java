@@ -114,7 +114,7 @@ public class SvnChangeList implements CommittedChangeList {
     myCommonPathSearcher = new CommonPathSearcher();
 
     myKnownAsDirectories = new HashSet<String>(0);
-    for(SVNLogEntryPath entry : logEntry.getChangedPaths().values()) {
+    for(LogEntryPath entry : logEntry.getChangedPaths().values()) {
       final String path = entry.getPath();
 
       if (SVNNodeKind.DIR.equals(entry.getKind())) {

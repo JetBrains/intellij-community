@@ -99,7 +99,7 @@ public class LatestExistentSearcher {
       public void consume(final LogEntry logEntry) throws SVNException {
         final Map changedPaths = logEntry.getChangedPaths();
         for (Object o : changedPaths.values()) {
-          final SVNLogEntryPath path = (SVNLogEntryPath)o;
+          final LogEntryPath path = (LogEntryPath)o;
           if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
             latest.set(logEntry.getRevision());
             throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);

@@ -148,7 +148,7 @@ public class FirstInBranch implements Runnable {
 
     private void checkEntries(LogEntry logEntry, Map map) throws SVNCancelException {
       for (Object o : map.values()) {
-        final SVNLogEntryPath path = (SVNLogEntryPath) o;
+        final LogEntryPath path = (LogEntryPath) o;
         final String localPath = path.getPath();
         final String copyPath = path.getCopyPath();
 
@@ -160,7 +160,7 @@ public class FirstInBranch implements Runnable {
       }
     }
 
-    private boolean checkForCopyCase(LogEntry logEntry, SVNLogEntryPath path, String localPath, String copyPath,
+    private boolean checkForCopyCase(LogEntry logEntry, LogEntryPath path, String localPath, String copyPath,
                                      final String trunkUrl, final String branchUrl) {
       if (equalOrParent(localPath, branchUrl) && equalOrParent(copyPath, trunkUrl)) {
         myCopyDataConsumer.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), true));

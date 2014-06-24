@@ -515,7 +515,7 @@ public class SvnHistoryProvider
             }
             myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
           }
-          SVNLogEntryPath entryPath = null;
+          LogEntryPath entryPath = null;
           String copyPath = null;
           final int mergeLevel = svnLogEntryIntegerPair.getSecond();
 
@@ -561,7 +561,7 @@ public class SvnHistoryProvider
       final String lastPathBefore = myLastPathCorrector.getBefore();
       String path = SVNPathUtil.removeTail(lastPathBefore);
       while (path.length() > 0) {
-        final SVNLogEntryPath entryPath = logEntry.getChangedPaths().get(path);
+        final LogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
         // TODO: seems that R (replaced) should also be checked here
         if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
@@ -606,7 +606,7 @@ public class SvnHistoryProvider
       }
     }
 
-    protected SvnFileRevision createRevision(final LogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath) throws SVNException {
+    protected SvnFileRevision createRevision(final LogEntry logEntry, final String copyPath, LogEntryPath entryPath) throws SVNException {
       Date date = logEntry.getDate();
       String author = logEntry.getAuthor();
       String message = logEntry.getMessage();
@@ -629,7 +629,7 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected SvnFileRevision createRevision(final LogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath)
+    protected SvnFileRevision createRevision(final LogEntry logEntry, final String copyPath, LogEntryPath entryPath)
       throws SVNException {
       final SVNURL url = entryPath == null ? myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false) :
                          myRepositoryRoot.appendPath(entryPath.getPath(), true);

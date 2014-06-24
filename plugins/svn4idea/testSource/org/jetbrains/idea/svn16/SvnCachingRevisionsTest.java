@@ -10,7 +10,6 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.history.*;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -39,7 +38,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   private SvnChangeList createList(final long revision) {
     return new SvnChangeList(null, myLocation,
-                             new LogEntry(Collections.<String, SVNLogEntryPath>emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), "", false), ROOT.toDecodedString());
+                             new LogEntry(Collections.<String, LogEntryPath>emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), "", false), ROOT.toDecodedString());
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {
