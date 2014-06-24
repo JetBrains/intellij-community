@@ -35,6 +35,8 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     installListener(myProjectCombo);
     installListener(myAPIKey);
 
+    toggleCredentialsVisibility();
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -63,6 +65,19 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     myRepository.setCurrentProject((RedmineProject)myProjectCombo.getSelectedItem());
     myRepository.setAPIKey(myAPIKey.getText().trim());
     myTestButton.setEnabled(myRepository.isConfigured());
+    toggleCredentialsVisibility();
+  }
+
+  private void toggleCredentialsVisibility() {
+    myPasswordLabel.setVisible(myRepository.isUseHttpAuthentication());
+    myPasswordText.setVisible(myRepository.isUseHttpAuthentication());
+
+    myUsernameLabel.setVisible(myRepository.isUseHttpAuthentication());
+    myUserNameText.setVisible(myRepository.isUseHttpAuthentication());
+
+    myAPIKeyLabel.setVisible(!myRepository.isUseHttpAuthentication());
+    myAPIKey.setVisible(!myRepository.isUseHttpAuthentication());
+
   }
 
   @Nullable
@@ -72,7 +87,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     myProjectCombo = new ComboBox(300);
     myProjectCombo.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set URL and password/token first"));
     myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
-    myAPIKey = new JTextField();
+    myAPIKey = new JPasswordField();
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myAPIKeyLabel, myAPIKey)
       .addLabeledComponent(myProjectLabel, myProjectCombo)
