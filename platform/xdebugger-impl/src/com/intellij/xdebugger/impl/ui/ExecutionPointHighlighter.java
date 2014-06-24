@@ -65,6 +65,9 @@ public class ExecutionPointHighlighter {
 
         mySourcePosition = position;
 
+        if (myOpenFileDescriptor != null && myOpenFileDescriptor.getRangeMarker() != null) {
+          myOpenFileDescriptor.getRangeMarker().dispose();
+        }
         myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
         //see IDEA-125645 and IDEA-63459
         //myOpenFileDescriptor.setUseCurrentWindow(true);
