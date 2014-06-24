@@ -101,7 +101,7 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
     if (matcher.matches()) {
       String path = matcher.group(2);
       if (path != null) {
-        name = matcher.group(1) + " " + path;
+        name = matcher.group(1) + " at " + path;
       }
       else {
         path = matcher.group(4);
@@ -109,11 +109,11 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
         if (index > 0) {
           path = path.substring(index);
         }
-        name = matcher.group(3) + " .." + path;
+        name = matcher.group(3) + " at ..." + path;
       }
     }
     else if (new File(name).exists()) {
-      name = "../" + new File(name).getParentFile().getParentFile().getName();
+      name = ".../" + new File(name).getParentFile().getParentFile().getName();
     }
     return name;
   }
