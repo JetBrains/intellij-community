@@ -35,8 +35,10 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   private SvnChangeList createList(final long revision) {
-    return new SvnChangeList(null, myLocation,
-                             new LogEntry(Collections.<String, LogEntryPath>emptyMap(), revision, AUTHOR, new Date(System.currentTimeMillis()), "", false), ROOT.toDecodedString());
+    LogEntry entry =
+      new LogEntry.Builder().setRevision(revision).setAuthor(AUTHOR).setDate(new Date(System.currentTimeMillis())).setMessage("").build();
+
+    return new SvnChangeList(null, myLocation, entry, ROOT.toDecodedString());
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {

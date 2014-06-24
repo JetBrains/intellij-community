@@ -16,8 +16,11 @@
 package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+
+import javax.xml.bind.annotation.*;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -31,16 +34,17 @@ public class LogEntryPath {
   private final SVNNodeKind myNodeKind;
 
   @NotNull
-  public static LogEntryPath create(@NotNull SVNLogEntryPath path) {
-    return new LogEntryPath(path.getPath(), path.getType(), path.getCopyPath(), path.getCopyRevision(), path.getKind());
+  public static LogEntryPath.Builder create(@NotNull SVNLogEntryPath path) {
+    return new LogEntryPath.Builder().setPath(path.getPath()).setType(path.getType()).setCopyFromPath(
+      path.getCopyPath()).setCopyFromRevision(path.getCopyRevision()).setKind(path.getKind());
   }
 
-  public LogEntryPath(String path, char type, String copyPath, long copyRevision, SVNNodeKind kind) {
-    myPath = path;
-    myType = type;
-    myCopyPath = copyPath;
-    myCopyRevision = copyRevision;
-    myNodeKind = kind;
+  public LogEntryPath(@NotNull LogEntryPath.Builder builder) {
+    myPath = builder.path;
+    myType = CommandUtil.getStatusChar(builder.action);
+    myCopyPath = builder.copyFromPath;
+    myCopyRevision = builder.copyFromRevision;
+    myNodeKind = SVNNodeKind.parseKind(builder.kind);
   }
 
   public String getCopyPath() {
@@ -61,5 +65,65 @@ public class LogEntryPath {
 
   public SVNNodeKind getKind() {
     return myNodeKind;
+  }
+
+  @XmlAccessorType(XmlAccessType.NONE)
+  // type explicitly specified not to conflict with LogEntry.Builder
+  @XmlType(name = "logentrypath")
+  public static class Builder {
+
+    @XmlAttribute(name = "kind")
+    private String kind;
+
+    @XmlAttribute(name = "action")
+    private String action;
+
+    @XmlAttribute(name = "copyfrom-path")
+    private String copyFromPath;
+
+    @XmlAttribute(name = "copyfrom-rev")
+    private long copyFromRevision;
+
+    @XmlValue
+    private String path;
+
+    public String getPath() {
+      return path;
+    }
+
+    @NotNull
+    public Builder setKind(@NotNull SVNNodeKind kind) {
+      this.kind = kind.toString();
+      return this;
+    }
+
+    @NotNull
+    public Builder setType(char type) {
+      this.action = String.valueOf(type);
+      return this;
+    }
+
+    @NotNull
+    public Builder setCopyFromPath(String copyFromPath) {
+      this.copyFromPath = copyFromPath;
+      return this;
+    }
+
+    @NotNull
+    public Builder setCopyFromRevision(long copyFromRevision) {
+      this.copyFromRevision = copyFromRevision;
+      return this;
+    }
+
+    @NotNull
+    public Builder setPath(String path) {
+      this.path = path;
+      return this;
+    }
+
+    @NotNull
+    public LogEntryPath build() {
+      return new LogEntryPath(this);
+    }
   }
 }
