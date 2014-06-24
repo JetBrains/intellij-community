@@ -271,4 +271,10 @@ public class OpenFileDescriptor implements Navigatable {
   public boolean isUseCurrentWindow() {
     return myUseCurrentWindow;
   }
+
+  public void dispose() {
+    if (myRangeMarker != null) {
+      myRangeMarker.dispose();
+    }
+  }
 }
