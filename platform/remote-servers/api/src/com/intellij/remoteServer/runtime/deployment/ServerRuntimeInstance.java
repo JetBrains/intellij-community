@@ -4,6 +4,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.RemoteOperationCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -33,6 +34,9 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
   public interface ComputeDeploymentsCallback extends RemoteOperationCallback {
     void addDeployment(@NotNull String deploymentName);
+
+    void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime);
+
     void succeeded();
   }
 }

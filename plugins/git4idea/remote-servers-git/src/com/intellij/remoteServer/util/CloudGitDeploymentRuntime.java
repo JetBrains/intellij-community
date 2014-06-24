@@ -283,17 +283,6 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     return result.get();
   }
 
-  public void undeploy() throws ServerRuntimeException {
-    getAgentTaskExecutor().execute(new Computable<Object>() {
-
-      @Override
-      public Object compute() {
-        getDeployment().deleteApplication();
-        return null;
-      }
-    });
-  }
-
   public boolean isDeployed() throws ServerRuntimeException {
     return findApplication() != null;
   }
