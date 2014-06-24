@@ -224,7 +224,9 @@ public class MinusculeMatcher implements Matcher {
     }
     finally {
       state.releaseState();
-      if (System.currentTimeMillis() - start > 1000) {
+      if (System.currentTimeMillis() - start > 1000 &&
+          // if there's little free memory, it might have been the gc affecting the performance
+          Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 3 / 10) {
         LOG.error("Too long matching: name=" + name + "; prefix=" + new String(myPattern));
       }
     }
