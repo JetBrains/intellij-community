@@ -27,6 +27,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -35,7 +36,7 @@ public class DomCompletionContributor extends CompletionContributor{
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     if (domKnowsBetter(parameters, result)) {

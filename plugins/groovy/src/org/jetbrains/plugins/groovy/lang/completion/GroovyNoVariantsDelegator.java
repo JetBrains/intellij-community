@@ -48,7 +48,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     LinkedHashSet<CompletionResult> plainResults = result.runRemainingContributors(parameters, true);
     final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(plainResults) || suggestMetaAnnotations(parameters);
 

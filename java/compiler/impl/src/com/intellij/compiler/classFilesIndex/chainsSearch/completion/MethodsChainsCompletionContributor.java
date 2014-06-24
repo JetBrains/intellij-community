@@ -40,7 +40,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   private final static int FILTER_RATIO = 10;
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getInvocationCount() >= INVOCATIONS_THRESHOLD &&
         ClassFilesIndexFeaturesHolder.getInstance(parameters.getPosition().getProject())
           .enableFeatureIfNeed(ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION)) {

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.ResolveResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 public class JavaMethodMergingContributor extends CompletionContributor {
 
   @Override
-  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+  public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     final CompletionParameters parameters = context.getParameters();
     if (parameters.getCompletionType() != CompletionType.SMART && parameters.getCompletionType() != CompletionType.BASIC) {
       return null;

@@ -128,7 +128,8 @@ public abstract class CompletionContributor {
   private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
       new MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>>();
 
-  public final void extend(@Nullable CompletionType type, final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
+  public final void extend(@Nullable CompletionType type,
+                           @NotNull final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
     myMap.putValue(type, new Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>(place, provider));
   }
 
@@ -144,11 +145,8 @@ public abstract class CompletionContributor {
    * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
    * ensure you call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()} often enough so that the completion process 
    * can be cancelled smoothly when the user begins to type in the editor. 
-   *
-   * @param parameters
-   * @param result
    */
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();
       if (pair.first.accepts(parameters.getPosition(), context)) {
@@ -171,7 +169,6 @@ public abstract class CompletionContributor {
 
   /**
    * Invoked before completion is started. Is used mainly for determining custom offsets in editor, and to change default dummy identifier.
-   * @param context
    */
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
   }
@@ -188,8 +185,6 @@ public abstract class CompletionContributor {
 
   /**
    *
-   * @param parameters
-   * @param editor
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
   @Nullable
@@ -201,7 +196,7 @@ public abstract class CompletionContributor {
    * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to autoinsert some item (typically - the only one).
    */
   @Nullable
-  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+  public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     return null;
   }
 
@@ -226,15 +221,16 @@ public abstract class CompletionContributor {
   }
   
   /**
-   * @param actionId
    * @return String representation of action shortcut. Useful while advertising something
    * @see #advertise(CompletionParameters)
    */
-  protected static String getActionShortcut(@NonNls final String actionId) {
+  @NotNull
+  protected static String getActionShortcut(@NonNls @NotNull final String actionId) {
     return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
   }
 
-  public static List<CompletionContributor> forParameters(final CompletionParameters parameters) {
+  @NotNull
+  public static List<CompletionContributor> forParameters(@NotNull final CompletionParameters parameters) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
       @Override
       public List<CompletionContributor> compute() {
@@ -243,6 +239,7 @@ public abstract class CompletionContributor {
     });
   }
 
+  @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
     return MyExtensionPointManager.INSTANCE.forKey(language);
   }

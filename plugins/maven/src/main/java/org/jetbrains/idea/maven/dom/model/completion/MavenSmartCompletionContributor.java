@@ -39,7 +39,7 @@ import java.util.Collections;
 
 public class MavenSmartCompletionContributor extends CompletionContributor {
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.SMART) return;
 
     Collection<?> variants = getVariants(parameters);
