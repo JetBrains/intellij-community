@@ -7,8 +7,8 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
+import com.intellij.remoteServer.agent.util.CloudApplication;
 import com.intellij.remoteServer.agent.util.CloudGitAgent;
-import com.intellij.remoteServer.agent.util.DeploymentData;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnector;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -126,29 +127,15 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
     myTasksExecutor.submit(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
-        myAgentTaskExecutor.execute(new Computable<DeploymentData[]>() {
-
-                                      @Override
-                                      public DeploymentData[] compute() {
-                                        return myAgent.getDeployments();
-                                      }
-                                    },
-                                    new CallbackWrapper<DeploymentData[]>() {
-
-                                      @Override
-                                      public void onSuccess(DeploymentData[] deployments) {
-                                        for (DeploymentData deployment : deployments) {
-                                          callback.addDeployment(deployment.getName());
-                                        }
-                                        callback.succeeded();
-                                      }
-
-                                      @Override
-                                      public void onError(String message) {
-                                        callback.errorOccurred(message);
-                                      }
-                                    }
-        );
+        try {
+          for (CloudApplicationRuntime application : getApplications()) {
+            callback.addDeployment(application.getApplicationName(), application);
+          }
+          callback.succeeded();
+        }
+        catch (ServerRuntimeException e) {
+          callback.errorOccurred(e.getMessage());
+        }
       }
     }, callback);
   }
@@ -223,6 +210,20 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
       }
     }
     throw new ServerRuntimeException("Unknown deployment source");
+  }
+
+  private List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
+    return getAgentTaskExecutor().execute(new Computable<List<CloudApplicationRuntime>>() {
+
+      @Override
+      public List<CloudApplicationRuntime> compute() {
+        List<CloudApplicationRuntime> result = new ArrayList<CloudApplicationRuntime>();
+        for (CloudApplication application : getAgent().getApplications()) {
+          result.add(new CloudApplicationRuntime(CloudMultiSourceServerRuntimeInstance.this, application.getName(), null));
+        }
+        return result;
+      }
+    });
   }
 
   public CloudConfigurationBase getConfiguration() {

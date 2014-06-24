@@ -29,7 +29,8 @@ public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGi
   @FinalCall
   void disconnect();
 
-  DeploymentData[] getDeployments();
+  @ChildCall
+  CloudApplication[] getApplications();
 
   @ChildCall
   D createDeployment(String deploymentName, CloudLoggingHandler loggingHandler);
