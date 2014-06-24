@@ -55,15 +55,20 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   }
 
   private void translate(HighlighterIterator iterator, List<TextRange> ranges) {
-    if (iterator.atEnd()) return;
     int offset = 0;
-    for (TextRange range : ranges) {
-      while (range.getStartOffset() > iterator.getStart()) {
+    int index = 0;
+
+    while (!iterator.atEnd() && index < ranges.size()) {
+      TextRange range = ranges.get(index);
+
+      if (range.getStartOffset() >= iterator.getEnd()) {
         iterator.advance();
-        if (iterator.atEnd()) return;
+        continue;
       }
-      while (range.getEndOffset() >= iterator.getEnd()) {
-        int relativeStart = iterator.getStart() - range.getStartOffset();
+
+      if (range.getEndOffset() >= iterator.getStart()) {
+        int relativeStart = Math.max(iterator.getStart() - range.getStartOffset(), 0);
+        int relativeEnd = Math.min(iterator.getEnd() - range.getStartOffset(), range.getLength());
         boolean merged = false;
         if (myMergeByTextAttributes && !myPieces.isEmpty()) {
           Map.Entry<Integer, Element> entry = myPieces.lastEntry();
@@ -74,19 +79,26 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
               element.getElementType().equals(iterator.getTokenType())) {
             merged = true;
             myPieces.put(key, new Element(key,
-                                          offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(),
+                                          offset + relativeEnd,
+                                          iterator.getTokenType(),
                                           iterator.getTextAttributes()));
           }
         }
         if (!merged) {
           myPieces.put(offset + relativeStart, new Element(offset + relativeStart,
-                                                           offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(),
+                                                           offset + relativeEnd,
+                                                           iterator.getTokenType(),
                                                            iterator.getTextAttributes()));
         }
-        iterator.advance();
-        if (iterator.atEnd()) return;
       }
-      offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+
+      if (range.getEndOffset() < iterator.getEnd()) {
+        offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+        index++;
+        continue;
+      }
+
+      iterator.advance();
     }
   }
 
