@@ -16,10 +16,15 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +40,14 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstrain
 public class ContractInference {
 
   @NotNull
-  public static List<MethodContract> inferContracts(@NotNull PsiMethod method) {
-    return new ContractInferenceInterpreter(method).inferContracts();
+  public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
+    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
+      @Nullable
+      @Override
+      public Result<List<MethodContract>> compute() {
+        return Result.create(new ContractInferenceInterpreter(method).inferContracts(), method);
+      }
+    });
   }
 }
 
@@ -49,13 +60,76 @@ class ContractInferenceInterpreter {
 
   List<MethodContract> inferContracts() {
     PsiCodeBlock body = myMethod.getBody();
-    if (body == null) return Collections.emptyList();
-
-    PsiStatement[] statements = body.getStatements();
+    PsiStatement[] statements = body == null ? PsiStatement.EMPTY_ARRAY : body.getStatements();
     if (statements.length == 0) return Collections.emptyList();
+
+    if (statements.length == 1) {
+      if (statements[0] instanceof PsiReturnStatement) {
+        List<MethodContract> result = handleDelegation(((PsiReturnStatement)statements[0]).getReturnValue(), false);
+        if (result != null) return result;
+      }
+      else if (statements[0] instanceof PsiExpressionStatement && ((PsiExpressionStatement)statements[0]).getExpression() instanceof PsiMethodCallExpression) {
+        List<MethodContract> result = handleDelegation(((PsiExpressionStatement)statements[0]).getExpression(), false);
+        if (result != null) return result;
+      }
+    }
 
     ValueConstraint[] emptyState = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
     return visitStatements(Collections.singletonList(emptyState), statements);
+  }
+
+  @Nullable
+  private List<MethodContract> handleDelegation(final PsiExpression expression, final boolean negated) {
+    if (expression instanceof PsiParenthesizedExpression) {
+      return handleDelegation(((PsiParenthesizedExpression)expression).getExpression(), negated);
+    }
+
+    if (expression instanceof PsiPrefixExpression && ((PsiPrefixExpression)expression).getOperationTokenType() == JavaTokenType.EXCL) {
+      return handleDelegation(((PsiPrefixExpression)expression).getOperand(), !negated);
+    }
+
+    if (expression instanceof PsiMethodCallExpression) {
+      return handleCallDelegation((PsiMethodCallExpression)expression, negated);
+    }
+
+    return null;
+  }
+
+  private List<MethodContract> handleCallDelegation(PsiMethodCallExpression expression, final boolean negated) {
+    final PsiMethod targetMethod = expression.resolveMethod();
+    if (targetMethod == null) return Collections.emptyList();
+    
+    final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+    return RecursionManager.doPreventingRecursion(myMethod, true, new Computable<List<MethodContract>>() {
+      @Override
+      public List<MethodContract> compute() {
+        List<MethodContract> delegateContracts = ContractInference.inferContracts(targetMethod); //todo use explicit contracts, too
+        return ContainerUtil.mapNotNull(delegateContracts, new NullableFunction<MethodContract, MethodContract>() {
+          @Nullable
+          @Override
+          public MethodContract fun(MethodContract delegateContract) {
+            ValueConstraint[] answer = MethodContract.createConstraintArray(myMethod.getParameterList().getParametersCount());
+            for (int i = 0; i < delegateContract.arguments.length; i++) {
+              if (i >= arguments.length) return null;
+
+              ValueConstraint argConstraint = delegateContract.arguments[i];
+              if (argConstraint != ANY_VALUE) {
+                int paramIndex = resolveParameter(arguments[i]);
+                if (paramIndex < 0) {
+                  if (argConstraint != getLiteralConstraint(arguments[i])) {
+                    return null;
+                  }
+                }
+                else {
+                  answer = withConstraint(answer, paramIndex, argConstraint);
+                }
+              }
+            }
+            return new MethodContract(answer, negated ? negateConstraint(delegateContract.returnValue) : delegateContract.returnValue);
+          }
+        });
+      }
+    });
   }
 
   @NotNull

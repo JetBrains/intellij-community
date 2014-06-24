@@ -40,6 +40,7 @@ public class AuthDialog extends DialogWrapper {
     init();
   }
 
+  @Nullable
   private static Boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     // if password saving is disabled, don't show the checkbox.

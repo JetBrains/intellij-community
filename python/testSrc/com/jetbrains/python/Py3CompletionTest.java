@@ -52,11 +52,25 @@ public class Py3CompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-13157
+  public void testMetaClass() {
+    doTestByText("class C(meta<caret>):\n" +
+                 "    pass\n");
+    myFixture.checkResult("class C(metaclass=):\n" +
+                          "    pass\n");
+  }
+
   private void doTest() {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private List<String> doTestByText(String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
   }
 }

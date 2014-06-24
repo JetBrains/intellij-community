@@ -280,8 +280,7 @@ public final class UpdateChecker {
   }
 
   private static boolean isReadyToUpdate(String idString, String newVersion) {
-    final String oldVersion = ourUpdatedPlugins.put(idString, newVersion);
-    return oldVersion == null || StringUtil.compareVersionNumbers(newVersion, oldVersion) > 0;
+    return true;
   }
 
   private static void prepareToInstall(Map<PluginId, PluginDownloader> downloaded,

@@ -171,6 +171,55 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  public void "test plain delegation"() {
+    def c = inferContracts("""
+  boolean delegating(Object o) {
+    return smth(o);
+  }
+  boolean smth(Object o) {
+    assert o instanceof String;
+    return true;
+  }
+""")
+    assert c == ['null -> fail']
+  }
+
+  public void "test arg swapping delegation"() {
+    def c = inferContracts("""
+  boolean delegating(Object o, Object o1) {
+    return smth(o1, o);
+  }
+  boolean smth(Object o, Object o1) {
+    return o == null && o1 != null;
+  }
+""")
+    assert c == ['_, !null -> false', 'null, null -> false', '!null, null -> true']
+  }
+
+  public void "test negating delegation"() {
+    def c = inferContracts("""
+  boolean delegating(Object o) {
+    return !smth(o);
+  }
+  boolean smth(Object o) {
+    return o == null;
+  }
+""")
+    assert c == ['null -> false', '!null -> true']
+  }
+
+  public void "test delegation with constant"() {
+    def c = inferContracts("""
+  boolean delegating(Object o) {
+    return smth(null);
+  }
+  boolean smth(Object o) {
+    return o == null;
+  }
+""")
+    assert c == ['_ -> true']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }

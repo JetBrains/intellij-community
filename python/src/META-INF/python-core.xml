@@ -69,6 +69,8 @@
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyParameterCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDocstringCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyMetaClassCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -91,6 +93,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyDecoratorStubIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
 
     <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
