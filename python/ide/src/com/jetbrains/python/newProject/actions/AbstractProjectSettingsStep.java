@@ -26,7 +26,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.ui.CenteredIcon;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonSdkChooserCombo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
@@ -44,11 +44,11 @@ import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -61,7 +61,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
   protected final File myProjectDirectory;
-  private Button myCreateButton;
+  private ActionButtonWithText myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
 
@@ -87,7 +87,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       });
     }
 
-    myCreateAction = new AnAction("Create    ", "Create Project", getIcon()) {
+    myCreateAction = new AnAction("Create", "Create Project", getIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         boolean isValid = checkValid();
@@ -127,7 +127,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
 
     myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
     bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
-    bottomPanel.add(myCreateButton, BorderLayout.CENTER);
+    bottomPanel.add(myCreateButton, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     return mainPanel;
   }
@@ -353,24 +353,10 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   private static class Button extends ActionButtonWithText {
-    private static final Icon DEFAULT_ICON = PythonIcons.Python.Python;
 
     public Button(AnAction action, Presentation presentation) {
-      super(action,
-            wrapIcon(presentation),
-            "NewProject",
-            new Dimension(32, 32));
-      setBorder(new EmptyBorder(3, 3, 3, 3));
-    }
-
-    @Override
-    public String getToolTipText() {
-      return null;
-    }
-
-    @Override
-    protected int horizontalTextAlignment() {
-      return SwingConstants.RIGHT;
+      super(action, presentation, "NewProject", new Dimension(70, 50));
+      setBorder(UIUtil.getButtonBorder());
     }
 
     @Override
@@ -378,11 +364,29 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       return 8;
     }
 
-    private static Presentation wrapIcon(Presentation presentation) {
-      Icon original = presentation.getIcon();
-      CenteredIcon centered = new CenteredIcon(original != null ? original : DEFAULT_ICON, 40, 40, false);
-      presentation.setIcon(centered);
-      return presentation;
+    @Override
+    public Insets getInsets() {
+      return new Insets(5,10,5,5);
+    }
+
+    @Override
+    protected int horizontalTextAlignment() {
+      return SwingConstants.LEFT;
+    }
+
+    @Override
+    public String getToolTipText() {
+      return null;
+    }
+
+    protected void processMouseEvent(MouseEvent e) {
+      super.processMouseEvent(e);
+      if (e.getID() == MouseEvent.MOUSE_ENTERED) {
+        setBorder(null);
+      }
+      else if (e.getID() == MouseEvent.MOUSE_EXITED) {
+        setBorder(UIUtil.getButtonBorder());
+      }
     }
   }
 

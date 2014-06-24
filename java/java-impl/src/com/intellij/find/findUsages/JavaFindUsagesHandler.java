@@ -308,7 +308,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       @Override
       public Boolean compute() {
         if (ThrowSearchUtil.isSearchable (element) && options instanceof JavaThrowFindUsagesOptions && options.isUsages) {
-          ThrowSearchUtil.Root root = options.getUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY);
+          ThrowSearchUtil.Root root = ((JavaThrowFindUsagesOptions)options).getRoot();
           if (root == null) {
             final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
             if (roots != null && roots.length > 0) {

@@ -53,6 +53,7 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
     myFoldingSettings = JavaCodeFoldingSettings.instance as JavaCodeFoldingSettingsImpl
     myFoldingStateToRestore = new JavaCodeFoldingSettingsImpl()
     myFoldingStateToRestore.loadState(myFoldingSettings)
+    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true)
   }
 
   @Override
@@ -672,7 +673,7 @@ public class VarArgTest {
     assert regions[1].placeholderText == "test: 13"
   }
 
-  public void "test do not inline if argument length is one (EA-57555)"() {
+  public void "test inline if argument length is one (EA-57555)"() {
     def text = """
 public class CharSymbol {
 
@@ -689,9 +690,13 @@ public class CharSymbol {
 """
     configure text
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 3
-    checkRangeOffsetByPositionInText(regions[1], text, "false")
-    assert regions[1].placeholderText == "fast: false"
+    assert regions.size() == 4
+
+    checkRangeOffsetByPositionInText(regions[1], text, "1")
+    assert regions[1].placeholderText == "test: 1"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "false")
+    assert regions[2].placeholderText == "fast: false"
   }
 
   public void "test inline constructor literal arguments names"() {

@@ -42,6 +42,15 @@ public abstract class MappingList {
           return middle;
         }
         else if (column < getColumn(mapping)) {
+          if (column == 0 || column == -1) {
+            // find first
+            int firstIndex = middle;
+            while (firstIndex > 0 && getLine(mappings.get(firstIndex - 1)) == line) {
+              firstIndex--;
+            }
+            return firstIndex;
+          }
+
           if (middle == 0) {
             return -1;
           }

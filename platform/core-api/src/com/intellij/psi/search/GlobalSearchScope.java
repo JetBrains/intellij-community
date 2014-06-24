@@ -266,6 +266,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile, @Nullable final String displayName) {
     return new FileScope(project, virtualFile) {
+      @NotNull
       @Override
       public String getDisplayName() {
         return displayName == null ? super.getDisplayName() : displayName;
@@ -282,6 +283,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files, @Nullable final String displayName) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return files.size() == 1? fileScope(project, files.iterator().next(), displayName) : new FilesScope(project, files) {
+      @NotNull
       @Override
       public String getDisplayName() {
         return displayName == null ? super.getDisplayName() : displayName;
@@ -310,6 +312,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return new IntersectionScope(this, scope, null);
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
       if (myDisplayName == null) {
@@ -392,6 +395,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myDisplayName = displayName;
     }
 
+    @NotNull
     @Override
     public String getDisplayName() {
       if (myDisplayName == null) {

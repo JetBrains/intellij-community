@@ -168,7 +168,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/groovy-support/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/groovy-support/structuralsearch-groovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/structuralsearch-groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/plugins/structuralsearch/structuralsearch-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" filepath="$PROJECT_DIR$/platform/structure-view-api/structure-view-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />

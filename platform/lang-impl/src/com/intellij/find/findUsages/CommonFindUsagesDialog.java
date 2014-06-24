@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,14 +42,14 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
                                 boolean toShowInNewTab,
                                 boolean mustOpenInNewTab,
                                 boolean isSingleFile,
-                                FindUsagesHandler handler) {
+                                @NotNull FindUsagesHandler handler) {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler),
           !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
     init();
   }
 
-  private static boolean isTextSearch(PsiElement element, boolean isSingleFile, FindUsagesHandler handler) {
+  private static boolean isTextSearch(@NotNull PsiElement element, boolean isSingleFile, @NotNull FindUsagesHandler handler) {
     return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, isSingleFile, handler);
   }
 

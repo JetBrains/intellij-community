@@ -69,6 +69,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return myBaseScope.isSearchOutsideRootModel();
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return myBaseScope.getDisplayName();

@@ -125,6 +125,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     return (myOptions & option) != 0;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return hasOption(COMPILE) ? PsiBundle.message("search.scope.module", myModule.getName())

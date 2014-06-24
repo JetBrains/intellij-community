@@ -317,6 +317,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
           if (!files.isEmpty()) {
             GlobalSearchScope prev = new GlobalSearchScope(project) {
               private Set<VirtualFile> myFiles = null;
+              @NotNull
               @Override
               public String getDisplayName() {
                 return IdeBundle.message("scope.files.in.previous.search.result");
@@ -371,6 +372,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         final Collection<TreeItem<Pair<AbstractUrl,String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
         if (rootUrls.isEmpty()) continue;  // ignore unused root
         result.add(new GlobalSearchScope(project) {
+          @NotNull
           @Override
           public String getDisplayName() {
             return "Favorite \'" + favorite + "\'";
@@ -404,6 +406,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       if (files != null) {
         final List<VirtualFile> openFiles = Arrays.asList(files);
         result.add(new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, openFiles)){
+          @NotNull
           @Override
           public String getDisplayName() {
             return "Selected Files";
