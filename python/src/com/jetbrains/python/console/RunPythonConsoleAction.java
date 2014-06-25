@@ -226,14 +226,12 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   }
 
   public static String constructPythonPathCommand(Collection<String> pythonPath, String command, PyConsoleOptions.PyConsoleSettings settingsProvider) {
-    String addAdditionalPathsCommand = "";
+    if ((settingsProvider.addContentRoots() || settingsProvider.addSourceRoots()) && !command.contains("extend([" + WORKING_DIR_ENV + "])")){
+      command = "\nimport sys; sys.path.extend([" + WORKING_DIR_ENV + "])" + command;
+    }
 
-    if (settingsProvider.addContentRoots() || settingsProvider.addSourceRoots()){
-      addAdditionalPathsCommand = "sys.path.extend([" + WORKING_DIR_ENV + "])";
-      if(!command.contains("import sys;") && !command.contains("import sys\n") && !command.endsWith("import sys") &&
-         !command.contains("from sys import path")){
-        addAdditionalPathsCommand = "import sys;" + addAdditionalPathsCommand;
-      }
+    if(command.endsWith("\n")){
+      command = command.substring(0, command.length()-1);
     }
 
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
@@ -242,13 +240,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
         return "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'";
       }
     }));
-
-    if(addAdditionalPathsCommand.length() > 0){
-      if(!command.endsWith("\n")){
-        addAdditionalPathsCommand = "\n" + addAdditionalPathsCommand;
-      }
-      command += addAdditionalPathsCommand;
-    }
 
     return command.replace(WORKING_DIR_ENV, path);
   }
