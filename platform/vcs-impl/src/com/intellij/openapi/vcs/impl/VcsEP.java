@@ -49,28 +49,40 @@ public class VcsEP extends AbstractExtensionPointBean {
   public boolean crawlUpToCheckUnderVcs;
 
   private AbstractVcs myVcs;
+  private final Object LOCK = new Object();
 
   @Nullable
   public AbstractVcs getVcs(@NotNull Project project) {
-    if (myVcs == null) {
-      try {
-        final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
-        final Class<?>[] interfaces = foundClass.getInterfaces();
-        for (Class<?> anInterface : interfaces) {
-          if (BaseComponent.class.isAssignableFrom(anInterface)) {
-            myVcs = PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
-            myVcs = VcsActiveEnvironmentsProxy.proxyVcs(myVcs);
-            return myVcs;
-          }
-        }
-        myVcs = VcsActiveEnvironmentsProxy.proxyVcs((AbstractVcs)instantiate(vcsClass, project.getPicoContainer()));
-      }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
+    synchronized (LOCK) {
+      if (myVcs != null) {
+        return myVcs;
       }
     }
-    return myVcs;
+    AbstractVcs vcs = getInstance(project, vcsClass);
+    synchronized (LOCK) {
+      if (myVcs == null) {
+        myVcs = VcsActiveEnvironmentsProxy.proxyVcs(vcs);
+      }
+      return myVcs;
+    }
+  }
+
+  @Nullable
+  private AbstractVcs getInstance(@NotNull Project project, @NotNull String vcsClass) {
+    try {
+      final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
+      final Class<?>[] interfaces = foundClass.getInterfaces();
+      for (Class<?> anInterface : interfaces) {
+        if (BaseComponent.class.isAssignableFrom(anInterface)) {
+          return PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
+        }
+      }
+      return instantiate(vcsClass, project.getPicoContainer());
+    }
+    catch(Exception e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @NotNull
