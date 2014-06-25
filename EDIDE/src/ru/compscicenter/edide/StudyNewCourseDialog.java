@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.io.File;
+import java.util.Map;
 import java.util.Set;
 
 public class StudyNewCourseDialog extends DialogWrapper {
@@ -18,62 +20,106 @@ public class StudyNewCourseDialog extends DialogWrapper {
   private JLabel myDefaultLabel;
   private JLabel myLocationLabel;
   private JLabel myErrorLabel;
+  private JLabel myErrorIconLabel;
+  private StudyDirectoryProjectGenerator myGenerator;
+  private final String CONNECTION_ERROR = "Check your internet connection";
+  private final String COURSE_NOT_SELECTED_ERROR = "You should choose some course";
+  private final String INVALID_COURSE_ERROR = "The course you chosen is invalid";
 
 
-  public StudyNewCourseDialog(final Project project, Set<String> availableDefaultCourses) {
+  public StudyNewCourseDialog(final Project project, StudyDirectoryProjectGenerator generator) {
     super(project, true);
     setTitle("Select the Course");
     init();
+    myGenerator = generator;
     myErrorLabel.setVisible(false);
+    myErrorIconLabel.setVisible(false);
+    myOKAction.setEnabled(false);
+    Map<String, File> downloadedDefaultCourses = myGenerator.getDefaultCourses();
+    myGenerator.setMyDefaultCourseFiles(downloadedDefaultCourses);
+    Set<String> availableDefaultCourses = downloadedDefaultCourses.keySet();
     if (availableDefaultCourses.size() == 0) {
-        myErrorLabel.setVisible(true);
+      myErrorLabel.setText(CONNECTION_ERROR);
+      myErrorLabel.setVisible(true);
+      myErrorIconLabel.setVisible(true);
+      if (myGenerator.downloadCoursesFromGithub()) {
+        availableDefaultCourses = myGenerator.getDefaultCourses().keySet();
+        if (availableDefaultCourses.size() != 0) {
+          myErrorIconLabel.setVisible(false);
+          myErrorLabel.setVisible(false);
+          myOKAction.setEnabled(true);
+        }
+      }
     }
-    for (String courseName: availableDefaultCourses) {
+    else {
+      myOKAction.setEnabled(true);
+    }
+    for (String courseName : availableDefaultCourses) {
       myDefaultCoursesComboBox.addItem(courseName);
     }
 
+    //TODO:try make filters
     final FileChooserDescriptor fileChooser = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    myCourseLocationField.addBrowseFolderListener("Select course file", null, project, fileChooser);
+    myCourseLocationField.addBrowseFolderListener("Select course archive", null, project, fileChooser);
     myCourseLocationField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String text = myCourseLocationField.getText();
-        StudyDirectoryProjectGenerator.setMyLocalCourseBaseFileName(text);
+        String fileName = myCourseLocationField.getText();
+        if (!fileName.contains("course.json")) {
+          myErrorLabel.setText(INVALID_COURSE_ERROR);
+          myErrorLabel.setVisible(true);
+          myErrorIconLabel.setVisible(true);
+        }
+        else {
+          myGenerator.setMyLocalCourseBaseFileName(fileName);
+          myErrorLabel.setVisible(false);
+          myErrorIconLabel.setVisible(false);
+          myOKAction.setEnabled(true);
+        }
       }
     });
-
-
 
     myDefaultCoursesComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         JComboBox cb = (JComboBox)e.getSource();
         String selectedFileName = (String)cb.getSelectedItem();
-        StudyDirectoryProjectGenerator.setMyDefaultSelectedCourseName(selectedFileName);
+        myGenerator.setMyDefaultSelectedCourseName(selectedFileName);
+        myOKAction.setEnabled(true);
       }
     });
     myRefreshButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-       myDefaultCoursesComboBox.removeAllItems();
-       Set<String> newCourses = StudyDirectoryProjectGenerator.updateDefaultCourseList();
-       if (newCourses.size() == 0) {
-         myErrorLabel.setVisible(true);
-         return;
-       }
-        myErrorLabel.setVisible(false);
-        for (String course:newCourses) {
-         myDefaultCoursesComboBox.addItem(course);
-       }
+        myGenerator.downloadCoursesFromGithub();
+        Map<String, File> newCourses = myGenerator.getDefaultCourses();
+        if (newCourses.size() != myGenerator.getMyDefaultCourseFiles().size() && newCourses.size() != 0) {
+          myGenerator.setMyDefaultCourseFiles(newCourses);
+          myErrorLabel.setVisible(false);
+          myErrorIconLabel.setVisible(false);
+          myDefaultCoursesComboBox.removeAllItems();
+          for (String course : newCourses.keySet()) {
+            myDefaultCoursesComboBox.addItem(course);
+          }
+          myOKAction.setEnabled(true);
+        }
+        else {
+          if (newCourses.size() == 0) {
+            myErrorLabel.setText(CONNECTION_ERROR);
+            myErrorIconLabel.setVisible(true);
+            myErrorLabel.setVisible(true);
+            myOKAction.setEnabled(false);
+          }
+        }
       }
     });
     myRefreshButton.setVisible(true);
   }
+
 
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
     return nyContentPane;
   }
-
 }

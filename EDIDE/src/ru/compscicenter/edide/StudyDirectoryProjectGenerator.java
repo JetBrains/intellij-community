@@ -39,7 +39,6 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   private static File myBaseCourseFile;
   private static File myDefaultCoursesBaseDir;
   private static Map<String, File> myDefaultCourseFiles =  new HashMap<String, File>();
-  private Map<String, File> myDefaultCourses;
   private static String myLocalCourseBaseFileName;
   private static String myDefaultSelectedCourseName;
 
@@ -50,12 +49,15 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     return "Study project";
   }
 
+  public void setMyDefaultCourseFiles(Map<String, File> defaultCourseFiles) {
+    myDefaultCourseFiles = defaultCourseFiles;
+  }
 
-  public static void setMyLocalCourseBaseFileName(String fileName) {
+  public void setMyLocalCourseBaseFileName(String fileName) {
     myLocalCourseBaseFileName = fileName;
   }
 
-  public static void setMyDefaultSelectedCourseName(String defaultSelectedCourseName) {
+  public void setMyDefaultSelectedCourseName(String defaultSelectedCourseName) {
     myDefaultSelectedCourseName = defaultSelectedCourseName;
   }
 
@@ -64,7 +66,7 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   }
 
 
-  public File getBaseCourseFile() {
+  public static File getBaseCourseFile() {
     if (myLocalCourseBaseFileName != null) {
       File file = new File(myLocalCourseBaseFileName);
       if (file.exists()) {
@@ -74,13 +76,13 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
       }
     } else {
       if (myDefaultSelectedCourseName != null) {
-        File file = myDefaultCourses.get(myDefaultSelectedCourseName);
+        File file = myDefaultCourseFiles.get(myDefaultSelectedCourseName);
         if (file!=null && file.exists()) {
           return file;
         }
       } else {
-        if (myDefaultCourses.size() > 0) {
-          return myDefaultCourses.entrySet().iterator().next().getValue();
+        if (myDefaultCourseFiles.size() > 0) {
+          return myDefaultCourseFiles.entrySet().iterator().next().getValue();
         }
       }
     }
@@ -131,12 +133,12 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    if (!myDefaultCoursesBaseDir.exists()) {
-      downloadCoursesFromGithub();
-    }
-    myDefaultCourses = getDefaultCourses();
-    ////select course window
-    StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, myDefaultCourses.keySet());
+    //if (!myDefaultCoursesBaseDir.exists()) {
+    //  downloadCoursesFromGithub();
+    //}
+    //myDefaultCourses = getDefaultCourses();
+    //////select course window
+    StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
 
     myBaseCourseFile = getBaseCourseFile();
@@ -154,50 +156,9 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     catch (FileNotFoundException e) {
       e.printStackTrace();
     }
-
-    //System.out.println();
-    //
-    //ApplicationManager.getApplication().invokeLater(
-    //  new Runnable() {
-    //    @Override
-    //    public void run() {
-    //      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //        @Override
-    //        public void run() {
-    //          try {
-    //            //StudyPlugin.createTaskManager(project.getName());
-    //            //TaskManager taskManager = TaskManager.getInstance(project);
-    //            TaskManager taskManager = TaskManager.getInstance(project);
-    //            int tasksNumber = taskManager.getTasksNum();
-    //            for (int task = 0; task < tasksNumber; task++) {
-    //              VirtualFile taskDirectory = baseDir.createChildDirectory(this, "task" + (task + 1));
-    //              for (int file = 0; file < taskManager.getTaskFileNum(task); file++) {
-    //                final String curFileName = taskManager.getFileName(task, file);
-    //                createFile(curFileName, taskDirectory);
-    //              }
-    //              final VirtualFile ideaDir = baseDir.findChild(".idea");
-    //              if (ideaDir != null) {
-    //                createFile(taskManager.getTest(task), ideaDir);
-    //              }
-    //              else {
-    //                LOG.error("Could not find .idea directory");
-    //              }
-    //            }
-    //          }
-    //          catch (IOException e) {
-    //            Log.print("Problems with creating files");
-    //            Log.print(e.toString());
-    //            Log.flush();
-    //          }
-    //          LocalFileSystem.getInstance().refresh(false);
-    //        }
-    //      });
-    //    }
-    //  }
-    //);
   }
 
-  private static boolean downloadCoursesFromGithub() {
+  public boolean downloadCoursesFromGithub() {
     File outputFile = new File(PathManager.getLibPath() + "/courses.zip");
       try {
         GithubDownloadUtil.downloadAtomically(null, REPO_URL,
@@ -216,10 +177,15 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
       }
   }
 
-  private  static Map<String, File> getDefaultCourses() {
-    Map<String, File> defaultCourses = new HashMap<String, File>();
+  public Map<String, File> getMyDefaultCourseFiles() {
+    return myDefaultCourseFiles;
+  }
+
+  //TODO: cash course names
+  public Map<String, File> getDefaultCourses() {
+    Map<String, File> defaultCourseFiles = new HashMap<String, File>();
     if (!myDefaultCoursesBaseDir.exists()) {
-      return defaultCourses;
+      return defaultCourseFiles;
     }
     try {
       File[] files = myDefaultCoursesBaseDir.listFiles();
@@ -233,7 +199,7 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
                   String name = getCourseName(courseFile);
                   int i = 2;
                   if (name!= null) {
-                    File item = defaultCourses.get(name);
+                    File item = defaultCourseFiles.get(name);
                     String tmp = name;
                     while(item!= null && !FileUtil.filesEqual(item, courseFile)) {
                       if (i>2)  {
@@ -241,22 +207,23 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
                       }
                       name = name + Integer.toString(i);
                       i++;
-                      item = defaultCourses.get(name);
+                      item = defaultCourseFiles.get(name);
                     }
-                    defaultCourses.put(name, courseFile);
+                    defaultCourseFiles.put(name, courseFile);
                   }
                 }
               }
             }
           }
         }
+        return defaultCourseFiles;
       }
 
     }
     catch (NullPointerException e) {
       LOG.error("default course folder doesn't exist");
     }
-    return defaultCourses;
+    return myDefaultCourseFiles;
   }
 
   private static String getCourseName(File file) {
@@ -282,11 +249,4 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     return ValidationResult.OK;
   }
 
-  public static Set<String> updateDefaultCourseList() {
-    downloadCoursesFromGithub();
-    if (myDefaultCoursesBaseDir.exists()) {
-      return getDefaultCourses().keySet();
-    }
-    return new HashSet<String>();
-  }
 }
