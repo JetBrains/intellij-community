@@ -104,16 +104,16 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    int offset = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), new Comparator<Element>() {
+    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), new Comparator<Element>() {
       @Override
       public int compare(Element o1, Element o2) {
         return o1.getStart() - o2.getStart();
       }
     });
-    // offset: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
-    // and we need offset of the first element that is less or equal (floorElement)
-    if (offset < 0) offset = Math.max(-offset - 2, 0);
-    return new ProxyIterator(myDocument, offset);
+    // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
+    // and we need index of the first element that is less or equal (floorElement)
+    if (index < 0) index = Math.max(-index - 2, 0);
+    return new ProxyIterator(myDocument, index);
   }
 
   @Override
