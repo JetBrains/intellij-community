@@ -384,7 +384,6 @@ public final class UpdateChecker {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
       prepareToInstall(buildNumber, downloaded, incompatiblePlugins, PluginDownloader.createDownloader(descriptor), indicator);
-      downloaded.put(descriptor.getPluginId(), PluginDownloader.createDownloader(descriptor));
     }
 
     boolean success = true;
