@@ -75,7 +75,10 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloads(atts.getValue(DOWNLOADS));
       currentPlugin.setSize(atts.getValue(SIZE));
       currentPlugin.setUrl(atts.getValue(URL));
-      currentPlugin.setDate(atts.getValue(DATE));
+      final String dateString = atts.getValue(DATE);
+      if (dateString != null) {
+        currentPlugin.setDate(dateString);
+      }
 
       plugins.add(currentPlugin);
     }
