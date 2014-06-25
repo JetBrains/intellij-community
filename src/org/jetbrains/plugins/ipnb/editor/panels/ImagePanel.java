@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
-import org.jetbrains.plugins.ipnb.format.cells.output.PngCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.ImageCellOutput;
 import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
@@ -15,18 +15,18 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-public class PngPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance(PngPanel.class);
+public class ImagePanel extends JPanel {
+  private static final Logger LOG = Logger.getInstance(ImagePanel.class);
   @NotNull private final Project myProject;
 
-  public PngPanel(@NotNull final Project project, @NotNull final PngCellOutput cell) {
+  public ImagePanel(@NotNull final Project project, @NotNull final ImageCellOutput cell) {
     super(new BorderLayout());
     myProject = project;
     add(createPanel(cell), BorderLayout.CENTER);
   }
 
-  private JLabel createPanel(@NotNull final PngCellOutput cell) {
-    String png = cell.getPng();
+  private JLabel createPanel(@NotNull final ImageCellOutput cell) {
+    String png = cell.getBase64String();
 
     final JBLabel label = new JBLabel();
     try {

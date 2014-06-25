@@ -80,6 +80,7 @@ public class IpnbParser {
     String output_type;
     String[] text;
     String png;
+    String jpeg;
     String[] html;
     String[] latex;
     String stream;
@@ -89,6 +90,9 @@ public class IpnbParser {
       final CellOutput cellOutput;
       if (png != null) {
         cellOutput = new PngCellOutput(png, text);
+      }
+      else if (jpeg != null) {
+        cellOutput = new JpegCellOutput(jpeg, text);
       }
       else if (latex != null) {
         cellOutput = new LatexCellOutput(latex, prompt_number, text);
