@@ -66,8 +66,8 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    final Ref<Boolean> result = new Ref<>();
-    Runnable runnable = new Runnable() {
+    final Ref<Boolean> result = new Ref<Boolean>();
+    final Runnable runnable = new Runnable() {
       public void run() {
         UpdateChecker.saveDisabledToUpdatePlugins();
         result.set(UpdateChecker.install(myUploadedPlugins));
