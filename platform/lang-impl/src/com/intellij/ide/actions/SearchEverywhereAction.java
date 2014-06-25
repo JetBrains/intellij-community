@@ -1543,7 +1543,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             if (o instanceof PsiElement) {
               final PsiElement element = (PsiElement)o;
               final PsiFile file = element.getContainingFile();
-              if (!myListModel.contains(o) && file != null && file.getVirtualFile() != null && scope.accept(file.getVirtualFile())) {
+              if (!myListModel.contains(o) &&
+                  //some elements are non-physical like DB columns
+                  (file == null || (file.getVirtualFile() != null && scope.accept(file.getVirtualFile())))) {
                 symbols.add(o);
               }
             }
