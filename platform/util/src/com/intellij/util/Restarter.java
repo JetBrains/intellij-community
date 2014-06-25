@@ -152,6 +152,7 @@ public class Restarter {
     List<String> commands = new ArrayList<String>();
     commands.add(createTempExecutable(restarterFile).getPath());
     argumentsBuilder.consume(commands);
+    System.out.println("commands: " + commands);
     Runtime.getRuntime().exec(commands.toArray(new String[commands.size()]));
   }
 
