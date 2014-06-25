@@ -94,6 +94,8 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
         }
       }
     });
+
+    annotationsDir.refresh(false, true);
   }
 
   public void testSdkAndLibAnnotations() {
