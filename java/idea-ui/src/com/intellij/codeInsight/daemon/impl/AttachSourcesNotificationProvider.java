@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -79,13 +79,14 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     });
   }
 
+  @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(final VirtualFile file, FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor) {
     if (file.getFileType() != JavaClassFileType.INSTANCE) return null;
     final List<LibraryOrderEntry> libraries = findOrderEntriesContainingFile(file);
     if (libraries == null) return null;
@@ -240,7 +241,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       if (modelsToCommit.isEmpty()) return new ActionCallback.Rejected();
       new WriteAction() {
         @Override
-        protected void run(final Result result) {
+        protected void run(@NotNull final Result result) {
           for (Library.ModifiableModel model : modelsToCommit) {
             model.commit();
           }
@@ -253,7 +254,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     @Nullable
     private VirtualFile findRoot(Library library) {
       for (VirtualFile classesRoot : library.getFiles(OrderRootType.CLASSES)) {
-        if (VfsUtil.isAncestor(classesRoot, myClassFile, true)) {
+        if (VfsUtilCore.isAncestor(classesRoot, myClassFile, true)) {
           return classesRoot;
         }
       }

@@ -27,6 +27,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -42,7 +43,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class JavaNoVariantsDelegator extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
     LinkedHashSet<CompletionResult> plainResults = result.runRemainingContributors(parameters, true);
     final boolean empty = containsOnlyPackages(plainResults) || suggestMetaAnnotations(parameters);
 

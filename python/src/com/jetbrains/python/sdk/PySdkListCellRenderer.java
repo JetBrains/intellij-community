@@ -113,7 +113,7 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       }
     }
     else if (new File(name).exists()) {
-      name = ".../" + new File(name).getParentFile().getParentFile().getName();
+      name = "..." + File.separator + new File(name).getParentFile().getParentFile().getName();
     }
     return name;
   }

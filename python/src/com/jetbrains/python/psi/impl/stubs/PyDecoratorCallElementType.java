@@ -17,14 +17,16 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.jetbrains.python.psi.PyStubElementType;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.impl.PyDecoratorImpl;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.impl.PyDecoratorImpl;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
+import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -34,7 +36,7 @@ import java.io.IOException;
  * User: dcheryasov
  * Date: Dec 18, 2008 9:09:57 PM
  */
-public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStub, PyDecorator>  {
+public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStub, PyDecorator> {
   public PyDecoratorCallElementType() {
     super("DECORATOR_CALL");
   }
@@ -55,10 +57,18 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     QualifiedName.serialize(stub.getQualifiedName(), dataStream);
   }
 
+  @Override
+  public void indexStub(@NotNull final PyDecoratorStub stub, @NotNull final IndexSink sink) {
+    // Index decorators stub by name (todo: index by FQDN as well!)
+    final QualifiedName qualifiedName = stub.getQualifiedName();
+    if (qualifiedName != null) {
+      sink.occurrence(PyDecoratorStubIndex.KEY, qualifiedName.toString());
+    }
+  }
+
   @NotNull
   public PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     QualifiedName q_name = QualifiedName.deserialize(dataStream);
     return new PyDecoratorStubImpl(q_name, parentStub);
   }
-
 }

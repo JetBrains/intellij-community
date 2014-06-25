@@ -342,8 +342,8 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
           if (visibleIndicator instanceof ProgressIndicatorEx) {
             indicator.addStateDelegate((ProgressIndicatorEx)visibleIndicator);
+            ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
           }
-          indicator.addStateDelegate(new AppIconProgress());
 
           indicator.setIndeterminate(true);
           indicator.setText(IdeBundle.message("progress.indexing.scanning"));

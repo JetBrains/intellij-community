@@ -21,6 +21,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
@@ -45,17 +46,21 @@ public class JpsRunConfigurationSerializer {
 
       String typeId = configurationTag.getAttributeValue("type");
       JpsRunConfigurationPropertiesSerializer<?> serializer = serializers.get(typeId);
+      String name = configurationTag.getAttributeValue("name");
       if (serializer != null) {
-        loadRunConfiguration(configurationTag, serializer, project);
+        loadRunConfiguration(name, configurationTag, serializer, project);
+      }
+      else {
+        project.addRunConfiguration(name, new JpsUnknownRunConfigurationType(typeId), JpsElementFactory.getInstance().createDummyElement());
       }
     }
   }
 
-  private static <P extends JpsElement> void loadRunConfiguration(Element configurationTag,
+  private static <P extends JpsElement> void loadRunConfiguration(final String name, Element configurationTag,
                                                                   JpsRunConfigurationPropertiesSerializer<P> serializer,
                                                                   JpsProject project) {
     P properties = serializer.loadProperties(configurationTag);
-    project.addRunConfiguration(configurationTag.getAttributeValue("name"), serializer.getType(), properties);
+    project.addRunConfiguration(name, serializer.getType(), properties);
 
   }
 }

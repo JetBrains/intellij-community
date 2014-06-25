@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -36,7 +37,7 @@ import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 public class CommitCompletionContributor extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {

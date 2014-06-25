@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -34,11 +35,14 @@ public class ChangelistConflictNotificationProvider extends EditorNotifications.
     myConflictTracker = changeListManager.getConflictTracker();
   }
 
+  @Override
+  @NotNull
   public Key<ChangelistConflictNotificationPanel> getKey() {
     return KEY;
   }
 
-  public ChangelistConflictNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+  @Override
+  public ChangelistConflictNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     return myConflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(myConflictTracker, file) : null;
   }
 }

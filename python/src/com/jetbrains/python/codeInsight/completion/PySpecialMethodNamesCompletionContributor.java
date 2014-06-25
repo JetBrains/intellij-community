@@ -40,7 +40,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  */
 public class PySpecialMethodNamesCompletionContributor extends CompletionContributor {
   @Override
-  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+  public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     // auto-insert the obvious only case; else show other cases. 
     final LookupElement[] items = context.getItems();
     if (items.length == 1) {
