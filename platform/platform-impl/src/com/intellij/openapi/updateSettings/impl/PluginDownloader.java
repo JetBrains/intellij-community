@@ -93,6 +93,10 @@ public class PluginDownloader {
   }
 
   public boolean prepareToInstall(@Nullable ProgressIndicator pi, @Nullable BuildNumber forBuildNumber) throws IOException {
+    if (myFile != null) {
+      return true;
+    }
+
     IdeaPluginDescriptor descriptor = null;
     if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
