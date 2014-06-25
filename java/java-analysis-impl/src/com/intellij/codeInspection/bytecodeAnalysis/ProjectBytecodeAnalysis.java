@@ -59,7 +59,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
 
   private final PsiManager myPsiManager;
 
-  private Annotations myAnnotations = null;
+  private volatile Annotations myAnnotations = null;
 
   private static final NotNullLazyKey<ProjectBytecodeAnalysis, Project>
     INSTANCE_KEY = ServiceManager.createLazyKey(ProjectBytecodeAnalysis.class);
@@ -189,6 +189,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       }
     }
     catch (IOException e) {
+      LOG.error(e);
       return null;
     }
   }
@@ -206,6 +207,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       return myAnnotations.notNulls.contains(key) ? notNullAnnotation : null;
     }
     catch (IOException e) {
+      LOG.error(e);
       return null;
     }
   }
@@ -224,6 +226,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       return contractValue != null ? createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")") : null;
     }
     catch (IOException e) {
+      LOG.error(e);
       return null;
     }
   }
