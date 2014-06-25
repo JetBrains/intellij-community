@@ -81,6 +81,10 @@ final class IntIdComponent {
   public boolean isEmpty() {
     return IdUtils.isEmpty(ids);
   }
+
+  IntIdComponent copy() {
+    return new IntIdComponent(value, ids.clone());
+  }
 }
 
 class IdUtils {
@@ -225,6 +229,28 @@ final class IntIdFinal implements IntIdResult {
   public IntIdFinal(Value value) {
     this.value = value;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IntIdFinal that = (IntIdFinal)o;
+
+    if (value != that.value) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return value.ordinal();
+  }
+
+  @Override
+  public String toString() {
+    return super.toString();
+  }
 }
 
 final class IntIdPending implements IntIdResult {
@@ -245,6 +271,14 @@ final class IntIdPending implements IntIdResult {
   @Override
   public int hashCode() {
     return Arrays.hashCode(delta);
+  }
+
+  IntIdPending copy() {
+    IntIdComponent[] delta1 = new IntIdComponent[delta.length];
+    for (int i = 0; i < delta.length; i++) {
+      delta1[i] = delta[i].copy();
+    }
+    return new IntIdPending(delta1);
   }
 }
 
@@ -327,14 +361,14 @@ final class IntIdSolver {
       solved.put(equation.id, ((IntIdFinal) rhs).value);
       moving.push(equation.id);
     } else if (rhs instanceof IntIdPending) {
-      IntIdPending pendResult = (IntIdPending)rhs;
+      IntIdPending pendResult = ((IntIdPending)rhs).copy();
       IntIdResult norm = normalize(pendResult.delta);
       if (norm instanceof IntIdFinal) {
         solved.put(equation.id, ((IntIdFinal) norm).value);
         moving.push(equation.id);
       }
       else {
-        IntIdPending pendResult1 = (IntIdPending)rhs;
+        IntIdPending pendResult1 = ((IntIdPending)rhs).copy();
         for (IntIdComponent component : pendResult1.delta) {
           for (int trigger : component.ids) {
             dependencies.addOccurence(trigger, equation.id);

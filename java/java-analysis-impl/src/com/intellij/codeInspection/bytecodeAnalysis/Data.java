@@ -128,7 +128,7 @@ final class InOut implements Direction {
   @Override
   public int hashCode() {
     int result = paramIndex;
-    result = 31 * result + inValue.hashCode();
+    result = 31 * result + inValue.ordinal();
     return result;
   }
 
