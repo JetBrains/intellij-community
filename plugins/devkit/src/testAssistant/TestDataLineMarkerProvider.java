@@ -105,7 +105,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     if (testDataPath == null) {
       return false;
     }
-    List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
+    List<String> fileNames = new TestDataReferenceCollector(testDataPath, TestDataGuessByExistingFilesUtil.getTestName(name)).collectTestDataReferences(method);
     return fileNames != null && !fileNames.isEmpty();
   }
 
