@@ -90,6 +90,8 @@ public class EditorNotificationsImpl extends EditorNotifications {
         myCurrentUpdates.put(file, indicator);
 
         final ReadTask task = createTask(indicator, file);
+        if (task == null) return;
+
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           task.computeInReadAction(indicator);
         }
@@ -106,11 +108,25 @@ public class EditorNotificationsImpl extends EditorNotifications {
     });
   }
 
+  @Nullable
   private ReadTask createTask(final ProgressIndicator indicator, final VirtualFile file) {
+    final FileEditor[] editors = FileEditorManager.getInstance(myProject).getAllEditors(file);
+    if (editors.length == 0) return null;
+
     return new ReadTask() {
 
       private boolean isOutdated() {
-        return myProject.isDisposed() || !file.isValid() || indicator != myCurrentUpdates.get(file);
+        if (myProject.isDisposed() || !file.isValid() || indicator != myCurrentUpdates.get(file)) {
+          return true;
+        }
+
+        for (FileEditor editor : editors) {
+          if (!editor.isValid()) {
+            return true;
+          }
+        }
+
+        return false;
       }
 
       @Override
@@ -118,7 +134,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
         if (isOutdated()) return;
 
         final List<Runnable> updates = ContainerUtil.newArrayList();
-        for (final FileEditor editor : FileEditorManager.getInstance(myProject).getAllEditors(file)) {
+        for (final FileEditor editor : editors) {
           for (final Provider<?> provider : Extensions.getExtensions(EXTENSION_POINT_NAME, myProject)) {
             final JComponent component = provider.createNotificationPanel(file, editor);
             updates.add(new Runnable() {

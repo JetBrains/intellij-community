@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 26-Dec-2007
- */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
@@ -30,11 +25,15 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
 import javax.swing.*;
 
+/**
+ * @author anna
+ * @since 26-Dec-2007
+ */
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-
   @Override
   public SdkPathEditor createPathEditor(Sdk sdk) {
-    return new SdkPathEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true));
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true);
+    return new SdkPathEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, descriptor);
   }
 
   @Override

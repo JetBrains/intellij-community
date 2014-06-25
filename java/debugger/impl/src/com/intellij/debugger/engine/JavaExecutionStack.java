@@ -116,8 +116,8 @@ public class JavaExecutionStack extends XExecutionStack {
       @Override
       protected void action() throws Exception {
         boolean showLibraryStackframes = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
-        List<JavaStackFrame> frames = new ArrayList<JavaStackFrame>();
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
+          List<JavaStackFrame> frames = new ArrayList<JavaStackFrame>();
           int status = myThreadProxy.status();
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&
               !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&
@@ -146,8 +146,11 @@ public class JavaExecutionStack extends XExecutionStack {
               return;
             }
           }
+          container.addStackFrames(frames, true);
         }
-        container.addStackFrames(frames, true);
+        else {
+          container.errorOccurred(DebuggerBundle.message("frame.panel.frames.not.available"));
+        }
       }
     });
   }

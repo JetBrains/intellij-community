@@ -23,9 +23,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +35,7 @@ import java.util.TreeMap;
  * Time: 12:52 PM
  */
 public class FragmentedEditorHighlighter implements EditorHighlighter {
-  private final TreeMap<Integer, Element> myPieces;
+  private final List<Element> myPieces;
   private final Document myDocument;
   private final int myAdditionalOffset;
   private final boolean myMergeByTextAttributes;
@@ -49,52 +50,70 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
                                      boolean mergeByTextAttributes) {
     myMergeByTextAttributes = mergeByTextAttributes;
     myDocument = sourceIterator.getDocument();
-    myPieces = new TreeMap<Integer, Element>();
+    myPieces = new ArrayList<Element>();
     myAdditionalOffset = additionalOffset;
     translate(sourceIterator, ranges);
   }
 
   private void translate(HighlighterIterator iterator, List<TextRange> ranges) {
-    if (iterator.atEnd()) return;
     int offset = 0;
-    for (TextRange range : ranges) {
-      while (range.getStartOffset() > iterator.getStart()) {
+    int index = 0;
+
+    while (!iterator.atEnd() && index < ranges.size()) {
+      TextRange range = ranges.get(index);
+
+      if (range.getStartOffset() >= iterator.getEnd()) {
         iterator.advance();
-        if (iterator.atEnd()) return;
+        continue;
       }
-      while (range.getEndOffset() >= iterator.getEnd()) {
-        int relativeStart = iterator.getStart() - range.getStartOffset();
+
+      if (range.getEndOffset() >= iterator.getStart()) {
+        int relativeStart = Math.max(iterator.getStart() - range.getStartOffset(), 0);
+        int relativeEnd = Math.min(iterator.getEnd() - range.getStartOffset(), range.getLength());
         boolean merged = false;
         if (myMergeByTextAttributes && !myPieces.isEmpty()) {
-          Map.Entry<Integer, Element> entry = myPieces.lastEntry();
-          final Integer key = entry.getKey();
-          final Element element = entry.getValue();
+          Element element = myPieces.get(myPieces.size() - 1);
           if (element.getEnd() >= offset + relativeStart &&
               element.getAttributes().equals(iterator.getTextAttributes()) &&
               element.getElementType().equals(iterator.getTokenType())) {
             merged = true;
-            myPieces.put(key, new Element(key,
-                                          offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(),
-                                          iterator.getTextAttributes()));
+            myPieces.add(new Element(element.getStart(),
+                                     offset + relativeEnd,
+                                     iterator.getTokenType(),
+                                     iterator.getTextAttributes()));
           }
         }
         if (!merged) {
-          myPieces.put(offset + relativeStart, new Element(offset + relativeStart,
-                                                           offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(),
-                                                           iterator.getTextAttributes()));
+          myPieces.add(new Element(offset + relativeStart,
+                                   offset + relativeEnd,
+                                   iterator.getTokenType(),
+                                   iterator.getTextAttributes()));
         }
-        iterator.advance();
-        if (iterator.atEnd()) return;
       }
-      offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+
+      if (range.getEndOffset() < iterator.getEnd()) {
+        offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+        index++;
+        continue;
+      }
+
+      iterator.advance();
     }
   }
 
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    Map.Entry<Integer, Element> entry = myPieces.ceilingEntry(startOffset);
-    return new ProxyIterator(myDocument, entry == null ? -1 : entry.getKey());
+    int offset = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), new Comparator<Element>() {
+      @Override
+      public int compare(Element o1, Element o2) {
+        return o1.getStart() - o2.getStart();
+      }
+    });
+    // offset: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
+    // and we need offset of the first element that is less or equal (floorElement)
+    if (offset < 0) offset = Math.max(-offset - 2, 0);
+    return new ProxyIterator(myDocument, offset);
   }
 
   @Override
@@ -148,27 +167,21 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
 
     @Override
     public void advance() {
-      if (myIdx == myPieces.lastKey() || myIdx == -1) {
-        myIdx = -1;
-        return;
+      if (myIdx < myPieces.size()) {
+        myIdx++;
       }
-      Map.Entry<Integer, Element> entry = myPieces.tailMap(myIdx, false).firstEntry();
-      myIdx = entry.getKey();
     }
 
     @Override
     public void retreat() {
-      if (myIdx == myPieces.firstKey() || myIdx == -1) {
-        myIdx = -1;
-        return;
+      if (myIdx > -1) {
+        myIdx--;
       }
-      Map.Entry<Integer, Element> entry = myPieces.headMap(myIdx, false).lastEntry();
-      myIdx = entry.getKey();
     }
 
     @Override
     public boolean atEnd() {
-      return myIdx < 0;
+      return myIdx < 0 || myIdx >= myPieces.size();
     }
 
     @Override
