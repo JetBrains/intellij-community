@@ -108,7 +108,11 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
     // and in this case we have to come back to requesting issues in this case to test anything at all.
     HttpClient client = getHttpClient();
-    HttpResponse response = client.execute(new HttpGet(getRestApiUrl("users", "current.json")));
+    URIBuilder uriBuilder = new URIBuilder(getRestApiUrl("users", "current.json"));
+    if (isUseApiKeyAuthentication()) {
+      uriBuilder.addParameter("key", getAPIKey());
+    }
+    HttpResponse response = client.execute(new HttpGet(uriBuilder.build()));
     //TaskUtil.prettyFormatResponseToLog(LOG, response);
     int code = response.getStatusLine().getStatusCode();
     if (code == HttpStatus.SC_NOT_FOUND) {
@@ -189,7 +193,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   }
 
   private boolean isUseApiKeyAuthentication() {
-    return !StringUtil.isEmptyOrSpaces(myAPIKey) && !isUseHttpAuthentication();
+    return !isUseHttpAuthentication() && StringUtil.isNotEmpty(myAPIKey);
   }
 
   @Override
@@ -203,11 +207,11 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    if (!super.isConfigured() || StringUtil.isEmpty(myUsername)) return false;
+    if (!super.isConfigured()) return false;
     if (isUseHttpAuthentication()) {
-      return StringUtil.isNotEmpty(myPassword);
+      return StringUtil.isNotEmpty(myPassword) && StringUtil.isNotEmpty(myUsername);
     }
-    return !StringUtil.isEmptyOrSpaces(myAPIKey);
+    return StringUtil.isNotEmpty(myAPIKey);
   }
 
   @Nullable

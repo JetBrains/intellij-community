@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -67,13 +68,14 @@ public class ConfigureGroovyLibraryNotificationProvider extends EditorNotificati
     }
   }
 
+  @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     try {
       if (!supportedFileTypes.contains(file.getFileType())) return null;
       // do not show the panel for Gradle build scripts
@@ -81,7 +83,7 @@ public class ConfigureGroovyLibraryNotificationProvider extends EditorNotificati
       if (StringUtil.endsWith(file.getName(), ".gradle")) return null;
       if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) return null;
 
-      final Module module = ModuleUtil.findModuleForFile(file, myProject);
+      final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
       if (module == null) return null;
 
       if (isMavenModule(module)) return null;

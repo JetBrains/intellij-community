@@ -20,12 +20,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
@@ -150,14 +150,12 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
     Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
     Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
-    PsiFile javaSrc = psiManager.findFile(pkgChildren.find { it.name == 'LibraryClass.java' })
-    assert !javaSrc.contentsLoaded
-    assert !javaSrc.stub
+    VirtualFile javaSrc = pkgChildren.find { it.name == 'LibraryClass.java' }
+    checkFileIsNotLoadedAndHasNoIndexedStub(javaSrc)
 
     assert pkg.containsClassNamed('LibraryClass')
-    assert !javaSrc.contentsLoaded
-    assert !javaSrc.stub
-    assert !javaSrc.node.parsed
+    checkFileIsNotLoadedAndHasNoIndexedStub(javaSrc)
+    assert !((PsiFileImpl)psiManager.findFile(javaSrc)).treeElement
   }
 
   @Override
@@ -174,7 +172,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     def localFile = myFixture.copyFileToProject(testDataPathForTest + File.separator + "Foo.java", 'Foo.java')
     assert localFile != null
 
-    checkFileIsNotLoadedAndHasNoStub(localFile)
+    checkFileIsNotLoadedAndHasNoIndexedStub(localFile)
     assert facade.findClasses('Foo', scope).size() == 0
     PsiTestUtil.addLibrary(myModule, 'cas', lib.path, [] as String[], ["/classesAndSources.jar!/"] as String[])
 
@@ -187,14 +185,16 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
     assert facade.findClasses('LibraryClass', scope).size() == 0
 
-    checkFileIsNotLoadedAndHasNoStub(vfile)
+    checkFileIsNotLoadedAndHasNoIndexedStub(vfile)
   }
 
-  private void checkFileIsNotLoadedAndHasNoStub(VirtualFile vfile) {
-    def file = PsiManager.getInstance(project).findFile(vfile);
+  private void checkFileIsNotLoadedAndHasNoIndexedStub(VirtualFile vfile) {
+    PsiFileImpl file = psiManager.findFile(vfile);
     assert file != null
 
     assert !file.contentsLoaded
-    assert !file.stub
+    assert !StubTreeLoader.instance.readFromVFile(project, vfile)
+    assert !StubTreeLoader.instance.canHaveStub(vfile)
+    assert file.stub // from text
   }
 }

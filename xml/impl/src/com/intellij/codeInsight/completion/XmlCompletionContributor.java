@@ -122,7 +122,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
     if (result.isStopped()) {
       return;

@@ -20,6 +20,8 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
+import java.io.IOException;
+
 public class EditorActionTest extends AbstractEditorTest {
   public void testDownWithSelectionWhenCaretsAreAllowedInsideTabs() throws Exception {
     init("<caret>text",
@@ -68,5 +70,36 @@ public class EditorActionTest extends AbstractEditorTest {
     init("some<selection> <caret></selection>text", TestFileType.TEXT);
     executeAction("EditorTab");
     checkResultByText("some    <caret>text");
+  }
+
+  public void testLineDeleteWithSelectionEndAtLineStart() throws IOException {
+    String text =
+      "line 1\n" +
+      "<selection>line 2\n" +
+      "</selection>line 3";
+    init(text, TestFileType.TEXT);
+    deleteLine();
+    checkResultByText(
+      "line 1\n" +
+      "line 3"
+    );
+  }
+
+  public void testDeleteLastLine() throws IOException {
+    String text =
+      "1\n" +
+      "2<caret>\n" +
+      "3";
+    init(text, TestFileType.TEXT);
+
+    deleteLine();
+    deleteLine();
+    checkResultByText("1");
+  }
+
+  public void testDeleteLastNonEmptyLine() throws IOException {
+    init("<caret>1\n", TestFileType.TEXT);
+    deleteLine();
+    checkResultByText("");
   }
 }

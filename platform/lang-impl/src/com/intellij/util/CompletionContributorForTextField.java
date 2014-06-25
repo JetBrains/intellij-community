@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author sergey.evdokimov
@@ -14,7 +15,7 @@ import com.intellij.psi.PsiPlainTextFile;
 public class CompletionContributorForTextField extends CompletionContributor implements DumbAware {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
     if (!(file instanceof PsiPlainTextFile)) return;
 

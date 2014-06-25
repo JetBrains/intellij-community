@@ -57,8 +57,6 @@ public class PySdkUtil {
   // Windows EOF marker, Ctrl+Z
   public static final int SUBSTITUTE = 26;
 
-  private static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
-
   private PySdkUtil() {
     // explicitly none
   }
@@ -243,7 +241,7 @@ public class PySdkUtil {
     String basePath = PathManager.getSystemPath();
     return basePath +
            File.separator +
-           REMOTE_SOURCES_DIR_NAME +
+           PythonSdkType.REMOTE_SOURCES_DIR_NAME +
            sep +
            FileUtil.toSystemIndependentName(sdkHome).hashCode() +
            sep;
@@ -255,8 +253,8 @@ public class PySdkUtil {
   }
 
   @Nullable
-  public static VirtualFile findRemoteLibrariesDir(@NotNull final Sdk sdk) {
-    return findLibraryDir(sdk, REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
+  public static VirtualFile findAnyRemoteLibrary(@NotNull final Sdk sdk) {
+    return findLibraryDir(sdk, PythonSdkType.REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
   }
 
   private static VirtualFile findLibraryDir(Sdk sdk, String dirName, OrderRootType rootType) {

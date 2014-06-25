@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.tasks.actions.TaskSearchSupport.getRepositoriesTasks;
-
 /**
  * @author Mikhail Golubev
  */
@@ -88,7 +86,15 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     try {
       List<Task> tasks = future.get();
       myFutureReference.compareAndSet(future, null);
-      tasks.removeAll(cachedAndLocalTasks);
+
+      // Exclude *all* cached and local issues, not only those returned by TaskSearchSupport.getLocalAndCachedTasks().
+      // Previously used approach might lead to the following strange behavior. Local task excluded by getLocalAndCachedTasks()
+      // as "locally closed" (i.e. having no associated change list) was indeed *included* in popup because it
+      // was contained in server response (as not remotely closed). Moreover on next request with pagination when the
+      // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
+      // number of items shown).
+      tasks.removeAll(TaskManager.getManager(myProject).getLocalTasks());
+      tasks.removeAll(TaskManager.getManager(myProject).getCachedIssues());
       return processTasks(tasks, consumer, cancelled);
     }
     catch (InterruptedException interrupted) {
@@ -138,7 +144,8 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       limit = GotoTaskAction.PAGE_SIZE;
       myCurrentOffset += GotoTaskAction.PAGE_SIZE;
     }
-    List<Task> tasks = getRepositoriesTasks(TaskManager.getManager(myProject), pattern, offset, limit, true, everywhere, cancelled);
+    List<Task> tasks = TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(myProject),
+                                                              pattern, offset, limit, true, everywhere, cancelled);
     myOldEverywhere = everywhere;
     myOldPattern = pattern;
     return tasks;

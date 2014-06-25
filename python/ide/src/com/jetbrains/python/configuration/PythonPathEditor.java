@@ -300,7 +300,7 @@ public class PythonPathEditor extends SdkPathEditor {
   }
 
 
-  private static class PythonPathListCellRenderer extends ListCellRendererWrapper<VirtualFile> {
+  private class PythonPathListCellRenderer extends ListCellRendererWrapper<VirtualFile> {
     private final PathListModel model;
 
     public PythonPathListCellRenderer(final ListCellRenderer listCellRenderer, PathListModel model) {
@@ -314,7 +314,11 @@ public class PythonPathEditor extends SdkPathEditor {
       if (suffix.length() > 0) {
         suffix = "  " + suffix;
       }
-      setText(value != null ? value.getPresentableUrl() + suffix : "");
+      setText(value != null ? getPresentablePath(value) + suffix : "");
     }
+  }
+
+  protected String getPresentablePath(VirtualFile value) {
+    return value.getPresentableUrl();
   }
 }

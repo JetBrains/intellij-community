@@ -41,7 +41,7 @@ public class DeleteLineAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
       SelectionModel selectionModel = editor.getSelectionModel();
@@ -76,7 +76,7 @@ public class DeleteLineAction extends TextComponentEditorAction {
       selectionModel.selectLineAtCaret();
       boolean removeLastSymbol = selectionModel.getSelectionEnd() == document.getTextLength() && document.getLineCount() > 1;
       EditorModificationUtil.deleteSelectedText(editor);
-      if (removeLastSymbol) {
+      if (removeLastSymbol && document.getTextLength() > 0) {
         document.deleteString(document.getTextLength() - 1, document.getTextLength());
         position = new VisualPosition(position.line - 1, position.column);
       }

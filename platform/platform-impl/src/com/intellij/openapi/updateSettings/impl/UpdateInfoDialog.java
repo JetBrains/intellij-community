@@ -144,7 +144,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
         new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins, true){
           @Override
-          protected boolean toRestart() {
+          protected boolean downloadModal() {
             return true;
           }
 

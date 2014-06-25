@@ -46,7 +46,7 @@ import java.util.Set;
 public class MavenVersionCompletionContributor extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) return;
 
     PsiElement element = parameters.getPosition();

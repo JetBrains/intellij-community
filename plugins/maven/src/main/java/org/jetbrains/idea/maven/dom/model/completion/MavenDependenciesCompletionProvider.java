@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -28,7 +29,7 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 public class MavenDependenciesCompletionProvider extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiElement xmlText = parameters.getPosition().getParent();
 
     if (!(xmlText instanceof XmlText)) return;

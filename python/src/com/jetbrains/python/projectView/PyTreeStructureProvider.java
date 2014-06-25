@@ -36,7 +36,6 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.remote.PyRemoteSdkCredentials;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,6 +114,17 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
         PsiDirectory dirParent = directory.getParent();
         if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
           continue;
+        }
+
+        if (dirParent != null && dirParent.getName().equals(PythonSdkType.REMOTE_SOURCES_DIR_NAME)) {
+          continue;
+        }
+        if (dirParent != null) {
+          PsiDirectory grandParent = dirParent.getParent();
+
+          if (grandParent != null && grandParent.getName().equals(PythonSdkType.REMOTE_SOURCES_DIR_NAME)) {
+            continue;
+          }
         }
       }
       newChildren.add(child);
