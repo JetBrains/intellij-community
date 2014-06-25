@@ -207,6 +207,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
     if (psiClass == null) {
+      LOG.info("PsiClass was null for " + psiMethod.getName());
       return null;
     }
     PsiClass outerClass = psiClass.getContainingClass();
@@ -264,6 +265,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     String packageName = "";
     PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
     if (psiFile == null) {
+      LOG.info("getContainingFile was null for " + psiClass.getQualifiedName());
       return false;
     }
     packageName = psiFile.getPackageName();
@@ -305,6 +307,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         return true;
       }
       else {
+        LOG.info("resolve was null for " + ((PsiClassType)psiType).getClassName());
         return false;
       }
     }

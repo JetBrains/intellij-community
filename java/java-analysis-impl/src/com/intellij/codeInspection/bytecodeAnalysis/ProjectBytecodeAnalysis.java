@@ -87,6 +87,8 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     loadParameterAnnotations(annotations);
     loadContractAnnotations(annotations);
     myAnnotations = annotations;
+    LOG.info("NotNull annotations: " + myAnnotations.notNulls.size());
+    LOG.info("Contract annotations: " + myAnnotations.contracts.size());
   }
 
   private void unloadAnnotations() {
@@ -108,6 +110,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         }
       }, ProjectScope.getLibrariesScope(myProject));
     LOG.info("parameter equations are constructed");
+    LOG.info("equations: " + solver.getSize());
     TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("parameter equations are solved");
     BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, annotations);
@@ -127,6 +130,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         }
       }, ProjectScope.getLibrariesScope(myProject));
     LOG.info("contract equations are constructed");
+    LOG.info("equations: " + solver.getSize());
     TIntObjectHashMap<Value> solutions = solver.solve();
     LOG.info("contract equations are solved");
     BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, annotations);

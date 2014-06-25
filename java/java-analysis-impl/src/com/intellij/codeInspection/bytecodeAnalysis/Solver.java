@@ -305,17 +305,23 @@ final class Equation<Id, T> {
 
 final class IntIdSolver {
 
+  private int size = 0;
   private final ELattice<Value> lattice;
   private final IntToIntSetMap dependencies = new IntToIntSetMap(10000, 0.5f);
   private final TIntObjectHashMap<IntIdPending> pending = new TIntObjectHashMap<IntIdPending>();
   private final TIntObjectHashMap<Value> solved = new TIntObjectHashMap<Value>();
   private final IntStack moving = new IntStack();
 
+  int getSize() {
+    return size;
+  }
+
   IntIdSolver(ELattice<Value> lattice) {
     this.lattice = lattice;
   }
 
   void addEquation(IntIdEquation equation) {
+    size ++;
     IntIdResult rhs = equation.rhs;
     if (rhs instanceof IntIdFinal) {
       solved.put(equation.id, ((IntIdFinal) rhs).value);
