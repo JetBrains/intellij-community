@@ -47,10 +47,11 @@ class RepositoryContentHandler extends DefaultHandler {
   @NonNls public static final String CHNAGE_NOTES = "change-notes";
   @NonNls private static final String DEPENDS = "depends";
   @NonNls private static final String DOWNLOADS = "downloads";
-  @NonNls public static final String DOWNLOAD_URL = "downloadUrl";
+  @NonNls private static final String DOWNLOAD_URL = "downloadUrl";
+  @NonNls private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
   @NonNls private static final String SIZE = "size";
-  @NonNls private static final String RATING = "rating";
 
+  @NonNls private static final String RATING = "rating";
   @NonNls private static final String DATE = "date";
   private PluginNode currentPlugin;
   private final StringBuilder currentValue = new StringBuilder();
@@ -120,7 +121,7 @@ class RepositoryContentHandler extends DefaultHandler {
     else if (qName.equals(RATING)) {
       currentPlugin.setRating(currentValueString);
     }
-    else if (qName.equals(DOWNLOAD_URL)) {
+    else if (qName.equals(DOWNLOAD_URL) || qName.equals(DOWNLOAD_URL_NEW_STYLE)) {
       currentPlugin.setDownloadUrl(currentValueString);
     }
   }
