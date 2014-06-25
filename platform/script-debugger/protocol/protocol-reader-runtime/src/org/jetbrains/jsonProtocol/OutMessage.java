@@ -5,13 +5,14 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
 public abstract class OutMessage {
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private final StringWriter stringWriter = new StringWriter();
   public final JsonWriter writer = new JsonWriter(stringWriter);
 
@@ -149,7 +150,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeSingletonIntArray(@NotNull String name, @NotNull int value) {
+  protected final void writeSingletonIntArray(@NotNull String name, int value) {
     try {
       beginArguments();
       writer.name(name);
@@ -180,7 +181,7 @@ public abstract class OutMessage {
           isNotFirst = true;
         }
 
-        StringBuffer buffer = item.stringWriter.getBuffer();
+        StringBuilder buffer = item.stringWriter.getBuffer();
         if (!item.finalized) {
           item.finalized = true;
           try {
@@ -217,7 +218,7 @@ public abstract class OutMessage {
 
   public static void prepareWriteRaw(OutMessage message, String name) throws IOException {
     message.writer.name(name).nullValue();
-    StringBuffer myBuffer = message.stringWriter.getBuffer();
+    StringBuilder myBuffer = message.stringWriter.getBuffer();
     myBuffer.delete(myBuffer.length() - "null".length(), myBuffer.length());
   }
 
@@ -230,7 +231,7 @@ public abstract class OutMessage {
       beginArguments();
       prepareWriteRaw(this, name);
 
-      StringBuffer buffer = value.stringWriter.getBuffer();
+      StringBuilder buffer = value.stringWriter.getBuffer();
       if (!value.finalized) {
         value.close();
       }
@@ -281,6 +282,18 @@ public abstract class OutMessage {
   protected final void writeString(String name, String value) {
     if (value != null) {
       writeNullableString(name, value);
+    }
+  }
+
+  protected final void writeString(String name, CharSequence value) {
+    if (value != null) {
+      try {
+        prepareWriteRaw(this, name);
+        JsonUtil.escape(value, stringWriter.getBuffer());
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
