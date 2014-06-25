@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -242,32 +243,12 @@ public final class UpdateChecker {
     if (!toUpdate.isEmpty()) {
       try {
         final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator);
-        final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final PluginId pluginId = loadedPlugin.getPluginId();
           final String idString = pluginId.getIdString();
           if (!toUpdate.containsKey(idString)) continue;
-          final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
-          if (installedPlugin == null) {
-            prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
-          } else {
-            final String newVersion = loadedPlugin.getVersion();
-            if (PluginDownloader.compareVersionsSkipBroken(installedPlugin, newVersion) > 0) {
-              updateSettings.myOutdatedPlugins.add(idString);
-              if (isReadyToUpdate(idString, newVersion)) {
-                if (!disabledPlugins.contains(idString)) {
-                  prepareToInstall(downloaded, loadedPlugin, indicator, buildNumber);
-                }
-              } else {
-                final PluginDownloader downloader = ourUpdatedPlugins.get(idString);
-                if (downloader != null) {
-                  downloaded.put(pluginId, downloader);
-                }
-              }
-            }
-            if (!downloaded.containsKey(pluginId)) {
-              collectIncompatible(incompatiblePlugins, buildNumber, installedPlugin);
-            }
+          if (!downloaded.containsKey(pluginId)) {
+            prepareToInstall(indicator, idString, getDownloadUrl(loadedPlugin), loadedPlugin.getVersion(), loadedPlugin.getName(), buildNumber, downloaded, incompatiblePlugins);
           }
         }
       }
@@ -291,18 +272,34 @@ public final class UpdateChecker {
     return oldPlugin == null || StringUtil.compareVersionNumbers(newVersion, oldPlugin.getPluginVersion()) > 0;
   }
 
-  private static void prepareToInstall(Map<PluginId, PluginDownloader> downloaded,
-                                       IdeaPluginDescriptor loadedPlugin,
-                                       @Nullable ProgressIndicator indicator, 
-                                       @Nullable BuildNumber buildNumber) throws IOException {
-    final PluginId pluginId = loadedPlugin.getPluginId();
-    //prefer plugins from plugin hosts
-    if (!downloaded.containsKey(pluginId)) {
-      final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
-      if (downloader.prepareToInstall(indicator, buildNumber)) {
-        downloaded.put(pluginId, downloader);
-        ourUpdatedPlugins.put(pluginId.getIdString(), downloader);
+  private static void prepareToInstall(ProgressIndicator progressIndicator,
+                                       String pluginId,
+                                       String finalPluginUrl,
+                                       String pluginVersion,
+                                       String pluginName, 
+                                       BuildNumber buildNumber,
+                                       Map<PluginId, PluginDownloader> downloaded,
+                                       Collection<IdeaPluginDescriptor> incompatiblePlugins) throws IOException {
+    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    if (disabledPlugins.contains(pluginId)) return;
+    final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, pluginName);
+    final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
+    if (loadedPlugin == null || pluginVersion == null ||
+        PluginDownloader.compareVersionsSkipBroken(loadedPlugin, pluginVersion) > 0) {
+      if (isReadyToUpdate(pluginId, pluginVersion)) {
+        if (downloader.prepareToInstall(progressIndicator, buildNumber)) {
+          downloaded.put(PluginId.getId(pluginId), downloader);
+          ourUpdatedPlugins.put(pluginId, downloader);
+        }
+      } else {
+        final PluginDownloader oldDownloader = ourUpdatedPlugins.get(pluginId);
+        if (oldDownloader != null) {
+          downloaded.put(PluginId.getId(pluginId), oldDownloader);
+        }
       }
+    }
+    if (loadedPlugin != null && !downloaded.containsKey(loadedPlugin.getPluginId())) {
+      collectIncompatible(incompatiblePlugins, buildNumber, loadedPlugin);
     }
   }
 
@@ -380,6 +377,7 @@ public final class UpdateChecker {
     final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
+      prepareToInstall(indicator, descriptor.getPluginId().getIdString(), ((PluginNode)descriptor).getDownloadUrl(), descriptor.getVersion(), descriptor.getName(), buildNumber, downloaded, incompatiblePlugins);
       downloaded.put(descriptor.getPluginId(), PluginDownloader.createDownloader(descriptor));
     }
 
@@ -427,25 +425,7 @@ public final class UpdateChecker {
               if (progressIndicator != null) {
                 progressIndicator.setText2(finalPluginUrl);
               }
-              final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
-              final IdeaPluginDescriptor loadedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
-              if (loadedPlugin == null || pluginVersion == null ||
-                  PluginDownloader.compareVersionsSkipBroken(loadedPlugin, pluginVersion) > 0) {
-                if (isReadyToUpdate(pluginId, pluginVersion)) {
-                  if (downloader.prepareToInstall(progressIndicator, buildNumber)) {
-                    downloaded.put(PluginId.getId(pluginId), downloader);
-                    ourUpdatedPlugins.put(pluginId, downloader);
-                  }
-                } else {
-                  final PluginDownloader oldDownloader = ourUpdatedPlugins.get(pluginId);
-                  if (oldDownloader != null) {
-                    downloaded.put(PluginId.getId(pluginId), oldDownloader);
-                  }
-                }
-              }
-              if (loadedPlugin != null && !downloaded.containsKey(loadedPlugin.getPluginId())) {
-                collectIncompatible(incompatiblePlugins, buildNumber, loadedPlugin);
-              }
+              prepareToInstall(progressIndicator, pluginId, finalPluginUrl, pluginVersion, null, buildNumber, downloaded, incompatiblePlugins);
             }
             catch (IOException e) {
               LOG.info(e);
@@ -870,4 +850,23 @@ public final class UpdateChecker {
       }
     }
   }
+
+  static String getDownloadUrl(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
+    String url = null;
+    if (descriptor instanceof PluginNode) {
+      url = ((PluginNode)descriptor).getDownloadUrl();
+    }
+    if (url == null) {
+      String uuid = ApplicationManager.getApplication() == null ?
+                    UUID.randomUUID().toString() :
+                    getInstallationUID(PropertiesComponent.getInstance());
+      String buildNumber = ApplicationManager.getApplication() != null
+                           ? ApplicationInfo.getInstance().getApiVersion()
+                           :  ApplicationInfoImpl.getShadowInstance().getBuild().asString();
+      url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
+            "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
+    }
+    return url;
+  }
+
 }

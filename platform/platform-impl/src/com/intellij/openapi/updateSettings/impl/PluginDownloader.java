@@ -18,11 +18,8 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -47,9 +44,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author anna
@@ -386,22 +381,9 @@ public class PluginDownloader {
   }
 
   public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
-    String url = null;
-    if (descriptor instanceof PluginNode) {
-      url = ((PluginNode)descriptor).getDownloadUrl();
-    }
-    if (url == null) {
-      String uuid = ApplicationManager.getApplication() == null ?
-                    UUID.randomUUID().toString() :
-                    UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
-      String buildNumber = ApplicationManager.getApplication() != null
-                           ? ApplicationInfo.getInstance().getApiVersion()
-                           :  ApplicationInfoImpl.getShadowInstance().getBuild().asString();
-      url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
-            "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
-    }
-
-    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, descriptor.getVersion(), null, descriptor.getName());
+    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), 
+                                                       UpdateChecker.getDownloadUrl(descriptor), 
+                                                       descriptor.getVersion(), null, descriptor.getName());
     downloader.setDescriptor(descriptor);
     return downloader;
   }
