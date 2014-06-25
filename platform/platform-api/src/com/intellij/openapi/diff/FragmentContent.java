@@ -48,6 +48,8 @@ public class FragmentContent extends DiffContent {
 
   public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, FileType fileType) {
     RangeMarker rangeMarker = original.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+    rangeMarker.setGreedyToLeft(true);
+    rangeMarker.setGreedyToRight(true);
     mySynchonizer = new MyDocumentsSynchronizer(project, rangeMarker);
     myOriginal = original;
     myType = fileType;

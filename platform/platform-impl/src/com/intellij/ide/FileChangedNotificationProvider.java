@@ -79,6 +79,7 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
     });
   }
 
+  @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;

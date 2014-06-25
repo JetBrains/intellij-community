@@ -44,6 +44,7 @@ import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -353,10 +354,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   private static class Button extends ActionButtonWithText {
+    private final Border myBorder;
 
     public Button(AnAction action, Presentation presentation) {
       super(action, presentation, "NewProject", new Dimension(70, 50));
-      setBorder(UIUtil.getButtonBorder());
+      myBorder = UIUtil.isUnderDarcula() ? UIUtil.getButtonBorder() : BorderFactory.createLineBorder(UIUtil.getBorderColor());
+      setBorder(myBorder);
     }
 
     @Override
@@ -385,7 +388,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         setBorder(null);
       }
       else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-        setBorder(UIUtil.getButtonBorder());
+        setBorder(myBorder);
       }
     }
   }
