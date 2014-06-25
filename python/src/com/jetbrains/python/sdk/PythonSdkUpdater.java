@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,49 +92,53 @@ public class PythonSdkUpdater implements StartupActivity {
 
     // NOTE: everything is run later on the AWT thread
     if (!sdksToUpdate.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          if (delay > 0) {
-            try {
-              Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
-            }
-            catch (InterruptedException ignore) {
-            }
-          }
-          // update skeletons
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
-                @Override
-                public void run(@NotNull ProgressIndicator indicator) {
-                  for (final Sdk sdk : sdksToUpdate) {
-                    try {
-                      LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                      updateSdk(project, sdk);
-                    }
-                    catch (InvalidSdkException e) {
-                      if (PythonSdkType.isRemote(sdk)) {
-                        PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
-                          @Override
-                          public void run() {
-                            updateActiveSdks(project, delay);
-                          }
-                        });
-                      }
-                      else if (!PythonSdkType.isInvalid(sdk)) {
-                        LOG.error(e);
-                      }
-                    }
-                    myAlreadyUpdated.add(sdk.getHomePath());
-                  }
-                }
-              });
-            }
-          });
-        }
-      });
+      updateSdks(project, delay, sdksToUpdate);
     }
+  }
+
+  private void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        if (delay > 0) {
+          try {
+            Thread.sleep(delay); // wait until all short-term disk-hitting activity ceases
+          }
+          catch (InterruptedException ignore) {
+          }
+        }
+        // update skeletons
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                for (final Sdk sdk : sdksToUpdate) {
+                  try {
+                    LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
+                    updateSdk(project, sdk);
+                  }
+                  catch (InvalidSdkException e) {
+                    if (PythonSdkType.isRemote(sdk)) {
+                      PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+                        @Override
+                        public void run() {
+                          updateSdks(project, delay, Sets.newHashSet(sdk));
+                        }
+                      });
+                    }
+                    else if (!PythonSdkType.isInvalid(sdk)) {
+                      LOG.error(e);
+                    }
+                  }
+                  myAlreadyUpdated.add(sdk.getHomePath());
+                }
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   private static void updateSdk(@NotNull Project project, @NotNull final Sdk sdk) throws InvalidSdkException {
