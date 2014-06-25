@@ -1,5 +1,6 @@
 package com.intellij.remote;
 
+import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +96,17 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   @Override
   public void setRemoteRoots(List<String> remoteRoots) {
     myRemoteSdkProperties.setRemoteRoots(remoteRoots);
+  }
+
+  @NotNull
+  @Override
+  public PathMappingSettings getPathMappings() {
+    return myRemoteSdkProperties.getPathMappings();
+  }
+
+  @Override
+  public void setPathMappings(@Nullable PathMappingSettings pathMappings) {
+    myRemoteSdkProperties.setPathMappings(pathMappings);
   }
 
   @Override

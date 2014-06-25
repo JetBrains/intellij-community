@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,8 +35,10 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,6 +148,15 @@ public class PythonSdkUpdater implements StartupActivity {
     PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdk)) {
       updateSysPath(sdk);
+    } else {
+      PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdk.getSdkAdditionalData();
+      assert remoteSdkData != null;
+      List<String> paths = Lists.newArrayList();
+      for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
+        paths.add(mapping.getLocalRoot());
+      }
+
+      updateSdkPath(sdk, paths);
     }
   }
 

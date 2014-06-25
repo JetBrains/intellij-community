@@ -96,6 +96,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class PythonSdkType extends SdkType {
+  public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
@@ -647,9 +648,6 @@ public class PythonSdkType extends SdkType {
         }
       }
     }
-    else {
-      addRemoteLibrariesRoot(sdkModificator, sdkHome);
-    }
 
     PyUserSkeletonsUtil.addUserSkeletonsRoot(sdkModificator);
     addSkeletonsRoot(sdkModificator, sdkHome);
@@ -697,14 +695,6 @@ public class PythonSdkType extends SdkType {
     final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
     assert builtins_root != null : "Cannot find skeletons path " + skeletonsPath + " in VFS";
     sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
-  }
-
-  private static void addRemoteLibrariesRoot(@NotNull SdkModificator sdkModificator, String sdkHome) {
-    @NonNls final String librariesRoot = PySdkUtil.getRemoteSourcesLocalPath(sdkHome);
-    new File(librariesRoot).mkdirs();
-    final VirtualFile remoteLibraries = LocalFileSystem.getInstance().refreshAndFindFileByPath(librariesRoot);
-    assert remoteLibraries != null : "Cannot find remote libraries path " + librariesRoot + " in VFS";
-    sdkModificator.addRoot(remoteLibraries, OrderRootType.CLASSES);
   }
 
   protected static void addHardcodedPaths(SdkModificator sdkModificator) {

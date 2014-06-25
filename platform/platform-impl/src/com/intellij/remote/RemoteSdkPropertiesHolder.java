@@ -19,12 +19,13 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author traff
@@ -35,6 +36,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
   private static final String REMOTE_PATH = "REMOTE_PATH";
   private static final String INITIALIZED = "INITIALIZED";
+  private static final String PATH_MAPPINGS = "PATH_MAPPINGS";
 
   private String mySdkId;
 
@@ -48,6 +50,9 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private Set<String> myRemoteRoots = Sets.newTreeSet();
 
   private boolean myInitialized = false;
+
+  @NotNull
+  private PathMappingSettings myPathMappings = new PathMappingSettings();
 
   public RemoteSdkPropertiesHolder(String name) {
     myHelpersDefaultDirName = name;
@@ -97,6 +102,20 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     myRemoteRoots = Sets.newTreeSet(remoteRoots);
   }
 
+  @NotNull
+  @Override
+  public PathMappingSettings getPathMappings() {
+    return myPathMappings;
+  }
+
+  @Override
+  public void setPathMappings(@Nullable PathMappingSettings pathMappings) {
+    myPathMappings = new PathMappingSettings();
+    if (pathMappings != null) {
+      myPathMappings.addAll(pathMappings);
+    }
+  }
+
   @Override
   public boolean isHelpersVersionChecked() {
     return myHelpersVersionChecked;
@@ -123,7 +142,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   @Override
   public void setInitialized(boolean initialized) {
     myInitialized = initialized;
-
   }
 
   public void copyTo(RemoteSdkProperties copy) {
@@ -142,6 +160,8 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
     rootElement.setAttribute(INITIALIZED, Boolean.toString(isInitialized()));
 
+    PathMappingSettings.writeExternal(rootElement, myPathMappings);
+
     for (String remoteRoot : getRemoteRoots()) {
       final Element child = new Element(REMOTE_ROOTS);
       child.setAttribute(REMOTE_PATH, remoteRoot);
@@ -156,5 +176,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     setRemoteRoots(JDOMExternalizer.loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
 
     setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
+
+    setPathMappings(PathMappingSettings.readExternal(element));
   }
 }
