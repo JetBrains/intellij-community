@@ -365,14 +365,14 @@ public class PyCallExpressionHelper {
 
   /**
    * Returns argument if it exists and has appropriate type
-   * @param parameter argument
-   * @param argClass expected class
+   * @param parameter  argument
+   * @param argClass   expected class
    * @param expression call expression
-   * @param <T> expected class
+   * @param <T>        expected class
    * @return argument expression or null if has wrong type of does not exist
    */
   @Nullable
-  public static  <T extends PsiElement> T getArgument(
+  public static <T extends PsiElement> T getArgument(
     @NotNull final FunctionParameter parameter,
     @NotNull final Class<T> argClass,
     @NotNull final PyCallExpression expression) {
