@@ -37,6 +37,10 @@ public class LazyRangeMarkerFactory {
   private final Project myProject;
   private static final Key<WeakList<LazyMarker>> LAZY_MARKERS_KEY = Key.create("LAZY_MARKERS_KEY");
 
+  public static LazyRangeMarkerFactory getInstance(Project project) {
+    return ServiceManager.getService(project, LazyRangeMarkerFactory.class);
+  }
+
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
     myProject = project;
 
@@ -87,10 +91,6 @@ public class LazyRangeMarkerFactory {
       markers = file.putUserDataIfAbsent(LAZY_MARKERS_KEY, new WeakList<LazyMarker>());
     }
     markers.add(marker);
-  }
-
-  public static LazyRangeMarkerFactory getInstance(Project project) {
-    return ServiceManager.getService(project, LazyRangeMarkerFactory.class);
   }
 
   @NotNull

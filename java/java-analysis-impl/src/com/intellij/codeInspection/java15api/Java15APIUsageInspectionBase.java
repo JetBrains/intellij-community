@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
-  private static Set<String> ourGenerifiedClasses = new HashSet<String>();
+  private static final Set<String> ourGenerifiedClasses = new HashSet<String>();
   static {
     ourGenerifiedClasses.add("javax.swing.JComboBox");
     ourGenerifiedClasses.add("javax.swing.ListModel");
