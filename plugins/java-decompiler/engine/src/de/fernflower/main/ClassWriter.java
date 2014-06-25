@@ -747,30 +747,32 @@ public class ClassWriter {
 			bufstrwriter.write("default ");
 		}
 
+    String name = mt.getName();
+    if("<init>".equals(name)) {
+      if(node.type == ClassNode.CLASS_ANONYMOUS) {
+        name = "";
+        dinit = true;
+      } else {
+        name = node.simpleName;
+        init = true;
+      }
+    } else if("<clinit>".equals(name)) {
+      name = "";
+      clinit = true;
+    }
+
 		GenericMethodDescriptor descriptor = null;
 		if(DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
 			StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)mt.getAttributes().getWithKey("Signature");
 			if(attr != null) {
 				descriptor = GenericMain.parseMethodSignature(attr.getSignature());
-				if(md.params.length != descriptor.params.size()) {
+        int actualParams = md.params.length;
+        if(isEnum && init) actualParams -= 2;
+        if(actualParams != descriptor.params.size()) {
 					DecompilerContext.getLogger().writeMessage("Inconsistent generic signature in method "+mt.getName()+" "+mt.getDescriptor(), IFernflowerLogger.WARNING);
 					descriptor = null;
 				}
 			}
-		}
-		
-		String name = mt.getName();
-		if("<init>".equals(name)) {
-			if(node.type == ClassNode.CLASS_ANONYMOUS) {
-				name = "";
-				dinit = true;
-			} else {
-				name = node.simpleName;
-				init = true;
-			}
-		} else if("<clinit>".equals(name)) {
-			name = "";
-			clinit = true;
 		}
 		
 		boolean throwsExceptions = false;
@@ -780,7 +782,7 @@ public class ClassWriter {
 		if(!clinit && !dinit) {
 			
 			boolean thisvar = (mt.getAccessFlags() & CodeConstants.ACC_STATIC) == 0;
-		
+
 			// formal type parameters
 			if(descriptor != null && !descriptor.fparameters.isEmpty()) {
 				bufstrwriter.write("<");
@@ -830,8 +832,9 @@ public class ClassWriter {
 
 			boolean firstpar = true;
       int index = isEnum && init ? 3 : thisvar ? 1 : 0;
-      int start = isEnum && init ? 2 : 0;
-      for(int i=start;i<md.params.length;i++) {
+      int start = isEnum && init && descriptor == null ? 2 : 0;
+      int params = descriptor == null ? md.params.length : descriptor.params.size();
+      for(int i=start;i<params;i++) {
 				if(signFields == null || signFields.get(i) == null) {
 					
 					if(!firstpar) {
