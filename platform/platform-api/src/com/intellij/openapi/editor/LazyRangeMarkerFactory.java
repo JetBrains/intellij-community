@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,21 +23,19 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 public class LazyRangeMarkerFactory {
   private final Project myProject;
-  private final ConcurrentMap<VirtualFile,WeakList<LazyMarker>> myMarkers = new ConcurrentWeakHashMap<VirtualFile, WeakList<LazyMarker>>();
+  private static final Key<WeakList<LazyMarker>> LAZY_MARKERS_KEY = Key.create("LAZY_MARKERS_KEY");
 
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
     myProject = project;
@@ -53,13 +51,14 @@ public class LazyRangeMarkerFactory {
         transformRangeMarkers(e);
       }
 
-      private void transformRangeMarkers(DocumentEvent e) {
-        VirtualFile file = fileDocumentManager.getFile(e.getDocument());
+      private void transformRangeMarkers(@NotNull DocumentEvent e) {
+        Document document = e.getDocument();
+        VirtualFile file = fileDocumentManager.getFile(document);
         if (file == null) {
           return;
         }
 
-        WeakList<LazyMarker> lazyMarkers = myMarkers.get(file);
+        WeakList<LazyMarker> lazyMarkers = file.getUserData(LAZY_MARKERS_KEY);
         if (lazyMarkers == null) {
           return;
         }
@@ -67,7 +66,7 @@ public class LazyRangeMarkerFactory {
         List<LazyMarker> markers = lazyMarkers.toStrongList();
         List<LazyMarker> markersToRemove = null;
         for (LazyMarker marker : markers) {
-          if (file.equals(marker.getFile()) && marker.documentChanged(e.getDocument()) != null) {
+          if (file.equals(marker.getFile()) && marker.documentChanged(document) != null) {
             if (markersToRemove == null) {
               markersToRemove = new SmartList<LazyMarker>();
             }
@@ -81,10 +80,11 @@ public class LazyRangeMarkerFactory {
     }, project);
   }
 
-  private void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
-    List<LazyMarker> markers = myMarkers.get(file);
+  private static void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
+    WeakList<LazyMarker> markers = file.getUserData(LAZY_MARKERS_KEY);
+
     if (markers == null) {
-      markers = ConcurrencyUtil.cacheOrGet(myMarkers, file, new WeakList<LazyMarker>());
+      markers = file.putUserDataIfAbsent(LAZY_MARKERS_KEY, new WeakList<LazyMarker>());
     }
     markers.add(marker);
   }
@@ -124,7 +124,7 @@ public class LazyRangeMarkerFactory {
     });
   }
 
-  private abstract static class LazyMarker extends UserDataHolderBase implements RangeMarker{
+  private abstract static class LazyMarker extends UserDataHolderBase implements RangeMarker {
     private RangeMarker myDelegate;
     private final VirtualFile myFile;
     protected final int myInitialOffset;

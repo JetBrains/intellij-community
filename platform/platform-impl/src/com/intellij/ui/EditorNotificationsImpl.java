@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -50,7 +48,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
-  private final Map<VirtualFile, ProgressIndicator> myCurrentUpdates = new ConcurrentWeakHashMap<VirtualFile, ProgressIndicator>();
+  private static final Key<ProgressIndicator> CURRENT_UPDATES = Key.create("CURRENT_UPDATES");
   private final ThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleThreadExecutor("EditorNotifications executor");
   private final MergingUpdateQueue myUpdateMerger;
 
@@ -78,16 +76,18 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   }
 
-  public void updateNotifications(final VirtualFile file) {
+  @Override
+  public void updateNotifications(@NotNull final VirtualFile file) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
-        ProgressIndicator indicator = myCurrentUpdates.remove(file);
+        ProgressIndicator indicator = file.getUserData(CURRENT_UPDATES);
         if (indicator != null) {
           indicator.cancel();
         }
 
         indicator = new ProgressIndicatorBase();
-        myCurrentUpdates.put(file, indicator);
+        file.putUserData(CURRENT_UPDATES, indicator);
 
         final ReadTask task = createTask(indicator, file);
         if (task == null) return;
@@ -109,14 +109,13 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @Nullable
-  private ReadTask createTask(final ProgressIndicator indicator, final VirtualFile file) {
+  private ReadTask createTask(final ProgressIndicator indicator, @NotNull final VirtualFile file) {
     final FileEditor[] editors = FileEditorManager.getInstance(myProject).getAllEditors(file);
     if (editors.length == 0) return null;
 
     return new ReadTask() {
-
       private boolean isOutdated() {
-        if (myProject.isDisposed() || !file.isValid() || indicator != myCurrentUpdates.get(file)) {
+        if (myProject.isDisposed() || !file.isValid() || indicator != file.getUserData(CURRENT_UPDATES)) {
           return true;
         }
 
@@ -150,7 +149,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
           @Override
           public void run() {
             if (!isOutdated()) {
-              myCurrentUpdates.remove(file);
+              file.putUserData(CURRENT_UPDATES, null);
               for (Runnable update : updates) {
                 update.run();
               }
@@ -167,7 +166,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
 
-  private void updateNotification(FileEditor editor, Key<? extends JComponent> key, @Nullable JComponent component) {
+  private void updateNotification(@NotNull FileEditor editor, @NotNull Key<? extends JComponent> key, @Nullable JComponent component) {
     JComponent old = editor.getUserData(key);
     if (old != null) {
       FileEditorManager.getInstance(myProject).removeTopComponent(editor, old);
@@ -182,6 +181,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  @Override
   public void updateAllNotifications() {
     myUpdateMerger.queue(new Update("update") {
       @Override
