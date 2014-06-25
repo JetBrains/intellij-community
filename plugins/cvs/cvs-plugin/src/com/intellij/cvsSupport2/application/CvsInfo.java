@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,12 @@ public class CvsInfo {
   private boolean myIsLoaded = false;
 
   private final VirtualFile myParent;
-  private final CvsEntriesManager myCvsEntriesManager;
   private static final VirtualFile DUMMY_ROOT = null;
 
   private boolean myStickyTagIsLoaded = false;
 
-  public CvsInfo(VirtualFile parent, CvsEntriesManager cvsEntriesManager) {
+  public CvsInfo(VirtualFile parent) {
     myParent = parent;
-    myCvsEntriesManager = cvsEntriesManager;
   }
 
   public synchronized CvsConnectionSettings getConnectionSettings() {
@@ -85,7 +83,7 @@ public class CvsInfo {
         myRepository = CvsUtil.getRelativeRepositoryPath(myRepository, myConnectionSettings.REPOSITORY);
       }
 
-      myCvsEntriesManager.watchForCvsAdminFiles(myParent);
+      CvsEntriesManager.getInstance().watchForCvsAdminFiles(myParent);
     }
     finally {
       myIsLoaded = true;
@@ -107,11 +105,11 @@ public class CvsInfo {
         myConnectionSettings = getAbsentSettings();
       }
       else {
-        myConnectionSettings = myCvsEntriesManager.createConnectionSettingsOn(cvsRoot);
+        myConnectionSettings = CvsEntriesManager.getInstance().createConnectionSettingsOn(cvsRoot);
       }
     }
     catch (Exception ex) {
-      myConnectionSettings = new MyInvalidCvsConnectionSettings();
+      myConnectionSettings = getAbsentSettings();
     }
   }
 
@@ -125,7 +123,7 @@ public class CvsInfo {
       if (myParent == null) {
         myIgnoreFilter = IgnoredFilesInfo.IGNORE_NOTHING;
       }
-      else if (myCvsEntriesManager.fileIsIgnored(myParent)) {
+      else if (CvsEntriesManager.getInstance().fileIsIgnored(myParent)) {
         myIgnoreFilter = IgnoredFilesInfo.IGNORE_ALL;
       }
       else if (!CvsUtil.fileIsUnderCvs(myParent)) {
@@ -320,7 +318,7 @@ public class CvsInfo {
   @SuppressWarnings({"NonSynchronizedMethodOverridesSynchronizedMethod"})
   private static class DummyCvsInfo extends CvsInfo {
     public DummyCvsInfo() {
-      super(null, null);
+      super(null);
     }
 
     @Override
