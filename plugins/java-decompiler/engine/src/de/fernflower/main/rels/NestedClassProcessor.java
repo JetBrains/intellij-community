@@ -75,16 +75,20 @@ public class NestedClassProcessor {
 			// for each local or anonymous class ensure not empty enclosing method 
 			checkNotFoundClasses(root, node);
 		}
-		
-		for(ClassNode child : node.nested) {
-			// ensure not-empty class name
-			if((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
-				DecompilerContext.getLogger().writeMessage("Nameless local or member class "+child.classStruct.qualifiedName+"!", IFernflowerLogger.WARNING);
-				child.simpleName = "NamelessClass"+child.hashCode();
-			}
-		}
-		
-		
+
+    int nameless = 0, synthetics = 0;
+    for(ClassNode child : node.nested) {
+      // ensure not-empty class name
+      if((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
+        if((child.classStruct.access_flags & CodeConstants.ACC_SYNTHETIC) == 0) {
+          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.WARNING);
+          child.simpleName = "NamelessClass_" + (++nameless);
+        } else {
+          child.simpleName = "SyntheticClass_" + (++synthetics);
+        }
+      }
+    }
+
 		for(ClassNode child : node.nested) {
 			if(child.type == ClassNode.CLASS_LAMBDA) {
 				setLambdaVars(node, child);
