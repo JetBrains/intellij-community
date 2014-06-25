@@ -366,7 +366,7 @@ public final class UpdateChecker {
                                           final Map<PluginId, PluginDownloader> downloaded,
                                           final @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
                                           final boolean collectToUpdate,
-                                          @Nullable ProgressIndicator indicator,
+                                          final @Nullable ProgressIndicator indicator,
                                           final BuildNumber buildNumber) throws Exception {
     InputStream inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
