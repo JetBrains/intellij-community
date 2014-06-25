@@ -75,15 +75,22 @@ public class MarkdownPanel extends JPanel {
         isEscaped = false;
       }
 
+      string = string.replace("\n", " \n");
       if ((StringUtil.trimTrailing(string).endsWith("$$") || string.startsWith("\\\\end{")) && inFormula) {
         inFormula = false;
+        string = StringUtil.trimTrailing(string);
+        if (string.endsWith("$$")) {
+          string = StringUtil.trimEnd(string, "$$");
+        }
+        formula.append(string);
       }
       else if (string.trim().startsWith("$$") && !isEscaped) {
-        formula.append(string.substring(2));
+        string = string.substring(2);
+        formula.append(string);
         hasFormula = true;
         inFormula = true;
       }
-      if (string.startsWith("\\") && !isEscaped || inFormula) {
+      else if (string.startsWith("\\") && !isEscaped || inFormula) {
         inFormula = true;
         hasFormula = true;
         if (string.contains("equation*"))
@@ -99,7 +106,7 @@ public class MarkdownPanel extends JPanel {
             add(picLabel);
           }
           catch (ParseException x) {
-            x.printStackTrace();
+            LOG.error("Error parsing " + formula.toString() + " because of:" + x.getMessage());
           }
           hasFormula = false;
           formula = new StringBuilder();
@@ -127,7 +134,7 @@ public class MarkdownPanel extends JPanel {
         add(picLabel);
       }
       catch (ParseException x) {
-        x.printStackTrace();
+        LOG.error("Error parsing " + formula.toString() + " because of:" + x.getMessage());
       }
     }
     setBackground(IpnbEditorUtil.getBackground());
