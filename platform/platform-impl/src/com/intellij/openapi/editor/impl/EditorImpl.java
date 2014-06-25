@@ -2075,7 +2075,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void paintComposedTextDecoration(@NotNull Graphics2D g) {
-    if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
+    if (myInputMethodRequestsHandler != null
+        && myInputMethodRequestsHandler.composedText != null
+        && myInputMethodRequestsHandler.composedTextRange != null) {
       VisualPosition visStart =
         offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getStartOffset(), myDocument.getTextLength()));
       int y = visibleLineToY(visStart.line) + getAscent() + 1;

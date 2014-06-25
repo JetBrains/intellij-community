@@ -79,7 +79,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
   private static final Pattern MAIN_CLASS_NAME_PATTERN = Pattern.compile("\nSTARTER_MAIN_CLASS=(.*)\n");
 
-  public static final GroovyScriptType INSTANCE = new GradleScriptType();
+  public static final GradleScriptType INSTANCE = new GradleScriptType();
 
   private GradleScriptType() {
     super(GradleConstants.EXTENSION);
@@ -264,7 +264,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
         if (scriptPath == null) {
           throw new CantRunException("Target script is undefined");
         }
-        params.getProgramParametersList().add("--build-file");
+        params.getProgramParametersList().add("--project-dir");
         params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
         params.getProgramParametersList().addParametersString(scriptParameters);
@@ -273,7 +273,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
   }
 
   @NotNull
-  private static String findMainClass(VirtualFile gradleHome, VirtualFile script, Project project) {
+  private static String findMainClass(VirtualFile gradleHome, @Nullable VirtualFile script, Project project) {
     final String userDefined = System.getProperty("gradle.launcher.class");
     if (StringUtil.isNotEmpty(userDefined)) {
       return userDefined;
@@ -298,9 +298,12 @@ public class GradleScriptType extends GroovyRunnableScriptType {
       }
     }
 
-    final PsiFile grFile = PsiManager.getInstance(project).findFile(script);
-    if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
-      return "org.gradle.BootstrapMain";
+    final PsiFile grFile;
+    if (script != null) {
+      grFile = PsiManager.getInstance(project).findFile(script);
+      if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
+        return "org.gradle.BootstrapMain";
+      }
     }
 
     return "org.gradle.launcher.GradleMain";

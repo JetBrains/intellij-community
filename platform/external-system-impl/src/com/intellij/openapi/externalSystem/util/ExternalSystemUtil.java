@@ -19,9 +19,13 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
@@ -58,6 +62,7 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentT
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -67,7 +72,9 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,6 +90,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
@@ -539,23 +547,120 @@ public class ExternalSystemUtil {
                              @NotNull String executorId,
                              @NotNull Project project,
                              @NotNull ProjectSystemId externalSystemId) {
-    runTask(taskSettings, executorId, project, externalSystemId, null);
+    runTask(taskSettings, executorId, project, externalSystemId, null, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 
-  public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                             @NotNull String executorId,
-                             @NotNull Project project,
-                             @NotNull ProjectSystemId externalSystemId,
-                             @Nullable ProgramRunner.Callback callback) {
+  public static void runTask(@NotNull final ExternalSystemTaskExecutionSettings taskSettings,
+                             @NotNull final String executorId,
+                             @NotNull final Project project,
+                             @NotNull final ProjectSystemId externalSystemId,
+                             @Nullable final TaskCallback callback,
+                             @NotNull final ProgressExecutionMode progressExecutionMode) {
     final Pair<ProgramRunner, ExecutionEnvironment> pair = createRunner(taskSettings, executorId, project, externalSystemId);
     if (pair == null) return;
 
-    try {
-      pair.first.execute(pair.second, callback);
-    }
-    catch (ExecutionException e) {
-      LOG.warn("Can't execute task " + taskSettings, e);
-    }
+    final ProgramRunner runner = pair.first;
+    final ExecutionEnvironment environment = pair.second;
+
+    final TaskUnderProgress task = new TaskUnderProgress() {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        final Semaphore targetDone = new Semaphore();
+        final Ref<Boolean> result = new Ref<Boolean>(false);
+        final Disposable disposable = Disposer.newDisposable();
+
+        project.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
+          public void processStartScheduled(final String executorIdLocal, final ExecutionEnvironment environmentLocal) {
+            if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+              targetDone.down();
+            }
+          }
+
+          public void processNotStarted(final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+            if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+              targetDone.up();
+            }
+          }
+
+          public void processStarted(final String executorIdLocal,
+                                     @NotNull final ExecutionEnvironment environmentLocal,
+                                     @NotNull final ProcessHandler handler) {
+            if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+              handler.addProcessListener(new ProcessAdapter() {
+                public void processTerminated(ProcessEvent event) {
+                  result.set(event.getExitCode() == 0);
+                  targetDone.up();
+                }
+              });
+            }
+          }
+        });
+
+        try {
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                runner.execute(environment);
+              }
+              catch (ExecutionException e) {
+                targetDone.up();
+                LOG.error(e);
+              }
+            }
+          }, ModalityState.NON_MODAL);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          Disposer.dispose(disposable);
+          return;
+        }
+
+        targetDone.waitFor();
+        Disposer.dispose(disposable);
+
+        if (callback != null) {
+          if (result.get()) {
+            callback.onSuccess();
+          }
+          else {
+            callback.onFailure();
+          }
+        }
+      }
+    };
+
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final String title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
+        switch (progressExecutionMode) {
+          case MODAL_SYNC:
+            new Task.Modal(project, title, true) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                task.execute(indicator);
+              }
+            }.queue();
+            break;
+          case IN_BACKGROUND_ASYNC:
+            new Task.Backgroundable(project, title) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                task.execute(indicator);
+              }
+            }.queue();
+            break;
+          case START_IN_FOREGROUND_ASYNC:
+            new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                task.execute(indicator);
+              }
+            }.queue();
+        }
+      }
+    });
   }
 
   @Nullable
@@ -579,7 +684,11 @@ public class ExternalSystemUtil {
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
     ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     runConfiguration.getSettings().setExternalProjectPath(taskSettings.getExternalProjectPath());
-    runConfiguration.getSettings().setTaskNames(taskSettings.getTaskNames());
+    runConfiguration.getSettings().setTaskNames(ContainerUtil.newArrayList(taskSettings.getTaskNames()));
+    runConfiguration.getSettings().setTaskDescriptions(ContainerUtil.newArrayList(taskSettings.getTaskDescriptions()));
+    runConfiguration.getSettings().setVmOptions(taskSettings.getVmOptions());
+    runConfiguration.getSettings().setScriptParameters(taskSettings.getScriptParameters());
+    runConfiguration.getSettings().setExecutionName(taskSettings.getExecutionName());
 
     return Pair.create(runner, new ExecutionEnvironment(executor, runner, settings, project));
   }

@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +47,7 @@ public class MagicCompletionContributor extends CompletionContributor {
   private static final int PRIORITY = 100;
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     //if (parameters.getCompletionType() != CompletionType.SMART) return;
     PsiElement pos = parameters.getPosition();
     MagicConstantInspection.AllowedValues allowedValues = null;

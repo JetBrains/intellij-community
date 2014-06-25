@@ -606,4 +606,13 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.checkResult("bar = {'a': '1'}\n" +
                           "print bar<caret>['a']");
   }
+
+  // PY-1860
+  public void testDunderMetaClass() {
+    doTestByText("class C(object):\n" +
+                 "    __meta<caret>\n");
+    myFixture.checkResult("class C(object):\n" +
+                          "    __metaclass__ = \n");
+
+  }
 }

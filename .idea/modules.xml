@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/ByteCodeViewer/ByteCodeViewer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-java.iml" group="plugins/IntelliLang" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-javaee.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" filepath="$PROJECT_DIR$/python/IntelliLang-python/IntelliLang-python.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-tests/IntelliLang-tests.iml" group="plugins/IntelliLang" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/IntelliLang-xml.iml" group="plugins/IntelliLang" />

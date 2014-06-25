@@ -48,10 +48,6 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       return fromIndices;
     }
 
-    if (!canHaveStub(vFile)) {
-      return null;
-    }
-
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(IndexingDataKeys.PROJECT, project);

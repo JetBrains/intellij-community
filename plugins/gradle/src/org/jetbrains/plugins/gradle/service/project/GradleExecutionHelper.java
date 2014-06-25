@@ -47,7 +47,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -382,14 +385,15 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static File generateInitScript(boolean isBuildSrcProject) {
+  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class> toolingExtensionClasses) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
         LOG.warn("Can't get init script template");
         return null;
       }
-      String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths());
+      final String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
+      String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -482,17 +486,10 @@ public class GradleExecutionHelper {
   }
 
   @NotNull
-  private static String getToolingExtensionsJarPaths() throws ClassNotFoundException {
-    final ArrayList<Class<?>> list = ContainerUtil.newArrayList(
-      // add gradle-tooling-extension-api jar
-      Class.forName("org.jetbrains.plugins.gradle.model.ProjectImportAction"),
-      // add gradle-tooling-extension-impl jar
-      Class.forName("org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl")
-    );
-
+  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
     StringBuilder buf = new StringBuilder();
     buf.append('[');
-    for (Iterator<Class<?>> it = list.iterator(); it.hasNext(); ) {
+    for (Iterator<Class> it = toolingExtensionClasses.iterator(); it.hasNext(); ) {
       Class<?> aClass = it.next();
       String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(aClass));
       buf.append('\"').append(jarPath).append('\"');

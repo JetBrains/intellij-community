@@ -209,6 +209,6 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.jgit.GitHttpAuthDataProvider"/>
+    <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
   </extensionPoints>
 </idea-plugin>

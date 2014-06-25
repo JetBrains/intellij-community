@@ -55,9 +55,9 @@ class XAddToWatchesAction extends XDebuggerTreeActionBase {
     if (view == null && project != null) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if (session != null) {
-        return ((XDebugSessionImpl)session).getSessionTab().getWatchesView();
+        view = ((XDebugSessionImpl)session).getSessionTab().getWatchesView();
       }
     }
-    return null;
+    return view;
   }
 }

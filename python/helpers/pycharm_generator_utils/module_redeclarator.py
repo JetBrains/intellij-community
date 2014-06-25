@@ -120,7 +120,7 @@ class ModuleRedeclarator(object):
         init = None
         try:
             if self.split_modules:
-                mod_path = self.outfile.strip(".py")
+                mod_path = module_to_package_name(self.outfile)
 
                 fname = build_output_name(mod_path, "__init__")
                 init = fopen(fname, "w")
@@ -1093,3 +1093,7 @@ class ModuleRedeclarator(object):
             for mod_name in sorted_no_case(self.hidden_imports.keys()):
                 out(0, 'import ', mod_name, ' as ', self.hidden_imports[mod_name])
             out(0, "") # empty line after group
+
+
+def module_to_package_name(module_name):
+    return re.sub(r"(.*)\.py$", r"\1", module_name)

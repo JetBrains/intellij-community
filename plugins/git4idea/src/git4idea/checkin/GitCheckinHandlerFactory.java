@@ -22,7 +22,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -131,14 +133,17 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       if (crlfHelper.get().shouldWarn()) {
-        final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        Pair<Integer, Boolean> codeAndDontWarn = UIUtil.invokeAndWaitIfNeeded(new Computable<Pair<Integer, Boolean>>() {
           @Override
-          public void run() {
+          public Pair<Integer, Boolean> compute() {
+            final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
             dialog.show();
+            return Pair.create(dialog.getExitCode(), dialog.dontWarnAgain());
           }
         });
-        int decision = dialog.getExitCode();
+        int decision = codeAndDontWarn.first;
+        boolean dontWarnAgain = codeAndDontWarn.second;
+
         if  (decision == GitCrlfDialog.CANCEL) {
           return ReturnResult.CANCEL;
         }
@@ -148,7 +153,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
             setCoreAutoCrlfAttribute(anyRoot);
           }
           else {
-            if (dialog.dontWarnAgain()) {
+            if (dontWarnAgain) {
               settings.setWarnAboutCrlf(false);
             }
           }

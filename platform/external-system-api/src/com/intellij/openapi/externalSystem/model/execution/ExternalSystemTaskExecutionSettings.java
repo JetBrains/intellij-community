@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,10 +40,20 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
   private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
 
+  @Nullable private String myExecutionName;
   private String myExternalSystemIdString;
   private String myExternalProjectPath;
   private String myVmOptions;
   private String myScriptParameters;
+
+  @Nullable
+  public String getExecutionName() {
+    return myExecutionName;
+  }
+
+  public void setExecutionName(@Nullable String executionName) {
+    myExecutionName = executionName;
+  }
 
   public String getExternalSystemIdString() {
     return myExternalSystemIdString;
@@ -99,6 +110,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @Override
   public ExternalSystemTaskExecutionSettings clone() {
     ExternalSystemTaskExecutionSettings result = new ExternalSystemTaskExecutionSettings();
+    result.setExecutionName(getExecutionName());
     result.setExternalSystemIdString(getExternalSystemIdString());
     result.setExternalProjectPath(getExternalProjectPath());
     result.setVmOptions(getVmOptions());
@@ -111,6 +123,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @Override
   public int hashCode() {
     int result = myTaskNames != null ? myTaskNames.hashCode() : 0;
+    result = 31 * result + (myExecutionName != null ? myExecutionName.hashCode() : 0);
     result = 31 * result + (myExternalSystemIdString != null ? myExternalSystemIdString.hashCode() : 0);
     result = 31 * result + (myExternalProjectPath != null ? myExternalProjectPath.hashCode() : 0);
     result = 31 * result + (myVmOptions != null ? myVmOptions.hashCode() : 0);
@@ -124,6 +137,10 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     if (o == null || getClass() != o.getClass()) return false;
 
     ExternalSystemTaskExecutionSettings settings = (ExternalSystemTaskExecutionSettings)o;
+
+    if (myExecutionName != null ? !myExecutionName.equals(settings.myExecutionName) : settings.myExecutionName != null) {
+      return false;
+    }
 
     if (myExternalProjectPath != null
         ? !myExternalProjectPath.equals(settings.myExternalProjectPath)

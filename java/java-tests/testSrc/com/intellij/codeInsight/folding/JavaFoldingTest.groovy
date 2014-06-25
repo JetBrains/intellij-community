@@ -53,7 +53,6 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
     myFoldingSettings = JavaCodeFoldingSettings.instance as JavaCodeFoldingSettingsImpl
     myFoldingStateToRestore = new JavaCodeFoldingSettingsImpl()
     myFoldingStateToRestore.loadState(myFoldingSettings)
-    myFoldingSettings.setInlineParameterNamesForLiteralCallArguments(true)
   }
 
   @Override

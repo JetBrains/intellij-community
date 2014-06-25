@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.KeyValue;
+import com.intellij.util.Consumer;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   void setProjectResolverContext(@NotNull ProjectResolverContext projectResolverContext);
 
-  void setNext(@Nullable GradleProjectResolverExtension projectResolverExtension);
+  void setNext(@NotNull GradleProjectResolverExtension projectResolverExtension);
 
   @Nullable
   GradleProjectResolverExtension getNext();
@@ -98,6 +99,14 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @NotNull
   Set<Class> getExtraProjectModelClasses();
 
+  /**
+   * add paths containing these classes to classpath of gradle tooling extension
+   *
+   * @return classes to be available for gradle
+   */
+  @NotNull
+  Set<Class> getToolingExtensionsClasses();
+
   @NotNull
   List<KeyValue<String, String>> getExtraJvmArgs();
 
@@ -111,4 +120,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * Performs project configuration and other checks before the actual project import (before invocation of gradle tooling API).
    */
   void preImportCheck();
+
+  void enhanceTaskProcessing(@NotNull List<String> taskNames, @Nullable String debuggerSetup, @NotNull Consumer<String> initScriptConsumer);
 }

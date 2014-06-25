@@ -18,11 +18,13 @@ package org.jetbrains.plugins.gradle.tooling;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
-public interface ModelBuilderService {
+public interface ModelBuilderService extends Serializable {
   boolean canBuild(String modelName);
 
   Object buildAll(String modelName, Project project);

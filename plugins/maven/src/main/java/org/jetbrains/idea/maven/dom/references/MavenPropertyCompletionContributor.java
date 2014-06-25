@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -33,7 +34,7 @@ import java.util.Collection;
 
 public class MavenPropertyCompletionContributor extends CompletionContributor {
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile psiFile = parameters.getOriginalFile();
     Project project = psiFile.getProject();
 

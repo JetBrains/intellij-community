@@ -561,7 +561,7 @@ public interface Test {
   static class LongContributor extends CompletionContributor {
 
     @Override
-    void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
       result.runRemainingContributors(parameters, true)
       Thread.sleep 500
     }
