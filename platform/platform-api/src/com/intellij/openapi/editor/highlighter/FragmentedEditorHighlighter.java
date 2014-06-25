@@ -105,7 +105,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    Map.Entry<Integer, Element> entry = myPieces.ceilingEntry(startOffset);
+    Map.Entry<Integer, Element> entry = myPieces.floorEntry(startOffset);
     return new ProxyIterator(myDocument, entry == null ? -1 : entry.getKey());
   }
 
