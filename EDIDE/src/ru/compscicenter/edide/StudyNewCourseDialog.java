@@ -23,7 +23,6 @@ public class StudyNewCourseDialog extends DialogWrapper {
   private JLabel myErrorIconLabel;
   private StudyDirectoryProjectGenerator myGenerator;
   private final String CONNECTION_ERROR = "Check your internet connection";
-  private final String COURSE_NOT_SELECTED_ERROR = "You should choose some course";
   private final String INVALID_COURSE_ERROR = "The course you chosen is invalid";
 
 

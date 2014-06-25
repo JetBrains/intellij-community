@@ -36,11 +36,10 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   public static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
   public static final String USER_NAME = "medvector";
   public static final String REPOSITORY_NAME = "initial-python-course";
-  private static File myBaseCourseFile;
-  private static File myDefaultCoursesBaseDir;
-  private static Map<String, File> myDefaultCourseFiles =  new HashMap<String, File>();
-  private static String myLocalCourseBaseFileName;
-  private static String myDefaultSelectedCourseName;
+  private File myDefaultCoursesBaseDir;
+  private Map<String, File> myDefaultCourseFiles =  new HashMap<String, File>();
+  private String myLocalCourseBaseFileName;
+  private String myDefaultSelectedCourseName;
 
   @Nls
   @NotNull
@@ -66,7 +65,7 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   }
 
 
-  public static File getBaseCourseFile() {
+  public File getBaseCourseFile() {
     if (myLocalCourseBaseFileName != null) {
       File file = new File(myLocalCourseBaseFileName);
       if (file.exists()) {
@@ -90,20 +89,6 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   }
 
 
-  public static File getResourcesRoot() {
-    @NonNls String jarPath = PathUtil.getJarPathForClass(StudyDirectoryProjectGenerator.class);
-    if (jarPath.endsWith(".jar")) {
-      final File jarFile = new File(jarPath);
-      return jarFile.getParentFile().getParentFile();
-    }
-
-    return new File(jarPath);
-  }
-
-
-  public static void setMyBaseCourseFile(String mymyBaseCouseFile) {
-    myBaseCourseFile = myDefaultCourseFiles.get(mymyBaseCouseFile);
-  }
 
   @Nullable
   @Override
@@ -111,46 +96,23 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     return null;
   }
 
-  //should be invoked in invokeLater method
-  void createFile(@NotNull final String name, @NotNull final VirtualFile directory) throws IOException {
-    final File root = getResourcesRoot();
-    String systemIndependentName = FileUtil.toSystemIndependentName(name);
-    final int index = systemIndependentName.lastIndexOf("/");
-    if (index > 0) {
-      systemIndependentName = systemIndependentName.substring(index + 1);
-    }
-    FileUtil.copy(new File(root, name), new File(directory.getPath(), systemIndependentName));
-  }
-
-  public static ArrayList<String> getCourseFiles() {
-    ArrayList<String> fileName = new ArrayList<String>();
-    for (String key : myDefaultCourseFiles.keySet()) {
-     fileName.add(key);
-    }
-    return fileName;
-  }
 
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    //if (!myDefaultCoursesBaseDir.exists()) {
-    //  downloadCoursesFromGithub();
-    //}
-    //myDefaultCourses = getDefaultCourses();
-    //////select course window
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
 
-    myBaseCourseFile = getBaseCourseFile();
-    if (myBaseCourseFile == null) {
+    File baseCourseFile = getBaseCourseFile();
+    if (baseCourseFile == null) {
       LOG.error("user didn't choose any course files");
       return;
     }
     try {
-      Reader reader = new InputStreamReader(new FileInputStream(myBaseCourseFile));
+      Reader reader = new InputStreamReader(new FileInputStream(baseCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
-      course.create(project, baseDir, myBaseCourseFile.getParent());
+      course.create(project, baseDir, baseCourseFile.getParent());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
     }
     catch (FileNotFoundException e) {
@@ -226,7 +188,7 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
     return myDefaultCourseFiles;
   }
 
-  private static String getCourseName(File file) {
+  private String getCourseName(File file) {
     InputStream metaIS = null;
     String name = null;
     try {
