@@ -96,13 +96,13 @@ public class ArrayExprent extends Exprent {
 	}
 
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof ArrayExprent) {
-			ArrayExprent arr = (ArrayExprent)o;
-			return InterpreterUtil.equalObjects(array, arr.getArray()) &&
-					InterpreterUtil.equalObjects(index, arr.getIndex());
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof ArrayExprent)) return false;
+
+    ArrayExprent arr = (ArrayExprent)o;
+    return InterpreterUtil.equalObjects(array, arr.getArray()) &&
+        InterpreterUtil.equalObjects(index, arr.getIndex());
+  }
 
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == array) {

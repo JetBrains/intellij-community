@@ -112,19 +112,17 @@ public class IfExprent extends Exprent {
 		StringBuffer buf = new StringBuffer("if(");
 		buf.append(condition.toJava(indent));
 		buf.append(")");
-		
+
 		return buf.toString();
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof IfExprent) {
-			IfExprent ie = (IfExprent)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof IfExprent)) return false;
 
-			return InterpreterUtil.equalObjects(condition, ie.getCondition());
-					 
-		}
-		return false;
-	}
+    IfExprent ie = (IfExprent)o;
+    return InterpreterUtil.equalObjects(condition, ie.getCondition());
+  }
 
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == condition) {

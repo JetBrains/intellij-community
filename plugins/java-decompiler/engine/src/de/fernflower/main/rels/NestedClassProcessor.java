@@ -997,13 +997,11 @@ public class NestedClassProcessor {
 		}
 
 		@Override
-		public boolean equals(Object arg0) {
-			
-			if(!(arg0 instanceof VarFieldPair)) {
-				return false;
-			}
-			
-			VarFieldPair pair = (VarFieldPair)arg0;
+		public boolean equals(Object o) {
+			if(o == this) return true;
+			if(o == null || !(o instanceof VarFieldPair)) return false;
+
+			VarFieldPair pair = (VarFieldPair)o;
 			return keyfield.equals(pair.keyfield) && varpaar.equals(pair.varpaar);
 		}
 

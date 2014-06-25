@@ -494,23 +494,20 @@ public class FlattenStatementsHelper {
 		}
 
 		@Override
-		public boolean equals(Object arg0) {
-			
-			if(arg0 != null && arg0 instanceof FinallyPathWrapper) {
-				FinallyPathWrapper fpwrapper = (FinallyPathWrapper)arg0;
-				
-				return (source+":"+destination+":"+entry).equals(
-						fpwrapper.source+":"+fpwrapper.destination+":"+fpwrapper.entry);
-			}
-			
-			return false;
-		}
+		public boolean equals(Object o) {
+      if(o == this) return true;
+      if(o == null || !(o instanceof FinallyPathWrapper)) return false;
+
+      FinallyPathWrapper fpw = (FinallyPathWrapper)o;
+      return (source+":"+destination+":"+entry).equals(fpw.source+":"+fpw.destination+":"+fpw.entry);
+    }
 
 		@Override
 		public int hashCode() {
 			return (source+":"+destination+":"+entry).hashCode();
 		}
-		
+
+    @Override
 		public String toString() {
 			return source + "->(" + entry + ")->" + destination; 
 		}

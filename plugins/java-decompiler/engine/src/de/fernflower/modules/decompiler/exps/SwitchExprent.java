@@ -81,14 +81,12 @@ public class SwitchExprent extends Exprent {
 	}
 
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof SwitchExprent) {
-			SwitchExprent sw = (SwitchExprent)o;
-			
-			return InterpreterUtil.equalObjects(value, sw.getValue());
-			
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof SwitchExprent)) return false;
+
+    SwitchExprent sw = (SwitchExprent)o;
+    return InterpreterUtil.equalObjects(value, sw.getValue());
+  }
 	
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == value) {

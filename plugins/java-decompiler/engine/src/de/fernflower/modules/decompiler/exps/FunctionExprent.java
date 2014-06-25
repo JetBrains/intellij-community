@@ -429,14 +429,13 @@ public class FunctionExprent extends Exprent {
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof FunctionExprent) {
-			FunctionExprent fe = (FunctionExprent)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof FunctionExprent)) return false;
 
-			return functype==fe.getFunctype() &&
-					InterpreterUtil.equalLists(lstOperands, fe.getLstOperands()); // TODO: order of operands insignificant 
-		}
-		return false;
-	}
+    FunctionExprent fe = (FunctionExprent)o;
+    return functype==fe.getFunctype() &&
+        InterpreterUtil.equalLists(lstOperands, fe.getLstOperands()); // TODO: order of operands insignificant
+  }
 	
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		for(int i=0;i<lstOperands.size();i++) {

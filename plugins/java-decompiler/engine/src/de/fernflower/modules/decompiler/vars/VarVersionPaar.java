@@ -39,14 +39,12 @@ public class VarVersionPaar {
 	}
 	
 	@Override
-	public boolean equals(Object arg0) {
-		if(arg0 == null || !(arg0 instanceof VarVersionPaar)) {
-			return false;
-		}
+	public boolean equals(Object o) {
+    if(o == this) return true;
+    if(o == null || !(o instanceof VarVersionPaar)) return false;
 		
-		VarVersionPaar paar = (VarVersionPaar)arg0;
-		
-		return var == paar.var && version == paar.version; 
+		VarVersionPaar paar = (VarVersionPaar)o;
+		return var == paar.var && version == paar.version;
 	}
 
 	@Override

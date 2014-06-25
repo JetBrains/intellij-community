@@ -231,14 +231,12 @@ public class VarType {  // TODO: optimize switch
 		}
 	}
 	
-	public boolean equals(Object arg0) {
-		
-		if(arg0 == null || !(arg0 instanceof VarType)) {
-			return false;
-		}
-		VarType vt = (VarType)arg0;
-		
-		return type == vt.type && arraydim == vt.arraydim && 
+	public boolean equals(Object o) {
+    if(o == this) return true;
+    if(o == null || !(o instanceof VarType)) return false;
+
+		VarType vt = (VarType)o;
+		return type == vt.type && arraydim == vt.arraydim &&
 				InterpreterUtil.equalObjects(value, vt.value);
 	}
 

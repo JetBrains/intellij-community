@@ -155,18 +155,16 @@ public class FieldExprent extends Exprent {
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof FieldExprent) {
-			FieldExprent ft = (FieldExprent)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof FieldExprent)) return false;
 
-			return InterpreterUtil.equalObjects(name, ft.getName()) &&
-					InterpreterUtil.equalObjects(classname, ft.getClassname()) && 
-					isStatic == ft.isStatic() &&
-					InterpreterUtil.equalObjects(instance, ft.getInstance()) &&
-					InterpreterUtil.equalObjects(descriptor, ft.getDescriptor());
-					 
-		}
-		return false;
-	}
+    FieldExprent ft = (FieldExprent)o;
+    return InterpreterUtil.equalObjects(name, ft.getName()) &&
+        InterpreterUtil.equalObjects(classname, ft.getClassname()) &&
+        isStatic == ft.isStatic() &&
+        InterpreterUtil.equalObjects(instance, ft.getInstance()) &&
+        InterpreterUtil.equalObjects(descriptor, ft.getDescriptor());
+  }
 
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == instance) {

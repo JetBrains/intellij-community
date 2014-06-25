@@ -416,18 +416,16 @@ public class NewExprent extends Exprent {
 	}
 
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof NewExprent) {
-			NewExprent ne = (NewExprent)o;
-			
-			return InterpreterUtil.equalObjects(newtype, ne.getNewtype()) && 
-					InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
-					InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
-					directArrayInit == ne.directArrayInit &&
-					InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
-			
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof NewExprent)) return false;
+
+    NewExprent ne = (NewExprent)o;
+    return InterpreterUtil.equalObjects(newtype, ne.getNewtype()) &&
+        InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
+        InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
+        directArrayInit == ne.directArrayInit &&
+        InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+  }
 	
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == constructor) {

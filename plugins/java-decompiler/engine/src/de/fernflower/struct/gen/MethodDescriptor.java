@@ -15,6 +15,7 @@
 package de.fernflower.struct.gen;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MethodDescriptor {
@@ -84,27 +85,18 @@ public class MethodDescriptor {
 
 	@Override
 	public boolean equals(Object o) {
-		
-		if(o!=null && o instanceof MethodDescriptor) {
-			MethodDescriptor md = (MethodDescriptor)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof MethodDescriptor)) return false;
 
-			if(ret.equals(md.ret) && params.length ==md.params.length) {
-				for(int i=0;i<params.length;i++) {
-					if(!params[i].equals(md.params[i])) {
-						return false;
-					}
-				}
-				
-				return true;
-			}
-					 
-		}
-		return false;
-	}
+    MethodDescriptor md = (MethodDescriptor)o;
+    return ret.equals(md.ret) && Arrays.equals(params, md.params);
+  }
 
 	@Override
 	public int hashCode() {
-		return ret.hashCode();
+    int result = ret.hashCode();
+    result = 31 * result + params.length;
+    return result;
 	}
-	
+
 }

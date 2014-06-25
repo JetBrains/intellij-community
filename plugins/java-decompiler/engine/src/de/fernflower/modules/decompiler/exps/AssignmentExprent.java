@@ -140,20 +140,20 @@ public class AssignmentExprent extends Exprent {
 			buffer.append(left.toJava(indent));
 		}
 		
-		buffer.append((condtype==CONDITION_NONE?" = ":funceq[condtype]) +res);
+		buffer.append(condtype == CONDITION_NONE ? " = " : funceq[condtype]).append(res);
 		
 		return buffer.toString();
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof AssignmentExprent) {
-			AssignmentExprent as = (AssignmentExprent)o;
-			return InterpreterUtil.equalObjects(left, as.getLeft()) &&
-					InterpreterUtil.equalObjects(right, as.getRight()) && 
-					condtype == as.getCondtype();
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof AssignmentExprent)) return false;
+
+    AssignmentExprent as = (AssignmentExprent)o;
+    return InterpreterUtil.equalObjects(left, as.getLeft()) &&
+        InterpreterUtil.equalObjects(right, as.getRight()) &&
+        condtype == as.getCondtype();
+  }
 	
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == left) {

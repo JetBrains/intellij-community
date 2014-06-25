@@ -284,13 +284,11 @@ public class FastSetFactory<E> {
 		}
 		
 		
-		public boolean equals(Object obj) {
+		public boolean equals(Object o) {
+      if(o == this) return true;
+      if(o == null || !(o instanceof FastSet)) return false;
 			
-			if(!(obj instanceof FastSet)) {
-				return false;
-			}
-			
-			int[] longdata = ((FastSet<E>)obj).getData();
+			int[] longdata = ((FastSet)o).getData();
 			int[] shortdata = data;
 			
 			if(data.length > longdata.length) {

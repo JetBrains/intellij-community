@@ -176,13 +176,11 @@ public class FastFixedSetFactory<E> {
 		}
 		
 		
-		public boolean equals(Object obj) {
+		public boolean equals(Object o) {
+      if(o == this) return true;
+      if(o == null || !(o instanceof FastFixedSet)) return false;
 			
-			if(!(obj instanceof FastFixedSet)) {
-				return false;
-			}
-			
-			int[] extdata = ((FastFixedSet<E>)obj).getData();
+			int[] extdata = ((FastFixedSet)o).getData();
 			int[] intdata = data;
 			
 			for(int i=intdata.length-1;i>=0;i--) {

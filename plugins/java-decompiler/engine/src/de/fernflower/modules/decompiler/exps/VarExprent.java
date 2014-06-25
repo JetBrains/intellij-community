@@ -122,16 +122,14 @@ public class VarExprent extends Exprent {
 	}
 
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof VarExprent) {
-			VarExprent ve = (VarExprent)o;
-			
-			return index == ve.getIndex() &&
-					version == ve.getVersion() &&
-					InterpreterUtil.equalObjects(getVartype(), ve.getVartype()); // FIXME: vartype comparison redundant?
-			
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof VarExprent)) return false;
+
+    VarExprent ve = (VarExprent)o;
+    return index == ve.getIndex() &&
+        version == ve.getVersion() &&
+        InterpreterUtil.equalObjects(getVartype(), ve.getVartype()); // FIXME: vartype comparison redundant?
+  }
 	
 	public int getIndex() {
 		return index;

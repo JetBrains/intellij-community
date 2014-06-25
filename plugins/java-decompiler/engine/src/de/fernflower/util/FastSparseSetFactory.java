@@ -350,13 +350,11 @@ public class FastSparseSetFactory<E> {
 		}
 		
 		
-		public boolean equals(Object obj) {
+		public boolean equals(Object o) {
+      if(o == this) return true;
+      if(o == null || !(o instanceof FastSparseSet)) return false;
 			
-			if(!(obj instanceof FastSparseSet)) {
-				return false;
-			}
-			
-			int[] longdata = ((FastSparseSet<E>)obj).getData();
+			int[] longdata = ((FastSparseSet)o).getData();
 			int[] shortdata = data;
 			
 			if(data.length > longdata.length) {

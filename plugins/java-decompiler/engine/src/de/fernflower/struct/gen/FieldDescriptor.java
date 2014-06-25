@@ -43,15 +43,12 @@ public class FieldDescriptor {
 
 	@Override
 	public boolean equals(Object o) {
-		
-		if(o!=null && o instanceof FieldDescriptor) {
-			FieldDescriptor fd = (FieldDescriptor)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof FieldDescriptor)) return false;
 
-			return type.equals(fd.type);
-					 
-		}
-		return false;
-	}
+    FieldDescriptor fd = (FieldDescriptor)o;
+    return type.equals(fd.type);
+  }
 
 	@Override
 	public int hashCode() {

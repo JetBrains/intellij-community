@@ -17,8 +17,6 @@ package de.fernflower.struct.consts;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.fernflower.code.CodeConstants;
-
 /*
  *   Integer, Long, Float, Double, String, Class, UTF8
  */
@@ -107,15 +105,12 @@ public class PrimitiveConstant extends PooledConstant {
 		}
 	}
 	
-	public boolean equals(Object obj) {
+	public boolean equals(Object o) {
+    if(o == this) return true;
+    if(o == null || !(o instanceof PrimitiveConstant)) return false;
 		
-		if(obj == null || !(obj instanceof PrimitiveConstant)) {
-			return false;
-		}
-		
-		PrimitiveConstant cn = (PrimitiveConstant)obj;
-		
-		return this.type == cn.type && 
+		PrimitiveConstant cn = (PrimitiveConstant)o;
+		return this.type == cn.type &&
 		 		this.isArray == cn.isArray &&
 		 		this.value.equals(cn.value); 
 		

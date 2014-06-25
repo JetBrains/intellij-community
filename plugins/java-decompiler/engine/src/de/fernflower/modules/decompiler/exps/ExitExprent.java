@@ -120,14 +120,13 @@ public class ExitExprent extends Exprent {
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof ExitExprent) {
-			ExitExprent et = (ExitExprent)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof ExitExprent)) return false;
 
-			return exittype==et.getExittype() &&
-					InterpreterUtil.equalObjects(value, et.getValue());
-		}
-		return false;
-	}
+    ExitExprent et = (ExitExprent)o;
+    return exittype==et.getExittype() &&
+        InterpreterUtil.equalObjects(value, et.getValue());
+  }
 	
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == value) {

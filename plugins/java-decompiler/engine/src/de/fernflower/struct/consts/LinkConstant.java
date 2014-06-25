@@ -103,27 +103,16 @@ public class LinkConstant extends PooledConstant {
 	}
 	
 	
-	public boolean equals(Object obj) {
+	public boolean equals(Object o) {
+    if(o == this) return true;
+    if(o == null || !(o instanceof LinkConstant)) return false;
 		
-		if(obj == null || !(obj instanceof LinkConstant)) {
-			return false;
-		}
-		
-		LinkConstant cn = (LinkConstant)obj;
-		
-		if(this.type == cn.type && 
-				this.elementname.equals(cn.elementname) && 
-				this.descriptor.equals(cn.descriptor)) {
-			
-			if(this.type == CONSTANT_NameAndType) {
-				return this.classname.equals(cn.classname);  
-			} else {
-				return true;
-			}
-		}
-		
-		return false;
-	}
+		LinkConstant cn = (LinkConstant)o;
+    return this.type == cn.type &&
+        this.elementname.equals(cn.elementname) &&
+        this.descriptor.equals(cn.descriptor) &&
+        (this.type != CONSTANT_NameAndType || this.classname.equals(cn.classname));
+  }
 	
 	// *****************************************************************************
 	// private methods

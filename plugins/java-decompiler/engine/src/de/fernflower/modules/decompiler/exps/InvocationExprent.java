@@ -393,20 +393,18 @@ public class InvocationExprent extends Exprent {
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof InvocationExprent) {
-			InvocationExprent it = (InvocationExprent)o;
+    if(o == this) return true;
+    if(o == null || !(o instanceof InvocationExprent)) return false;
 
-			return InterpreterUtil.equalObjects(name, it.getName()) &&
-					InterpreterUtil.equalObjects(classname, it.getClassname()) && 
-					isStatic == it.isStatic() &&
-					InterpreterUtil.equalObjects(instance, it.getInstance()) &&
-					InterpreterUtil.equalObjects(descriptor, it.getDescriptor()) &&
-					functype == it.getFunctype() &&
-					InterpreterUtil.equalLists(lstParameters, it.getLstParameters());
-					 
-		}
-		return false;
-	}
+    InvocationExprent it = (InvocationExprent)o;
+    return InterpreterUtil.equalObjects(name, it.getName()) &&
+        InterpreterUtil.equalObjects(classname, it.getClassname()) &&
+        isStatic == it.isStatic() &&
+        InterpreterUtil.equalObjects(instance, it.getInstance()) &&
+        InterpreterUtil.equalObjects(descriptor, it.getDescriptor()) &&
+        functype == it.getFunctype() &&
+        InterpreterUtil.equalLists(lstParameters, it.getLstParameters());
+  }
 	
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == instance) {

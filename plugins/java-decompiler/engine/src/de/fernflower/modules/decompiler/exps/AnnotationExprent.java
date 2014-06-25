@@ -95,14 +95,14 @@ public class AnnotationExprent extends Exprent {
 	}
 
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof AnnotationExprent) {
-			AnnotationExprent ann = (AnnotationExprent)o;
-			return classname.equals(ann.classname) &&
-					InterpreterUtil.equalLists(parnames, ann.parnames) &&
-					InterpreterUtil.equalLists(parvalues, ann.parvalues);
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof AnnotationExprent)) return false;
+
+    AnnotationExprent ann = (AnnotationExprent)o;
+    return classname.equals(ann.classname) &&
+        InterpreterUtil.equalLists(parnames, ann.parnames) &&
+        InterpreterUtil.equalLists(parvalues, ann.parvalues);
+  }
 
 	public String getClassname() {
 		return classname;

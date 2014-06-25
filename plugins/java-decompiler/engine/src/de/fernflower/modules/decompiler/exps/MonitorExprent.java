@@ -57,14 +57,13 @@ public class MonitorExprent extends Exprent {
 	}
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof MonitorExprent) {
-			MonitorExprent me = (MonitorExprent)o;
-			
-			return montype == me.getMontype() &&
-					InterpreterUtil.equalObjects(value, me.getValue());
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof MonitorExprent)) return false;
+
+    MonitorExprent me = (MonitorExprent)o;
+    return montype == me.getMontype() &&
+        InterpreterUtil.equalObjects(value, me.getValue());
+  }
 
 	public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
 		if(oldexpr == value) {

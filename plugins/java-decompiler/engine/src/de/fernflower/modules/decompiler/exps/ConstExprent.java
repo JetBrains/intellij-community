@@ -276,14 +276,13 @@ public class ConstExprent extends Exprent {
 	
 	
 	public boolean equals(Object o) {
-		if(o!=null && o instanceof ConstExprent) {
-			ConstExprent cn = (ConstExprent)o;
-			
-			return InterpreterUtil.equalObjects(consttype, cn.getConsttype()) &&
-					InterpreterUtil.equalObjects(value, cn.getValue());
-		}
-		return false;
-	}
+    if(o == this) return true;
+    if(o == null || !(o instanceof ConstExprent)) return false;
+
+    ConstExprent cn = (ConstExprent)o;
+    return InterpreterUtil.equalObjects(consttype, cn.getConsttype()) &&
+        InterpreterUtil.equalObjects(value, cn.getValue());
+  }
 	
 	public boolean hasBooleanValue() {
 
