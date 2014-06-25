@@ -864,7 +864,17 @@ public final class UpdateChecker {
     String url = null;
     if (descriptor instanceof PluginNode) {
       url = ((PluginNode)descriptor).getDownloadUrl();
+      if (url != null) {
+        final String repositoryName = ((PluginNode)descriptor).getRepositoryName();
+        if (repositoryName != null) {
+          final VirtualFile pluginFile = PluginDownloader.findPluginFile(url, repositoryName);
+          if (pluginFile != null) {
+            url = getPluginUrl(pluginFile);
+          }
+        }
+      }
     }
+
     if (url == null) {
       String uuid = ApplicationManager.getApplication() == null ?
                     UUID.randomUUID().toString() :
