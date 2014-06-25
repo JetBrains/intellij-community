@@ -5,10 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.*;
-import org.jetbrains.plugins.ipnb.format.cells.output.CellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.LatexCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.PngCellOutput;
-import org.jetbrains.plugins.ipnb.format.cells.output.StreamCellOutput;
+import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -83,6 +80,7 @@ public class IpnbParser {
     String output_type;
     String[] text;
     String png;
+    String[] html;
     String[] latex;
     String stream;
     int prompt_number;
@@ -97,6 +95,9 @@ public class IpnbParser {
       }
       else if (stream != null) {
         cellOutput = new StreamCellOutput(stream, text);
+      }
+      else if (html != null) {
+        cellOutput = new HtmlCellOutput(html, text);
       }
       else {
         cellOutput = new CellOutput(text);
