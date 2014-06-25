@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActiveEnvironmentsProxy;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -48,7 +50,8 @@ public class VcsEP extends AbstractExtensionPointBean {
 
   private AbstractVcs myVcs;
 
-  public AbstractVcs getVcs(Project project) {
+  @Nullable
+  public AbstractVcs getVcs(@NotNull Project project) {
     if (myVcs == null) {
       try {
         final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
@@ -70,6 +73,7 @@ public class VcsEP extends AbstractExtensionPointBean {
     return myVcs;
   }
 
+  @NotNull
   public VcsDescriptor createDescriptor() {
     return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs);
   }
