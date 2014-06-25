@@ -114,6 +114,9 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
       Course course = gson.fromJson(reader, Course.class);
       course.create(project, baseDir, baseCourseFile.getParent());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+      TaskManager tm = new TaskManager(project);
+      tm.setCourse(course);
+      System.out.println("test");
     }
     catch (FileNotFoundException e) {
       e.printStackTrace();

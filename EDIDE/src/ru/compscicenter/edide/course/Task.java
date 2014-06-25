@@ -51,4 +51,13 @@ public class Task {
       taskFiles.get(i).create(project, taskDir, resourseRoot+"/"+taskDir.getName());
     }
   }
+
+  public TaskFile getFile(String fileName) {
+    for (TaskFile file:taskFiles) {
+      if (file.getName().equals(fileName)) {
+        return file;
+      }
+    }
+    return null;
+  }
 }

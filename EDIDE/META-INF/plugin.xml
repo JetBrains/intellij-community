@@ -33,14 +33,14 @@
 
   <project-components>
     <!-- Add your project components here -->
-    <!--component>
+    <component>
       <implementation-class>ru.compscicenter.edide.TaskManager</implementation-class>
-    </component-->
+    </component>
   </project-components>
 
   <actions>
 
-      <action id="ru.compscicenter.edide.CheckAction" class="ru.compscicenter.edide.CheckAction" text="Check task"
+      <!--action id="ru.compscicenter.edide.CheckAction" class="ru.compscicenter.edide.CheckAction" text="Check task"
               description="Runnes tests for current tasks" icon="/ru/compscicenter/edide/icon.jpg">
           <add-to-group group-id="MainToolBar" anchor="last"/>
           <keyboard-shortcut first-keystroke="shift C"  keymap="$default"/>
@@ -54,14 +54,15 @@
               description="Draws All Windows" icon="/ru/compscicenter/edide/icon.jpg">
           <add-to-group group-id="MainToolBar" anchor="last"/>
           <keyboard-shortcut first-keystroke="shift A"  keymap="$default"/>
-      </action>
+      </action-->
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
     <!--fileEditorProvider implementation="ru.compscicenter.edide.StudyFileEditorProvider"/-->
     <directoryProjectGenerator implementation="ru.compscicenter.edide.StudyDirectoryProjectGenerator"/>
-    <documentationProvider implementation="ru.compscicenter.edide.StudyDocumentationProvider"/>
+    <!--documentationProvider implementation="ru.compscicenter.edide.StudyDocumentationProvider"/-->
     <!--projectService  serviceImplementation="ru.compscicenter.edide.StudyPlugin"/-->
+    <treeStructureProvider implementation="ru.compscicenter.edide.StudyTreeStructureProvider"/>
   </extensions>
 </idea-plugin>

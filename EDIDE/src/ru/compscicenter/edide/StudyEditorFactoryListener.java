@@ -3,7 +3,6 @@ package ru.compscicenter.edide;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -15,8 +14,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import ru.compscicenter.edide.course.TaskFile;
 
-import java.io.*;
 import java.util.Arrays;
 
 
@@ -27,42 +26,22 @@ import java.util.Arrays;
 
 class StudyEditorFactoryListener implements EditorFactoryListener {
 
-    class MyMouseListener extends EditorMouseAdapter {
-        private final TaskFile myTaskFile;
+  class MyMouseListener extends EditorMouseAdapter {
+    private final TaskFile myTaskFile;
 
-        MyMouseListener(TaskFile taskFile) {
-            myTaskFile = taskFile;
-        }
-
-        @Override
-        public void mouseClicked(EditorMouseEvent e){
-            Editor editor = e.getEditor();
-            LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-            editor.getMarkupModel().removeAllHighlighters();
-            myTaskFile.drawWindowByPos(editor, pos);
-        }
-
+    MyMouseListener(TaskFile taskFile) {
+      myTaskFile = taskFile;
     }
 
-    boolean fileChanged(VirtualFile file) throws IOException {
-    File usualFile = new File(file.getPath());
-    InputStream usualFileStream = new FileInputStream(usualFile);
-    InputStream metaIs = StudyEditorFactoryListener.class.getResourceAsStream(file.getName());
-    BufferedReader bfMeta = new BufferedReader(new InputStreamReader(metaIs));
-    BufferedReader bfUsual = new BufferedReader(new InputStreamReader(usualFileStream));
-    while(bfMeta.ready()) {
-      String line1 = bfMeta.readLine();
-      String line2 = bfUsual.readLine();
-      if (!line1.equals(line2)) {
-        bfMeta.close();
-        bfUsual.close();
-        return true;
-      }
+    @Override
+    public void mouseClicked(EditorMouseEvent e) {
+      Editor editor = e.getEditor();
+      LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+      editor.getMarkupModel().removeAllHighlighters();
+      myTaskFile.drawWindowByPos(editor, pos);
     }
-    bfMeta.close();
-    bfUsual.close();
-    return false;
   }
+
 
   @Override
   public void editorCreated(@NotNull final EditorFactoryEvent event) {
@@ -70,8 +49,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     if (project == null) {
       return;
     }
-    //ServiceManager.getService(project, StudyPlugin.class);
-      ApplicationManager.getApplication().invokeLater(
+    ApplicationManager.getApplication().invokeLater(
       new Runnable() {
         @Override
         public void run() {
@@ -81,18 +59,18 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
               try {
                 final Editor editor = event.getEditor();
 
-                VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-                if (vfOpenedFile != null) {
-                  if (fileChanged(vfOpenedFile)) {
+                VirtualFile openedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+                if (openedFile != null) {
+                  HintManager.getInstance().showInformationHint(editor, "Select any window");
+                  TaskManager taskManager = TaskManager.getInstance(editor.getProject());
+                  TaskFile taskFile = taskManager.getTaskFile(openedFile);
+                  if (taskFile == null) {
                     return;
                   }
-                  HintManager.getInstance().showInformationHint(editor, "Нажмите на любое окошко с заданием");
-                    TaskManager taskManager = TaskManager.getInstance(editor.getProject());
-                   int currentTask = taskManager.getTaskNumForFile(vfOpenedFile.getName());
-                   TaskFile tf = taskManager.getTaskFile(currentTask, vfOpenedFile.getName());
-                    editor.addEditorMouseListener(new MyMouseListener(tf));
-                    editor.getMarkupModel().removeAllHighlighters();
-                    tf.drawAllWindows(editor);
+
+                  editor.addEditorMouseListener(new MyMouseListener(taskFile));
+                  editor.getMarkupModel().removeAllHighlighters();
+                  taskFile.drawAllWindows(editor);
                 }
               }
               catch (Exception e) {
@@ -110,7 +88,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
   @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
-      Log.print("Editor released\n");
-      Log.flush();
+    Log.print("Editor released\n");
+    Log.flush();
   }
 }
