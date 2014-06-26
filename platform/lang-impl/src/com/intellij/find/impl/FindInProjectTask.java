@@ -290,6 +290,10 @@ class FindInProjectTask {
       for (VirtualFile file : getLocalScopeFiles((LocalSearchScope)customScope)) {
         iterator.processFile(file);
       }
+    } else if (customScope instanceof Iterable) {  // GlobalSearchScope can span files out of project roots e.g. FileScope / FilesScope
+      for (VirtualFile file : (Iterable<VirtualFile>)customScope) {
+        iterator.processFile(file);
+      }
     }
     else if (myPsiDirectory != null) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
