@@ -73,6 +73,8 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
     public boolean RENAME_VARIABLES_INPLACE = true;
     public boolean PRESELECT_RENAME = true;
+    public boolean SHOW_INLINE_DIALOG = true;
+    
     public boolean REFRAIN_FROM_SCROLLING = false;
 
     public boolean SHOW_REFORMAT_DIALOG = true;
@@ -522,4 +524,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setPreselectRename(final boolean val) {
     myOptions.PRESELECT_RENAME = val;
   }
+  
+  public boolean isShowInlineLocalDialog() {
+    return myOptions.SHOW_INLINE_DIALOG;
+  }
+
+  public void setShowInlineLocalDialog(final boolean val) {
+    myOptions.SHOW_INLINE_DIALOG = val;
+  }
+  
+  
 }
