@@ -118,7 +118,7 @@ public final class UpdateChecker {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        doUpdateAndShowResult(null, true, false, null, UpdateSettings.getInstance(), null, callback);
+        doUpdateAndShowResult(null, true, false, UpdateSettings.getInstance(), null, callback);
       }
     });
     return callback;
@@ -127,13 +127,12 @@ public final class UpdateChecker {
   // for manual update checks (Help | Check for Updates)
   public static void updateAndShowResult(final @Nullable Project project,
                                          final boolean fromSettings,
-                                         final @Nullable PluginHostsConfigurable hostsConfigurable,
                                          final UpdateSettings settings) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        doUpdateAndShowResult(project, !fromSettings, true, hostsConfigurable, settings, indicator, null);
+        doUpdateAndShowResult(project, !fromSettings, true, settings, indicator, null);
       }
 
       @Override
@@ -151,7 +150,6 @@ public final class UpdateChecker {
   private static void doUpdateAndShowResult(final @Nullable Project project,
                                             final boolean enableLink,
                                             final boolean manualCheck,
-                                            final @Nullable PluginHostsConfigurable hostsConfigurable,
                                             final UpdateSettings updateSettings,
                                             final @Nullable ProgressIndicator indicator,
                                             final @Nullable ActionCallback callback) {
@@ -177,7 +175,7 @@ public final class UpdateChecker {
       }
     }
     final Collection<IdeaPluginDescriptor> incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
-    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, incompatiblePlugins, hostsConfigurable, indicator, buildNumber);
+    final Collection<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, incompatiblePlugins, indicator, buildNumber);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -192,12 +190,11 @@ public final class UpdateChecker {
 
   public static Collection<PluginDownloader> updatePlugins(boolean manualCheck,
                                                            @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                                           @Nullable PluginHostsConfigurable hostsConfigurable,
                                                            @Nullable ProgressIndicator indicator,
                                                            @Nullable BuildNumber buildNumber) {
     final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
-    for (String host : getPluginHosts(hostsConfigurable)) {
+    for (String host : getPluginHosts()) {
       try {
         checkPluginsHost(host, downloaded, incompatiblePlugins, true, indicator, buildNumber);
       }
@@ -331,14 +328,10 @@ public final class UpdateChecker {
     }
   }
 
-  private static List<String> getPluginHosts(@Nullable PluginHostsConfigurable hostsConfigurable) {
-    final ArrayList<String> hosts = new ArrayList<String>();
-    if (hostsConfigurable != null) {
-      hosts.addAll(hostsConfigurable.getPluginsHosts());
-    }
-    else {
-      hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
-    }
+  private static List<String> getPluginHosts() {
+    ArrayList<String> hosts = new ArrayList<String>();
+    hosts.addAll(UpdateSettings.getInstance().myPluginHosts);
+    ContainerUtil.addIfNotNull(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl(), hosts);
     final String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
