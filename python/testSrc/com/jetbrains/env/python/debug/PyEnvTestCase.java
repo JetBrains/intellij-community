@@ -84,7 +84,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     if (runInWriteAction()) {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         public void run() {
