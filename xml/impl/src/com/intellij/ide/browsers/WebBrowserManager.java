@@ -26,10 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/web-browsers.xml")})
 public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
@@ -82,7 +79,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowser != DefaultBrowser.SYSTEM) {
-      state.setAttribute("default", defaultBrowser.name().toLowerCase());
+      state.setAttribute("default", defaultBrowser.name().toLowerCase(Locale.ENGLISH));
     }
 
     for (ConfigurableWebBrowser browser : browsers) {
@@ -180,7 +177,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase());
+        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
