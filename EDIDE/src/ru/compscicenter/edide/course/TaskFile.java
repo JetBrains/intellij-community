@@ -68,8 +68,11 @@ public class TaskFile {
     //myLastLineNum = editor.getDocument().getLineCount();
   }
 
-  private Window getTaskWindowByPos(Editor editor, LogicalPosition pos) {
+  public Window getTaskWindowByPos(Editor editor, LogicalPosition pos) {
     int line = pos.line;
+    if (line >= editor.getDocument().getLineCount()) {
+      return null;
+    }
     int column = pos.column;
     int realOffset = editor.getDocument().getLineStartOffset(line) + column;
     for (Window tw: windows) {

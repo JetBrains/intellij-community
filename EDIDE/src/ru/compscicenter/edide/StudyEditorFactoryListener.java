@@ -38,6 +38,10 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     public void mouseClicked(EditorMouseEvent e) {
       Editor editor = e.getEditor();
       LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+      if (myTaskFile.getTaskWindowByPos(editor, pos) == null) {
+        myTaskFile.drawAllWindows(editor);
+        return;
+      }
       editor.getMarkupModel().removeAllHighlighters();
       myTaskFile.drawWindowByPos(editor, pos);
     }
