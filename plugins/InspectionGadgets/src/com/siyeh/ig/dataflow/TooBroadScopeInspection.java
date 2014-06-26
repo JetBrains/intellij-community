@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,22 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       PsiDeclarationStatement newDeclaration;
       if (commonParent instanceof PsiForStatement) {
         final PsiForStatement forStatement = (PsiForStatement)commonParent;
-        newDeclaration = createNewDeclaration(variable, initializer);
         final PsiStatement initialization = forStatement.getInitialization();
         if (initialization == null) {
           return;
+        }
+        if (initialization instanceof PsiExpressionStatement) {
+          final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)initialization;
+          final PsiExpression expression = expressionStatement.getExpression();
+          if (!(expression instanceof PsiAssignmentExpression)) {
+            return;
+          }
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+          final PsiExpression rhs = assignmentExpression.getRExpression();
+          newDeclaration = createNewDeclaration(variable, rhs);
+        }
+        else {
+          newDeclaration = createNewDeclaration(variable, initializer);
         }
         newDeclaration = (PsiDeclarationStatement)initialization.replace(newDeclaration);
       } else if (firstReferenceScope.equals(commonParent)) {
