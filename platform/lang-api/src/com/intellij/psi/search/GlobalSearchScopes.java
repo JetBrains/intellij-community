@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,11 +37,12 @@ public class GlobalSearchScopes extends GlobalSearchScopesCore {
   public static SearchScope openFilesScope(@NotNull Project project) {
     final VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
     // We can not use GlobalSearchScope as it is usually bound to project and used via filtering of project / library roots
-    // Open files can be out of project roots e.g. arbitrary open file so we go LocalSearchScope way, filled with elements to process
+    // Open files can be out of project roots e.g. arbitrary open file so we go LocalSearchScope way, filling it with elements to process
     List<PsiElement> psiFiles = new ArrayList<PsiElement>(files.length);
     PsiManager psiManager = PsiManager.getInstance(project);
     for(VirtualFile file:files) {
-      psiFiles.add(psiManager.findFile(file));
+      PsiFile psiFile = psiManager.findFile(file);
+      if (psiFile != null) psiFiles.add(psiFile);
     }
     return new LocalSearchScope(psiFiles.toArray(new PsiElement[psiFiles.size()]), "Open Files");
   }
