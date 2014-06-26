@@ -31,11 +31,17 @@ public class GroovyClsCustomNavigationPolicy extends ClsCustomNavigationPolicyEx
   @Override
   @Nullable
   public PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod) {
+    if (isGroovyLanguage(clsMethod)) return null;
+
     PsiMethod source = clsMethod.getSourceMirrorMethod();
-    if (source instanceof LightElement && source.getLanguage() == GroovyLanguage.INSTANCE) {
+    if (source instanceof LightElement) {
       return source.getNavigationElement();
     }
 
     return null;
+  }
+
+  private static boolean isGroovyLanguage(ClsMethodImpl method) {
+    return method.getContainingFile().getNavigationElement().getLanguage() == GroovyLanguage.INSTANCE;
   }
 }
