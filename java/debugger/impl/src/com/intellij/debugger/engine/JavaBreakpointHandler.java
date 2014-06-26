@@ -49,7 +49,7 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
     if (javaBreakpoint != null) {
       final Breakpoint bpt = javaBreakpoint;
       BreakpointManager.addBreakpoint(bpt);
-      myProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
+      myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
           bpt.createRequest(myProcess);
@@ -62,7 +62,7 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
   public void unregisterBreakpoint(@NotNull final XBreakpoint breakpoint, boolean temporary) {
     final Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
-      myProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
+      myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
           javaBreakpoint.delete();
