@@ -245,7 +245,7 @@ public final class UpdateChecker {
           final String idString = pluginId.getIdString();
           if (!toUpdate.containsKey(idString)) continue;
           if (!downloaded.containsKey(pluginId)) {
-            prepareToInstall(buildNumber, downloaded, incompatiblePlugins, PluginDownloader.createDownloader(loadedPlugin), indicator);
+            prepareToInstall(PluginDownloader.createDownloader(loadedPlugin), buildNumber, downloaded, incompatiblePlugins, true, indicator);
           }
         }
       }
@@ -269,15 +269,15 @@ public final class UpdateChecker {
     return oldPlugin == null || StringUtil.compareVersionNumbers(newVersion, oldPlugin.getPluginVersion()) > 0;
   }
 
-  private static void prepareToInstall(BuildNumber buildNumber,
+  private static void prepareToInstall(PluginDownloader downloader, 
+                                       BuildNumber buildNumber,
                                        Map<PluginId, PluginDownloader> downloaded,
                                        Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                       PluginDownloader downloader, 
+                                       boolean collectToUpdate, 
                                        ProgressIndicator indicator) throws IOException {
     final String pluginId = downloader.getPluginId();
     final String pluginVersion = downloader.getPluginVersion();
-    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
-    if (disabledPlugins.contains(pluginId)) return;
+    if (collectToUpdate && PluginManagerCore.getDisabledPlugins().contains(pluginId)) return;
     final IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
     if (installedPlugin == null || pluginVersion == null ||
         PluginDownloader.compareVersionsSkipBroken(installedPlugin, pluginVersion) > 0) {
@@ -376,7 +376,8 @@ public final class UpdateChecker {
     final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
-      prepareToInstall(buildNumber, downloaded, incompatiblePlugins, PluginDownloader.createDownloader(descriptor), indicator);
+      prepareToInstall(PluginDownloader.createDownloader(descriptor), buildNumber, downloaded, incompatiblePlugins, collectToUpdate,
+                       indicator);
     }
 
     boolean success = true;
@@ -424,7 +425,7 @@ public final class UpdateChecker {
                 progressIndicator.setText2(finalPluginUrl);
               }
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion, null, null);
-              prepareToInstall(buildNumber, downloaded, incompatiblePlugins, downloader, indicator);
+              prepareToInstall(downloader, buildNumber, downloaded, incompatiblePlugins, collectToUpdate, indicator);
             }
             catch (IOException e) {
               LOG.info(e);
