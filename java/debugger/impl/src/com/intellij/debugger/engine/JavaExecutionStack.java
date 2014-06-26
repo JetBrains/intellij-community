@@ -104,6 +104,11 @@ public class JavaExecutionStack extends XExecutionStack {
       else {
         myDebugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
           @Override
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+
+          @Override
           protected void action() throws Exception {
             myTopFrame = calcTopFrame();
           }
@@ -117,6 +122,11 @@ public class JavaExecutionStack extends XExecutionStack {
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
     final AtomicInteger skipCounter = new AtomicInteger(firstFrameIndex);
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+
       @Override
       public void threadAction() {
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
