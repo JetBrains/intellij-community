@@ -15,4 +15,12 @@ public class A {
     public static <T> T firstNonNull(T first, T second) {
         return first != null ? first : second;
     }
+
+    void m() {
+      throw (RuntimeException) b();
+    }
+
+    public Exception b() {
+      return new RuntimeException();
+    }
 }
