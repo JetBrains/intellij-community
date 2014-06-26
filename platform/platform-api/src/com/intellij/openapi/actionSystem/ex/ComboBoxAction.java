@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,9 +284,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void updateUI() {
       super.updateUI();
-      if (!UIUtil.isUnderGTKLookAndFeel()) {
-        setBorder(UIUtil.getButtonBorder());
-      }
+      //if (!UIUtil.isUnderGTKLookAndFeel()) {
+      //  setBorder(UIUtil.getButtonBorder());
+      //}
+      //((JComponent)getParent().getParent()).revalidate();
     }
 
     protected class MyButtonModel extends DefaultButtonModel {
@@ -356,6 +357,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
       if (isSmallVariant()) width += 4;
       return new Dimension(width, isSmallVariant() ? 19 : UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
+    }
+
+    @Override
+    public Font getFont() {
+      return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
     }
 
     @Override
@@ -440,6 +446,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     protected void updateButtonSize() {
       invalidate();
       repaint();
+      setSize(getPreferredSize());
     }
   }
 }
