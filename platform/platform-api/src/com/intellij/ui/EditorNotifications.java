@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,10 +32,11 @@ import javax.swing.*;
 public abstract class EditorNotifications extends AbstractProjectComponent {
 
   public abstract static class Provider<T extends JComponent> {
+    @NotNull
     public abstract Key<T> getKey();
 
     @Nullable
-    public abstract T createNotificationPanel(VirtualFile file, FileEditor fileEditor);
+    public abstract T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor);
   }
 
   public static EditorNotifications getInstance(Project project) {
@@ -45,7 +47,7 @@ public abstract class EditorNotifications extends AbstractProjectComponent {
     super(project);
   }
 
-  public abstract void updateNotifications(final VirtualFile file);
+  public abstract void updateNotifications(@NotNull VirtualFile file);
 
   public abstract void updateAllNotifications();
 

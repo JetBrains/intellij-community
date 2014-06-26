@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * Allows to query and modify the list of root files and directories belonging to a project.
  */
-public abstract class ProjectRootManager implements ModificationTracker {
+public abstract class ProjectRootManager extends SimpleModificationTracker {
   /**
    * Returns the project root manager instance for the specified project.
    *
@@ -72,7 +72,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
   /**
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
    * TODO: remove this method?
-   * @return
    */
   public abstract VirtualFile[] getContentRootsFromAllModules();
 

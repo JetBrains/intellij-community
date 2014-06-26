@@ -119,7 +119,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     final Project project = myDomManager.getProject();
     DomElementAnnotationsManager.getInstance(project).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
       @Override
-      public void highlightingFinished(DomFileElement element) {
+      public void highlightingFinished(@NotNull DomFileElement element) {
         if (element.isValid()) {
           queueUpdate(DomUtil.getFile(element).getVirtualFile());
         }

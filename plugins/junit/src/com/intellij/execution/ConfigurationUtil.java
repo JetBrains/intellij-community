@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,12 @@ package com.intellij.execution;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -47,7 +42,7 @@ public class ConfigurationUtil {
     final Project project = manager.getProject();
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
-    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true, true, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(@NotNull final PsiClass aClass) {
         if (testClassFilter.isAccepted(aClass)) found.add(aClass);
         return true;
@@ -113,7 +108,7 @@ public class ConfigurationUtil {
               found.add(containingClass);
               isJUnit4.set(Boolean.TRUE);
             }
-            ClassInheritorsSearch.search(containingClass, scope, true)
+            ClassInheritorsSearch.search(containingClass, scope, true, true, false)
               .forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
                 public boolean execute(@NotNull final PsiClass aClass) {
                   if (testClassFilter.isAccepted(aClass)) {

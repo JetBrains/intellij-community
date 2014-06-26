@@ -127,20 +127,15 @@ public class VfsRootAccess {
       if (!project.isInitialized()) {
         return null; // all is allowed
       }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
-            allowed.add(root.getPath());
-          }
-          for (VirtualFile root : getAllRoots(project)) {
-            allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
-          }
-          String location = project.getBasePath();
-          assert location != null : project;
-          allowed.add(FileUtil.toSystemIndependentName(location));
-        }
-      });
+      for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+        allowed.add(root.getPath());
+      }
+      for (VirtualFile root : getAllRoots(project)) {
+        allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
+      }
+      String location = project.getBasePath();
+      assert location != null : project;
+      allowed.add(FileUtil.toSystemIndependentName(location));
     }
 
     allowed.addAll(ourAdditionalRoots);

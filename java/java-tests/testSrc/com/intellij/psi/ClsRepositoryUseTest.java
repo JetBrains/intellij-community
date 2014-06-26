@@ -690,7 +690,6 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     final PsiType returnType = methodsWithReturnType.getReturnType();
     assert returnType != null : methodsWithReturnType;
     assertEquals("pack.Parametrized<? extends T>", returnType.getCanonicalText());
-    assertEquals("public pack.Parametrized<? extends T> method() { /* compiled code */ }", methodsWithReturnType.getText());
   }
 
   private static void checkEnumConstant(String name, PsiField field, PsiClassType type) {
@@ -740,19 +739,20 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals(PsiWildcardType.createUnbounded(myPsiManager), substitution);
   }
 
+  @SuppressWarnings("ConstantConditions")
   public void testModifiers() throws Exception {
-    final PsiClass psiClass = myJavaFacade.findClass("pack.Modifiers", RESOLVE_SCOPE);
+    PsiClass psiClass = myJavaFacade.findClass("pack.Modifiers", RESOLVE_SCOPE);
     assertNotNull(psiClass);
-    assertEquals("public class Modifiers {\n" +
-                 "    private transient int f1;\n" +
-                 "    private volatile int f2;\n" +
-                 "\n" +
-                 "    public Modifiers() { /* compiled code */ }\n" +
-                 "\n" +
-                 "    private void m1(int... i) { /* compiled code */ }\n" +
-                 "\n" +
-                 "    private synchronized void m2() { /* compiled code */ }\n" +
-                 "}",
-                 psiClass.getText().trim());
+
+    PsiField f1 = psiClass.findFieldByName("f1", false);
+    assertEquals("private transient", f1.getModifierList().getText());
+    PsiField f2 = psiClass.findFieldByName("f2", false);
+    assertEquals("private volatile", f2.getModifierList().getText());
+    PsiMethod init = psiClass.findMethodsByName("Modifiers", false)[0];
+    assertEquals("public", init.getModifierList().getText());
+    PsiMethod m1 = psiClass.findMethodsByName("m1", false)[0];
+    assertEquals("private", m1.getModifierList().getText());
+    PsiMethod m2 = psiClass.findMethodsByName("m2", false)[0];
+    assertEquals("private synchronized", m2.getModifierList().getText());
   }
 }

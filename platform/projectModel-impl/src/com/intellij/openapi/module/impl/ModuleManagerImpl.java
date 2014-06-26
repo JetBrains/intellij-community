@@ -67,7 +67,7 @@ import java.util.*;
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
+public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private static final String IML_EXTENSION = ".iml";
@@ -84,7 +84,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @NonNls private static final String ATTRIBUTE_FILEURL = "fileurl";
   @NonNls public static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
-  private long myModificationCount;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -114,11 +113,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   public void disposeComponent() {
     myModuleModel.disposeModel();
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myModificationCount;
   }
 
   @Override
@@ -468,7 +462,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   @NotNull
   public Module newModule(@NotNull String filePath, final String moduleTypeId) {
-    myModificationCount++;
+    incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleTypeId);
     modifiableModel.commit();
@@ -478,7 +472,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   @Override
   @NotNull
   public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists {
-    myModificationCount++;
+    incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
     modifiableModel.commit();
@@ -941,7 +935,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   private void commitModel(final ModuleModelImpl moduleModel, final Runnable runnable) {
     myModuleModel.myModulesCache = null;
-    myModificationCount++;
+    incModificationCount();
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myPathToModule.values();
     final Collection<Module> newModules = moduleModel.myPathToModule.values();

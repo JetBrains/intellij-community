@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,10 +182,5 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   @Override
   public String[] getResourceUrls(@Nullable FileType fileType, @NonNls String version, boolean includeStandard) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public long getModificationCount() {
-    return 0;
   }
 }

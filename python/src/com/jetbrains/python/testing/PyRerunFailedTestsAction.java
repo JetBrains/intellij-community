@@ -23,14 +23,11 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,16 +127,5 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       myState.addPredefinedEnvironmentVariables(envs,
                                                 passParentEnvs);
     }
-  }
-
-  @NotNull
-  @Override
-  protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
-    return new Filter() {
-      public boolean shouldAccept(final AbstractTestProxy test) {
-        boolean ignored = (test.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX.getValue());
-        return !ignored && (test.isInterrupted() || test.isDefect());
-      }
-    };
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
@@ -67,12 +67,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   private final DefaultPackagingElementResolvingContext myResolvingContext;
   private boolean myInsideCommit = false;
   private boolean myLoaded;
-  private long myModificationCount;
-  private final ModificationTracker myModificationTracker = new ModificationTracker() {
-    public long getModificationCount() {
-      return myModificationCount;
-    }
-  };
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private final Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
 
   public ArtifactManagerImpl(Project project) {
@@ -355,7 +350,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       }
 
       myModel.setArtifactsList(allArtifacts);
-      myModificationCount++;
+      myModificationTracker.incModificationCount();
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
       hasChanges = !removed.isEmpty() || !added.isEmpty() || !changed.isEmpty();
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
@@ -389,7 +384,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @NotNull
   public Artifact addArtifact(@NotNull final String name, @NotNull final ArtifactType type, final CompositePackagingElement<?> root) {
     return new WriteAction<Artifact>() {
-      protected void run(final Result<Artifact> result) {
+      protected void run(@NotNull final Result<Artifact> result) {
         final ModifiableArtifactModel model = createModifiableModel();
         final ModifiableArtifact artifact = model.addArtifact(name, type);
         if (root != null) {
@@ -413,7 +408,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     final CompositePackagingElement<?> root = model.getOrCreateModifiableArtifact(artifact).getRootElement();
     PackagingElementFactory.getInstance().getOrCreateDirectory(root, relativePath).addOrFindChildren(elements);
     new WriteAction() {
-      protected void run(final Result result) {
+      protected void run(@NotNull final Result result) {
         model.commit();
       }
     }.execute();

@@ -93,15 +93,13 @@ public class ClassInnerStuffCache {
     if (checkBases) {
       return PsiClassImplUtil.findFieldByName(myClass, name, true);
     }
-    else {
-      return CachedValuesManager.getCachedValue(myClass, new CachedValueProvider<Map<String, PsiField>>() {
-        @Nullable
-        @Override
-        public Result<Map<String, PsiField>> compute() {
-          return Result.create(getFieldsMap(), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
-        }
-      }).get(name);
-    }
+    return CachedValuesManager.getCachedValue(myClass, new CachedValueProvider<Map<String, PsiField>>() {
+      @Nullable
+      @Override
+      public Result<Map<String, PsiField>> compute() {
+        return Result.create(getFieldsMap(), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+      }
+    }).get(name);
   }
 
   @NotNull
@@ -109,16 +107,14 @@ public class ClassInnerStuffCache {
     if (checkBases) {
       return PsiClassImplUtil.findMethodsByName(myClass, name, true);
     }
-    else {
-      PsiMethod[] methods = CachedValuesManager.getCachedValue(myClass, new CachedValueProvider<Map<String, PsiMethod[]>>() {
-        @Nullable
-        @Override
-        public Result<Map<String, PsiMethod[]>> compute() {
-          return Result.create(getMethodsMap(), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
-        }
-      }).get(name);
-      return methods != null ? methods : PsiMethod.EMPTY_ARRAY;
-    }
+    PsiMethod[] methods = CachedValuesManager.getCachedValue(myClass, new CachedValueProvider<Map<String, PsiMethod[]>>() {
+      @Nullable
+      @Override
+      public Result<Map<String, PsiMethod[]>> compute() {
+        return Result.create(getMethodsMap(), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
+      }
+    }).get(name);
+    return methods == null ? PsiMethod.EMPTY_ARRAY : methods;
   }
 
   @Nullable
@@ -167,24 +163,28 @@ public class ClassInnerStuffCache {
     });
   }
 
+  @NotNull
   private PsiField[] getAllFields() {
     List<PsiField> own = myClass.getOwnFields();
     List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class);
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
+  @NotNull
   private PsiMethod[] getAllMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
     List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
     return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 
+  @NotNull
   private PsiClass[] getAllInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
     List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
+  @NotNull
   private Map<String, PsiField> getFieldsMap() {
     PsiField[] fields = getFields();
     if (fields.length == 0) return Collections.emptyMap();
@@ -199,6 +199,7 @@ public class ClassInnerStuffCache {
     return cachedFields;
   }
 
+  @NotNull
   private Map<String, PsiMethod[]> getMethodsMap() {
     PsiMethod[] methods = getMethods();
     if (methods.length == 0) return Collections.emptyMap();
@@ -220,6 +221,7 @@ public class ClassInnerStuffCache {
     return cachedMethods;
   }
 
+  @NotNull
   private Map<String, PsiClass> getInnerClassesMap() {
     PsiClass[] classes = getInnerClasses();
     if (classes.length == 0) return Collections.emptyMap();

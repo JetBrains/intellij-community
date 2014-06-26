@@ -53,13 +53,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final TempFileSystem TEMP_FILE_SYSTEM;
   private final LocalFileSystem LOCAL_FILE_SYSTEM;
   private final JarFileSystem JAR_FILE_SYSTEM;
-  private volatile long myVfsModificationCounter;
   // guarded by this
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = new LinkedHashMap<VirtualFilePointerListener, FilePointerPartNode>();
 
   // compare by identity because VirtualFilePointerContainer has too smart equals
   // guarded by myContainers
-  private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.<VirtualFilePointerContainerImpl>newIdentityTroveSet();
+  private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();
   @NotNull private final VirtualFileManager myVirtualFileManager;
   @NotNull private final MessageBus myBus;
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
@@ -85,12 +84,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     TEMP_FILE_SYSTEM = tempFileSystem;
     LOCAL_FILE_SYSTEM = localFileSystem;
     JAR_FILE_SYSTEM = jarFileSystem;
-  }
-
-
-  @Override
-  public long getModificationCount() {
-    return myVfsModificationCounter;
   }
 
   @Override
@@ -348,10 +341,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   public void dispose() {
   }
 
-  private void incModificationCounter() {
-    myVfsModificationCounter++;
-  }
-
   @Override
   @NotNull
   public VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
@@ -382,6 +371,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
       }
 
+      @Override
       @NonNls
       @NotNull
       public String toString() {
@@ -402,7 +392,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     VirtualFilePointer[] toFirePointers;
 
     synchronized (this) {
-      incModificationCounter();
+      incModificationCount();
       for (VFileEvent event : events) {
         if (event instanceof VFileDeleteEvent) {
           final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
@@ -483,7 +473,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @Override
   public void after(@NotNull final List<? extends VFileEvent> events) {
-    incModificationCounter();
+    incModificationCount();
 
     for (FilePointerPartNode node : myPointersToUpdateUrl) {
       synchronized (this) {

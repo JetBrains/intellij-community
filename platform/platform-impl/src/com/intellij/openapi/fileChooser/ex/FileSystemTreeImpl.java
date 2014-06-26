@@ -49,6 +49,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +77,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final MyExpansionListener myExpansionListener = new MyExpansionListener();
 
-  private Map<VirtualFile, VirtualFile> myEverExpanded = new WeakHashMap<VirtualFile, VirtualFile>();
+  private final Set<VirtualFile> myEverExpanded = new THashSet<VirtualFile>();
 
   public FileSystemTreeImpl(@Nullable final Project project, final FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null, null);
@@ -455,11 +456,11 @@ public class FileSystemTreeImpl implements FileSystemTree {
         final FileElement fileDescriptor = nodeDescriptor.getElement();
         final VirtualFile virtualFile = fileDescriptor.getFile();
         if (virtualFile != null) {
-          if (!myEverExpanded.containsKey(virtualFile)) {
+          if (!myEverExpanded.contains(virtualFile)) {
             if (virtualFile instanceof NewVirtualFile) {
               ((NewVirtualFile)virtualFile).markDirty();
             }
-            myEverExpanded.put(virtualFile, virtualFile);
+            myEverExpanded.add(virtualFile);
           }
 
 

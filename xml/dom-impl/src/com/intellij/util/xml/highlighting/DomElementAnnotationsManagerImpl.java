@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -56,7 +54,6 @@ import java.util.List;
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager {
   public static final Object LOCK = new Object();
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl");
   private static final Key<DomElementsProblemsHolderImpl> DOM_PROBLEM_HOLDER_KEY = Key.create("DomProblemHolder");
   private static final Key<CachedValue<Boolean>> CACHED_VALUE_KEY = Key.create("DomProblemHolderCachedValue");
   private final EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
@@ -109,18 +106,10 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
   };
-  private final ModificationTracker myModificationTracker;
   private final Project myProject;
-  private long myModificationCount;
 
   public DomElementAnnotationsManagerImpl(Project project) {
     myProject = project;
-    myModificationTracker = new ModificationTracker() {
-      @Override
-      public long getModificationCount() {
-        return myModificationCount;
-      }
-    };
     final ProfileChangeAdapter profileChangeAdapter = new ProfileChangeAdapter() {
       @Override
       public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
@@ -145,7 +134,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   @Override
   public void dropAnnotationsCache() {
-    myModificationCount++;
+    incModificationCount();
   }
 
   public final List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement element, @NotNull DomElementAnnotationHolder annotationHolder, Class<? extends DomElementsInspection> inspectionClass) {
@@ -171,7 +160,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Boolean>() {
         @Override
         public Result<Boolean> compute() {
-          return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myModificationTracker, ProjectRootManager.getInstance(myProject));
+          return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, DomElementAnnotationsManagerImpl.this, ProjectRootManager.getInstance(myProject));
         }
       }, false);
       cachedValue.getValue();

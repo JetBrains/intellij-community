@@ -19,6 +19,7 @@
           <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-1.12.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-1.12.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-1.12.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-1.12.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-native-1.12.jar!/" />
         </CLASSES>
         <JAVADOC />

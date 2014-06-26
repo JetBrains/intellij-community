@@ -55,6 +55,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   public void testExtendsList() { doTestDecompiler(); }
   public void testParameters() { doTestDecompiler(); }
   public void testConstants() { doTestDecompiler(); }
+  public void testAnonymous() { doTestDecompiler(); }
 
   private void doTestDecompiler() {
     String name = PluginPathManager.getPluginHomePath("java-decompiler") + "/testData/" + getName().substring(4);

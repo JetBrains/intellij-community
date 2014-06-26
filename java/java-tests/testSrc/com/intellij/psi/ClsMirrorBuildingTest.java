@@ -86,10 +86,8 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   private static void doTest(String clsPath, String txtPath) {
     VirtualFileSystem fs = clsPath.contains("!/") ? JarFileSystem.getInstance() : LocalFileSystem.getInstance();
-    VirtualFile vFile = fs.findFileByPath(clsPath);
-    assertNotNull(clsPath, vFile);
-    PsiFile clsFile = getPsiManager().findFile(vFile);
-    assertNotNull(vFile.getPath(), clsFile);
+    VirtualFile file = fs.findFileByPath(clsPath);
+    assertNotNull(clsPath, file);
 
     String expected;
     try {
@@ -100,6 +98,6 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
       return;
     }
 
-    assertEquals(expected, ((ClsFileImpl)clsFile).getMirror().getText());
+    assertEquals(expected, ClsFileImpl.decompile(file).toString());
   }
 }

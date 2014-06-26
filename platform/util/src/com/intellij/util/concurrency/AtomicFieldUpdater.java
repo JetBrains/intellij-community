@@ -27,8 +27,6 @@ import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 /**
  * Utility class similar to {@link java.util.concurrent.atomic.AtomicReferenceFieldUpdater} except:
@@ -69,15 +67,13 @@ public class AtomicFieldUpdater<T,V> {
   }
 
   @NotNull
-  public static <T> AtomicLongFieldUpdater<T> forLongFieldIn(@NotNull Class<T> ownerClass) {
-    Field field = getTheOnlyVolatileFieldOfClass(ownerClass, long.class);
-    return AtomicLongFieldUpdater.newUpdater(ownerClass, field.getName());
+  public static <T> AtomicFieldUpdater<T, Long> forLongFieldIn(@NotNull Class<T> ownerClass) {
+    return new AtomicFieldUpdater<T, Long>(ownerClass, long.class);
   }
 
   @NotNull
-  public static <T> AtomicIntegerFieldUpdater<T> forIntFieldIn(@NotNull Class<T> ownerClass) {
-    Field field = getTheOnlyVolatileFieldOfClass(ownerClass, int.class);
-    return AtomicIntegerFieldUpdater.newUpdater(ownerClass, field.getName());
+  public static <T> AtomicFieldUpdater<T, Integer> forIntFieldIn(@NotNull Class<T> ownerClass) {
+    return new AtomicFieldUpdater<T, Integer>(ownerClass, int.class);
   }
 
   private AtomicFieldUpdater(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
@@ -118,6 +114,10 @@ public class AtomicFieldUpdater<T,V> {
 
   public boolean compareAndSetLong(@NotNull T owner, long expected, long newValue) {
     return unsafe.compareAndSwapLong(owner, offset, expected, newValue);
+  }
+
+  public boolean compareAndSetInt(@NotNull T owner, int expected, int newValue) {
+    return unsafe.compareAndSwapInt(owner, offset, expected, newValue);
   }
 
   public void set(@NotNull T owner, V newValue) {
