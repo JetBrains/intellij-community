@@ -42,6 +42,8 @@ public class StudyNewCourseDialog extends DialogWrapper {
       myErrorLabel.setVisible(true);
       myErrorIconLabel.setVisible(true);
       if (myGenerator.downloadCoursesFromGithub()) {
+        downloadedDefaultCourses = myGenerator.getDefaultCourses();
+        myGenerator.setMyDefaultCourseFiles(downloadedDefaultCourses);
         availableDefaultCourses = myGenerator.getDefaultCourses().keySet();
         if (availableDefaultCourses.size() != 0) {
           myErrorIconLabel.setVisible(false);
