@@ -15,5 +15,17 @@
  */
 package com.intellij.openapi.util;
 
-public class DefaultModificationTracker extends SimpleModificationTracker {
+import org.jetbrains.annotations.NotNull;
+
+public class CompositeModificationTracker extends SimpleModificationTracker {
+  @NotNull private final ModificationTracker myAdditionalTracker;
+
+  public CompositeModificationTracker(@NotNull ModificationTracker tracker) {
+    myAdditionalTracker = tracker;
+  }
+
+  @Override
+  public long getModificationCount() {
+    return super.getModificationCount() + myAdditionalTracker.getModificationCount();
+  }
 }

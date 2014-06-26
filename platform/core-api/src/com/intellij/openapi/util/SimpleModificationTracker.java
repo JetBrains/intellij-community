@@ -15,18 +15,28 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.Patches;
+
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
 /**
  * Created by Max Medvedev on 28/03/14
  */
 public class SimpleModificationTracker implements ModificationTracker {
-  private long myCounter;
+  static {
+    // field made public to workaround bug in JDK7 when AtomicIntegerFieldUpdater can't be created for private field, even from within its own class
+    assert Patches.HACK_USED_WHICH_IS_FIXED_IN_JDK8;
+  }
+  public volatile int myCounter;
 
   @Override
   public long getModificationCount() {
     return myCounter;
   }
 
+  private static final AtomicIntegerFieldUpdater<SimpleModificationTracker> UPDATER = AtomicIntegerFieldUpdater.newUpdater(SimpleModificationTracker.class, "myCounter");
+
   public void incModificationCount() {
-    myCounter++;
+    UPDATER.incrementAndGet(this);
   }
 }

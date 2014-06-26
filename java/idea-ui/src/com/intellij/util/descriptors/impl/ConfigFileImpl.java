@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -36,13 +37,12 @@ import java.lang.ref.SoftReference;
 /**
  * @author nik
  */
-public class ConfigFileImpl implements ConfigFile {
+public class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
   @NotNull private ConfigFileInfo myInfo;
   private final VirtualFilePointer myFilePointer;
   private volatile Reference<PsiFile> myPsiFile;
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
-  private long myModificationCount;
 
   public ConfigFileImpl(@NotNull final ConfigFileContainerImpl container, @NotNull final ConfigFileInfo configuration) {
     myContainer = container;
@@ -64,7 +64,7 @@ public class ConfigFileImpl implements ConfigFile {
   }
 
   private void onChange() {
-    myModificationCount++;
+    incModificationCount();
     myContainer.fireDescriptorChanged(this);
   }
 
@@ -137,11 +137,5 @@ public class ConfigFileImpl implements ConfigFile {
   @NotNull
   public ConfigFileMetaData getMetaData() {
     return myInfo.getMetaData();
-  }
-
-
-  @Override
-  public long getModificationCount() {
-    return myModificationCount;
   }
 }

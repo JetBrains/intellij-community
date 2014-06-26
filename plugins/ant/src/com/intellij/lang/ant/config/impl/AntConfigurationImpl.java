@@ -72,7 +72,7 @@ import java.util.*;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
+public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element> {
 
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
   public static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<AntConfiguration>("$instance", null);
@@ -118,7 +118,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
   private boolean myInitializing;
-  private volatile long myModificationCount = 0;
 
   public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
     super(project);
@@ -232,7 +231,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         indicator.pushState();
         try {
           indicator.setText(title);
-          myModificationCount++;
+          incModificationCount();
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
@@ -264,7 +263,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public void removeBuildFile(final AntBuildFile file) {
-    myModificationCount++;
+    incModificationCount();
     removeBuildFileImpl(file);
     updateRegisteredActions();
   }
@@ -371,7 +370,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public void updateBuildFile(final AntBuildFile buildFile) {
-    myModificationCount++;
+    incModificationCount();
     myEventDispatcher.getMulticaster().buildFileChanged(buildFile);
     updateRegisteredActions();
   }
@@ -396,10 +395,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     }
     return getModel(buildFile);
-  }
-
-  public long getModificationCount() {
-    return myModificationCount;
   }
 
   private void readExternal(final Element parentNode) throws InvalidDataException {

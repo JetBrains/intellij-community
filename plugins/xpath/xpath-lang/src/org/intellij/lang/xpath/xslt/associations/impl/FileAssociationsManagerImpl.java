@@ -15,17 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.util.PsiUtilCore;
-import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -33,20 +29,20 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilCore;
+import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import org.jdom.Element;
-
 import java.util.*;
 
-class FileAssociationsManagerImpl extends FileAssociationsManager implements ProjectComponent, JDOMExternalizable, ModificationTracker {
+class FileAssociationsManagerImpl extends FileAssociationsManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(FileAssociationsManagerImpl.class);
 
   private final Project myProject;
   private final VirtualFilePointerManager myFilePointerManager;
   private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
-  private long myModCount;
   private boolean myTempCopy;
 
   public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
@@ -121,7 +117,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   }
 
   private void touch() {
-    myModCount++;
+    incModificationCount();
     if (!myTempCopy) {
       final ProjectView view = ProjectView.getInstance(myProject);
       if (view != null) {
@@ -263,9 +259,5 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
       if (psiFile.getFileType().equals(fileType)) return true;
     }
     return false;
-  }
-
-  public long getModificationCount() {
-    return myModCount;
   }
 }

@@ -66,8 +66,7 @@ import java.util.*;
  * Making it a service may result in FileContentUtil.reparseFiles at a random loading moment which may cause
  * mysterious PSI validity losses
  */
-public class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
-
+public class Configuration extends SimpleModificationTracker implements PersistentStateComponent<Element>, ModificationTracker {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
   private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION = new Condition<BaseInjection>() {
     @Override
@@ -222,8 +221,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       return Result.create(map, Configuration.this);
     }
   });
-
-  private volatile long myModificationCount;
 
   public Configuration() {
   }
@@ -436,11 +433,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
 
   private void configurationModified() {
-    myModificationCount ++;
-  }
-
-  public long getModificationCount() {
-    return myModificationCount;
+    incModificationCount();
   }
 
   @Nullable
