@@ -14,42 +14,19 @@
 
 package de.fernflower.modules.decompiler;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import de.fernflower.code.CodeConstants;
 import de.fernflower.code.Instruction;
 import de.fernflower.code.InstructionSequence;
 import de.fernflower.code.cfg.BasicBlock;
 import de.fernflower.main.DecompilerContext;
-import de.fernflower.main.extern.IFernflowerPreferences;
-import de.fernflower.modules.decompiler.exps.ArrayExprent;
-import de.fernflower.modules.decompiler.exps.AssignmentExprent;
-import de.fernflower.modules.decompiler.exps.ConstExprent;
-import de.fernflower.modules.decompiler.exps.ExitExprent;
-import de.fernflower.modules.decompiler.exps.Exprent;
-import de.fernflower.modules.decompiler.exps.FieldExprent;
-import de.fernflower.modules.decompiler.exps.FunctionExprent;
-import de.fernflower.modules.decompiler.exps.IfExprent;
-import de.fernflower.modules.decompiler.exps.InvocationExprent;
-import de.fernflower.modules.decompiler.exps.MonitorExprent;
-import de.fernflower.modules.decompiler.exps.NewExprent;
-import de.fernflower.modules.decompiler.exps.SwitchExprent;
-import de.fernflower.modules.decompiler.exps.VarExprent;
+import de.fernflower.modules.decompiler.exps.*;
 import de.fernflower.modules.decompiler.sforms.DirectGraph;
 import de.fernflower.modules.decompiler.sforms.DirectNode;
 import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper;
 import de.fernflower.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
-import de.fernflower.modules.decompiler.stats.BasicBlockStatement;
-import de.fernflower.modules.decompiler.stats.CatchAllStatement;
-import de.fernflower.modules.decompiler.stats.CatchStatement;
-import de.fernflower.modules.decompiler.stats.RootStatement;
-import de.fernflower.modules.decompiler.stats.Statement;
+import de.fernflower.modules.decompiler.stats.*;
 import de.fernflower.modules.decompiler.vars.VarProcessor;
 import de.fernflower.struct.StructClass;
 import de.fernflower.struct.consts.ConstantPool;
@@ -756,8 +733,11 @@ public class ExprProcessor implements CodeConstants {
 	}
 
 	public static String listToJava(List<Exprent> lst, int indent) {
-		String indstr = InterpreterUtil.getIndentString(indent);
+    if (lst == null || lst.isEmpty()) {
+      return "";
+    }
 
+		String indstr = InterpreterUtil.getIndentString(indent);
 		String new_line_separator = DecompilerContext.getNewLineSeparator();
 		
 		StringBuffer buf = new StringBuffer();

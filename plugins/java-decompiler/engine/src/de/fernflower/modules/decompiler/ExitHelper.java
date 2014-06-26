@@ -212,7 +212,7 @@ public class ExitHelper {
 				&& edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
 			List<Exprent> data = dest.getExprents();
 			
-			if(data.size() == 1) {
+			if(data != null && data.size() == 1) {
 				if(data.get(0).type == Exprent.EXPRENT_EXIT) {
 					return dest;
 				}
@@ -252,8 +252,8 @@ public class ExitHelper {
 		for(StatEdge edge: root.getDummyExit().getAllPredecessorEdges()) {
 			if(!edge.explicit) {
 				Statement source = edge.getSource();
-				if(source.getExprents() != null && !source.getExprents().isEmpty()) {
-					List<Exprent> lstExpr = source.getExprents();					
+        List<Exprent> lstExpr = source.getExprents();
+        if(lstExpr != null && !lstExpr.isEmpty()) {
 					Exprent expr = lstExpr.get(lstExpr.size() - 1);
 					if(expr.type == Exprent.EXPRENT_EXIT) {
 						ExitExprent ex = (ExitExprent)expr;
@@ -289,8 +289,8 @@ public class ExitHelper {
 				}
 				
 				Statement source = edge.getSource();
-				if(source.getExprents() != null && !source.getExprents().isEmpty()) {
-					List<Exprent> lstExpr = source.getExprents();					
+        List<Exprent> lstExpr = source.getExprents();
+        if(lstExpr != null && !lstExpr.isEmpty()) {
 					Exprent expr = lstExpr.get(lstExpr.size() - 1);
 					if(expr.type == Exprent.EXPRENT_EXIT) {
 						ExitExprent ex = (ExitExprent)expr;
