@@ -64,7 +64,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   @Nullable
   private static Date parseDate(@Nullable String dateStr) {
-    if (dateStr == null) return null;
+    if (dateStr == null || dateStr.isEmpty()) return null;
     try {
       return DATE_FORMAT.parse(dateStr);
     }
