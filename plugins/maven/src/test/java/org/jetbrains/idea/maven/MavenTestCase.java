@@ -237,7 +237,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     runnable.run();
   }
 
