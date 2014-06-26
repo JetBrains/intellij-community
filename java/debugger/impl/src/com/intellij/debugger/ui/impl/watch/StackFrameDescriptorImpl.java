@@ -68,7 +68,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myUiIndex = frame.getFrameIndex();
       myLocation = frame.location();
       myThisObject = frame.thisObject();
-      myMethodOccurrence = tracker.getMethodOccurrence(myLocation.method());
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, myLocation.method());
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
@@ -91,14 +91,14 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     catch (InternalException e) {
       LOG.info(e);
       myLocation = null;
-      myMethodOccurrence = tracker.getMethodOccurrence(null);
+      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
     catch (EvaluateException e) {
       LOG.info(e);
       myLocation = null;
-      myMethodOccurrence = tracker.getMethodOccurrence(null);
+      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }

@@ -18,6 +18,8 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
@@ -31,8 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author egor
@@ -101,6 +104,11 @@ public class JavaExecutionStack extends XExecutionStack {
       else {
         myDebugProcess.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
           @Override
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+
+          @Override
           protected void action() throws Exception {
             myTopFrame = calcTopFrame();
           }
@@ -112,33 +120,29 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+    final AtomicInteger skipCounter = new AtomicInteger(firstFrameIndex);
+    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
-      protected void action() throws Exception {
-        boolean showLibraryStackframes = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+
+      @Override
+      public void threadAction() {
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
-          List<JavaStackFrame> frames = new ArrayList<JavaStackFrame>();
           int status = myThreadProxy.status();
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&
               !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&
               !(status == ThreadReference.THREAD_STATUS_ZOMBIE)) {
             try {
-              int framesToSkip = firstFrameIndex;
               boolean first = true;
               for (StackFrameProxyImpl stackFrame : myThreadProxy.frames()) {
-                if (first && framesToSkip > 0) {
-                  framesToSkip--;
+                if (first && firstFrameIndex > 0) {
+                  skipCounter.decrementAndGet();
                   first = false;
                   continue;
                 }
-                JavaStackFrame frame = new JavaStackFrame(stackFrame, myDebugProcess, myTracker);
-                if (showLibraryStackframes || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
-                  if (framesToSkip > 0) {
-                    framesToSkip--;
-                    continue;
-                  }
-                  frames.add(frame);
-                }
+                myDebugProcess.getManagerThread().schedule(new AppendFrameCommand(getSuspendContext(), stackFrame, container, skipCounter));
               }
             }
             catch (EvaluateException e) {
@@ -146,13 +150,45 @@ public class JavaExecutionStack extends XExecutionStack {
               return;
             }
           }
-          container.addStackFrames(frames, true);
+          myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(getSuspendContext()) {
+            @Override
+            public void contextAction() throws Exception {
+              container.addStackFrames(Collections.<JavaStackFrame>emptyList(), true);
+            }
+          });
         }
         else {
           container.errorOccurred(DebuggerBundle.message("frame.panel.frames.not.available"));
         }
       }
     });
+  }
+
+  private class AppendFrameCommand extends SuspendContextCommandImpl {
+    private final StackFrameProxyImpl myStackFrameProxy;
+    private final XStackFrameContainer myContainer;
+    private final AtomicInteger mySkipCounter;
+
+    public AppendFrameCommand(SuspendContextImpl suspendContext,
+                              StackFrameProxyImpl stackFrame,
+                              XStackFrameContainer container,
+                              AtomicInteger skipCounter) {
+      super(suspendContext);
+      myStackFrameProxy = stackFrame;
+      myContainer = container;
+      mySkipCounter = skipCounter;
+    }
+
+    @Override
+    public void contextAction() throws Exception {
+      boolean showLibraryStackframes = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
+      JavaStackFrame frame = new JavaStackFrame(myStackFrameProxy, myDebugProcess, myTracker);
+      if (showLibraryStackframes || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
+        if (mySkipCounter.getAndDecrement() <= 0) {
+          myContainer.addStackFrames(Arrays.asList(frame), false);
+        }
+      }
+    }
   }
 
   private static String calcRepresentation(ThreadReferenceProxyImpl thread) {
