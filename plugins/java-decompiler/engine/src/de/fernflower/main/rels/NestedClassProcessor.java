@@ -80,11 +80,12 @@ public class NestedClassProcessor {
     for(ClassNode child : node.nested) {
       // ensure not-empty class name
       if((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
-        if((child.classStruct.access_flags & CodeConstants.ACC_SYNTHETIC) == 0) {
-          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + child.classStruct.qualifiedName + "!", IFernflowerLogger.WARNING);
-          child.simpleName = "NamelessClass_" + (++nameless);
-        } else {
+        StructClass cl = child.classStruct;
+        if(((child.access | cl.access_flags) & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic")) {
           child.simpleName = "SyntheticClass_" + (++synthetics);
+        } else {
+          DecompilerContext.getLogger().writeMessage("Nameless local or member class " + cl.qualifiedName + "!", IFernflowerLogger.WARNING);
+          child.simpleName = "NamelessClass_" + (++nameless);
         }
       }
     }

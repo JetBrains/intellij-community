@@ -296,7 +296,7 @@ public class ClassWriter {
 			if(inner.type == ClassNode.CLASS_MEMBER) {
 				StructClass innercl = inner.classStruct;
 				
-				boolean isSynthetic = (innercl.access_flags & CodeConstants.ACC_SYNTHETIC) != 0 || innercl.getAttributes().containsKey("Synthetic");
+				boolean isSynthetic = ((inner.access | innercl.access_flags) & CodeConstants.ACC_SYNTHETIC) != 0 || innercl.getAttributes().containsKey("Synthetic");
 				if((!isSynthetic || !DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC))
 						&& !wrapper.getHideMembers().contains(innercl.qualifiedName)) {
 					writer.write(DecompilerContext.getNewLineSeparator());
