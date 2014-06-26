@@ -32,7 +32,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     data.setIcon(UNRESOLVED_TASK);
     //data.setPresentableText("my" + myValue.getName());
     if (myValue.getName().equals(myProject.getName())) {
-      data.setPresentableText(TaskManager.getInstance(myProject).getCourse().getName());
+      data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
     } else {
       data.setPresentableText(myValue.getName());
     }

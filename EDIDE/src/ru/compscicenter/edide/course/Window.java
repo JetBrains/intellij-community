@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jdom.Element;
 
 /**
  * User: lia
@@ -14,30 +15,22 @@ import com.intellij.openapi.editor.markup.TextAttributes;
  * Time: 18:54
  */
 public class Window {
-  private int line;
-  private int start;
-  private String text;
-  private String hint;
-  private String possibleAnswer;
-  private int offsetInLine;
-  private boolean myResolveStatus;
+  private int line = 0;
+  private int start = 0;
+  private String text = "default text";
+  private String hint = "";
+  private String possibleAnswer = "";
+  private int offsetInLine = text.length();
+  private boolean myResolveStatus = false;
 
+  public Window() {
+  }
   public int getLine() {
     return line;
   }
 
   public void setLine(int line) {
     this.line = line;
-  }
-
-  public Window(int line, int start, String text, String hint, String possibleAnswer) {
-    this.line = line;
-    this.start = start;
-    this.text = text;
-    this.hint = hint;
-    this.possibleAnswer = possibleAnswer;
-    offsetInLine = text.length();
-    myResolveStatus = false;
   }
 
   public String getText() {
@@ -59,7 +52,7 @@ public class Window {
     //TODO:return;
     //setOffsets(rh.getStartOffset(), rh.getEndOffset());
     if (drawSelection) {
-      editor.getSelectionModel().setSelection(startOffset, startOffset + offsetInLine);
+      editor.getSelectionModel().setSelection(startOffset, startOffset + text.length());
       editor.getCaretModel().moveToOffset(startOffset);
     }
 
@@ -68,14 +61,26 @@ public class Window {
   }
 
   public boolean getResolveStatus() {
-    return myResolveStatus;
+    //return myResolveStatus;
+    return false;
   }
+  //
+  //public int getOffsetInLine() {
+  //  return offsetInLine;
+  //}
 
-  public int getOffsetInLine() {
-    return offsetInLine;
+
+  public void setResolveStatus(boolean resolveStatus) {
+    myResolveStatus = resolveStatus;
   }
 
   public int getRealStartOffset(Editor editor) {
-    return editor.getDocument().getLineStartOffset(line) + offsetInLine;
+    return editor.getDocument().getLineStartOffset(line) + start;
+  }
+
+  public Element saveState() {
+    Element windowElement = new Element("window");
+    windowElement.addContent(Boolean.toString(myResolveStatus));
+    return windowElement;
   }
 }

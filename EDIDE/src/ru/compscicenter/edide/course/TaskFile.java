@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import ru.compscicenter.edide.TaskWindow;
 import ru.compscicenter.edide.course.Window;
 
@@ -74,12 +75,20 @@ public class TaskFile {
     for (Window tw: windows) {
       if (line == tw.getLine()) {
         int twStartOffset = tw.getRealStartOffset(editor);
-        int twEndOffset = twStartOffset + tw.getOffsetInLine();
+        int twEndOffset = twStartOffset + tw.getText().length();
         if (twStartOffset < realOffset && realOffset < twEndOffset) {
           return tw;
         }
       }
     }
     return null;
+  }
+
+  public Element saveState() {
+    Element fileElement = new Element("file");
+    for (Window window:windows) {
+      fileElement.addContent(window.saveState());
+    }
+    return fileElement;
   }
 }

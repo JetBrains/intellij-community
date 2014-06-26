@@ -26,15 +26,12 @@
   <depends>com.intellij.modules.lang</depends>
 
   <application-components>
-          <component>
-              <implementation-class>ru.compscicenter.edide.StudyApplicationComponent</implementation-class>
-          </component>
    </application-components>
 
   <project-components>
-    <!-- Add your project components here -->
     <component>
-      <implementation-class>ru.compscicenter.edide.TaskManager</implementation-class>
+      <implementation-class>ru.compscicenter.edide.StudyTaskManager</implementation-class>
+      <interface-class>ru.compscicenter.edide.StudyTaskManager</interface-class>
     </component>
   </project-components>
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.course.Window;
 
 import java.util.Arrays;
 
@@ -62,7 +63,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 VirtualFile openedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
                 if (openedFile != null) {
                   HintManager.getInstance().showInformationHint(editor, "Select any window");
-                  TaskManager taskManager = TaskManager.getInstance(editor.getProject());
+                  StudyTaskManager taskManager = StudyTaskManager.getInstance(editor.getProject());
                   TaskFile taskFile = taskManager.getTaskFile(openedFile);
                   if (taskFile == null) {
                     return;
@@ -71,6 +72,9 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   editor.addEditorMouseListener(new MyMouseListener(taskFile));
                   editor.getMarkupModel().removeAllHighlighters();
                   taskFile.drawAllWindows(editor);
+                  for (Window window :taskFile.getWindows()) {
+                    window.setResolveStatus(true);
+                  }
                 }
               }
               catch (Exception e) {

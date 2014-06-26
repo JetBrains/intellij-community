@@ -2,6 +2,7 @@ package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,5 +38,13 @@ public class Lesson {
       taskList.get(i).create(project, lessonDir, i + 1, resourseRoot + "/"+lessonDir.getName() );
     }
 
+  }
+
+  public Element saveState() {
+    Element lessonElement =  new Element("lesson");
+    for (Task task:taskList) {
+      lessonElement.addContent(task.saveState());
+    }
+    return lessonElement;
   }
 }

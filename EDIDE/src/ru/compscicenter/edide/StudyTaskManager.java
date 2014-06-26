@@ -1,33 +1,20 @@
 package ru.compscicenter.edide;
 
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jdom.DataConversionException;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,15 +25,16 @@ import java.util.Map;
 
 
 @State(
-  name = "StudySettings",
+  name = "Element",
   storages = {
     @Storage(
-      id = "main",
-      file = "$PROJECT_CONFIG_DIR$/study.xml"
+      id = "others",
+      file = "$PROJECT_CONFIG_DIR$/study_project.xml",
+      scheme = StorageScheme.DIRECTORY_BASED
     )}
 )
-public class TaskManager implements ProjectComponent, PersistentStateComponent<Element> {
-  private static Map<String, TaskManager> myTaskManagers = new HashMap<String, TaskManager>();
+public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element> {
+  private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private final Project myProject;
   private Course myCourse;
 
@@ -54,17 +42,10 @@ public class TaskManager implements ProjectComponent, PersistentStateComponent<E
     myCourse = course;
   }
 
-  public TaskManager(Project project) {
+  private StudyTaskManager(Project project) {
     myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
-  }
-
-  public Element saveState(String projectName) {
-    Element taskManagerElement = new Element(projectName);
-    //for (Task task:tasks) {
-    //   taskManagerElement.addContent(task.saveState());
-    //}
-    return taskManagerElement;
+    myCourse = null;
   }
 
 
@@ -72,15 +53,27 @@ public class TaskManager implements ProjectComponent, PersistentStateComponent<E
     return myCourse;
   }
 
+  public Element saveState(String projectName) {
+    Element taskManagerElement = new Element(projectName);
+    if (myCourse == null) {
+      return taskManagerElement;
+    }
+    for (Lesson lesson:myCourse.getLessons()) {
+      taskManagerElement.addContent(lesson.saveState());
+    }
+    return taskManagerElement;
+  }
+
   @Nullable
   @Override
   public Element getState() {
-    return saveState(myProject.getName());
+    Element state = saveState(myProject.getName());
+    return state;
   }
 
   @Override
-  public void loadState(Element state) {
-
+  public void loadState(Element el) {
+    System.out.println("some text");
   }
 
 
@@ -107,18 +100,17 @@ public class TaskManager implements ProjectComponent, PersistentStateComponent<E
   @NotNull
   @Override
   public String getComponentName() {
-    return "taskManager";
+    return "StudyTaskManager";
   }
 
-  public static TaskManager getInstance(Project project) {
-    return myTaskManagers.get(project.getBasePath());
+  public static StudyTaskManager getInstance(Project project) {
+    StudyTaskManager item = myTaskManagers.get(project.getBasePath());
+    if (item != null) {
+      return item;
+    }
+    StudyTaskManager taskManager = new StudyTaskManager(project);
+    return taskManager;
   }
-
-  public int getTaskNumForFile(VirtualFile file) {
-
-    return 0;
-  }
-
 
   private int getIndex(String fullName, String logicalName) {
      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;

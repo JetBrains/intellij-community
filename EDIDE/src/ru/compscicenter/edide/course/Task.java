@@ -2,6 +2,7 @@ package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 
 import java.io.IOException;
 import java.util.List;
@@ -59,5 +60,13 @@ public class Task {
       }
     }
     return null;
+  }
+
+  public Element saveState() {
+    Element taskElement = new Element("task");
+    for (TaskFile file: taskFiles) {
+      taskElement.addContent(file.saveState());
+    }
+    return taskElement;
   }
 }

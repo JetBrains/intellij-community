@@ -16,9 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
@@ -114,7 +112,7 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
       Course course = gson.fromJson(reader, Course.class);
       course.create(project, baseDir, baseCourseFile.getParent());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
-      TaskManager tm = new TaskManager(project);
+      StudyTaskManager tm = StudyTaskManager.getInstance(project);
       tm.setCourse(course);
       System.out.println("test");
     }
@@ -165,7 +163,6 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
                   int i = 2;
                   if (name!= null) {
                     File item = defaultCourseFiles.get(name);
-                    String tmp = name;
                     while(item!= null && !FileUtil.filesEqual(item, courseFile)) {
                       if (i>2)  {
                         name = name.substring(0, name.length() - 2);
