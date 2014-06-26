@@ -2,6 +2,10 @@ package ru.compscicenter.edide;
 
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.editor.Editor;
@@ -12,10 +16,12 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import ru.compscicenter.edide.course.StudyTaskWindow;
 import ru.compscicenter.edide.course.TaskFile;
-import ru.compscicenter.edide.course.Window;
 
 import java.util.Arrays;
 
@@ -38,12 +44,37 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
     public void mouseClicked(EditorMouseEvent e) {
       Editor editor = e.getEditor();
       LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-      if (myTaskFile.getTaskWindowByPos(editor, pos) == null) {
+      StudyTaskWindow taskWindow = myTaskFile.getTaskWindow(editor, pos);
+      if (taskWindow == null) {
         myTaskFile.drawAllWindows(editor);
         return;
       }
-      editor.getMarkupModel().removeAllHighlighters();
-      myTaskFile.drawWindowByPos(editor, pos);
+      StudyTaskManager taskManager = StudyTaskManager.getInstance(e.getEditor().getProject());
+      if (taskManager.getSelectedTaskWindow() == null) {
+        editor.getMarkupModel().removeAllHighlighters();
+
+        taskManager.setSelectedTaskWindow(taskWindow);
+        if (taskWindow.getResolveStatus()) {
+          taskWindow.draw(editor, false);
+        }
+        else {
+          taskWindow.draw(editor, true);
+        }
+      }
+      else {
+        if (!(taskManager.getSelectedTaskWindow() == taskWindow)) {
+          DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
+
+          AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.CheckAction");
+          defaultActionGroup.add(action);
+          ListPopup popUp =
+            JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,
+                                                                DataManager.getInstance().getDataContext(e.getEditor().getComponent()),
+                                                                JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+
+          popUp.showInBestPositionFor(DataManager.getInstance().getDataContext(e.getEditor().getComponent()));
+        }
+      }
     }
   }
 
@@ -76,7 +107,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   editor.addEditorMouseListener(new MyMouseListener(taskFile));
                   editor.getMarkupModel().removeAllHighlighters();
                   taskFile.drawAllWindows(editor);
-                  for (Window window :taskFile.getWindows()) {
+                  for (StudyTaskWindow window : taskFile.getWindows()) {
                     window.setResolveStatus(true);
                   }
                 }

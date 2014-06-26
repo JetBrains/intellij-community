@@ -1,28 +1,34 @@
-//package ru.compscicenter.edide;
-//
-//import com.intellij.execution.ExecutionException;
-//import com.intellij.execution.configurations.GeneralCommandLine;
-//import com.intellij.openapi.actionSystem.AnAction;
-//import com.intellij.openapi.actionSystem.AnActionEvent;
-//import com.intellij.openapi.editor.Editor;
-//import com.intellij.openapi.fileEditor.FileDocumentManager;
-//import com.intellij.openapi.project.Project;
-//import com.intellij.openapi.vfs.VirtualFile;
-//
-//import javax.swing.*;
-//import java.io.BufferedReader;
-//import java.io.IOException;
-//import java.io.InputStream;
-//import java.io.InputStreamReader;
-//
-///**
-// * User: lia
-// * Date: 23.05.14
-// * Time: 20:33
-// */
-//class CheckAction extends AnAction {
-//  @Override
-//  public void actionPerformed(AnActionEvent e) {
+package ru.compscicenter.edide;
+
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+/**
+* User: lia
+* Date: 23.05.14
+* Time: 20:33
+*/
+class CheckAction extends AnAction {
+
+  @Override
+  public boolean displayTextInToolbar() {
+    return false;
+  }
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+      StudyTaskManager.getInstance(e.getProject()).setSelectedTaskWindow(null);
 //    Project project = e.getProject();
 //    FileDocumentManager.getInstance().saveAllDocuments();
 //    TaskManager tm = TaskManager.getInstance(project);
@@ -76,5 +82,5 @@
 //    catch (IOException e1) {
 //      e1.printStackTrace();
 //    }
-//  }
-//}
+  }
+}

@@ -37,12 +37,12 @@
 
   <actions>
 
-      <!--action id="ru.compscicenter.edide.CheckAction" class="ru.compscicenter.edide.CheckAction" text="Check task"
+      <action id="ru.compscicenter.edide.CheckAction" class="ru.compscicenter.edide.CheckAction" text="Check task"
               description="Runnes tests for current tasks" icon="/ru/compscicenter/edide/icon.jpg">
           <add-to-group group-id="MainToolBar" anchor="last"/>
           <keyboard-shortcut first-keystroke="shift C"  keymap="$default"/>
       </action>
-      <action id="ru.compscicenter.edide.ResolveAction" class="ru.compscicenter.edide.ResolveAction" text="Resolve Window"
+      <!--action id="ru.compscicenter.edide.ResolveAction" class="ru.compscicenter.edide.ResolveAction" text="Resolve Window"
               description="Resolve Current Window" icon="/ru/compscicenter/edide/icon.jpg">
           <add-to-group group-id="MainToolBar" anchor="last"/>
           <keyboard-shortcut first-keystroke="shift R"  keymap="$default"/>

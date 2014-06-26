@@ -4,9 +4,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import javax.swing.*;
+import java.io.File;
 
 /**
  * author: liana
@@ -29,7 +32,10 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   protected void updateImpl(PresentationData data) {
 
-    data.setIcon(UNRESOLVED_TASK);
+    //data.setIcon(UNRESOLVED_TASK);
+   String pathToIcon = StudyDirectoryNode.class.getResource("unchecked.png").getPath();
+
+    data.setIcon(new ImageIcon(pathToIcon));
     //data.setPresentableText("my" + myValue.getName());
     if (myValue.getName().equals(myProject.getName())) {
       data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());

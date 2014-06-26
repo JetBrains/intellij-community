@@ -5,14 +5,11 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.compscicenter.edide.course.Course;
-import ru.compscicenter.edide.course.Lesson;
+import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.course.Task;
-import ru.compscicenter.edide.course.TaskFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +34,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private final Project myProject;
   private Course myCourse;
-
+  private StudyTaskWindow mySelectedTaskWindow;
   public void setCourse(Course course) {
     myCourse = course;
   }
@@ -46,8 +43,16 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
     myCourse = null;
+    mySelectedTaskWindow = null;
   }
 
+  public StudyTaskWindow getSelectedTaskWindow() {
+    return mySelectedTaskWindow;
+  }
+
+  public void setSelectedTaskWindow(StudyTaskWindow selectedTaskWindow) {
+    mySelectedTaskWindow = selectedTaskWindow;
+  }
 
   public Course getCourse() {
     return myCourse;
@@ -116,7 +121,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
-  public TaskFile getTaskFile(VirtualFile file) {
+  public ru.compscicenter.edide.course.TaskFile getTaskFile(VirtualFile file) {
    String taskDirName = file.getParent().getName();
    String lessonDirName = file.getParent().getParent().getName();
    Task task = myCourse.getLessons().get(getIndex(lessonDirName, "lesson")).getTaskList().get(getIndex(taskDirName, "task"));
