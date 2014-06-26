@@ -348,6 +348,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (classOptions.isImplementingClasses){
           if (!addImplementingClasses(psiClass, processor, classOptions)) return false;
+        }
+
+        if (classOptions.isImplementingClasses) {
           FunctionalExpressionSearch.search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
             new PsiElementProcessor<PsiFunctionalExpression>() {
               @Override
