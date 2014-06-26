@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,21 +30,26 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   private final static String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
   private final static String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
 
+  @NotNull
   private final S myPrimaryConsoleView;
-
+  @NotNull
   private final T mySecondaryConsoleView;
 
   private boolean myPrimary;
-
+  @Nullable
   private ProcessHandler myProcessHandler;
+  @NotNull
+  private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
 
-  public DuplexConsoleView(S primaryConsoleView, T secondaryConsoleView) {
+  public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView) {
     super(new CardLayout());
     myPrimaryConsoleView = primaryConsoleView;
     mySecondaryConsoleView = secondaryConsoleView;
 
     add(myPrimaryConsoleView.getComponent(), PRIMARY_CONSOLE_PANEL);
     add(mySecondaryConsoleView.getComponent(), SECONDARY_CONSOLE_PANEL);
+
+    mySwitchConsoleAction = new SwitchDuplexConsoleViewAction(this);
 
     myPrimary = true;
     enableConsole(false);
@@ -74,10 +80,12 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     return myPrimary;
   }
 
+  @NotNull
   public S getPrimaryConsoleView() {
     return myPrimaryConsoleView;
   }
 
+  @NotNull
   public T getSecondaryConsoleView() {
     return mySecondaryConsoleView;
   }
@@ -166,13 +174,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   public AnAction[] createConsoleActions() {
     List<AnAction> actions = Lists.newArrayList();
     actions.addAll(Arrays.asList(myPrimaryConsoleView.createConsoleActions()));
-    //for (AnAction action : mySecondaryConsoleView.createConsoleActions()) {
-    //  if (!actions.contains(action)) {
-    //    actions.add(action);
-    //  }
-    //}
 
-    actions.add(new SwitchDuplexConsoleViewAction(this));
+    actions.add(mySwitchConsoleAction);
 
     return ArrayUtil.toObjectArray(actions, AnAction.class);
   }
@@ -205,6 +208,11 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     if (mySecondaryConsoleView instanceof ObservableConsoleView) {
       ((ObservableConsoleView)mySecondaryConsoleView).addChangeListener(listener, parent);
     }
+  }
+
+  @NotNull
+  public Presentation getSwitchConsoleActionPresentation() {
+    return mySwitchConsoleAction.getTemplatePresentation();
   }
 
   private static class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {

@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.jetbrains.python.PyBundle;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,9 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     super(consoleView, new PythonConsoleView(project, "Python Console", sdk));
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
+
+    getSwitchConsoleActionPresentation().setIcon(PythonIcons.Python.Debug.CommandLine);
+    getSwitchConsoleActionPresentation().setText(PyBundle.message("run.configuration.show.command.line.action.name"));
   }
 
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
