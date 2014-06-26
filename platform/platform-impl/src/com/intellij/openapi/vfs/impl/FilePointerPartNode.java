@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class FilePointerPartNode {
   }
 
   boolean getPointersUnder(@NotNull String path, int start, @NotNull List<FilePointerPartNode> out) {
-    checkStructure();
+    checkConsistency();
     if (pointersUnder == 0) return false;
     // invariant: upper nodes are matched
     int index = indexOfFirstDifferentChar(path, start);
@@ -76,12 +76,12 @@ class FilePointerPartNode {
     return false;
   }
 
-  void checkStructure() {
+  void checkConsistency() {
     if (!DEBUG) return;
     int childSum = 0;
     for (FilePointerPartNode child : children) {
       childSum += child.pointersUnder;
-      child.checkStructure();
+      child.checkConsistency();
       assert child.parent == this;
     }
     if (leaf != null) childSum++;
