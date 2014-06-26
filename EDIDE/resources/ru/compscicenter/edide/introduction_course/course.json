@@ -18,7 +18,7 @@
                                     "start": 33,
                                     "text": "type your name",
                                     "hint": "lesson1.task1.docs",
-                                    "possible answer": "Liana"
+                                    "possible_answer": "Liana"
                                 }
                             ]
                         }
@@ -37,7 +37,7 @@
                                     "start": 2,
                                     "text": "type here",
                                     "hint": "lesson1.task2.docs",
-                                    "possible answer": "new comment"
+                                    "possible_answer": "new comment"
                                 }
                             ]
                         }
@@ -61,7 +61,7 @@
                                     "start": 12,
                                     "text": "another value",
                                     "hint": "lesson2.task1.docs",
-                                    "possible answer": "5"
+                                    "possible_answer": "5"
                                 }
                             ]
                         }
@@ -80,7 +80,7 @@
                                     "start": 7,
                                     "text": "other variable",
                                     "hint": "lesson2.task2.docs",
-                                    "possible answer": "other_variable"
+                                    "possible_answer": "other_variable"
                                 }
                             ]
                         }
@@ -99,7 +99,7 @@
                                     "start": 6,
                                     "text": "float_number type",
                                     "hint": "lesson2.task3.docs",
-                                    "possible answer": "type(float_number)"
+                                    "possible_answer": "type(float_number)"
                                 }
                             ]
                         }
@@ -118,14 +118,14 @@
                                     "start": 11,
                                     "text": "divide 'number' by two",
                                     "hint": "lesson2.task4.1.docs",
-                                    "possible answer": "number/2"
+                                    "possible_answer": "number/2"
                                 },
                                 {
                                     "line": 4,
                                     "start": 12,
                                     "text": "calculate the remainder",
                                     "hint": "lesson2.task4.2.docs",
-                                    "possible answer": "number%2"
+                                    "possible_answer": "number%2"
                                 }
                             ]
                         }
@@ -144,7 +144,7 @@
                                     "start": 6,
                                     "text": "operator",
                                     "hint": "lesson2.task5.docs",
-                                    "possible answer": "+="
+                                    "possible_answer": "+="
                                 }
                             ]
                         }
@@ -163,7 +163,7 @@
                                     "start": 15,
                                     "text": "operator",
                                     "hint": "lesson2.task6.docs",
-                                    "possible answer": "=="
+                                    "possible_answer": "=="
                                 }
                             ]
                         }
@@ -182,7 +182,7 @@
                                     "start": 19,
                                     "text": "operator",
                                     "hint": "lesson2.task7.docs",
-                                    "possible answer": ">="
+                                    "possible_answer": ">="
                                 }
                             ]
                         }
@@ -207,7 +207,7 @@
                                     "start": 14,
                                     "text": "type here",
                                     "hint": "lesson3.task1.docs",
-                                    "possible answer": "hello + ' ' + world"
+                                    "possible_answer": "hello + ' ' + world"
                                 }
                             ]
                         }
@@ -226,7 +226,7 @@
                                     "start": 20,
                                     "text": "operator",
                                     "hint": "lesson3.task2.docs",
-                                    "possible answer": "hello * 10"
+                                    "possible_answer": "hello * 10"
                                 }
                             ]
                         }
@@ -245,7 +245,7 @@
                                     "start": 11,
                                     "text": "type here",
                                     "hint": "lesson3.task3.docs",
-                                    "possible answer": "python[0]"
+                                    "possible_answer": "python[0]"
                                 }
                             ]
                         }
@@ -264,7 +264,7 @@
                                     "start": 14,
                                     "text": "type here",
                                     "hint": "lesson3.task4.docs",
-                                    "possible answer": "long_string[-1]"
+                                    "possible_answer": "long_string[-1]"
                                 }
                             ]
                         }
@@ -283,7 +283,7 @@
                                     "start": 9,
                                     "text": "type here",
                                     "hint": "lesson3.task5.docs",
-                                    "possible answer": "monty_python[6:]"
+                                    "possible_answer": "monty_python[6:]"
                                 }
                             ]
                         }
@@ -302,7 +302,7 @@
                                     "start": 11,
                                     "text": "type here",
                                     "hint": "lesson3.task6.docs",
-                                    "possible answer": "'ice' in ice_cream"
+                                    "possible_answer": "'ice' in ice_cream"
                                 }
                             ]
                         }
@@ -321,7 +321,7 @@
                                     "start": 13,
                                     "text": "type here",
                                     "hint": "lesson3.task7.docs",
-                                    "possible answer": "phrase[:len(phrase)/2]"
+                                    "possible_answer": "phrase[:len(phrase)/2]"
                                 }
                             ]
                         }
