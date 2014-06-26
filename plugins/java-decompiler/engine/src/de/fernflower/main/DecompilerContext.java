@@ -77,7 +77,8 @@ public class DecompilerContext {
 		mapDefault.put(IFernflowerPreferences.FINALLY_DEINLINE, "1"); 
 		mapDefault.put(IFernflowerPreferences.REMOVE_GETCLASS_NEW, "1"); 
 		mapDefault.put(IFernflowerPreferences.LITERALS_AS_IS, "0");
-		mapDefault.put(IFernflowerPreferences.BOOLEAN_TRUE_ONE, "1"); 
+		mapDefault.put(IFernflowerPreferences.ASCII_STRING_CHARACTERS, "0");
+		mapDefault.put(IFernflowerPreferences.BOOLEAN_TRUE_ONE, "1");
 		mapDefault.put(IFernflowerPreferences.SYNTHETIC_NOT_SET, "1"); 
 		mapDefault.put(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT, "1"); 
 

@@ -102,6 +102,7 @@ public class ConstExprent extends Exprent {
 	
 	public String toJava(int indent) {
     boolean literal = DecompilerContext.getOption(IFernflowerPreferences.LITERALS_AS_IS);
+    boolean ascii = DecompilerContext.getOption(IFernflowerPreferences.ASCII_STRING_CHARACTERS);
 
 		if(consttype.type != CodeConstants.TYPE_NULL && value == null) {
 			return ExprProcessor.getCastTypeName(consttype);
@@ -113,7 +114,7 @@ public class ConstExprent extends Exprent {
 				Integer val = (Integer)value;
 				String ret = escapes.get(val);
 				if(ret == null) {
-					if(literal || val.intValue() >= 32 && val.intValue() < 127) {
+					if(!ascii || val.intValue() >= 32 && val.intValue() < 127) {
 						ret = String.valueOf((char)val.intValue());
 					} else {
 						ret = InterpreterUtil.charToUnicodeLiteral(val);
@@ -212,7 +213,7 @@ public class ConstExprent extends Exprent {
 				return "null";
 			case CodeConstants.TYPE_OBJECT:
 				if(consttype.equals(VarType.VARTYPE_STRING)) {
-					return "\""+convertStringToJava(value.toString())+"\"";
+					return "\""+convertStringToJava(value.toString(), ascii)+"\"";
 				} else if(consttype.equals(VarType.VARTYPE_CLASS)) {
 					String strval = value.toString();
 					
@@ -231,8 +232,7 @@ public class ConstExprent extends Exprent {
 		throw new RuntimeException("invalid constant type");
 	}
 	
-	private String convertStringToJava(String value) {
-		
+	private String convertStringToJava(String value, boolean ascii) {
 		char[] arr = value.toCharArray();
 		StringBuilder buffer = new StringBuilder(arr.length);
 
@@ -263,7 +263,7 @@ public class ConstExprent extends Exprent {
 				buffer.append("\\\'");
 				break;
 			default:
-				if(!DecompilerContext.getOption(IFernflowerPreferences.ASCII_STRING_CHARACTERS) || (c >= 32 && c < 127)) {
+        if(!ascii || (c >= 32 && c < 127)) {
 					buffer.append(c);
 				} else {
 					buffer.append(InterpreterUtil.charToUnicodeLiteral(c));
