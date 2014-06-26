@@ -24,13 +24,9 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
-
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -45,10 +41,13 @@ public class PyFunctionBuilder {
   private final List<String> myDecorators = new ArrayList<String>();
   private String myAnnotation = null;
   private String[] myDocStringLines = null;
+  @NotNull
+  private final Map<String, String> myDecoratorValues = new HashMap<String, String>();
 
   /**
    * Creates builder copying signature and doc from another one.
-   * @param source what to copy
+   *
+   * @param source                  what to copy
    * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
    * @return builder configured by this function
    */
@@ -82,6 +81,7 @@ public class PyFunctionBuilder {
 
   /**
    * Adds docstring to function. Provide doc with out of comment blocks.
+   *
    * @param docString doc
    */
   public void docString(@NotNull final String docString) {
@@ -127,15 +127,21 @@ public class PyFunctionBuilder {
   }
 
   public PyFunction buildFunction(Project project, final LanguageLevel languageLevel) {
-    String text = buildText(project);
     PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    String text = buildText(project, generator, languageLevel);
     return generator.createFromText(languageLevel, PyFunction.class, text);
   }
 
-  private String buildText(Project project) {
+  private String buildText(Project project, PyElementGenerator generator, LanguageLevel languageLevel) {
     StringBuilder builder = new StringBuilder();
     for (String decorator : myDecorators) {
-      builder.append(decorator).append("\n");
+      final StringBuilder decoratorAppender = builder.append('@' + decorator);
+      if (myDecoratorValues.containsKey(decorator)) {
+        final PyCallExpression fakeCall = generator.createCallExpression(languageLevel, "fakeFunction");
+        fakeCall.getArgumentList().addArgument(generator.createStringLiteralFromString(myDecoratorValues.get(decorator)));
+        decoratorAppender.append(fakeCall.getArgumentList().getText());
+      }
+      decoratorAppender.append("\n");
     }
     builder.append("def ");
     builder.append(myName).append("(");
@@ -165,8 +171,18 @@ public class PyFunctionBuilder {
     return builder.toString();
   }
 
+  /**
+   * Adds decorator with argument
+   * @param decoratorName decorator name
+   * @param value its argument
+   */
+  public void decorate(@NotNull final String decoratorName, @NotNull final String value) {
+    decorate(decoratorName);
+    myDecoratorValues.put(decoratorName, value);
+  }
+
   public void decorate(String decoratorName) {
-    myDecorators.add("@" + decoratorName);
+    myDecorators.add(decoratorName);
   }
 
   @NotNull

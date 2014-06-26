@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.facet.FacetModificationTrackingService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ModificationTrackerListener;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
   @Override
   public void incFacetModificationTracker(@NotNull final Facet facet) {
     final Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
-    pair.first.myModificationCount ++;
+    pair.first.incModificationCount();
     pair.second.getMulticaster().modificationCountChanged(facet);
   }
 
@@ -74,13 +74,7 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
     getFacetInfo(facet).second.removeListener(listener);
   }
 
-  private static class FacetModificationTracker implements ModificationTracker {
-    private long myModificationCount;
-
-    @Override
-    public long getModificationCount() {
-      return myModificationCount;
-    }
+  private static class FacetModificationTracker extends SimpleModificationTracker {
   }
 
   private class FacetModificationTrackingListener extends FacetManagerAdapter {
@@ -88,7 +82,7 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
     public void facetConfigurationChanged(@NotNull final Facet facet) {
       final Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
       if (pair != null) {
-        pair.first.myModificationCount++;
+        pair.first.incModificationCount();
         pair.second.getMulticaster().modificationCountChanged(facet);
       }
     }

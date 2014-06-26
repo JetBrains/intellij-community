@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -70,7 +71,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
         if (documentManager.getCachedPsiFile(document) == null) return;
         if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
           document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
-          PsiDocumentManagerImpl.addRunOnCommit(document, new Runnable() {
+          PsiDocumentManagerBase.addRunOnCommit(document, new Runnable() {
             @Override
             public void run() {
               updateChangesForDocument(document);

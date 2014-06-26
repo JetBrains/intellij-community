@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.WeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,26 +37,25 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
     myCachedDocumentKey = cachedDocumentKey;
   }
 
-  private final WeakFactoryMap<VirtualFile,Document> myDocuments = new WeakFactoryMap<VirtualFile, Document>() {
-    @Override
-    protected Document create(final VirtualFile key) {
-      if (key.isDirectory() || isBinaryWithoutDecompiler(key)) return null;
+  private static final Key<Document> MOCK_DOC_KEY = Key.create("MOCK_DOC_KEY");
 
-      CharSequence text = LoadTextUtil.loadText(key);
-      final Document document = myFactory.fun(text);
-      document.putUserData(MOCK_VIRTUAL_FILE_KEY, key);
-      return document;
-    }
-
-    private boolean isBinaryWithoutDecompiler(VirtualFile file) {
-      final FileType ft = file.getFileType();
-      return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) == null;
-    }
-  };
+  private static boolean isBinaryWithoutDecompiler(VirtualFile file) {
+    final FileType ft = file.getFileType();
+    return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) == null;
+  }
 
   @Override
   public Document getDocument(@NotNull VirtualFile file) {
-    return myDocuments.get(file);
+    Document document = file.getUserData(MOCK_DOC_KEY);
+    if (document == null) {
+      if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
+
+      CharSequence text = LoadTextUtil.loadText(file);
+      document = myFactory.fun(text);
+      document.putUserData(MOCK_VIRTUAL_FILE_KEY, file);
+      document = file.putUserDataIfAbsent(MOCK_DOC_KEY, document);
+    }
+    return document;
   }
 
   @Override

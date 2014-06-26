@@ -143,7 +143,7 @@ public class ProblematicWhitespaceInspection extends BaseInspection {
               }
               else if (!spaceSeen) {
                 final int currentIndent = Math.max(0, j);
-                if (currentIndent != previousLineIndent) {
+                if (currentIndent < previousLineIndent) {
                   registerError(file, file.getName(), Boolean.valueOf(isOnTheFly()), Boolean.TRUE);
                   return;
                 }

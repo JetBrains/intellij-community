@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@ import java.util.Set;
  * @author Kirill Likhodedov
  */
 public class MockProjectRootManager extends ProjectRootManager {
-
-  List<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myContentRoots = new ArrayList<VirtualFile>();
 
   @NotNull
   @Override
@@ -105,11 +104,6 @@ public class MockProjectRootManager extends ProjectRootManager {
 
   @Override
   public void setProjectSdkName(String name) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public long getModificationCount() {
     throw new UnsupportedOperationException();
   }
 }

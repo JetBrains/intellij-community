@@ -175,7 +175,7 @@ public class PathEditor {
     requestDefaultFocus();
   }
 
-  private VirtualFile[] doAdd() {
+  protected VirtualFile[] doAdd() {
     VirtualFile baseDir = myAddBaseDir;
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (baseDir == null && project != null) {

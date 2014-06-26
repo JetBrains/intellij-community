@@ -392,42 +392,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
-    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeners are executed
-    process.getManagerThread().schedule(new DebuggerCommandImpl() {
-      protected void action() throws Exception {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            XDebugSession session = myDebugProcess.getSession().getXDebugSession();
-            if (session != null) {
-              session.initBreakpoints();
-            }
-          }
-        });
-        //Project project = myDebugProcess.getProject();
-        //final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-        //for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
-        //  try {
-        //    breakpoint.createRequest(myDebugProcess);
-        //  } catch (Exception e) {
-        //    LOG.error(e);
-        //  }
-        //}
-
-        //AccessToken token = ReadAction.start();
-        //try {
-        //  JavaBreakpointAdapter adapter = new JavaBreakpointAdapter(project);
-        //  for (XLineBreakpoint breakpoint : XDebuggerManager.getInstance(project).getBreakpointManager()
-        //    .getBreakpoints(JavaLineBreakpointType.class)) {
-        //    //new JavaLineBreakpointRequestor(breakpoint).createRequest(myDebugProcess);
-        //    //adapter.getOrCreate(breakpoint).createRequest(myDebugProcess);
-        //  }
-        //}
-        //finally {
-        //  token.finish();
-        //}
-      }
-    });
   }
 
   public void processClassPrepared(final ClassPrepareEvent event) {

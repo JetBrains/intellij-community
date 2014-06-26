@@ -97,6 +97,17 @@ public class ProblematicWhitespaceInspectionTest extends LightInspectionTestCase
            "}\n/**/");
   }
 
+  public void testSmartTabsInFileWihtoutBinaryExpressionMultilineAlignment() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
+    options.USE_TAB_CHARACTER = true;
+    options.SMART_TABS = true;
+    doTest("class X {{\n" +
+           "\tSystem.out.println(\"asdf\" +\n" +
+           "\t\t\t                   \"asdf\");\n" +
+           "}}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ProblematicWhitespaceInspection();

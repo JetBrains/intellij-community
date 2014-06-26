@@ -128,10 +128,20 @@ public class PathMappingSettings implements Cloneable {
 
   public void addMapping(String local, String remote) {
     PathMapping mapping = new PathMapping(local, remote);
-    if (areBothEmpty(mapping.myLocalRoot, mapping.myRemoteRoot)) {
-      return;
+    add(mapping);
+  }
+
+  public void addMappingCheckUnique(String local, String remote) {
+    for (PathMapping mapping: myPathMappings) {
+      if (pathEquals(local, mapping.getLocalRoot()) && pathEquals(remote, mapping.getRemoteRoot())) {
+        return;
+      }
     }
-    myPathMappings.add(mapping);
+    addMapping(local, remote);
+  }
+
+  private static boolean pathEquals(@NotNull String path1, @NotNull String path2) {
+    return norm(path1).equals(norm(path2));
   }
 
   public boolean canReplaceRemote(String remotePath) {
@@ -267,11 +277,11 @@ public class PathMappingSettings implements Cloneable {
       return myRemoteRoot;
     }
 
-    public int getLocalLen() {
+    private int getLocalLen() {
       return myLocalRoot != null ? myLocalRoot.length() : -1;
     }
 
-    public int getRemoteLen() {
+    private int getRemoteLen() {
       return myRemoteRoot != null ? myRemoteRoot.length() : -1;
     }
 

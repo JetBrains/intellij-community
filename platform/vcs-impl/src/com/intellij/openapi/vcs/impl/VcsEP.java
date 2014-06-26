@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActiveEnvironmentsProxy;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -47,29 +49,43 @@ public class VcsEP extends AbstractExtensionPointBean {
   public boolean crawlUpToCheckUnderVcs;
 
   private AbstractVcs myVcs;
+  private final Object LOCK = new Object();
 
-  public AbstractVcs getVcs(Project project) {
-    if (myVcs == null) {
-      try {
-        final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
-        final Class<?>[] interfaces = foundClass.getInterfaces();
-        for (Class<?> anInterface : interfaces) {
-          if (BaseComponent.class.isAssignableFrom(anInterface)) {
-            myVcs = PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
-            myVcs = VcsActiveEnvironmentsProxy.proxyVcs(myVcs);
-            return myVcs;
-          }
-        }
-        myVcs = VcsActiveEnvironmentsProxy.proxyVcs((AbstractVcs)instantiate(vcsClass, project.getPicoContainer()));
-      }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
+  @Nullable
+  public AbstractVcs getVcs(@NotNull Project project) {
+    synchronized (LOCK) {
+      if (myVcs != null) {
+        return myVcs;
       }
     }
-    return myVcs;
+    AbstractVcs vcs = getInstance(project, vcsClass);
+    synchronized (LOCK) {
+      if (myVcs == null) {
+        myVcs = VcsActiveEnvironmentsProxy.proxyVcs(vcs);
+      }
+      return myVcs;
+    }
   }
 
+  @Nullable
+  private AbstractVcs getInstance(@NotNull Project project, @NotNull String vcsClass) {
+    try {
+      final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
+      final Class<?>[] interfaces = foundClass.getInterfaces();
+      for (Class<?> anInterface : interfaces) {
+        if (BaseComponent.class.isAssignableFrom(anInterface)) {
+          return PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
+        }
+      }
+      return instantiate(vcsClass, project.getPicoContainer());
+    }
+    catch(Exception e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @NotNull
   public VcsDescriptor createDescriptor() {
     return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs);
   }

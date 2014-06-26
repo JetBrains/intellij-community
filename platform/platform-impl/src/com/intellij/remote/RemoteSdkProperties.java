@@ -15,6 +15,10 @@
  */
 package com.intellij.remote;
 
+import com.intellij.util.PathMappingSettings;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -31,13 +35,46 @@ public interface RemoteSdkProperties {
 
   String getDefaultHelpersName();
 
+  /**
+   * Use getPathMappings() instead
+   * To be removed in IDEA 15
+   *
+   * @deprecated
+   */
+  @Deprecated
   void addRemoteRoot(String remoteRoot);
 
+  /**
+   * Use getPathMappings() instead
+   * To be removed in IDEA 15
+   *
+   * @deprecated
+   */
+  @Deprecated
   void clearRemoteRoots();
 
+  /**
+   * Use getPathMappings() instead
+   * To be removed in IDEA 15
+   *
+   * @deprecated
+   */
+  @Deprecated
   List<String> getRemoteRoots();
 
+  /**
+   * Use setPathMappings() instead
+   * To be removed in IDEA 15
+   *
+   * @deprecated
+   */
+  @Deprecated
   void setRemoteRoots(List<String> remoteRoots);
+
+  @NotNull
+  PathMappingSettings getPathMappings();
+
+  void setPathMappings(@Nullable PathMappingSettings pathMappings);
 
   boolean isHelpersVersionChecked();
 

@@ -26,7 +26,7 @@ public interface ScriptManager {
    * @param newSource new text of script
    */
   @NotNull
-  AsyncResult<?> setSourceOnRemote(@NotNull Script script, @NotNull String newSource, boolean preview);
+  AsyncResult<?> setSourceOnRemote(@NotNull Script script, @NotNull CharSequence newSource, boolean preview);
 
   void forEachScript(@NotNull Processor<Script> scriptProcessor);
 

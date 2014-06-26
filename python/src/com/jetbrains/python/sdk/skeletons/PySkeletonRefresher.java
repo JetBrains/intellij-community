@@ -237,7 +237,7 @@ public class PySkeletonRefresher {
     final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
     final File userSkeletons = userSkeletonsDir != null ? new File(userSkeletonsDir.getPath()) : null;
 
-    final VirtualFile remoteSourcesDir = PySdkUtil.findRemoteLibrariesDir(sdk);
+    final VirtualFile remoteSourcesDir = PySdkUtil.findAnyRemoteLibrary(sdk);
     final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);

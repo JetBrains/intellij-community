@@ -17,7 +17,6 @@
 package com.intellij.analysis;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,9 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -177,11 +174,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
         if (fileIndex.isInContent(vFile)) {
-          if (vFile instanceof VirtualFileWindow) {
-            files.add(vFile);
-            vFile = ((VirtualFileWindow)vFile).getDelegate();
-          }
-          collectFilesUnder(vFile, files);
+          files.add(vFile);
         }
       }
       return new AnalysisScope(project, files);
@@ -208,15 +201,4 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
-  private static void collectFilesUnder(@NotNull VirtualFile vFile, @NotNull final Set<VirtualFile> files) {
-    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory()) {
-          files.add(file);
-        }
-        return true;
-      }
-    });
-  }
 }

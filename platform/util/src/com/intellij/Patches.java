@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,4 +145,10 @@ public class Patches {
    * which need to be changed when migrated to JDK 7
    */
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
+
+  /**
+   * Marker field to find all usages of workarounds
+   * which will not be needed when migrated to JDK 8+
+   */
+  public static final boolean HACK_USED_WHICH_IS_FIXED_IN_JDK8 = true;
 }

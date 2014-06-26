@@ -23,6 +23,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
@@ -240,7 +242,7 @@ class Intf {
   }
 
   @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     runnable.run()
   }
 }

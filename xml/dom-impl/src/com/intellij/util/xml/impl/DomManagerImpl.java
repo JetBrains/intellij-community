@@ -83,10 +83,10 @@ public final class DomManagerImpl extends DomManager {
   private final SemService mySemService;
   private final DomApplicationComponent myApplicationComponent;
 
-  private long myModificationCount;
   private boolean myChanging;
 
   public DomManagerImpl(Project project) {
+    super(project);
     myProject = project;
     mySemService = SemService.getSemService(project);
     myApplicationComponent = DomApplicationComponent.getInstance();
@@ -221,7 +221,7 @@ public final class DomManagerImpl extends DomManager {
 
   final void fireEvent(DomEvent event) {
     if (mySemService.isInsideAtomicChange()) return;
-    myModificationCount++;
+    incModificationCount();
     myListeners.getMulticaster().eventOccured(event);
   }
 
@@ -490,15 +490,10 @@ public final class DomManagerImpl extends DomManager {
     return myApplicationComponent.getTypeChooserManager();
   }
 
-  @Override
-  public long getModificationCount() {
-    return myModificationCount + PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
-  }
-
   public void performAtomicChange(@NotNull Runnable change) {
     mySemService.performAtomicChange(change);
     if (!mySemService.isInsideAtomicChange()) {
-      myModificationCount++;
+      incModificationCount();
     }
   }
 

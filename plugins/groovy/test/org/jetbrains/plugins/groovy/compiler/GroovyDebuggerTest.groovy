@@ -54,6 +54,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
@@ -74,7 +75,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(Runnable runnable) {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run()
   }
 

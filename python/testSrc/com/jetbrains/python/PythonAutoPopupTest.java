@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -39,7 +40,7 @@ public class PythonAutoPopupTest extends PyTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     myTester.runWithAutoPopupEnabled(runnable);
   }
 

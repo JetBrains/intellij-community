@@ -92,11 +92,16 @@ public abstract class MavenTestCase extends UsefulTestCase {
       getMavenGeneralSettings().setMavenHome(home);
     }
 
-    restoreSettingsFile();
-
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        try {
+          restoreSettingsFile();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
@@ -237,7 +242,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     runnable.run();
   }
 

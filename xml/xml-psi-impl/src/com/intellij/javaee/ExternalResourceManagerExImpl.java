@@ -92,7 +92,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   }
 
   private final List<ExternalResourceListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private long myModificationCount = 0;
   private final PathMacrosImpl myPathMacros;
   @NonNls private static final String RESOURCE_ELEMENT = "resource";
   @NonNls private static final String URL_ATTR = "url";
@@ -268,7 +267,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     assert map != null;
     map.put(url, location);
     myResourceLocations.add(location);
-    myModificationCount++;
+    incModificationCount();
   }
 
   @Override
@@ -285,7 +284,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
       if (location != null) {
         myResourceLocations.remove(location);
       }
-      myModificationCount++;
+      incModificationCount();
       fireExternalResourceChanged();
     }
   }
@@ -325,7 +324,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     clearAllResources();
     getProjectResources(project).clearAllResources();
-    myModificationCount++;
+    incModificationCount();
     fireExternalResourceChanged();
   }
 
@@ -338,14 +337,14 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
 
   private void addIgnoredSilently(String url) {
     myIgnoredResources.add(url);
-    myModificationCount++;
+    incModificationCount();
   }
 
   @Override
   public void removeIgnoredResource(String url) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (myIgnoredResources.remove(url)) {
-      myModificationCount++;
+      incModificationCount();
       fireExternalResourceChanged();
     }
   }
@@ -371,11 +370,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   }
 
   @Override
-  public long getModificationCount() {
-    return myModificationCount;
-  }
-
-  @Override
   public long getModificationCount(@NotNull Project project) {
     return getProjectResources(project).getModificationCount();
   }
@@ -385,7 +379,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
     myPathMacros.addMacroExpands(macroExpands);
     macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
 
-    myModificationCount++;
+    incModificationCount();
     for (final Object o1 : element.getChildren(RESOURCE_ELEMENT)) {
       Element e = (Element)o1;
       addSilently(e.getAttributeValue(URL_ATTR), DEFAULT_VERSION, e.getAttributeValue(LOCATION_ATTR).replace('/', File.separatorChar));
@@ -502,7 +496,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   public void setCatalogPropertiesFile(String filePath) {
     myCatalogManager = null;
     myCatalogPropertiesFile = filePath;
-    myModificationCount++;
+    incModificationCount();
   }
 
   @Nullable
@@ -514,7 +508,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx {
   }
 
   private void setDefaultHtmlDoctype(String defaultHtmlDoctype) {
-    myModificationCount++;
+    incModificationCount();
 
     if (Html5SchemaProvider.getHtml5SchemaLocation().equals(defaultHtmlDoctype)) {
       myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;

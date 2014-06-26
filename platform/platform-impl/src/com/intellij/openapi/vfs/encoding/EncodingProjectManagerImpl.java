@@ -34,13 +34,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -65,13 +65,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private final Project myProject;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
-  private volatile long myModificationCount;
-  private final ModificationTracker myModificationTracker = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return myModificationCount;
-    }
-  };
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public EncodingProjectManagerImpl(Project project, PsiDocumentManager documentManager) {
     myProject = project;
@@ -136,7 +130,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
 
-    myModificationCount++;
+    myModificationTracker.incModificationCount();
   }
 
   @Override
@@ -176,7 +170,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     }
 
     if (!Comparing.equal(oldCharset, charset)) {
-      myModificationCount++;
+      myModificationTracker.incModificationCount();
       if (virtualFileOrDir != null) {
         virtualFileOrDir.setCharset(virtualFileOrDir.getBOM() == null ? charset : null);
       }
@@ -294,7 +288,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       });
     }
 
-    myModificationCount++;
+    myModificationTracker.incModificationCount();
   }
 
   private static Processor<VirtualFile> createChangeCharsetProcessor() {

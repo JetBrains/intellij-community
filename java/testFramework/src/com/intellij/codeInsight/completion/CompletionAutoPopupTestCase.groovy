@@ -19,6 +19,8 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
@@ -38,7 +40,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     return false;
   }
 
-  @Override protected void invokeTestRunnable(Runnable runnable) {
+  @Override protected void invokeTestRunnable(@NotNull Runnable runnable) {
     myTester.runWithAutoPopupEnabled(runnable)
   }
 
