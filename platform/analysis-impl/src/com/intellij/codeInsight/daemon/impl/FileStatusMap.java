@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,13 @@ public class FileStatusMap implements Disposable {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && status.errorFound;
+    }
+  }
+
+  public boolean isMarkedDirtyDefensively(@NotNull Document document) {
+    synchronized(myDocumentToStatusMap) {
+      FileStatus status = myDocumentToStatusMap.get(document);
+      return status != null && status.defensivelyMarked;
     }
   }
 

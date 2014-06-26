@@ -296,9 +296,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     Project project = file.getProject();
     setUpdateByTimerEnabled(false);
     FileStatusMap fileStatusMap = getFileStatusMap();
-    for (int ignoreId : toIgnore) {
-      fileStatusMap.markFileUpToDate(document, ignoreId);
-    }
     fileStatusMap.allowDirt(canChangeDocument);
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<FileEditor, HighlightingPass[]>();
@@ -309,6 +306,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
       assert array.length != 0 : "Highlighting is disabled for the file " + file;
       map.put(textEditor, array);
     }
+    for (int ignoreId : toIgnore) {
+      fileStatusMap.markFileUpToDate(document, ignoreId);
+    }
+
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {
