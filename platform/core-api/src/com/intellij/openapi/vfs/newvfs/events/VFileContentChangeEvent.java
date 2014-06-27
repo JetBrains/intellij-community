@@ -60,6 +60,7 @@ public class VFileContentChangeEvent extends VFileEvent {
     return "VfsEvent[update: " + myFile.getUrl() + "]";
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myFile.getPath();
