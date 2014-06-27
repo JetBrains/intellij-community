@@ -30,6 +30,8 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
@@ -37,6 +39,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -944,5 +947,46 @@ public class GitUtil {
       LOG.warn("VirtualFile not found for " + absolutePath);
     }
     return file;
+  }
+
+  @NotNull
+  public static String toAbsolute(@NotNull VirtualFile root, @NotNull String relativePath) {
+    return StringUtil.trimEnd(root.getPath(), "/") + "/" + StringUtil.trimStart(relativePath, "/");
+  }
+
+  @NotNull
+  public static Collection<String> toAbsolute(@NotNull final VirtualFile root, @NotNull Collection<String> relativePaths) {
+    return ContainerUtil.map(relativePaths, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return toAbsolute(root, s);
+      }
+    });
+  }
+
+  /**
+   * Given the list of paths converts them to the list of {@link Change Changes} found in the {@link ChangeListManager},
+   * i.e. this works only for local changes. </br>
+   * Paths can be absolute or relative to the repository.
+   * If a path is not found in the local changes, it is ignored, but the fact is logged.
+   */
+  @NotNull
+  public static List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull GitRepository repository,
+                                                      @NotNull Collection<String> affectedPaths, boolean relativePaths) {
+    List<Change> affectedChanges = new ArrayList<Change>();
+    for (String path : affectedPaths) {
+      String absolutePath = relativePaths ? toAbsolute(repository.getRoot(), path) : path;
+      VirtualFile file = findRefreshFileOrLog(absolutePath);
+      if (file != null) {
+        Change change = ChangeListManager.getInstance(project).getChange(file);
+        if (change != null) {
+          affectedChanges.add(change);
+        }
+        else {
+          LOG.warn("Change is not found for " + file.getPath());
+        }
+      }
+    }
+    return affectedChanges;
   }
 }
