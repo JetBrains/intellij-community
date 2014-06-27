@@ -147,8 +147,8 @@ public class Patches {
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
 
   /**
-   * Marker field to find all usages of workarounds
-   * which will not be needed when migrated to JDK 8+
+   * AtomicIntegerFieldUpdater does not work when SecurityManager is installed
+   * fixed in JDK8
    */
-  public static final boolean HACK_USED_WHICH_IS_FIXED_IN_JDK8 = true;
+  public static final boolean JDK_BUG_ID_7103570 = true;
 }

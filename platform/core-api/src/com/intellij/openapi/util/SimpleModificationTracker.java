@@ -25,7 +25,8 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 public class SimpleModificationTracker implements ModificationTracker {
   static {
     // field made public to workaround bug in JDK7 when AtomicIntegerFieldUpdater can't be created for private field, even from within its own class
-    assert Patches.HACK_USED_WHICH_IS_FIXED_IN_JDK8;
+    // fixed in JDK8
+    assert Patches.JDK_BUG_ID_7103570;
   }
   public volatile int myCounter;
 
