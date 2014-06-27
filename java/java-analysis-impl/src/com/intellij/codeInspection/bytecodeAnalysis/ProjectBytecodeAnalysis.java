@@ -46,7 +46,7 @@ import java.util.Collection;
  * @author lambdamix
  */
 public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
-
+  private static final PsiAnnotation[] NO_DATA = new PsiAnnotation[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis");
   private static final CharTableImpl charTable = new CharTableImpl();
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
@@ -149,13 +149,13 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     }
   }
 
-  @Nullable
+  @NotNull
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     return collectInferredAnnotations(listOwner);
   }
 
   // TODO the best way to synchronize?
-  @Nullable
+  @NotNull
   private synchronized PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     if (myAnnotations == null) {
       loadAnnotations();
@@ -163,7 +163,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     try {
       int key = getKey(listOwner);
       if (key == -1) {
-        return null;
+        return NO_DATA;
       }
       boolean notNull = myAnnotations.notNulls.contains(key);
       String contractValue = myAnnotations.contracts.get(key);
@@ -185,12 +185,12 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         };
       }
       else {
-        return null;
+        return NO_DATA;
       }
     }
     catch (IOException e) {
       LOG.error(e);
-      return null;
+      return NO_DATA;
     }
   }
 

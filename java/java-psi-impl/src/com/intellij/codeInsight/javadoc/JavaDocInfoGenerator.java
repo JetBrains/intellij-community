@@ -705,9 +705,7 @@ public class JavaDocInfoGenerator {
       externalAnnotations = new PsiAnnotation[]{};
     }
     PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner);
-    if (inferredAnnotations != null) {
-      externalAnnotations = ArrayUtil.mergeArrays(externalAnnotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
-    }
+    externalAnnotations = ArrayUtil.mergeArrays(externalAnnotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
     generateAnnotations(buffer, owner, externalAnnotations, true, generateLink);
   }
 
