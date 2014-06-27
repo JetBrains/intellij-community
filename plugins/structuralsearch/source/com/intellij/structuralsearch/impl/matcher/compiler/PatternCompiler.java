@@ -325,7 +325,11 @@ public class PatternCompiler {
 
     @Override
     public String getPrefix(int varIndex) {
-      return myPrefixes[varIndex];
+      try {
+        return myPrefixes[varIndex];
+      } catch (ArrayIndexOutOfBoundsException e) {
+        return null;
+      }
     }
   }
 
@@ -351,6 +355,9 @@ public class PatternCompiler {
       final String name = template.getSegmentName(i);
 
       final String prefix = prefixProvider.getPrefix(i);
+      if (prefix == null) {
+        throw new MalformedPatternException();
+      }
 
       buf.append(text.substring(prevOffset,offset));
       buf.append(prefix);
