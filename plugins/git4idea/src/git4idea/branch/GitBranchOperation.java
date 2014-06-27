@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -377,5 +378,15 @@ abstract class GitBranchOperation {
   @NotNull
   private static String joinPaths(@NotNull VirtualFile root, @NotNull String relativePath) {
     return StringUtil.trimEnd(root.getPath(), "/") + "/" + StringUtil.trimStart(relativePath, "/");
+  }
+
+  @NotNull
+  protected static Collection<String> toAbsolute(@NotNull final VirtualFile root, @NotNull Collection<String> relativePaths) {
+    return ContainerUtil.map(relativePaths, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return joinPaths(root, s);
+      }
+    });
   }
 }
