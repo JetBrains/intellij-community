@@ -68,6 +68,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
         final List<WebConfiguration.WebResource> webResources = []
         final War warTask = task as War
         warModel.webXml = warTask.webXml
+        warTask.rootSpec.setIncludeEmptyDirs(true)
 
         warTask.rootSpec.walk({ def resolver ->
           // def resolver ->
@@ -83,6 +84,24 @@ class WarModelBuilderImpl implements ModelBuilderService {
           }
 
           final String relativePath = resolver.destPath.pathString
+          final def sourcePaths
+
+          if (resolver.metaClass.respondsTo(resolver, 'getSourcePaths')) {
+            sourcePaths = resolver.getSourcePaths()
+          } else if (resolver.this$0.metaClass.respondsTo(resolver, 'getSourcePaths')) {
+            sourcePaths = resolver.this$0.getSourcePaths()
+          } else {
+            throw new RuntimeException("${GradleVersion.current()} is not supported by web artifact importer")
+          }
+
+          (sourcePaths.flatten() as List).each { def path ->
+            if (path instanceof String) {
+              def file = new File(warTask.project.projectDir, path)
+              addPath(webResources, relativePath, "", file)
+            }
+          }
+
+
           resolver.source.visit(new FileVisitor() {
             @Override
             public void visitDir(FileVisitDetails dirDetails) {
