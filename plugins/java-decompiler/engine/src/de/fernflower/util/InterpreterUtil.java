@@ -138,10 +138,15 @@ public class InterpreterUtil {
 		return false; 
 	}
 	
+	public static boolean isPrintableUnicode(char c) {
+    int t = Character.getType(c);
+    return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
+           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
+  }
+
 	public static String charToUnicodeLiteral(int value) {
 		String sTemp = Integer.toHexString(value);
 		sTemp = ("0000"+sTemp).substring(sTemp.length());
-		
 		return "\\u"+sTemp;
 	}
 	

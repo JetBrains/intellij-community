@@ -27,8 +27,7 @@ import de.fernflower.struct.gen.VarType;
 import de.fernflower.util.InterpreterUtil;
 
 public class ConstExprent extends Exprent {
-	
-	private static final HashMap<Integer, String> escapes = new HashMap<Integer, String>(); 
+	private static final HashMap<Integer, String> escapes = new HashMap<Integer, String>();
 
 	static {
 		escapes.put(new Integer(0x8), "\\b"); /* \u0008: backspace BS */
@@ -114,10 +113,11 @@ public class ConstExprent extends Exprent {
 				Integer val = (Integer)value;
 				String ret = escapes.get(val);
 				if(ret == null) {
-					if(!ascii || val.intValue() >= 32 && val.intValue() < 127) {
-						ret = String.valueOf((char)val.intValue());
+          char c = (char)val.intValue();
+          if(c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
+            ret = String.valueOf(c);
 					} else {
-						ret = InterpreterUtil.charToUnicodeLiteral(val);
+						ret = InterpreterUtil.charToUnicodeLiteral(c);
 					}
 				}
 				return "\'"+ret+"\'";
@@ -263,7 +263,7 @@ public class ConstExprent extends Exprent {
 				buffer.append("\\\'");
 				break;
 			default:
-        if(!ascii || (c >= 32 && c < 127)) {
+        if(c >= 32 && c < 127 || !ascii && InterpreterUtil.isPrintableUnicode(c)) {
 					buffer.append(c);
 				} else {
 					buffer.append(InterpreterUtil.charToUnicodeLiteral(c));
