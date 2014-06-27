@@ -316,7 +316,7 @@ Page custom ConfirmDesktopShortcut
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
-OutFile "${OUT_DIR}\${OUT_FILE}.exe"
+OutFile "c:\Build\Installation\installation.exe"
 
 InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
 !define MUI_BRANDINGTEXT " "
@@ -681,39 +681,45 @@ skip_quicklaunch_shortcut:
 "${Index}-Skip:"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
     '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
-
-  ; back up old value of .java
- StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" java_association
- StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 skip_ipr
-java_association: 
- ReadRegStr $1 HKCR ".java" ""
- StrCmp $1 "" skip_backup
-   StrCmp $1 "IntelliJIdeaProjectFile" skip_backup
-   WriteRegStr HKCR ".java" "backup_val" $1
-skip_backup:
-  WriteRegStr HKCR ".java" "" "IntelliJIdeaProjectFile"
 !undef Index
 
 skip_ipr:
 
+StrCmp "${ASSOCIATION}" "" skip_association
+ ; back up old value of an association
+ ReadRegStr $1 HKCR ${ASSOCIATION} ""
+  StrCmp $1 "" skip_backup
+    StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
+    WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
+skip_backup:
+  WriteRegStr HKCR ${ASSOCIATION} "" "${PRODUCT_PATHS_SELECTOR}"
+  ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
+  StrCmp $0 "" 0 command_exists
+	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "{PRODUCT_FULL_NAME}"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+command_exists:
+  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
+    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+
+  ; back up old value of .java
+; StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" java_association
+; StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 skip_ipr
+;java_association:
+; ReadRegStr $1 HKCR ${PRODUCT_PATHS_SELECTOR} ""
+; StrCmp $1 "" skip_backup
+;   StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
+;   WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
+;skip_backup:
+;  WriteRegStr HKCR ${ASSOCIATION} "" ${PRODUCT_PATHS_SELECTOR}
+
+skip_association:
   ; Rest of script
 
 
 ; readonly section
   SectionIn RO
 !include "idea_win.nsh"
-
-  ; check if PyCharm project folder is already exists
-  IfFileExists "$PROFILE\PyCharmProjects\*.*" skipCopyProject
-  CreateDirectory "$PROFILE\PyCharmProjects"
-  ; install PyCharm project example
-  Push $0
-  StrCpy $0 $INSTDIR
-  StrCpy $INSTDIR $PROFILE\PyCharmProjects
-;  SetOutPath ${PROFILE}\PyCharmProjects
-  !include "python_projects.nsh"
-  StrCpy $INSTDIR $0
-  Pop $0
 
 skipCopyProject:
   IntCmp $IS_UPGRADE_60 1 skip_properties
