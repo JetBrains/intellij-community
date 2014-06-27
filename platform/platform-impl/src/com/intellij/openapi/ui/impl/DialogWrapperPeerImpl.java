@@ -745,6 +745,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
         @Override
         public void windowOpened(WindowEvent e) {
+          if (!isModal()) {
+            DialogWrapper wrapper = getDialogWrapper();
+            if (wrapper != null) {
+              JComponent component = wrapper.getPreferredFocusedComponent();
+              if (component != null) {
+                // request focus for non-modal dialog (i.e. TipDialog)
+                IdeFocusManager.findInstance().requestFocus(component, true);
+              }
+            }
+          }
           if (!SystemInfo.isMacOSLion) return;
           Window window = e.getWindow();
           if (window instanceof Dialog) {

@@ -162,7 +162,7 @@ public abstract class DialogWrapper {
   @Nullable
   private DoNotAskOption myDoNotAsk;
 
-  private JComponent myPreferredFocusedComponent;
+  protected JComponent myPreferredFocusedComponent;
   private Computable<Point> myInitialLocationCallback;
 
   protected final Disposable myDisposable = new Disposable() {
