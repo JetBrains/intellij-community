@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -261,21 +260,21 @@ abstract class GitBranchOperation {
    * If some repositories succeeded, shows a dialog with the list of these files and a proposal to rollback the operation of those
    * repositories.
    */
-  protected void fatalUntrackedFilesError(@NotNull Collection<VirtualFile> untrackedFiles) {
+  protected void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
     if (wereSuccessful()) {
-      showUntrackedFilesDialogWithRollback(untrackedFiles);
+      showUntrackedFilesDialogWithRollback(root, untrackedFiles);
     }
     else {
-      showUntrackedFilesNotification(untrackedFiles);
+      showUntrackedFilesNotification(root, untrackedFiles);
     }
   }
 
-  private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    myUiHandler.showUntrackedFilesNotification(getOperationName(), untrackedFiles);
+  private void showUntrackedFilesNotification(@NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
+    myUiHandler.showUntrackedFilesNotification(getOperationName(), root, untrackedFiles);
   }
 
-  private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
-    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), untrackedFiles);
+  private void showUntrackedFilesDialogWithRollback(@NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
+    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), root, untrackedFiles);
     if (ok) {
       rollback();
     }

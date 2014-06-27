@@ -91,7 +91,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         }
       }
       else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
-        fatalUntrackedFilesError(untrackedOverwrittenByCheckout.getFiles());
+        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
         fatalErrorHappened = true;
       }
       else {

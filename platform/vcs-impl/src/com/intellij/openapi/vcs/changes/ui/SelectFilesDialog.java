@@ -93,7 +93,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     return defaultGroup;
   }
 
-  private static class VirtualFileList extends ChangesTreeList<VirtualFile> {
+  public static class VirtualFileList extends ChangesTreeList<VirtualFile> {
     private final Project myProject;
     @Nullable private final DeleteProvider myDeleteProvider;
 

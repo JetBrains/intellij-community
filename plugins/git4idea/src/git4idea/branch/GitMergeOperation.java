@@ -116,7 +116,7 @@ class GitMergeOperation extends GitBranchOperation {
       }
       else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
         LOG.info("Untracked files would be overwritten by merge!");
-        fatalUntrackedFilesError(untrackedOverwrittenByMerge.getFiles());
+        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByMerge.getRelativeFilePaths());
         fatalErrorHappened = true;
       }
       else {

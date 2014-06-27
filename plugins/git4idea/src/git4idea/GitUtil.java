@@ -23,6 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +55,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
@@ -988,5 +991,18 @@ public class GitUtil {
       }
     }
     return affectedChanges;
+  }
+
+  @NotNull
+  public static void showPathsInDialog(@NotNull Project project, @NotNull Collection<String> paths,
+                                                @NotNull String title, @Nullable String description) {
+    DialogBuilder builder = new DialogBuilder(project);
+    builder.setCenterPanel(new GitSimplePathsBrowser(project, paths));
+    if (description != null) {
+      builder.setNorthPanel(new MultiLineLabel(description));
+    }
+    builder.addOkAction();
+    builder.setTitle(title);
+    builder.show();
   }
 }
