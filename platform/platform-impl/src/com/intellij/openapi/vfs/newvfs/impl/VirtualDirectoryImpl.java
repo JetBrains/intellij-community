@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -54,7 +55,7 @@ import java.util.List;
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
 
-  public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
+  public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInPerformanceTest();
 
   static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
     new VirtualDirectoryImpl(-42, null, null, null, LocalFileSystem.getInstance()) {

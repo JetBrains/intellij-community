@@ -138,8 +138,6 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/" + TEMP_DIR_MARKER + testName + "_"+ RNG.nextInt(1000));
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
   @Override

@@ -56,7 +56,6 @@ import java.util.List;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
-  public static boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
 
   private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();

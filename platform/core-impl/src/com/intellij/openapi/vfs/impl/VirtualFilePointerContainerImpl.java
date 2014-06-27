@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TraceableDisposable;
@@ -51,7 +52,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   private volatile long myTimeStampOfCachedThings = -1;
   @NonNls public static final String URL_ATTR = "url";
   private boolean myDisposed;
-  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInPerformanceTest());
   public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                          @NotNull Disposable parentDisposable,
                                          @Nullable VirtualFilePointerListener listener) {
