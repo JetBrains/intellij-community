@@ -25,18 +25,14 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -47,13 +43,12 @@ import git4idea.MessageManager;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
+import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -167,7 +162,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       fileBrowser = new GitSmartOperationChangesBrowser(project, changes);
     }
     else {
-      fileBrowser = new GitSmartOperationPathsBrowser(project, paths);
+      fileBrowser = new GitSimplePathsBrowser(project, paths);
     }
     return GitSmartOperationDialog.showAndGetAnswer(myProject, fileBrowser, operation, isForcePossible);
   }
@@ -251,41 +246,4 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       });
     }
   }
-
-  private static class GitSmartOperationPathsBrowser extends JPanel {
-    GitSmartOperationPathsBrowser(@NotNull Project project, @NotNull Collection<String> paths) {
-      super(new BorderLayout());
-
-      FilePathChangesTreeList browser = createBrowser(project, paths);
-      ActionToolbar toolbar = createToolbar(browser);
-
-      add(toolbar.getComponent(), BorderLayout.NORTH);
-      add(browser);
-    }
-
-    @NotNull
-    private static FilePathChangesTreeList createBrowser(@NotNull Project project, @NotNull Collection<String> paths) {
-      List<FilePath> filePaths = toFilePaths(paths);
-      FilePathChangesTreeList browser = new FilePathChangesTreeList(project, filePaths, false, false, null, null);
-      browser.setChangesToDisplay(filePaths);
-      return browser;
-    }
-
-    @NotNull
-    private static ActionToolbar createToolbar(@NotNull FilePathChangesTreeList browser) {
-      DefaultActionGroup actionGroup = new DefaultActionGroup(browser.getTreeActions());
-      return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
-    }
-
-    @NotNull
-    private static List<FilePath> toFilePaths(@NotNull Collection<String> paths) {
-      return ContainerUtil.map(paths, new Function<String, FilePath>() {
-        @Override
-        public FilePath fun(String path) {
-          return new FilePathImpl(new File(path), false);
-        }
-      });
-    }
-  }
-
 }
