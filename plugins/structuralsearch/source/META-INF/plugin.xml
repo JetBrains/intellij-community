@@ -4,6 +4,7 @@
   </description>
   <version>9.0</version>
   <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="java.xml">com.intellij.java-i18n</depends>
 
   <extensionPoints>
