@@ -8,20 +8,28 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
-import ru.compscicenter.edide.course.StudyTaskWindow;
 import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.course.Window;
 
 import java.util.Arrays;
 
@@ -32,7 +40,7 @@ import java.util.Arrays;
 
 
 class StudyEditorFactoryListener implements EditorFactoryListener {
-
+  private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
   class MyMouseListener extends EditorMouseAdapter {
     private final TaskFile myTaskFile;
 
@@ -42,31 +50,52 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
     @Override
     public void mouseClicked(EditorMouseEvent e) {
+      Window selectedWindow = StudyTaskManager.getInstance(e.getEditor().getProject()).getSelectedWindow();
       Editor editor = e.getEditor();
       LogicalPosition pos = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-      StudyTaskWindow taskWindow = myTaskFile.getTaskWindow(editor, pos);
-      if (taskWindow == null) {
+      Window window = myTaskFile.getTaskWindow(editor, pos);
+
+
+      if (selectedWindow!= null && selectedWindow != window) {
+        DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
+
+        AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.CheckAction");
+        AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.ResolveAction");
+        defaultActionGroup.add(action);
+        defaultActionGroup.add(resolveAction);
+        ListPopup popUp =
+          JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,
+                                                              DataManager.getInstance().getDataContext(e.getEditor().getComponent()),
+                                                              JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+
+        popUp.showInBestPositionFor(DataManager.getInstance().getDataContext(e.getEditor().getComponent()));
+        return;
+      }
+
+      if (window == null) {
         myTaskFile.drawAllWindows(editor);
         return;
       }
       StudyTaskManager taskManager = StudyTaskManager.getInstance(e.getEditor().getProject());
-      if (taskManager.getSelectedTaskWindow() == null) {
+      if (taskManager.getSelectedWindow() == null) {
         editor.getMarkupModel().removeAllHighlighters();
 
-        taskManager.setSelectedTaskWindow(taskWindow);
-        if (taskWindow.getResolveStatus()) {
-          taskWindow.draw(editor, false);
+        taskManager.setSelectedWindow(window);
+        if (window.isResolveStatus()) {
+          window.draw(editor, false);
         }
         else {
-          taskWindow.draw(editor, true);
+          window.draw(editor, true);
         }
       }
       else {
-        if (!(taskManager.getSelectedTaskWindow() == taskWindow)) {
+        if (!(taskManager.getSelectedWindow() == window)) {
           DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
           AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.CheckAction");
+          AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.ResolveAction");
           defaultActionGroup.add(action);
+          defaultActionGroup.add(resolveAction);
           ListPopup popUp =
             JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,
                                                                 DataManager.getInstance().getDataContext(e.getEditor().getComponent()),
@@ -94,29 +123,22 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
             public void run() {
               try {
                 final Editor editor = event.getEditor();
-
                 VirtualFile openedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
                 if (openedFile != null) {
                   HintManager.getInstance().showInformationHint(editor, "Select any window");
                   StudyTaskManager taskManager = StudyTaskManager.getInstance(editor.getProject());
-                  TaskFile taskFile = taskManager.getTaskFile(openedFile);
+                  ru.compscicenter.edide.course.TaskFile taskFile = taskManager.getTaskFile(openedFile);
                   if (taskFile == null) {
                     return;
                   }
-
+                  taskFile.setLineNum(editor.getDocument().getLineCount());
                   editor.addEditorMouseListener(new MyMouseListener(taskFile));
                   editor.getMarkupModel().removeAllHighlighters();
                   taskFile.drawAllWindows(editor);
-                  for (StudyTaskWindow window : taskFile.getWindows()) {
-                    window.setResolveStatus(true);
-                  }
                 }
               }
               catch (Exception e) {
-                Log.print("Something wrong with meta file:" + e.getCause());
-                Log.print(Arrays.toString(e.getStackTrace()));
-                Log.print(e.getMessage());
-                Log.flush();
+                LOG.error(e.getStackTrace());
               }
             }
           });
@@ -127,7 +149,6 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
 
   @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
-    Log.print("Editor released\n");
-    Log.flush();
+    LOG.info("Editor released\n");
   }
 }

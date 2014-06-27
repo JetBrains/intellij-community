@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import ru.compscicenter.edide.TaskWindow;
-import ru.compscicenter.edide.course.Window;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +19,7 @@ import java.util.List;
 public class TaskFile {
     private String name;
     private List<Window> windows;
+    private int myLineNum = -1;
 
     public String getName() {
         return name;
@@ -38,6 +37,14 @@ public class TaskFile {
         this.windows = windows;
     }
 
+  public int getLineNum() {
+    return myLineNum;
+  }
+
+  public void setLineNum(int lineNum) {
+    myLineNum = lineNum;
+  }
+
   public void create(Project project, VirtualFile baseDir, String resourseRoot) throws IOException {
     String systemIndependentName = FileUtil.toSystemIndependentName(name);
     String systemIndependentResourceRootName = FileUtil.toSystemIndependentName(resourseRoot);
@@ -49,26 +56,12 @@ public class TaskFile {
   }
 
   public void drawAllWindows(Editor editor) {
-    for (Window taskWindow: windows){
-      taskWindow.draw(editor, false);
+    for (Window window : windows){
+      window.draw(editor, false);
     }
   }
 
-  public void drawWindowByPos(Editor editor, LogicalPosition pos) {
-    Window taskWindow = getTaskWindowByPos(editor, pos);
-    if (taskWindow == null) {
-      return;
-    }
-    if (taskWindow.getResolveStatus()) {
-      taskWindow.draw(editor, false);
-    } else {
-      taskWindow.draw(editor, true);
-    }
-    //TODO:return this field;
-    //myLastLineNum = editor.getDocument().getLineCount();
-  }
-
-  public Window getTaskWindowByPos(Editor editor, LogicalPosition pos) {
+  public Window getTaskWindow(Editor editor, LogicalPosition pos) {
     int line = pos.line;
     if (line >= editor.getDocument().getLineCount()) {
       return null;
@@ -93,5 +86,21 @@ public class TaskFile {
       fileElement.addContent(window.saveState());
     }
     return fileElement;
+  }
+
+  public void incrementAfterOffset(int line, int afterOffset, int change) {
+    for (Window taskWindow:windows) {
+      if (taskWindow.getLine() == line && taskWindow.getStart() > afterOffset) {
+        taskWindow.setStart(taskWindow.getStart() + change);
+      }
+    }
+  }
+
+  public void increment(int startLine, int change) {
+    for (Window taskWindow : windows) {
+      if (taskWindow.getLine() >= startLine) {
+        taskWindow.setLine(taskWindow.getLine() + change);
+      }
+    }
   }
 }

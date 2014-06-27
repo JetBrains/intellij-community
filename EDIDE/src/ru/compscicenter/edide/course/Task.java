@@ -54,7 +54,7 @@ public class Task {
   }
 
   public TaskFile getFile(String fileName) {
-    for (TaskFile file:taskFiles) {
+    for (TaskFile file: taskFiles) {
       if (file.getName().equals(fileName)) {
         return file;
       }

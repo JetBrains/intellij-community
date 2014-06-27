@@ -42,7 +42,7 @@ public class Lesson {
 
   public Element saveState() {
     Element lessonElement =  new Element("lesson");
-    for (Task task:taskList) {
+    for (Task task : taskList) {
       lessonElement.addContent(task.saveState());
     }
     return lessonElement;

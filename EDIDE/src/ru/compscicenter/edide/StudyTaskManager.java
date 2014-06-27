@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.course.TaskFile;
+import ru.compscicenter.edide.course.Window;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +24,7 @@ import java.util.Map;
 
 
 @State(
-  name = "Element",
+  name = "StudySettings",
   storages = {
     @Storage(
       id = "others",
@@ -34,7 +36,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private final Project myProject;
   private Course myCourse;
-  private StudyTaskWindow mySelectedTaskWindow;
+  private Window mySelectedWindow;
   public void setCourse(Course course) {
     myCourse = course;
   }
@@ -43,15 +45,15 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
     myCourse = null;
-    mySelectedTaskWindow = null;
+    mySelectedWindow = null;
   }
 
-  public StudyTaskWindow getSelectedTaskWindow() {
-    return mySelectedTaskWindow;
+  public Window getSelectedWindow() {
+    return mySelectedWindow;
   }
 
-  public void setSelectedTaskWindow(StudyTaskWindow selectedTaskWindow) {
-    mySelectedTaskWindow = selectedTaskWindow;
+  public void setSelectedWindow(Window selectedWindow) {
+    mySelectedWindow = selectedWindow;
   }
 
   public Course getCourse() {
@@ -63,7 +65,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (myCourse == null) {
       return taskManagerElement;
     }
-    for (Lesson lesson:myCourse.getLessons()) {
+    for (Lesson lesson : myCourse.getLessons()) {
       taskManagerElement.addContent(lesson.saveState());
     }
     return taskManagerElement;
@@ -121,7 +123,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
      return Integer.parseInt(fullName.substring(logicalName.length())) - 1;
   }
 
-  public ru.compscicenter.edide.course.TaskFile getTaskFile(VirtualFile file) {
+  public TaskFile getTaskFile(VirtualFile file) {
    String taskDirName = file.getParent().getName();
    String lessonDirName = file.getParent().getParent().getName();
    Task task = myCourse.getLessons().get(getIndex(lessonDirName, "lesson")).getTaskList().get(getIndex(taskDirName, "task"));

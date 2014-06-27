@@ -1,19 +1,7 @@
 package ru.compscicenter.edide;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-
-import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
 * User: lia
@@ -28,7 +16,8 @@ class CheckAction extends AnAction {
   }
   @Override
   public void actionPerformed(AnActionEvent e) {
-      StudyTaskManager.getInstance(e.getProject()).setSelectedTaskWindow(null);
+      StudyTaskManager.getInstance(e.getProject()).getSelectedWindow().setResolveStatus(true);
+      StudyTaskManager.getInstance(e.getProject()).setSelectedWindow(null);
 //    Project project = e.getProject();
 //    FileDocumentManager.getInstance().saveAllDocuments();
 //    TaskManager tm = TaskManager.getInstance(project);
