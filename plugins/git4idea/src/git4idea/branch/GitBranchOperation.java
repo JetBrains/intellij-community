@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -353,12 +352,7 @@ abstract class GitBranchOperation {
     List<Change> affectedChanges = new ArrayList<Change>();
     for (String path : affectedPaths) {
       String absolutePath = relativePaths ? joinPaths(repository.getRoot(), path) : path;
-
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absolutePath);
-      if (file == null) {
-        file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
-      }
-
+      VirtualFile file = GitUtil.findRefreshFileOrLog(absolutePath);
       if (file != null) {
         Change change = myFacade.getChangeListManager(myProject).getChange(file);
         if (change != null) {
@@ -367,9 +361,6 @@ abstract class GitBranchOperation {
         else {
           LOG.warn("Change is not found for " + file.getPath());
         }
-      }
-      else {
-        LOG.warn("VirtualFile not found for " + path);
       }
     }
     return affectedChanges;

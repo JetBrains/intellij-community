@@ -934,4 +934,15 @@ public class GitUtil {
     return !output.trim().isEmpty();
   }
 
+  @Nullable
+  public static VirtualFile findRefreshFileOrLog(@NotNull String absolutePath) {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absolutePath);
+    if (file == null) {
+      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
+    }
+    if (file == null) {
+      LOG.warn("VirtualFile not found for " + absolutePath);
+    }
+    return file;
+  }
 }
