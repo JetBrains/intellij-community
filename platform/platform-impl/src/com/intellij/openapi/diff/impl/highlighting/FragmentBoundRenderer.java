@@ -142,8 +142,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
   private int getLastPointInBeforeGutter(int width, List<Couple<Integer>> points) {
     int i = 0;
     for (; i < points.size(); i++) {
-      Couple<Integer> integerIntegerPair = points.get(i);
-      if (integerIntegerPair.getFirst() >= width) break;
+      if (points.get(i).getFirst() >= width) break;
     }
     i = i == 0 ? 0 : i - 1;
     return i;
