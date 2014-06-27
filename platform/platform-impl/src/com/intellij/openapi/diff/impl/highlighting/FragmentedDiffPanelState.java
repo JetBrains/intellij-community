@@ -157,7 +157,7 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     }
     myRanges.addAll(ranges);
   }
-  
+
   public List<Integer> getLeftLines() {
     return myFragmentHighlighter.getLeftLines();
   }
@@ -201,15 +201,13 @@ public class FragmentedDiffPanelState extends DiffPanelState {
                            rightScrollOffset;
 
           g.setColor(FragmentBoundRenderer.darkerBorder());
-          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark - 1, width, rightBaseY + rightOffset + TornLineParams.ourDark + 1);
-          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark + 1, width, rightBaseY + rightOffset + TornLineParams.ourDark - 1);
-          g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark - 1, width, rightBaseY + rightOffset - TornLineParams.ourDark + 1);
-          g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark + 1, width, rightBaseY + rightOffset - TornLineParams.ourDark - 1);
+          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
+          g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
 
           g.setColor(FragmentBoundRenderer.darkerBorder().darker());
           // +- 2
-          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
-          g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
+          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourLight, width, rightBaseY + rightOffset + TornLineParams.ourLight);
+          g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourLight, width, rightBaseY + rightOffset - TornLineParams.ourLight);
         }
       }
     } finally {
