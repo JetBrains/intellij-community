@@ -88,11 +88,10 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
         drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, width + editorWidth, true,width);
 
         int j = points.size() - 1;
-        final int finalX = width + editorWidth + width;
+        final int finalX = width + editorWidth;
         for (; j > 0; j--) {
           if (points.get(j).getFirst() >= finalX) break;
         }
-        j = j == 0 ? 0 : j - 1;
         myOffsetsConsumer.consume(points.get(j).getSecond());
 
       } else {
