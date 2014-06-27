@@ -6,9 +6,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(char)">
@@ -18,15 +15,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(double)">
@@ -39,9 +30,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder append(java.lang.StringBuffer)">
@@ -68,33 +56,21 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder insert(int, char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder insert(int, char[], int, int) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder insert(int, char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder insert(int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder replace(int, int, java.lang.String) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.AbstractStringBuilder replace(int, int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.AbstractStringBuilder java.lang.String substring(int, int)">
@@ -125,9 +101,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Boolean java.lang.String toString(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte Byte(java.lang.String) 0">
@@ -154,27 +127,18 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte java.lang.Byte decode(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte java.lang.Byte valueOf(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte java.lang.Byte valueOf(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte java.lang.Byte valueOf(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte java.lang.Byte valueOf(java.lang.String, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Byte java.lang.String toString()">
@@ -254,15 +218,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Class java.lang.Class&lt;? extends U&gt; asSubclass(java.lang.Class&lt;U&gt;)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Class java.lang.String argumentTypesToString(java.lang.Class[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Class java.lang.String getSimpleName()">
@@ -327,9 +285,6 @@
     </annotation>
   </item>
   <item name="java.lang.ClassLoader java.lang.Package definePackage(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.net.URL)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_,_,_,_,_,_-&gt;!null;_,!null,_,_,_,_,_,_-&gt;!null;_,_,!null,_,_,_,_,_-&gt;!null;_,_,_,!null,_,_,_,_-&gt;!null;_,_,_,_,!null,_,_,_-&gt;!null;_,_,_,_,_,!null,_,_-&gt;!null;_,_,_,_,_,_,!null,_-&gt;!null;_,_,_,_,_,_,_,!null-&gt;!null;_,_,_,_,_,_,_,null-&gt;!null;_,_,_,_,_,_,null,_-&gt;!null;_,_,_,_,_,null,_,_-&gt;!null;_,_,_,_,null,_,_,_-&gt;!null;_,_,_,null,_,_,_,_-&gt;!null;_,_,null,_,_,_,_,_-&gt;!null;_,null,_,_,_,_,_,_-&gt;!null;null,_,_,_,_,_,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ClassLoader java.lang.String findLibrary(java.lang.String)">
@@ -346,27 +301,15 @@
     </annotation>
   </item>
   <item name="java.lang.ClassLoader java.util.Enumeration findResources(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ClassLoader java.util.Enumeration getBootstrapResources(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ClassLoader java.util.Enumeration getResources(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ClassLoader java.util.Enumeration getSystemResources(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ClassLoader void checkCerts(java.lang.String, java.security.CodeSource) 0">
@@ -390,9 +333,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Double java.lang.Double valueOf(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 0">
@@ -419,9 +359,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Float java.lang.Float valueOf(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer Integer(java.lang.String) 0">
@@ -448,9 +385,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer java.lang.Integer decode(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer java.lang.Integer getInteger(java.lang.String, java.lang.Integer)">
@@ -465,18 +399,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer java.lang.Integer valueOf(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer java.lang.Integer valueOf(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer java.lang.Integer valueOf(java.lang.String, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Integer java.lang.String toBinaryString(int)">
@@ -521,9 +449,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Long java.lang.Long decode(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Long java.lang.Long getLong(java.lang.String, java.lang.Long)">
@@ -535,18 +460,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Long java.lang.Long valueOf(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Long java.lang.Long valueOf(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Long java.lang.Long valueOf(java.lang.String, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Long java.lang.String toBinaryString(long)">
@@ -580,9 +499,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.NumberFormatException java.lang.NumberFormatException forInputString(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Object java.lang.String toString()">
@@ -606,27 +522,18 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Short java.lang.Short decode(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Short java.lang.Short valueOf(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Short java.lang.Short valueOf(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Short java.lang.Short valueOf(java.lang.String, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Short java.lang.Short valueOf(java.lang.String, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Short java.lang.Short valueOf(short)">
@@ -741,27 +648,18 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String concat(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String copyValueOf(char[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String copyValueOf(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String copyValueOf(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String copyValueOf(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String replace(java.lang.CharSequence, java.lang.CharSequence) 0">
@@ -786,9 +684,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String valueOf(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char)">
@@ -798,18 +693,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.String java.lang.String valueOf(int)">
@@ -851,9 +740,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(char)">
@@ -863,15 +749,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(double)">
@@ -884,33 +764,18 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(java.lang.StringBuffer)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder append(long)">
@@ -926,9 +791,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,false-&gt;!null;_,true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, char)">
@@ -938,18 +800,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, char[], int, int) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, double)">
@@ -962,27 +818,15 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder insert(int, long)">
@@ -992,9 +836,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder replace(int, int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,!null-&gt;!null;_,_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.AbstractStringBuilder reverse()">
@@ -1004,15 +845,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.Appendable append(java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.Appendable append(java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.CharSequence subSequence(int, int)">
@@ -1028,9 +863,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(char)">
@@ -1040,15 +872,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(double)">
@@ -1061,33 +887,18 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(java.lang.StringBuffer)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer append(long)">
@@ -1103,9 +914,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,false-&gt;!null;_,true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, char)">
@@ -1115,18 +923,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, char[], int, int) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, double)">
@@ -1139,27 +941,15 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer insert(int, long)">
@@ -1169,9 +959,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer replace(int, int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,!null-&gt;!null;_,_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuffer java.lang.StringBuffer reverse()">
@@ -1202,9 +989,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(char)">
@@ -1214,15 +998,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(double)">
@@ -1235,33 +1013,18 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(java.lang.StringBuffer)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder append(long)">
@@ -1277,9 +1040,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,false-&gt;!null;_,true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, char)">
@@ -1289,18 +1049,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, char[], int, int) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, double)">
@@ -1313,27 +1067,15 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder insert(int, long)">
@@ -1343,9 +1085,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder replace(int, int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,!null-&gt;!null;_,_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.AbstractStringBuilder reverse()">
@@ -1355,24 +1094,15 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.Appendable append(java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.Appendable append(java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;false-&gt;!null;true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(char)">
@@ -1382,15 +1112,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(double)">
@@ -1403,39 +1127,21 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(java.lang.StringBuffer)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(java.lang.StringBuilder)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder append(long)">
@@ -1451,9 +1157,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, boolean)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,false-&gt;!null;_,true-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, char)">
@@ -1463,18 +1166,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, char[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, char[], int, int) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, char[], int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, double)">
@@ -1487,27 +1184,15 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, java.lang.CharSequence)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, java.lang.CharSequence, int, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null,_,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,!null-&gt;!null;_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder insert(int, long)">
@@ -1517,9 +1202,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder replace(int, int, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,!null-&gt;!null;_,_,null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.StringBuilder java.lang.StringBuilder reverse()">
@@ -1592,9 +1274,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ThreadLocal java.lang.ThreadLocal.ThreadLocalMap createInheritedMap(java.lang.ThreadLocal.ThreadLocalMap)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.ThreadLocal java.lang.ThreadLocal.ThreadLocalMap getMap(java.lang.Thread) 0">
@@ -1645,9 +1324,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Throwable java.lang.Throwable initCause(java.lang.Throwable)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.lang.Throwable void printEnclosedStackTrace(java.lang.Throwable.PrintStreamOrWriter, java.lang.StackTraceElement[], java.lang.String, java.lang.String, java.util.Set&lt;java.lang.Throwable&gt;) 0">

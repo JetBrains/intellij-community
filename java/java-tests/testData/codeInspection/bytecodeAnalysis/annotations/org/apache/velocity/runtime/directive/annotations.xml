@@ -46,9 +46,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Directive org.apache.velocity.runtime.directive.Scope makeScope(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.Evaluate boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0">
@@ -198,9 +195,6 @@
     </annotation>
   </item>
   <item name="org.apache.velocity.runtime.directive.VelocimacroProxy java.lang.String buildErrorMsg(org.apache.velocity.runtime.parser.node.Node, int)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.directive.VelocimacroProxy void checkArgs(org.apache.velocity.context.InternalContextAdapter, org.apache.velocity.runtime.parser.node.Node, boolean) 1">

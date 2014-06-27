@@ -18,9 +18,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.atomic.AtomicIntegerFieldUpdater java.util.concurrent.atomic.AtomicIntegerFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.atomic.AtomicIntegerFieldUpdater.AtomicIntegerFieldUpdaterImpl AtomicIntegerFieldUpdaterImpl(java.lang.Class&lt;T&gt;, java.lang.String) 0">
@@ -45,9 +42,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.atomic.AtomicLongFieldUpdater java.util.concurrent.atomic.AtomicLongFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;_,null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.atomic.AtomicLongFieldUpdater.CASUpdater CASUpdater(java.lang.Class&lt;T&gt;, java.lang.String) 0">
@@ -84,9 +78,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.atomic.AtomicReferenceFieldUpdater java.util.concurrent.atomic.AtomicReferenceFieldUpdater&lt;U,W&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.Class&lt;W&gt;, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null;_,_,null-&gt;!null;_,null,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.atomic.AtomicReferenceFieldUpdater.AtomicReferenceFieldUpdaterImpl AtomicReferenceFieldUpdaterImpl(java.lang.Class&lt;T&gt;, java.lang.Class&lt;V&gt;, java.lang.String) 0">

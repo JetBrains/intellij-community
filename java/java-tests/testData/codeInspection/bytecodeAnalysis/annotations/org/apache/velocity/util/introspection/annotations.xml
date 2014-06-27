@@ -59,9 +59,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.util.introspection.IntrospectorCacheImpl org.apache.velocity.util.introspection.ClassMap put(java.lang.Class)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.util.introspection.MethodMap boolean isApplicable(java.lang.reflect.Method, java.lang.Class[]) 0">

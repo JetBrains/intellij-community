@@ -262,13 +262,12 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   }
 
   private boolean writeClass(int[] compoundKey, int i, PsiClass psiClass, int dimensions) throws IOException {
-    String packageName = "";
     PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
     if (psiFile == null) {
       LOG.info("getContainingFile was null for " + psiClass.getQualifiedName());
       return false;
     }
-    packageName = psiFile.getPackageName();
+    String packageName = psiFile.getPackageName();
     String qname = psiClass.getQualifiedName();
     if (qname == null) {
       return false;
@@ -382,14 +381,14 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     for (int i = contractClauses.size(); i-- > 0;) {
       buildersIterator.advance();
       int key = buildersIterator.key();
-      List<String> clauses = buildersIterator.value();
-      Collections.sort(clauses);
-
-      //if (!outs.contains(key)) {
-      StringBuilder sb = new StringBuilder("\"");
-      StringUtil.join(clauses, ";", sb);
-      sb.append('"');
-      contracts.put(key, sb.toString().intern());
+      if (!notNulls.contains(key)) {
+        List<String> clauses = buildersIterator.value();
+        Collections.sort(clauses);
+        StringBuilder sb = new StringBuilder("\"");
+        StringUtil.join(clauses, ";", sb);
+        sb.append('"');
+        contracts.put(key, sb.toString().intern());
+      }
     }
   }
 

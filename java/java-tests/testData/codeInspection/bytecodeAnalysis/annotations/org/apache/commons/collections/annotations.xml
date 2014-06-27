@@ -15,9 +15,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String escape(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List)">
@@ -32,9 +29,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties java.lang.String unescape(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties convertProperties(java.util.Properties) 0">

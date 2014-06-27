@@ -9,9 +9,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.ParseException java.lang.String add_escapes(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.Parser Parser(org.apache.velocity.runtime.RuntimeServices) 0">
@@ -47,18 +44,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String LexicalError(boolean, int, int, int, java.lang.String, char)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;_,_,_,_,!null,_-&gt;!null;_,_,_,_,null,_-&gt;!null;false,_,_,_,_,_-&gt;!null;true,_,_,_,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String addEscapes(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.TokenMgrError java.lang.String addEscapes(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.InputStream, int, int) 0">

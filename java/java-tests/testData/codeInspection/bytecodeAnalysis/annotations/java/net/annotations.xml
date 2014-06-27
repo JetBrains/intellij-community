@@ -77,18 +77,12 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.InetAddress java.net.InetAddress getByAddress(byte[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.InetAddress java.net.InetAddress getByAddress(java.lang.String, byte[]) 1">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.InetAddress java.net.InetAddress getByAddress(java.lang.String, byte[])">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null;null,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String)">
@@ -257,15 +251,9 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_,_,_,_,_,_,_-&gt;!null;_,!null,_,_,_,_,_,_,_-&gt;!null;_,_,!null,_,_,_,_,_,_-&gt;!null;_,_,_,!null,_,_,_,_,_-&gt;!null;_,_,_,_,!null,_,_,_,_-&gt;!null;_,_,_,_,_,_,!null,_,_-&gt;!null;_,_,_,_,_,_,_,!null,_-&gt;!null;_,_,_,_,_,_,_,_,!null-&gt;!null;_,_,_,_,_,_,_,_,null-&gt;!null;_,_,_,_,_,_,_,null,_-&gt;!null;_,_,_,_,_,_,null,_,_-&gt;!null;_,_,_,_,null,_,_,_,_-&gt;!null;_,_,_,null,_,_,_,_,_-&gt;!null;_,_,null,_,_,_,_,_,_-&gt;!null;_,null,_,_,_,_,_,_,_-&gt;!null;null,_,_,_,_,_,_,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.URI java.net.URI create(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.URI java.net.URI normalize(java.net.URI) 0">
@@ -412,9 +400,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.URLConnection java.lang.String typeToPackageName(java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.net.URLConnection java.net.ContentHandler lookupContentHandlerClassFor(java.lang.String) 0">

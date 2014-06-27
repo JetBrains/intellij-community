@@ -52,9 +52,6 @@
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.PrintExceptions java.lang.Object methodException(java.lang.Class, java.lang.String, java.lang.Exception)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="&quot;!null,_,_-&gt;!null;_,!null,_-&gt;!null;_,_,!null-&gt;!null;_,null,_-&gt;!null;null,_,_-&gt;!null&quot;"/>
-    </annotation>
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="org.apache.velocity.app.event.implement.PrintExceptions java.lang.String getStackTrace(java.lang.Throwable) 0">
