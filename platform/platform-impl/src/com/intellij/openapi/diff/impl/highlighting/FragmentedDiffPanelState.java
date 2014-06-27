@@ -207,14 +207,52 @@ public class FragmentedDiffPanelState extends DiffPanelState {
             myAppender2.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getRightLine(), 0)).y - lineHeight / 2 -
             rightScrollOffset + myDiffDividerPolygonsOffset;
 
-          g.setColor(FragmentBoundRenderer.darkerBorder());
-          g.drawLine(0, leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
-          g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
+          int x1 = 0;
+          int x2 = width;
+          int y1 = leftBaseY + leftOffset;
+          int y2 = rightBaseY + rightOffset;
 
-          g.setColor(FragmentBoundRenderer.darkerBorder().darker());
-          // +- 2
-          g.drawLine(0, leftBaseY + leftOffset + TornLineParams.ourLight, width, rightBaseY + rightOffset + TornLineParams.ourLight);
-          g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourLight, width, rightBaseY + rightOffset - TornLineParams.ourLight);
+          if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
+            int offset = 2;
+            if (y2 < y1) {
+              g.setColor(FragmentBoundRenderer.darkerBorder());
+              g.drawLine(x1 + offset, y1 + TornLineParams.ourDark, x2, y2 + TornLineParams.ourDark);
+              g.drawLine(x1, y1 - TornLineParams.ourDark, x2 - offset, y2 - TornLineParams.ourDark);
+
+              g.drawLine(x1, y1 + TornLineParams.ourDark, x1 + offset, y1 + TornLineParams.ourDark);
+              g.drawLine(x2, y2 - TornLineParams.ourDark, x2 - offset, y2 - TornLineParams.ourDark);
+
+              g.setColor(FragmentBoundRenderer.darkerBorder().darker());
+              g.drawLine(x1 + offset, y1 + TornLineParams.ourLight, x2, y2 + TornLineParams.ourLight);
+              g.drawLine(x1, y1 - TornLineParams.ourLight, x2 - offset, y2 - TornLineParams.ourLight);
+
+              g.drawLine(x1, y1 + TornLineParams.ourLight, x1 + offset, y1 + TornLineParams.ourLight);
+              g.drawLine(x2, y2 - TornLineParams.ourLight, x2 - offset, y2 - TornLineParams.ourLight);
+            } else {
+              g.setColor(FragmentBoundRenderer.darkerBorder());
+              g.drawLine(x1, y1 + TornLineParams.ourDark, x2 - offset, y2 + TornLineParams.ourDark);
+              g.drawLine(x1 + offset, y1 - TornLineParams.ourDark, x2, y2 - TornLineParams.ourDark);
+
+              g.drawLine(x2, y2 + TornLineParams.ourDark, x2 - offset, y2 + TornLineParams.ourDark);
+              g.drawLine(x1, y1 - TornLineParams.ourDark, x1 + offset, y1 - TornLineParams.ourDark);
+
+              g.setColor(FragmentBoundRenderer.darkerBorder().darker());
+              g.drawLine(x1, y1 + TornLineParams.ourLight, x2 - offset, y2 + TornLineParams.ourLight);
+              g.drawLine(x1 + offset, y1 - TornLineParams.ourLight, x2, y2 - TornLineParams.ourLight);
+
+              g.drawLine(x2, y2 + TornLineParams.ourLight, x2 - offset, y2 + TornLineParams.ourLight);
+              g.drawLine(x1, y1 - TornLineParams.ourLight, x1 + offset, y1 - TornLineParams.ourLight);
+            }
+
+          } else {
+            g.setColor(FragmentBoundRenderer.darkerBorder());
+            g.drawLine(x1, y1 + TornLineParams.ourDark, x2, y2 + TornLineParams.ourDark);
+            g.drawLine(x1, y1 - TornLineParams.ourDark, x2, y2 - TornLineParams.ourDark);
+
+            g.setColor(FragmentBoundRenderer.darkerBorder().darker());
+            g.drawLine(x1, y1 + TornLineParams.ourLight, x2, y2 + TornLineParams.ourLight);
+            g.drawLine(x1, y1 - TornLineParams.ourLight, x2, y2 - TornLineParams.ourLight);
+          }
         }
       }
     }
