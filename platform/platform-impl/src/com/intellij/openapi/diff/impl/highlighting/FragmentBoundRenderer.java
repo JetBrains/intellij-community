@@ -101,8 +101,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
         gr.setColor(getColor().darker());
         drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, 0, false,0);
 
-        int i = getLastPointInBeforeGutter(width, points);
-        myOffsetsConsumer.consume(points.get(i).getSecond());
+        myOffsetsConsumer.consume(points.get(0).getSecond());
       }
     } finally {
       gr.dispose();
