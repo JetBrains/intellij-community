@@ -68,7 +68,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
     try {
       CharSequence text = new IdeaDecompiler().getText(file);
       assertNotNull(text);
-      String expected = FileUtil.loadFile(new File(name + ".txt"));
+      String expected = FileUtil.loadFile(new File(name + ".txt"), "UTF-8");
       assertEquals(StringUtil.convertLineSeparators(expected), text.toString());
     }
     catch (IOException e) {
