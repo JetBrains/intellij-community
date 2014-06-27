@@ -157,6 +157,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (name.isEmpty()) return null;
     }
 
+    VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
       if (myData.isAdoptedName(name)) return NULL_VIRTUAL_FILE;
@@ -173,7 +174,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (id <= 0) {
         return null;
       }
-      VirtualFileSystemEntry child = createChild(FileNameCache.storeName(name), id, delegate);
+      child = createChild(FileNameCache.storeName(name), id, delegate);
 
       int[] after = myData.myChildrenIds;
       if (after != array)  {
@@ -185,8 +186,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         insertChildAt(child, indexInReal);
         assertConsistency(!delegate.isCaseSensitive(), name);
       }
-      return child;
     }
+
+    if (!child.isDirectory()) {
+      // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity
+      //noinspection TestOnlyProblems
+      VfsRootAccess.assertAccessInTests(child, getFileSystem());
+    }
+
+    return child;
   }
 
   private VirtualFileSystemEntry[] getArraySafely() {
@@ -419,12 +427,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     appended[i] = file.getId();
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myData.myChildrenIds = appended;
-
-    if (!file.isDirectory()) {
-      // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity
-      //noinspection TestOnlyProblems
-      VfsRootAccess.assertAccessInTests(file, getFileSystem());
-    }
   }
 
   public void removeChild(@NotNull VirtualFile file) {
@@ -538,5 +540,4 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
     return myData.changeUserMap(oldMap, UserDataInterner.internUserData(newMap));
   }
-
 }
