@@ -34,7 +34,8 @@ import javax.swing.*;
  * @author max
  */
 public class ProjectUtil {
-  private ProjectUtil() { }
+  private ProjectUtil() {
+  }
 
   @Nullable
   public static String getProjectLocationString(@NotNull final Project project) {
@@ -83,9 +84,16 @@ public class ProjectUtil {
   }
 
   @Nullable
-  // guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
   public static Project guessProjectForContentFile(@NotNull VirtualFile file) {
-    if (isProjectOrWorkspaceFile(file)) {
+    return guessProjectForContentFile(file, file.getFileType());
+  }
+
+  @Nullable
+  /***
+   * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
+   */
+  public static Project guessProjectForContentFile(@NotNull VirtualFile file, @NotNull FileType fileType) {
+    if (isProjectOrWorkspaceFile(file, fileType)) {
       return null;
     }
 
@@ -102,10 +110,8 @@ public class ProjectUtil {
     return isProjectOrWorkspaceFile(file, file.getFileType());
   }
 
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
-                                                 final FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
-    return file.getPath().contains("/"+ Project.DIRECTORY_STORE_FOLDER +"/");
+  public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @NotNull FileType fileType) {
+    return fileType instanceof InternalFileType || file.getPath().contains('/' + ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR + '/');
   }
 
   @NotNull
