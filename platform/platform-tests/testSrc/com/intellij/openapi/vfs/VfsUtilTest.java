@@ -22,6 +22,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -262,13 +263,13 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testDirAttributeRefreshes() throws IOException {
     File tempDir = createTempDirectory();
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    VirtualFile vDir = refreshAndFindFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
     File file = FileUtil.createTempFile(tempDir, "xxx", "yyy", true);
     assertNotNull(file);
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile vFile = refreshAndFindFile(file);
     assertNotNull(vFile);
     assertFalse(vFile.isDirectory());
 
@@ -278,9 +279,18 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertTrue(created);
     assertTrue(file.exists());
 
-    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile vFile2 = refreshAndFindFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
+  }
+
+  private static VirtualFile refreshAndFindFile(final File file) {
+    return UIUtil.invokeAndWaitIfNeeded(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      }
+    });
   }
 
   public void testPresentableUrlSurvivesDeletion() throws IOException {
@@ -360,7 +370,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testFindChildByNamePerformance() throws IOException {
     File tempDir = createTempDirectory();
-    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    final VirtualFile vDir = refreshAndFindFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 
@@ -398,7 +408,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testFindRootWithDenormalizedPath() throws IOException {
     File tempJar = IoTestUtil.createTestJar();
-    VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
+    VirtualFile jar = refreshAndFindFile(tempJar);
     assertNotNull(jar);
 
     JarFileSystem fs = JarFileSystem.getInstance();
@@ -410,7 +420,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testFindRootPerformance() throws IOException {
     File tempJar = IoTestUtil.createTestJar();
-    final VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
+    final VirtualFile jar = refreshAndFindFile(tempJar);
     assertNotNull(jar);
 
     final JarFileSystem fs = JarFileSystem.getInstance();
@@ -440,7 +450,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertTrue(new File(tempDir, "CssInvalidElement").createNewFile());
     assertTrue(new File(tempDir, "extFiles").createNewFile());
 
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    VirtualFile vDir = refreshAndFindFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 

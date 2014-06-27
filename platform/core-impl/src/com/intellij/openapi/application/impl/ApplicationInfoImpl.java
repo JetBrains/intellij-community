@@ -779,4 +779,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       return myDependentPlugin;
     }
   }
+
+  private static volatile boolean myInPerformanceTest;
+  public static boolean isInPerformanceTest() {
+    return myInPerformanceTest;
+  }
+  public static void setInPerformanceTest(boolean inPerformanceTest) {
+    myInPerformanceTest = inPerformanceTest;
+  }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +68,12 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = allowedRoots();
+      Set<String> allowed = ApplicationManager.getApplication().runReadAction(new Computable<Set<String>>() {
+        @Override
+        public Set<String> compute() {
+          return allowedRoots();
+        }
+      });
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
