@@ -119,6 +119,10 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       return true;
     }
 
+    if (myS instanceof PsiCapturedWildcardType) {
+      return false;
+    }
+    
     return true;
   }
 

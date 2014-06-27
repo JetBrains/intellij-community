@@ -205,6 +205,5 @@
       <keyboard-shortcut first-keystroke="shift control alt UP"/>
     </action>
     <action id="CopyElement"/>
-    <action id="CloneElement"/>
   </keymap>
 </component>

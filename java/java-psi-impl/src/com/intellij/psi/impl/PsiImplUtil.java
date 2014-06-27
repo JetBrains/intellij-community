@@ -512,6 +512,9 @@ public class PsiImplUtil {
     if (type instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)type;
 
+      if (toplevel.getParent() instanceof PsiLambdaExpression) {
+        return PsiCapturedWildcardType.create(wildcardType, expression);
+      }
       if (PsiUtil.isAccessedForWriting(toplevel)) {
         return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
       }

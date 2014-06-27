@@ -90,9 +90,6 @@
   <action id="Generate">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
   </action>
-  <action id="CloneElement">
-    <keyboard-shortcut first-keystroke="shift F5"/>
-  </action>
   <action id="EditorChooseLookupItemReplace">
     <keyboard-shortcut first-keystroke="TAB"/>
   </action>
