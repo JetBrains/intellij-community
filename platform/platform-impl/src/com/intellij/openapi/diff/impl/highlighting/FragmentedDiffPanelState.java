@@ -52,8 +52,12 @@ public class FragmentedDiffPanelState extends DiffPanelState {
   private final NumberedFragmentHighlighter myFragmentHighlighter;
   private FragmentSeparatorsPositionConsumer mySeparatorsPositionConsumer;
 
-  public FragmentedDiffPanelState(ContentChangeListener changeListener, Project project, boolean drawNumber, @NotNull Disposable parentDisposable) {
-    super(changeListener, project, parentDisposable);
+  public FragmentedDiffPanelState(ContentChangeListener changeListener,
+                                  Project project,
+                                  int diffDividerPolygonsOffset,
+                                  boolean drawNumber,
+                                  @NotNull Disposable parentDisposable) {
+    super(changeListener, project, diffDividerPolygonsOffset, parentDisposable);
     myFragmentHighlighter = new NumberedFragmentHighlighter(myAppender1, myAppender2, drawNumber);
     mySeparatorsPositionConsumer = new FragmentSeparatorsPositionConsumer();
   }
@@ -68,7 +72,7 @@ public class FragmentedDiffPanelState extends DiffPanelState {
   private LineBlocks addMarkup(final List<LineFragment> lines) {
     myFragmentHighlighter.precalculateNumbers(lines);
 
-    for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
+    for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext(); ) {
       LineFragment line = iterator.next();
       myFragmentHighlighter.setIsLast(!iterator.hasNext());
       line.highlight(myFragmentHighlighter);
@@ -106,8 +110,9 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     for (int i = 0; i < myRanges.size(); i++) {
       final BeforeAfter<Integer> start = lineStarts(i);
       final BeforeAfter<Integer> end = i == myRanges.size() - 1 ?
-        new BeforeAfter<Integer>(myAppender1.getDocument().getTextLength(), myAppender2.getDocument().getTextLength()) :
-        lineStarts(i + 1);
+                                       new BeforeAfter<Integer>(myAppender1.getDocument().getTextLength(),
+                                                                myAppender2.getDocument().getTextLength()) :
+                                       lineStarts(i + 1);
 
       ranges.add(new BeforeAfter<TextRange>(new TextRange(start.getBefore(), end.getBefore()),
                                             new TextRange(start.getAfter(), end.getAfter())));
@@ -145,14 +150,14 @@ public class FragmentedDiffPanelState extends DiffPanelState {
 
   private BeforeAfter<Integer> lineStarts(int i) {
     return new BeforeAfter<Integer>(myAppender1.getDocument().getLineStartOffset(myRanges.get(i).getBefore()),
-      myAppender2.getDocument().getLineStartOffset(myRanges.get(i).getAfter()));
+                                    myAppender2.getDocument().getLineStartOffset(myRanges.get(i).getAfter()));
   }
 
   public void setRanges(List<BeforeAfter<Integer>> ranges) {
     myRanges = new ArrayList<BeforeAfter<Integer>>();
-    if (! ranges.isEmpty()) {
+    if (!ranges.isEmpty()) {
       if (ranges.get(0).getAfter() != 0 && ranges.get(0).getBefore() != 0) {
-        myRanges.add(new BeforeAfter<Integer>(0,0));
+        myRanges.add(new BeforeAfter<Integer>(0, 0));
       }
     }
     myRanges.addAll(ranges);
@@ -188,36 +193,39 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     final Graphics g = gr.create();
 
     try {
-      ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       for (Map.Entry<Integer, FragmentSeparatorsPositionConsumer.TornSeparator> entry : left.entrySet()) {
         final FragmentSeparatorsPositionConsumer.TornSeparator tornSeparator = entry.getValue();
         if (tornSeparator.getLeftLine() >= startLeft || tornSeparator.getRightLine() >= startRight) {
           final int leftOffset = tornSeparator.getLeftOffset();
-          int leftBaseY = myAppender1.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getLeftLine(), 0)).y - lineHeight/2 -
-                          leftScrollOffset;
+          int leftBaseY =
+            myAppender1.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getLeftLine(), 0)).y - lineHeight / 2 -
+            leftScrollOffset + myDiffDividerPolygonsOffset;
 
           final int rightOffset = tornSeparator.getRightOffset();
-          int rightBaseY = myAppender2.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getRightLine(), 0)).y - lineHeight/2 -
-                           rightScrollOffset;
+          int rightBaseY =
+            myAppender2.getEditor().logicalPositionToXY(new LogicalPosition(tornSeparator.getRightLine(), 0)).y - lineHeight / 2 -
+            rightScrollOffset + myDiffDividerPolygonsOffset;
 
           g.setColor(FragmentBoundRenderer.darkerBorder());
-          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
-          g.drawLine(0,leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
+          g.drawLine(0, leftBaseY + leftOffset + TornLineParams.ourDark, width, rightBaseY + rightOffset + TornLineParams.ourDark);
+          g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourDark, width, rightBaseY + rightOffset - TornLineParams.ourDark);
 
           g.setColor(FragmentBoundRenderer.darkerBorder().darker());
           // +- 2
-          g.drawLine(0,leftBaseY + leftOffset + TornLineParams.ourLight, width, rightBaseY + rightOffset + TornLineParams.ourLight);
+          g.drawLine(0, leftBaseY + leftOffset + TornLineParams.ourLight, width, rightBaseY + rightOffset + TornLineParams.ourLight);
           g.drawLine(0, leftBaseY + leftOffset - TornLineParams.ourLight, width, rightBaseY + rightOffset - TornLineParams.ourLight);
         }
       }
-    } finally {
+    }
+    finally {
       g.dispose();
     }
   }
 
   private int getStartVisibleLine(final Editor editor) {
     int offset = editor.getScrollingModel().getVerticalScrollOffset();
-     LogicalPosition logicalPosition = editor.xyToLogicalPosition(new Point(0, offset));
-     return logicalPosition.line;
+    LogicalPosition logicalPosition = editor.xyToLogicalPosition(new Point(0, offset));
+    return logicalPosition.line;
   }
 }
