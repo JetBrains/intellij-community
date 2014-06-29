@@ -316,7 +316,7 @@ Page custom ConfirmDesktopShortcut
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
-OutFile "c:\Build\Installation\installation.exe"
+OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 
 InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
 !define MUI_BRANDINGTEXT " "
