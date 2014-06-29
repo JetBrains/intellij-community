@@ -20,10 +20,12 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.DefaultLogger;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Task;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
@@ -96,13 +98,41 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void messageLogged(BuildEvent event) {
-    if (sendException(event)) return;
-    int priority = event.getPriority();
-    String message = event.getMessage();
-    if (priority == Project.MSG_ERR)
+    if (sendException(event)) {
+      return;
+    }
+    final int priority = getEffectivePriority(event);
+    final String message = event.getMessage();
+    if (priority == Project.MSG_ERR) {
       myMessagePriority.sendMessage(ERROR, priority, message);
-    else
+    }
+    else {
       myMessagePriority.sendMessage(MESSAGE, priority, message);
+    }
+  }
+
+  // some ant tasks (like Copy) with 'failOnError' attribute set to 'false'
+  // send warnings with priority level = Project.MSG_ERR
+  // this heuristic corrects the priority level, so that IDEA considers the message not as an error but as a warning
+  private static int getEffectivePriority(BuildEvent event) {
+    final int priority = event.getPriority();
+    if (priority == Project.MSG_ERR) {
+      final Task task = event.getTask();
+      if (task != null) {
+        final Class taskClass = task.getClass();
+        try {
+          final Field field = taskClass.getDeclaredField("failonerror");
+          field.setAccessible(true);
+          final Object isFailOnError = field.get(task);
+          if (Boolean.FALSE.equals(isFailOnError)) {
+            return Project.MSG_WARN;
+          }
+        }
+        catch (Exception ignored) {
+        }
+      }
+    }
+    return priority;
   }
 
   private boolean sendException(BuildEvent event) {
