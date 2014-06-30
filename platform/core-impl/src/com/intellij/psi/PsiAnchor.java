@@ -104,7 +104,7 @@ public abstract class PsiAnchor {
   public static StubIndexReference createStubReference(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement &&
         element.isPhysical() &&
-        (element instanceof PsiCompiledElement || canHaveStub((PsiFileImpl)containingFile))) {
+        (element instanceof PsiCompiledElement || canHaveStub(containingFile))) {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       final IStubElementType elementType = elt.getElementType();
       if (elt.getStub() != null || elementType.shouldCreateStub(element.getNode())) {
@@ -117,12 +117,12 @@ public abstract class PsiAnchor {
     return null;
   }
 
-  private static boolean canHaveStub(PsiFileImpl containingFile) {
-    VirtualFile file = containingFile.getVirtualFile();
-    IElementType fileElementType = containingFile.getContentElementType();
-    return fileElementType instanceof IStubFileElementType &&
-           file != null &&
-           ((IStubFileElementType)fileElementType).shouldBuildStubFor(file);
+  private static boolean canHaveStub(PsiFile file) {
+    if (!(file instanceof PsiFileImpl)) return false;
+
+    VirtualFile vFile = file.getVirtualFile();
+    IElementType elementType = ((PsiFileImpl)file).getContentElementType();
+    return elementType instanceof IStubFileElementType && vFile != null && ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
   }
 
   public static int calcStubIndex(StubBasedPsiElement psi) {
@@ -369,7 +369,7 @@ public abstract class PsiAnchor {
       PsiDirectoryReference reference = (PsiDirectoryReference)o;
 
       if (!myFile.equals(reference.myFile)) return false;
-      if (myProject != null ? !myProject.equals(reference.myProject) : reference.myProject != null) return false;
+      if (!myProject.equals(reference.myProject)) return false;
 
       return true;
     }
