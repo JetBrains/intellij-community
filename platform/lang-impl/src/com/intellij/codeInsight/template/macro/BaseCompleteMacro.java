@@ -80,6 +80,9 @@ public abstract class BaseCompleteMacro extends Macro {
       public void run() {
         if (project.isDisposed() || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
 
+        // it's invokeLater, so another completion could have started
+        if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
+
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
           public void run() {
