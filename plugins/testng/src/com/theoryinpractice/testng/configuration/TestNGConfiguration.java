@@ -269,7 +269,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     } else {
       suffix = "";
     }
-    Set<String> patterns = new HashSet<String>();
+    Set<String> patterns = new LinkedHashSet<String>();
     for (PsiClass pattern : classes) {
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
