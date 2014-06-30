@@ -27,6 +27,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -149,6 +150,11 @@ public class GitMergeDialog extends DialogWrapper {
     myBranchChooser.addElementsMarkListener(listener);
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myBranchChooser.getComponent();
+  }
 
   /**
    * Setup branches for git root, this method should be called when root is changed.
