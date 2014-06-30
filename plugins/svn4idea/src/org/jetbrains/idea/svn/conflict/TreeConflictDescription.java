@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.conflict;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
@@ -34,8 +33,8 @@ public class TreeConflictDescription {
   private final ConflictReason myConflictReason;
 
   private final ConflictOperation myOperation;
-  private final SVNConflictVersion mySourceLeftVersion;
-  private final SVNConflictVersion mySourceRightVersion;
+  private final ConflictVersion mySourceLeftVersion;
+  private final ConflictVersion mySourceRightVersion;
 
   @Nullable
   public static TreeConflictDescription create(@Nullable SVNTreeConflictDescription conflict) {
@@ -45,8 +44,9 @@ public class TreeConflictDescription {
       result =
         new TreeConflictDescription(conflict.getPath(), conflict.getNodeKind(), ConflictAction.from(conflict.getConflictAction().getName()),
                                     ConflictReason.from(conflict.getConflictReason().getName()),
-                                    ConflictOperation.from(conflict.getOperation().getName()), conflict.getSourceLeftVersion(),
-                                    conflict.getSourceRightVersion());
+                                    ConflictOperation.from(conflict.getOperation().getName()),
+                                    ConflictVersion.create(conflict.getSourceLeftVersion()),
+                                    ConflictVersion.create(conflict.getSourceRightVersion()));
     }
 
     return result;
@@ -57,8 +57,8 @@ public class TreeConflictDescription {
                                  ConflictAction conflictAction,
                                  ConflictReason conflictReason,
                                  ConflictOperation operation,
-                                 SVNConflictVersion sourceLeftVersion,
-                                 SVNConflictVersion sourceRightVersion) {
+                                 ConflictVersion sourceLeftVersion,
+                                 ConflictVersion sourceRightVersion) {
     myPath = path;
     myNodeKind = nodeKind;
     myConflictAction = conflictAction;
@@ -102,11 +102,11 @@ public class TreeConflictDescription {
     return myOperation;
   }
 
-  public SVNConflictVersion getSourceLeftVersion() {
+  public ConflictVersion getSourceLeftVersion() {
     return mySourceLeftVersion;
   }
 
-  public SVNConflictVersion getSourceRightVersion() {
+  public ConflictVersion getSourceRightVersion() {
     return mySourceRightVersion;
   }
 

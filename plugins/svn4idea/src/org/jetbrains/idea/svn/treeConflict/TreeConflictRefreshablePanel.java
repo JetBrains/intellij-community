@@ -45,13 +45,12 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
+import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnHistorySession;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
-import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -111,7 +110,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return true;
   }
 
-  private static boolean compareConflictVersion(SVNConflictVersion v1, SVNConflictVersion v2) {
+  private static boolean compareConflictVersion(ConflictVersion v1, ConflictVersion v2) {
     if (v1 == null && v2 == null) return true;
     if (v1 == null || v2 == null) return false;
     if (! v1.getKind().equals(v2.getKind())) return false;
@@ -185,7 +184,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                 ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
   }
 
-  private ConflictSidePresentation createSide(SVNConflictVersion version, final SVNRevision untilThisOther, final boolean isLeft) throws VcsException {
+  private ConflictSidePresentation createSide(ConflictVersion version, final SVNRevision untilThisOther, final boolean isLeft) throws VcsException {
     if (version == null) return EmptyConflictSide.getInstance();
     if (myChange.getBeforeRevision() != null && myCommittedRevision != null) {
       SvnRevisionNumber number = myCommittedRevision;
@@ -397,10 +396,10 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   private void addSide(JPanel main,
                        GridBagConstraints gb,
                        ConflictSidePresentation before,
-                       SVNConflictVersion leftVersion, final String name, boolean directory) {
+                       ConflictVersion leftVersion, final String name, boolean directory) {
     final String leftPresentation = leftVersion == null ? name + ": (" + (directory ? "directory" : "file") +
       (myChange.getBeforeRevision() == null ? ") added" : ") unversioned") :
-                                    name + ": " + FileUtil.toSystemIndependentName(SVNTreeConflictUtil.getHumanReadableConflictVersion(leftVersion));
+                                    name + ": " + FileUtil.toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
     gb.insets.top = 10;
     main.add(new JLabel(leftPresentation), gb);
     ++ gb.gridy;
@@ -454,9 +453,9 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
 
   private abstract static class AbstractConflictSide<T> implements ConflictSidePresentation, Convertor<T, VcsRevisionNumber> {
     protected final Project myProject;
-    protected final SVNConflictVersion myVersion;
+    protected final ConflictVersion myVersion;
 
-    private AbstractConflictSide(Project project, SVNConflictVersion version) {
+    private AbstractConflictSide(Project project, ConflictVersion version) {
       myProject = project;
       myVersion = version;
     }
@@ -472,7 +471,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     private FileHistoryPanelImpl myFileHistoryPanel;
     private TLongArrayList myListToReportLoaded;
 
-    private HistoryConflictSide(SvnVcs vcs, SVNConflictVersion version, final SVNRevision peg) throws VcsException {
+    private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final SVNRevision peg) throws VcsException {
       super(vcs.getProject(), version);
       myVcs = vcs;
       myPeg = peg;

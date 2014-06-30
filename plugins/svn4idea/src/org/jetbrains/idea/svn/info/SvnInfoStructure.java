@@ -20,7 +20,6 @@ import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -95,8 +94,10 @@ public class SvnInfoStructure {
     }
   }
 
-  private SVNConflictVersion createVersion(final ConflictVersion version) throws SVNException, SAXException {
-    return version == null ? null : new SVNConflictVersion(SVNURL.parseURIEncoded(version.myRepoUrl), version.myPathInRepo,
+  private org.jetbrains.idea.svn.conflict.ConflictVersion createVersion(final ConflictVersion version) throws SVNException, SAXException {
+    return version == null
+           ? null
+           : new org.jetbrains.idea.svn.conflict.ConflictVersion(SVNURL.parseURIEncoded(version.myRepoUrl), version.myPathInRepo,
                                                            parseRevision(version.myRevision), SVNNodeKind.parseKind(version.myKind));
   }
   
