@@ -418,15 +418,20 @@ public class CodeCompletionHandlerBase {
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
 
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      CommandProcessor.getInstance().executeCommand(indicator.getProject(), new Runnable() {
-                                                      @Override
-                                                      public void run() {
-                                                        indicator.setMergeCommand();
-                                                        indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
-                                                      }
-                                                    }, "Autocompletion", null);
-
-
+      try {
+        CommandProcessor.getInstance().executeCommand(indicator.getProject(), new Runnable() {
+          @Override
+          public void run() {
+            indicator.setMergeCommand();
+            indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
+          }
+        }, "Autocompletion", null);
+      }
+      catch (Throwable e) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        LOG.error(e);
+        return;
+      }
 
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
