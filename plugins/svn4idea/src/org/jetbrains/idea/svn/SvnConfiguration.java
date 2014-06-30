@@ -30,6 +30,7 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.auth.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -41,7 +42,6 @@ import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
@@ -109,8 +109,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
   }
 
-  public SVNDiffOptions getMergeOptions() {
-    return new SVNDiffOptions(isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge());
+  @NotNull
+  public DiffOptions getMergeOptions() {
+    return new DiffOptions(isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge(), isIgnoreSpacesInMerge());
   }
 
   private void initServers() {

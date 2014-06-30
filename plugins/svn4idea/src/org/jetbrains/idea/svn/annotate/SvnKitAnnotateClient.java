@@ -4,9 +4,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -22,12 +22,12 @@ public class SvnKitAnnotateClient extends BaseSvnClient implements AnnotateClien
                        @NotNull SVNRevision endRevision,
                        @Nullable SVNRevision pegRevision,
                        boolean includeMergedRevisions,
-                       @Nullable SVNDiffOptions diffOptions,
+                       @Nullable DiffOptions diffOptions,
                        @Nullable ISVNAnnotateHandler handler) throws VcsException {
     try {
       SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
 
-      client.setDiffOptions(diffOptions);
+      client.setDiffOptions(toDiffOptions(diffOptions));
       if (target.isFile()) {
         client.doAnnotate(target.getFile(), pegRevision, startRevision, endRevision, true, includeMergedRevisions, handler, null);
       }

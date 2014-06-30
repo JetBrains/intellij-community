@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
@@ -477,7 +478,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return true;
   }
 
-  private static SVNDiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
-    return SvnConfiguration.getInstance(vcs.getProject()).isIgnoreSpacesInAnnotate() ? new SVNDiffOptions(true, true, true) : null;
+  @Nullable
+  private static DiffOptions getLogClientOptions(@NotNull SvnVcs vcs) {
+    return SvnConfiguration.getInstance(vcs.getProject()).isIgnoreSpacesInAnnotate() ? new DiffOptions(true, true, true) : null;
   }
 }

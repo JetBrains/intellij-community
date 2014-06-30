@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -23,7 +23,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
   public void merge(@NotNull SvnTarget source,
                     @NotNull File destination,
                     boolean dryRun,
-                    @Nullable SVNDiffOptions diffOptions,
+                    @Nullable DiffOptions diffOptions,
                     @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
@@ -43,7 +43,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
                     boolean dryRun,
                     boolean recordOnly,
                     boolean force,
-                    @Nullable SVNDiffOptions diffOptions,
+                    @Nullable DiffOptions diffOptions,
                     @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
@@ -65,7 +65,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
                     boolean dryRun,
                     boolean recordOnly,
                     boolean force,
-                    @Nullable SVNDiffOptions diffOptions,
+                    @Nullable DiffOptions diffOptions,
                     @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source1);
     assertUrl(source2);
@@ -80,10 +80,10 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
   }
 
   @NotNull
-  private SVNDiffClient createClient(@Nullable SVNDiffOptions diffOptions, @Nullable ProgressTracker handler) {
+  private SVNDiffClient createClient(@Nullable DiffOptions diffOptions, @Nullable ProgressTracker handler) {
     SVNDiffClient client = myVcs.getSvnKitManager().createDiffClient();
 
-    client.setMergeOptions(diffOptions);
+    client.setMergeOptions(toDiffOptions(diffOptions));
     client.setEventHandler(toEventHandler(handler));
 
     return client;

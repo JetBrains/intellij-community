@@ -8,9 +8,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -145,5 +147,11 @@ public abstract class BaseSvnClient implements SvnClient {
     }
 
     return result;
+  }
+
+  @Nullable
+  protected static SVNDiffOptions toDiffOptions(@Nullable DiffOptions options) {
+    return options != null ? new SVNDiffOptions(options.isIgnoreAllWhitespace(), options.isIgnoreAmountOfWhitespace(),
+                                                options.isIgnoreEOLStyle()) : null;
   }
 }

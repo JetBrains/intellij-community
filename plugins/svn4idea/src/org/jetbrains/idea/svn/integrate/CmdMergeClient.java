@@ -6,8 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -23,7 +23,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
   public void merge(@NotNull SvnTarget source,
                     @NotNull File destination,
                     boolean dryRun,
-                    @Nullable SVNDiffOptions diffOptions,
+                    @Nullable DiffOptions diffOptions,
                     @Nullable final ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
@@ -42,7 +42,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     boolean dryRun,
                     boolean recordOnly,
                     boolean force,
-                    @Nullable SVNDiffOptions diffOptions,
+                    @Nullable DiffOptions diffOptions,
                     @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source);
 
@@ -65,7 +65,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                     boolean dryRun,
                     boolean recordOnly,
                     boolean force,
-                    @Nullable SVNDiffOptions diffOptions,
+                    @Nullable DiffOptions diffOptions,
                     @Nullable ProgressTracker handler) throws VcsException {
     assertUrl(source1);
     assertUrl(source2);
@@ -87,7 +87,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
                                      boolean recordOnly,
                                      boolean force,
                                      boolean reintegrate,
-                                     @Nullable SVNDiffOptions diffOptions) {
+                                     @Nullable DiffOptions diffOptions) {
     CommandUtil.put(parameters, destination);
     CommandUtil.put(parameters, diffOptions);
     CommandUtil.put(parameters, dryRun, "--dry-run");

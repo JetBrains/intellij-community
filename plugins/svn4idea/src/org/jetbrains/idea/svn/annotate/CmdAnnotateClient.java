@@ -7,9 +7,9 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -32,7 +32,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
                        @NotNull SVNRevision endRevision,
                        @Nullable SVNRevision pegRevision,
                        boolean includeMergedRevisions,
-                       @Nullable SVNDiffOptions diffOptions,
+                       @Nullable DiffOptions diffOptions,
                        @Nullable final ISVNAnnotateHandler handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);

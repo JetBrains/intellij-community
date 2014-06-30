@@ -4,8 +4,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -113,7 +113,7 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable SVNDiffOptions diffOptions) {
+  public static void put(@NotNull List<String> parameters, @Nullable DiffOptions diffOptions) {
     if (diffOptions != null) {
       StringBuilder builder = new StringBuilder();
 
