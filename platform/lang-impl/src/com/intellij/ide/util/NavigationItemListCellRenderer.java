@@ -22,7 +22,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -107,7 +106,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       final PsiElement psiElement = value instanceof PsiElement
                                     ? (PsiElement)value
                                     : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) value);
-      if (psiElement != null) {
+      if (psiElement != null && psiElement.isValid()) {
         final FileColorManager fileColorManager = FileColorManager.getInstance(psiElement.getProject());
         final Color fileColor = fileColorManager.getRendererBackground(psiElement.getContainingFile());
         if (fileColor != null) {
