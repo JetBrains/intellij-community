@@ -294,7 +294,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private void notifyStateChanged() {
-    myBus.syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
+    if (!myProject.isDisposed()) {
+      myBus.syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
+    }
   }
 
   private File getPatchPath(@NonNls final String commitMessage) {

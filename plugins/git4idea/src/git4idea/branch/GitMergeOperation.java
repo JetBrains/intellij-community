@@ -116,7 +116,7 @@ class GitMergeOperation extends GitBranchOperation {
       }
       else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
         LOG.info("Untracked files would be overwritten by merge!");
-        fatalUntrackedFilesError(untrackedOverwrittenByMerge.getFiles());
+        fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByMerge.getRelativeFilePaths());
         fatalErrorHappened = true;
       }
       else {
@@ -187,7 +187,8 @@ class GitMergeOperation extends GitBranchOperation {
     List<GitRepository> allConflictingRepositories = conflictingRepositoriesAndAffectedChanges.getFirst();
     List<Change> affectedChanges = conflictingRepositoriesAndAffectedChanges.getSecond();
 
-    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, "merge", false);
+    Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), localChangesOverwrittenByMerge.getRelativeFilePaths());
+    int smartCheckoutDecision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "merge", false);
     if (smartCheckoutDecision == GitSmartOperationDialog.SMART_EXIT_CODE) {
       return doSmartMerge(allConflictingRepositories);
     }

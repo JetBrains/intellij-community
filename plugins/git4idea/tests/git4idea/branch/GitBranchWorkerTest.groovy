@@ -711,8 +711,12 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
 
     @Override
-    int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation,
-                                 boolean isForcePossible) {
+    int showSmartOperationDialog(
+      @NotNull Project project,
+      @NotNull List<Change> changes,
+      @NotNull Collection<String> paths,
+      @NotNull String operation,
+      boolean isForcePossible) {
       GitSmartOperationDialog.SMART_EXIT_CODE
     }
 
@@ -742,12 +746,13 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
 
     @Override
-    void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
+    void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
       throw new UnsupportedOperationException()
     }
 
     @Override
-    boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal, @NotNull Collection<VirtualFile> untrackedFiles) {
+    boolean showUntrackedFilesDialogWithRollback(
+      @NotNull String operationName, @NotNull String rollbackProposal, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
       throw new UnsupportedOperationException()
     }
 

@@ -29,7 +29,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -49,6 +51,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
+import git4idea.util.UntrackedFilesNotifier;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -397,7 +400,7 @@ public class GitUnstashDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     VirtualFile root = getGitRoot();
-    GitLineHandler h = handler();
+    final GitLineHandler h = handler();
     final AtomicBoolean conflict = new AtomicBoolean();
 
     h.addLineListener(new GitLineHandlerAdapter() {
@@ -407,13 +410,27 @@ public class GitUnstashDialog extends DialogWrapper {
         }
       }
     });
-    int rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
-    ServiceManager.getService(myProject, GitPlatformFacade.class).hardRefresh(root);
+    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
+    h.addLineListener(untrackedFilesDetector);
 
+    final Ref<GitCommandResult> result = Ref.create();
+    ProgressManager.getInstance().run(new Task.Modal(h.project(), GitBundle.getString("unstash.unstashing"), false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(indicator, h, "stash", false));
+        Git git = ServiceManager.getService(Git.class);
+        result.set(git.runCommand(new Computable.PredefinedValueComputable<GitLineHandler>(h)));
+      }
+    });
+
+    ServiceManager.getService(myProject, GitPlatformFacade.class).hardRefresh(root);
+    GitCommandResult res = result.get();
     if (conflict.get()) {
       boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();
       LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
-    } else if (rc != 0) {
+    } else if (untrackedFilesDetector.wasMessageDetected()) {
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root, untrackedFilesDetector.getRelativeFilePaths(),
+                                                               "unstash", null);
+    } else if (!res.success()) {
       GitUIUtil.showOperationErrors(myProject, h.errors(), h.printableCommandLine());
     }
     super.doOKAction();

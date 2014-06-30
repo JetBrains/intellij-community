@@ -128,8 +128,8 @@ public class GitRebaser {
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
-                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root,
+                                                               untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
       return GitUpdateResult.ERROR;
     } else {
       LOG.info("handleRebaseFailure error " + pullHandler.errors());
@@ -382,8 +382,8 @@ public class GitRebaser {
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
-                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root,
+                                                               untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
       return GitUpdateResult.ERROR;
     } else {
       LOG.info("handleRebaseFailure error " + handler.errors());

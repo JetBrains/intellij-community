@@ -135,8 +135,9 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
-                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge", null);
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, myRoot,
+                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getRelativeFilePaths(),
+                                                               "merge", null);
       return GitUpdateResult.ERROR;
     }
     else {

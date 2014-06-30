@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,12 +122,6 @@ public abstract class DvcsPlatformFacadeImpl implements DvcsPlatformFacade {
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
-  }
-
-  @Nullable
-  @Override
-  public VirtualFile getVirtualFileByPath(@NotNull String path) {
-    return VcsUtil.getVirtualFile(path);
   }
 
   @NotNull
