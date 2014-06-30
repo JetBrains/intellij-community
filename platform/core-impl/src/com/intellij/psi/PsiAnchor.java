@@ -32,6 +32,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -103,7 +104,7 @@ public abstract class PsiAnchor {
   public static StubIndexReference createStubReference(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement &&
         element.isPhysical() &&
-        (element instanceof PsiCompiledElement || ((PsiFileImpl)containingFile).getContentElementType() instanceof IStubFileElementType)) {
+        (element instanceof PsiCompiledElement || canHaveStub((PsiFileImpl)containingFile))) {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       final IStubElementType elementType = elt.getElementType();
       if (elt.getStub() != null || elementType.shouldCreateStub(element.getNode())) {
@@ -114,6 +115,14 @@ public abstract class PsiAnchor {
       }
     }
     return null;
+  }
+
+  private static boolean canHaveStub(PsiFileImpl containingFile) {
+    VirtualFile file = containingFile.getVirtualFile();
+    IElementType fileElementType = containingFile.getContentElementType();
+    return fileElementType instanceof IStubFileElementType &&
+           file != null &&
+           ((IStubFileElementType)fileElementType).shouldBuildStubFor(file);
   }
 
   public static int calcStubIndex(StubBasedPsiElement psi) {
