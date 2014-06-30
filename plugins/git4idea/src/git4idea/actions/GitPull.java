@@ -31,6 +31,7 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
@@ -38,10 +39,13 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
+import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
+
+import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 
 /**
  * Git "pull" action
@@ -83,10 +87,14 @@ public class GitPull extends GitRepositoryAction {
         }
 
         final Git git = ServiceManager.getService(Git.class);
+        final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
+          new GitLocalChangesWouldBeOverwrittenDetector(defaultRoot, MERGE);
         GitCommandResult result = git.runRemoteCommand(new Computable<GitLineHandler>() {
           @Override
           public GitLineHandler compute() {
-            return dialog.makeHandler(url);
+            GitLineHandler handler = dialog.makeHandler(url);
+            handler.addLineListener(localChangesDetector);
+            return handler;
           }
         });
         final VirtualFile root = dialog.gitRoot();
@@ -101,6 +109,10 @@ public class GitPull extends GitRepositoryAction {
           GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
           repositoryManager.updateRepository(root);
           runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
+        }
+        else if (localChangesDetector.wasMessageDetected()) {
+          LocalChangesWouldBeOverwrittenHelper.showErrorNotification(repository, project, "pull",
+                                                                     localChangesDetector.getRelativeFilePaths());
         }
         else {
           GitUIUtil.notifyError(project, "Error pulling " + dialog.getRemote(), result.getErrorOutputAsJoinedString(), true, null);
