@@ -580,7 +580,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     if (offsetInLine > end- lineStartOffset) offsetInLine = end - lineStartOffset;
 
     CharSequence text = myDocumentWindow.getCharsSequence();
-    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine, EditorUtil.getTabSize(myDelegate));
+    return EditorUtil.calcColumnNumber(this, text, lineStartOffset, lineStartOffset +offsetInLine);
   }
   private int calcOffset(int col, int lineNumber, int lineStartOffset) {
     if (myDocumentWindow.getTextLength() == 0) return 0;
