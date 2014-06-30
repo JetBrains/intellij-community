@@ -2,13 +2,10 @@
 
 <project name="Fernflower" default="buildAll" basedir=".">
 
-    <taskdef resource="proguard/ant/task.properties"
-   				classpath="${basedir}/lib/proguard_4_11.jar" />
+    <taskdef resource="proguard/ant/task.properties" classpath="${basedir}/lib/proguard_4_11.jar" />
 
-   	<taskdef name="javancss"
-	            classname="javancss.JavancssAntTask">
+   	<taskdef name="javancss" classname="javancss.JavancssAntTask">
    	    <classpath>
-   	        <pathelement path="${classpath}"/>
    	      	<pathelement location="${basedir}/lib/ncss/javancss.jar"/>
    	      	<pathelement location="${basedir}/lib/ncss/javacc.jar"/>
    	      	<pathelement location="${basedir}/lib/ncss/ccl.jar"/>
@@ -59,8 +56,6 @@
 
             -forceprocessing
             -repackageclasses d.ff
-            <!-- -allowaccessmodification -->
-
             -optimizationpasses 5
 
             -keep public class de.fernflower.main.decompiler.ConsoleDecompiler {
@@ -74,12 +69,6 @@
             -keep public class de.fernflower.main.extern.* {
                 public protected *;
             }
-
-            <!--
-            -keep public class de.fernflower.code.instructions.* {
-                public protected *;
-            }
-            -->
         </proguard>
     </target>
 
@@ -108,7 +97,6 @@
 
 	<target name="printunused" depends="init" description="Print unused code">
 	  <proguard>
-
 	  	-injars      ${fulldist}/${jar.file}
 	  	-libraryjars ${java.home}/lib/rt.jar
 
@@ -116,12 +104,6 @@
 	  	-dontobfuscate
 	  	-dontpreverify
 	  	-printusage
-
-	  	<!--
-	  	-whyareyoukeeping public class de.fernflower.code.instructions.ALOAD {
-	  		public *;
-	  	}
-	  	-->
 
 	  	-keep public class de.fernflower.main.decompiler.ConsoleDecompiler {
 	  	    public protected *;
@@ -134,11 +116,6 @@
 	  	-keep public class de.fernflower.main.extern.* {
 	  	    public protected *;
 	  	}
-
-	  	<!--
-	  	-keep public class de.fernflower.code.instructions.*
-	  	-->
-
 	  </proguard>
 	</target>
 
