@@ -292,7 +292,7 @@ abstract class GitBranchOperation {
     for (GitRepository repository : repositories) {
       try {
         Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(myGit, repository, currentBranch, otherBranch);
-        List<Change> changesInRepo = GitUtil.findLocalChangesForPaths(myProject, repository, diff, false);
+        List<Change> changesInRepo = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), diff, false);
         if (!changesInRepo.isEmpty()) {
           changes.put(repository, changesInRepo);
         }
@@ -323,8 +323,9 @@ abstract class GitBranchOperation {
     String currentBranch, String nextBranch) {
 
     // get changes overwritten by checkout from the error message captured from Git
-    List<Change> affectedChanges = GitUtil.findLocalChangesForPaths(myProject, currentRepository,
-                                                                    localChangesOverwrittenBy.getRelativeFilePaths(), true);
+    List<Change> affectedChanges = GitUtil.findLocalChangesForPaths(myProject, currentRepository.getRoot(),
+                                                                    localChangesOverwrittenBy.getRelativeFilePaths(), true
+    );
     // get all other conflicting changes
     // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
     Map<GitRepository, List<Change>> conflictingChangesInRepositories =

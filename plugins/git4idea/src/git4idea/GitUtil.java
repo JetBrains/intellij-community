@@ -974,11 +974,11 @@ public class GitUtil {
    * If a path is not found in the local changes, it is ignored, but the fact is logged.
    */
   @NotNull
-  public static List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull GitRepository repository,
+  public static List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull VirtualFile root,
                                                       @NotNull Collection<String> affectedPaths, boolean relativePaths) {
     List<Change> affectedChanges = new ArrayList<Change>();
     for (String path : affectedPaths) {
-      String absolutePath = relativePaths ? toAbsolute(repository.getRoot(), path) : path;
+      String absolutePath = relativePaths ? toAbsolute(root, path) : path;
       VirtualFile file = findRefreshFileOrLog(absolutePath);
       if (file != null) {
         Change change = ChangeListManager.getInstance(project).getChange(file);

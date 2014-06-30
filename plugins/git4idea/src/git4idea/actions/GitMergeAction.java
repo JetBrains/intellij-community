@@ -120,7 +120,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
     }
     else if (localChangesDetector.wasMessageDetected()) {
-      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(repository, project, getActionName(),
+      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, repository.getRoot(), getActionName(),
                                                                  localChangesDetector.getRelativeFilePaths());
     }
     else if (untrackedFilesDetector.wasMessageDetected()) {

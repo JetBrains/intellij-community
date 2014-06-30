@@ -23,8 +23,8 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
-import git4idea.repo.GitRepository;
 import git4idea.ui.ChangesBrowserWithRollback;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,10 +56,10 @@ public class LocalChangesWouldBeOverwrittenHelper {
     }
   }
 
-  public static void showErrorNotification(@NotNull GitRepository repository, @NotNull final Project project,
-                                           @NotNull final String operationName, @NotNull final Collection<String> relativeFilePaths) {
-    final Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), relativeFilePaths);
-    final List<Change> changes = GitUtil.findLocalChangesForPaths(project, repository, absolutePaths, false);
+  public static void showErrorNotification(@NotNull final Project project, @NotNull VirtualFile root, @NotNull final String operationName,
+                                           @NotNull final Collection<String> relativeFilePaths) {
+    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
+    final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
     String notificationTitle = "Git " + StringUtil.capitalize(operationName) + " Failed";
     VcsNotifier.getInstance(project).notifyError(notificationTitle, getErrorNotificationDescription(),
       new NotificationListener.Adapter() {
