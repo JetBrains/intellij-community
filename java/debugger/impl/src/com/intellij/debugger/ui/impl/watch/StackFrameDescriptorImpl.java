@@ -58,6 +58,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private boolean myIsInLibraryContent;
   private ObjectReference myThisObject;
   private Color myBackgroundColor;
+  private SourcePosition mySourcePosition;
 
   private Icon myIcon = AllIcons.Debugger.StackFrame;
 
@@ -73,8 +74,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
-          final SourcePosition position = ContextUtil.getSourcePosition(StackFrameDescriptorImpl.this);
-          final PsiFile file = position != null? position.getFile() : null;
+          mySourcePosition = ContextUtil.getSourcePosition(StackFrameDescriptorImpl.this);
+          final PsiFile file = mySourcePosition != null? mySourcePosition.getFile() : null;
           if (file == null) {
             myIsInLibraryContent = true;
           }
@@ -271,6 +272,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public Location getLocation() {
     return myLocation;
+  }
+
+  public SourcePosition getSourcePosition() {
+    return mySourcePosition;
   }
 
   private Icon calcIcon() {
