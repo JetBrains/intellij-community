@@ -110,7 +110,12 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
       }
     }
 
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+    ListPopup popup = updatePopupSize(JBPopupFactory.getInstance().createListPopup(step), languages);
+    popup.showCenteredInCurrentWindow(project);
+  }
+
+  @NotNull
+  public static ListPopup updatePopupSize(@NotNull ListPopup popup, @NotNull List<Language> languages) {
     int nameLen = 0;
     for (Language language : languages) {
       nameLen = Math.max(nameLen, language.getDisplayName().length());
@@ -120,7 +125,7 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
       size.height *= MAX_VISIBLE_SIZE;
       popup.setSize(size);
     }
-    popup.showCenteredInCurrentWindow(project);
+    return popup;
   }
 
   public static void doAction(@NotNull Project project, @NotNull Language language) {
@@ -130,10 +135,10 @@ public class CreateScratchFileAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static List<Language> getLanguages() {
+  public static List<Language> getLanguages() {
     Set<Language> result = ContainerUtil.newTreeSet(new Comparator<Language>() {
       @Override
-      public int compare(Language l1, Language l2) {
+      public int compare(@NotNull Language l1, @NotNull Language l2) {
         return l1.getDisplayName().compareTo(l2.getDisplayName());
       }
     });

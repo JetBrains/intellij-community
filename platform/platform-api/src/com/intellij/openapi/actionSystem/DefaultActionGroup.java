@@ -76,6 +76,15 @@ public class DefaultActionGroup extends ActionGroup {
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, false);
+    addActions(actions);
+  }
+
+  public DefaultActionGroup(@NotNull String name, @NotNull List<? extends AnAction> actions) {
+    this(name, false);
+    addActions(actions);
+  }
+
+  private void addActions(@NotNull List<? extends AnAction> actions) {
     for (AnAction action : actions) {
       add(action);
     }

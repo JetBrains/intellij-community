@@ -873,6 +873,7 @@
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
 
     <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
+    <fileIconProvider implementation="com.intellij.ide.scratch.ScratchpadIconProvider"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
