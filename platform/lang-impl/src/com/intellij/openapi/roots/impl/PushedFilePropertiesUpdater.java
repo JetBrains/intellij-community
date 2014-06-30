@@ -62,6 +62,7 @@ public class PushedFilePropertiesUpdater {
   private final Queue<Runnable> myTasks = new ConcurrentLinkedQueue<Runnable>();
   private final MessageBusConnection myConnection;
 
+  @NotNull
   public static PushedFilePropertiesUpdater getInstance(Project project) {
     return project.getComponent(PushedFilePropertiesUpdater.class);
   }
