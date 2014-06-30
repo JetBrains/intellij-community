@@ -36,7 +36,7 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
+  public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
     ScrollingModel scrollingModel = editor.getScrollingModel();
@@ -62,12 +62,15 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
           else {
             caretModel.moveToOffset(myDirection == Direction.RIGHT ? end : start);
           }
-          scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+          if (caret == editor.getCaretModel().getPrimaryCaret()) {
+            scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+          }
           return;
         }
       }
     }
-    final boolean scrollToCaret = !(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret();
+    final boolean scrollToCaret = (!(editor instanceof EditorImpl) || ((EditorImpl)editor).isScrollToCaret())
+                                  && caret == editor.getCaretModel().getPrimaryCaret();
     caretModel.moveCaretRelatively(myDirection == Direction.RIGHT ? 1 : -1, 0, false, false, scrollToCaret);
   }
 }
