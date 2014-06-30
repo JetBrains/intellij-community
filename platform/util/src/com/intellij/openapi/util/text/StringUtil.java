@@ -519,7 +519,7 @@ public class StringUtil extends StringUtilRt {
           else if (additionalChars != null && additionalChars.indexOf(ch) > -1 && (escapeSlash || prev != '\\')) {
             buffer.append("\\").append(ch);
           }
-          else if (Character.isISOControl(ch)) {
+          else if (!isPrintableUnicode(ch)) {
             String hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
@@ -535,6 +535,12 @@ public class StringUtil extends StringUtilRt {
       prev = ch;
     }
     return buffer;
+  }
+
+  private static boolean isPrintableUnicode(char c) {
+    int t = Character.getType(c);
+    return t != Character.UNASSIGNED && t != Character.LINE_SEPARATOR && t != Character.PARAGRAPH_SEPARATOR &&
+           t != Character.CONTROL && t != Character.FORMAT && t != Character.PRIVATE_USE && t != Character.SURROGATE;
   }
 
   @NotNull
