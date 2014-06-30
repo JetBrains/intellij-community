@@ -15,9 +15,11 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 
+import javax.xml.bind.annotation.*;
 import java.util.Date;
 
 /**
@@ -25,22 +27,18 @@ import java.util.Date;
  */
 public class CommitInfo {
 
-  public static final CommitInfo EMPTY = new CommitInfo(-1, null, null, null);
+  public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevision(-1).build();
 
   private final long myRevision;
   private final Date myDate;
   private final String myAuthor;
   @Nullable private final SVNErrorMessage myErrorMessage;
 
-  public CommitInfo(long revision, String author, Date date) {
-    this(revision, author, date, null);
-  }
-
-  public CommitInfo(long revision, String author, Date date, @Nullable SVNErrorMessage error) {
-    myRevision = revision;
-    myAuthor = author;
-    myDate = date;
-    myErrorMessage = error;
+  private CommitInfo(@NotNull CommitInfo.Builder builder) {
+    myRevision = builder.revision;
+    myAuthor = builder.author;
+    myDate = builder.date;
+    myErrorMessage = builder.error;
   }
 
   public long getRevision() {
@@ -58,5 +56,63 @@ public class CommitInfo {
   @Nullable
   public SVNErrorMessage getErrorMessage() {
     return myErrorMessage;
+  }
+
+  @XmlAccessorType(XmlAccessType.NONE)
+  @XmlType(name = "commit")
+  @XmlRootElement(name = "commit")
+  public static class Builder {
+
+    @XmlAttribute(name = "revision")
+    private long revision;
+
+    @XmlElement(name = "author")
+    private String author;
+
+    @XmlElement(name = "date")
+    private Date date;
+
+    @Nullable private SVNErrorMessage error;
+
+    public long getRevision() {
+      return revision;
+    }
+
+    public String getAuthor() {
+      return author;
+    }
+
+    public Date getDate() {
+      return date;
+    }
+
+    @NotNull
+    public Builder setRevision(long revision) {
+      this.revision = revision;
+      return this;
+    }
+
+    @NotNull
+    public Builder setAuthor(String author) {
+      this.author = author;
+      return this;
+    }
+
+    @NotNull
+    public Builder setDate(Date date) {
+      this.date = date;
+      return this;
+    }
+
+    @NotNull
+    public Builder setError(@Nullable SVNErrorMessage error) {
+      this.error = error;
+      return this;
+    }
+
+    @NotNull
+    public CommitInfo build() {
+      return new CommitInfo(this);
+    }
   }
 }

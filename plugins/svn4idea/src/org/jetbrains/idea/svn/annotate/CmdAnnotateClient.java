@@ -4,6 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
@@ -91,8 +92,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     @XmlAttribute(name = "line-number")
     public int lineNumber;
 
-    @XmlElement(name = "commit")
-    public CommitEntry commit;
+    public CommitInfo.Builder commit;
 
     @XmlElement(name = "merged")
     public MergedEntry merged;
@@ -130,31 +130,19 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
       return merged != null ? date(merged.commit) : null;
     }
 
-    private static long revision(@Nullable CommitEntry commit) {
-      return commit != null ? commit.revision : 0;
+    private static long revision(@Nullable CommitInfo.Builder commit) {
+      return commit != null ? commit.getRevision() : 0;
     }
 
     @Nullable
-    private static String author(@Nullable CommitEntry commit) {
-      return commit != null ? commit.author : null;
+    private static String author(@Nullable CommitInfo.Builder commit) {
+      return commit != null ? commit.getAuthor() : null;
     }
 
     @Nullable
-    private static Date date(@Nullable CommitEntry commit) {
-      return commit != null ? commit.date : null;
+    private static Date date(@Nullable CommitInfo.Builder commit) {
+      return commit != null ? commit.getDate() : null;
     }
-  }
-
-  public static class CommitEntry {
-
-    @XmlAttribute(name = "revision")
-    public long revision;
-
-    @XmlElement(name = "author")
-    public String author;
-
-    @XmlElement(name = "date")
-    public Date date;
   }
 
   public static class MergedEntry {
@@ -162,7 +150,6 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     @XmlAttribute(name = "path")
     public String path;
 
-    @XmlElement(name = "commit")
-    public CommitEntry commit;
+    public CommitInfo.Builder commit;
   }
 }

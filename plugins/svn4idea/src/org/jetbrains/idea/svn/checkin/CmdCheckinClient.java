@@ -29,7 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -88,7 +91,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
     long revision = validateRevisionNumber(listener.getCommittedRevision());
 
-    return new CommitInfo[]{new CommitInfo(revision, null, null)};
+    return new CommitInfo[]{new CommitInfo.Builder().setRevision(revision).build()};
   }
 
   private static long validateRevisionNumber(long revision) throws VcsException {
