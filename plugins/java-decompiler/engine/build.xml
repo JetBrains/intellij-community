@@ -58,7 +58,7 @@
             -libraryjars "${rt_jar}"
 
             -forceprocessing
-            -repackageclasses
+            -repackageclasses d.ff
             <!-- -allowaccessmodification -->
 
             -optimizationpasses 5
