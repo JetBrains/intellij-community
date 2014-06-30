@@ -89,15 +89,6 @@ public class GitMergeDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   private final GitVcs myVcs;
 
-
-
-  /**
-   * A constructor
-   *
-   * @param project     a project to select
-   * @param roots       a git repository roots for the project
-   * @param defaultRoot a guessed default root
-   */
   public GitMergeDialog(@NotNull Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("merge.branch.title"));
@@ -126,9 +117,6 @@ public class GitMergeDialog extends DialogWrapper {
     init();
   }
 
-  /**
-   * Initialize {@link #myBranchChooser} component
-   */
   private void initBranchChooser() {
     myBranchChooser = new ElementsChooser<String>(true);
     myBranchChooser.setToolTipText(GitBundle.getString("merge.branches.tooltip"));
@@ -210,32 +198,20 @@ public class GitMergeDialog extends DialogWrapper {
   }
 
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.MergeBranches";
   }
 
-  /**
-   * @return selected root
-   */
   public VirtualFile getSelectedRoot() {
     return (VirtualFile)myGitRoot.getSelectedItem();
   }
