@@ -28,15 +28,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
+import git4idea.commands.*;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
+import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,11 +81,14 @@ abstract class GitMergeAction extends GitRepositoryAction {
         final Git git = ServiceManager.getService(Git.class);
         final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(selectedRoot, MERGE);
+        final GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = 
+          new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
         GitCommandResult result = git.runCommand(new Computable<GitLineHandler>() {
           @Override
           public GitLineHandler compute() {
             GitLineHandler handler = handlerProvider.compute();
             handler.addLineListener(localChangesDetector);
+            handler.addLineListener(untrackedFilesDetector);
             return handler;
           }
         });
@@ -100,15 +101,15 @@ abstract class GitMergeAction extends GitRepositoryAction {
           return;
         }
         final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
-        handleResult(result, project, localChangesDetector, repository, currentRev, affectedRoots, beforeLabel);
+        handleResult(result, project, localChangesDetector, untrackedFilesDetector, repository, currentRev, affectedRoots, beforeLabel);
       }
 
     }.queue();
   }
 
-  private void handleResult(GitCommandResult result, Project project,
-                            GitLocalChangesWouldBeOverwrittenDetector localChangesDetector,
-                            GitRepository repository, GitRevisionNumber currentRev, Set<VirtualFile> affectedRoots, Label beforeLabel) {
+  private void handleResult(GitCommandResult result, Project project, GitLocalChangesWouldBeOverwrittenDetector localChangesDetector, 
+                            GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector, GitRepository repository, 
+                            GitRevisionNumber currentRev, Set<VirtualFile> affectedRoots, Label beforeLabel) {
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
     VirtualFile root = repository.getRoot();
     if (result.success()) {
@@ -121,6 +122,10 @@ abstract class GitMergeAction extends GitRepositoryAction {
     else if (localChangesDetector.wasMessageDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(repository, project, getActionName(),
                                                                  localChangesDetector.getRelativeFilePaths());
+    }
+    else if (untrackedFilesDetector.wasMessageDetected()) {
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.getRelativeFilePaths(),
+                                                               getActionName(), null);
     }
     else {
       GitUIUtil.notifyError(project, "Git " + getActionName() + " Failed", result.getErrorOutputAsJoinedString(), true, null);
