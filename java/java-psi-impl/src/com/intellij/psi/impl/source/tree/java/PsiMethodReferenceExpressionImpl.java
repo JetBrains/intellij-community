@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -45,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -228,7 +226,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   @Override
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {
     if (newQualifier == null) {
-      super.setQualifierExpression(newQualifier);
+      LOG.error("Forbidden null qualifier");
       return;
     }
     final PsiExpression expression = getQualifierExpression();
