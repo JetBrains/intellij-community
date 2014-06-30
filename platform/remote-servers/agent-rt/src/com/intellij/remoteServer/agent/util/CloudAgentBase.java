@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.util;
+package com.intellij.remoteServer.agent.util;
 
-import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+import com.intellij.remoteServer.agent.annotation.ChildCall;
+import com.intellij.remoteServer.agent.annotation.FinalCall;
 
-public abstract class CloudApplicationRuntime extends DeploymentRuntime {
+public interface CloudAgentBase<Config extends CloudAgentConfig> extends CloudAgent {
 
-  private final String myApplicationName;
+  void connect(Config config, CloudAgentCallback callback, CloudAgentLogger logger, CloudAgentErrorHandler errorHandler);
 
-  public CloudApplicationRuntime(String applicationName) {
-    myApplicationName = applicationName;
-  }
+  @FinalCall
+  void disconnect();
 
-  public String getApplicationName() {
-    return myApplicationName;
-  }
+  @ChildCall
+  CloudAgentApplication createApplication(String applicationName);
 }

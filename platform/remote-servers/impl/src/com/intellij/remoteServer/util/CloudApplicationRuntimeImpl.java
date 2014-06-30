@@ -15,17 +15,21 @@
  */
 package com.intellij.remoteServer.util;
 
-import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+import com.intellij.remoteServer.agent.util.CloudAgentApplication;
+import com.intellij.remoteServer.agent.util.CloudAgentBase;
+import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 
-public abstract class CloudApplicationRuntime extends DeploymentRuntime {
+public class CloudApplicationRuntimeImpl extends CloudApplicationRuntimeBase {
 
-  private final String myApplicationName;
+  private final CloudAgentApplication myAgentApplication;
 
-  public CloudApplicationRuntime(String applicationName) {
-    myApplicationName = applicationName;
+  public CloudApplicationRuntimeImpl(ServerTaskExecutor taskExecutor, CloudAgentBase agent, String applicationName) {
+    super(taskExecutor, applicationName);
+    myAgentApplication = agent.createApplication(applicationName);
   }
 
-  public String getApplicationName() {
-    return myApplicationName;
+  @Override
+  protected CloudAgentApplication getApplication() {
+    return myAgentApplication;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remoteServer.util;
+package com.intellij.remoteServer.agent.util;
 
-import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+/**
+ * @author michael.golubev
+ */
+public interface CloudRemoteApplication {
 
-public abstract class CloudApplicationRuntime extends DeploymentRuntime {
+  String getName();
 
-  private final String myApplicationName;
-
-  public CloudApplicationRuntime(String applicationName) {
-    myApplicationName = applicationName;
-  }
-
-  public String getApplicationName() {
-    return myApplicationName;
-  }
+  String getWebUrl();
 }

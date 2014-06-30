@@ -20,11 +20,8 @@ import com.intellij.remoteServer.agent.annotation.AsyncCall;
 /**
  * @author michael.golubev
  */
-public interface CloudAgentDeployment {
+public interface CloudAgentDeployment extends CloudAgentApplication {
 
   @AsyncCall
   void deploy(CloudAgentDeploymentCallback callback);
-
-  @AsyncCall
-  void undeploy(CloudAgentDeploymentCallback callback);
 }
