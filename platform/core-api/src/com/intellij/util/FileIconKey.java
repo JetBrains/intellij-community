@@ -15,10 +15,14 @@
  */
 package com.intellij.util;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,9 +31,11 @@ class FileIconKey {
   private final VirtualFile myFile;
   private final Project myProject;
   @Iconable.IconFlags private final int myFlags;
+  @Nullable private final Language myInitialLanguage;
 
   FileIconKey(@NotNull VirtualFile file, final Project project, @Iconable.IconFlags int flags) {
     myFile = file;
+    myInitialLanguage = myFile instanceof LightVirtualFile ? ((LightVirtualFile)myFile).getLanguage() : null;
     myProject = project;
     myFlags = flags;
   }
@@ -43,6 +49,7 @@ class FileIconKey {
 
     if (myFlags != that.myFlags) return false;
     if (!myFile.equals(that.myFile)) return false;
+    if (!Comparing.equal(myInitialLanguage, that.myInitialLanguage)) return false;
     if (myProject != null ? !myProject.equals(that.myProject) : that.myProject != null) return false;
 
     return true;
