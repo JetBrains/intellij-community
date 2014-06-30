@@ -31,7 +31,7 @@ public class HgIdentifyCommand {
   public HgCommandResult execute(@NotNull ModalityState state) {
     final List<String> arguments = new LinkedList<String>();
     arguments.add(source);
-    final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(project, source, state);
+    final HgRemoteCommandExecutor executor = new HgRemoteCommandExecutor(project, source, state, false);
     executor.setSilent(true);
     return executor.executeInCurrentThread(null, "identify", arguments);
   }

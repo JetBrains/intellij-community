@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -70,7 +71,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       String currentRevision = repository.getCurrentRevision();
       LOG.assertTrue(currentRevision != null,
                      "Current revision is null for " + repository + ". Compare with branch shouldn't be available for fresh repository");
-      head = GitUtil.getShortHash(currentRevision);
+      head = DvcsUtil.getShortHash(currentRevision);
     }
     else {
       head = currentBranch.getName();

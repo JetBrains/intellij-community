@@ -25,7 +25,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
-public class HgCreateTagAction extends HgAbstractGlobalAction {
+public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
 
   public void execute(@NotNull final Project project,
                       @NotNull Collection<HgRepository> repositories,

@@ -38,9 +38,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.openapi.vcs.Executor.overwrite;
 import static com.intellij.openapi.vcs.Executor.touch;
-import static git4idea.GitUtil.getShortHash;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;

@@ -371,6 +371,14 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   public static Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
                                                                @NotNull final ProgressIndicator progressIndicator,
                                                                @Nullable final Runnable continuation) {
+    return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, ModalityState.NON_MODAL);
+  }
+
+  @NotNull
+  public static Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
+                                                               @NotNull final ProgressIndicator progressIndicator,
+                                                               @Nullable final Runnable continuation,
+                                                               @NotNull final ModalityState modalityState) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
@@ -397,7 +405,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
             public void run() {
               task.onCancel();
             }
-          }, ModalityState.NON_MODAL);
+          }, modalityState);
         }
         else {
           final Task.NotificationInfo notificationInfo = task.notifyFinished();
@@ -412,7 +420,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
             public void run() {
               task.onSuccess();
             }
-          }, ModalityState.NON_MODAL);
+          }, modalityState);
         }
       }
     };

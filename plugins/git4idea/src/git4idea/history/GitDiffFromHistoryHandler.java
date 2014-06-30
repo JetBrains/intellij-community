@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.components.ServiceManager;
@@ -116,7 +117,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   @NotNull
   @Override
   protected String getPresentableName(@NotNull GitFileRevision revision) {
-    return GitUtil.getShortHash(revision.getHash());
+    return DvcsUtil.getShortHash(revision.getHash());
   }
 
   @NotNull
@@ -301,7 +302,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     @NotNull private final GitFileRevision myParentRevision;
 
     public ShowDiffWithParentAction(@NotNull FilePath filePath, @NotNull GitFileRevision rev, @NotNull GitFileRevision parent) {
-      super(GitUtil.getShortHash(parent.getHash()));
+      super(DvcsUtil.getShortHash(parent.getHash()));
       myFilePath = filePath;
       myRevision = rev;
       myParentRevision = parent;

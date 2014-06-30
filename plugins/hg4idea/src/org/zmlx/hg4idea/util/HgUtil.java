@@ -584,11 +584,16 @@ public abstract class HgUtil {
     if (state != HgRepository.State.NORMAL) {
       branchText += state.toString() + " ";
     }
+    return branchText + getActiveBranchName(repository);
+  }
+
+  @NotNull
+  public static String getActiveBranchName(@NotNull HgRepository repository) {
     String branchOrBookMarkName = repository.getCurrentBookmark();
     if (StringUtil.isEmptyOrSpaces(branchOrBookMarkName)) {
       branchOrBookMarkName = repository.getCurrentBranch();
     }
-    return branchText + branchOrBookMarkName;
+    return branchOrBookMarkName;
   }
 
   @NotNull

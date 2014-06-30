@@ -102,7 +102,6 @@ public class GitUtil {
   public static final String DOT_GIT = ".git";
 
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
-  private static final int SHORT_HASH_LENGTH = 8;
 
   public static final Predicate<GitBranchTrackInfo> NOT_NULL_PREDICATE = new Predicate<GitBranchTrackInfo>() {
     @Override
@@ -826,17 +825,6 @@ public class GitUtil {
         return remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]";
       }
     }, "\n");
-  }
-
-  @NotNull
-  public static String getShortHash(@NotNull String hash) {
-    if (hash.length() == 0) return "";
-    if (hash.length() == 40) return hash.substring(0, SHORT_HASH_LENGTH);
-    if (hash.length() > 40)  // revision string encoded with date too
-    {
-      return hash.substring(hash.indexOf("[") + 1, SHORT_HASH_LENGTH);
-    }
-    return hash;
   }
 
   @NotNull

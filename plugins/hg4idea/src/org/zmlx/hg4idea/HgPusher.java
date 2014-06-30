@@ -16,26 +16,18 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
-import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgPushDialog;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,17 +46,17 @@ public class HgPusher {
     myProject = project;
   }
 
-  public void showDialogAndPush (@NotNull Collection<HgRepository> repositories,@Nullable final HgRepository selectedRepo) {
+ /* public void showDialogAndPush(@NotNull List<? extends Repository> selectedRepositories) {
 
-    if (repositories.isEmpty()) {
+    if (selectedRepositories.isEmpty()) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
       return;
     }
     final AtomicReference<HgPushCommand> pushCommand = new AtomicReference<HgPushCommand>();
     final HgPushDialog dialog = new HgPushDialog(myProject, repositories, selectedRepo);
     dialog.show();
-    if (dialog.isOK()) {
-      pushCommand.set(preparePushCommand(myProject, dialog));
+    if (d2.isOK()) {
+     pushCommand.set(preparePushCommand(myProject, dialog));
       new Task.Backgroundable(myProject, "Pushing...", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -74,9 +66,9 @@ public class HgPusher {
         }
       }.queue();
     }
-  }
+  }*/
 
-  private static void push(final Project project, HgPushCommand command) {
+  public static void push(final Project project, HgPushCommand command) {
     final VirtualFile repo = command.getRepo();
     command.execute(new HgCommandResultHandler() {
       @Override
@@ -91,9 +83,11 @@ public class HgPusher {
           String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
                                                     repo.getPresentableName());
           VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
-        } else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
+        }
+        else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
           VcsNotifier.getInstance(project).notifySuccess("Nothing to push");
-        } else {
+        }
+        else {
           new HgCommandResultNotifier(project).notifyError(result, "Push failed",
                                                            "Failed to push to [" + repo.getPresentableName() + "]");
         }

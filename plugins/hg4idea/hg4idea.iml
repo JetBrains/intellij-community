@@ -16,9 +16,10 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="dvcs" />
+    <orderEntry type="module" module-name="dvcs-impl" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-log-impl" />
+    <orderEntry type="module" module-name="dvcs-api" />
   </component>
 </module>
 
