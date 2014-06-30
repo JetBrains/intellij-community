@@ -77,27 +77,11 @@ public class GitHandlerUtil {
    * @param operationName  an operation name shown in failure dialog
    * @return An exit code
    */
-  public static int doSynchronously(final GitLineHandler handler, String operationTitle, @NonNls final String operationName) {
-    return doSynchronously(handler, operationTitle, operationName, true);
-  }
-
-  /**
-   * Execute simple process synchronously with progress
-   *
-   * @param handler        a handler
-   * @param operationTitle an operation title shown in progress dialog
-   * @param operationName  an operation name shown in failure dialog
-   * @param showErrors     if true, the errors are shown when process is terminated
-   * @return An exit code
-   */
-  public static int doSynchronously(final GitLineHandler handler,
-                                    final String operationTitle,
-                                    @NonNls final String operationName,
-                                    final boolean showErrors) {
+  public static int doSynchronously(final GitLineHandler handler, final String operationTitle, @NonNls final String operationName) {
     final ProgressManager manager = ProgressManager.getInstance();
     manager.run(new Task.Modal(handler.project(), operationTitle, false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, showErrors));
+        handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, true));
         runInCurrentThread(handler, indicator, true, operationTitle);
       }
     });
