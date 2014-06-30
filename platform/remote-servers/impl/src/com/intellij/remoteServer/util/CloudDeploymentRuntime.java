@@ -16,7 +16,7 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.remoteServer.agent.util.CloudApplication;
+import com.intellij.remoteServer.agent.util.CloudRemoteApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author michael.golubev
  */
-public abstract class CloudDeploymentRuntime extends CloudApplicationRuntime {
+public abstract class CloudDeploymentRuntime extends CloudGitApplicationRuntime {
 
   private final DeploymentTask myTask;
 
@@ -47,7 +47,7 @@ public abstract class CloudDeploymentRuntime extends CloudApplicationRuntime {
 
   public void deploy(ServerRuntimeInstance.DeploymentOperationCallback callback) {
     try {
-      CloudApplication application = deploy();
+      CloudRemoteApplication application = deploy();
 
       DeploymentLogManager logManager = getLogManager();
       if (logManager != null) {
@@ -68,5 +68,5 @@ public abstract class CloudDeploymentRuntime extends CloudApplicationRuntime {
     return myTask.getProject();
   }
 
-  public abstract CloudApplication deploy() throws ServerRuntimeException;
+  public abstract CloudRemoteApplication deploy() throws ServerRuntimeException;
 }

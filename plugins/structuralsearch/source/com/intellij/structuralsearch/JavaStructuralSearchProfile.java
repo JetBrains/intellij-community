@@ -296,7 +296,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
       private void checkModifier(final String name) {
         if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
-            !MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME.equals(name) &&
+            !PsiModifier.PACKAGE_LOCAL.equals(name) &&
             Arrays.binarySearch(JavaMatchingVisitor.MODIFIERS, name) < 0
           ) {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));

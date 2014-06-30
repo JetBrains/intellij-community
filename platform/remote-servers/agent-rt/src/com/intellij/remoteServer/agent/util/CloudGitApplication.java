@@ -18,7 +18,7 @@ package com.intellij.remoteServer.agent.util;
 /**
  * @author michael.golubev
  */
-public interface CloudGitApplication extends CloudApplication {
+public interface CloudGitApplication extends CloudRemoteApplication {
 
   String getGitUrl();
 }

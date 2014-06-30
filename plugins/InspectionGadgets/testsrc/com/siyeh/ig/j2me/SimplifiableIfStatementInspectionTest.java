@@ -1,11 +1,16 @@
 package com.siyeh.ig.j2me;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class SimplifiableIfStatementInspectionTest extends IGInspectionTestCase {
+public class SimplifiableIfStatementInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/j2me/simplifiable_if_statement",
-           new SimplifiableIfStatementInspection());
+  public void testSimplifiableIfStatement() throws Exception {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new SimplifiableIfStatementInspection();
   }
 }

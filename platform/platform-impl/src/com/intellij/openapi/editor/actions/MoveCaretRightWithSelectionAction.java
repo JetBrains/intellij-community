@@ -25,6 +25,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -40,8 +41,9 @@ public class MoveCaretRightWithSelectionAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      editor.getCaretModel().moveCaretRelatively(1, 0, true, editor.isColumnMode(), true);
+    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+      editor.getCaretModel().moveCaretRelatively(1, 0, true, editor.isColumnMode(),
+                                                 caret == editor.getCaretModel().getPrimaryCaret());
     }
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.structuralsearch;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -46,7 +45,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
-  @NonNls public static final String PACKAGE_LOCAL_MODIFIER_NAME = PsiModifier.PACKAGE_LOCAL;
 
   //private static final String UNDEFINED_SCOPE = "undefined";
 

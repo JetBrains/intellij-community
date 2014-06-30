@@ -5,25 +5,25 @@ public class SimplifiableIfStatement {
         boolean a = bar();
         boolean b = bar();
         final boolean i;
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'i = !a || b;'">if</warning> (a) {
             i = b;
         } else {
             i = true;
         }
         final boolean j;
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'j = a || b;'">if</warning> (a) {
             j = true;
         } else {
             j = b;
         }
         final boolean k;
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'k = a && b;'">if</warning> (a) {
             k = b;
         } else {
             k = false;
         }
         final boolean l;
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'l = !a && b;'">if</warning> (a) {
             l = false;
         } else {
             l = b;
@@ -37,7 +37,7 @@ public class SimplifiableIfStatement {
     public boolean foo1() {
         boolean a = bar();
         boolean b = bar();
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'return !a || b;'">if</warning> (a) {
             return b;
         } else {
             return true;
@@ -47,7 +47,7 @@ public class SimplifiableIfStatement {
     public boolean foo2() {
         boolean a = bar();
         boolean b = bar();
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'return a || b;'">if</warning> (a) {
             return true;
         } else {
             return b;
@@ -57,7 +57,7 @@ public class SimplifiableIfStatement {
     public boolean foo3() {
         boolean a = bar();
         boolean b = bar();
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'return !a && b;'">if</warning> (a) {
             return false;
         } else {
             return b;
@@ -67,7 +67,7 @@ public class SimplifiableIfStatement {
     public boolean foo4() {
         boolean a = bar();
         boolean b = bar();
-        if (a) {
+        <warning descr="'if' statement can be replaced with 'return a && b;'">if</warning> (a) {
             return b;
         } else {
             return false;
@@ -76,7 +76,7 @@ public class SimplifiableIfStatement {
 
   public static boolean original(boolean a, boolean b, boolean c, boolean d) {
 
-    if (!(a || b)) {
+    <warning descr="'if' statement can be replaced with 'return (a || b) && (c || d);'">if</warning> (!(a || b)) {
       return false;
     }
 
@@ -100,7 +100,7 @@ public class SimplifiableIfStatement {
   }
 
   boolean m(boolean b1, boolean b2, boolean b3, boolean b4, boolean i) {
-    if (b1 == b2 == b3 == b4) {
+    <warning descr="'if' statement can be replaced with 'return b1!=b2==b3!=b4 && (i = true);'">if</warning> (b1 == b2 == b3 == b4) {
       return false;
     }
     return i = true;

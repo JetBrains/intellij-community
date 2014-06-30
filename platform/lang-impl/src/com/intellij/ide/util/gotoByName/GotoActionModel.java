@@ -651,7 +651,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     private MatchMode myMode;
     private String myGroupName;
 
-    public ActionWrapper(AnAction action, String groupName, MatchMode mode) {
+    public ActionWrapper(@NotNull AnAction action, String groupName, MatchMode mode) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
@@ -679,6 +679,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     public void setGroupName(String groupName) {
       myGroupName = groupName;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ActionWrapper && compareTo((ActionWrapper)obj) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      return myAction.getTemplatePresentation().getText().hashCode();
     }
   }
 }

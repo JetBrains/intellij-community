@@ -465,20 +465,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
           || (beforeLast.visualLine + 1 == last.visualLine && last.startOffset - beforeLast.endOffset > 1)
           || last.startOffset > myEditor.getDocument().getTextLength())
       {
-        CharSequence editorState = "";
-        if (myEditor instanceof EditorImpl) {
-          editorState = ((EditorImpl)myEditor).dumpState();
-        }
-        LOG.error(
-          "Detected invalid soft wraps cache update",
-          String.format(
-            "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
-            + "After change state: %s%n%nEditor state: %s",
-            event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
-            myBeforeChangeState, myAfterChangeState, editorState
-          )
-        );
+        logInvalidUpdate(event, normal);
       }
+    }
+    if (!myCache.isEmpty() && myEditor.getDocument().getTextLength() == 0) {
+      logInvalidUpdate(event, normal);
     }
     
     myAffectedByUpdateCacheEntries.clear();
@@ -490,6 +481,22 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
 
     myBeforeChangeState.cacheShouldBeUpdated = false;
+  }
+
+  private void logInvalidUpdate(@NotNull IncrementalCacheUpdateEvent event, boolean normal) {
+    CharSequence editorState = "";
+    if (myEditor instanceof EditorImpl) {
+      editorState = ((EditorImpl)myEditor).dumpState();
+    }
+    LOG.error(
+      "Detected invalid soft wraps cache update",
+      String.format(
+        "Event: %s, normal: %b.%n%nTail cache entries: %s%n%nAffected by change cache entries: %s%n%nBefore change state: %s%n%n"
+        + "After change state: %s%n%nEditor state: %s",
+        event, normal, myNotAffectedByUpdateTailCacheEntries, myAffectedByUpdateCacheEntries,
+        myBeforeChangeState, myAfterChangeState, editorState
+      )
+    );
   }
 
   @Override

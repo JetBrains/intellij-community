@@ -37,7 +37,7 @@ public abstract class CloudConnectionTask<
   T,
   SC extends ServerConfigurationBase,
   DC extends DeploymentConfiguration,
-  SR extends CloudServerRuntimeInstance<DC>> extends CloudRuntimeTask<T, DC, SR> {
+  SR extends CloudServerRuntimeInstance<DC, ?, ?>> extends CloudRuntimeTask<T, DC, SR> {
 
   private final RemoteServer<SC> myServer;
 

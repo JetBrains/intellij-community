@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,10 @@
 package com.intellij.remoteServer.agent.util;
 
 import com.intellij.remoteServer.agent.RemoteAgent;
-import com.intellij.remoteServer.agent.annotation.FinalCall;
+import com.intellij.remoteServer.agent.annotation.ChildCall;
 
-/**
- * @author michael.golubev
- */
-public interface CloudAgent<Config extends CloudAgentConfig> extends RemoteAgent {
+public interface CloudAgent extends RemoteAgent {
 
-  void connect(Config config, CloudAgentCallback callback, CloudAgentLogger logger);
-
-  @FinalCall
-  void disconnect();
-
-  void getDeployments(CloudAgentGetDeploymentsCallback callback);
+  @ChildCall
+  CloudRemoteApplication[] getApplications();
 }
