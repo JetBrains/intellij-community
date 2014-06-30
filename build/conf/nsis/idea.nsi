@@ -754,7 +754,7 @@ skip_quicklaunch_shortcut:
 
 skip_ipr:
 
-StrCmp "${ASSOCIATION}" "" skip_association
+StrCmp "${ASSOCIATION}" "no association" skip_association
  ; back up old value of an association
  ReadRegStr $1 HKCR ${ASSOCIATION} ""
  StrCmp $1 "" skip_backup
@@ -1101,7 +1101,7 @@ clear_Registry:
   StrCpy $2 "MenuFolder"
   Call un.OMDeleteRegValue
 
-  StrCmp "${ASSOCIATION}" "" finish_uninstall
+  StrCmp "${ASSOCIATION}" "no association" finish_uninstall
   StrCpy $1 "${ASSOCIATION}"
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
