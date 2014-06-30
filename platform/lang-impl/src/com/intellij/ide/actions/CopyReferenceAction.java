@@ -36,15 +36,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +52,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Alexey
@@ -68,10 +69,20 @@ public class CopyReferenceAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
+    boolean plural = false;
+    boolean enabled;
+
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    boolean enabled = (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) ||
-                      getElementToCopy(editor, dataContext) != null;
+    if (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) {
+      enabled = true;
+    }
+    else {
+      List<PsiElement> elements = getElementsToCopy(editor, dataContext);
+      enabled = !elements.isEmpty();
+      plural = elements.size() > 1;
+    }
+
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
@@ -79,6 +90,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     else {
       e.getPresentation().setVisible(true);
     }
+    e.getPresentation().setText(plural ? "Cop&y References" : "Cop&y Reference");
   }
 
   @Override
@@ -86,9 +98,9 @@ public class CopyReferenceAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    PsiElement element = getElementToCopy(editor, dataContext);
+    List<PsiElement> elements = getElementsToCopy(editor, dataContext);
 
-    if (!doCopy(element, project, editor) && editor != null && project != null) {
+    if (!doCopy(elements, project, editor) && editor != null && project != null) {
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
@@ -102,45 +114,54 @@ public class CopyReferenceAction extends DumbAwareAction {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (element != null && editor != null && project != null) {
-      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(element);
+    if (elements.size() == 1 && editor != null && project != null) {
+      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(elements.get(0));
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
       } else {
         PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
         if (reference != null) {
           highlightManager.addOccurrenceHighlights(editor, new PsiReference[]{reference}, attributes, true, null);
-        } else if (element != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
-          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
+        } else if (elements != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
+          highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{elements.get(0)}, attributes, true, null);
         }
       }
     }
   }
 
-  @Nullable
-  private static PsiElement getElementToCopy(@Nullable final Editor editor, final DataContext dataContext) {
-    PsiElement element = null;
+  @NotNull
+  private static List<PsiElement> getElementsToCopy(@Nullable final Editor editor, final DataContext dataContext) {
+    List<PsiElement> elements = ContainerUtil.newArrayList();
     if (editor != null) {
       PsiReference reference = TargetElementUtilBase.findReference(editor);
       if (reference != null) {
-        element = reference.getElement();
+        ContainerUtil.addIfNotNull(elements, reference.getElement());
       }
     }
 
-    if (element == null) {
-      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    }
-    if (element == null && editor == null) {
-      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (virtualFile != null && project != null) {
-        element = PsiManager.getInstance(project).findFile(virtualFile);
-      }
-    }
-    if (element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()) {
-      return null;
+    if (elements.isEmpty()) {
+      ContainerUtil.addIfNotNull(elements, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
     }
 
+    if (elements.isEmpty() && editor == null) {
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (project != null && files != null) {
+        for (VirtualFile file : files) {
+          ContainerUtil.addIfNotNull(elements, PsiManager.getInstance(project).findFile(file));
+        }
+      }
+    }
+
+    return ContainerUtil.mapNotNull(elements, new Function<PsiElement, PsiElement>() {
+      @Override
+      public PsiElement fun(PsiElement element) {
+        return element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical() ? null : adjustElement(element);
+      }
+    });
+  }
+
+  private static PsiElement adjustElement(PsiElement element) {
     for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
       PsiElement adjustedElement = provider.adjustElementToCopy(element);
       if (adjustedElement != null) return adjustedElement;
@@ -149,16 +170,25 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   public static boolean doCopy(final PsiElement element, final Project project) {
-    return doCopy(element, project, null);
+    return doCopy(Arrays.asList(element), project, null);
   }
 
-  private static boolean doCopy(final PsiElement element, @Nullable final Project project, @Nullable Editor editor) {
-    String fqn = elementToFqn(element, editor);
-    if (fqn == null) return false;
+  private static boolean doCopy(List<PsiElement> elements, @Nullable final Project project, @Nullable Editor editor) {
+    if (elements.isEmpty()) return false;
 
-    CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
+    List<String> fqns = ContainerUtil.newArrayList();
+    for (PsiElement element : elements) {
+      String fqn = elementToFqn(element, editor);
+      if (fqn == null) return false;
 
-    setStatusBarText(project, IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+      fqns.add(fqn);
+    }
+
+    String toCopy = StringUtil.join(fqns, "\n");
+
+    CopyPasteManager.getInstance().setContents(new MyTransferable(toCopy));
+
+    setStatusBarText(project, IdeBundle.message("message.reference.to.fqn.has.been.copied", toCopy));
     return true;
   }
 
@@ -199,12 +229,12 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   @Nullable
-  public static String elementToFqn(final PsiElement element) {
+  public static String elementToFqn(@Nullable final PsiElement element) {
     return elementToFqn(element, null);
   }
 
   @Nullable
-  public static String elementToFqn(final PsiElement element, @Nullable Editor editor) {
+  private static String elementToFqn(@Nullable final PsiElement element, @Nullable Editor editor) {
     String result = getQualifiedNameFromProviders(element);
     if (result != null) return result;
 
