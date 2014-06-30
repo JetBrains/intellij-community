@@ -44,17 +44,17 @@ public class UntrackedFilesNotifier {
    * Displays notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
    * @param root
-   * @param untrackedPaths
+   * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    * @param description the content of the notification or null if the deafult content is to be used.
    */
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project,
-                                                       @NotNull final VirtualFile root, @NotNull final Collection<String> untrackedPaths,
+                                                       @NotNull final VirtualFile root, @NotNull final Collection<String> relativePaths,
                                                        @NotNull final String operation, @Nullable String description) {
     final String notificationTitle = StringUtil.capitalize(operation) + " failed";
     final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, true) : description;
 
-    Collection<String> absolutePaths = GitUtil.toAbsolute(root, untrackedPaths);
+    Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
     final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
       @Override
       public VirtualFile fun(String absolutePath) {
@@ -69,7 +69,7 @@ public class UntrackedFilesNotifier {
           final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, false);
           String title = "Untracked Files Preventing " + StringUtil.capitalize(operation);
           if (untrackedFiles.isEmpty()) {
-            GitUtil.showPathsInDialog(project, untrackedPaths, title, dialogDesc);
+            GitUtil.showPathsInDialog(project, relativePaths, title, dialogDesc);
           }
           else {
             DialogWrapper dialog;

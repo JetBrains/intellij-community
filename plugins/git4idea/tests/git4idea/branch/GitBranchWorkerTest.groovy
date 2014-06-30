@@ -746,13 +746,13 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
 
     @Override
-    void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
+    void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
       throw new UnsupportedOperationException()
     }
 
     @Override
     boolean showUntrackedFilesDialogWithRollback(
-      @NotNull String operationName, @NotNull String rollbackProposal, @NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
+      @NotNull String operationName, @NotNull String rollbackProposal, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
       throw new UnsupportedOperationException()
     }
 

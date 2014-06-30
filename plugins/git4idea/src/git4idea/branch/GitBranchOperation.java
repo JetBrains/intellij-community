@@ -260,21 +260,21 @@ abstract class GitBranchOperation {
    * If some repositories succeeded, shows a dialog with the list of these files and a proposal to rollback the operation of those
    * repositories.
    */
-  protected void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
+  protected void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
     if (wereSuccessful()) {
-      showUntrackedFilesDialogWithRollback(root, untrackedFiles);
+      showUntrackedFilesDialogWithRollback(root, relativePaths);
     }
     else {
-      showUntrackedFilesNotification(root, untrackedFiles);
+      showUntrackedFilesNotification(root, relativePaths);
     }
   }
 
-  private void showUntrackedFilesNotification(@NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
-    myUiHandler.showUntrackedFilesNotification(getOperationName(), root, untrackedFiles);
+  private void showUntrackedFilesNotification(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    myUiHandler.showUntrackedFilesNotification(getOperationName(), root, relativePaths);
   }
 
-  private void showUntrackedFilesDialogWithRollback(@NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
-    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), root, untrackedFiles);
+  private void showUntrackedFilesDialogWithRollback(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), root, relativePaths);
     if (ok) {
       rollback();
     }

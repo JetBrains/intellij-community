@@ -127,17 +127,17 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root, untrackedFiles, operationName, null);
+  public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null);
   }
 
   @Override
   public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal,
-                                                      @NotNull VirtualFile root, @NotNull final Collection<String> untrackedPaths) {
+                                                      @NotNull VirtualFile root, @NotNull final Collection<String> relativePaths) {
     final String title = "Could not " + StringUtil.capitalize(operationName);
     final String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
 
-    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, untrackedPaths);
+    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
     final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
       @Override
       public VirtualFile fun(String absolutePath) {

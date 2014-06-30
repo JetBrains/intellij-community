@@ -58,12 +58,11 @@ public interface GitBranchUiHandler {
 
   /**
    * Show notification about "untracked files would be overwritten by merge/checkout".
-   * @param untrackedFiles
    */
-  void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles);
+  void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths);
 
   boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
-                                               @NotNull VirtualFile root, @NotNull Collection<String> untrackedFiles);
+                                               @NotNull VirtualFile root, @NotNull Collection<String> relativePaths);
 
   /**
    * Shows the dialog proposing to execute the operation (checkout or merge) smartly, i.e. stash-execute-unstash.
