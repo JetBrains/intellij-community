@@ -17,8 +17,6 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,13 +24,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -47,6 +41,7 @@ import git4idea.MessageManager;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
+import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -180,7 +175,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                       @NotNull String operation, boolean isForcePossible) {
     JComponent fileBrowser;
     if (!changes.isEmpty()) {
-      fileBrowser = new GitSmartOperationChangesBrowser(project, changes);
+      fileBrowser = new ChangesBrowserWithRollback(project, changes);
     }
     else {
       fileBrowser = new GitSimplePathsBrowser(project, paths);
@@ -252,38 +247,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       label.setUI(new MultiLineLabelUI());
       label.setBorder(new EmptyBorder(5, 1, 5, 1));
       return label;
-    }
-  }
-
-  private static class GitSmartOperationChangesBrowser extends ChangesBrowser {
-    private final List<Change> myOriginalChanges;
-
-    public GitSmartOperationChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
-      super(project, null, changes, null, false, true, null, MyUseCase.LOCAL_CHANGES, null);
-      myOriginalChanges = changes;
-      RollbackDialogAction rollback = new RollbackDialogAction();
-      EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, this);
-      addToolbarAction(rollback);
-      setChangesToDisplay(changes);
-    }
-
-    @Override
-    public void rebuildList() {
-      if (myOriginalChanges != null) { // null is possible because rebuildList is called during initialization
-        myChangesToDisplay = filterActualChanges(myProject, myOriginalChanges);
-      }
-      super.rebuildList();
-    }
-
-    @NotNull
-    private static List<Change> filterActualChanges(@NotNull Project project, @NotNull List<Change> originalChanges) {
-      final Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
-      return ContainerUtil.filter(originalChanges, new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return allChanges.contains(change);
-        }
-      });
     }
   }
 }
