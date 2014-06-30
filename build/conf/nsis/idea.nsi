@@ -1101,10 +1101,8 @@ clear_Registry:
   StrCpy $2 "MenuFolder"
   Call un.OMDeleteRegValue
 
-  StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" restore_java_association
-  StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 finish_uninstall
-restore_java_association:
-  StrCpy $1 ".java"
+  StrCmp "${ASSOCIATION}" "" finish_uninstall
+  StrCpy $1 "${ASSOCIATION}"
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
 
