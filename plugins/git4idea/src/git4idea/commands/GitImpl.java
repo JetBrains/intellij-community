@@ -373,7 +373,7 @@ public class GitImpl implements Git {
   public GitCommandResult push(@NotNull final GitRepository repository, @NotNull final String remote, @NotNull final String url,
                                @NotNull final String spec, final boolean updateTracking,
                                @NotNull final GitLineHandlerListener... listeners) {
-    return runRemoteCommand(new Computable<GitLineHandler>() {
+    return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
         final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
@@ -451,7 +451,7 @@ public class GitImpl implements Git {
   @NotNull
   public GitCommandResult fetch(@NotNull final GitRepository repository, @NotNull final String url, @NotNull final String remote,
                                 @NotNull final List<GitLineHandlerListener> listeners, final String... params) {
-    return runRemoteCommand(new Computable<GitLineHandler>() {
+    return runCommand(new Computable<GitLineHandler>() {
       @Override
       public GitLineHandler compute() {
         final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
@@ -543,7 +543,7 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult runRemoteCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
+  public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
     return run(handlerConstructor);
   }
   
