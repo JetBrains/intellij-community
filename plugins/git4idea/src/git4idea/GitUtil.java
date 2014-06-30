@@ -993,10 +993,10 @@ public class GitUtil {
     return affectedChanges;
   }
 
-  public static void showPathsInDialog(@NotNull Project project, @NotNull Collection<String> paths, @NotNull String title,
+  public static void showPathsInDialog(@NotNull Project project, @NotNull Collection<String> absolutePaths, @NotNull String title,
                                        @Nullable String description) {
     DialogBuilder builder = new DialogBuilder(project);
-    builder.setCenterPanel(new GitSimplePathsBrowser(project, paths));
+    builder.setCenterPanel(new GitSimplePathsBrowser(project, absolutePaths));
     if (description != null) {
       builder.setNorthPanel(new MultiLineLabel(description));
     }

@@ -35,10 +35,10 @@ import java.util.List;
 
 public class GitSimplePathsBrowser extends JPanel {
 
-  public GitSimplePathsBrowser(@NotNull Project project, @NotNull Collection<String> paths) {
+  public GitSimplePathsBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     super(new BorderLayout());
 
-    FilePathChangesTreeList browser = createBrowser(project, paths);
+    FilePathChangesTreeList browser = createBrowser(project, absolutePaths);
     ActionToolbar toolbar = createToolbar(browser);
 
     add(toolbar.getComponent(), BorderLayout.NORTH);
@@ -46,8 +46,8 @@ public class GitSimplePathsBrowser extends JPanel {
   }
 
   @NotNull
-  private static FilePathChangesTreeList createBrowser(@NotNull Project project, @NotNull Collection<String> paths) {
-    List<FilePath> filePaths = toFilePaths(paths);
+  private static FilePathChangesTreeList createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
+    List<FilePath> filePaths = toFilePaths(absolutePaths);
     FilePathChangesTreeList browser = new FilePathChangesTreeList(project, filePaths, false, false, null, null);
     browser.setChangesToDisplay(filePaths);
     return browser;
@@ -60,8 +60,8 @@ public class GitSimplePathsBrowser extends JPanel {
   }
 
   @NotNull
-  private static List<FilePath> toFilePaths(@NotNull Collection<String> paths) {
-    return ContainerUtil.map(paths, new Function<String, FilePath>() {
+  private static List<FilePath> toFilePaths(@NotNull Collection<String> absolutePaths) {
+    return ContainerUtil.map(absolutePaths, new Function<String, FilePath>() {
       @Override
       public FilePath fun(String path) {
         return new FilePathImpl(new File(path), false);
