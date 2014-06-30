@@ -43,7 +43,7 @@ public class PsiElement2UsageTargetComposite extends PsiElement2UsageTargetAdapt
     PsiElement element = getElement();
     if (element == null) return;
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
-    FindUsagesHandler handler = findUsagesManager.getNewFindUsagesHandler(element, false);
+    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
     boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
     findUsagesManager.findUsages(myDescriptor.getPrimaryElements(), myDescriptor.getAdditionalElements(), handler, myOptions, skipResultsWithOneUsage);
   }
