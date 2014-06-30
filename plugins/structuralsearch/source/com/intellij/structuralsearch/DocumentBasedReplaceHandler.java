@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import com.intellij.util.containers.HashMap;
@@ -24,7 +25,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
     myProject = project;
   }
 
-  public void replace(ReplacementInfo info) {
+  public void replace(ReplacementInfo info, ReplaceOptions options) {
     if (info.getMatchesCount() == 0) return;
     assert info instanceof ReplacementInfoImpl;
     PsiElement element = info.getMatch(0);
