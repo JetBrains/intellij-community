@@ -32,7 +32,6 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -56,7 +55,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   @NotNull
   @Override
-  public SVNCommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String message) throws VcsException {
+  public CommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String message) throws VcsException {
     // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
     // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
     // there at least some child-parent relationships in passed paths
@@ -66,8 +65,8 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
   }
 
   @NotNull
-  public SVNCommitInfo[] commit(@NotNull File[] paths, @NotNull String message) throws VcsException {
-    if (paths.length == 0) return new SVNCommitInfo[]{SVNCommitInfo.NULL};
+  public CommitInfo[] commit(@NotNull File[] paths, @NotNull String message) throws VcsException {
+    if (paths.length == 0) return new CommitInfo[]{CommitInfo.EMPTY};
 
     final List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, SVNDepth.EMPTY);
@@ -89,7 +88,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
     long revision = validateRevisionNumber(listener.getCommittedRevision());
 
-    return new SVNCommitInfo[]{new SVNCommitInfo(revision, null, null, null)};
+    return new CommitInfo[]{new CommitInfo(revision, null, null)};
   }
 
   private static long validateRevisionNumber(long revision) throws VcsException {

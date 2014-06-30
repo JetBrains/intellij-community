@@ -49,7 +49,6 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -131,18 +130,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
 
-    SVNCommitInfo[] results = mySvnVcs.getFactory(format).createCheckinClient().commit(committables, comment);
+    CommitInfo[] results = mySvnVcs.getFactory(format).createCheckinClient().commit(committables, comment);
 
     final StringBuilder committedRevisions = new StringBuilder();
-    for (SVNCommitInfo result : results) {
+    for (CommitInfo result : results) {
       if (result.getErrorMessage() != null) {
         exception.add(new VcsException(result.getErrorMessage().getFullMessage()));
       }
-      else if (result != SVNCommitInfo.NULL && result.getNewRevision() > 0) {
+      else if (result != CommitInfo.EMPTY && result.getRevision() > 0) {
         if (committedRevisions.length() > 0) {
           committedRevisions.append(", ");
         }
-        committedRevisions.append(result.getNewRevision());
+        committedRevisions.append(result.getRevision());
       }
     }
     if (committedRevisions.length() > 0) {
