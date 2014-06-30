@@ -291,7 +291,6 @@ public class JavaDocInfoGenerator {
 
   private void generateClassJavaDoc(@NonNls StringBuilder buffer, PsiClass aClass, boolean generatePrologueAndEpilogue) {
     if (aClass instanceof PsiAnonymousClass) return;
-    PsiManager manager = aClass.getManager();
     if (generatePrologueAndEpilogue)
       generatePrologue(buffer);
 
@@ -1874,9 +1873,11 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
-  @Nullable private <T> Pair<T, InheritDocProvider<T>> searchDocTagInSupers(PsiClassType[] supers,
+  @Nullable
+  private <T> Pair<T, InheritDocProvider<T>> searchDocTagInSupers(PsiClassType[] supers,
                                                                   PsiMethod method,
-                                                                  DocTagLocator<T> loc) {
+                                                                  DocTagLocator<T> loc,
+                                                                  Set<PsiClass> visitedClasses) {
     for (PsiClassType superType : supers) {
       PsiClass aSuper = superType.resolve();
 
@@ -1890,8 +1891,8 @@ public class JavaDocInfoGenerator {
     for (PsiClassType superType : supers) {
       PsiClass aSuper = superType.resolve();
 
-      if (aSuper != null) {
-        Pair<T, InheritDocProvider<T>> tag = findInheritDocTagInClass(method, aSuper, loc);
+      if (aSuper != null && visitedClasses.add(aSuper)) {
+        Pair<T, InheritDocProvider<T>> tag = findInheritDocTagInClass(method, aSuper, loc, visitedClasses);
 
         if (tag != null) {
           return tag;
@@ -1904,20 +1905,21 @@ public class JavaDocInfoGenerator {
 
   private <T> Pair<T, InheritDocProvider<T>> findInheritDocTagInClass(PsiMethod aMethod,
                                                                       PsiClass aClass,
-                                                                      DocTagLocator<T> loc) {
+                                                                      DocTagLocator<T> loc,
+                                                                      Set<PsiClass> visitedClasses) {
     if (aClass == null) {
       return null;
     }
 
     PsiClassType[] implementsTypes = aClass.getImplementsListTypes();
-    Pair<T, InheritDocProvider<T>> tag = searchDocTagInSupers(implementsTypes, aMethod, loc);
+    Pair<T, InheritDocProvider<T>> tag = searchDocTagInSupers(implementsTypes, aMethod, loc, visitedClasses);
 
     if (tag != null) {
       return tag;
     }
 
     PsiClassType[] extendsTypes = aClass.getExtendsListTypes();
-    return searchDocTagInSupers(extendsTypes, aMethod, loc);
+    return searchDocTagInSupers(extendsTypes, aMethod, loc, visitedClasses);
   }
 
   @Nullable private <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(PsiMethod method, DocTagLocator<T> loc) {
@@ -1925,7 +1927,7 @@ public class JavaDocInfoGenerator {
 
     if (aClass == null) return null;
 
-    return findInheritDocTagInClass(method, aClass, loc);
+    return findInheritDocTagInClass(method, aClass, loc, new HashSet<PsiClass>());
   }
 
   private static class ReturnTagLocator implements DocTagLocator<PsiDocTag> {
