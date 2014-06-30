@@ -26,7 +26,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -137,12 +136,12 @@ public class RenameDialog extends RefactoringDialog {
     return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchInComments(myPsiElement);
   }
 
-  private String getFullName() {
+  protected String getFullName() {
     final String name = DescriptiveNameUtil.getDescriptiveName(myPsiElement);
     return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
   }
 
-  private void createNewNameComponent() {
+  protected void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
     myOldName = suggestedNames.length > 0 ? suggestedNames[0] : null;
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
@@ -340,5 +339,13 @@ public class RenameDialog extends RefactoringDialog {
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);
+  }
+
+  protected NameSuggestionsField getNameSuggestionsField() {
+    return myNameSuggestionsField;
+  }
+
+  public JCheckBox getCbSearchInComments() {
+    return myCbSearchInComments;
   }
 }
