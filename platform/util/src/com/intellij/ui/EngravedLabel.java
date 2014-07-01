@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import java.awt.*;
  * @author max
  */
 public class EngravedLabel extends JLabel {
+  private Color myShadowColor = EngravedTextGraphics.SHADOW_COLOR;
+
   public EngravedLabel(String text) {
     super(text);
     setOpaque(false);
@@ -38,7 +40,18 @@ public class EngravedLabel extends JLabel {
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(UIUtil.isUnderDarcula() ? g : new EngravedTextGraphics((Graphics2D)g));
+  protected void paintComponent(Graphics graphics) {
+    if (!UIUtil.isUnderDarcula()) {
+      graphics = new EngravedTextGraphics((Graphics2D)graphics, 0, 1, getShadowColor());
+    }
+    super.paintComponent(graphics);
+  }
+
+  public Color getShadowColor() {
+    return myShadowColor == null ? EngravedTextGraphics.SHADOW_COLOR : myShadowColor;
+  }
+
+  public void setShadowColor(Color shadowColor) {
+    myShadowColor = shadowColor;
   }
 }
