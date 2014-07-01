@@ -21,6 +21,9 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
     return getDeploymentName(source);
   }
 
+  /**
+   * @deprecated use {@link #getDeploymentName(com.intellij.remoteServer.configuration.deployment.DeploymentSource, D configuration)} instead
+   */
   @NotNull
   public String getDeploymentName(@NotNull DeploymentSource source) {
     return source.getPresentableName();
