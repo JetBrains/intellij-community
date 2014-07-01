@@ -41,7 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author cdr
  */
 abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
-  private static final boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInPerformanceTest();
+  private static final boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
@@ -80,7 +80,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   private final boolean myDebug = isDebug();
 
   boolean isDebug() {
-    return DEBUG_DEFERRED_PROCESSING || CHECK_DOCUMENT_CONSISTENCY;
+    return DEBUG_DEFERRED_PROCESSING || CHECK_DOCUMENT_CONSISTENCY && !ApplicationInfoImpl.isInPerformanceTest();
   }
 
   /**

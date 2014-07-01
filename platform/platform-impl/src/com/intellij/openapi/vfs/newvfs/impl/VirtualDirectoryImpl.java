@@ -55,7 +55,7 @@ import java.util.List;
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl");
 
-  public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInPerformanceTest();
+  public static boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
   static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
     new VirtualDirectoryImpl(-42, null, null, null, LocalFileSystem.getInstance()) {
@@ -339,7 +339,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private void assertConsistency(boolean ignoreCase, @NotNull Object... details) {
-    if (!CHECK) return;
+    if (!CHECK || ApplicationInfoImpl.isInPerformanceTest()) return;
     int[] childrenIds = myData.myChildrenIds;
     for (int i = 1; i < childrenIds.length; i++) {
       int id = childrenIds[i];

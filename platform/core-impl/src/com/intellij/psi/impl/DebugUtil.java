@@ -21,7 +21,6 @@ import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -76,7 +75,7 @@ public class DebugUtil {
   public static final boolean DO_EXPENSIVE_CHECKS;
   static {
     Application application = ApplicationManager.getApplication();
-    DO_EXPENSIVE_CHECKS = application != null && application.isUnitTestMode() && !ApplicationInfoImpl.isInPerformanceTest();
+    DO_EXPENSIVE_CHECKS = application != null && application.isUnitTestMode();
   }
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = DO_EXPENSIVE_CHECKS;
 

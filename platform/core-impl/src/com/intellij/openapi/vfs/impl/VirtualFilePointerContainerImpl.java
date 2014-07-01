@@ -52,12 +52,12 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   private volatile long myTimeStampOfCachedThings = -1;
   @NonNls public static final String URL_ATTR = "url";
   private boolean myDisposed;
-  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInPerformanceTest());
+  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
   public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                          @NotNull Disposable parentDisposable,
                                          @Nullable VirtualFilePointerListener listener) {
     //noinspection HardCodedStringLiteral
-    super(TRACE_CREATION
+    super(TRACE_CREATION && !ApplicationInfoImpl.isInPerformanceTest()
           ? new Throwable("parent = '" + parentDisposable + "' (" + parentDisposable.getClass() + "); listener=" + listener)
           : null);
     myVirtualFilePointerManager = manager;
