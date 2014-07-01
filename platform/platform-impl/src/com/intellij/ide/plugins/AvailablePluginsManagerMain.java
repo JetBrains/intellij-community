@@ -21,11 +21,11 @@ import com.intellij.ide.plugins.sorters.SortByRatingAction;
 import com.intellij.ide.plugins.sorters.SortByUpdatedAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -187,9 +187,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
 
   @Override
   protected boolean acceptHost(String host) {
-    final String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
-    if (AvailablePluginsTableModel.ALL.equals(repository)) return true;
-    return Comparing.equal(host, repository);
+    return ((AvailablePluginsTableModel)pluginsModel).isHostAccepted(host);
   }
 
   @Override
@@ -251,7 +249,8 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(!UpdateSettings.getInstance().myPluginHosts.isEmpty());
+      boolean empty = UpdateSettings.getInstance().myPluginHosts.isEmpty();
+      e.getPresentation().setVisible(!empty || ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null);
       String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
       if (repository.length() > LENGTH) {
         repository = repository.substring(0, LENGTH) + "...";
@@ -265,6 +264,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       final DefaultActionGroup gr = new DefaultActionGroup();
       gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.ALL));
       gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.JETBRAINS_REPO));
+      if (ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl() != null) {
+        gr.add(createFilterByRepositoryAction(AvailablePluginsTableModel.BUILTIN_REPO));
+      }
       for (final String host : UpdateSettings.getInstance().myPluginHosts) {
         gr.add(createFilterByRepositoryAction(host));
       }

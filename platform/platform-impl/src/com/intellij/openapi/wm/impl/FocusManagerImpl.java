@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,6 +203,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     assertDispatchThread();
 
+    if (!forced && !command.canFocusChangeFrom(getFocusOwner())) {
+      return ActionCallback.REJECTED;
+    }
     if (isInternalMode) {
       recordCommand(command, new Throwable(), forced);
     }

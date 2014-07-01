@@ -126,7 +126,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       myContext = context;
     }
 
-    public void replace(ReplacementInfo info) {
+    public void replace(ReplacementInfo info, ReplaceOptions options) {
       PsiElement elementToReplace = info.getMatch(0);
       assert elementToReplace != null;
       PsiElement elementParent = elementToReplace.getParent();

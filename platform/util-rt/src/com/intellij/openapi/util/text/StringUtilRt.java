@@ -92,6 +92,11 @@ public class StringUtilRt {
   }
 
   @NotNull
+  public static CharSequence convertLineSeparators(@NotNull CharSequence text, @NotNull String newSeparator) {
+    return unifyLineSeparators(text, newSeparator, null, false);
+  }
+
+  @NotNull
   public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
     return convertLineSeparators(text, newSeparator, offsetsToKeep, false);
   }

@@ -57,7 +57,7 @@ public class TestData implements Cloneable
   public List<String> TEST_LISTENERS = new ArrayList<String>();
   public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
-  private Set<String> myPatterns = new HashSet<String>();
+  private Set<String> myPatterns = new LinkedHashSet<String>();
 
   public TestData() {
     TEST_OBJECT = TestType.CLASS.getType();

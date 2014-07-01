@@ -120,8 +120,12 @@ public class SceneBuilderImpl implements SceneBuilder {
   @Override
   public void close() {
     if (myEditorController != null) {
-      myEditorController.getSelection().revisionProperty().removeListener(mySelectionListener);
-      myEditorController.getJobManager().revisionProperty().removeListener(myListener);
+      if (mySelectionListener != null) {
+        myEditorController.getSelection().revisionProperty().removeListener(mySelectionListener);
+      }
+      if (myListener != null) {
+        myEditorController.getJobManager().revisionProperty().removeListener(myListener);
+      }
     }
   }
 

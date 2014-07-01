@@ -37,7 +37,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -196,7 +195,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     String path;
     if (file == null) {
-      path = protocolEnd == -1 ? url : url.substring(protocolEnd + URLUtil.SCHEME_SEPARATOR.length());
+      path = url.substring(protocolEnd + URLUtil.SCHEME_SEPARATOR.length());
       String cleanPath = cleanupPath(path, isJar);
       // if newly created path is the same as substringed one then the url did not change, we can reuse it
       //noinspection StringEquality
@@ -263,7 +262,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     pointer.myNode.incrementUsageCount(1);
 
-    root.checkStructure();
+    root.checkConsistency();
     return pointer;
   }
 
@@ -327,7 +326,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private void addAllPointers(Collection<VirtualFilePointerImpl> pointers) {
+  private void addAllPointers(@NotNull Collection<VirtualFilePointerImpl> pointers) {
     List<FilePointerPartNode> out = new ArrayList<FilePointerPartNode>();
     for (FilePointerPartNode root : myPointers.values()) {
       root.getPointersUnder("", 0, out);
@@ -381,9 +380,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return virtualFilePointerContainer;
   }
 
-  @Nullable private List<EventDescriptor> myEvents = Collections.emptyList();
-  @Nullable private List<FilePointerPartNode> myPointersToUpdateUrl = Collections.emptyList();
-  @Nullable private List<FilePointerPartNode> myPointersToFire = Collections.emptyList();
+  private List<EventDescriptor> myEvents = Collections.emptyList();
+  private List<FilePointerPartNode> myPointersToUpdateUrl = Collections.emptyList();
+  private List<FilePointerPartNode> myPointersToFire = Collections.emptyList();
 
   @Override
   public void before(@NotNull final List<? extends VFileEvent> events) {
@@ -518,7 +517,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     myEvents = Collections.emptyList();
     myPointersToFire = Collections.emptyList();
     for (FilePointerPartNode root : myPointers.values()) {
-      root.checkStructure();
+      root.checkConsistency();
     }
   }
 
@@ -528,12 +527,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myPointers.remove(listener);
     }
     else {
-      myPointers.get(listener).checkStructure();
+      myPointers.get(listener).checkConsistency();
     }
   }
 
   private static class DelegatingDisposable implements Disposable {
-    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = new ConcurrentHashMap<Disposable, DelegatingDisposable>(TObjectHashingStrategy.IDENTITY);
+    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = new ConcurrentHashMap<Disposable, DelegatingDisposable>(ContainerUtil.<Disposable>identityStrategy());
     private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<VirtualFilePointerImpl>();
     private final Disposable myParent;
 

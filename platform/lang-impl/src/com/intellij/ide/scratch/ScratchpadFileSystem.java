@@ -20,7 +20,6 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.ide.presentation.PresentationProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -29,6 +28,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -77,12 +77,15 @@ public class ScratchpadFileSystem extends DummyFileSystem {
   @NotNull
   @Override
   public String extractPresentableUrl(@NotNull String path) {
-    String substring = StringUtil.substringAfter(path, "/");
-    return substring != null ? substring : super.extractPresentableUrl(path);
+    return calcSuffix(findFileByPath(path));
+  }
+
+  private static String calcSuffix(@Nullable VirtualFile file) {
+    return file instanceof LightVirtualFile ? ((LightVirtualFile)file).getLanguage().getDisplayName() : "Unknown language";
   }
 
   @Presentation(provider = ScratchPresentation.class)
-  private static class MyLightVirtualFile extends LightVirtualFile {
+  public static class MyLightVirtualFile extends LightVirtualFile {
     private final String myPrefix;
 
     public MyLightVirtualFile(@NotNull String fileName, @NotNull Language language, @NotNull String projectPrefix) {
@@ -103,9 +106,9 @@ public class ScratchpadFileSystem extends DummyFileSystem {
     }
   }
 
-  public static class ScratchPresentation extends PresentationProvider<MyLightVirtualFile> {
+  public static class ScratchPresentation extends PresentationProvider<LightVirtualFile> {
     @Override
-    public Icon getIcon(@NotNull MyLightVirtualFile file) {
+    public Icon getIcon(@NotNull LightVirtualFile file) {
       return LayeredIcon.create(file.getFileType().getIcon(), AllIcons.Actions.New);
     }
   }

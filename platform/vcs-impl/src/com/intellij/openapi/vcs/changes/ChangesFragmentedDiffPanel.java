@@ -335,7 +335,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, horizontal, SHORT_DIFF_DIVIDER_POLYGONS_OFFSET, null) {
       @Override
       protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
-        return new FragmentedDiffPanelState(this, myProject, ! horizontal, parentDisposable);
+        return new FragmentedDiffPanelState(this, myProject, getDiffDividerPolygonsOffset(), ! horizontal, parentDisposable);
       }
     };
     diffPanel.enableToolbar(false);

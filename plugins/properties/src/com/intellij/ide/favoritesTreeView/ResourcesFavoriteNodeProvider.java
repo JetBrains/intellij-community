@@ -22,13 +22,13 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +64,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof ResourceBundle) {
       ResourceBundle bundle = (ResourceBundle)element;
-      final List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(myProject);
+      final List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles();
       for (PropertiesFile file : propertiesFiles) {
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) continue;
@@ -87,7 +87,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   public boolean isInvalidElement(final Object element) {
     if (element instanceof ResourceBundle) {
       ResourceBundle resourceBundle = (ResourceBundle)element;
-      List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(myProject);
+      List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
       if (propertiesFiles.size() == 1) {
         //todo result.add(new PsiFileNode(myProject, propertiesFiles.iterator().next(), this));
         return true;
@@ -113,6 +113,6 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
-    return new Object[]{ResourceBundleImpl.createByUrl(url)};
+    return new Object[]{PropertiesImplUtil.createByUrl(url, project)};
   }
 }

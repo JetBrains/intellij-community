@@ -142,6 +142,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final DiffTool myParentTool;
   private EditorNotificationPanel myTopMessageDiffPanel;
   private final VisibleAreaListener myVisibleAreaListener;
+  private final int myDiffDividerPolygonsOffset;
 
   public DiffPanelImpl(final Window owner,
                        Project project,
@@ -163,6 +164,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myRightSide = new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), v ? 0 : 1, v ? 0 : 1, 1, 0));
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
+
+    myDiffDividerPolygonsOffset = diffDividerPolygonsOffset;
 
     myData = createDiffPanelState(this);
 
@@ -220,7 +223,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
-    return new DiffPanelState(this, myProject, parentDisposable);
+    return new DiffPanelState(this, myProject, getDiffDividerPolygonsOffset(), parentDisposable);
+  }
+
+  public int getDiffDividerPolygonsOffset() {
+    return myDiffDividerPolygonsOffset;
   }
 
   public boolean isHorisontal() {

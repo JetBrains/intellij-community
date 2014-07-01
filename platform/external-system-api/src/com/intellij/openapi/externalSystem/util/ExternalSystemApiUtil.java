@@ -672,6 +672,11 @@ public class ExternalSystemApiUtil {
     return module != null && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
   }
 
+  @Contract("_, null -> false")
+  public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
+    return module != null && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+  }
+
   @Nullable
   public static String getExternalProjectPath(@Nullable Module module) {
     return module != null ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;

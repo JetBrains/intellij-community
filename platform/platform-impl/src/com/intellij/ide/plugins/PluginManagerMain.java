@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -310,30 +311,43 @@ public abstract class PluginManagerMain implements Disposable {
           LOG.info(e);
           errorMessages.add(e.getMessage());
         }
+        String builtinPluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
+        if (builtinPluginsUrl != null) {
+          processPluginHost(builtinPluginsUrl, true);
+        }
         for (String host : UpdateSettings.getInstance().myPluginHosts) {
-          if (!acceptHost(host)) continue;
-          final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
-          try {
-            UpdateChecker.checkPluginsHost(host, downloaded, false, null);
-            for (PluginDownloader downloader : downloaded.values()) {
-              final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
-              if (pluginNode != null) {
-                if (list == null) list = new ArrayList<IdeaPluginDescriptor>();
-                list.add(pluginNode);
-              }
+          processPluginHost(host, false);
+        }
+        return list;
+      }
+
+      void processPluginHost(@NotNull String host, boolean builtIn) {
+        if (!acceptHost(host)) return;
+        final Map<PluginId, PluginDownloader> downloaded = new HashMap<PluginId, PluginDownloader>();
+        try {
+          UpdateChecker.checkPluginsHost(host, downloaded, false, null);
+          for (PluginDownloader downloader : downloaded.values()) {
+            final PluginNode pluginNode = PluginDownloader.createPluginNode(host, downloader);
+            if (pluginNode != null) {
+              if (list == null) list = new ArrayList<IdeaPluginDescriptor>();
+              list.add(pluginNode);
             }
           }
-          catch (ProcessCanceledException ignore) {
+        }
+        catch (ProcessCanceledException ignore) {
+        }
+        catch (FileNotFoundException e) {
+          LOG.info(e);
+        }
+        catch (Exception e) {
+          if (builtIn) {
+            LOG.info("built-in repo failed: " + e.toString());
           }
-          catch (FileNotFoundException e) {
-            LOG.info(e);
-          }
-          catch (Exception e) {
+          else {
             LOG.info(e);
             errorMessages.add(e.getMessage());
           }
         }
-        return list;
       }
 
       public void finished() {

@@ -22,6 +22,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColumnInfo;
 
@@ -45,7 +46,8 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
   protected static final String STATUS = "Status";
 
-  public static final String JETBRAINS_REPO = "JetBrains";
+  public static final String JETBRAINS_REPO = "JetBrains Plugin Repository";
+  public static final String BUILTIN_REPO = "Built-in Plugin Repository";
   private String myRepository = ALL;
   private String myVendor = null;
 
@@ -95,10 +97,19 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       }
     }
 
-    final String repositoryName = ((PluginNode)descriptor).getRepositoryName();
+    return isHostAccepted(((PluginNode)descriptor).getRepositoryName());
+  }
+
+  public boolean isHostAccepted(String repositoryName) {
     if (repositoryName != null) {
-      if (!ALL.equals(myRepository) && !repositoryName.equals(myRepository)) return false;
-    } else {
+      if (repositoryName.equals(ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl()) && myRepository.equals(BUILTIN_REPO)) {
+        return true;
+      }
+      else if (!ALL.equals(myRepository) && !repositoryName.equals(myRepository)) {
+        return false;
+      }
+    }
+    else {
       return ALL.equals(myRepository) || JETBRAINS_REPO.equals(myRepository);
     }
     return true;

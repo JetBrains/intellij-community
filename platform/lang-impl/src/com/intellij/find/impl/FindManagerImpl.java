@@ -59,6 +59,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.LexerEditorHighlighterLexer;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
@@ -860,13 +861,18 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
+  public void findUsagesInScope(@NotNull PsiElement element, @NotNull SearchScope searchScope) {
+    myFindUsagesManager.findUsages(element, null, null, false, searchScope);
+  }
+
+  @Override
   public void findUsages(@NotNull PsiElement element, boolean showDialog) {
-    myFindUsagesManager.findUsages(element, null, null, showDialog);
+    myFindUsagesManager.findUsages(element, null, null, showDialog, null);
   }
 
   @Override
   public void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
-    myFindUsagesManager.showSettingsAndFindUsages(targets);
+    FindUsagesManager.showSettingsAndFindUsages(targets);
   }
 
   @Override
@@ -882,7 +888,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       Document document = editor.getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
 
-      myFindUsagesManager.findUsages(element, psiFile, fileEditor, false);
+      myFindUsagesManager.findUsages(element, psiFile, fileEditor, false, null);
     }
   }
 

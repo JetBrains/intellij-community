@@ -63,7 +63,6 @@ public class PropertiesCoreEnvironment {
 
       appEnvironment.registerApplicationService(PropertiesQuickFixFactory.class, new EmptyPropertiesQuickFixFactory());
       appEnvironment.registerApplicationService(PropertiesRefactoringSettings.class, new PropertiesRefactoringSettings());
-      appEnvironment.registerApplicationService(PropertiesSeparatorManager.class, new PropertiesSeparatorManager());
       appEnvironment.addExplicitExtension(LanguageAnnotators.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesAnnotator());
       appEnvironment.addExplicitExtension(LanguageFindUsages.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesFindUsagesProvider());
 
@@ -87,6 +86,7 @@ public class PropertiesCoreEnvironment {
   public static class ProjectEnvironment {
     public ProjectEnvironment(CoreProjectEnvironment projectEnvironment) {
       projectEnvironment.getProject().registerService(PropertiesReferenceManager.class);
+      projectEnvironment.getProject().registerService(PropertiesSeparatorManager.class);
     }
   }
 }

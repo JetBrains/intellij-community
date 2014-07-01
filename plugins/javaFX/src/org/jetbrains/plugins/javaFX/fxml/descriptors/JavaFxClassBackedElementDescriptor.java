@@ -235,7 +235,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   private <T> void collectProperties(final List<T> children, final Function<PsiMember, T> factory, final boolean acceptPrimitive) {
-    final List<PsiMember> fieldList =
+    final List<PsiMember> fieldList = myPsiClass == null ? null :
       CachedValuesManager.getCachedValue(myPsiClass, new CachedValueProvider<List<PsiMember>>() {
         @Nullable
         @Override

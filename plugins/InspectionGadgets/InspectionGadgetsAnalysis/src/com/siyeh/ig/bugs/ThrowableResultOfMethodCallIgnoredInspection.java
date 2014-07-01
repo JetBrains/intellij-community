@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -57,11 +58,10 @@ public class ThrowableResultOfMethodCallIgnoredInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       PsiElement parent = expression.getParent();
-      while (parent instanceof PsiParenthesizedExpression) {
+      while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
         parent = parent.getParent();
       }
       if (parent instanceof PsiReturnStatement ||

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.event.InputEvent;
@@ -304,5 +305,19 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     checkResultByText("q<caret>uick\n" +
                       "brown\n" +
                       "fox");
+  }
+
+  public void testCaretPositionsRecalculationOnDocumentChange() throws Exception {
+    init("\n" +
+         "<selection><caret>word</selection>\n" +
+         "some long prefix <selection><caret>word</selection>-suffix", TestFileType.TEXT);
+    EditorTestUtil.configureSoftWraps(myEditor, 17); // wrapping right before 'word-suffix'
+
+    delete();
+
+    checkResultByText("\n" +
+                      "<caret>\n" +
+                      "some long prefix <caret>-suffix");
+    verifySoftWrapPositions(19);
   }
 }

@@ -24,11 +24,11 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.jetbrains.plugins.gradle.model.data.War;
 import org.jetbrains.plugins.gradle.model.data.WarDirectory;
 import org.jetbrains.plugins.gradle.model.data.WebConfigurationModelData;
 import org.jetbrains.plugins.gradle.model.data.WebResource;
+import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -82,9 +82,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
       public WebResource fun(WebConfiguration.WebResource resource) {
         if (resource == null) return null;
 
-        final WarDirectory warDirectory =
-          WarDirectory.fromPath(resource.getWarDirectory());
-        if (warDirectory == null) return null;
+        final WarDirectory warDirectory = WarDirectory.fromPath(resource.getWarDirectory());
         return new WebResource(warDirectory, resource.getRelativePath(), resource.getFile());
       }
     });

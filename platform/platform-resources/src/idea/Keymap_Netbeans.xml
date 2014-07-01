@@ -42,7 +42,6 @@
       <keyboard-shortcut first-keystroke="control alt SPACE" />
       <keyboard-shortcut first-keystroke="control alt BACK_SLASH" />
     </action>
-    <action id="CloneElement" />
     <action id="CloseActiveTab" />
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="shift control W" />

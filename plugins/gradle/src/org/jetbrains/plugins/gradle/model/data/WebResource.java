@@ -36,7 +36,7 @@ public class WebResource implements Serializable {
 
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull File file) {
     myWarDirectory = warDirectory;
-    this.warRelativePath = warRelativePath;
+    this.warRelativePath = getAdjustedPath(warRelativePath);
     this.file = file;
   }
 
@@ -53,6 +53,10 @@ public class WebResource implements Serializable {
   @NotNull
   public File getFile() {
     return file;
+  }
+
+  private static String getAdjustedPath(final @NotNull String path) {
+    return path.isEmpty() || path.charAt(0) != '/' ? '/' + path : path;
   }
 
   @Override

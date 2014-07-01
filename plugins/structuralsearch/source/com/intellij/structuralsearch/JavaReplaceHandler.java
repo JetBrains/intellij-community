@@ -4,10 +4,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
@@ -251,7 +253,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     return replacement;
   }
 
-  public void replace(final ReplacementInfo info) {
+  public void replace(final ReplacementInfo info, ReplaceOptions options) {
     PsiElement elementToReplace = info.getMatch(0);
     PsiElement elementParent = elementToReplace.getParent();
     String replacementToMake = info.getReplacement();
@@ -445,6 +447,10 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
         element.getParent().deleteChildRange(firstToDelete, lastToDelete);
       }
+    }
+    
+    if (options.isToShortenFQN() && elementParent.isValid()) {
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(elementParent, 0, elementParent.getTextLength());
     }
   }
 

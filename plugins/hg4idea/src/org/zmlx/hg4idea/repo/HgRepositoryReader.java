@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,12 +107,25 @@ public class HgRepositoryReader {
   public String readCurrentRevision() {
     if (!isDirStateInfoAvailable()) return null;
     try {
-      return Hex.encodeHexString(FileUtil.loadBytes(new FileInputStream(myDirStateFile), 20));
+      return Hex.encodeHexString(readBytesFromFile(myDirStateFile, 20));
     }
     catch (IOException e) {
       // dirState exists if not fresh,  if we could not load dirState info repository must be corrupted
-      throw new RepoStateException("IOException while try to read current repository state ingormation.", e);
+      throw new RepoStateException("IOException while trying to read current repository state information.", e);
     }
+  }
+
+  @NotNull
+  public byte[] readBytesFromFile(@NotNull File file, int len) throws IOException {
+    byte[] bytes;
+    final InputStream stream = new FileInputStream(file);
+    try {
+      bytes = FileUtil.loadBytes(stream, len);
+    }
+    finally {
+      stream.close();
+    }
+    return bytes;
   }
 
   /**

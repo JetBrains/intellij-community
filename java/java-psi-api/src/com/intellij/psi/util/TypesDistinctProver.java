@@ -121,7 +121,7 @@ public class TypesDistinctProver {
           if (substitutedType1 instanceof PsiWildcardType && !((PsiWildcardType)substitutedType1).isBounded()) return true;
         }
       }
-      return false;
+      if (level < 2) return false;
     }
 
     final PsiClass boundClass1 = classResolveResult1.getElement();

@@ -26,6 +26,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,8 +35,22 @@ public abstract class ResourceBundle {
   public static final DataKey<ResourceBundle[]> ARRAY_DATA_KEY = DataKey.create("resource.bundle.array");
 
   @NotNull
+  public abstract List<PropertiesFile> getPropertiesFiles();
+
+  /**
+   * @deprecated, use getPropertiesFiles() instead this method
+   */
+  @Deprecated
+  @NotNull
   public abstract List<PropertiesFile> getPropertiesFiles(final Project project);
 
+  @NotNull
+  public abstract PropertiesFile getDefaultPropertiesFile();
+
+  /**
+   * @deprecated, use getDefaultPropertiesFile() instead this method
+   */
+  @Deprecated
   @NotNull
   public abstract PropertiesFile getDefaultPropertiesFile(final Project project);
 
@@ -44,4 +59,7 @@ public abstract class ResourceBundle {
 
   @NotNull
   public abstract VirtualFile getBaseDirectory();
+
+  @NotNull
+  public abstract Project getProject();
 }

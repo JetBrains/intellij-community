@@ -36,13 +36,13 @@ import java.util.Set;
 public interface Git {
 
   /**
-   * A generic method to run a Git remote command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}
+   * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}
    * are not sufficient.
    * @param handlerConstructor this is needed, since the operation may need to repeat (e.g. in case of authentication failure).
    *                           make sure to supply a stateless constructor.
    */
   @NotNull
-  GitCommandResult runRemoteCommand(@NotNull Computable<GitLineHandler> handlerConstructor);
+  GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor);
 
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);

@@ -127,7 +127,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           UpdateSettings settings = new UpdateSettings();
           settings.loadState(UpdateSettings.getInstance().getState());
           settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();
-          UpdateChecker.updateAndShowResult(project, true, null, settings);  //todo load configured hosts on the fly
+          UpdateChecker.updateAndShowResult(project, true, settings);  //todo load configured hosts on the fly
           updateLastCheckedLabel();
         }
       });

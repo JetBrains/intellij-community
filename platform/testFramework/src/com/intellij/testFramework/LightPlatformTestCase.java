@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -344,6 +345,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         try {
           LightPlatformTestCase.super.setUp();
           initApplication();
+          ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
+
           ourApplication.setDataProvider(LightPlatformTestCase.this);
           doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(),
                   myAvailableInspectionTools);

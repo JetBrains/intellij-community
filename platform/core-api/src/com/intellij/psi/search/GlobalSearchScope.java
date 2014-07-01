@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -586,8 +583,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static final GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
 
-  private static class FileScope extends GlobalSearchScope {
-    private final VirtualFile myVirtualFile;
+  private static class FileScope extends GlobalSearchScope implements Iterable<VirtualFile> {
+    private final VirtualFile myVirtualFile; // files can be out of project roots
     private final Module myModule;
 
     private FileScope(@NotNull Project project, VirtualFile virtualFile) {
@@ -620,10 +617,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public String toString() {
       return "File :"+myVirtualFile;
     }
+
+    @Override
+    public Iterator<VirtualFile> iterator() {
+      return Collections.singletonList(myVirtualFile).iterator();
+    }
   }
 
-  public static class FilesScope extends GlobalSearchScope {
-    private final Collection<VirtualFile> myFiles;
+  public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
+    private final Collection<VirtualFile> myFiles; // files can be out of project roots
 
     public FilesScope(final Project project, @NotNull Collection<VirtualFile> files) {
       super(project);
@@ -665,6 +667,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public String toString() {
       List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<VirtualFile>(myFiles) : new ArrayList<VirtualFile>(myFiles).subList(0,20);
       return "Files: ("+ files +")";
+    }
+
+    @Override
+    public Iterator<VirtualFile> iterator() {
+      return myFiles.iterator();
     }
   }
 }

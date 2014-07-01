@@ -15,31 +15,159 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.ui.PopupHandler;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author cdr
  */
 class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
+  private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
+
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleStructureViewComponent(Project project, ResourceBundle resourceBundle, ResourceBundleEditor editor) {
-    super(project, editor, new ResourceBundleStructureViewModel(project, resourceBundle));
+  public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle, final ResourceBundleEditor editor) {
+    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
     myResourceBundle = resourceBundle;
+    tunePopupActionGroup();
   }
 
-  public Object getData(String dataId) {
+  @Override
+  protected void addGroupByActions(final DefaultActionGroup result) {
+    super.addGroupByActions(result);
+    result.add(new NewPropertyAction(), Constraints.FIRST);
+  }
+
+  private void tunePopupActionGroup() {
+    final DefaultActionGroup propertiesPopupGroup = new DefaultActionGroup();
+    propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
+    propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
+    propertiesPopupGroup.add(new NewPropertyAction(), Constraints.FIRST);
+    PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
+  }
+
+  public Object getData(final String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return new ResourceBundleAsVirtualFile(myResourceBundle);
+      return ResourceBundleAsVirtualFile.fromResourceBundle(myResourceBundle);
+    } else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      return getFileEditor();
+    } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      final ResourceBundleEditorViewElement selectedElement = ((ResourceBundleEditor)getFileEditor()).getSelectedElement();
+      if (selectedElement != null) {
+        final Project project = CommonDataKeys.PROJECT.getData(this);
+        if (project != null) {
+          final PsiElement[] psiElements = selectedElement.getPsiElements(project);
+          if (psiElements != null) {
+            return psiElements;
+          }
+        }
+      }
+    } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(this);
+      if (psiElements != null && psiElements.length > 0) {
+        return new PsiElementsDeleteProvider(psiElements);
+      }
+    } else if (UsageView.USAGE_TARGETS_KEY.is(dataId)) {
+      final PsiElement[] chosenElements = (PsiElement[]) getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
+      if (chosenElements != null) {
+        final UsageTarget[] usageTargets = new UsageTarget[chosenElements.length];
+        for (int i = 0; i < chosenElements.length; i++) {
+          usageTargets[i] = new PsiElement2UsageTargetAdapter(chosenElements[i]);
+        }
+        return usageTargets;
+      }
+    } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return new CopyProvider() {
+        @Override
+        public void performCopy(@NotNull final DataContext dataContext) {
+          final PsiElement[] selectedPsiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
+          if (selectedPsiElements != null) {
+            final List<String> names = new ArrayList<String>(selectedPsiElements.length);
+            for (final PsiElement element : selectedPsiElements) {
+              if (element instanceof PsiNamedElement) {
+                names.add(((PsiNamedElement)element).getName());
+              }
+            }
+            CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(names, "\n")));
+          }
+        }
+
+        @Override
+        public boolean isCopyEnabled(@NotNull final DataContext dataContext) {
+          return true;
+        }
+
+        @Override
+        public boolean isCopyVisible(@NotNull final DataContext dataContext) {
+          return true;
+        }
+      };
     }
     return super.getData(dataId);
   }
 
   protected boolean showScrollToFromSourceActions() {
     return false;
+  }
+
+  private class PsiElementsDeleteProvider implements DeleteProvider {
+    private final PsiElement[] myElements;
+
+    private PsiElementsDeleteProvider(final PsiElement[] elements) {
+      myElements = elements;
+    }
+
+    @Override
+    public void deleteElement(@NotNull final DataContext dataContext) {
+      final List<PropertiesFile> bundlePropertiesFiles = myResourceBundle.getPropertiesFiles();
+
+      final List<PsiElement> toDelete = new ArrayList<PsiElement>();
+      for (PsiElement element : myElements) {
+        final Property property = (Property) element;
+        final String key = property.getKey();
+        if (key == null) {
+          LOG.error("key must be not null " + element);
+        } else {
+          for (PropertiesFile propertiesFile : bundlePropertiesFiles) {
+            for (final IProperty iProperty : propertiesFile.findPropertiesByKey(key)) {
+              toDelete.add(iProperty.getPsiElement());
+            }
+          }
+        }
+      }
+
+      new SafeDeleteHandler().invoke(myElements[0].getProject(), PsiUtilCore.toPsiElementArray(toDelete), dataContext);
+    }
+
+    @Override
+    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
+      return true;
+    }
   }
 }
 

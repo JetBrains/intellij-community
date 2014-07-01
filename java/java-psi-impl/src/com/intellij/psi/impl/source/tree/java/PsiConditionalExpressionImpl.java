@@ -73,8 +73,12 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (type2 instanceof PsiClassType && type1.equals(PsiPrimitiveType.getUnboxedType(type2))) return type1;
 
     if (TypeConversionUtil.isNumericType(typeRank1) && TypeConversionUtil.isNumericType(typeRank2)){
-      if (typeRank1 == TypeConversionUtil.BYTE_RANK && typeRank2 == TypeConversionUtil.SHORT_RANK) return type2;
-      if (typeRank1 == TypeConversionUtil.SHORT_RANK && typeRank2 == TypeConversionUtil.BYTE_RANK) return type1;
+      if (typeRank1 == TypeConversionUtil.BYTE_RANK && typeRank2 == TypeConversionUtil.SHORT_RANK) {
+        return type2 instanceof PsiPrimitiveType ? type2 : PsiPrimitiveType.getUnboxedType(type2);
+      }
+      if (typeRank1 == TypeConversionUtil.SHORT_RANK && typeRank2 == TypeConversionUtil.BYTE_RANK) {
+        return type1 instanceof PsiPrimitiveType ? type1 : PsiPrimitiveType.getUnboxedType(type1);
+      }
       if (typeRank2 == TypeConversionUtil.INT_RANK && (typeRank1 == TypeConversionUtil.BYTE_RANK || typeRank1 == TypeConversionUtil.SHORT_RANK || typeRank1 == TypeConversionUtil.CHAR_RANK)){
         if (TypeConversionUtil.areTypesAssignmentCompatible(type1, expr2)) return type1;
       }

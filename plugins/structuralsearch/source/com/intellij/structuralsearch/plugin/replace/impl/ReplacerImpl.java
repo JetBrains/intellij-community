@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.*;
@@ -206,27 +205,15 @@ public class ReplacerImpl {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject());
         final PsiFile containingFile = elementParent.getContainingFile();
 
-        if (containingFile != null) {
-
-          if (options.isToShortenFQN()) {
-            if (containingFile.getVirtualFile() != null) {
-              PsiDocumentManager.getInstance(project)
-                .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
-            }
-
-            JavaCodeStyleManager.getInstance(project).shortenClassReferences(elementParent, 0, elementParent.getTextLength());
+        if (containingFile != null && options.isToReformatAccordingToStyle()) {
+          if (containingFile.getVirtualFile() != null) {
+            PsiDocumentManager.getInstance(project)
+              .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
           }
 
-          if (options.isToReformatAccordingToStyle()) {
-            if (containingFile.getVirtualFile() != null) {
-              PsiDocumentManager.getInstance(project)
-                .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
-            }
+          final int parentOffset = elementParent.getTextRange().getStartOffset();
 
-            final int parentOffset = elementParent.getTextRange().getStartOffset();
-
-            codeStyleManager.reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
-          }
+          codeStyleManager.reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
         }
       }
     };
@@ -252,7 +239,7 @@ public class ReplacerImpl {
           context.replacementInfo = info;
 
           if (replaceHandler != null) {
-            replaceHandler.replace(info);
+            replaceHandler.replace(info, options);
           }
         }
       }

@@ -34,5 +34,8 @@ public class ThreadComboBoxRenderer extends ListCellRendererWrapper<XExecutionSt
       setText(value.getDisplayName());
       setIcon(value.getIcon());
     }
+    else if (index >= 0) {
+      setText("Loading...");
+    }
   }
 }

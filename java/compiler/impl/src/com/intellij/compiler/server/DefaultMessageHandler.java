@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.util.SmartList;
-import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -177,7 +177,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
               }
               else {
                 for (final PsiField changedField : changedFields) {
-                  if (!accessChanged && ClsUtil.isPrivate(accessFlags)) {
+                  if (!accessChanged && isPrivate(accessFlags)) {
                     // optimization: don't need to search, cause may be used only in this class
                     continue;
                   }
@@ -291,7 +291,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
   private SearchScope getSearchScope(PsiClass aClass, int fieldAccessFlags) {
     SearchScope searchScope = GlobalSearchScope.projectScope(myProject);
-    if (aClass != null && ClsUtil.isPackageLocal(fieldAccessFlags)) {
+    if (aClass != null && isPackageLocal(fieldAccessFlags)) {
       final PsiFile containingFile = aClass.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
         final String packageName = ((PsiJavaFile)containingFile).getPackageName();
@@ -386,4 +386,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return null;
   }
 
+  private static boolean isPackageLocal(int flags) {
+    return (Opcodes.ACC_PUBLIC & flags) == 0 && (Opcodes.ACC_PROTECTED & flags) == 0 && (Opcodes.ACC_PRIVATE & flags) == 0;
+  }
+
+  private static boolean isPrivate(int flags) {
+    return (Opcodes.ACC_PRIVATE & flags) != 0;
+  }
 }

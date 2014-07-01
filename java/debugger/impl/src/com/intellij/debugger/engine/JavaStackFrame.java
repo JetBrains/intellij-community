@@ -151,6 +151,11 @@ public class JavaStackFrame extends XStackFrame {
     }
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+
+      @Override
       public void threadAction() {
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(), children, node);

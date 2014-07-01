@@ -114,6 +114,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
       final PsiFile psiFile = viewProvider.getPsi(language);
       if (psiFile != null) {
         if (markAsCopy) {
+          if (psiFile.getNode() == null) {
+            throw new AssertionError("No node for file " + psiFile + "; language=" + language);
+          }
           markGenerated(psiFile);
         }
         return psiFile;

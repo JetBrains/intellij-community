@@ -15,7 +15,6 @@
  */
 package git4idea.commands;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,21 +27,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.EventQueue;
-import java.util.Collection;
+import java.awt.*;
 
 /**
  * Handler utilities that allow running handlers with progress indicators
  */
 public class GitHandlerUtil {
-  /**
-   * The logger instance
-   */
-  private static final Logger LOG = Logger.getInstance(GitHandlerUtil.class.getName());
 
-  /**
-   * a private constructor for utility class
-   */
   private GitHandlerUtil() {
   }
 
@@ -55,7 +46,7 @@ public class GitHandlerUtil {
    * @return A stdout content or null if there was error (exit code != 0 or exception during start).
    */
   @Nullable
-  public static String doSynchronously(final GitSimpleHandler handler, String operationTitle, @NonNls final String operationName) {
+  public static String doSynchronously(final GitSimpleHandler handler, final String operationTitle, @NonNls final String operationName) {
     handler.addListener(new GitHandlerListenerBase(handler, operationName) {
       protected String getErrorText() {
         String text = handler.getStderr();
@@ -65,7 +56,13 @@ public class GitHandlerUtil {
         return text;
       }
     });
-    runHandlerSynchronously(handler, operationTitle, ProgressManager.getInstance(), true);
+    final ProgressManager manager = ProgressManager.getInstance();
+    manager.runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        runInCurrentThread(handler, manager.getProgressIndicator(), true,
+                           operationTitle);
+      }
+    }, operationTitle, false, handler.project());
     if (!handler.isStarted() || handler.getExitCode() != 0) {
       return null;
     }
@@ -80,47 +77,12 @@ public class GitHandlerUtil {
    * @param operationName  an operation name shown in failure dialog
    * @return An exit code
    */
-  public static int doSynchronously(final GitLineHandler handler, String operationTitle, @NonNls final String operationName) {
-    return doSynchronously(handler, operationTitle, operationName, true);
-  }
-
-  /**
-   * Execute simple process synchronously with progress
-   *
-   * @param handler        a handler
-   * @param operationTitle an operation title shown in progress dialog
-   * @param operationName  an operation name shown in failure dialog
-   * @param showErrors     if true, the errors are shown when process is terminated
-   * @return An exit code
-   */
-  public static int doSynchronously(final GitLineHandler handler,
-                                    String operationTitle,
-                                    @NonNls final String operationName,
-                                    boolean showErrors) {
-    return doSynchronously(handler, operationTitle, operationName, showErrors, true);
-  }
-
-
-  /**
-   * Execute simple process synchronously with progress
-   *
-   * @param handler              a handler
-   * @param operationTitle       an operation title shown in progress dialog
-   * @param operationName        an operation name shown in failure dialog
-   * @param showErrors           if true, the errors are shown when process is terminated
-   * @param setIndeterminateFlag a flag indicating that progress should be configured as indeterminate
-   * @return An exit code
-   */
-  public static int doSynchronously(final GitLineHandler handler,
-                                    final String operationTitle,
-                                    @NonNls final String operationName,
-                                    final boolean showErrors,
-                                    final boolean setIndeterminateFlag) {
+  public static int doSynchronously(final GitLineHandler handler, final String operationTitle, @NonNls final String operationName) {
     final ProgressManager manager = ProgressManager.getInstance();
     manager.run(new Task.Modal(handler.project(), operationTitle, false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, showErrors));
-        runInCurrentThread(handler, indicator, setIndeterminateFlag, operationTitle);
+        handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, true));
+        runInCurrentThread(handler, indicator, true, operationTitle);
       }
     });
     if (!handler.isStarted()) {
@@ -129,26 +91,6 @@ public class GitHandlerUtil {
     return handler.getExitCode();
   }
 
-
-  /**
-   * Run handler synchronously. The method assumes that all listeners are set up.
-   *
-   * @param handler              a handler to run
-   * @param operationTitle       operation title
-   * @param manager              a progress manager
-   * @param setIndeterminateFlag if true handler is configured as indeterminate
-   */
-  private static void runHandlerSynchronously(final GitHandler handler,
-                                              final String operationTitle,
-                                              final ProgressManager manager,
-                                              final boolean setIndeterminateFlag) {
-    manager.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        runInCurrentThread(handler, manager.getProgressIndicator(), setIndeterminateFlag,
-                           operationTitle);
-      }
-    }, operationTitle, false, handler.project());
-  }
 
   /**
    * Run handler in the current thread
@@ -183,33 +125,6 @@ public class GitHandlerUtil {
    */
   public static void runInCurrentThread(final GitHandler handler, @Nullable final Runnable postStartAction) {
     handler.runInCurrentThread(postStartAction);
-  }
-
-  /**
-   * Run synchronously using progress indicator, but collect exceptions instead of showing error dialog
-   *
-   * @param handler a handler to use
-   * @return the collection of exception collected during operation
-   */
-  public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler) {
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    return doSynchronouslyWithExceptions(handler, progressIndicator, null);
-  }
-
-  /**
-   * Run synchronously using progress indicator, but collect exception instead of showing error dialog
-   *
-   * @param handler           a handler to use
-   * @param progressIndicator a progress indicator
-   * @param operationName
-   * @return the collection of exception collected during operation
-   */
-  public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler,
-                                                                       final ProgressIndicator progressIndicator,
-                                                                       @Nullable String operationName) {
-    handler.addLineListener(new GitLineHandlerListenerProgress(progressIndicator, handler, operationName, false));
-    runInCurrentThread(handler, progressIndicator, false, operationName);
-    return handler.errors();
   }
 
   public static String formatOperationName(String operation, @NotNull VirtualFile root) {

@@ -282,7 +282,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
-    fireErrors(errors);
+    onModuleLoadErrors(errors);
 
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
 
@@ -321,7 +321,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
-  private void fireErrors(final List<ModuleLoadingErrorDescription> errors) {
+  protected void onModuleLoadErrors(final List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
     myModuleModel.myModulesCache = null;
@@ -337,6 +337,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
       }
     }
 
+    fireModuleLoadErrors(errors);
+  }
+
+  protected void fireModuleLoadErrors(List<ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }

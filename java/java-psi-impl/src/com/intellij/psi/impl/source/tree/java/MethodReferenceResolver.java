@@ -219,7 +219,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     }
 
     @Override
-    protected int getPertinentApplicabilityLevel(MethodCandidateInfo conflict) {
+    protected int getPertinentApplicabilityLevel(@NotNull MethodCandidateInfo conflict) {
       return conflict.isVarargs() ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY;
     }
 
@@ -299,7 +299,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     }
 
     @Override
-    protected boolean nonComparable(CandidateInfo method, CandidateInfo conflict) {
+    protected boolean nonComparable(@NotNull CandidateInfo method, @NotNull CandidateInfo conflict) {
       if (method == conflict) return true;
       PsiElement psiElement = method.getElement();
       PsiElement conflictElement = conflict.getElement();

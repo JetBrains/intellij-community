@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public class MethodsTracker {
   private final Map<Method, Integer> myMethodToOccurrenceMap = new HashMap<Method, Integer>();
+  private final Map<Integer, MethodOccurrence> myOccurences = new HashMap<Integer, MethodOccurrence>();
 
   public final class MethodOccurrence {
     private final Method myMethod;
@@ -49,8 +50,13 @@ public class MethodsTracker {
     }
   }
 
-  public MethodOccurrence getMethodOccurrence(Method method) {
-    return new MethodOccurrence(method, assignOccurrenceIndex(method));
+  public MethodOccurrence getMethodOccurrence(int frameIndex, Method method) {
+    MethodOccurrence occurrence = myOccurences.get(frameIndex);
+    if (occurrence == null) {
+      occurrence = new MethodOccurrence(method, assignOccurrenceIndex(method));
+      myOccurences.put(frameIndex, occurrence);
+    }
+    return occurrence;
   }
 
   private int getOccurrenceCount(Method method) {

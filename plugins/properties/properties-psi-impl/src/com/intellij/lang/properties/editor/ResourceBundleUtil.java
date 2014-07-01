@@ -54,10 +54,10 @@ public class ResourceBundleUtil {
     if (virtualFile == null) {
       return null;
     }
-    if (virtualFile instanceof ResourceBundleAsVirtualFile) {
-      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (virtualFile instanceof ResourceBundleAsVirtualFile && project != null) {
+      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle(project);
     }
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PropertiesFile) {

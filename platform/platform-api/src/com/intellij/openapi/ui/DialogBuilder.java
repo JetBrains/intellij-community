@@ -42,6 +42,7 @@ public class DialogBuilder implements Disposable {
   @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
   private JComponent myCenterPanel;
+  private JComponent myNorthPanel;
   private String myTitle;
   private JComponent myPreferedFocusComponent;
   private String myDimensionServiceKey;
@@ -87,6 +88,12 @@ public class DialogBuilder implements Disposable {
 
   public void setCenterPanel(JComponent centerPanel) {
     myCenterPanel = centerPanel;
+  }
+
+  @NotNull
+  public DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
+    myNorthPanel = northPanel;
+    return this;
   }
 
   public void setTitle(String title) {
@@ -347,6 +354,9 @@ public class DialogBuilder implements Disposable {
 
     @Override
     protected JComponent createCenterPanel() { return myCenterPanel; }
+
+    @Override
+    protected JComponent createNorthPanel() { return myNorthPanel; }
 
     @Override
     public void dispose() {

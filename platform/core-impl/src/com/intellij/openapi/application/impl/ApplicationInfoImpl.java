@@ -83,6 +83,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String myPluginsDownloadUrl;
+  private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
@@ -153,6 +154,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_PLUGINS = "plugins";
   @NonNls private static final String ATTRIBUTE_LIST_URL = "list-url";
   @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
+  @NonNls private static final String ATTRIBUTE_BUILTIN_URL = "builtin-url";
   @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
   @NonNls private static final String ATTRIBUTE_HAS_HELP = "has-help";
   @NonNls private static final String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
@@ -353,6 +355,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getPluginsDownloadUrl() {
     return myPluginsDownloadUrl;
+  }
+
+  public String getBuiltinPluginsUrl() {
+    return myBuiltinPluginsUrl;
   }
 
   public String getWebHelpUrl() {
@@ -651,6 +657,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       if (downloadUrl != null) {
         myPluginsDownloadUrl = downloadUrl;
       }
+      if (!getBuild().isSnapshot()) {
+        myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+      }
     }
     else {
       myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
@@ -769,5 +778,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     public String getDependentPlugin() {
       return myDependentPlugin;
     }
+  }
+
+  private static volatile boolean myInPerformanceTest;
+  public static boolean isInPerformanceTest() {
+    return myInPerformanceTest;
+  }
+  public static void setInPerformanceTest(boolean inPerformanceTest) {
+    myInPerformanceTest = inPerformanceTest;
   }
 }

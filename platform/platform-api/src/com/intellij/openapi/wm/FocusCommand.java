@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
@@ -141,6 +142,10 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
     return myAllocation;
   }
 
+  public boolean canFocusChangeFrom(@Nullable Component component) {
+    return true;
+  }
+
   @Override
   public String toString() {
     final Object[] objects = getEqualityObjects();
@@ -212,6 +217,12 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
     public Component getComponent() {
       return myToFocus;
+    }
+
+    @Override
+    public boolean canFocusChangeFrom(@Nullable Component component) {
+      DialogWrapper dialog = DialogWrapper.findInstance(component);
+      return (dialog == null) || (dialog == DialogWrapper.findInstance(myToFocus));
     }
   }
 }

@@ -302,6 +302,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return new Dimension(800, 600);
   }
 
+  @NotNull 
   public JComponent createComponent() {
     reInitWholePanelIfNeeded();
 

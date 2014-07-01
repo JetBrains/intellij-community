@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
@@ -66,10 +67,18 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
     } else {
-      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
-      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
       final PsiMember applicableMember = myExpression.getPotentiallyApplicableMember();
       LOG.assertTrue(applicableMember != null);
+      
+      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
+      final PsiClass applicableMemberContainingClass = applicableMember.getContainingClass();
+      final PsiClass containingClass = qualifierResolveResult.getContainingClass();
+
+      PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+      psiSubstitutor = applicableMemberContainingClass == null || containingClass == null || myExpression.isConstructor()
+                       ? psiSubstitutor
+                       : TypeConversionUtil.getSuperClassSubstitutor(applicableMemberContainingClass, containingClass, psiSubstitutor);
+
       PsiType applicableMethodReturnType = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getReturnType() : null;
       int idx = 0;
       for (PsiTypeParameter param : ((PsiTypeParameterListOwner)applicableMember).getTypeParameters()) {
@@ -99,7 +108,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(applicableMethodReturnType)));
         } else if (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor()) {
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(applicableMember.getProject());
-          final PsiClass containingClass = qualifierResolveResult.getContainingClass();
+          
           if (containingClass != null) {
             final PsiClassType classType = elementFactory.createType(containingClass, psiSubstitutor);
             constraints.add(new TypeCompatibilityConstraint(returnType, classType));

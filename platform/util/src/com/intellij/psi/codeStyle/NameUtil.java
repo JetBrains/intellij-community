@@ -352,7 +352,7 @@ public class NameUtil {
       return i - 1;
     }
     
-    while (i < text.length() && Character.isLowerCase(text.charAt(i))) i++;
+    while (i < text.length() && Character.isLetter(text.charAt(i)) && !Character.isUpperCase(text.charAt(i))) i++;
     return i;
   }
 

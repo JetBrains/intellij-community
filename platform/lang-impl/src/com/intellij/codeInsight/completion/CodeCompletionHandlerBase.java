@@ -135,19 +135,18 @@ public class CodeCompletionHandlerBase {
     }
     */
 
-    int newTime = phase.newCompletionStarted(time, repeated);
+    final int newTime = phase.newCompletionStarted(time, repeated);
     if (invokedExplicitly) {
       time = newTime;
     }
+    final int invocationCount = time;
     if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem.class)) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
 
-    if (time > 1) {
-      if (myCompletionType == CompletionType.BASIC) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
-      }
+    if (invocationCount > 1 && myCompletionType == CompletionType.BASIC) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
     }
 
     final CompletionInitializationContext[] initializationContext = {null};
@@ -168,7 +167,7 @@ public class CodeCompletionHandlerBase {
             psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
             CompletionAssertions.assertCommitSuccessful(editor, psiFile);
 
-            initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile);
+            initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile, invocationCount);
           }
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
@@ -184,12 +183,12 @@ public class CodeCompletionHandlerBase {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
 
-    insertDummyIdentifier(initializationContext[0], hasModifiers, time);
+    insertDummyIdentifier(initializationContext[0], hasModifiers, invocationCount);
   }
 
-  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile) {
+  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount) {
     final Ref<CompletionContributor> current = Ref.create(null);
-    CompletionInitializationContext context = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
+    CompletionInitializationContext context = new CompletionInitializationContext(editor, psiFile, myCompletionType, invocationCount) {
       CompletionContributor dummyIdentifierChanger;
 
       @Override
@@ -418,15 +417,20 @@ public class CodeCompletionHandlerBase {
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
 
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      CommandProcessor.getInstance().executeCommand(indicator.getProject(), new Runnable() {
-                                                      @Override
-                                                      public void run() {
-                                                        indicator.setMergeCommand();
-                                                        indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
-                                                      }
-                                                    }, "Autocompletion", null);
-
-
+      try {
+        CommandProcessor.getInstance().executeCommand(indicator.getProject(), new Runnable() {
+          @Override
+          public void run() {
+            indicator.setMergeCommand();
+            indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
+          }
+        }, "Autocompletion", null);
+      }
+      catch (Throwable e) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        LOG.error(e);
+        return;
+      }
 
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
@@ -754,10 +758,12 @@ public class CodeCompletionHandlerBase {
     }
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-      final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
-      if (processors.size() > 0) {
-        for (SmartEnterProcessor processor : processors) {
-          processor.process(project, editor, indicator.getParameters().getOriginalFile());
+      if (language != null) {
+        final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
+        if (processors.size() > 0) {
+          for (SmartEnterProcessor processor : processors) {
+            processor.process(project, editor, indicator.getParameters().getOriginalFile());
+          }
         }
       }
     }

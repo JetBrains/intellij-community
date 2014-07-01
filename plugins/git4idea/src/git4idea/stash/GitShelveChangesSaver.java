@@ -107,7 +107,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
 
   @Override
   protected boolean wereChangesSaved() {
-    return myShelvedLists != null;
+    return myShelvedLists != null && !myShelvedLists.isEmpty();
   }
 
   @Override

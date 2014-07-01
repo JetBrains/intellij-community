@@ -160,7 +160,12 @@ public class ConvertUsagesUtil {
    */
   @NotNull
   public static String escapeDescriptorName(@NotNull final String name) {
-    return name.replace(" ", "_").replace(GROUP_SEPARATOR, '_').replace(GROUPS_SEPARATOR, '_').replace(GROUP_VALUE_SEPARATOR, '_');
+    return name.replace(" ", "_").
+      replace(GROUP_SEPARATOR, '_').
+      replace(GROUPS_SEPARATOR, '_').
+      replace(GROUP_VALUE_SEPARATOR, '_')
+      .replace("'", " ")
+      .replace("\"", " ");
   }
 
   private static class StringPair {

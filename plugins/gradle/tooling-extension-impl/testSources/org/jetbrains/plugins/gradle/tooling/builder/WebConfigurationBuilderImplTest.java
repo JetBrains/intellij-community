@@ -26,6 +26,9 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.plugins.gradle.model.web.WebConfiguration.WarModel;
+import static org.jetbrains.plugins.gradle.model.web.WebConfiguration.WebResource;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -53,8 +56,17 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
     WebConfiguration webConfiguration = ideaModule.get(0);
     assertEquals(1, webConfiguration.getWarModels().size());
 
-    final WebConfiguration.WarModel warModel = webConfiguration.getWarModels().iterator().next();
+    final WarModel warModel = webConfiguration.getWarModels().iterator().next();
     assertEquals("src/main/webapp", warModel.getWebAppDirName());
+
+    assertArrayEquals(
+      new String[]{"MANIFEST.MF", "additionalWebInf", "rootContent"},
+      ContainerUtil.map2Array(warModel.getWebResources(), new Function<WebResource, Object>() {
+        @Override
+        public String fun(WebResource resource) {
+          return resource.getFile().getName();
+        }
+      }));
   }
 
   @Override

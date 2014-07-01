@@ -32,6 +32,7 @@ import java.util.Set;
  * @author cdr
  */
 public class PropertiesGroupingStructureViewComponent extends StructureViewComponent {
+
   protected PropertiesGroupingStructureViewComponent(Project project,
                                                   FileEditor editor,
                                                   PropertiesGroupingStructureViewModel structureViewModel) {

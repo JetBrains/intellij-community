@@ -37,7 +37,7 @@ import java.io.IOException;
  * @author Gregory.Shrago
  */
 public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
-  public static void pushLanguageLevel(final Project project) {
+  public static void pushLanguageLevel(@NotNull final Project project) {
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new JavaLanguageLevelPusher());
   }
 

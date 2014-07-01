@@ -116,73 +116,6 @@ public class UIUtil {
     return createOptionLine(new JComponent[]{option});
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String buildPatternFromElement(final PsiElement element) {
-    if (element != null) {
-      String text;
-
-      if (element instanceof PsiMethod || element instanceof PsiVariable || element instanceof PsiClass) {
-        final StringBuffer buf = new StringBuffer();
-
-        if (element instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)element;
-          final PsiClass clazz = method.getContainingClass();
-
-          if (method.hasModifierProperty(PsiModifier.STATIC)) {
-            buf.append(clazz.getName()).append(".");
-          }
-          else if (method.getReturnType() == null) {
-            buf.append("new ");
-          }
-          else {
-            buf.append("'instance?:[exprtype( *").append(clazz.getName())
-                .append(" )]").append(".");
-          }
-
-          buf.append(method.getName()).append('(');
-          final PsiParameter[] params = method.getParameterList().getParameters();
-          for (int i = 0; i < params.length; ++i) {
-            if (i != 0) buf.append(',');
-            buf.append("'param").append(i + 1).append(":[exprtype( *").append(params[i].getType().getPresentableText()).append(" )]");
-          }
-          buf.append(")");
-        }
-        else if (element instanceof PsiVariable) {
-          final PsiVariable var = (PsiVariable)element;
-          if (var instanceof PsiField) {
-            final PsiClass clazz = (PsiClass)var.getParent();
-
-            if (var.hasModifierProperty(PsiModifier.STATIC)) {
-              buf.append(clazz.getName());
-            }
-            else {
-              buf.append("'instance?:[exprtype( *").append(clazz.getName())
-                  .append(" )]");
-            }
-
-            buf.append('.');
-          }
-
-          buf.append(var.getName());
-        }
-        else {
-          PsiClass clazz = (PsiClass)element;
-          buf.append("'").append(clazz.getName()).append(":").append(clazz.getName());
-        }
-
-        text = buf.toString();
-      }
-      else {
-        text = element.getText();
-        if (text == null) return "";
-      }
-
-      return text;
-    }
-
-    return "";
-  }
-
   public static void setContent(final Editor editor, String val, final int from, final int end, final Project project) {
     final String value = val != null ? val : "";
 
@@ -268,24 +201,6 @@ public class UIUtil {
 
     FileEditorManager.getInstance(ref.getProject())
         .openTextEditor(new OpenFileDescriptor(ref.getProject(), ref.getFile(), ref.getOffset()), true);
-  }
-
-  public static PsiElement getNavigationElement(PsiElement element) {
-    if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
-      element = ((PsiClass)element).getNameIdentifier();
-    }
-    else if (element instanceof PsiMethod) {
-      element = ((PsiMethod)element).getNameIdentifier();
-    }
-    else if (element instanceof PsiVariable) {
-      element = ((PsiVariable)element).getNameIdentifier();
-    }
-
-    return element;
-  }
-
-  public static PsiElement getNavigationElement(MatchResult result) {
-    return getNavigationElement(result.getMatchRef().getElement());
   }
 
   public static void invokeAction(Configuration config, SearchContext context) {

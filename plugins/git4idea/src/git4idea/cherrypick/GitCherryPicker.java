@@ -140,8 +140,8 @@ public class GitCherryPicker {
                              "Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>";
         description += getSuccessfulCommitDetailsIfAny(successfulCommits);
 
-        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFilesDetector.getFiles(),
-                                                                 "cherry-pick", description);
+        UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, repository.getRoot(),
+                                                                 untrackedFilesDetector.getRelativeFilePaths(), "cherry-pick", description);
         return false;
       }
       else if (localChangesOverwrittenDetector.hasHappened()) {

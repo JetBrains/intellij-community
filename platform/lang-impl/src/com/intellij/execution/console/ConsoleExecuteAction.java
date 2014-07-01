@@ -156,10 +156,14 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myAddToHistory = addCurrentToHistory;
     }
 
+    /**
+     * @deprecated
+     */
     protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
     }
 
-    final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+    protected void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+      //noinspection deprecation
       beforeExecution(console);
 
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);

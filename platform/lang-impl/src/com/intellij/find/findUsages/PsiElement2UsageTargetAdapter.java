@@ -40,7 +40,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.ui.ComputableIcon;
@@ -219,18 +218,16 @@ public class PsiElement2UsageTargetAdapter
     return psiElement == null ? UsageViewBundle.message("node.invalid") :
            FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                               DescriptiveNameUtil.getDescriptiveName(psiElement),
-                              scopeString == null
-                              ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName()
-                              : scopeString
+                              scopeString
     );
   }
 
   @Override
   public void showSettings() {
-    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myPointer.getProject())).getFindUsagesManager();
     PsiElement element = getElement();
     if (element != null) {
-      findUsagesManager.findUsages(element, null, null, true);
+      FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myPointer.getProject())).getFindUsagesManager();
+      findUsagesManager.findUsages(element, null, null, true, null);
     }
   }
 

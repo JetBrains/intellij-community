@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class CloudRuntimeTask<
   T,
   DC extends DeploymentConfiguration,
-  SR extends CloudServerRuntimeInstance<DC>> {
+  SR extends CloudServerRuntimeInstance<DC, ?, ?>> {
 
   private static final Logger LOG = Logger.getInstance("#" + CloudRuntimeTask.class.getName());
 

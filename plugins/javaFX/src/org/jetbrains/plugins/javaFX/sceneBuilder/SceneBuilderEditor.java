@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
@@ -109,6 +110,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (mySceneBuilder != null) {
+
+          if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
+            return;
+          }
+
           try {
             myChangeListener.setRunState(false);
 

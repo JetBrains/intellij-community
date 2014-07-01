@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -30,24 +31,30 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
 * @author cdr
 */
 class ShowUsagesTableCellRenderer implements TableCellRenderer {
   private final UsageViewImpl myUsageView;
+  @NotNull private final AtomicInteger myOutOfScopeUsages;
+  @NotNull private final SearchScope mySearchScope;
 
-  ShowUsagesTableCellRenderer(@NotNull UsageViewImpl usageView) {
+  ShowUsagesTableCellRenderer(@NotNull UsageViewImpl usageView, @NotNull AtomicInteger outOfScopeUsages, @NotNull SearchScope searchScope) {
     myUsageView = usageView;
+    myOutOfScopeUsages = outOfScopeUsages;
+    mySearchScope = searchScope;
   }
 
   @Override
@@ -60,32 +67,37 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     Color fileBgColor = getBackgroundColor(isSelected, usage);
     final Color bg = UIUtil.getListSelectionBackground();
     final Color fg = UIUtil.getListSelectionForeground();
-    panel.setBackground(isSelected ? bg : fileBgColor == null ? list.getBackground() : fileBgColor);
-    panel.setForeground(isSelected ? fg : list.getForeground());
-
-    if (usage == null || usageNode instanceof ShowUsagesAction.StringNode) {
-      panel.setLayout(new BorderLayout());
-      if (column == 0) {
-        panel.add(new JLabel(XmlStringUtil.wrapInHtml("<b>" + value + "</b>"), SwingConstants.CENTER));
-      }
-      return panel;
-    }
-
+    Color panelBackground = isSelected ? bg : fileBgColor == null ? list.getBackground() : fileBgColor;
+    Color panelForeground = isSelected ? fg : list.getForeground();
+    panel.setBackground(panelBackground);
+    panel.setForeground(panelForeground);
 
     SimpleColoredComponent textChunks = new SimpleColoredComponent();
-    textChunks.setIpad(new Insets(0,0,0,0));
+    textChunks.setIpad(new Insets(0, 0, 0, 0));
     textChunks.setBorder(null);
+
+    if (usage == null || usageNode instanceof ShowUsagesAction.StringNode) {
+      textChunks.append(value.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      return textComponentSpanningWholeRow(textChunks, panelBackground, panelForeground, column, list, row);
+    }
+    if (usage == ShowUsagesAction.MORE_USAGES_SEPARATOR) {
+      textChunks.append("...<");
+      textChunks.append("more usages", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      textChunks.append(">...");
+      return textComponentSpanningWholeRow(textChunks, panelBackground, panelForeground, column, list, row);
+    }
+    else if (usage == ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+      textChunks.append("...<");
+      textChunks.append(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      textChunks.append(">...");
+      return textComponentSpanningWholeRow(textChunks, panelBackground, panelForeground, column, list, row);
+    }
 
     if (column == 0) {
       GroupNode parent = (GroupNode)usageNode.getParent();
       appendGroupText(parent, panel, fileBgColor);
-      if (usage == ShowUsagesAction.MORE_USAGES_SEPARATOR) {
-          textChunks.append("...<");
-          textChunks.append("more usages", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          textChunks.append(">...");
-      }
     }
-    else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR) {
+    else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       UsagePresentation presentation = usage.getPresentation();
       TextChunk[] text = presentation.getText();
 
@@ -114,6 +126,59 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
     panel.add(textChunks);
     return panel;
+  }
+
+  @NotNull
+  private static Component textComponentSpanningWholeRow(@NotNull SimpleColoredComponent chunks,
+                                                         Color panelBackground,
+                                                         Color panelForeground,
+                                                         final int column,
+                                                         @NotNull final JTable table, int row) {
+    final SimpleColoredComponent component = new SimpleColoredComponent() {
+      @Override
+      protected void doPaint(Graphics2D g) {
+        int offset = 0;
+        int i = 0;
+        final TableColumnModel columnModel = table.getColumnModel();
+        while (i < column) {
+          offset += columnModel.getColumn(i).getWidth();
+          i++;
+        }
+        g.translate(-offset, 0);
+
+        //if (column == columnModel.getColumnCount()-1) {
+        //}
+        setSize(getWidth()+offset, getHeight()); // should increase the column width so that selection background will be visible even after offset translation
+
+        super.doPaint(g);
+
+        g.translate(+offset, 0);
+      }
+
+      @NotNull
+      @Override
+      public Dimension getPreferredSize() {
+        //return super.getPreferredSize();
+        return column == table.getColumnModel().getColumnCount()-1 ? super.getPreferredSize() : new Dimension(0,0);
+        // it should span the whole row, so we can't return any specific value here,
+        // because otherwise it would be used in the "max width" calculation in com.intellij.find.actions.ShowUsagesAction.calcMaxWidth
+      }
+    };
+
+    component.setIpad(new Insets(0,0,0,0));
+    component.setBorder(null);
+    component.setBackground(panelBackground);
+    component.setForeground(panelForeground);
+
+    for (SimpleColoredComponent.ColoredIterator iterator = chunks.iterator(); iterator.hasNext(); ) {
+      iterator.next();
+      String fragment = iterator.getFragment();
+      SimpleTextAttributes attributes = iterator.getTextAttributes();
+      attributes = attributes.derive(attributes.getStyle(), panelForeground, panelBackground, attributes.getWaveColor());
+      component.append(fragment, attributes);
+    }
+
+    return component;
   }
 
   private static SimpleTextAttributes deriveAttributesWithColor(SimpleTextAttributes attributes, Color fileBgColor) {

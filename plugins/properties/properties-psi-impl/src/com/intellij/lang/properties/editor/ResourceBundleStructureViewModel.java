@@ -25,7 +25,6 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.lang.properties.structureView.PropertiesSeparatorManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,23 +32,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel, StructureViewModel.ExpandInfoProvider {
   private final ResourceBundle myResourceBundle;
-  private final GroupByWordPrefixes myGroupByWordPrefixes;
+  private final GroupByWordPrefixes myByWordPrefixesGrouper;
   private final StructureViewTreeElement myRoot;
 
-  public ResourceBundleStructureViewModel(final Project project, ResourceBundle root) {
+  public ResourceBundleStructureViewModel(ResourceBundle root) {
     myResourceBundle = root;
-    String separator = PropertiesSeparatorManager.getInstance().getSeparator(project, new ResourceBundleAsVirtualFile(myResourceBundle));
-    myGroupByWordPrefixes = new GroupByWordPrefixes(separator);
-    myRoot = new ResourceBundleFileStructureViewElement(project, myResourceBundle);
+    String separator = PropertiesSeparatorManager.getInstance(root.getProject()).
+      getSeparator(myResourceBundle);
+    myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
+    myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle);
   }
 
   public void setSeparator(String separator) {
-    myGroupByWordPrefixes.setSeparator(separator);
-    PropertiesSeparatorManager.getInstance().setSeparator(new ResourceBundleAsVirtualFile(myResourceBundle), separator);
+    myByWordPrefixesGrouper.setSeparator(separator);
+    PropertiesSeparatorManager.getInstance(myResourceBundle.getProject()).setSeparator(myResourceBundle, separator);
   }
 
   public String getSeparator() {
-    return myGroupByWordPrefixes.getSeparator();
+    return myByWordPrefixesGrouper.getSeparator();
   }
 
   @NotNull
@@ -59,7 +59,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
 
   @NotNull
   public Grouper[] getGroupers() {
-    return new Grouper[]{myGroupByWordPrefixes};
+    return new Grouper[]{myByWordPrefixesGrouper};
   }
 
   @NotNull

@@ -42,7 +42,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
     if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
-    return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles(project).size() > 1;
+    return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
   }
 
   @Override
@@ -50,7 +50,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file){
     ResourceBundle resourceBundle;
     if (file instanceof ResourceBundleAsVirtualFile) {
-      resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
+      resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle(project);
     }
     else {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -60,7 +60,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
       resourceBundle = PropertiesImplUtil.getPropertiesFile(psiFile).getResourceBundle();
     }
 
-    return new ResourceBundleEditor(project, resourceBundle);
+    return new ResourceBundleEditor(resourceBundle);
   }
 
   @Override

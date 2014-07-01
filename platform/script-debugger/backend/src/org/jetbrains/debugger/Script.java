@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.sourcemap.SourceMap;
 
-public interface Script extends UserDataHolderEx {
+public interface Script extends UserDataHolderEx, HasUrl {
   void setSourceMap(SourceMap sourceMap);
 
   enum Type {

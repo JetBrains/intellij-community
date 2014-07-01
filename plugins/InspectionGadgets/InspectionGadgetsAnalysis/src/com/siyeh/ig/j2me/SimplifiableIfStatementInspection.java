@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,20 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimplifiableIfStatementInspection extends BaseInspection {
 
@@ -280,21 +282,68 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
-      final String newStatement = calculateReplacementStatement(ifStatement);
-      if (newStatement == null) {
+      List<PsiComment> before = new ArrayList<PsiComment>();
+      List<PsiComment> after = new ArrayList<PsiComment>();
+      collectComments(ifStatement, true, before, after);
+      final String newStatementText = calculateReplacementStatement(ifStatement);
+      if (newStatementText == null) {
         return;
       }
+      final StringBuilder codeBlockText = new StringBuilder("{\n");
+      for (PsiComment comment : before) {
+        codeBlockText.append(comment.getText()).append('\n');
+      }
+      codeBlockText.append(newStatementText).append('\n');
+      for (PsiComment comment : after) {
+        codeBlockText.append(comment.getText()).append('\n');
+      }
+      codeBlockText.append('}');
       if (ifStatement.getElseBranch() == null) {
         final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
         if (nextStatement != null) {
           nextStatement.delete();
         }
       }
-      PsiReplacementUtil.replaceStatement(ifStatement, newStatement);
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiCodeBlock codeBlock = psiFacade.getElementFactory().createCodeBlockFromText(codeBlockText.toString(), ifStatement);
+      final PsiElement parent = ifStatement.getParent();
+      PsiElement child = codeBlock.getFirstBodyElement();
+      final PsiElement end = codeBlock.getLastBodyElement();
+      while (true) {
+        parent.addBefore(child, ifStatement);
+        if (child == end) {
+          break;
+        }
+        child = child.getNextSibling();
+      }
+      ifStatement.delete();
+      CodeStyleManager.getInstance(project).reformat(parent);
+    }
+
+    private static void collectComments(PsiElement element, boolean first, List<PsiComment> before, List<PsiComment> after) {
+      if (element instanceof PsiComment) {
+        if (first) {
+          before.add((PsiComment)element);
+        }
+        else {
+          after.add((PsiComment)element);
+        }
+        return;
+      }
+      for (PsiElement child : element.getChildren()) {
+        if (child instanceof PsiKeyword) {
+          final PsiKeyword keyword = (PsiKeyword)child;
+          if (keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD) {
+            first = false;
+          }
+        }
+        else {
+          collectComments(child, first, before, after);
+        }
+      }
     }
   }
 

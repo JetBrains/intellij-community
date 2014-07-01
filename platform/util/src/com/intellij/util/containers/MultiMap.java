@@ -293,6 +293,29 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   @NotNull
+  public static <K, V> MultiMap<K, V> createConcurrentSet() {
+    return new MultiMap<K, V>() {
+      @NotNull
+      @Override
+      protected Collection<V> createCollection() {
+        return new ConcurrentHashSet<V>();
+      }
+
+      @NotNull
+      @Override
+      protected Collection<V> createEmptyCollection() {
+        return Collections.emptySet();
+      }
+
+      @NotNull
+      @Override
+      protected Map<K, Collection<V>> createMap() {
+        return ContainerUtil.newConcurrentMap();
+      }
+    };
+  }
+
+  @NotNull
   public static <K, V> MultiMap<K, V> createSet() {
     return new MultiMap<K, V>() {
       @NotNull

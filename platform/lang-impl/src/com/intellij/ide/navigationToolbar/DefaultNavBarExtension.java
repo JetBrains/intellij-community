@@ -22,8 +22,10 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
@@ -33,7 +35,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +114,10 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       new Computable<Boolean>() {
         @Override
         public Boolean compute() {
-          return ContainerUtil.process(ModuleManager.getInstance(object).getModules(), processor);
+          for (Module module : ModuleManager.getInstance(object).getModules()) {
+            if (!(ModuleType.get(module) instanceof InternalModuleType) && !processor.process(module)) return false;
+          }
+          return true;
         }
       }
     );

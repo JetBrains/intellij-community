@@ -226,6 +226,7 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
 binding.setVariable("commonJvmArgs", {
   return [
    "-ea",
+   "-server",
    "-Didea.home.path=$home",
    "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
    "-XX:+HeapDumpOnOutOfMemoryError",

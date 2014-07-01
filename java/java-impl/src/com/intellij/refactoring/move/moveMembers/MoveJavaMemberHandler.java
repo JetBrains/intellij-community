@@ -180,7 +180,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         }
         else {
           final PsiReferenceParameterList parameterList = refExpr.getParameterList();
-          if (parameterList != null && parameterList.getTypeArguments().length == 0){
+          if (parameterList != null && parameterList.getTypeArguments().length == 0 && !(refExpr instanceof PsiMethodReferenceExpression)){
             refExpr.setQualifierExpression(null);
           } else {
             final Project project = element.getProject();

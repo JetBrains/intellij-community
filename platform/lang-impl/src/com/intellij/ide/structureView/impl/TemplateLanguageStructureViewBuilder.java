@@ -60,9 +60,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     myVirtualFile = psiElement.getContainingFile().getVirtualFile();
     myProject = psiElement.getProject();
 
-    final TemplateLanguageFileViewProvider provider = getViewProvider();
-    assert provider != null;
-    myTemplateDataLanguage = provider.getTemplateDataLanguage();
+    myTemplateDataLanguage = getNotNullViewProvider().getTemplateDataLanguage();
   }
 
   private void updateAfterPsiChange() {
@@ -115,6 +113,15 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     return provider instanceof TemplateLanguageFileViewProvider ? (TemplateLanguageFileViewProvider)provider : null;
   }
 
+  @NotNull 
+  private TemplateLanguageFileViewProvider getNotNullViewProvider() {
+    final FileViewProvider provider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
+    if (provider == null || !(provider instanceof TemplateLanguageFileViewProvider)) {
+      throw new AssertionError("Not a template view provider for " + myVirtualFile + ": " + provider);
+    }
+    return (TemplateLanguageFileViewProvider)provider;
+  }
+
   private void updateBaseLanguageView() {
     if (myBaseStructureViewDescriptor == null || !myProject.isOpen()) return;
     final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
@@ -158,8 +165,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     myFileEditor = fileEditor;
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
-    final TemplateLanguageFileViewProvider provider = getViewProvider();
-    assert provider != null;
+    final TemplateLanguageFileViewProvider provider = getNotNullViewProvider();
 
     final StructureViewComposite.StructureViewDescriptor structureViewDescriptor = createMainView(fileEditor, provider.getPsi(provider.getBaseLanguage()));
     if (structureViewDescriptor != null) viewDescriptors.add(structureViewDescriptor);
