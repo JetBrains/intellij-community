@@ -103,10 +103,11 @@ public class PsiTypeLookupItem extends LookupItem {
     myImportFixer.handleInsert(context, this);
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    assert position != null;
-    int genericsStart = context.getTailOffset();
-    context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
-    JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
+    if (position != null) {
+      int genericsStart = context.getTailOffset();
+      context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
+      JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
+    }
 
     int tail = context.getTailOffset();
     String braces = StringUtil.repeat("[]", getBracketsCount());
