@@ -43,7 +43,7 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
 
 ;------------------------------------------------------------------------------
-; on GUI initialization installer checks whether IDEA is already installed
+; on GUI ialization installer checks whether IDEA is already installed
 ;------------------------------------------------------------------------------
 
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
@@ -621,7 +621,7 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 ; Installer sections
 ;------------------------------------------------------------------------------
-Section "IDEA Files" CopyIdeaFiles
+ection "IDEA Files" CopyIdeaFiles
 ;  StrCpy $baseRegKey "HKCU"
 ;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
 ;  StrCmp $R2 1 continue_for_current_user
@@ -688,30 +688,19 @@ skip_ipr:
 StrCmp "${ASSOCIATION}" "" skip_association
  ; back up old value of an association
  ReadRegStr $1 HKCR ${ASSOCIATION} ""
-  StrCmp $1 "" skip_backup
+ StrCmp $1 "" skip_backup
     StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
     WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
 skip_backup:
   WriteRegStr HKCR ${ASSOCIATION} "" "${PRODUCT_PATHS_SELECTOR}"
   ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
   StrCmp $0 "" 0 command_exists
-	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "{PRODUCT_FULL_NAME}"
+	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
 	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
 	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
 command_exists:
   WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
     '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
-
-  ; back up old value of .java
-; StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" java_association
-; StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 skip_ipr
-;java_association:
-; ReadRegStr $1 HKCR ${PRODUCT_PATHS_SELECTOR} ""
-; StrCmp $1 "" skip_backup
-;   StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
-;   WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
-;skip_backup:
-;  WriteRegStr HKCR ${ASSOCIATION} "" ${PRODUCT_PATHS_SELECTOR}
 
 skip_association:
   ; Rest of script
@@ -803,6 +792,36 @@ FunctionEnd
 Function un.onInit
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
+
+  ;does admin perm. is required to uninstall?
+  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  MessageBox MB_OK "result search PROGRAMFILES inside INSTDIR path: $R0"
+  StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
+requred_admin_perm:
+  MessageBox MB_OK "R0 is not empty: $R0"
+
+  ;has the user admin rights?
+  UserInfo::GetAccountType
+  Pop $R2
+  MessageBox MB_OK "Type of user account: $R2"
+  StrCmp $R2 "Admin" UAC_Done UAC_Elevate
+UAC_Elevate:
+  !insertmacro UAC_RunElevated
+  StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
+  StrCmp 0 $0 0 UAC_Err ; Error?
+  StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+  Quit
+UAC_ElevationAborted:
+UAC_Err:
+  Abort
+UAC_Success:
+  StrCmp 1 $3 UAC_Admin ;Admin?
+  StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
+  goto UAC_Elevate
+UAC_Admin:
+UAC_Done:
+  SetShellVarContext all
+  StrCpy $baseRegKey "HKLM"
 FunctionEnd
 
 Function OMEnumRegKey
@@ -1044,10 +1063,8 @@ clear_Registry:
   StrCpy $2 "MenuFolder"
   Call un.OMDeleteRegValue
 
-  StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" restore_java_association
-  StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 finish_uninstall
-restore_java_association:
-  StrCpy $1 ".java"
+  StrCmp "${ASSOCIATION}" "" finish_uninstall
+  StrCpy $1 "${ASSOCIATION}"
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
 
