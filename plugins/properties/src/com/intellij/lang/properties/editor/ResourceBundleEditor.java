@@ -132,6 +132,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         if (getSelectedPropertyName() == null) return;
         if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
+
+          if (e.getOldLeadSelectionPath() != null) {
+            for (Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
+              if (entry.getValue() == mySelectedEditor) {
+                writeEditorPropertyValue(mySelectedEditor, entry.getKey(), selectedPropertyName);
+                break;
+              }
+            }
+          }
+
           selectedPropertyName = getSelectedPropertyName();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
@@ -283,9 +293,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
   }
 
-  private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile) {
+  private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile, final @Nullable String propertyName) {
     final String currentValue = editor.getDocument().getText();
-    final String currentSelectedProperty = getSelectedPropertyName();
+    final String currentSelectedProperty = propertyName ==  null ? getSelectedPropertyName() : propertyName;
 
     assert currentSelectedProperty != null;
 
@@ -350,7 +360,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
         @Override
         public void focusLost(final Editor eventEditor) {
-          writeEditorPropertyValue(editor, propertiesFile);
+          writeEditorPropertyValue(editor, propertiesFile, null);
         }
       });
       editor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -521,7 +531,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
   private void selectionChanged() {
     myBackSlashPressed.clear();
-
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -699,7 +708,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (mySelectedEditor != null) {
       for (final Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
         if (mySelectedEditor.equals(entry.getValue())) {
-          writeEditorPropertyValue(mySelectedEditor, entry.getKey());
+          writeEditorPropertyValue(mySelectedEditor, entry.getKey(), null);
         }
       }
     }
