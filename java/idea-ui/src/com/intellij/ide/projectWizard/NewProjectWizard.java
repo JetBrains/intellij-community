@@ -21,6 +21,7 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
   protected void init(@NotNull ModulesProvider modulesProvider) {
     myWizardContext.setNewWizard(true);
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
+    Disposer.register(getDisposable(), projectTypeStep);
     mySequence.addCommonStep(projectTypeStep);
     ChooseTemplateStep chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
     mySequence.addCommonStep(chooseTemplateStep);
