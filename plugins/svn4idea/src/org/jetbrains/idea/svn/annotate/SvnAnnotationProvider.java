@@ -249,8 +249,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
     byte[] data = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(wasUrl), svnRevision, svnRevision);
     final String contents = LoadTextUtil.getTextByBinaryPresentation(data, charset == null ? CharsetToolkit.UTF8_CHARSET : charset).toString();
-    final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), pair.getFirst(),
-                                                                       pair.getSecond().getPath(), current);
+    final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), current);
     final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
     final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
