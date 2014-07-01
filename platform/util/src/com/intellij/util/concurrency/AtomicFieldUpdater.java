@@ -22,6 +22,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
 
@@ -38,23 +39,9 @@ public class AtomicFieldUpdater<T,V> {
 
   @NotNull
   public static Unsafe getUnsafe() {
-    Unsafe unsafe = null;
-    Class uc = Unsafe.class;
-    try {
-      Field[] fields = uc.getDeclaredFields();
-      for (Field field : fields) {
-        if (field.getName().equals("theUnsafe")) {
-          field.setAccessible(true);
-          unsafe = (Unsafe)field.get(uc);
-          break;
-        }
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    Unsafe unsafe = ReflectionUtil.getField(Unsafe.class, null, Unsafe.class, "theUnsafe");
     if (unsafe == null) {
-      throw new RuntimeException("Could not find 'theUnsafe' field in the " + uc);
+      throw new RuntimeException("Could not find 'theUnsafe' field in the " + Unsafe.class);
     }
     return unsafe;
   }

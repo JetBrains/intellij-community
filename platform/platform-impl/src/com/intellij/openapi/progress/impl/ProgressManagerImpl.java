@@ -38,12 +38,9 @@ import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -500,29 +497,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   private void stopCheckCanceled() {
     if (myCheckCancelledFuture != null) myCheckCancelledFuture.cancel(false);
-  }
-
-  @TestOnly
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static String isCanceledThread(@NotNull Thread thread) {
-    try {
-      Field th = Thread.class.getDeclaredField("threadLocals");
-      th.setAccessible(true);
-      Object tLocalMap = th.get(thread);
-      if (tLocalMap == null) return null;
-      Method getEntry = tLocalMap.getClass().getDeclaredMethod("getEntry", ThreadLocal.class);
-      getEntry.setAccessible(true);
-      Object entry = getEntry.invoke(tLocalMap, myThreadIndicator);
-      if (entry == null) return null;
-      Field value = entry.getClass().getDeclaredField("value");
-      value.setAccessible(true);
-      ProgressIndicator indicator = (ProgressIndicator)value.get(entry);
-      if (indicator ==null) return null;
-      return String.valueOf(indicator.isCanceled());
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static void maybeSleep() {

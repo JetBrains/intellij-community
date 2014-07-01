@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,7 @@ import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
-import com.intellij.util.CharTable;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ThreeState;
-import com.intellij.util.TripleFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.LimitedPool;
@@ -1654,21 +1651,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
    * just to make removeRange method available.
    */
   private static class MyList extends ArrayList<ProductionMarker> {
-    private static final Field ourElementDataField;
-
-    static {
-      Field f;
-      try {
-        f = ArrayList.class.getDeclaredField("elementData");
-        f.setAccessible(true);
-      }
-      catch(NoSuchFieldException e) {
-        // IBM J9 does not have the field
-        f = null;
-
-      }
-      ourElementDataField = f;
-    }
+    private static final Field ourElementDataField = ReflectionUtil.getDeclaredField(ArrayList.class, "elementData");
 
     private Object[] cachedElementData;
 

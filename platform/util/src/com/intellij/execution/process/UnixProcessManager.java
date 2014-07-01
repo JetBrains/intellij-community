@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -27,7 +28,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -60,14 +60,9 @@ public class UnixProcessManager {
 
   public static int getProcessPid(Process process) {
     try {
-      Field f = process.getClass().getDeclaredField("pid");
-      f.setAccessible(true);
-      return ((Number)f.get(process)).intValue();
+      return ReflectionUtil.getField(process.getClass(), process, int.class, "pid");
     }
-    catch (NoSuchFieldException e) {
-      throw new IllegalStateException("system is not unix", e);
-    }
-    catch (IllegalAccessException e) {
+    catch (Exception e) {
       throw new IllegalStateException("system is not unix", e);
     }
   }

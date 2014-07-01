@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,9 +119,8 @@ public final class SwingCleanuper implements ApplicationComponent{
                       // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
 
                       try{
-                        final Field recognizerField = TransferHandler.class.getDeclaredField("recognizer");
-                        recognizerField.setAccessible(true);
-                        final Object recognizerObject = recognizerField.get(null);
+                        final Object recognizerObject = ReflectionUtil.getField(TransferHandler.class, null, null, "recognizer");
+
                         if(recognizerObject!=null){ // that is memory leak
                           final Method setComponentMethod = DragGestureRecognizer.class.getDeclaredMethod("setComponent", Component.class);
                           setComponentMethod.invoke(recognizerObject,new Object[]{null});
@@ -132,9 +131,8 @@ public final class SwingCleanuper implements ApplicationComponent{
                       }
                       try {
                         fixJTextComponentMemoryLeak();
-                      } catch(NoSuchFieldException e) {
-                        // JDK 1.5
-                      } catch(Exception e) {
+                      }
+                      catch(Exception e) {
                         // Ignore
                       }
 
@@ -256,12 +254,7 @@ public final class SwingCleanuper implements ApplicationComponent{
     }
   }
   private static void resetStaticField(@NotNull Class aClass, @NotNull @NonNls String name) {
-    try {
-      Field field = aClass.getDeclaredField(name);
-      ReflectionUtil.resetField(null, field);
-    }
-    catch (Exception ignored) {
-    }
+    ReflectionUtil.resetField(aClass, null, name);
   }
 
   public final void disposeComponent(){}
@@ -273,13 +266,10 @@ public final class SwingCleanuper implements ApplicationComponent{
 
   public final void initComponent() { }
 
-  private static void fixJTextComponentMemoryLeak() throws NoSuchFieldException, IllegalAccessException {
-    //noinspection HardCodedStringLiteral
-    final Field focusedComponentField = JTextComponent.class.getDeclaredField("focusedComponent");
-    focusedComponentField.setAccessible(true);
-    final JTextComponent component = (JTextComponent)focusedComponentField.get(null);
+  private static void fixJTextComponentMemoryLeak() {
+    final JTextComponent component = ReflectionUtil.getField(JTextComponent.class, null, JTextComponent.class, "focusedComponent");
     if (component != null && !component.isDisplayable()){
-      focusedComponentField.set(null, null);
+      ReflectionUtil.resetField(JTextComponent.class, JTextComponent.class, "focusedComponent");
     }
   }
 
