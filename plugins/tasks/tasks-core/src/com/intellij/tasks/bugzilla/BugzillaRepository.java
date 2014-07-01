@@ -11,9 +11,10 @@ import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.xmlrpc.CommonsXmlRpcTransportFactory;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +72,12 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     ensureUserAuthenticated();
     // Method search appeared in Bugzilla 3.4, ensureVersionDiscovered() checks minimal
     // supported version requirement.
-    //List<Object> arguments = Arrays.asList("")
-    Hashtable<String, Object> response = makeRequest("Bug.search", true);
+    Hashtable<String, Object> response = makeRequest("Bug.search", true,
+                                                     "summary", StringUtil.isNotEmpty(query) ? newVector(query.split("\\s+")) : null,
+                                                     "offset", offset,
+                                                     "limit", limit,
+                                                     "assigned_to", getUsername(),
+                                                     "resolution", !withClosed ? "" : null);
     Vector<Hashtable<String, Object>> bugs = (Vector<Hashtable<String, Object>>)response.get("bugs");
     return ContainerUtil.map2Array(bugs, BugzillaTask.class, new Function<Hashtable<String, Object>, BugzillaTask>() {
       @Override
@@ -130,7 +135,35 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     }
   }
 
+  @Nullable
+  @Override
+  public CancellableConnection createCancellableConnection() {
+    return new CancellableConnection() {
+
+      CancellableTransport myTransport;
+
+      @Override
+      protected void doTest() throws Exception {
+        // Reset information about server.
+        myVersion = null;
+        myAuthenticationToken = null;
+
+        myTransport = new CancellableTransport();
+        makeRequest("User.login", false, "login", getUsername(), "password", getPassword());
+      }
+
+      @Override
+      public void cancel() {
+        myTransport.cancel();
+      }
+    };
+  }
+
   private <T> T makeRequest(String methodName, boolean authenticate, Object... pairs) throws Exception {
+    return makeRequest(new CancellableTransport(), methodName, authenticate, pairs);
+  }
+
+  private <T> T makeRequest(CommonsXmlRpcTransport transport, String methodName, boolean authenticate, Object... pairs) throws Exception {
     // Bugzilla's XML-RPC accepts only named key-value pairs
     assert pairs.length % 2 == 0;
     Hashtable<String, Object> args = newHashTable(pairs);
@@ -143,8 +176,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       args.put("Bugzilla_token", myAuthenticationToken);
     }
     XmlRpcClient client = createXmlRpcClient();
+    XmlRpcRequest request = new XmlRpcRequest(methodName, newVector(args));
     //noinspection unchecked
-    return (T)client.execute(methodName, newVector(args));
+    return (T)client.execute(request, transport);
   }
 
   private static <T> Vector<T> newVector(T... elements) {
@@ -155,14 +189,17 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     assert pairs.length % 2 == 0;
     Hashtable<K, V> table = new Hashtable<K, V>();
     for (int i = 0; i < pairs.length; i += 2) {
-      table.put((K)pairs[i], (V)pairs[i + 1]);
+      // Null values are not allowed, because Bugzilla reacts unexpectedly on them.
+      if (pairs[i + 1] != null) {
+        table.put((K)pairs[i], (V)pairs[i + 1]);
+      }
     }
     return table;
   }
 
   private XmlRpcClient createXmlRpcClient() throws MalformedURLException {
-    URL url = new URL(getUrl());
-    return new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
+    final URL url = new URL(getUrl());
+    return new XmlRpcClient(url);
   }
 
   @Nullable
@@ -175,5 +212,16 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   @Override
   public boolean isConfigured() {
     return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
+  }
+
+  // Copied from TracRepository.
+  private class CancellableTransport extends CommonsXmlRpcTransport {
+    public CancellableTransport() throws MalformedURLException {
+      super(new URL(getUrl()), getHttpClient());
+    }
+
+    public void cancel() {
+      method.abort();
+    }
   }
 }
