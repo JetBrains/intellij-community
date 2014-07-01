@@ -86,7 +86,7 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
     return ContainerUtil.map(infos, new Function<SVNCommitInfo, CommitInfo>() {
       @Override
       public CommitInfo fun(SVNCommitInfo info) {
-        return new CommitInfo.Builder().setRevision(info.getNewRevision()).setAuthor(info.getAuthor()).setDate(info.getDate())
+        return new CommitInfo.Builder(info.getNewRevision(), info.getDate(), info.getAuthor())
           .setError(info.getErrorMessage()).build();
       }
     }, new CommitInfo[0]);

@@ -26,11 +26,13 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -46,7 +48,7 @@ public class SvnFileRevision implements VcsFileRevision {
   private final Date myDate;
   private String myCommitMessage;
   private final String myAuthor;
-  private final VcsRevisionNumber myRevisionNumber;
+  private final SvnRevisionNumber myRevisionNumber;
   private final SvnVcs myVCS;
   private final String myURL;
   private final SVNRevision myPegRevision;
@@ -93,6 +95,11 @@ public class SvnFileRevision implements VcsFileRevision {
     myVCS = vcs;
     myURL = url;
     myMergeSources = new ArrayList<SvnFileRevision>();
+  }
+
+  @NotNull
+  public CommitInfo getCommitInfo() {
+    return new CommitInfo.Builder(myRevisionNumber.getRevision().getNumber(), myDate, myAuthor).build();
   }
 
   public String getURL() {

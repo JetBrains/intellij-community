@@ -35,11 +35,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -259,10 +264,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   private ISVNAnnotateHandler createAnnotationHandler(final ProgressIndicator progress, final BaseSvnFileAnnotation result) {
     return new ISVNAnnotateHandler() {
       public void handleLine(Date date, long revision, String author, String line) {
-        if (progress != null) {
-          progress.checkCanceled();
-        }
-        result.appendLineInfo(date, revision, author, null, -1, null);
+        // deprecated - not called
       }
 
       public void handleLine(final Date date,
@@ -278,12 +280,12 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           progress.checkCanceled();
         }
         if (revision == -1) return;
-        if ((mergedDate != null) && (revision > mergedRevision)) {
-          // !!! merged date = date of merge, i.e. date -> date of original change etc.
-          result.setLineInfo(lineNumber, date, revision, author, mergedDate, mergedRevision, mergedAuthor);
-        } else {
-          result.setLineInfo(lineNumber, date, revision, author, null, -1, null);
-        }
+
+        CommitInfo info = new CommitInfo.Builder(revision, date, author).build();
+        CommitInfo mergeInfo =
+          mergedDate != null && revision > mergedRevision ? new CommitInfo.Builder(mergedRevision, mergedDate, mergedAuthor).build() : null;
+
+        result.setLineInfo(lineNumber, info, mergeInfo);
       }
 
       public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
@@ -356,17 +358,15 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     for (int i = 0; i < basicAnnotation.getNumLines(); i++) {
       final VcsRevisionNumber revision = basicAnnotation.getRevision(i);
       final VcsRevisionNumber mergedData = data == null ? null : data.getRevision(i);
-      final VcsFileRevision fileRevision = historyAsMap.get(revision);
+      final SvnFileRevision fileRevision = (SvnFileRevision)historyAsMap.get(revision);
       if (fileRevision == null) return null;
+
       if (mergedData == null) {
-        annotation.setLineInfo(i, fileRevision.getRevisionDate(), ((SvnRevisionNumber) revision).getRevision().getNumber(),
-                             fileRevision.getAuthor(), null, -1, null);
+        annotation.setLineInfo(i, fileRevision.getCommitInfo(), null);
       } else {
-        final VcsFileRevision mergedRevision = cachedOtherRevisions.get(mergedData);
+        final SvnFileRevision mergedRevision = (SvnFileRevision)cachedOtherRevisions.get(mergedData);
         if (mergedRevision == null) return null;
-        annotation.setLineInfo(i, fileRevision.getRevisionDate(), ((SvnRevisionNumber) revision).getRevision().getNumber(),
-                             fileRevision.getAuthor(), mergedRevision.getRevisionDate(),
-                             ((SvnRevisionNumber) mergedRevision.getRevisionNumber()).getRevision().getNumber(), mergedRevision.getAuthor());
+        annotation.setLineInfo(i, fileRevision.getCommitInfo(), mergedRevision.getCommitInfo());
       }
     }
     if (vcsAnnotation.getFirstRevision() != null) {

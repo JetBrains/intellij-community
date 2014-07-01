@@ -74,6 +74,15 @@ public class CommitInfo {
 
     @Nullable private SVNErrorMessage error;
 
+    public Builder() {
+    }
+
+    public Builder(long revision, Date date, String author) {
+      this.revision = revision;
+      this.date = date;
+      this.author = author;
+    }
+
     public long getRevision() {
       return revision;
     }
