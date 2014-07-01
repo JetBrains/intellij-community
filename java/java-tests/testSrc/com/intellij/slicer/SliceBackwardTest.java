@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,6 +179,8 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testArrayElements() throws Exception { doTest();}
   public void testAnonArray() throws Exception { doTest();}
   public void testVarArgs() throws Exception { doTest();}
+  public void testVarArgsAsAWhole() throws Exception { doTest();}
+  public void testVarArgsPartial() throws Exception { doTest();}
 
   public void testListTrackToArray() throws Exception { doTest();}
 }
