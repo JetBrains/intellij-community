@@ -32,6 +32,6 @@ public class InvalidElementFilter implements Filter {
   @NotNull
   @Override
   public String getName() {
-    return "Invalid icons";
+    return "Invalid elements";
   }
 }
