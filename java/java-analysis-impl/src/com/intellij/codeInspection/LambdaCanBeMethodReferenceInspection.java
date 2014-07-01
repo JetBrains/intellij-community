@@ -112,7 +112,6 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           containingClass = psiMethod.getContainingClass();
           isConstructor = psiMethod.isConstructor();
         }
-        if (containingClass == null) return null;
         boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
         if (isReceiverType && psiMethod != null) {
           PsiMethod nonAmbiguousMethod = ensureNonAmbiguousMethod(parameters, psiMethod);
@@ -120,6 +119,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           psiMethod = nonAmbiguousMethod;
           containingClass = nonAmbiguousMethod.getContainingClass();
         }
+        if (containingClass == null) return null;
         final boolean staticOrValidConstructorRef;
         if (isConstructor) {
           staticOrValidConstructorRef =
@@ -182,6 +182,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
             }
           });
           if (usedInQualifier.get()) return null;
+        } else if (containingClass != PsiTreeUtil.getParentOfType(body, PsiClass.class) && containingClass.getName() == null) {
+          return null;
         }
         return methodCall;
       } else if (methodCall instanceof PsiNewExpression) {
@@ -275,8 +277,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         methodRefText = qualifier + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
-        methodRefText =
-          (psiMethod.hasModifierProperty(PsiModifier.STATIC) ? getClassReferenceName(containingClass) : "this") + "::" + methodReferenceName;
+        if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          methodRefText = getClassReferenceName(containingClass);
+        } else {
+          if (containingClass != PsiTreeUtil.getParentOfType(element, PsiClass.class) ) {
+            methodRefText = containingClass.getName() + ".this";
+          } else {
+            methodRefText = "this";
+          }
+        }
+        methodRefText += "::" + methodReferenceName;
       }
     }
     else if (element instanceof PsiNewExpression) {
@@ -343,7 +353,13 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
 
   private static String getClassReferenceName(PsiClass containingClass) {
     final String qualifiedName = containingClass.getQualifiedName();
-    return qualifiedName != null ? qualifiedName : containingClass.getName();
+    if (qualifiedName != null) {
+      return qualifiedName;
+    }
+    else {
+      final String containingClassName = containingClass.getName();
+      return containingClassName != null ? containingClassName : "";
+    }
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
