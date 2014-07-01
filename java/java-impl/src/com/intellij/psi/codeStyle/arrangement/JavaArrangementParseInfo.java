@@ -229,4 +229,9 @@ public class JavaArrangementParseInfo {
   public List<ArrangementEntryDependencyInfo> getFieldDependencyRoots() {
      return new FieldDependenciesManager(myFieldDependencies, myFields).getRoots();
   }
+
+  @NotNull
+  public Collection<JavaElementArrangementEntry> getFields() {
+    return myFields.values();
+  }
 }
