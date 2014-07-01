@@ -355,12 +355,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           writeEditorPropertyValue(editor, propertiesFile);
         }
       });
-      editor.getComponent().addFocusListener(new FocusAdapter() {
-        @Override
-        public void focusLost(FocusEvent e) {
-          writeEditorPropertyValue(editor, propertiesFile);
-        }
-      });
       editor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
       gc.gridx = 0;
       gc.gridy = y++;
