@@ -41,6 +41,12 @@ public class GithubNotifications {
     VcsNotifier.getInstance(project).notifyImportantWarning(title, message);
   }
 
+  public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
+    LOG.info(title + "; ", e);
+    if (e instanceof GithubOperationCanceledException) return;
+    VcsNotifier.getInstance(project).notifyImportantWarning(title, getErrorTextFromException(e));
+  }
+
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyError(title, message);

@@ -376,6 +376,15 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  public static List<GithubRepo> getForks(@NotNull GithubConnection connection, @NotNull String owner, @NotNull String name)
+    throws IOException {
+    String path = "/repos/" + owner + "/" + name + "/forks?" + PER_PAGE;
+    PagedRequest<GithubRepo> requestWatched =
+      new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class, ACCEPT_V3_JSON);
+    return requestWatched.getAll(connection);
+  }
+
+  @NotNull
   public static GithubPullRequest createPullRequest(@NotNull GithubConnection connection,
                                                     @NotNull String user,
                                                     @NotNull String repo,
