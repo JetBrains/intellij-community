@@ -31,11 +31,11 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
@@ -46,7 +46,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   static {
     TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
-    textAttributes.setForegroundColor(Color.red);
+    textAttributes.setForegroundColor(JBColor.RED);
     INCOMPLETE_PROPERTY_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", textAttributes);
 
   }
@@ -101,7 +101,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        boolean isComplete = PropertiesUtil.isPropertyComplete(myResourceBundle, myProperty.getName());
+        boolean isComplete = propertyComplete();
 
         if (isComplete) {
           return PropertiesHighlighter.PROPERTY_KEY;
@@ -109,6 +109,10 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
         return INCOMPLETE_PROPERTY_KEY;
       }
     };
+  }
+
+  public boolean propertyComplete() {
+    return PropertiesUtil.isPropertyComplete(myResourceBundle, myProperty.getName());
   }
 
   @Override
