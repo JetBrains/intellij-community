@@ -307,7 +307,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     if (annotationSourceSwitcher != null) {
       annotationSourceSwitcher.switchTo(AnnotationSource.LOCAL);
     }
-    final int size = svnFileAnnotation.getNumLines();
+    final int size = svnFileAnnotation.getLineCount();
 
     final VcsUsualLineAnnotationData lineAnnotationData = new VcsUsualLineAnnotationData(size);
     for (int i = 0; i < size; i++) {
