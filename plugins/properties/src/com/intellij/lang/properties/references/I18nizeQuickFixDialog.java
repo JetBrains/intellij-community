@@ -275,7 +275,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   private void propertiesFileChanged() {
     PropertiesFile propertiesFile = getPropertiesFile();
     boolean hasResourceBundle =
-      propertiesFile != null && propertiesFile.getResourceBundle().getPropertiesFiles(propertiesFile.getProject()).size() > 1;
+      propertiesFile != null && propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
     myUseResourceBundle.setEnabled(hasResourceBundle);
   }
 
@@ -497,7 +497,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (propertiesFile == null) return Collections.emptySet();
     Collection<PropertiesFile> propertiesFiles;
     if (isUseResourceBundle()) {
-      propertiesFiles = propertiesFile.getResourceBundle().getPropertiesFiles(myProject);
+      propertiesFiles = propertiesFile.getResourceBundle().getPropertiesFiles();
     }
     else {
       propertiesFiles = Collections.singleton(propertiesFile);

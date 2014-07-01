@@ -16,8 +16,11 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +28,7 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class PropertiesStructureViewElement implements StructureViewTreeElement {
+public class PropertiesStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final Property myProperty;
   private String myPresentableName;
 
@@ -52,6 +55,11 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement 
   @NotNull
   public StructureViewTreeElement[] getChildren() {
     return EMPTY_ARRAY;
+  }
+
+  @Override
+  public PsiElement[] getPsiElements(@NotNull Project project) {
+    return new PsiElement[] {getValue()};
   }
 
   @NotNull

@@ -20,6 +20,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -29,16 +30,16 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement {
-  private final String myPropertyName;
-  private final Project myProject;
+public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
+  private final IProperty myProperty;
   private String myPresentableName;
 
   private static final TextAttributesKey INCOMPLETE_PROPERTY_KEY;
@@ -49,10 +50,19 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     INCOMPLETE_PROPERTY_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", textAttributes);
 
   }
-  public ResourceBundlePropertyStructureViewElement(final Project project, final ResourceBundle resourceBundle, String propertyName) {
-    myProject = project;
+
+  public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final IProperty property) {
     myResourceBundle = resourceBundle;
-    myPropertyName = propertyName;
+    myProperty = property;
+  }
+
+  public IProperty getProperty() {
+    return myProperty;
+  }
+
+  @Override
+  public PsiElement[] getPsiElements(final @NotNull Project project) {
+    return new PsiElement[] {getProperty().getPsiElement()};
   }
 
   public void setPresentableName(final String presentableName) {
@@ -61,7 +71,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @Override
   public String getValue() {
-    return myPropertyName;
+    return myProperty.getName();
   }
 
   @Override
@@ -76,7 +86,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
-        return myPresentableName == null ? myPropertyName : myPresentableName;
+        return myPresentableName == null ? myProperty.getName() : myPresentableName;
       }
 
       @Override
@@ -91,7 +101,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        boolean isComplete = PropertiesUtil.isPropertyComplete(myProject, myResourceBundle, myPropertyName);
+        boolean isComplete = PropertiesUtil.isPropertyComplete(myResourceBundle, myProperty.getName());
 
         if (isComplete) {
           return PropertiesHighlighter.PROPERTY_KEY;
@@ -115,5 +125,4 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   public boolean canNavigateToSource() {
     return false;
   }
-
 }

@@ -69,10 +69,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
@@ -85,7 +88,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<PropertiesFile, Editor> myEditors;
-  private String                            myOldPropertyName;
   private final ResourceBundle              myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
@@ -102,8 +104,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
 
-  public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
-    myProject = project;
+  public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
+    myProject = resourceBundle.getProject();
 
     final JPanel splitPanel = new JPanel();
     myValuesPanel = new JPanel();
@@ -118,7 +120,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     splitPanel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(project, myResourceBundle, this);
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
@@ -130,9 +132,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       public void valueChanged(TreeSelectionEvent e) {
         // filter out temp unselect/select events
         if (getSelectedPropertyName() == null) return;
-        if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName())
-            || !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile()))
-        {
+        if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName()) ||
+            !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
           selectedPropertyName = getSelectedPropertyName();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
@@ -153,12 +154,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
     myDataProviderPanel = new DataProviderPanel(splitPanel);
 
-    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         onSelectionChanged(event);
       }
     });
+  }
+
+  public ResourceBundle getResourceBundle() {
+    return myResourceBundle;
   }
 
   private void onSelectionChanged(@NotNull FileEditorManagerEvent event) {
@@ -194,6 +199,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void setStructureViewSelection(@NotNull final String propertyName) {
+    if (myStructureViewComponent.isDisposed()) {
+      return;
+    }
     JTree tree = myStructureViewComponent.getTree();
     if (tree == null) {
       return;
@@ -264,19 +272,24 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   @Nullable
   private static String getNodeValue(@NotNull DefaultMutableTreeNode node) {
+    final ResourceBundleEditorViewElement element = getSelectedElement(node);
+    return element instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
+                                                                       : null;
+  }
+
+  @Nullable
+  private static ResourceBundleEditorViewElement getSelectedElement(@NotNull DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (!(userObject instanceof AbstractTreeNode)) return null;
     Object value = ((AbstractTreeNode)userObject).getValue();
-    return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue()
-                                                                       : null;
+    return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
   }
 
   private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile) {
     final String currentValue = editor.getDocument().getText();
     final String currentSelectedProperty = getSelectedPropertyName();
-    final String selectedProperty = myOldPropertyName == null ? currentSelectedProperty : myOldPropertyName;
 
-    assert selectedProperty != null;
+    assert currentSelectedProperty != null;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -284,10 +297,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
           @Override
           public void run() {
-            final IProperty property = propertiesFile.findPropertyByKey(selectedProperty);
+            final IProperty property = propertiesFile.findPropertyByKey(currentSelectedProperty);
             try {
               if (property == null) {
-                propertiesFile.addProperty(selectedProperty, currentValue);
+                propertiesFile.addProperty(currentSelectedProperty, currentValue);
               }
               else {
                 property.setValue(currentValue);
@@ -318,7 +331,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }, VALUES);
     myValuesPanel.add(myNoPropertySelectedPanel, NO_PROPERTY_SELECTED);
 
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
+    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                    new Insets(5, 5, 5, 5), 0, 0);
@@ -339,6 +352,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
         @Override
         public void focusLost(final Editor eventEditor) {
+          writeEditorPropertyValue(editor, propertiesFile);
+        }
+      });
+      editor.getComponent().addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
           writeEditorPropertyValue(editor, propertiesFile);
         }
       });
@@ -510,18 +529,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
   private void selectionChanged() {
     myBackSlashPressed.clear();
-    final String currentSelectedPropertyName = getSelectedPropertyName();
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (myOldPropertyName != null && !myOldPropertyName.equals(currentSelectedPropertyName)) {
-          for (final Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
-            writeEditorPropertyValue(entry.getValue(), entry.getKey());
-          }
-        }
         updateEditorsFromProperties();
-        myOldPropertyName = currentSelectedPropertyName;
       }
     });
   }
@@ -537,12 +549,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   @Nullable
-  private String getSelectedPropertyName() {
+  public String getSelectedPropertyName() {
     JTree tree = myStructureViewComponent.getTree();
     if (tree == null) return null;
     TreePath selected = tree.getSelectionModel().getSelectionPath();
     if (selected == null) return null;
     return getNodeValue((DefaultMutableTreeNode)selected.getLastPathComponent());
+  }
+
+  @Nullable
+  public ResourceBundleEditorViewElement getSelectedElement() {
+    JTree tree = myStructureViewComponent.getTree();
+    if (tree == null) return null;
+    TreePath selected = tree.getSelectionModel().getSelectionPath();
+    if (selected == null) return null;
+    return getSelectedElement((DefaultMutableTreeNode)selected.getLastPathComponent());
   }
 
   @Override
@@ -704,23 +725,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
     }
     myEditors.clear();
-  }
-
-  /**
-   * Renames target property if the one is available.
-   * <p/>
-   * <b>Note:</b> is assumed to be called under {@link WriteAction write action}.
-   *
-   * @param oldName   old property name
-   * @param newName   new property name
-   */
-  public void renameProperty(@NotNull String oldName, @NotNull String newName) {
-    for (PropertiesFile properties : myResourceBundle.getPropertiesFiles(myProject)) {
-      IProperty property = properties.findPropertyByKey(oldName);
-      if (property != null) {
-        property.setName(newName);
-      }
-    }
   }
 
   public static class ResourceBundleEditorState implements FileEditorState {

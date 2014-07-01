@@ -19,28 +19,18 @@
  */
 package com.intellij.lang.properties.structureView;
 
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesLanguage;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.ResourceBundleImpl;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiManager;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -48,45 +38,42 @@ import java.util.Map;
   name="PropertiesSeparatorManager",
   storages= {
     @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/other.xml"
+      file = StoragePathMacros.PROJECT_FILE
     )}
 )
 public class PropertiesSeparatorManager implements PersistentStateComponent<Element> {
   @NonNls private static final String FILE_ELEMENT = "file";
   @NonNls private static final String URL_ELEMENT = "url";
   @NonNls private static final String SEPARATOR_ATTR = "separator";
+  private final Project myProject;
 
-  public static PropertiesSeparatorManager getInstance() {
-    return ServiceManager.getService(PropertiesSeparatorManager.class);
+  public static PropertiesSeparatorManager getInstance(final Project project) {
+    return ServiceManager.getService(project, PropertiesSeparatorManager.class);
   }
 
-  private final Map<VirtualFile, String> mySeparators = new THashMap<VirtualFile, String>();
+  private final Map<String, String> mySeparators = new THashMap<String, String>();
 
-  public String getSeparator(Project project, VirtualFile file) {
-    String separator = mySeparators.get(file);
+  public PropertiesSeparatorManager(final Project project) {
+    myProject = project;
+  }
+
+  @NotNull
+  public String getSeparator(final ResourceBundle resourceBundle) {
+    if (!(resourceBundle instanceof ResourceBundleImpl)) {
+      return ".";
+    }
+    String separator = mySeparators.get(((ResourceBundleImpl)resourceBundle).getUrl());
     if (separator == null) {
-      separator = guessSeparator(project, file);
-      setSeparator(file, separator);
+      separator = guessSeparator((ResourceBundleImpl)resourceBundle);
+      setSeparator(resourceBundle, separator);
     }
     return separator;
   }
 
   //returns most probable separator in properties files
-  private static String guessSeparator(final Project project, final VirtualFile file) {
-    Collection<PropertiesFile> files;
-    if (file instanceof ResourceBundleAsVirtualFile) {
-      files = ((ResourceBundleAsVirtualFile)file).getResourceBundle().getPropertiesFiles(project);
-    }
-    else {
-      PsiManager psiManager = PsiManager.getInstance(project);
-      final FileViewProvider provider = psiManager.findViewProvider(file);
-      files = new SmartList<PropertiesFile>();
-      if (provider != null) {
-        ContainerUtil.addIfNotNull((PropertiesFile)provider.getPsi(PropertiesLanguage.INSTANCE), files);
-      }
-    }
+  private static String guessSeparator(final ResourceBundleImpl resourceBundle) {
     final TIntLongHashMap charCounts = new TIntLongHashMap();
-    for (PropertiesFile propertiesFile : files) {
+    for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
       if (propertiesFile == null) continue;
       List<IProperty> properties = propertiesFile.getProperties();
       for (IProperty property : properties) {
@@ -119,8 +106,10 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
     return Character.toString(mostProbableChar[0]);
   }
 
-  public void setSeparator(VirtualFile file, String separator) {
-    mySeparators.put(file, separator);
+  public void setSeparator(ResourceBundle resourceBundle, String separator) {
+    if (resourceBundle instanceof ResourceBundleImpl) {
+      mySeparators.put(((ResourceBundleImpl)resourceBundle).getUrl(), separator);
+    }
   }
 
   public void loadState(final Element element) {
@@ -132,16 +121,9 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
       if (separator == null) {
         continue;
       }
-      VirtualFile file;
-      ResourceBundle resourceBundle = ResourceBundleImpl.createByUrl(url);
+      ResourceBundle resourceBundle = PropertiesImplUtil.createByUrl(url, myProject);
       if (resourceBundle != null) {
-        file = new ResourceBundleAsVirtualFile(resourceBundle);
-      }
-      else {
-        file = VirtualFileManager.getInstance().findFileByUrl(url);
-      }
-      if (file != null) {
-        mySeparators.put(file, separator);
+        mySeparators.put(url, separator);
       }
     }
   }
@@ -178,16 +160,8 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Elem
 
   public Element getState() {
     Element element = new Element("PropertiesSeparatorManager");
-    for (VirtualFile file : mySeparators.keySet()) {
-      String url;
-      if (file instanceof ResourceBundleAsVirtualFile) {
-        ResourceBundle resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
-        url = ((ResourceBundleImpl)resourceBundle).getUrl();
-      }
-      else {
-        url = file.getUrl();
-      }
-      String separator = mySeparators.get(file);
+    for (final String url: mySeparators.keySet()) {
+      String separator = mySeparators.get(url);
       StringBuilder encoded = new StringBuilder(separator.length());
       for (int i=0;i<separator.length();i++) {
         char c = separator.charAt(i);

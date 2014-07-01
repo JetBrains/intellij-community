@@ -19,31 +19,50 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.ide.presentation.Presentation;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@Presentation(icon = "AllIcons.Nodes.ResourceBundle")
 public class ResourceBundleAsVirtualFile extends VirtualFile {
-  private final ResourceBundle myResourceBundle;
+  private final VirtualFile myBasePropertiesFile;
 
-  public ResourceBundleAsVirtualFile(@NotNull ResourceBundle resourceBundle) {
-    myResourceBundle = resourceBundle;
+  private ResourceBundleAsVirtualFile(@NotNull final VirtualFile basePropertiesFile) {
+    myBasePropertiesFile = basePropertiesFile;
   }
 
   @NotNull
-  public ResourceBundle getResourceBundle() {
-    return myResourceBundle;
+  public static ResourceBundleAsVirtualFile fromResourceBundle(final @NotNull ResourceBundle resourceBundle) {
+    return new ResourceBundleAsVirtualFile(resourceBundle.getDefaultPropertiesFile().getVirtualFile());
+  }
+
+  @Nullable
+  public ResourceBundle getResourceBundle(final Project project) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(psiManager.findFile(myBasePropertiesFile));
+    if (file == null) {
+      return null;
+    }
+    return PropertiesImplUtil.getResourceBundle(file);
   }
 
   @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return myResourceBundle.getBaseDirectory().getFileSystem();
+    return LocalFileSystem.getInstance();
   }
 
   @Override
@@ -55,7 +74,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public String getName() {
-    return myResourceBundle.getBaseName();
+    return PropertiesUtil.getBaseName(myBasePropertiesFile);
   }
 
   public boolean equals(final Object o) {
@@ -64,17 +83,18 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
 
     final ResourceBundleAsVirtualFile resourceBundleAsVirtualFile = (ResourceBundleAsVirtualFile)o;
 
-    if (!myResourceBundle.equals(resourceBundleAsVirtualFile.myResourceBundle)) return false;
+    if (!myBasePropertiesFile.equals(resourceBundleAsVirtualFile.myBasePropertiesFile)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myResourceBundle.hashCode();
+    return myBasePropertiesFile.hashCode();
   }
 
   @Override
   public void rename(Object requestor, @NotNull String newName) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -94,7 +114,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile getParent() {
-    return myResourceBundle.getBaseDirectory();
+    return myBasePropertiesFile.getParent();
   }
 
   @Override

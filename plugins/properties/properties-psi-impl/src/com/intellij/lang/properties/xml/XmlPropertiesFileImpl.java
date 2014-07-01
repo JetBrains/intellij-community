@@ -101,7 +101,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public ResourceBundle getResourceBundle() {
-    return PropertiesImplUtil.getResourceBundle(getContainingFile());
+    return PropertiesImplUtil.getResourceBundle(this);
   }
 
   @NotNull

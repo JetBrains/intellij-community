@@ -23,44 +23,64 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class PropertiesImplUtil extends PropertiesUtil {
-  public static ResourceBundle getResourceBundle(final PsiFile containingFile) {
-    VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (!containingFile.isValid() || virtualFile == null) {
+
+  @Nullable
+  public static ResourceBundle getResourceBundle(@NotNull final PropertiesFile representative) {
+    final PsiFile containingFile = representative.getContainingFile();
+    if (!containingFile.isValid()) {
       return EmptyResourceBundle.getInstance();
     }
-    String baseName = getBaseName(virtualFile);
-    PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+    final String baseName = getBaseName(containingFile);
+    final PsiDirectory directory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
       @Nullable
       public PsiDirectory compute() {
         return containingFile.getContainingDirectory();
       }});
     if (directory == null) return EmptyResourceBundle.getInstance();
-
-    return new ResourceBundleImpl(directory.getVirtualFile(), baseName);
+    return getResourceBundle(baseName, directory);
   }
 
-  public static boolean isPropertiesFile(VirtualFile file, Project project) {
+  @Nullable
+  private static ResourceBundle getResourceBundle(@NotNull final String baseName, @NotNull final PsiDirectory baseDirectory) {
+    PropertiesFile defaultPropertiesFile = null;
+    for (final PsiFile psiFile : baseDirectory.getFiles()) {
+      if (baseName.equals(getBaseName(psiFile))) {
+        final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
+        if (propertiesFile != null) {
+          if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) < 0) {
+            defaultPropertiesFile = propertiesFile;
+          }
+        }
+      }
+    }
+    if (defaultPropertiesFile == null) {
+      return null;
+    }
+    return new ResourceBundleImpl(defaultPropertiesFile);
+  }
+
+  public static boolean isPropertiesFile(@NotNull VirtualFile file, @NotNull Project project) {
     return getPropertiesFile(PsiManager.getInstance(project).findFile(file)) != null;
   }
 
-  public static boolean isPropertiesFile(PsiFile file) {
+  public static boolean isPropertiesFile(@Nullable PsiFile file) {
     return getPropertiesFile(file) != null;
   }
 
@@ -69,8 +89,6 @@ public class PropertiesImplUtil extends PropertiesUtil {
     if (file == null) return null;
     return file instanceof PropertiesFile ? (PropertiesFile)file : XmlPropertiesFileImpl.getPropertiesFile(file);
   }
-
-
 
   @NotNull
   public static List<IProperty> findPropertiesByKey(final Project project, final String key) {
@@ -94,4 +112,23 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return properties;
   }
 
+  @Nullable
+  public static ResourceBundle createByUrl(final @NotNull String url, final @NotNull Project project) {
+    if (!url.startsWith(ResourceBundleImpl.RESOURCE_BUNDLE_PREFIX)) return null;
+
+    final String defaultPropertiesUrl = url.substring(ResourceBundleImpl.RESOURCE_BUNDLE_PREFIX.length());
+    final int idx = defaultPropertiesUrl.lastIndexOf('/');
+    if (idx == -1) return null;
+    final String baseDirectoryName = defaultPropertiesUrl.substring(0, idx);
+    final String baseName = defaultPropertiesUrl.substring(idx + 1);
+    final VirtualFile baseDirectoryVirtualFile = VirtualFileManager.getInstance().findFileByUrl(baseDirectoryName);
+    if (baseDirectoryVirtualFile == null) {
+      return null;
+    }
+    final PsiFile baseDirectory = PsiManager.getInstance(project).findFile(baseDirectoryVirtualFile);
+    if (baseDirectory == null || !(baseDirectory instanceof PsiDirectory)) {
+      return null;
+    }
+    return getResourceBundle(baseName, (PsiDirectory)baseDirectory);
+  }
 }

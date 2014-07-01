@@ -25,9 +25,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesImplUtil;
-import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -50,7 +48,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles(myProject);
+    List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
     Collection<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile.getContainingFile(), getSettings());
@@ -63,11 +61,11 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
     if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
-    return propertiesFile != null && getValue().getPropertiesFiles(myProject).contains(propertiesFile);
+    return propertiesFile != null && getValue().getPropertiesFiles().contains(propertiesFile);
   }
 
   public VirtualFile getVirtualFile() {
-    final List<PropertiesFile> list = getValue().getPropertiesFiles(myProject);
+    final List<PropertiesFile> list = getValue().getPropertiesFiles();
     if (!list.isEmpty()) {
       return list.get(0).getVirtualFile();
     }
@@ -88,7 +86,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public void navigate(final boolean requestFocus) {
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(getValue()));
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), ResourceBundleAsVirtualFile.fromResourceBundle(getValue()));
     FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, requestFocus);
   }
 

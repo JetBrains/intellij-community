@@ -37,7 +37,7 @@ import java.util.Comparator;
  */
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
   private final PropertiesFileImpl myPropertiesFile;
-  private final GroupByWordPrefixes myGroupByWordPrefixes;
+  private final GroupByWordPrefixes myByWordPrefixesGrouper;
   @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
   private static final Sorter KIND_SORTER = new Sorter() {
     @NotNull
@@ -70,17 +70,17 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   public PropertiesFileStructureViewModel(final PropertiesFileImpl root) {
     super(root);
     myPropertiesFile = root;
-    String separator = PropertiesSeparatorManager.getInstance().getSeparator(root.getProject(), root.getVirtualFile());
-    myGroupByWordPrefixes = new GroupByWordPrefixes(separator);
+    String separator = PropertiesSeparatorManager.getInstance(root.getProject()).getSeparator(root.getResourceBundle());
+    myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
   }
 
   public void setSeparator(String separator) {
-    myGroupByWordPrefixes.setSeparator(separator);
-    PropertiesSeparatorManager.getInstance().setSeparator(myPropertiesFile.getVirtualFile(), separator);
+    myByWordPrefixesGrouper.setSeparator(separator);
+    PropertiesSeparatorManager.getInstance(myPropertiesFile.getProject()).setSeparator(myPropertiesFile.getResourceBundle(), separator);
   }
 
   public String getSeparator() {
-    return myGroupByWordPrefixes.getSeparator();
+    return myByWordPrefixesGrouper.getSeparator();
   }
 
   @NotNull
@@ -90,7 +90,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
 
   @NotNull
   public Grouper[] getGroupers() {
-    return new Grouper[]{myGroupByWordPrefixes};
+    return new Grouper[]{myByWordPrefixesGrouper};
   }
 
   @NotNull

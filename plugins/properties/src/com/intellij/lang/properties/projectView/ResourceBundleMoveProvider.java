@@ -57,7 +57,7 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     LOG.assertTrue(bundles != null);
     for (ResourceBundle bundle : bundles) {
-      List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(CommonDataKeys.PROJECT.getData(dataContext));
+      List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         filesOrDirs.add(propertiesFile.getContainingFile());
       }
