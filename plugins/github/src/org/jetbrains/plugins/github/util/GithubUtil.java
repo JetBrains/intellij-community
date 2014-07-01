@@ -357,13 +357,7 @@ public class GithubUtil {
         try {
           dataRef.set(task.convert(indicator));
         }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
-        catch (Error e) {
-          exceptionRef.set(e);
-        }
-        catch (RuntimeException e) {
+        catch (Throwable e) {
           exceptionRef.set(e);
         }
       }
@@ -388,10 +382,7 @@ public class GithubUtil {
         try {
           dataRef.set(task.convert(indicator));
         }
-        catch (Error e) {
-          exceptionRef.set(e);
-        }
-        catch (RuntimeException e) {
+        catch (Throwable e) {
           exceptionRef.set(e);
         }
       }
@@ -414,10 +405,7 @@ public class GithubUtil {
         try {
           task.consume(indicator);
         }
-        catch (Error e) {
-          exceptionRef.set(e);
-        }
-        catch (RuntimeException e) {
+        catch (Throwable e) {
           exceptionRef.set(e);
         }
       }
