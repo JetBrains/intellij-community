@@ -10,6 +10,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.xmlrpc.CommonsXmlRpcTransport;
 import org.apache.xmlrpc.XmlRpcClient;
@@ -33,7 +34,7 @@ public class BugzillaRepository extends BaseRepositoryImpl {
 
   private Version myVersion;
 
-  private boolean myUserLoggedIn;
+  private boolean myAuthenticated;
   private String myAuthenticationToken;
 
   /**
@@ -69,15 +70,10 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed, @NotNull ProgressIndicator cancelled)
     throws Exception {
-    ensureUserAuthenticated();
     // Method search appeared in Bugzilla 3.4, ensureVersionDiscovered() checks minimal
     // supported version requirement.
-    Hashtable<String, Object> response = makeRequest("Bug.search", true,
-                                                     "summary", StringUtil.isNotEmpty(query) ? newVector(query.split("\\s+")) : null,
-                                                     "offset", offset,
-                                                     "limit", limit,
-                                                     "assigned_to", getUsername(),
-                                                     "resolution", !withClosed ? "" : null);
+    Hashtable<String, Object> response = createIssueSearchRequest(query, offset, limit, withClosed).execute();
+
     Vector<Hashtable<String, Object>> bugs = (Vector<Hashtable<String, Object>>)response.get("bugs");
     return ContainerUtil.map2Array(bugs, BugzillaTask.class, new Function<Hashtable<String, Object>, BugzillaTask>() {
       @Override
@@ -87,14 +83,25 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     });
   }
 
+  private BugzillaXmlRpcRequest createIssueSearchRequest(String query, int offset, int limit, boolean withClosed) throws Exception {
+    // Method search appeared in Bugzilla 3.4, ensureVersionDiscovered() checks minimal
+    // supported version requirement.
+    return new BugzillaXmlRpcRequest("Bug.search")
+      .requireAuthentication(true)
+      .withParameter("summary", StringUtil.isNotEmpty(query) ? newVector(query.split("\\s+")) : null)
+      .withParameter("offset", offset)
+      .withParameter("limit", limit)
+      .withParameter("assigned_to", getUsername())
+      .withParameter("resolution", !withClosed ? "" : null);
+  }
+
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
-    ensureUserAuthenticated();
     Hashtable<String, Object> response;
     try {
       // In Bugzilla 3.0 this method is called "get_bugs".
-      response = makeRequest("Bug.get", true, "ids", newVector(id));
+      response = new BugzillaXmlRpcRequest("Bug.get").requireAuthentication(true).withParameter("ids", newVector(id)).execute();
     }
     catch (XmlRpcException e) {
       if (e.code == 101 && e.getMessage().contains("does not exist")) {
@@ -111,12 +118,10 @@ public class BugzillaRepository extends BaseRepositoryImpl {
 
   private void ensureVersionDiscovered() throws Exception {
     if (myVersion == null) {
-      Hashtable<String, Object> result = makeRequest("Bugzilla.version", false);
+      Hashtable<String, Object> result = new BugzillaXmlRpcRequest("Bugzilla.version").execute();
       String version = (String)result.get("version");
       String[] parts = version.split("\\.", 3);
-      myVersion = new Version(parts.length > 0 ? Integer.parseInt(parts[0]) : 0,
-                              parts.length > 1 ? Integer.parseInt(parts[1]) : 0,
-                              parts.length > 2 ? Integer.parseInt(parts[2]) : 0);
+      myVersion = new Version(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
       if (myVersion.lessThan(3, 4)) {
         throw new RequestFailedException("Bugzilla before 3.4 is not supported");
       }
@@ -125,12 +130,13 @@ public class BugzillaRepository extends BaseRepositoryImpl {
 
   private void ensureUserAuthenticated() throws Exception {
     ensureVersionDiscovered();
-    if (!myUserLoggedIn) {
-      Hashtable<String, Object> response = makeRequest("User.login", false,
-                                                       "login", getUsername(),
-                                                       "password", getPassword());
-      myUserLoggedIn = true;
-      // Will not be available in Bugzilla before 4.4.
+    if (!myAuthenticated) {
+      Hashtable<String, Object> response = new BugzillaXmlRpcRequest("User.login")
+        .withParameter("login", getUsername())
+        .withParameter("password", getPassword())
+        .execute();
+      myAuthenticated = true;
+      // Not available in Bugzilla before 4.4
       myAuthenticationToken = (String)response.get("token");
     }
   }
@@ -140,51 +146,31 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
 
-      CancellableTransport myTransport;
+      BugzillaXmlRpcRequest myRequest;
 
       @Override
       protected void doTest() throws Exception {
         // Reset information about server.
         myVersion = null;
+        myAuthenticated = false;
         myAuthenticationToken = null;
 
-        myTransport = new CancellableTransport();
-        makeRequest("User.login", false, "login", getUsername(), "password", getPassword());
+        myRequest = createIssueSearchRequest(null, 0, 1, true);
+        myRequest.execute();
       }
 
       @Override
       public void cancel() {
-        myTransport.cancel();
+        myRequest.cancel();
       }
     };
-  }
-
-  private <T> T makeRequest(String methodName, boolean authenticate, Object... pairs) throws Exception {
-    return makeRequest(new CancellableTransport(), methodName, authenticate, pairs);
-  }
-
-  private <T> T makeRequest(CommonsXmlRpcTransport transport, String methodName, boolean authenticate, Object... pairs) throws Exception {
-    // Bugzilla's XML-RPC accepts only named key-value pairs
-    assert pairs.length % 2 == 0;
-    Hashtable<String, Object> args = newHashTable(pairs);
-    // Bugzilla [3.0, 4.4) uses cookies authentication.
-    // Bugzilla [3.6, ...) allows to send login ("Bugzilla_login") and password ("Bugzilla_password")
-    // with every requests for automatic authentication (not used here).
-    // Bugzilla [4.4, ...) also allows to send token ("Bugzilla_token") returned by call to User.login
-    // with any request to its API.
-    if (authenticate && myVersion.isOrGreaterThan(4, 4) && myAuthenticationToken != null) {
-      args.put("Bugzilla_token", myAuthenticationToken);
-    }
-    XmlRpcClient client = createXmlRpcClient();
-    XmlRpcRequest request = new XmlRpcRequest(methodName, newVector(args));
-    //noinspection unchecked
-    return (T)client.execute(request, transport);
   }
 
   private static <T> Vector<T> newVector(T... elements) {
     return new Vector<T>(Arrays.asList(elements));
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   private static <K, V> Hashtable<K, V> newHashTable(Object... pairs) {
     assert pairs.length % 2 == 0;
     Hashtable<K, V> table = new Hashtable<K, V>();
@@ -195,11 +181,6 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       }
     }
     return table;
-  }
-
-  private XmlRpcClient createXmlRpcClient() throws MalformedURLException {
-    final URL url = new URL(getUrl());
-    return new XmlRpcClient(url);
   }
 
   @Nullable
@@ -214,14 +195,59 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
   }
 
-  // Copied from TracRepository.
-  private class CancellableTransport extends CommonsXmlRpcTransport {
-    public CancellableTransport() throws MalformedURLException {
-      super(new URL(getUrl()), getHttpClient());
+  private class BugzillaXmlRpcRequest {
+    // Copied from Trac repository
+    private class Transport extends CommonsXmlRpcTransport {
+      public Transport() throws MalformedURLException {
+        super(new URL(getUrl()), getHttpClient());
+      }
+
+      public void cancel() {
+        method.abort();
+      }
+    }
+
+    private final String myMethodName;
+    private boolean myRequireAuthentication;
+    private final HashMap<String, Object> myParameters = new HashMap<String, Object>();
+    private final Transport myTransport;
+
+    public BugzillaXmlRpcRequest(@NotNull String methodName) throws MalformedURLException {
+      myMethodName = methodName;
+      myTransport = new Transport();
+    }
+
+    public BugzillaXmlRpcRequest withParameter(@NotNull String name, @Nullable Object value) {
+      if (value != null) {
+        myParameters.put(name, value);
+      }
+      return this;
+    }
+
+    public BugzillaXmlRpcRequest requireAuthentication(boolean require) {
+      myRequireAuthentication = require;
+      return this;
     }
 
     public void cancel() {
-      method.abort();
+      myTransport.cancel();
+    }
+
+    public <T> T execute() throws Exception {
+      if (myRequireAuthentication) {
+        ensureUserAuthenticated();
+        // Bugzilla [3.0, 4.4) uses cookies authentication.
+        // Bugzilla [3.6, ...) allows to send login ("Bugzilla_login") and password ("Bugzilla_password")
+        // with every requests for automatic authentication (not used here).
+        // Bugzilla [4.4, ...) also allows to send token ("Bugzilla_token") returned by call to User.login
+        // with any request to its API.
+        if (myVersion.isOrGreaterThan(4, 4) && myAuthenticationToken != null) {
+          myParameters.put("Bugzilla_token", myAuthenticationToken);
+        }
+      }
+      Vector<Hashtable<String, Object>> parameters = new Vector<Hashtable<String, Object>>();
+      parameters.add(new Hashtable<String, Object>(myParameters));
+      return (T)new XmlRpcClient(getUrl()).execute(new XmlRpcRequest(myMethodName, parameters), myTransport);
     }
   }
 }
