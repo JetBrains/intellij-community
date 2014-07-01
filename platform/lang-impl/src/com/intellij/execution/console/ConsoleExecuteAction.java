@@ -162,16 +162,9 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
     }
 
-    protected boolean shouldExecute(@NotNull LanguageConsoleImpl console) {
+    protected void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
       //noinspection deprecation
       beforeExecution(console);
-      return true;
-    }
-
-    final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
-      if (!shouldExecute(console)) {
-        return;
-      }
 
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);
       ((UndoManagerImpl)UndoManager.getInstance(console.getProject())).invalidateActionsFor(DocumentReferenceManager.getInstance().create(console.getCurrentEditor().getDocument()));
