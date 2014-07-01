@@ -1,6 +1,7 @@
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
@@ -37,6 +38,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   private boolean myAuthenticated;
   private String myAuthenticationToken;
 
+  private String myProductName = "";
+  private String myComponentName = "";
+
   /**
    * Serialization constructor
    */
@@ -59,6 +63,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
    */
   public BugzillaRepository(BugzillaRepository other) {
     super(other);
+    myProductName = other.myProductName;
+    myComponentName = other.myComponentName;
   }
 
   @NotNull
@@ -89,6 +95,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return new BugzillaXmlRpcRequest("Bug.search")
       .requireAuthentication(true)
       .withParameter("summary", StringUtil.isNotEmpty(query) ? newVector(query.split("\\s+")) : null)
+      .withParameter("product", StringUtil.nullize(myProductName))
+        // Bugzilla's API allows to specify component even without parental project
+      .withParameter("component", StringUtil.nullize(myComponentName))
       .withParameter("offset", offset)
       .withParameter("limit", limit)
       .withParameter("assigned_to", getUsername())
@@ -249,5 +258,36 @@ public class BugzillaRepository extends BaseRepositoryImpl {
       parameters.add(new Hashtable<String, Object>(myParameters));
       return (T)new XmlRpcClient(getUrl()).execute(new XmlRpcRequest(myMethodName, parameters), myTransport);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!super.equals(o)) return false;
+
+    if (!(o instanceof BugzillaRepository)) return false;
+    BugzillaRepository repository = (BugzillaRepository)o;
+
+    if (!Comparing.equal(myProductName, repository.getProductName())) return false;
+    if (!Comparing.equal(myComponentName, repository.getComponentName())) return false;
+
+    return true;
+  }
+
+  @NotNull
+  public String getProductName() {
+    return myProductName;
+  }
+
+  public void setProductName(@NotNull String productName) {
+    myProductName = productName;
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return myComponentName;
+  }
+
+  public void setComponentName(@NotNull String componentName) {
+    myComponentName = componentName;
   }
 }
