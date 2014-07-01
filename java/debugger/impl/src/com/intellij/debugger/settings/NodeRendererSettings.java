@@ -33,6 +33,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -546,7 +547,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     static String constructLabelText(final String keylabel, final String valueLabel) {
-      return keylabel + " -> " + valueLabel;
+      StringBuilder sb = new StringBuilder();
+      sb.append('\"').append(keylabel).append("\" -> ");
+      if (!StringUtil.isEmpty(valueLabel)) {
+        sb.append('\"').append(valueLabel).append('\"');
+      }
+      return sb.toString();
     }
 
     private static String getDescriptorLabel(final ValueDescriptorImpl keyDescriptor) {
