@@ -790,38 +790,51 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.onInit
-  !insertmacro MUI_UNGETLANGUAGE
-  !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
-
   ;does admin perm. is required to uninstall?
   ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
-  MessageBox MB_OK "result search PROGRAMFILES inside INSTDIR path: $R0"
   StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
 requred_admin_perm:
-  MessageBox MB_OK "R0 is not empty: $R0"
-
   ;has the user admin rights?
   UserInfo::GetAccountType
   Pop $R2
   MessageBox MB_OK "Type of user account: $R2"
-  StrCmp $R2 "Admin" UAC_Done UAC_Elevate
-UAC_Elevate:
-  !insertmacro UAC_RunElevated
-  StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
-  StrCmp 0 $0 0 UAC_Err ; Error?
-  StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+  StrCmp $R2 "Admin" UAC_Done uninstall_location
+
+uninstall_location:
+  ;check if the uninstall is running from the product location
+  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe UAC_Elevate copy_uninstall
+
+copy_uninstall:
+  ;copy the unistall.exe to avoid using the AU_.exe name (default) in UAC dialog
+  MessageBox MB_OK "copy to $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  MessageBox MB_OK "exec $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  ;SetOutPath $APPDATA
+  ;MessageBox MB_OK "after copy OUTDIR = $OUTDIR"
+  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe" _?=$INSTDIR'
+  MessageBox MB_OK "Done."
+  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
   Quit
+
+UAC_Elevate:
+    !insertmacro UAC_RunElevated
+    StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
+    StrCmp 0 $0 0 UAC_Err ; Error?
+    StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+    Quit
 UAC_ElevationAborted:
 UAC_Err:
-  Abort
+    Abort
 UAC_Success:
-  StrCmp 1 $3 UAC_Admin ;Admin?
-  StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
-  goto UAC_Elevate
+    StrCmp 1 $3 UAC_Admin ;Admin?
+    StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
+    goto UAC_Elevate
 UAC_Admin:
 UAC_Done:
-  SetShellVarContext all
-  StrCpy $baseRegKey "HKLM"
+    SetShellVarContext all
+    StrCpy $baseRegKey "HKLM"
+  !insertmacro MUI_UNGETLANGUAGE
+  !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
 
 Function OMEnumRegKey
