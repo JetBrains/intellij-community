@@ -58,8 +58,17 @@ class JarLoader extends Loader {
   }
 
   void preloadClasses() {
+    ZipFile zipFile;
+
     try {
-      ZipFile zipFile = acquireZipFile();
+      zipFile = acquireZipFile();
+    }
+    catch (Exception e) {
+      LOG.debug("url: " + myURL, e);
+      return;
+    }
+
+    try {
       try {
         JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
         if (loader != null) {
