@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -135,7 +134,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     autodetectPlatformPrefix();
     ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
     ourApplication.setDataProvider(this);
-    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
     if (firstTime) {
       cleanPersistedVFSContent();
