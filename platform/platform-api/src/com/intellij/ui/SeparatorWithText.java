@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-import static javax.swing.SwingConstants.*;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
 
 public class SeparatorWithText extends JComponent {
 
@@ -34,11 +35,11 @@ public class SeparatorWithText extends JComponent {
     setFont(getFont().deriveFont(Font.BOLD));
   }
 
-  private static int getVgap() {
+  protected static int getVgap() {
     return UIUtil.isUnderNativeMacLookAndFeel() ? 1 : 3;
   }
 
-  private static int getHgap() {
+  protected static int getHgap() {
     return 3;
   }
 
@@ -107,6 +108,10 @@ public class SeparatorWithText extends JComponent {
     else {
       g.drawLine(0, getVgap(), getWidth() - 1, getVgap());
     }
+  }
+
+  protected String getCaption() {
+    return myCaption;
   }
 
   public void setCaption(String captionAboveOf) {
