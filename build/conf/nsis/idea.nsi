@@ -43,7 +43,7 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
 
 ;------------------------------------------------------------------------------
-; on GUI ialization installer checks whether IDEA is already installed
+; on GUI initialization installer checks whether IDEA is already installed
 ;------------------------------------------------------------------------------
 
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
@@ -621,7 +621,7 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 ; Installer sections
 ;------------------------------------------------------------------------------
-ection "IDEA Files" CopyIdeaFiles
+Section "IDEA Files" CopyIdeaFiles
 ;  StrCpy $baseRegKey "HKCU"
 ;  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
 ;  StrCmp $R2 1 continue_for_current_user
@@ -688,7 +688,7 @@ skip_ipr:
 StrCmp "${ASSOCIATION}" "" skip_association
  ; back up old value of an association
  ReadRegStr $1 HKCR ${ASSOCIATION} ""
- StrCmp $1 "" skip_backup
+  StrCmp $1 "" skip_backup
     StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
     WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
 skip_backup:
