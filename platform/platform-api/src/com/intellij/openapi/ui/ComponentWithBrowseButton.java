@@ -74,9 +74,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
     }
-    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
-      setBorder(new EmptyBorder(0, 1, 0, 1));
-    }
   }
 
   public final Comp getChildComponent() {
