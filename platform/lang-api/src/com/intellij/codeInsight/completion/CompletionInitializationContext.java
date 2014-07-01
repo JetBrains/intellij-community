@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,13 +41,15 @@ public class CompletionInitializationContext {
   private final Editor myEditor;
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
+  private final int myInvocationCount;
   private final OffsetMap myOffsetMap;
   private String myDummyIdentifier = DUMMY_IDENTIFIER;
 
-  public CompletionInitializationContext(final Editor editor, final PsiFile file, final CompletionType completionType) {
+  public CompletionInitializationContext(final Editor editor, final PsiFile file, final CompletionType completionType, int invocationCount) {
     myEditor = editor;
     myFile = file;
     myCompletionType = completionType;
+    myInvocationCount = invocationCount;
     myOffsetMap = new OffsetMap(editor.getDocument());
 
     myOffsetMap.addOffset(START_OFFSET, calcStartOffset(editor));
@@ -79,7 +82,7 @@ public class CompletionInitializationContext {
 
   @NotNull
   public Language getPositionLanguage() {
-    return PsiUtilBase.getLanguageInEditor(getEditor(), getProject());
+    return ObjectUtils.assertNotNull(PsiUtilBase.getLanguageInEditor(getEditor(), getProject()));
   }
 
   public String getDummyIdentifier() {
@@ -127,9 +130,12 @@ public class CompletionInitializationContext {
     return getIdentifierEndOffset();
   }
 
+  public int getInvocationCount() {
+    return myInvocationCount;
+  }
+
   /**
    * Mark the offset up to which the text will be deleted if a completion variant is selected using Replace character (Tab)
-   * @param idEnd
    */
   public void setReplacementOffset(int idEnd) {
     myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
