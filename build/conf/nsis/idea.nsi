@@ -858,6 +858,43 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.onInit
+  ;admin perm. is required to uninstall?
+  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
+requred_admin_perm:
+  ;the user has admin rights?
+  UserInfo::GetAccountType
+  Pop $R2
+  StrCmp $R2 "Admin" UAC_Done uninstall_location
+
+uninstall_location:
+  ;check if the uninstallation is running from the product location
+  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe UAC_Elevate copy_uninstall
+
+copy_uninstall:
+  ;prepare copy of the unistall.exe to avoid using the AU_.exe name (default) by UAC dialog
+  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe" _?=$INSTDIR'
+  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  Quit
+
+UAC_Elevate:
+  !insertmacro UAC_RunElevated
+  StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
+  StrCmp 0 $0 0 UAC_Err ; Error?
+  StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+  Quit
+UAC_ElevationAborted:
+UAC_Err:
+  Abort
+UAC_Success:
+  StrCmp 1 $3 UAC_Admin ;Admin?
+  StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
+  goto UAC_Elevate
+UAC_Admin:
+UAC_Done:
+  SetShellVarContext all
+  StrCpy $baseRegKey "HKLM"
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
