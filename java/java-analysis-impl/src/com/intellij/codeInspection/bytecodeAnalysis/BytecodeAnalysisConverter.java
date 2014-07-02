@@ -68,8 +68,8 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       IOUtil.openCleanOrResetBroken(new ThrowableComputable<Void, IOException>() {
         @Override
         public Void compute() throws IOException {
-          myPackageEnumerator = new PersistentStringEnumerator(packageKeysFile);
-          myNamesEnumerator = new PersistentStringEnumerator(namesFile);
+          myPackageEnumerator = new PersistentStringEnumerator(packageKeysFile, true);
+          myNamesEnumerator = new PersistentStringEnumerator(namesFile, true);
           myCompoundKeyEnumerator = new PersistentEnumeratorDelegate<int[]>(compoundKeysFile, new IntArrayKeyDescriptor(), 1024 * 4);
           return null;
         }
@@ -198,8 +198,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     }
     compoundKey[i] = myPackageEnumerator.enumerate(packageName);
     compoundKey[i + 1] = myNamesEnumerator.enumerate(simpleName);
-    myPackageEnumerator.valueOf(compoundKey[i]);
-    myNamesEnumerator.valueOf(compoundKey[i + 1]);
   }
 
   @Nullable
