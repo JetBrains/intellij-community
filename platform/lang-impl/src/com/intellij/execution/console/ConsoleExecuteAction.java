@@ -133,7 +133,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     myExecuteActionHandler.addToCommandHistoryAndExecute(myConsole, myConsoleView, text);
   }
 
-  static abstract class ConsoleExecuteActionHandler {
+  public static abstract class ConsoleExecuteActionHandler {
     private final ConsoleHistoryModel myCommandHistoryModel;
 
     private boolean myAddToHistory = true;
