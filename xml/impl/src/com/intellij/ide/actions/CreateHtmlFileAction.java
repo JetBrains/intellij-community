@@ -43,8 +43,8 @@ public class CreateHtmlFileAction extends CreateFileFromTemplateAction implement
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(XmlBundle.message("new.html.file.action"))
-      .addKind("HTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME)
-      .addKind("HTML4 file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME)
+      .addKind("HTML 5 file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME)
+      .addKind("HTML 4 file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME)
       .addKind("XHTML file", StdFileTypes.XHTML.getIcon(), FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
   }
 
