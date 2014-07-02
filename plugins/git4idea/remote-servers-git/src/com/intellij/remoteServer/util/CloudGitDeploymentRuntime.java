@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -101,7 +100,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         return CommitSession.VCS_COMMIT;
       }
     },
-    new CommitExecutor() {
+    new CommitExecutorBase() {
 
       @Nls
       @Override
@@ -113,6 +112,11 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       @Override
       public CommitSession createCommitSession() {
         return NO_COMMIT;
+      }
+
+      @Override
+      public boolean areChangesRequired() {
+        return false;
       }
     }
   );
@@ -191,32 +195,6 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         relevantChanges.add(change);
       }
     }
-    if (relevantChanges.isEmpty()) {
-      Integer showCommitDialogChoice = runOnEdt(new Computable<Integer>() {
-
-        @Override
-        public Integer compute() {
-          return Messages.showYesNoCancelDialog(getProject(),
-                                                "Active changelist does not contain a relevant change.\n"
-                                                + "Do you want to show commit dialog anyway?\n\n"
-                                                + "Yes - show commit dialog\n"
-                                                + "No - push immediately\n"
-                                                + "Cancel - interrupt deploy",
-                                                "Deploy",
-                                                Messages.getWarningIcon());
-        }
-      });
-      if (showCommitDialogChoice == Messages.YES) {
-        relevantChanges.addAll(changes);
-      }
-      else if (showCommitDialogChoice == Messages.NO) {
-        pushApplication(application);
-        return;
-      }
-      else {
-        throw new ServerRuntimeException("Deploy interrupted");
-      }
-    }
 
     final Semaphore commitSemaphore = new Semaphore();
     commitSemaphore.down();
@@ -244,7 +222,8 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
                                                       public void onFailure() {
                                                         commitSemaphore.up();
                                                       }
-                                                    });
+                                                    },
+                                                    false);
       }
     });
     if (commitStarted != null && commitStarted) {
