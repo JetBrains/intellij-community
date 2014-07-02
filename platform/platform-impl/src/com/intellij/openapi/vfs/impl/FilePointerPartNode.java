@@ -66,7 +66,7 @@ class FilePointerPartNode {
     }
     else {
       VirtualFile gparent = parent.getParent();
-      partStart = position(gparent, gparent != null, parent.getNameSequence(), outNode);
+      partStart = position(gparent, gparent != null && !StringUtil.equals(gparent.getNameSequence(), "/"), parent.getNameSequence(), outNode);
       if (partStart == -1) return -1;
     }
 
