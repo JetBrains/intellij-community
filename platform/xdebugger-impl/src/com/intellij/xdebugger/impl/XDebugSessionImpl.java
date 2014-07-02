@@ -694,6 +694,14 @@ public class XDebugSessionImpl implements XDebugSession {
     myActiveNonLineBreakpoint = !(breakpoint instanceof XLineBreakpoint<?>) ? breakpoint : null;
     positionReached(suspendContext);
 
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        mySessionTab.toFront();
+        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+      }
+    });
+
     if (breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
     }
@@ -775,8 +783,6 @@ public class XDebugSessionImpl implements XDebugSession {
           initSessionTab();
           showSessionTab();
         }
-        mySessionTab.toFront();
-        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
         if (myCurrentPosition != null) {
           adjustMouseTrackingCounter(myCurrentPosition, 1);
         }

@@ -237,6 +237,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
     }
 
+    final DefaultActionGroup focus = new DefaultActionGroup();
+    focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
+    myUi.getOptions().setAdditionalFocusActions(focus);
+
     rebuildViews();
   }
 

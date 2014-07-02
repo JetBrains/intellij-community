@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.ui.breakpoints.actions;
+package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ui.actions.AbstractFocusOnAction;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
