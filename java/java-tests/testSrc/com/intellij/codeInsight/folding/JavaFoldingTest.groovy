@@ -698,6 +698,35 @@ public class CharSymbol {
     assert regions[2].placeholderText == "fast: false"
   }
 
+  public void "test inline names if literal expression can be assigned to method parameter"() {
+    def text = """
+public class CharSymbol {
+
+  public void main() {
+    Object obj = new Object();
+    count(100, false, "Hi!");
+  }
+
+  public void count(Integer test, Boolean boo, CharSequence seq) {
+    int a = test;
+    Object obj = new Object();
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 5
+
+    checkRangeOffsetByPositionInText(regions[1], text, "100")
+    assert regions[1].placeholderText == "test: 100"
+
+    checkRangeOffsetByPositionInText(regions[2], text, "false")
+    assert regions[2].placeholderText == "boo: false"
+
+    checkRangeOffsetByPositionInText(regions[3], text, '"Hi!"')
+    assert regions[3].placeholderText == 'seq: "Hi!"'
+  }
+
   public void "test inline negative numbers (IDEA-126753)"() {
     def text = """
 public class CharSymbol {

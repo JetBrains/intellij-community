@@ -41,10 +41,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
@@ -776,7 +773,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       for (int i = 0; i < callArguments.length; i++) {
         PsiExpression callArgument = callArguments[i];
 
-        if (isLiteralExpression(callArgument)) {
+        if (callArgument.getType() != null && isLiteralExpression(callArgument)) {
           if (!isResolved) {
             PsiMethod method = expression.resolveMethod();
             isResolved = true;
@@ -790,7 +787,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
           }
 
           PsiParameter methodParam = parameters[i];
-          if (PsiType.NULL.equals(callArgument.getType()) || methodParam.getType().equals(callArgument.getType())) {
+          if (TypeConversionUtil.isAssignable(methodParam.getType(), callArgument.getType())) {
             TextRange range = callArgument.getTextRange();
             String placeholderText = methodParam.getName() + ": " + callArgument.getText();
             foldElements.add(new NamedFoldingDescriptor(callArgument, range.getStartOffset(), range.getEndOffset(), null, placeholderText));
