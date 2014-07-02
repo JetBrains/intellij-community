@@ -38,6 +38,7 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
@@ -219,11 +220,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     try {
       final List<FileContent> finalContents = contents;
-      return GithubUtil.runTask(project, auth, indicator, new ThrowableConvertor<GithubAuthData, GithubGist, IOException>() {
+      return GithubUtil.runTask(project, auth, indicator, new ThrowableConvertor<GithubConnection, GithubGist, IOException>() {
         @NotNull
         @Override
-        public GithubGist convert(@NotNull GithubAuthData auth) throws IOException {
-          return GithubApiUtil.createGist(auth, finalContents, description, isPrivate);
+        public GithubGist convert(@NotNull GithubConnection connection) throws IOException {
+          return GithubApiUtil.createGist(connection, finalContents, description, isPrivate);
         }
       }).getHtmlUrl();
     }

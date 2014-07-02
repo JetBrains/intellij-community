@@ -116,15 +116,16 @@ public class GithubNotifications {
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
-  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String message) {
-    LOG.info(title + "; " + message);
-    Messages.showErrorDialog(component, message, title);
-  }
-
   public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
     if (e instanceof GithubOperationCanceledException) return;
     Messages.showErrorDialog(component, getErrorTextFromException(e), title);
+  }
+
+  public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String prefix, @NotNull Exception e) {
+    LOG.info(title, e);
+    if (e instanceof GithubOperationCanceledException) return;
+    Messages.showErrorDialog(component, prefix + getErrorTextFromException(e), title);
   }
 
   @Messages.YesNoResult

@@ -192,11 +192,12 @@ public class GithubCreatePullRequestWorker {
 
             // load available branches
             List<String> branches = ContainerUtil.map(GithubUtil.runTask(myProject, myAuthHolder, indicator,
-                                                                         new ThrowableConvertor<GithubAuthData, List<GithubBranch>, IOException>() {
+                                                                         new ThrowableConvertor<GithubConnection, List<GithubBranch>, IOException>() {
                                                                            @Override
-                                                                           public List<GithubBranch> convert(@NotNull GithubAuthData auth)
+                                                                           public List<GithubBranch> convert(@NotNull GithubConnection connection)
                                                                              throws IOException {
-                                                                             return GithubApiUtil.getRepoBranches(auth, forkPath.getUser(),
+                                                                             return GithubApiUtil.getRepoBranches(connection,
+                                                                                                                  forkPath.getUser(),
                                                                                                                   forkPath.getRepository());
                                                                            }
                                                                          }
@@ -386,11 +387,11 @@ public class GithubCreatePullRequestWorker {
                                                      @NotNull final String head,
                                                      @NotNull final String base) {
     try {
-      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubPullRequest, IOException>() {
+      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubConnection, GithubPullRequest, IOException>() {
         @NotNull
         @Override
-        public GithubPullRequest convert(@NotNull GithubAuthData auth) throws IOException {
-          return GithubApiUtil.createPullRequest(auth, targetRepo.getUser(), targetRepo.getRepository(), title, description, head, base);
+        public GithubPullRequest convert(@NotNull GithubConnection connection) throws IOException {
+          return GithubApiUtil.createPullRequest(connection, targetRepo.getUser(), targetRepo.getRepository(), title, description, head, base);
         }
       });
     }
@@ -491,11 +492,11 @@ public class GithubCreatePullRequestWorker {
 
             // GitHub
             GithubRepoDetailed repo =
-              GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubRepoDetailed, IOException>() {
+              GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubConnection, GithubRepoDetailed, IOException>() {
                 @NotNull
                 @Override
-                public GithubRepoDetailed convert(@NotNull GithubAuthData auth) throws IOException {
-                  return GithubApiUtil.getDetailedRepoInfo(auth, path.getUser(), path.getRepository());
+                public GithubRepoDetailed convert(@NotNull GithubConnection connection) throws IOException {
+                  return GithubApiUtil.getDetailedRepoInfo(connection, path.getUser(), path.getRepository());
                 }
               });
 
@@ -552,12 +553,12 @@ public class GithubCreatePullRequestWorker {
     }
 
     try {
-      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubAuthData, GithubFullPath, IOException>() {
+      return GithubUtil.runTask(project, authHolder, indicator, new ThrowableConvertor<GithubConnection, GithubFullPath, IOException>() {
         @Nullable
         @Override
-        public GithubFullPath convert(@NotNull GithubAuthData auth) throws IOException {
+        public GithubFullPath convert(@NotNull GithubConnection connection) throws IOException {
           try {
-            GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(auth, user, source.getName());
+            GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(connection, user, source.getName());
             if (target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), source.getUserName())) {
               return target.getFullPath();
             }
@@ -566,7 +567,7 @@ public class GithubCreatePullRequestWorker {
             // such repo may not exist
           }
 
-          GithubRepo fork = GithubApiUtil.findForkByUser(auth, source.getUserName(), source.getName(), user);
+          GithubRepo fork = GithubApiUtil.findForkByUser(connection, source.getUserName(), source.getName(), user);
           if (fork != null) {
             return fork.getFullPath();
           }
