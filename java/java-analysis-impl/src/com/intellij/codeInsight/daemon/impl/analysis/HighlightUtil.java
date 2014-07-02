@@ -1796,12 +1796,19 @@ public class HighlightUtil extends HighlightUtilBase {
    */
   @Nullable
   public static HighlightInfo checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
+    final PsiField initField = isIllegalForwardReferenceToField(expression, referencedField, false);
+    if (initField == null) return null;
+    String description = initField == referencedField ? JavaErrorMessages.message("illegal.self.reference") : JavaErrorMessages.message("illegal.forward.reference");
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+  }
+
+  public static PsiField isIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField, boolean acceptQualified) {
     PsiClass containingClass = referencedField.getContainingClass();
     if (containingClass == null) return null;
     if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
     if (expression.getTextRange().getStartOffset() >= referencedField.getTextRange().getEndOffset()) return null;
     // only simple reference can be illegal
-    if (expression.getQualifierExpression() != null) return null;
+    if (!acceptQualified && expression.getQualifierExpression() != null) return null;
     PsiField initField = findEnclosingFieldInitializer(expression);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
@@ -1814,8 +1821,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.getParentOfType(expression, PsiClass.class))) {
       return null;
     }
-    String description = initField == referencedField ? JavaErrorMessages.message("illegal.self.reference") : JavaErrorMessages.message("illegal.forward.reference");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    return initField;
   }
 
   /**
