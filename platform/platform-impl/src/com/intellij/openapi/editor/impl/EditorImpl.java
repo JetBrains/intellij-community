@@ -83,6 +83,7 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
@@ -879,9 +880,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           repaintLines(caretLine, caretLine);
         }
         fireFocusGained();
-        if (myGutterNeedsUpdate) {
-          updateGutterSize();
-        }
       }
 
       @Override
@@ -892,6 +890,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           repaintLines(caretLine, caretLine);
         }
         fireFocusLost();
+      }
+    });
+
+    new UiNotifyConnector(myEditorComponent, new Activatable.Adapter(){
+      @Override
+      public void showNotify() {
+        if (myGutterNeedsUpdate) {
+          updateGutterSize();
+        }
       }
     });
 
