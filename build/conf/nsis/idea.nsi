@@ -866,7 +866,7 @@ requred_admin_perm:
   ;the user has admin rights?
   UserInfo::GetAccountType
   Pop $R2
-  StrCmp $R2 "Admin" UAC_Done uninstall_location
+  StrCmp $R2 "Admin" UAC_Admin uninstall_location
 
 uninstall_location:
   ;check if the uninstallation is running from the product location
@@ -893,9 +893,9 @@ UAC_Success:
   StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
   goto UAC_Elevate
 UAC_Admin:
-UAC_Done:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
+UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
