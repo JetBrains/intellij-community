@@ -167,7 +167,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setConditionEnabled(boolean conditionEnabled) {
-    myConditionEnabled = conditionEnabled;
+    if (myConditionEnabled != conditionEnabled) {
+      myConditionEnabled = conditionEnabled;
+      fireBreakpointChanged();
+    }
   }
 
   public boolean isLogExpressionEnabled() {
@@ -175,7 +178,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setLogExpressionEnabled(boolean logExpressionEnabled) {
-    myLogExpressionEnabled = logExpressionEnabled;
+    if (myLogExpressionEnabled != logExpressionEnabled) {
+      myLogExpressionEnabled = logExpressionEnabled;
+      fireBreakpointChanged();
+    }
   }
 
   @Override
@@ -204,7 +210,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpressionObject(@Nullable XExpression expression) {
-    if (!Comparing.equal(getLogExpressionObject(), expression)) {
+    if (!Comparing.equal(myLogExpression, expression)) {
       myLogExpression = expression;
       fireBreakpointChanged();
     }
@@ -236,7 +242,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setConditionExpression(@Nullable XExpression condition) {
-    if (!Comparing.equal(condition, getConditionExpression())) {
+    if (!Comparing.equal(condition, myCondition)) {
       myCondition = condition;
       fireBreakpointChanged();
     }
