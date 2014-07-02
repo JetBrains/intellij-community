@@ -270,6 +270,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public void checkSearchPattern(Project project, MatchOptions options) {
     class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
+      private PsiElement myCurrent;
+
       @Override public void visitAnnotation(PsiAnnotation annotation) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 
@@ -302,15 +304,31 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
         }
       }
+
+      @Override
+      public void visitErrorElement(PsiErrorElement element) {
+        super.visitErrorElement(element);
+        final PsiElement parent = element.getParent();
+        if (parent != myCurrent || !"';' expected".equals(element.getErrorDescription())) {
+          throw new MalformedPatternException(element.getErrorDescription());
+        }
+      }
+
+      public void setCurrent(PsiElement current) {
+        myCurrent = current;
+      }
     }
     ValidatingVisitor visitor = new ValidatingVisitor();
-    final NodeIterator nodes = PatternCompiler.compilePattern(project, options).getNodes();
-    while(nodes.hasNext()) {
-      nodes.current().accept( visitor );
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options);
+    final int nodeCount = compiledPattern.getNodeCount();
+    final NodeIterator nodes = compiledPattern.getNodes();
+    while (nodes.hasNext()) {
+      final PsiElement current = nodes.current();
+      visitor.setCurrent(nodeCount == 1 && current instanceof PsiExpressionStatement ? current : null);
+      current.accept(visitor);
       nodes.advance();
     }
     nodes.reset();
-
   }
 
   @Override
