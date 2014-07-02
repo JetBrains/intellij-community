@@ -1181,7 +1181,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final PsiType caughtType = parameter.getType();
     if (caughtType instanceof PsiClassType) {
       HighlightInfo info = checkSimpleCatchParameter(parameter, thrownTypes, (PsiClassType)caughtType);
-      return info == null ? null : Collections.<HighlightInfo>singletonList(info);
+      return info == null ? null : Collections.singletonList(info);
     }
     if (caughtType instanceof PsiDisjunctionType) {
       return checkMultiCatchParameter(parameter, thrownTypes);
@@ -1814,7 +1814,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.getParentOfType(expression, PsiClass.class))) {
       return null;
     }
-    String description = JavaErrorMessages.message("illegal.forward.reference");
+    String description = initField == referencedField ? JavaErrorMessages.message("illegal.self.reference") : JavaErrorMessages.message("illegal.forward.reference");
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
   }
 
