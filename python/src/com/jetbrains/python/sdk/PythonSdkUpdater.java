@@ -32,6 +32,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,9 +42,12 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 /**
  * A component that initiates a refresh of all project's Python SDKs.
@@ -119,7 +123,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 for (final Sdk sdk : sdksToUpdate) {
                   try {
                     LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                    updateSdk(project, sdk);
+                    updateSdk(project, null, sdk, PythonSdkType.findSkeletonsPath(sdk));
                   }
                   catch (InvalidSdkException e) {
                     if (PythonSdkType.isRemote(sdk)) {
@@ -144,8 +148,8 @@ public class PythonSdkUpdater implements StartupActivity {
     });
   }
 
-  private static void updateSdk(@NotNull Project project, @NotNull final Sdk sdk) throws InvalidSdkException {
-    PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk); // NOTE: whole thing would need a rename
+  public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final Sdk sdk, String skeletonsPath) throws InvalidSdkException {
+    PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, new Ref<Boolean>(false), sdk); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdk)) {
       updateSysPath(sdk);
     }
