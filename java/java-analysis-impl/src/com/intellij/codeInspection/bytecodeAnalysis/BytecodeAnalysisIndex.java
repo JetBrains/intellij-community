@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -33,13 +35,14 @@ import java.util.Collection;
  * @author lambdamix
  */
 public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Collection<IntIdEquation>> {
-  public static final int PARAMETERS = 0;
-  public static final int CONTRACTS = 1;
   public static final ID<Integer, Collection<IntIdEquation>> NAME = ID.create("bytecodeAnalysis");
   private final EquationExternalizer myExternalizer = new EquationExternalizer();
-
   private static final DataIndexer<Integer, Collection<IntIdEquation>, FileContent> INDEXER =
     new ClassDataIndexer(BytecodeAnalysisConverter.getInstance());
+
+  public static int indexKey(VirtualFile file, boolean parameters) {
+    return (file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() * 2 :  -2) + (parameters ? 1 : 0);
+  }
 
   @NotNull
   @Override

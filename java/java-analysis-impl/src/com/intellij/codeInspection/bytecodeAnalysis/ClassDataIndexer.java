@@ -49,8 +49,8 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
     Collection<IntIdEquation> idContractEquations = new ArrayList<IntIdEquation>(rawContractEquations.size());
 
     HashMap<Integer, Collection<IntIdEquation>> map = new HashMap<Integer, Collection<IntIdEquation>>(2);
-    map.put(BytecodeAnalysisIndex.PARAMETERS, idParameterEquations);
-    map.put(BytecodeAnalysisIndex.CONTRACTS, idContractEquations);
+    map.put(BytecodeAnalysisIndex.indexKey(inputData.getFile(), true), idParameterEquations);
+    map.put(BytecodeAnalysisIndex.indexKey(inputData.getFile(), false), idContractEquations);
 
     try {
       for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
