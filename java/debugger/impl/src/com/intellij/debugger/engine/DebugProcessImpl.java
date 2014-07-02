@@ -56,7 +56,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -1266,7 +1269,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     // for this refType and the refType is not visible to the loader.
     // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
     // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
-    return fromLoader == null || Comparing.equal(fromLoader, refType.classLoader()) || fromLoader.visibleClasses().contains(refType);
+    return fromLoader == null || fromLoader.equals(refType.classLoader()) || fromLoader.visibleClasses().contains(refType);
   }
 
   private static String reformatArrayName(String className) {
