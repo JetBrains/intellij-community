@@ -74,7 +74,6 @@ import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -555,7 +554,7 @@ public class PythonSdkType extends SdkType {
             public void run(@NotNull ProgressIndicator indicator) {
               try {
                 final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
-                PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, null, sdk);
+                PythonSdkUpdater.updateSdk(project, ownerComponent, sdk, skeletonsPath);
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
