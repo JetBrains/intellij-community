@@ -100,7 +100,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       myErrorLabel.setHyperlinkText("Error: " + e.getMessage(), "", "");
       myErrorLabel.setIcon(Messages.getErrorIcon());
 
-      LOG.error(e);
+      LOG.info(e);
     }
     myLayout.show(myPanel, ERROR_CARD);
   }
