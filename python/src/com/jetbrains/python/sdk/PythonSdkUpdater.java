@@ -148,15 +148,21 @@ public class PythonSdkUpdater implements StartupActivity {
     PySkeletonRefresher.refreshSkeletonsOfSdk(project, sdk); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdk)) {
       updateSysPath(sdk);
-    } else {
-      PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdk.getSdkAdditionalData();
+    }
+    else {
+      PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
       assert remoteSdkData != null;
-      List<String> paths = Lists.newArrayList();
+      final List<String> paths = Lists.newArrayList();
       for (PathMappingSettings.PathMapping mapping : remoteSdkData.getPathMappings().getPathMappings()) {
         paths.add(mapping.getLocalRoot());
       }
 
-      updateSdkPath(sdk, paths);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          updateSdkPath(sdk, paths);
+        }
+      });
     }
   }
 
