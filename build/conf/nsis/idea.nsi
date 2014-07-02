@@ -861,6 +861,7 @@ Function un.onInit
   ;admin perm. is required to uninstall?
   ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
   StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
+
 requred_admin_perm:
   ;the user has admin rights?
   UserInfo::GetAccountType
@@ -869,13 +870,13 @@ requred_admin_perm:
 
 uninstall_location:
   ;check if the uninstallation is running from the product location
-  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe UAC_Elevate copy_uninstall
+  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
 
 copy_uninstall:
-  ;prepare copy of the unistall.exe to avoid using the AU_.exe name (default) by UAC dialog
-  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
-  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe" _?=$INSTDIR'
-  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  ;do copy for unistall.exe
+  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   Quit
 
 UAC_Elevate:
