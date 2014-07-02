@@ -87,14 +87,9 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final int lengthOfTextBeforePosition = parameters.getOffset();
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!(indicator instanceof CompletionProgressIndicator)) {
-      throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + getCurrentCompletion() + "; phase set at " + ourPhaseTrace);
-    }
-    CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher, contributor,parameters, sorter, process, null);
+    return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher, contributor,parameters, sorter, null);
   }
 
   @Override
@@ -110,7 +105,6 @@ public class CompletionServiceImpl extends CompletionService{
     private final int myLengthOfTextBeforePosition;
     private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
-    private final CompletionProgressIndicator myProcess;
     @Nullable private final CompletionResultSetImpl myOriginal;
 
     public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
@@ -118,13 +112,11 @@ public class CompletionServiceImpl extends CompletionService{
                                    CompletionContributor contributor,
                                    CompletionParameters parameters,
                                    @NotNull CompletionSorterImpl sorter,
-                                   @NotNull CompletionProgressIndicator process,
                                    @Nullable CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myLengthOfTextBeforePosition = lengthOfTextBeforePosition;
       myParameters = parameters;
       mySorter = sorter;
-      myProcess = process;
       myOriginal = original;
     }
 
@@ -144,7 +136,7 @@ public class CompletionServiceImpl extends CompletionService{
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, matcher, myContributor, myParameters, mySorter, this);
     }
 
     @Override
@@ -167,7 +159,8 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, myProcess, this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter,
+                                         this);
     }
 
     @Override
