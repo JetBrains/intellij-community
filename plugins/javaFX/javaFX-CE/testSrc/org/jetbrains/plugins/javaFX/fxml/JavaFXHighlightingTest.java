@@ -87,6 +87,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTestIdController();
   }
 
+  public void testEventHandlers() throws Exception {
+    myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
+  }
+
   public void testPackageLocalController() throws Exception {
     doTest(getTestName(false) + ".java");
   }
