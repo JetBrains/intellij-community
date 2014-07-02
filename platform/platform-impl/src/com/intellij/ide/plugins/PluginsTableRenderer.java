@@ -16,12 +16,16 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -30,6 +34,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.util.Set;
 
 /**
 * @author Konstantin Bulenkov
@@ -79,6 +84,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (myPluginDescriptor != null) {
+      final PluginId pluginId = myPluginDescriptor.getPluginId();
       myName.setText(myPluginDescriptor.getName() + "  ");
 
       final Color fg = UIUtil.getTableForeground(isSelected);
@@ -123,18 +129,22 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         myLastUpdated.setText(DateFormatUtil.formatBetweenDates(pluginNode.getDate(), System.currentTimeMillis()));
       }
 
-      final IdeaPluginDescriptor installed = PluginManager.getPlugin(myPluginDescriptor.getPluginId());
+      final IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginId);
       if ((pluginNode != null && PluginManagerColumnInfo.isDownloaded(pluginNode)) ||
           (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
         if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
         //todo[kb] set proper icon
         //myStatus.setText("[Downloaded]");
         myStatus.setIcon(AllIcons.Nodes.PluginRestart);
+        if (installed != null) {
+          myPanel.setToolTipText("Plugin was updated to the newest version. Changes will be available after restart");
+        } else {
+          myPanel.setToolTipText("Plugin will be activated after restart.");
+        }
         //myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
         //myStatus.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));
       }
       else if (pluginNode != null && pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
-        PluginId pluginId = pluginNode.getPluginId();
         final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
         if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
         if (hasNewerVersion) {
@@ -147,7 +157,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         //myStatus.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));
       }
 
-      if (InstalledPluginsTableModel.hasNewerVersion(myPluginDescriptor.getPluginId())) {
+      if (InstalledPluginsTableModel.hasNewerVersion(pluginId)) {
         myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
         if (!isSelected) {
           myName.setForeground(FileStatus.MODIFIED.getColor());
@@ -155,6 +165,37 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       }
       if (!myPluginDescriptor.isEnabled()) {
         myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
+      }
+
+      if (table.getModel() instanceof InstalledPluginsTableModel) {
+        final InstalledPluginsTableModel installedPluginsTableModel = (InstalledPluginsTableModel)table.getModel();
+        final Set<PluginId> required = installedPluginsTableModel.getRequiredPlugins(pluginId);
+        if (required != null && required.size() > 0) {
+          final StringBuilder s = new StringBuilder();
+          if (!installedPluginsTableModel.isLoaded(pluginId)) {
+            s.append("Plugin was not loaded.\n");
+          }
+
+          if (required.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
+            s.append("The plugin requires IntelliJ IDEA Ultimate");
+          }
+          else {
+            s.append("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
+            s.append(StringUtil.join(required, new Function<PluginId, String>() {
+              @Override
+              public String fun(final PluginId id) {
+                final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+                return plugin == null ? id.getIdString() : plugin.getName();
+              }
+            }, ","));
+
+            s.append(required.size() == 1 ? "\" is not enabled." : "\" are not enabled.");
+
+          }
+          myPanel.setToolTipText(s.toString());
+        } else if (PluginManagerCore.isIncompatible(myPluginDescriptor)) {
+          myPanel.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
+        }
       }
     }
     if (!isSelected) {
