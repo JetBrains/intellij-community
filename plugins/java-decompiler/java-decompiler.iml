@@ -22,6 +22,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="asm5" level="project" />
   </component>
 </module>
 
