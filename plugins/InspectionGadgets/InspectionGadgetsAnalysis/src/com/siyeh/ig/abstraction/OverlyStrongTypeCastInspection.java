@@ -175,6 +175,9 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (castTypeElement == null) {
         return;
       }
+      if (operand instanceof PsiFunctionalExpression && !LambdaUtil.isFunctionalType(expectedType)) {
+        return;
+      }
       registerError(castTypeElement, expectedType);
     }
 
