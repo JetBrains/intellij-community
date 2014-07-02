@@ -125,7 +125,7 @@ public class AppUIUtil {
     if ("true".equals(System.getProperty("idea.debug.mode"))) {
       wmClass += "-debug";
     }
-    return PlatformUtils.isIdeaCommunity() ? wmClass + "-ce" : wmClass;
+    return PlatformUtils.isCommunityEdition() ? wmClass + "-ce" : wmClass;
   }
 
   public static void registerBundledFonts() {

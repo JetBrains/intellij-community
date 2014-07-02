@@ -98,11 +98,13 @@ public class PlatformUtils {
     return PlatformUtilsCore.isDatabaseIDE();
   }
 
+  public static boolean isCommunityEdition() {
+    return isIdeaCommunity() || isPyCharmCommunity();
+  }
+
   /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
   @SuppressWarnings("UnusedDeclaration")
-  public static boolean isIdeaProject(@Nullable Project project) {
-    return false;
-  }
+  public static boolean isIdeaProject(@Nullable Project project) { return false; }
 
   /** @deprecated use {@link #IDEA_CE_PREFIX} (to remove in IDEA 15) */
   @SuppressWarnings("UnusedDeclaration")
