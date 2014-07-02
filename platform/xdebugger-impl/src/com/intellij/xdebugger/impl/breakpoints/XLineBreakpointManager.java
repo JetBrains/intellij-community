@@ -59,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -163,6 +164,15 @@ public class XLineBreakpointManager {
     if (highlighter != null) {
       myBreakpoints.remove(breakpoint);
     }
+  }
+
+  @NotNull
+  public Collection<XLineBreakpointImpl> getDocumentBreakpoints(Document document) {
+    Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
+    if (breakpoints == null) {
+      breakpoints = Collections.emptyList();
+    }
+    return breakpoints;
   }
 
   private void updateBreakpoints(@NotNull Document document) {
