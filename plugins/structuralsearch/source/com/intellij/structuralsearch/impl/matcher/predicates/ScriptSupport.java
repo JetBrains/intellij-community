@@ -11,8 +11,15 @@ import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.ErrorCollector;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.messages.Message;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.syntax.SyntaxException;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko
@@ -58,10 +65,25 @@ public class ScriptSupport {
     }
   }
 
-  public static String checkValidScript(String script) {
+  public static String checkValidScript(String scriptText) {
     try {
-      final Object o = new GroovyShell().parse(script);
+      final File scriptFile = new File(scriptText);
+      final GroovyShell shell = new GroovyShell();
+      final Script script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(scriptText);
       return null;
+    } catch (IOException e) {
+      return e.getMessage();
+    } catch (MultipleCompilationErrorsException e) {
+      final ErrorCollector errorCollector = e.getErrorCollector();
+      final List<Message> errors = errorCollector.getErrors();
+      for (Message error : errors) {
+        if (error instanceof SyntaxErrorMessage) {
+          final SyntaxErrorMessage errorMessage = (SyntaxErrorMessage)error;
+          final SyntaxException cause = errorMessage.getCause();
+          return cause.getMessage();
+        }
+      }
+      return e.getMessage();
     } catch (CompilationFailedException ex) {
       return ex.getLocalizedMessage();
     }
