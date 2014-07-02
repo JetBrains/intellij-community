@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,14 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -102,5 +107,34 @@ public class ModuleUtil extends ModuleUtilCore {
   public static ModuleType getModuleType(@NotNull Module module) {
     String type = module.getOptionValue(Module.ELEMENT_TYPE);
     return ModuleTypeManager.getInstance().findByID(type);
+  }
+
+  public static void updateExcludedFoldersInWriteAction(final Module module,
+                                                        @NotNull final VirtualFile contentRoot,
+                                                        final Collection<String> urlsToUnExclude,
+                                                        final Collection<String> urlsToExclude) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        try {
+          for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
+            if (contentRoot.equals(contentEntry.getFile())) {
+              for (String url : urlsToUnExclude) {
+                contentEntry.removeExcludeFolder(url);
+              }
+              for (String url : urlsToExclude) {
+                contentEntry.addExcludeFolder(url);
+              }
+              break;
+            }
+          }
+          modifiableModel.commit();
+        }
+        catch (Exception e) {
+          modifiableModel.dispose();
+          throw new RuntimeException(e.getMessage(), e);
+        }
+      }
+    });
   }
 }
