@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.TIntHashSet;
@@ -102,6 +103,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
       }
 
       void processMethod(String className, MethodNode methodNode, boolean stableClass) {
+        ProgressManager.checkCanceled();
         Method method = new Method(className, methodNode.name, methodNode.desc);
 
         int access = methodNode.access;
