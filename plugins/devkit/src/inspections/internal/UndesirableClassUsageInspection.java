@@ -26,7 +26,7 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.QueryExecutor;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,17 +34,17 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public class UndesirableClassUsageInspection extends InternalInspection {
-  private static final Map<String, String> CLASSES = new THashMap<String, String>();
-  static {
-    CLASSES.put(JList.class.getName(), JBList.class.getName());
-    CLASSES.put(JTable.class.getName(), JBTable.class.getName());
-    CLASSES.put(JTree.class.getName(), Tree.class.getName());
-    CLASSES.put(JScrollPane.class.getName(), JBScrollPane.class.getName());
-    CLASSES.put(JTabbedPane.class.getName(), JBTabbedPane.class.getName());
-    CLASSES.put(JComboBox.class.getName(), ComboBox.class.getName());
-    CLASSES.put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName());
-    CLASSES.put(BufferedImage.class.getName(), "UIUtil.createImage()");
-  }
+
+  private static final Map<String, String> CLASSES = ContainerUtil.<String, String>immutableMapBuilder()
+    .put(JList.class.getName(), JBList.class.getName())
+    .put(JTable.class.getName(), JBTable.class.getName())
+    .put(JTree.class.getName(), Tree.class.getName())
+    .put(JScrollPane.class.getName(), JBScrollPane.class.getName())
+    .put(JTabbedPane.class.getName(), JBTabbedPane.class.getName())
+    .put(JComboBox.class.getName(), ComboBox.class.getName())
+    .put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName())
+    .put(BufferedImage.class.getName(), "UIUtil.createImage()")
+    .build();
 
   @Override
   @NotNull
