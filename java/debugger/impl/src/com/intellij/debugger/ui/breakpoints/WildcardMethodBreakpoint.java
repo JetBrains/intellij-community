@@ -135,7 +135,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     try {
       RequestManagerImpl requestManager = debugProcess.getRequestsManager();
       if (isWatchEntry()) {
-        MethodEntryRequest entryRequest = (MethodEntryRequest)findRequest(debugProcess, MethodEntryRequest.class);
+        MethodEntryRequest entryRequest = MethodBreakpoint.findRequest(debugProcess, MethodEntryRequest.class, this);
         if (entryRequest == null) {
           entryRequest = requestManager.createMethodEntryRequest(this);
         }
@@ -146,7 +146,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
         debugProcess.getRequestsManager().enableRequest(entryRequest);
       }
       if (isWatchExit()) {
-        MethodExitRequest exitRequest = (MethodExitRequest)findRequest(debugProcess, MethodExitRequest.class);
+        MethodExitRequest exitRequest = MethodBreakpoint.findRequest(debugProcess, MethodExitRequest.class, this);
         if (exitRequest == null) {
           exitRequest = requestManager.createMethodExitRequest(this);
         }
@@ -160,18 +160,6 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     catch (Exception e) {
       LOG.debug(e);
     }
-  }
-
-  private EventRequest findRequest(DebugProcessImpl debugProcess, Class requestClass) {
-    Set reqSet = debugProcess.getRequestsManager().findRequests(this);
-    for (Iterator iterator = reqSet.iterator(); iterator.hasNext();) {
-      EventRequest eventRequest = (EventRequest) iterator.next();
-      if(eventRequest.getClass().equals(requestClass)) {
-        return eventRequest;
-      }
-    }
-
-    return null;
   }
 
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {

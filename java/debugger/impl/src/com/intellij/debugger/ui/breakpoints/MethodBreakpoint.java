@@ -31,6 +31,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -146,7 +147,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       RequestManagerImpl requestManager = debugProcess.getRequestsManager();
       if (isWatchEntry()) {
-        MethodEntryRequest entryRequest = (MethodEntryRequest)findRequest(debugProcess, MethodEntryRequest.class);
+        MethodEntryRequest entryRequest = findRequest(debugProcess, MethodEntryRequest.class, this);
         if (entryRequest == null) {
           entryRequest = requestManager.createMethodEntryRequest(this);
         }
@@ -159,7 +160,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         debugProcess.getRequestsManager().enableRequest(entryRequest);
       }
       if (isWatchExit()) {
-        MethodExitRequest exitRequest = (MethodExitRequest)findRequest(debugProcess, MethodExitRequest.class);
+        MethodExitRequest exitRequest = findRequest(debugProcess, MethodExitRequest.class, this);
         if (exitRequest == null) {
           exitRequest = requestManager.createMethodExitRequest(this);
         }
@@ -353,15 +354,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Nullable
-  private EventRequest findRequest(@NotNull DebugProcessImpl debugProcess, Class requestClass) {
-    Set reqSet = debugProcess.getRequestsManager().findRequests(this);
-    for (Iterator iterator = reqSet.iterator(); iterator.hasNext();) {
-      EventRequest eventRequest = (EventRequest) iterator.next();
-      if(eventRequest.getClass().equals(requestClass)) {
-        return eventRequest;
+  static <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
+    Set<EventRequest> requests = debugProcess.getRequestsManager().findRequests(requestor);
+    for (EventRequest eventRequest : requests) {
+      if (eventRequest.getClass().equals(requestClass)) {
+        return (T)eventRequest;
       }
     }
-
     return null;
   }
 
