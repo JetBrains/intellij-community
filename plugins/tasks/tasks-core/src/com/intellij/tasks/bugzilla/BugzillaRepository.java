@@ -2,6 +2,7 @@ package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
@@ -23,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * @author Mikhail Golubev
@@ -169,6 +168,34 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     }
 
     request.execute();
+  }
+
+  /**
+   * @return pair where first element is list of project names and second is list of component names (will be empty for Bugzilla < 4.2)
+   */
+  @NotNull
+  public Pair<List<String>, List<String>> fetchProductAndComponentNames() throws Exception {
+    Hashtable<String, Vector<Integer>> productIdsResponse = new BugzillaXmlRpcRequest("Product.get_selectable_products")
+      .requireAuthentication(true)
+      .execute();
+
+    Hashtable<String, Object> productInfoResponse = new BugzillaXmlRpcRequest("Product.get")
+      .requireAuthentication(true)
+      .withParameter("ids", productIdsResponse.get("ids"))
+      .execute();
+
+    List<String> productNames = new ArrayList<String>();
+    List<String> componentNames = new ArrayList<String>();
+
+    for (Hashtable<String, Object> info : (Vector<Hashtable<String, Object>>)productInfoResponse.get("products")) {
+      productNames.add((String)info.get("name"));
+      if (myVersion != null && myVersion.isOrGreaterThan(4, 2)) {
+        for (Hashtable<String, Object> component : (Vector<Hashtable<String, Object>>)info.get("components")) {
+          componentNames.add((String)component.get("name"));
+        }
+      }
+    }
+    return Pair.create(productNames, componentNames);
   }
 
   @Nullable
