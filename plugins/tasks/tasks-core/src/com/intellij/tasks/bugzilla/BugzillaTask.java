@@ -2,6 +2,7 @@ package com.intellij.tasks.bugzilla;
 
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -91,5 +92,11 @@ public class BugzillaTask extends Task {
       repositoryUrl = repositoryUrl.substring(0, repositoryUrl.length() - "xmlrpc.cgi".length());
     }
     return repositoryUrl + "/show_bug.cgi?id=" + getId();
+  }
+
+  @Nullable
+  @Override
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 }

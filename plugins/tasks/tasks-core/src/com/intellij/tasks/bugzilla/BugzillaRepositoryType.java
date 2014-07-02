@@ -3,12 +3,14 @@ package com.intellij.tasks.bugzilla;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.EnumSet;
 
 /**
  * @author Mikhail Golubev
@@ -41,6 +43,12 @@ public class BugzillaRepositoryType extends TaskRepositoryType<BugzillaRepositor
   @Override
   public Class<BugzillaRepository> getRepositoryClass() {
     return BugzillaRepository.class;
+  }
+
+  @Override
+  public EnumSet<TaskState> getPossibleTaskStates() {
+    // UNCONFIRMED, CONFIRMED, IN_PROGRESS, RESOLVED (resolution=FIXED)
+    return EnumSet.of(TaskState.SUBMITTED, TaskState.OPEN, TaskState.IN_PROGRESS, TaskState.RESOLVED);
   }
 }
 

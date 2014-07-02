@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.RequestFailedException;
@@ -150,6 +151,26 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     }
   }
 
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+    BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
+      .requireAuthentication(true)
+      .withParameter("ids", newVector(task.getId()));
+
+    switch (state) {
+      case IN_PROGRESS:
+        request.withParameter("status", "IN_PROGRESS");
+        break;
+      case RESOLVED:
+        request.withParameter("status", "RESOLVED").withParameter("resolution", "FIXED");
+        break;
+      default:
+        return;
+    }
+
+    request.execute();
+  }
+
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
@@ -202,6 +223,15 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   @Override
   public boolean isConfigured() {
     return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
+  }
+
+  @Override
+  protected int getFeatures() {
+    int baseFeatures = super.getFeatures();
+    if (myVersion != null && myVersion.isOrGreaterThan(4, 0)) {
+      baseFeatures |= STATE_UPDATING;
+    }
+    return baseFeatures;
   }
 
   private class BugzillaXmlRpcRequest {
