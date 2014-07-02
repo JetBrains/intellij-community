@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,9 @@ import de.fernflower.main.extern.IDecompilatSaver;
 import de.fernflower.main.extern.IFernflowerLogger;
 import de.fernflower.main.extern.IFernflowerPreferences;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,8 +79,8 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
   @NotNull
   @Override
   public CharSequence getText(@NotNull VirtualFile file) {
-    if ("package-info.class".equals(file.getName())) {
-      return ClsFileImpl.decompile(file);  //fixme
+    if (!canHandle(file)) {
+      return ClsFileImpl.decompile(file);
     }
 
     try {
@@ -103,6 +107,36 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       Logger.getInstance(IdeaDecompiler.class).error(file.getPath(), e);
       return ClsFileImpl.decompile(file);
     }
+  }
+
+  private static boolean canHandle(VirtualFile file) {
+    if ("package-info.class".equals(file.getName())) {
+      return false;
+    }
+
+    final Ref<Boolean> isGroovy = Ref.create(false);
+    try {
+      new ClassReader(file.contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM5) {
+        @Override
+        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+          for (String anInterface : interfaces) {
+            if ("groovy/lang/GroovyObject".equals(anInterface)) {
+              isGroovy.set(true);
+              break;
+            }
+          }
+        }
+
+        @Override
+        public void visitSource(String source, String debug) {
+          if (source != null && source.endsWith(".groovy")) {
+            isGroovy.set(true);
+          }
+        }
+      }, ClassReader.SKIP_CODE);
+    }
+    catch (IOException ignore) { }
+    return !isGroovy.get();
   }
 
   private static class MyByteCodeProvider implements IBytecodeProvider {
