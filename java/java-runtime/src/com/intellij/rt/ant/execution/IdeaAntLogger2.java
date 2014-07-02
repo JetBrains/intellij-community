@@ -84,7 +84,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void targetFinished(BuildEvent event) {
-    sendException(event);
+    sendException(event, true);
     myTargetPriority.sendMessage(TARGET_END, event.getPriority(), event.getException());
   }
 
@@ -93,16 +93,26 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public synchronized void taskFinished(BuildEvent event) {
-    sendException(event);
+    sendException(event, true);
     myTaskPriority.sendMessage(TASK_END, event.getPriority(), event.getException());
   }
 
   public synchronized void messageLogged(BuildEvent event) {
-    if (sendException(event)) {
+    final boolean failOnError = isFailOnError(event);
+    if (sendException(event, failOnError)) {
       return;
     }
-    final int priority = getEffectivePriority(event);
+
+    int priority = event.getPriority();
+    if (priority == Project.MSG_ERR && !failOnError) {
+      // some ant tasks (like Copy) with 'failOnError' attribute set to 'false'
+      // send warnings with priority level = Project.MSG_ERR
+      // this heuristic corrects the priority level, so that IDEA considers the message not as an error but as a warning
+      priority = Project.MSG_WARN;
+    }
+
     final String message = event.getMessage();
+
     if (priority == Project.MSG_ERR) {
       myMessagePriority.sendMessage(ERROR, priority, message);
     }
@@ -111,35 +121,28 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     }
   }
 
-  // some ant tasks (like Copy) with 'failOnError' attribute set to 'false'
-  // send warnings with priority level = Project.MSG_ERR
-  // this heuristic corrects the priority level, so that IDEA considers the message not as an error but as a warning
-  private static int getEffectivePriority(BuildEvent event) {
-    final int priority = event.getPriority();
-    if (priority == Project.MSG_ERR) {
-      final Task task = event.getTask();
-      if (task != null) {
-        final Class taskClass = task.getClass();
-        try {
-          final Field field = taskClass.getDeclaredField("failonerror");
-          field.setAccessible(true);
-          final Object isFailOnError = field.get(task);
-          if (Boolean.FALSE.equals(isFailOnError)) {
-            return Project.MSG_WARN;
-          }
-        }
-        catch (Exception ignored) {
-        }
+  private static boolean isFailOnError(BuildEvent event) {
+    final Task task = event.getTask();
+    if (task != null) {
+      try {
+        final Field field = task.getClass().getDeclaredField("failonerror");
+        field.setAccessible(true);
+        return !Boolean.FALSE.equals(field.get(task));
+      }
+      catch (Exception ignored) {
       }
     }
-    return priority;
+    return true; // default value
   }
 
-  private boolean sendException(BuildEvent event) {
+  private boolean sendException(BuildEvent event, boolean isFailOnError) {
     Throwable exception = event.getException();
     if (exception != null) {
-      myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
-      return true;
+      if (isFailOnError) {
+        myAlwaysSend.sendMessage(EXCEPTION, event.getPriority(), exception);
+        return true;
+      }
+      myMessagePriority.sendMessage(MESSAGE, Project.MSG_WARN, exception.getMessage());
     }
     return false;
   }
