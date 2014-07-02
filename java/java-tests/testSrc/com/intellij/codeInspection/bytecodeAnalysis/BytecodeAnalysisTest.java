@@ -151,7 +151,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void setUpDataClasses() throws IOException {
-    File classesDir = new File(Test01.class.getResource(".").getFile());
+    File classesDir = new File(Test01.class.getResource("/" + Test01.class.getPackage().getName().replace('.', '/')).getFile());
     File destDir = new File(myModule.getProject().getBaseDir().getPath() + myClassesProjectRelativePath);
     FileUtil.copyDir(classesDir, destDir);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destDir);
