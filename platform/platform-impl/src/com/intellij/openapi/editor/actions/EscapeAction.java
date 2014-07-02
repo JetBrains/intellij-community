@@ -17,10 +17,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -44,8 +41,12 @@ public class EscapeAction extends EditorAction {
           editorEx.setStickySelection(false);
         }
       }
+      boolean scrollNeeded = editor.getCaretModel().getCaretCount() > 1;
       retainOldestCaret(editor.getCaretModel());
       editor.getSelectionModel().removeSelection();
+      if (scrollNeeded) {
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
     }
 
     private static void retainOldestCaret(CaretModel caretModel) {
