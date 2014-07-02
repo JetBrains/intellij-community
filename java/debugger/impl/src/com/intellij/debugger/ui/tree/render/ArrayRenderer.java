@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
@@ -126,7 +127,12 @@ public class ArrayRenderer extends NodeRendererImpl{
           DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
 
           if (arrayItemNode == null) continue;
-          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && ((ValueDescriptorImpl)arrayItemNode.getDescriptor()).isNull()) continue;
+          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS) {
+            // need to init value to be able to ask for null
+            ValueDescriptorImpl descriptor = (ValueDescriptorImpl)arrayItemNode.getDescriptor();
+            descriptor.setContext((EvaluationContextImpl)evaluationContext);
+            if (descriptor.isNull()) continue;
+          }
           //if(added >= (ENTRIES_LIMIT  + 1)/ 2) break;
           children.add(arrayItemNode);
           added++;

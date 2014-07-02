@@ -131,9 +131,9 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
         // value gathered here is required for correct renderers work. e.g. array renderer
-        ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
+        //((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
         final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(null, descriptor);
-        ((NodeDescriptorImpl)descriptor).updateRepresentation((EvaluationContextImpl)evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+        //((NodeDescriptorImpl)descriptor).updateRepresentation((EvaluationContextImpl)evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         return node;
       }
 
