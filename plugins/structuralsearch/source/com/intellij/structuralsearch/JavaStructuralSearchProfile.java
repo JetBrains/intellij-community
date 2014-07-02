@@ -341,14 +341,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       fileType,
       project
     );
-    boolean searchIsExpression = false;
-
-    for (PsiElement statement : statements) {
-      if (statement.getLastChild() instanceof PsiErrorElement) {
-        searchIsExpression = true;
-        break;
-      }
-    }
+    final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;
 
     PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(
       options.getReplacement(),
@@ -356,14 +349,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       fileType,
       project
     );
-    boolean replaceIsExpression = false;
-
-    for (PsiElement statement : statements2) {
-      if (statement.getLastChild() instanceof PsiErrorElement) {
-        replaceIsExpression = true;
-        break;
-      }
-    }
+    final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
     if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
