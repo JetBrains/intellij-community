@@ -82,7 +82,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
   }
 
-  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, Editor editor) {
+  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, @Nullable Editor editor) {
     if (element != null && !canRename(project, editor, element)) {
       return;
     }

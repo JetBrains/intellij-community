@@ -48,7 +48,7 @@ class ResourceBundleDeleteProvider implements DeleteProvider {
 
   public void deleteElement(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(project);
+    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
     assert project != null;
     new SafeDeleteHandler().invoke(project, ContainerUtil.map2Array(propertiesFiles, PsiElement.class, MAPPER), dataContext);
   }

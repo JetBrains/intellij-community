@@ -328,9 +328,61 @@ class Second extends First {
     )
   }
 
+  void "test IDEA-123875"() {
+    doTest(
+      initial: '''\
+public class RearrangeFail {
 
+    public static final byte[] ENTITIES_END = "</entities>".getBytes();
+    private final Element entitiesEndElement = new Element(ENTITIES_END);
 
+    public static final byte[] ENTITIES_START = "<entities>".getBytes();
+    private final Element entitiesStartElement = new Element(ENTITIES_START);
 
+}
+''',
+      expected: '''\
+public class RearrangeFail {
 
+    public static final byte[] ENTITIES_END = "</entities>".getBytes();
+    public static final byte[] ENTITIES_START = "<entities>".getBytes();
+    private final Element entitiesEndElement = new Element(ENTITIES_END);
+    private final Element entitiesStartElement = new Element(ENTITIES_START);
 
+}
+''',
+      rules: [
+        rule(PUBLIC, STATIC, FINAL),
+        rule(PRIVATE),
+      ]
+    )
+  }
+
+  void "test IDEA-125099"() {
+    doTest(
+      initial: '''\
+public class test {
+
+    private int a = 2;
+
+    public static final String TEST = "1";
+    public static final String SHOULD_BE_IN_BETWEEN = "2";
+    public static final String USERS_ROLE_ID_COLUMN = TEST;
+}
+''',
+      expected: '''\
+public class test {
+
+    public static final String TEST = "1";
+    public static final String SHOULD_BE_IN_BETWEEN = "2";
+    public static final String USERS_ROLE_ID_COLUMN = TEST;
+    private int a = 2;
+}
+''',
+      rules: [
+        rule(PUBLIC, STATIC, FINAL),
+        rule(PRIVATE)
+      ]
+    )
+  }
 }

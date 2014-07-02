@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +42,16 @@ public class PropertiesUtil {
   private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
 
 
-  public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {
-    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
+  /**
+   * @deprecated use PropertiesUtil.isPropertyComplete(ResourceBundle resourceBundle, String propertyName)
+   */
+  @Deprecated
+  public static boolean isPropertyComplete(final Project project, final ResourceBundle resourceBundle, final String propertyName) {
+    return isPropertyComplete(resourceBundle, propertyName);
+  }
+
+  public static boolean isPropertyComplete(final ResourceBundle resourceBundle, final String propertyName) {
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       if (propertiesFile.findPropertyByKey(propertyName) == null) return false;
     }
@@ -50,8 +59,13 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static String getBaseName(@NotNull VirtualFile virtualFile) {
-    String name = virtualFile.getName();
+  public static String getBaseName(@NotNull PsiFile file) {
+    return getBaseName(file.getContainingFile().getVirtualFile());
+  }
+
+  @NotNull
+  public static String getBaseName(@NotNull VirtualFile file) {
+    final String name = file.getName();
     final Matcher matcher = LOCALE_PATTERN.matcher(name);
     final String baseNameWithExtension;
     if (matcher.find()) {
@@ -92,10 +106,10 @@ public class PropertiesUtil {
   }
 
   @Nullable
-  public static String getFullName(final PropertiesFile psiFile) {
+  public static String getFullName(final PropertiesFile propertiesFile) {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
       public String compute() {
-        PsiDirectory directory = psiFile.getParent();
+        PsiDirectory directory = propertiesFile.getParent();
         String packageQualifiedName = getPackageQualifiedName(directory);
         if (packageQualifiedName == null) {
           return null;
@@ -104,9 +118,7 @@ public class PropertiesUtil {
           if (qName.length() > 0) {
             qName.append(".");
           }
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        assert virtualFile != null;
-        qName.append(getBaseName(virtualFile));
+        qName.append(getBaseName(propertiesFile.getContainingFile()));
         return qName.toString();
       }
     });
@@ -132,7 +144,7 @@ public class PropertiesUtil {
   @NotNull
   public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
     List<IProperty> result = new SmartList<IProperty>();
-    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));
     }

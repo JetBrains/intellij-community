@@ -18,9 +18,12 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +34,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFileImpl> {
+public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFileImpl> implements ResourceBundleEditorViewElement {
 
   protected PropertiesFileStructureViewElement(PropertiesFileImpl propertiesFile) {
     super(propertiesFile);
@@ -46,6 +49,11 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
       elements.add(new PropertiesStructureViewElement((Property)property));
     }
     return elements;
+  }
+
+  @Override
+  public PsiElement[] getPsiElements(@NotNull Project project) {
+    return new PsiElement[] {getValue()};
   }
 
   public String getPresentableText() {

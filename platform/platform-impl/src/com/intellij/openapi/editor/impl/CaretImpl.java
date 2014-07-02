@@ -561,7 +561,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
-    if (locateBeforeSoftWrap && SoftWrapHelper.isCaretAfterSoftWrap(myEditor)) {
+    if (locateBeforeSoftWrap && SoftWrapHelper.isCaretAfterSoftWrap(this)) {
       int lineToUse = myVisibleCaret.line - 1;
       if (lineToUse >= 0) {
         final VisualPosition visualPosition = new VisualPosition(lineToUse, EditorUtil.getLastVisualLineColumnNumber(myEditor, lineToUse));
@@ -1449,6 +1449,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     validateContext(false);
     MyRangeMarker marker = mySelectionMarker;
     return marker != null && marker.isValid() && isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset;
+  }
+
+  public EditorImpl getEditor() {
+    return myEditor;
   }
 
   /**

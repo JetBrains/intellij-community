@@ -80,7 +80,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       //noinspection unchecked
       final List<SmartStepTarget> targets = new OrderedSet<SmartStepTarget>();
 
-      final Range<Integer> lines = new Range<Integer>(doc.getLineNumber(element.getTextOffset()), doc.getLineNumber(element.getTextOffset() + element.getTextLength()));
+      TextRange textRange = element.getTextRange();
+      final Range<Integer> lines = new Range<Integer>(doc.getLineNumber(textRange.getStartOffset()), doc.getLineNumber(textRange.getEndOffset()));
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
         final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();

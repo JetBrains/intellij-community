@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,13 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureC
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
 import com.intellij.ui.navigation.ForwardAction;
@@ -67,7 +69,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
   protected final UIState myUiState = new UIState();
-  private Splitter mySplitter;
+  private JBSplitter mySplitter;
   private JComponent myToolbarComponent;
   @NonNls public static final String CATEGORY = "category";
   private JComponent myToFocus;
@@ -173,8 +175,16 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   public JComponent createComponent() {
     myComponent = new MyPanel();
 
-    mySplitter = new Splitter(false, .15f);
+    mySplitter = new JBSplitter(false, .15f);
+    mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
+    if (Registry.is("ide.new.project.settings")) {
+      mySplitter.setDividerWidth(1);
+      mySplitter.setShowDividerIcon(false);
+      mySplitter.getDivider().setBackground(Gray._153.withAlpha(128));
+      mySplitter.setShowDividerControls(false);
+      mySplitter.setOrientation(mySplitter.getOrientation());
+    }
 
     initSidePanel();
 
@@ -192,7 +202,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
-    left.add(myToolbarComponent, BorderLayout.NORTH);
+    if (Registry.is("ide.new.project.settings")) {
+      left.setBackground(new Color(0xD2D6DD));
+    } else {
+      left.add(myToolbarComponent, BorderLayout.NORTH);
+    }
     left.add(mySidePanel, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(left);

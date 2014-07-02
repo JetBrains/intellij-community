@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
+import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 
 /**
@@ -48,18 +48,18 @@ public class SoftWrapHelper {
    * @return          <code>true</code> if caret offset of the given editor points to visual position that belongs to
    *                  visual line where soft wrap end is located
    */
-  public static boolean isCaretAfterSoftWrap(EditorImpl editor) {
-    CaretModel caretModel = editor.getCaretModel();
-    if (!caretModel.isUpToDate()) {
+  public static boolean isCaretAfterSoftWrap(CaretImpl caret) {
+    if (!caret.isUpToDate()) {
       return false;
     }
+    EditorImpl editor = caret.getEditor();
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
-    int offset = caretModel.getOffset();
+    int offset = caret.getOffset();
     SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
     if (softWrap == null) {
       return false;
     }
 
-    return editor.offsetToVisualLine(offset) == caretModel.getVisualPosition().line;
+    return editor.offsetToVisualLine(offset) == caret.getVisualPosition().line;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -24,16 +26,43 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
+
 public abstract class GroupedElementsRenderer {
   public static final Color POPUP_SEPARATOR_FOREGROUND = new JBColor(Color.gray.brighter(), Gray._43);
   public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = Color.gray;
   public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
 
-  protected SeparatorWithText mySeparatorComponent = new SeparatorWithText();
+  protected SeparatorWithText mySeparatorComponent = new SeparatorWithText() {
+    @Override
+    protected void paintComponent(Graphics g) {
+      if (Registry.is("ide.new.project.settings")) {
+        g.setColor(POPUP_SEPARATOR_FOREGROUND);
+        Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
+        Rectangle iconR = new Rectangle();
+        Rectangle textR = new Rectangle();
+        String s = SwingUtilities
+          .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, CENTER,
+                               LEFT,
+                               CENTER,
+                               LEFT,
+                               viewR, iconR, textR, 0);
+        GraphicsUtil.setupAAPainting(g);
+        g.setColor(Gray._255.withAlpha(80));
+        g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
+        g.setColor(new Color(0x5F6D7B));
+        g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
+      } else {
+        super.paintComponent(g);
+      }
+    }
+  };
+
   protected JComponent myComponent;
   protected MyComponent myRendererComponent;
 
-  protected ErrorLabel myTextLabel;
+  protected JLabel myTextLabel;
 
 
   public GroupedElementsRenderer() {
@@ -58,14 +87,16 @@ public abstract class GroupedElementsRenderer {
 
     myTextLabel.setIcon(icon);
     myTextLabel.setDisabledIcon(disabledIcon);
+    if (myTextLabel instanceof EngravedLabel) {
+      ((EngravedLabel)myTextLabel).setShadowColor(isSelected ? UIUtil.getTreeSelectionBackground() : null);
+    }
 
     if (isSelected) {
-      myComponent.setBorder(getSelectedBorder());
+      //myComponent.setBorder(getSelectedBorder());
       setSelected(myComponent);
       setSelected(myTextLabel);
-    }
-    else {
-      myComponent.setBorder(getBorder());
+    } else {
+      //myComponent.setBorder(getBorder());
       setDeselected(myComponent);
       setDeselected(myTextLabel);
     }
@@ -98,7 +129,7 @@ public abstract class GroupedElementsRenderer {
 
   protected final  void setDeselected(JComponent aComponent) {
     aComponent.setBackground(getBackground());
-    aComponent.setForeground(getForeground());
+    aComponent.setForeground(Registry.is("ide.new.project.settings") ? Gray._60 : getForeground());
   }
 
   protected abstract Color getSelectionBackground();
@@ -139,12 +170,12 @@ public abstract class GroupedElementsRenderer {
     }
 
     @Override
-    protected final Color getBackground() {
+    protected Color getBackground() {
       return UIUtil.getListBackground();
     }
 
     @Override
-    protected final Color getForeground() {
+    protected Color getForeground() {
       return UIUtil.getListForeground();
     }
   }

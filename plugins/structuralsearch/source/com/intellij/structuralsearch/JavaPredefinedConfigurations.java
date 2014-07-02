@@ -148,7 +148,7 @@ class JavaPredefinedConfigurations {
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.static.fields.without.final"),
-        "class '_Class {\n  static '_Type 'Variable*:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;\n}",
+        "class '_Class {\n  static '_Type 'Variable+:[ script( \"!__context__.hasModifierProperty(\"final\")\" ) ] = '_Init?;\n}",
         CLASS_TYPE
       ),
 

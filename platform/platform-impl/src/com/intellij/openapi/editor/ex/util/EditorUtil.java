@@ -488,8 +488,6 @@ public final class EditorUtil {
     }
 
     if (editor == null || useOptimization) {
-      int shift = 0;
-
       Document document = editor == null ? null : editor.getDocument();
       if (document != null && start < offset-1 && document.getLineNumber(start) != document.getLineNumber(offset-1)) {
         String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
@@ -504,6 +502,7 @@ public final class EditorUtil {
           LOG, "detected incorrect offset -> column number calculation",
           "start: " + start + ", given offset: " + offset+", given tab size: " + tabSize + ". "+documentInfo+ editorInfo);
       }
+      int shift = 0;
       if (hasTabs) {
         for (int i = start; i < offset; i++) {
           char c = text.charAt(i);

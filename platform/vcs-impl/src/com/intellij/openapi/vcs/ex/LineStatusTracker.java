@@ -173,14 +173,12 @@ public class LineStatusTracker {
   @SuppressWarnings({"AutoBoxing"})
   private RangeHighlighter createHighlighter(final Range range) {
     LOG.assertTrue(!myReleased, "Already released");
-    int first =
-      range.getOffset1() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset1());
 
-    int second =
-      range.getOffset2() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset2());
+    TextRange textRange = getCurrentTextRange(range);
 
     final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
-      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
+      .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.FIRST - 1, null,
+                           HighlighterTargetArea.LINES_IN_RANGE);
     final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
     highlighter.setErrorStripeMarkColor(attr.getErrorStripeColor());
     highlighter.setThinErrorStripeMark(true);
@@ -188,14 +186,21 @@ public class LineStatusTracker {
     highlighter.setGreedyToRight(true);
     highlighter.setLineMarkerRenderer(LineStatusTrackerDrawing.createRenderer(range, this));
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-    final int line1 = myDocument.getLineNumber(first);
-    final int line2 = myDocument.getLineNumber(second);
+
     final String tooltip;
-    if (line1 == line2) {
-      tooltip = VcsBundle.message("tooltip.text.line.changed", line1);
+    if (range.getOffset1() == range.getOffset2()) {
+      if (range.getUOffset1() + 1 == range.getUOffset2()) {
+        tooltip = VcsBundle.message("tooltip.text.line.before.deleted", range.getOffset1() + 1);
+      }
+      else {
+        tooltip = VcsBundle.message("tooltip.text.lines.before.deleted", range.getOffset1() + 1, range.getUOffset2() - range.getUOffset1());
+      }
+    }
+    else if (range.getOffset1() + 1 == range.getOffset2()) {
+      tooltip = VcsBundle.message("tooltip.text.line.changed", range.getOffset1() + 1);
     }
     else {
-      tooltip = VcsBundle.message("tooltip.text.lines.changed", line1, line2);
+      tooltip = VcsBundle.message("tooltip.text.lines.changed", range.getOffset1() + 1, range.getOffset2());
     }
 
     highlighter.setErrorStripeTooltip(tooltip);

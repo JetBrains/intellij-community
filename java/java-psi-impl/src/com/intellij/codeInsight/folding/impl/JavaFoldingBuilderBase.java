@@ -48,6 +48,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -703,7 +704,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     else if (element instanceof PsiComment) {
       return settings.isCollapseEndOfLineComments();
     }
-    else if (element instanceof PsiLiteralExpression
+    else if (isLiteralExpression(element)
              && element.getParent() instanceof PsiExpressionList
              && (element.getParent().getParent() instanceof PsiCallExpression
                  || element.getParent().getParent() instanceof PsiAnonymousClass)) {
@@ -775,7 +776,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       for (int i = 0; i < callArguments.length; i++) {
         PsiExpression callArgument = callArguments[i];
 
-        if (callArgument instanceof PsiLiteralExpression) {
+        if (isLiteralExpression(callArgument)) {
           if (!isResolved) {
             PsiMethod method = expression.resolveMethod();
             isResolved = true;
@@ -797,6 +798,20 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         }
       }
     }
+  }
+
+  @Contract("null -> false")
+  private static boolean isLiteralExpression(@Nullable PsiElement callArgument) {
+    if (callArgument instanceof PsiLiteralExpression)
+      return true;
+
+    if (callArgument instanceof PsiPrefixExpression) {
+      PsiPrefixExpression expr = (PsiPrefixExpression)callArgument;
+      IElementType tokenType = expr.getOperationTokenType();
+      return JavaTokenType.MINUS.equals(tokenType) && expr.getOperand() instanceof PsiLiteralExpression;
+    }
+
+    return false;
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,

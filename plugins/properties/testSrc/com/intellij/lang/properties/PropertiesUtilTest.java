@@ -16,13 +16,16 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesUtilTest extends TestCase {
+public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testBaseNameWithoutLocale() {
     assertBaseNameEquals("property-file.properties", "property-file");
@@ -62,14 +65,8 @@ public class PropertiesUtilTest extends TestCase {
     assertBaseNameEquals("Base_Page.utf8.properties", "Base_Page.utf8");
   }
 
-  private static void assertBaseNameEquals(final String propertyFileName, final String expectedBaseName) {
-    final String actualBaseName = PropertiesUtil.getBaseName(new StubVirtualFile() {
-      @NotNull
-      @Override
-      public String getName() {
-        return propertyFileName;
-      }
-    });
+  private void assertBaseNameEquals(final String propertyFileName, final String expectedBaseName) {
+    final String actualBaseName = PropertiesUtil.getBaseName(myFixture.configureByText(propertyFileName, ""));
     assertEquals(expectedBaseName, actualBaseName);
   }
 }

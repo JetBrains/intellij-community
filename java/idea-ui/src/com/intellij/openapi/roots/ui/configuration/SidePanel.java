@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,17 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -52,7 +55,10 @@ public class SidePanel extends JPanel {
 
     myModel = new DefaultListModel();
     myList = new JBList(myModel);
-
+    if (Registry.is("ide.new.project.settings")) {
+      myList.setBackground(new Color(0xD2D6DD));
+      myList.setBorder(new EmptyBorder(5, 0, 0, 0));
+    }
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
       @Override
       public String getTextFor(final Object value) {
@@ -66,7 +72,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public Icon getIconFor(final Object value) {
-        return null;
+        return Registry.is("ide.new.project.settings") ? EmptyIcon.create(16, 20) : null;
         //return myPlace2Presentation.get(value).getIcon();
       }
 
@@ -78,14 +84,22 @@ public class SidePanel extends JPanel {
 
       @Override
       public String getCaptionAboveOf(final Object value) {
-        return myIndex2Separator.get(myPlaces.indexOf(value));
+        String text = myIndex2Separator.get(myPlaces.indexOf(value));
+        return text != null && Registry.is("ide.new.project.settings") ? text.toUpperCase() : text;
       }
     };
 
-    myList.setCellRenderer(new GroupedItemsListRenderer(descriptor));
+    myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
+      {
+        mySeparatorComponent.setCaptionCentered(false);
+      }
+      @Override
+      protected Color getBackground() {
+        return Registry.is("ide.new.project.settings") ? new Color(0xD2D6DD) : super.getBackground();
+      }
+    });
 
-
-    add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myList, Registry.is("ide.new.project.settings")), BorderLayout.CENTER);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.addListSelectionListener(new ListSelectionListener() {

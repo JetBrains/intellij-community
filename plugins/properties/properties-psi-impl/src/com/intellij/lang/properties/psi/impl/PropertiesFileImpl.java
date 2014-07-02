@@ -114,7 +114,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public ResourceBundle getResourceBundle() {
-    return PropertiesImplUtil.getResourceBundle(getContainingFile());
+    return PropertiesImplUtil.getResourceBundle(this);
   }
 
   @Override

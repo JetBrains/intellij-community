@@ -19,11 +19,18 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -33,17 +40,34 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class PropertiesPrefixGroup implements Group {
+public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewElement {
   private final Collection<TreeElement> myProperties;
   private final @NotNull String myPrefix;
   private final String myPresentableName;
   private final @NotNull String mySeparator;
 
-  public PropertiesPrefixGroup(final Collection<TreeElement> properties, String prefix, String presentableName, final String separator) {
+  public PropertiesPrefixGroup(final Collection<TreeElement> properties,
+                               final @NotNull String prefix,
+                               final String presentableName,
+                               final @NotNull String separator) {
     myProperties = properties;
     myPrefix = prefix;
     myPresentableName = presentableName;
     mySeparator = separator;
+  }
+
+  public String getPresentableName() {
+    return myPresentableName;
+  }
+
+  @NotNull
+  public String getSeparator() {
+    return mySeparator;
+  }
+
+  @NotNull
+  public String getPrefix() {
+    return myPrefix;
   }
 
   @NotNull
@@ -112,8 +136,24 @@ public class PropertiesPrefixGroup implements Group {
     return result;
   }
 
-  public String getPrefix() {
-    return myPrefix;
+  @Override
+  public PsiElement[] getPsiElements(final @NotNull Project project) {
+    final List<PsiElement> elements = ContainerUtil.mapNotNull(getChildren(), new NullableFunction<TreeElement, PsiElement>() {
+      @Nullable
+      @Override
+      public PsiElement fun(final TreeElement treeElement) {
+        if (treeElement instanceof PropertiesStructureViewElement) {
+          PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
+          IProperty property = propertiesElement.getValue();
+          return property.getPsiElement();
+        }
+        else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+          return ((ResourceBundlePropertyStructureViewElement)treeElement).getPsiElements(project)[0];
+        }
+        return null;
+      }
+    });
+    return elements.toArray(new PsiElement[elements.size()]);
   }
 
   public boolean equals(final Object o) {

@@ -144,7 +144,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assert visitedBundles != null;
     if (!visitedBundles.add(resourceBundle)) return;
-    List<PropertiesFile> files = resourceBundle.getPropertiesFiles(manager.getProject());
+    List<PropertiesFile> files = resourceBundle.getPropertiesFiles();
     if (files.size() < 2) return;
     BidirectionalMap<PropertiesFile, PropertiesFile> parents = new BidirectionalMap<PropertiesFile, PropertiesFile>();
     for (PropertiesFile f : files) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class VFileCreateEvent extends VFileEvent {
-  private final VirtualFile myParent;
+  @NotNull private final VirtualFile myParent;
   private final boolean myDirectory;
-  private final String myChildName;
+  @NotNull private final String myChildName;
   private final boolean myReCreation;
   private VirtualFile myCreatedFile;
 
@@ -51,6 +51,7 @@ public class VFileCreateEvent extends VFileEvent {
     myReCreation = isReCreation;
   }
 
+  @NotNull
   public String getChildName() {
     return myChildName;
   }
@@ -59,6 +60,7 @@ public class VFileCreateEvent extends VFileEvent {
     return myDirectory;
   }
 
+  @NotNull
   public VirtualFile getParent() {
     return myParent;
   }
@@ -74,6 +76,7 @@ public class VFileCreateEvent extends VFileEvent {
            myChildName +  " in " + myParent.getUrl() + "]";
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myParent.getPath() + "/" + myChildName;

@@ -32,7 +32,7 @@
                              implementationClass="com.intellij.lang.properties.PropertyValueManipulator"/>
     <lang.elementManipulator forClass="com.intellij.lang.properties.psi.impl.PropertyImpl"
                              implementationClass="com.intellij.lang.properties.PropertyManipulator"/>
-    <applicationService serviceInterface="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"
+    <projectService serviceInterface="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"
                         serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
@@ -44,11 +44,11 @@
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInPropertiesFileHandler"/>
 
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
-    <renameHandler implementation="com.intellij.lang.properties.refactoring.ResourceBundleRenameHandler"/>
-    <renameHandler implementation="com.intellij.lang.properties.refactoring.ResourceBundleKeyRenameHandler"/>
-    <renameHandler implementation="com.intellij.lang.properties.refactoring.PropertyRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromEditorRenameHandler"/>
+    <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromProjectViewRenameHandler"/>
+    <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
+    <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
-    <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.RenamePropertyProcessor"/>
     <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
     <stubIndex implementation="com.intellij.lang.properties.psi.PropertyKeyIndex"/>
     <lang.namesValidator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesNamesValidator"/>

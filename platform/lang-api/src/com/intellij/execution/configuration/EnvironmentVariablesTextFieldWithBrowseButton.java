@@ -34,27 +34,21 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class EnvironmentVariablesTextField {
+public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
 
-  private final TextFieldWithBrowseButton myEnvsTextField;
   private final Map<String, String> myEnvs = new THashMap<String, String>();
   private boolean myPassParentEnvs;
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public EnvironmentVariablesTextField() {
-    myEnvsTextField = new TextFieldWithBrowseButton();
-    myEnvsTextField.setEditable(false);
-    myEnvsTextField.addActionListener(new ActionListener() {
+  public EnvironmentVariablesTextFieldWithBrowseButton() {
+    super();
+    setEditable(false);
+    addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         new MyEnvironmentVariablesDialog().show();
       }
     });
-  }
-
-  @NotNull
-  public TextFieldWithBrowseButton getComponent() {
-    return myEnvsTextField;
   }
 
   @NotNull
@@ -66,7 +60,7 @@ public class EnvironmentVariablesTextField {
     myEnvs.clear();
     myEnvs.putAll(envs);
     String envsStr = stringifyEnvs(myEnvs);
-    myEnvsTextField.setText(envsStr);
+    setText(envsStr);
   }
 
   @NotNull
@@ -115,7 +109,7 @@ public class EnvironmentVariablesTextField {
     private final JPanel myWholePanel = new JPanel(new BorderLayout());
 
     protected MyEnvironmentVariablesDialog() {
-      super(myEnvsTextField, true);
+      super(EnvironmentVariablesTextFieldWithBrowseButton.this, true);
       myEnvVariablesTable = new EnvVariablesTable();
       List<EnvironmentVariable> envVariables = ContainerUtil.newArrayList();
       for (Map.Entry<String, String> entry : myEnvs.entrySet()) {

@@ -698,6 +698,29 @@ public class CharSymbol {
     assert regions[2].placeholderText == "fast: false"
   }
 
+  public void "test inline negative numbers (IDEA-126753)"() {
+    def text = """
+public class CharSymbol {
+
+  public void main() {
+    Object obj = new Object();
+    count(-1, obj);
+  }
+
+  public void count(int test, Object obj) {
+    Object tmp = obj;
+    boolean isFast = false;
+  }
+}
+"""
+    configure text
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 3
+
+    checkRangeOffsetByPositionInText(regions[1], text, "-1")
+    assert regions[1].placeholderText == "test: -1"
+  }
+
   public void "test inline constructor literal arguments names"() {
     def text = """
 public class Test {
