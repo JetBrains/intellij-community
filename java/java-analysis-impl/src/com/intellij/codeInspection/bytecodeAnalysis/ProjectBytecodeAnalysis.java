@@ -254,17 +254,19 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     if (owner instanceof PsiMethod) {
       return BytecodeAnalysisConverter.getInstance().mkKey((PsiMethod)owner, new Out());
     }
-    else if (owner instanceof PsiParameter) {
-      final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
-      if (!(declarationScope instanceof PsiMethod)) {
-        return -1;
+
+    if (owner instanceof PsiParameter) {
+      PsiElement parent = owner.getParent();
+      if (parent instanceof PsiParameterList) {
+        PsiElement gParent = parent.getParent();
+        if (gParent instanceof PsiMethod) {
+          final int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
+          return BytecodeAnalysisConverter.getInstance().mkKey((PsiMethod)gParent, new In(index));
+        }
       }
-      final PsiMethod psiMethod = (PsiMethod)declarationScope;
-      final int index = psiMethod.getParameterList().getParameterIndex((PsiParameter)owner);
-      return BytecodeAnalysisConverter.getInstance().mkKey(psiMethod, new In(index));
-    } else {
-      return -1;
     }
+
+    return -1;
   }
 
   @NotNull
