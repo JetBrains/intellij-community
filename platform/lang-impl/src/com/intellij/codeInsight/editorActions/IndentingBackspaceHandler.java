@@ -86,7 +86,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
     }
 
     if (caretWasAtLineStart || logicalPosition.column > targetColumn) {
-      smartReplace(document, lineStartOffset, offset, indent);
+      document.replaceString(lineStartOffset, offset, indent);
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logicalPosition.line, targetColumn));
       return true;
     }
@@ -104,19 +104,10 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
       editor.getCaretModel().moveToOffset(targetOffset);
     }
     else {
-      smartReplace(document, prevLineStartOffset, offset, indent);
+      document.replaceString(prevLineStartOffset, offset, indent);
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logicalPosition.line - 1, targetColumn));
     }
     return true;
-  }
-
-  private static void smartReplace(Document document, int from, int to, String indent) {
-    CharSequence text = document.getCharsSequence();
-    int prefixLength = 0;
-    while ((prefixLength + from) < to && prefixLength < indent.length() && text.charAt(prefixLength + from) == indent.charAt(prefixLength)) {
-      prefixLength++;
-    }
-    document.replaceString(from + prefixLength, to, indent.substring(prefixLength));
   }
 
   private static int getTabSize(@NotNull CodeStyleFacade codeStyleFacade, @NotNull Document document) {
