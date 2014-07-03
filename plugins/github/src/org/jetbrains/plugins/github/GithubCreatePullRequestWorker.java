@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -371,6 +372,7 @@ public class GithubCreatePullRequestWorker {
 
   @NotNull
   private DiffInfo doLoadDiffInfo(@NotNull final BranchInfo branch) throws VcsException {
+    // TODO: make cancelable and abort old speculative requests (when git4idea will allow so)
     String currentBranch = myCurrentBranch;
     String targetBranch = branch.getForkInfo().getRemoteName() + "/" + branch.getRemoteName();
 
@@ -405,7 +407,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     return GithubUtil
-      .computeValueInModal(myProject, "Collecting additional data...", new Convertor<ProgressIndicator, Couple<String>>() {
+      .computeValueInModal(myProject, "Collecting additional data...", false, new Convertor<ProgressIndicator, Couple<String>>() {
         @Override
         public Couple<String> convert(ProgressIndicator o) {
           String localBranch = myCurrentBranch;
@@ -449,8 +451,13 @@ public class GithubCreatePullRequestWorker {
       info = GithubUtil
         .computeValueInModal(myProject, "Collecting diff data...", new ThrowableConvertor<ProgressIndicator, DiffInfo, IOException>() {
           @Override
-          public DiffInfo convert(ProgressIndicator o) throws IOException {
-            return getDiffInfo(branch);
+          public DiffInfo convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil.runInterruptable(indicator, new ThrowableComputable<DiffInfo, IOException>() {
+              @Override
+              public DiffInfo compute() throws IOException {
+                return getDiffInfo(branch);
+              }
+            });
           }
         });
     }
@@ -545,8 +552,13 @@ public class GithubCreatePullRequestWorker {
       info = GithubUtil
         .computeValueInModal(myProject, "Collecting diff data...", new ThrowableConvertor<ProgressIndicator, DiffInfo, IOException>() {
           @Override
-          public DiffInfo convert(ProgressIndicator o) throws IOException {
-            return getDiffInfo(branch);
+          public DiffInfo convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil.runInterruptable(indicator, new ThrowableComputable<DiffInfo, IOException>() {
+              @Override
+              public DiffInfo compute() throws IOException {
+                return getDiffInfo(branch);
+              }
+            });
           }
         });
     }

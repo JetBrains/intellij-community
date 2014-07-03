@@ -42,7 +42,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
 
 
   public GithubSelectForkDialog(@NotNull Project project,
-                                @NotNull List<GithubFullPath> forks,
+                                @Nullable List<GithubFullPath> forks,
                                 @NotNull Convertor<String, ForkInfo> checkFork) {
     super(project);
     myProject = project;
@@ -50,12 +50,14 @@ public class GithubSelectForkDialog extends DialogWrapper {
 
     myPanel = new GithubSelectForkPanel();
 
-    myPanel.setUsers(ContainerUtil.map(forks, new Function<GithubFullPath, String>() {
-      @Override
-      public String fun(GithubFullPath path) {
-        return path.getUser();
-      }
-    }));
+    if (forks != null) {
+      myPanel.setUsers(ContainerUtil.map(forks, new Function<GithubFullPath, String>() {
+        @Override
+        public String fun(GithubFullPath path) {
+          return path.getUser();
+        }
+      }));
+    }
 
     setTitle("Select Base Fork Repository");
     init();

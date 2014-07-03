@@ -393,9 +393,16 @@ public class GithubUtil {
   public static <T> T computeValueInModal(@NotNull Project project,
                                           @NotNull String caption,
                                           @NotNull final Convertor<ProgressIndicator, T> task) {
+    return computeValueInModal(project, caption, true, task);
+  }
+
+  public static <T> T computeValueInModal(@NotNull Project project,
+                                          @NotNull String caption,
+                                          boolean canBeCancelled,
+                                          @NotNull final Convertor<ProgressIndicator, T> task) {
     final Ref<T> dataRef = new Ref<T>();
     final Ref<Throwable> exceptionRef = new Ref<Throwable>();
-    ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, caption, canBeCancelled) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           dataRef.set(task.convert(indicator));
@@ -458,6 +465,20 @@ public class GithubUtil {
       future = addCancellationListener(indicator, thread);
 
       return task.compute();
+    }
+    finally {
+      if (future != null) future.cancel(true);
+      Thread.interrupted();
+    }
+  }
+
+  public static void runInterruptable(@NotNull final ProgressIndicator indicator, @NotNull Runnable task) {
+    ScheduledFuture<?> future = null;
+    try {
+      final Thread thread = Thread.currentThread();
+      future = addCancellationListener(indicator, thread);
+
+      task.run();
     }
     finally {
       if (future != null) future.cancel(true);

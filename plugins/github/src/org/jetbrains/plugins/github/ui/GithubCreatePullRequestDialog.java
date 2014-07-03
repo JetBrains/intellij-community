@@ -94,7 +94,12 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
               GithubUtil.computeValueInModal(project, "Creating remote..", new Consumer<ProgressIndicator>() {
                 @Override
                 public void consume(ProgressIndicator indicator) {
-                  myWorker.configureRemote(fork);
+                  GithubUtil.runInterruptable(indicator, new Runnable() {
+                    @Override
+                    public void run() {
+                      myWorker.configureRemote(fork);
+                    }
+                  });
                 }
               });
             }
