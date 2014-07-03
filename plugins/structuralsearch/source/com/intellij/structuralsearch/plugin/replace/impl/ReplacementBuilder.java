@@ -11,7 +11,7 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -441,10 +441,10 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
     if (parameterizations != null) {
       MatchVariableConstraint constraint =
-        options.getMatchOptions().getVariableConstraint(JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+        options.getMatchOptions().getVariableConstraint(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
       if (constraint != null && parameterizations != null) {
         ParameterInfo e = new ParameterInfo();
-        e.name = JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
+        e.name = CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
         e.startIndex = replacement.lastIndexOf('}');
         parameterizations.add(e);
       }

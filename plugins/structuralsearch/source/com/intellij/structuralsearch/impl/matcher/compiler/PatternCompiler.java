@@ -2,10 +2,10 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -21,6 +21,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.MatchPredicateProvider;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
@@ -390,7 +391,7 @@ public class PatternCompiler {
 
       MatchPredicate predicate;
 
-      if (constraint.getRegExp()!=null && constraint.getRegExp().length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
         predicate = new RegExpPredicate(
           constraint.getRegExp(),
           options.isCaseSensitiveMatch(),
@@ -399,24 +400,6 @@ public class PatternCompiler {
           constraint.isPartOfSearchResults()
         );
         if (constraint.isInvertRegExp()) {
-          predicate = new NotPredicate(predicate);
-        }
-        addPredicate(handler,predicate);
-      }
-
-      if (constraint.isReadAccess()) {
-        predicate = new ReadPredicate();
-
-        if (constraint.isInvertReadAccess()) {
-          predicate = new NotPredicate(predicate);
-        }
-        addPredicate(handler,predicate);
-      }
-
-      if (constraint.isWriteAccess()) {
-        predicate = new WritePredicate();
-
-        if (constraint.isInvertWriteAccess()) {
           predicate = new NotPredicate(predicate);
         }
         addPredicate(handler,predicate);
@@ -431,40 +414,17 @@ public class PatternCompiler {
         addPredicate(handler,predicate);
       }
 
-      if (constraint.getNameOfExprType()!=null &&
-          constraint.getNameOfExprType().length() > 0
-          ) {
-        predicate = new ExprTypePredicate(
-          constraint.getNameOfExprType(),
-          name,
-          constraint.isExprTypeWithinHierarchy(),
-          options.isCaseSensitiveMatch(),
-          constraint.isPartOfSearchResults()
-        );
-
-        if (constraint.isInvertExprType()) {
-          predicate = new NotPredicate(predicate);
-        }
-        addPredicate(handler,predicate);
+      Set<MatchPredicate> predicates = new LinkedHashSet<MatchPredicate>();
+      for (MatchPredicateProvider matchPredicateProvider : Extensions.getExtensions(MatchPredicateProvider.EP_NAME)) {
+        matchPredicateProvider.collectPredicates(constraint, name, options, predicates);
       }
-
-      if (constraint.getNameOfFormalArgType()!=null && constraint.getNameOfFormalArgType().length() > 0) {
-        predicate = new FormalArgTypePredicate(
-          constraint.getNameOfFormalArgType(),
-          name,
-          constraint.isFormalArgTypeWithinHierarchy(),
-          options.isCaseSensitiveMatch(),
-          constraint.isPartOfSearchResults()
-        );
-        if (constraint.isInvertFormalType()) {
-          predicate = new NotPredicate(predicate);
-        }
-        addPredicate(handler,predicate);
+      for (MatchPredicate matchPredicate : predicates) {
+        addPredicate(handler, matchPredicate);
       }
 
       addScriptConstraint(name, constraint, handler);
 
-      if (constraint.getContainsConstraint() != null && constraint.getContainsConstraint().length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
         predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
         if (constraint.isInvertContainsConstraint()) {
           predicate = new NotPredicate(predicate);
@@ -472,7 +432,7 @@ public class PatternCompiler {
         addPredicate(handler,predicate);
       }
 
-      if (constraint.getWithinConstraint() != null && constraint.getWithinConstraint().length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
         assert false;
       }
 
@@ -490,7 +450,7 @@ public class PatternCompiler {
         constraint.isGreedy()
       );
 
-      if (constraint.getWithinConstraint() != null && constraint.getWithinConstraint().length() > 0) {
+      if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
         MatchPredicate predicate = new WithinPredicate(Configuration.CONTEXT_VAR_NAME, constraint.getWithinConstraint(), project);
         if (constraint.isInvertWithinConstraint()) {
           predicate = new NotPredicate(predicate);
@@ -545,13 +505,7 @@ public class PatternCompiler {
     if (handler.getPredicate()==null) {
       handler.setPredicate(predicate);
     } else {
-      handler.setPredicate(
-        new BinaryPredicate(
-          handler.getPredicate(),
-          predicate,
-          false
-        )
-      );
+      handler.setPredicate(new BinaryPredicate(handler.getPredicate(), predicate, false));
     }
   }
 

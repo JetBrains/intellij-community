@@ -19,10 +19,8 @@ public final class ReferencePredicate extends SubstitutionHandler {
       match = match.getParent();
     }
 
-    PsiElement result;
-
-    result = MatchUtils.getReferencedElement(match);
-    if (result==null) {
+    PsiElement result = MatchUtils.getReferencedElement(match);
+    if (result == null) {
       result = match;
       //return false;
     }

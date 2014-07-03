@@ -30,25 +30,29 @@ import java.util.*;
  * Date: Mar 4, 2004
  * Time: 9:19:34 PM
  */
-public class ReplacerImpl {
+public class Replacer {
   private final Project project;
   private ReplacementBuilder replacementBuilder;
   private ReplaceOptions options;
   private ReplacementContext context;
   private StructuralReplaceHandler replaceHandler;
 
-  protected ReplacerImpl(Project project, ReplaceOptions options) {
+  public Replacer(Project project, ReplaceOptions options) {
     this.project = project;
     this.options = options;
   }
 
-  protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern) {
+  public String testReplace(String in, String what, String by, ReplaceOptions options) throws IncorrectOperationException {
+    return testReplace(in, what, by, options,false);
+  }
+
+  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern) {
     FileType type = options.getMatchOptions().getFileType();
     return testReplace(in, what, by, options, filePattern, false, type, null);
   }
 
-  protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern, boolean createPhysicalFile, 
-                               FileType sourceFileType, Language sourceDialect) {
+  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern, boolean createPhysicalFile,
+                            FileType sourceFileType, Language sourceDialect) {
     this.options = options;
     this.options.getMatchOptions().setSearchPattern(what);
     this.options.setReplacement(by);
@@ -129,7 +133,7 @@ public class ReplacerImpl {
     }
   }
 
-  protected void replaceAll(final List<ReplacementInfo> resultPtrList) {
+  public void replaceAll(final List<ReplacementInfo> resultPtrList) {
     PsiElement lastAffectedElement = null;
     PsiElement currentAffectedElement;
 
@@ -153,7 +157,7 @@ public class ReplacerImpl {
     reformatAndShortenRefs(lastAffectedElement);
   }
 
-  protected void replace(ReplacementInfo info) {
+  public void replace(ReplacementInfo info) {
     PsiElement element = info.getMatch(0);
     initContextAndHandler(element);
 
@@ -366,7 +370,7 @@ public class ReplacerImpl {
     }
   }
 
-  protected ReplacementInfo buildReplacement(MatchResult result) {
+  public ReplacementInfo buildReplacement(MatchResult result) {
     List<SmartPsiElementPointer> l = new ArrayList<SmartPsiElementPointer>();
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 

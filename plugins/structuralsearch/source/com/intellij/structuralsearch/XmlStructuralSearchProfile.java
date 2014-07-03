@@ -21,7 +21,7 @@ import com.intellij.structuralsearch.impl.matcher.filters.XmlLexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
@@ -143,7 +143,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, statements, replacementToMake, elementParent);
 
         // preserve comments
-        ReplacerImpl.handleComments(elementToReplace, replacement, myContext);
+        Replacer.handleComments(elementToReplace, replacement, myContext);
         elementToReplace.replace(replacement);
       }
       else {
@@ -172,7 +172,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     else if (statements.length == 1) {
       PsiElement replacement = statements[0];
 
-      ReplacerImpl.handleComments(elementToReplace, replacement, context);
+      Replacer.handleComments(elementToReplace, replacement, context);
 
       try {
         elementParent.addBefore(replacement, elementToReplace);

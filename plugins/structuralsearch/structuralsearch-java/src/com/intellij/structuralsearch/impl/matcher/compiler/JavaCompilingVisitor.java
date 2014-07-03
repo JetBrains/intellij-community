@@ -349,7 +349,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     if (!hasSubstitutionHandler) {
-      String name = JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
+      String name = CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
       psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, name);
       MatchOptions options = myCompilingVisitor.getContext().getOptions();
       if (options.getVariableConstraint(name) == null) {

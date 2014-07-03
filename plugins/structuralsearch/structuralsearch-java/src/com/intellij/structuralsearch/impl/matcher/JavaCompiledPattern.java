@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
 
 /**
 * @author Eugene.Kudelevsky
@@ -11,6 +12,10 @@ public class JavaCompiledPattern extends CompiledPattern {
   private boolean requestsSuperFields;
   private boolean requestsSuperMethods;
   private boolean requestsSuperInners;
+
+  public JavaCompiledPattern() {
+    setStrategy(ExprMatchingStrategy.getInstance());
+  }
 
   public String[] getTypedVarPrefixes() {
     return new String[] {TYPED_VAR_PREFIX};
@@ -25,7 +30,6 @@ public class JavaCompiledPattern extends CompiledPattern {
   }
 
   public static final Key<String> ALL_CLASS_CONTENT_VAR_NAME_KEY = Key.create("AllClassContent");
-  public static final String ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME = "__class_unmatched__";
 
   public boolean isRequestsSuperFields() {
     return requestsSuperFields;

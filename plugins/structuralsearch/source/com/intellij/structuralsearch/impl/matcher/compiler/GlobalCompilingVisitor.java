@@ -12,7 +12,6 @@ import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstituti
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
-import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +127,7 @@ public class GlobalCompilingVisitor {
     profile.compile(elements, this);
 
     if (context.getPattern().getStrategy() == null) {
-      context.getPattern().setStrategy(ExprMatchingStrategy.getInstance());
+      System.out.println();
     }
   }
 

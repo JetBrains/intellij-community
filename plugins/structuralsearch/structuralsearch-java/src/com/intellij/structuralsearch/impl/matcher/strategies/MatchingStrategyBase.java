@@ -34,16 +34,6 @@ public class MatchingStrategyBase extends JavaElementVisitor implements Matching
     return false;
   }
 
-  protected MatchingStrategyBase() {}
-
-  private static class MatchingStrategyBaseHolder {
-    private static final MatchingStrategyBase instance = new MatchingStrategyBase();
-  }
-
-  public static MatchingStrategy getInstance() {
-    return MatchingStrategyBaseHolder.instance;
-  }
-
   public boolean accepts(PsiElement element) {
     result = false;
     if (element!=null) element.accept(this);

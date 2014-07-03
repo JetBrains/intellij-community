@@ -33,7 +33,7 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
@@ -113,7 +113,7 @@ public class SSBasedInspection extends LocalInspectionTool {
           Configuration configuration = pair.second;
           MatchContext context = pair.first;
 
-          if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
+          if (MatcherImpl.checkIfShouldAttemptToMatch(context, matchedNodes)) {
             final int nodeCount = context.getPattern().getNodeCount();
             matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
             matchedNodes.reset();

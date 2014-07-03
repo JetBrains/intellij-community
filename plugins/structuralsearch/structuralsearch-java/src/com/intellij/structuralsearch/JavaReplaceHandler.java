@@ -13,7 +13,7 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -157,7 +157,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     collector.namedElements.clear();
 
     if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
-      ReplacerImpl.handleComments(el, replacement, myContext);
+      Replacer.handleComments(el, replacement, myContext);
       return;
     }
 
@@ -196,7 +196,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
 
       if (replacementNamedElement != null && searchNamedElement != null) {
-        ReplacerImpl.handleComments(originalNamedElement, replacementNamedElement, myContext);
+        Replacer.handleComments(originalNamedElement, replacementNamedElement, myContext);
       }
 
       if (comment != null && replacementNamedElement instanceof PsiDocCommentOwner &&

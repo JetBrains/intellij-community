@@ -11,6 +11,8 @@
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
     <extensionPoint qualifiedName="com.intellij.tokenindex.tokenizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.matchPredicateProvider" 
+                    interface="com.intellij.structuralsearch.impl.matcher.MatchPredicateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -20,6 +20,7 @@ import java.util.List;
  * Class to hold compiled pattern information
  */
 public abstract class CompiledPattern {
+  public static final String ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME = "__class_unmatched__";
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;

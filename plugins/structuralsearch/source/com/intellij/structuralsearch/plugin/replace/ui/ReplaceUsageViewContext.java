@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
