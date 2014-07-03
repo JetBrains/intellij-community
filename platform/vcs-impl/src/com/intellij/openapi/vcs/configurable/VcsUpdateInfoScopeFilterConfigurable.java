@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -44,7 +42,6 @@ import java.awt.*;
  * @author Kirill Likhodedov
  */
 class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesHolder.ScopeListener {
-  
   private final JCheckBox myCheckbox;
   private final JComboBox myComboBox;
   private final Project myProject;
@@ -98,13 +95,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     panel.add(new LinkLabel("Manage Scopes", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext(panel));
-        if (optionsEditor != null) {
-          SearchableConfigurable configurable = optionsEditor.findConfigurableById(new ScopeChooserConfigurable(myProject).getId());
-          if (configurable != null) {
-            optionsEditor.select(configurable);
-          }
-        }
+        ShowSettingsUtilImpl.showSettingsDialog(myProject, ScopeChooserConfigurable.PROJECT_SCOPES, "");
       }
     }));
     return panel;
