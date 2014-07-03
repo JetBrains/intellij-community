@@ -220,14 +220,15 @@ public class GithubConnection {
 
       HttpEntity entity = response.getEntity();
       if (entity == null) {
-        return new ResponsePage(response.getAllHeaders());
+        return createResponse(response);
       }
 
       JsonElement ret = parseResponse(entity.getContent());
       if (ret.isJsonNull()) {
-        return new ResponsePage(response.getAllHeaders());
+        return createResponse(response);
       }
 
+      String newPath = null;
       Header pageHeader = response.getFirstHeader("Link");
       if (pageHeader != null) {
         for (HeaderElement element : pageHeader.getElements()) {
@@ -238,18 +239,19 @@ public class GithubConnection {
             int end = urlString.lastIndexOf('>');
             if (begin == -1 || end == -1) {
               LOG.error("Invalid 'Link' header", "{" + pageHeader.toString() + "}");
-              return new ResponsePage(ret, response.getAllHeaders());
+              break;
             }
 
             String url = urlString.substring(begin + 1, end);
-            String newPath = GithubUrlUtil.removeProtocolPrefix(url);
-            int index = newPath.indexOf('/');
-            return new ResponsePage(ret, newPath.substring(index), response.getAllHeaders());
+            String newUrl = GithubUrlUtil.removeProtocolPrefix(url);
+            int index = newUrl.indexOf('/');
+            newPath = newUrl.substring(index);
+            break;
           }
         }
       }
 
-      return new ResponsePage(ret, response.getAllHeaders());
+      return createResponse(ret, newPath, response);
     }
     catch (SSLHandshakeException e) { // User canceled operation from CertificateManager
       if (e.getCause() instanceof ValidatorException) {
@@ -443,18 +445,23 @@ public class GithubConnection {
     }
   }
 
+  private ResponsePage createResponse(@NotNull CloseableHttpResponse response) throws GithubOperationCanceledException {
+    if (myAborted) throw new GithubOperationCanceledException();
+
+    return new ResponsePage(null, null, response.getAllHeaders());
+  }
+
+  private ResponsePage createResponse(@NotNull JsonElement ret, @Nullable String path, @NotNull CloseableHttpResponse response)
+    throws GithubOperationCanceledException {
+    if (myAborted) throw new GithubOperationCanceledException();
+
+    return new ResponsePage(ret, path, response.getAllHeaders());
+  }
+
   private static class ResponsePage {
     @Nullable private final JsonElement myResponse;
     @Nullable private final String myNextPage;
     @NotNull private final Header[] myHeaders;
-
-    public ResponsePage(@NotNull Header[] headers) {
-      this(null, null, headers);
-    }
-
-    public ResponsePage(@Nullable JsonElement response, @NotNull Header[] headers) {
-      this(response, null, headers);
-    }
 
     public ResponsePage(@Nullable JsonElement response, @Nullable String next, @NotNull Header[] headers) {
       myResponse = response;
