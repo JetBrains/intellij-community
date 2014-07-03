@@ -65,7 +65,11 @@ public class Fernflower implements IDecompiledData {
 		
 		structcontext.saveContext();
 	}
-	
+
+  public void clearContext() {
+    DecompilerContext.setCurrentContext(null);
+  }
+
 	public String getClassEntryName(StructClass cl, String entryname) {
 		
 		ClassNode node = clprocessor.getMapRootClasses().get(cl.qualifiedName);

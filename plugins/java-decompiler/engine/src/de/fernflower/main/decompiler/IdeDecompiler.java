@@ -44,7 +44,11 @@ public class IdeDecompiler {
   }
 
   public void decompileContext() {
-		fernflower.decompileContext();
-	}
-	
+    try {
+      fernflower.decompileContext();
+    } finally {
+      fernflower.clearContext();
+    }
+  }
+
 }
