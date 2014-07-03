@@ -91,17 +91,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
             if (Messages.YES ==
                 GithubNotifications
                   .showYesNoDialog(project, "Can't Find Remote", "Configure remote for '" + fork.getPath().getUser() + "'?")) {
-              GithubUtil.computeValueInModal(project, "Creating remote..", new Consumer<ProgressIndicator>() {
-                @Override
-                public void consume(ProgressIndicator indicator) {
-                  GithubUtil.runInterruptable(indicator, new Runnable() {
-                    @Override
-                    public void run() {
-                      myWorker.configureRemote(fork);
-                    }
-                  });
-                }
-              });
+              myWorker.configureRemote(fork);
             }
             fork.setProposedToCreateRemote(true);
           }

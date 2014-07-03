@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
@@ -386,7 +387,7 @@ public class GithubCreatePullRequestWorker {
     return new DiffInfo(info, currentBranch, targetBranch);
   }
 
-  public void configureRemote(@NotNull ForkInfo fork) {
+  private void doConfigureRemote(@NotNull ForkInfo fork) {
     if (fork.getRemoteName() != null) return;
 
     GithubFullPath path = fork.getPath();
@@ -395,6 +396,20 @@ public class GithubCreatePullRequestWorker {
     if (GithubUtil.addGithubRemote(myProject, myGitRepository, path.getUser(), url)) {
       fork.setRemote(path.getUser());
     }
+  }
+
+  public void configureRemote(@NotNull final ForkInfo fork) {
+    GithubUtil.computeValueInModal(myProject, "Creating remote..", new Consumer<ProgressIndicator>() {
+      @Override
+      public void consume(ProgressIndicator indicator) {
+        GithubUtil.runInterruptable(indicator, new Runnable() {
+          @Override
+          public void run() {
+            configureRemote(fork);
+          }
+        });
+      }
+    });
   }
 
   @NotNull
