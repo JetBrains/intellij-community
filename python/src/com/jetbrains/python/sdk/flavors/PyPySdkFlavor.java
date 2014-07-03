@@ -18,29 +18,37 @@ package com.jetbrains.python.sdk.flavors;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author traff
  */
 public class PyPySdkFlavor extends PythonSdkFlavor {
+  public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
+
+  private static final Pattern VERSION_RE = Pattern.compile("\\[(PyPy \\S+).*\\]");
+
   private PyPySdkFlavor() {
   }
-
-  public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
 
   public boolean isValidSdkPath(@NotNull File file) {
     return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("pypy");
   }
 
-  public String getVersionRegexp() {
-    return "\\[(PyPy \\S+).*\\]";
+  @Nullable
+  @Override
+  public String getVersionStringFromOutput(@NotNull String output) {
+    return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
   public String getVersionOption() {
