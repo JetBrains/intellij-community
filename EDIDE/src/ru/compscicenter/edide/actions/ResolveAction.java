@@ -14,7 +14,9 @@ import ru.compscicenter.edide.course.Window;
 /**
  * author: liana
  * data: 6/18/14.
- * Action for marking task window as resolved
+ * mark selected task window as resolved
+ * and update offsets in task file
+ * or propose user to check task if no task windows are available
  */
 
 class ResolveAction extends AnAction {
@@ -32,7 +34,7 @@ class ResolveAction extends AnAction {
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
       TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
       if (selectedTaskFile != null) {
-        selectedTaskFile.resolveSelectedTaskWindow(project, selectedEditor);
+        selectedTaskFile.updateOffsets(project, selectedEditor);
         Window selectedWindow = taskManager.getSelectedWindow();
         selectedWindow.setResolveStatus(true);
         selectedEditor.getMarkupModel().removeAllHighlighters();

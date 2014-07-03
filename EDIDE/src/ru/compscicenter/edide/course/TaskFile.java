@@ -42,6 +42,10 @@ public class TaskFile {
     return fileElement;
   }
 
+  public Task getTask() {
+    return myTask;
+  }
+
   public String getName() {
     return name;
   }
@@ -121,7 +125,7 @@ public class TaskFile {
 
   public void setParents(Task task) {
     myTask = task;
-    for (Window window: windows) {
+    for (Window window : windows) {
       window.setParent(this);
     }
     Collections.sort(windows);
@@ -129,7 +133,7 @@ public class TaskFile {
 
   public void setNewOffsetInLine(int startLine, int startOffset, int defaultOffet) {
     for (Window taskWindow : windows) {
-      if (taskWindow.getLine() == startLine  && taskWindow.getStart() > startOffset) {
+      if (taskWindow.getLine() == startLine && taskWindow.getStart() > startOffset) {
         taskWindow.setStart(defaultOffet + (taskWindow.getStart() - startOffset));
       }
     }
@@ -149,25 +153,28 @@ public class TaskFile {
     return lineCount - 1;
   }
 
-  public void resolveSelectedTaskWindow(Project project, Editor selectedEditor) {
+  public void updateOffsets(Project project, Editor selectedEditor) {
     Window selectedTaskWindow = StudyTaskManager.getInstance(project).getSelectedWindow();
     if (selectedTaskWindow != null) {
       RangeHighlighter selectedRangeHighlighter = selectedTaskWindow.getRangeHighlighter();
-      int lineChange = selectedEditor.getDocument().getLineCount() - getLineNum();
-      if (lineChange != 0) {
-        int newStartLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getStartOffset());
-        int newEndLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getEndOffset());
-        increment(newStartLine, lineChange);
-        selectedTaskWindow.setLine(selectedTaskWindow.getLine() - lineChange);
-        setNewOffsetInLine(newEndLine, selectedTaskWindow.getStart() + selectedTaskWindow.getOffsetInLine(),selectedRangeHighlighter.getEndOffset() - selectedEditor.getDocument().getLineStartOffset(newEndLine));
+      if (selectedRangeHighlighter != null) {
+        int lineChange = selectedEditor.getDocument().getLineCount() - getLineNum();
+        if (lineChange != 0) {
+          int newStartLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getStartOffset());
+          int newEndLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getEndOffset());
+          increment(newStartLine, lineChange);
+          selectedTaskWindow.setLine(selectedTaskWindow.getLine() - lineChange);
+          setNewOffsetInLine(newEndLine, selectedTaskWindow.getStart() + selectedTaskWindow.getOffsetInLine(),
+                             selectedRangeHighlighter.getEndOffset() - selectedEditor.getDocument().getLineStartOffset(newEndLine));
+        }
+        else {
+          int oldEnd = selectedTaskWindow.getRealStartOffset(selectedEditor) + selectedTaskWindow.getOffsetInLine();
+          int endChange = selectedRangeHighlighter.getEndOffset() - oldEnd;
+          incrementAfterOffset(selectedTaskWindow.getLine(), selectedTaskWindow.getStart(), endChange);
+        }
+        int newLength = selectedRangeHighlighter.getEndOffset() - selectedRangeHighlighter.getStartOffset();
+        selectedTaskWindow.setOffsetInLine(newLength);
       }
-      else {
-        int oldEnd = selectedTaskWindow.getRealStartOffset(selectedEditor) + selectedTaskWindow.getOffsetInLine();
-        int endChange = selectedRangeHighlighter.getEndOffset() - oldEnd;
-        incrementAfterOffset(selectedTaskWindow.getLine(), selectedTaskWindow.getStart(), endChange);
-      }
-      int newLength = selectedRangeHighlighter.getEndOffset() - selectedRangeHighlighter.getStartOffset();
-      selectedTaskWindow.setOffsetInLine(newLength);
     }
   }
 }

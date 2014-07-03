@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.google.gson.annotations.Expose;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -18,20 +17,13 @@ import org.jetbrains.annotations.NotNull;
  * Time: 18:54
  */
 public class Window implements Comparable{
-  @Expose
   private int line = 0;
-  @Expose
   private int start = 0;
-  @Expose
   private String text ="";
-  @Expose
   private String hint = "";
-  @Expose
   private String possibleAnswer = "";
-  @Expose
   private boolean myResolveStatus = false;
   private RangeHighlighter myRangeHighlighter = null;
-  @Expose
   private int myOffsetInLine = text.length();
   private TaskFile myTaskFile;
 
@@ -129,9 +121,8 @@ public class Window implements Comparable{
     myRangeHighlighter = rh;
     if (drawSelection) {
       editor.getSelectionModel().setSelection(startOffset, startOffset + myOffsetInLine);
-      editor.getCaretModel().moveToOffset(startOffset);
     }
-
+    editor.getCaretModel().moveToOffset(startOffset);
     rh.setGreedyToLeft(true);
     rh.setGreedyToRight(true);
   }

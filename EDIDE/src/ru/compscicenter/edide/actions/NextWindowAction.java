@@ -4,9 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyEditor;
@@ -16,39 +13,35 @@ import ru.compscicenter.edide.course.*;
 /**
  * author: liana
  * data: 6/27/14.
+ * move caret to next task window
  */
 public class NextWindowAction extends AnAction {
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
-    StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    Window selectedTaskWindow = taskManager.getSelectedWindow();
-    Editor selectedEditor = null;
-    if (selectedTaskWindow != null) {
-      //getting selected editor
-      FileEditor fileEditor =
-        FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
-          .getFirst();
-      if (fileEditor instanceof StudyEditor) {
-        FileEditor defaultEditor = ((StudyEditor)fileEditor).getDefaultEditor();
-        if (defaultEditor instanceof PsiAwareTextEditorImpl) {
-          selectedEditor = ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
-        }
-        if (selectedEditor != null) {
-          VirtualFile openedFile = FileDocumentManager.getInstance().getFile(selectedEditor.getDocument());
-          ru.compscicenter.edide.course.TaskFile selectedTaskFile = StudyTaskManager.getInstance(project).getTaskFile(openedFile);
-          boolean toDraw = false;
-          for (Window taskWindow:selectedTaskFile.getWindows()) {
-            if (toDraw) {
+    Editor selectedEditor = StudyEditor.getSelectedEditor(project);
+    if (selectedEditor != null) {
+      FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+      VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
+      if (openedFile != null) {
+        StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+        TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
+        if (selectedTaskFile != null) {
+          selectedTaskFile.updateOffsets(project, selectedEditor);
+          Window selectedWindow = taskManager.getSelectedWindow();
+          boolean ifDraw = false;
+          for (Window window : selectedTaskFile.getWindows()) {
+            if (ifDraw) {
               selectedEditor.getMarkupModel().removeAllHighlighters();
-              taskManager.setSelectedWindow(taskWindow);
-              taskWindow.draw(selectedEditor, !taskWindow.isResolveStatus());
+              taskManager.setSelectedWindow(window);
+              window.draw(selectedEditor, !window.isResolveStatus());
               return;
             }
-            if (taskWindow == selectedTaskWindow) {
-              toDraw = true;
+            if (window == selectedWindow) {
+              ifDraw = true;
             }
           }
-
+          //TODO:propose user to do next action
         }
       }
     }
