@@ -44,7 +44,11 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
 
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet nonThreadSafeClasses =
-    new ExternalizableStringSet("java.text.SimpleDateFormat", "java.util.Calendar");
+    new ExternalizableStringSet("java.text.SimpleDateFormat",
+                                "java.text.MessageFormat",
+                                "java.text.DecimalFormat",
+                                "java.text.ChoiceFormat",
+                                "java.util.Calendar");
 
   @NonNls
   @SuppressWarnings({"PublicField"})
