@@ -25,10 +25,11 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,16 +93,64 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestStubCompatibility(VirtualFile root) {
+    doTestStubCompatibility(root, null);
+  }
+
+  private void doTestStubCompatibility(VirtualFile root, @Nullable final String textPath) {
+    final int pathStart = root.getPath().length();
+    final boolean compare = textPath != null && new File(textPath).exists();
+
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getFileType() == StdFileTypes.CLASS && !file.getName().contains("$")) {
           PsiFile clsFile = getPsiManager().findFile(file);
           assertNotNull(file.getPath(), clsFile);
-          String decompiled = ((ClsFileImpl)clsFile).getMirror().getText();
+
+          PsiElement mirror = ((ClsFileImpl)clsFile).getMirror().copy();
+          collapseCodeBlocks(mirror);
+          String decompiled = mirror.getText();
           assertTrue(file.getPath(), decompiled.contains(file.getNameWithoutExtension()));
+
+          if (textPath != null) {
+            try {
+              File txtFile = new File(textPath, file.getPath().substring(pathStart));
+              if (!compare) {
+                FileUtil.writeToFile(txtFile, decompiled.getBytes("UTF-8"));
+              }
+              else {
+                String expected = FileUtil.loadFile(txtFile, "UTF-8");
+                assertEquals(file.getPath(), expected, decompiled);
+              }
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
         }
         return true;
+      }
+    });
+  }
+
+  private static void collapseCodeBlocks(PsiElement original) {
+    final PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(original.getProject());
+    original.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitMethod(PsiMethod method) {
+        PsiCodeBlock body = method.getBody();
+        if (body != null) {
+          body.replace(factory.createCodeBlockFromText("{ /* collapsed */}", null));
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        for (PsiClassInitializer initializer : aClass.getInitializers()) {
+          PsiCodeBlock body = initializer.getBody();
+          body.replace(factory.createCodeBlockFromText("{ /* collapsed */}", null));
+        }
+        super.visitClass(aClass);
       }
     });
   }
