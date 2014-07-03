@@ -1128,7 +1128,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myPickerFrame.setSize(SIZE - 4, SIZE - 4);
         myPickerFrame.setUndecorated(true);
-        myPickerFrame.setAlwaysOnTop(true);
+        myPickerFrame.setAlwaysOnTop(!SystemInfo.isJavaVersionAtLeast("1.8.0"));
 
         JRootPane rootPane = ((JDialog)myPickerFrame).getRootPane();
         rootPane.putClientProperty("Window.shadow", Boolean.FALSE);
