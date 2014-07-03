@@ -1,6 +1,8 @@
 public class Test {
-  public String foo(String path) {
-    String smth = new String(path);
+  public Test(String s) { }
+
+  public Test foo(String path) {
+    Test smth = new Test(path);
     if (path == null) return null;
     return smth;
   }
