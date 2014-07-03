@@ -54,13 +54,11 @@ public class GithubConnection {
 
   private static final HttpRequestInterceptor PREEMPTIVE_BASIC_AUTH = new PreemptiveBasicAuthInterceptor();
 
-  private final Object LOCK = new Object();
-
   @NotNull private final String myHost;
   @NotNull private final CloseableHttpClient myClient;
   private final boolean myReusable;
 
-  private HttpUriRequest myRequest;
+  private volatile HttpUriRequest myRequest;
   private volatile boolean myAborted;
 
   @TestOnly
@@ -114,9 +112,8 @@ public class GithubConnection {
     if (myAborted) return;
     myAborted = true;
 
-    synchronized (LOCK) {
-      if (myRequest != null) myRequest.abort();
-    }
+    HttpUriRequest request = myRequest;
+    if (request != null) request.abort();
   }
 
   public void close() throws IOException {
@@ -265,9 +262,7 @@ public class GithubConnection {
       throw e;
     }
     finally {
-      synchronized (LOCK) {
-        myRequest = null;
-      }
+      myRequest = null;
       if (response != null) {
         response.close();
       }
@@ -313,9 +308,7 @@ public class GithubConnection {
       request.addHeader(header);
     }
 
-    synchronized (LOCK) {
-      myRequest = request;
-    }
+    myRequest = request;
     return myClient.execute(request);
   }
 
