@@ -611,7 +611,7 @@ public class BuildManager implements ApplicationComponent{
               data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
               myProjectDataMap.put(projectPath, data);
             }
-            if (isRebuild) {
+            if (isRebuild || (isAutomake && Registry.is("compiler.automake.force.fs.rescan", false))) {
               data.dropChanges();
             }
             if (IS_UNIT_TEST_MODE) {
