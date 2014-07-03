@@ -69,13 +69,12 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     if (!isShown()) {
       return;
     }
+    myInplaceEditorComponent = null;
     onHidden();
     for (Runnable action : myRemoveActions) {
       action.run();
     }
     myRemoveActions.clear();
-
-    myInplaceEditorComponent = null;
 
     final JTree tree = getTree();
     tree.repaint();
@@ -172,7 +171,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       @Override
       public void run() {
         tree.removeHierarchyListener(hierarchyListener);
-        tree.addComponentListener(componentListener);
+        tree.removeComponentListener(componentListener);
         rootPane.removeComponentListener(componentListener);
       }
     });
