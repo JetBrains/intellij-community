@@ -69,11 +69,20 @@ public class PySdkFlavorTest extends PyTestCase {
     final String versionOutput = "Python 2.7.6 (32f35069a16d819b58c1b6efb17c44e3e53397b2, Jun 10 2014, 00:42:27)\n" +
                                  "[PyPy 2.3.1 with GCC 4.8.2]\n";
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("PyPy 2.3.1", mockSdk.getVersionString());
+    assertEquals("PyPy 2.3.1 [Python 2.7.6]", mockSdk.getVersionString());
     assertEquals(LanguageLevel.PYTHON27, flavor.getLanguageLevel(mockSdk));
   }
 
-  // TODO: Add tests for PyPy3, MayaPy and IronPython SDK flavors
+  public void testPyPy323VersionString() {
+    final PythonSdkFlavor flavor = PyPySdkFlavor.INSTANCE;
+    final String versionOutput = "Python 3.2.5 (986752d005bb6c65ce418113e4c3cd115f61a9b4, Jun 23 2014, 00:23:34)\n" +
+                                 "[PyPy 2.3.1 with GCC 4.8.2]\n";
+    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
+    assertEquals("PyPy 2.3.1 [Python 3.2.5]", mockSdk.getVersionString());
+    assertEquals(LanguageLevel.PYTHON32, flavor.getLanguageLevel(mockSdk));
+  }
+
+  // TODO: Add tests for MayaPy and IronPython SDK flavors
 
   @NotNull
   private static Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
