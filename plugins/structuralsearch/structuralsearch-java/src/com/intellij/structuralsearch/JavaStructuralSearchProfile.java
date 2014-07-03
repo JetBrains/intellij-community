@@ -262,7 +262,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return JavaCodeContextType.class;
   }
 
-  protected PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
+  public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     return factory.createCodeBlockCodeFragment(text, context, true);
   }

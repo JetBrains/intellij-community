@@ -125,7 +125,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  protected PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
+  public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
     return null;
   }
 
