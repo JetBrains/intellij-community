@@ -118,7 +118,7 @@ public class PyTestRemoteSdkProvider {
     final File dir = new File("/tmp");
 
     File tmpDir = FileUtil.createTempDirectory(dir, "pycharm_helpers_", "_" + Math.abs(
-      Hashing.md5().hashString(interpreterPath).asInt()), true);
+      Hashing.md5().hashUnencodedChars(interpreterPath).asInt()), true);
     return tmpDir.getPath();
   }
 
