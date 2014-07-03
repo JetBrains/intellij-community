@@ -491,30 +491,36 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return (SearchListModel)myList.getModel();
   }
 
-  private void onFocusLost() {
+  private ActionCallback onFocusLost() {
+    final ActionCallback result = new ActionCallback();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myCalcThread != null) {
-          myCalcThread.cancel();
-          //myCalcThread = null;
-        }
-        myAlarm.cancelAllRequests();
-        if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
-          myBalloon.cancel();
-          myPopup.cancel();
-        }
-
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ActionToolbarImpl.updateAllToolbarsImmediately();
+        try {
+          if (myCalcThread != null) {
+            myCalcThread.cancel();
+            //myCalcThread = null;
           }
-        });
+          myAlarm.cancelAllRequests();
+          if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
+            myBalloon.cancel();
+            myPopup.cancel();
+          }
+
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              ActionToolbarImpl.updateAllToolbarsImmediately();
+            }
+          });
+        } finally {
+          result.setDone();
+        }
       }
     });
+    return result;
   }
 
   private SearchTextField getField() {
@@ -566,19 +572,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myList.repaint();
       return;
     }
+    Runnable onDone = null;
 
     AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       if (value instanceof PsiElement) {
-        NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
+        onDone = new Runnable() {
+          public void run() {
+            NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
+          }
+        };
         return;
       }
       else if (isVirtualFile(value)) {
-        OpenFileDescriptor navigatable = new OpenFileDescriptor(project, (VirtualFile)value);
-        if (navigatable.canNavigate()) {
-          navigatable.navigate(true);
-          return;
-        }
+        onDone = new Runnable() {
+          public void run() {
+            OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
+          }
+        };
+        return;
       }
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
@@ -596,23 +608,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               ((ChooseRunConfigurationPopup.ItemWrapper)value).perform(project, executor, DataManager.getInstance().getDataContext(c));
             } else {
               GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
+              if (isToolWindowAction(value)) return;
             }
           }
         });
         return;
       }
       else if (value instanceof Navigatable) {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+        onDone = new Runnable() {
           @Override
           public void run() {
             OpenSourceUtil.navigate(true, (Navigatable)value);
           }
-        });
+        };
+        return;
       }
     }
     finally {
       token.finish();
-      onFocusLost();
+      final ActionCallback callback = onFocusLost();
+      if (onDone != null) {
+        callback.doWhenDone(onDone);
+      }
     }
     focusManager.requestDefaultFocus(true);
   }
