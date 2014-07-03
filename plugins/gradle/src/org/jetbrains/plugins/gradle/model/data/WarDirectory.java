@@ -18,11 +18,13 @@ package org.jetbrains.plugins.gradle.model.data;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * @author Vladislav.Soroka
  * @since 2/10/14
  */
-public class WarDirectory {
+public class WarDirectory implements Serializable {
   /**
    * Public files typically include the following:
    * HTML files.
