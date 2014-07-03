@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class EditorHeaderComponent extends JPanel {
   }
 
   public static void paintGradient(Graphics g, JComponent c) {
-    Color GRADIENT_C1 = new JBColor(c.getBackground(), JBColor.background());
+    Color GRADIENT_C1 = JBColor.background();
     Color GRADIENT_C2 = new JBColor(new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
                                               Math.max(0, GRADIENT_C1.getBlue() - 0x18)), Gray._75);
 
