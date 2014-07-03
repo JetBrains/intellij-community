@@ -284,7 +284,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         finally {
           final RefactoringEventData afterData = new RefactoringEventData();
           afterData.addElement(containingClass);
-          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, afterData);
+          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
         }
       }
     };
