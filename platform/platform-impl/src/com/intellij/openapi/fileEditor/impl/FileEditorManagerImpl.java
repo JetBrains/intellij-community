@@ -851,6 +851,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         // Notify editors about selection changes
         window.getOwner().setCurrentWindow(window, focusEditor);
         window.getOwner().afterFileOpen(file);
+        addSelectionRecord(file, window);
 
         composite.getSelectedEditor().selectNotify();
 
