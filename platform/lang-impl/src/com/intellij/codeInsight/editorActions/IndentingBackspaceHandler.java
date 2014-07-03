@@ -65,9 +65,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
         document.deleteString(beforeWhitespaceOffset, offset);
         return true;
       }
-      else {
-        return false;
-      }
+      return false;
     }
 
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(editor.getProject());
@@ -84,9 +82,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
         editor.getCaretModel().moveToLogicalPosition(logicalPosition);
         return true;
       }
-      else {
-        return false;
-      }
+      return false;
     }
 
     if (caretWasAtLineStart || logicalPosition.column > targetColumn) {
