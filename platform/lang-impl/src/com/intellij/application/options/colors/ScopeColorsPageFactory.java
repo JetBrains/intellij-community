@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,8 +32,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
+  @NotNull
   @Override
-  public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
+  public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final JPanel scopePanel = createChooseScopePanel();
     return NewColorAndFontPanel.create(new PreviewPanel.Empty(){
       @Override
@@ -45,6 +45,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     }, ColorAndFontOptions.SCOPES_GROUP, options, null, null);
   }
 
+  @NotNull
   @Override
   public String getPanelDisplayName() {
     return ColorAndFontOptions.SCOPES_GROUP;
@@ -60,7 +61,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     final Project contextProject = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     final Project project = contextProject != null ? contextProject : projects[0];
 
-    JButton button = new JButton(ApplicationBundle.message("button.edit.scopes"));
+    JButton button = new JButton("Manage Scopes...");
     button.setPreferredSize(new Dimension(230, button.getPreferredSize().height));
     panel.add(button, gc);
     gc.gridx = GridBagConstraints.REMAINDER;
@@ -73,7 +74,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     panel.add(new JPanel(), gc);
     button.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {
           try {

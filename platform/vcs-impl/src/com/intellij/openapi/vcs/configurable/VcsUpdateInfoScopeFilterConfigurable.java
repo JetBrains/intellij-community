@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -31,6 +32,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,12 +55,12 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     myProject = project;
     myVcsConfiguration = vcsConfiguration;
     myCheckbox = new JCheckBox(VcsBundle.getString("settings.filter.update.project.info.by.scope"));
-    myComboBox = new JComboBox();
+    myComboBox = new ComboBox();
     
     myComboBox.setEnabled(myCheckbox.isSelected());
     myCheckbox.addChangeListener(new ChangeListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void stateChanged(@NotNull ChangeEvent e) {
         myComboBox.setEnabled(myCheckbox.isSelected());
       }
     });
@@ -93,7 +95,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     panel.add(myCheckbox);
     panel.add(myComboBox);
     panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
-    panel.add(new LinkLabel("Edit scopes", null, new LinkListener() {
+    panel.add(new LinkLabel("Manage Scopes", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext(panel));
