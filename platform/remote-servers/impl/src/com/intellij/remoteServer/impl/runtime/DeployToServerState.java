@@ -67,18 +67,13 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     else {
       debugConnector = null;
     }
-    connection.computeDeployments(new Runnable() {
-      @Override
-      public void run() {
-        connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment),
-                          new ParameterizedRunnable<String>() {
-                            @Override
-                            public void run(String s) {
-                              RemoteServersView.getInstance(project).showDeployment(connection, s);
-                            }
-                          });
-      }
-    });
+    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment),
+                      new ParameterizedRunnable<String>() {
+                        @Override
+                        public void run(String s) {
+                          RemoteServersView.getInstance(project).showDeployment(connection, s);
+                        }
+                      });
     return null;
   }
 }
