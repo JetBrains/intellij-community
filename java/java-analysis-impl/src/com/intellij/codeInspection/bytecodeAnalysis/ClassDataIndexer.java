@@ -183,7 +183,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
             }
           }
         } catch (AnalyzerException e) {
-          LOG.error("Error during processing of " + method, e);
+          LOG.info("Error during processing of " + method, e);
         }
       }
     }, 0);

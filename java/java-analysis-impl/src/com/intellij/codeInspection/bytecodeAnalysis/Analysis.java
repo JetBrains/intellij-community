@@ -215,6 +215,7 @@ class MakeResult<Res> implements PendingAction<Res> {
 }
 
 abstract class Analysis<Res> {
+  private static final int STEPS_LIMIT = 30000;
   final RichControlFlow richControlFlow;
   final Direction direction;
   final ControlFlowGraph controlFlow;
@@ -271,7 +272,12 @@ abstract class Analysis<Res> {
 
   final Equation<Key, Value> analyze() throws AnalyzerException {
     pending.push(new ProceedState<Res>(createStartState()));
+    int steps = 0;
     while (!pending.isEmpty() && earlyResult == null) {
+      steps ++;
+      if (steps >= STEPS_LIMIT) {
+        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
+      }
       PendingAction<Res> action = pending.pop();
       if (action instanceof MakeResult) {
         MakeResult<Res> makeResult = (MakeResult<Res>) action;
