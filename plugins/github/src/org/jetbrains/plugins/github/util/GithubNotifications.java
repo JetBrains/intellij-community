@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.util;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -137,5 +138,13 @@ public class GithubNotifications {
   @Messages.YesNoResult
   public static int showYesNoDialog(@Nullable Project project, @NotNull String title, @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
+  }
+
+  @Messages.YesNoResult
+  public static int showYesNoDialog(@Nullable Project project,
+                                    @NotNull String title,
+                                    @NotNull String message,
+                                    @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+    return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
   }
 }

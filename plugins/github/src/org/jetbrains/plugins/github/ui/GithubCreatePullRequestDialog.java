@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.github.GithubCreatePullRequestWorker;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubProjectSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
@@ -87,10 +89,11 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
           myPanel.setBranches(fork.getBranches());
           myPanel.setSelectedBranch(fork.getDefaultBranch());
 
-          if (fork.getRemoteName() == null && !fork.isProposedToCreateRemote()) { // TODO: do not ask again ?
+          if (fork.getRemoteName() == null && !fork.isProposedToCreateRemote()) {
             if (Messages.YES ==
                 GithubNotifications
-                  .showYesNoDialog(project, "Can't Find Remote", "Configure remote for '" + fork.getPath().getUser() + "'?")) {
+                  .showYesNoDialog(project, "Can't Find Remote", "Configure remote for '" + fork.getPath().getUser() + "'?",
+                                   new CreateRemoteDoNotAskOption())) {
               myWorker.configureRemote(fork);
             }
             fork.setProposedToCreateRemote(true);
@@ -217,5 +220,33 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   @TestOnly
   public void testSetFork(@NotNull GithubFullPath forkPath) {
     myPanel.setSelectedFork(forkPath);
+  }
+
+  private static class CreateRemoteDoNotAskOption implements DoNotAskOption {
+    @Override
+    public boolean isToBeShown() {
+      return GithubSettings.getInstance().isCreatePullRequestCreateRemoteDoNotAsk();
+    }
+
+    @Override
+    public void setToBeShown(boolean value, int exitCode) {
+      GithubSettings.getInstance().setCreatePullRequestCreateRemoteDoNotAsk(value);
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return false;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getDoNotShowMessage() {
+      return CommonBundle.message("dialog.options.do.not.ask");
+    }
   }
 }

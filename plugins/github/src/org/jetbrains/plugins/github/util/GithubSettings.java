@@ -60,6 +60,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
     public boolean VALID_GIT_AUTH = true;
+    public boolean CREATE_PULL_REQUEST_CREATE_REMOTE_DO_NOT_ASK = false;
   }
 
   public static GithubSettings getInstance() {
@@ -128,6 +129,14 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   public boolean isSavePasswordMakesSense() {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
+  }
+
+  public boolean isCreatePullRequestCreateRemoteDoNotAsk() {
+    return myState.CREATE_PULL_REQUEST_CREATE_REMOTE_DO_NOT_ASK;
+  }
+
+  public void setCreatePullRequestCreateRemoteDoNotAsk(boolean value) {
+    myState.CREATE_PULL_REQUEST_CREATE_REMOTE_DO_NOT_ASK = value;
   }
 
   public void setAnonymousGist(final boolean anonymousGist) {
