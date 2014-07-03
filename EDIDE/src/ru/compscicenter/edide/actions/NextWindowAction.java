@@ -27,14 +27,14 @@ public class NextWindowAction extends AnAction {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
         if (selectedTaskFile != null) {
-          selectedTaskFile.updateOffsets(project, selectedEditor);
-          Window selectedWindow = taskManager.getSelectedWindow();
+          selectedTaskFile.updateOffsets(selectedEditor);
+          Window selectedWindow = selectedTaskFile.getSelectedWindow();
           boolean ifDraw = false;
           for (Window window : selectedTaskFile.getWindows()) {
             if (ifDraw) {
               selectedEditor.getMarkupModel().removeAllHighlighters();
-              taskManager.setSelectedWindow(window);
-              window.draw(selectedEditor, !window.isResolveStatus());
+              selectedTaskFile.setSelectedWindow(window);
+              window.draw(selectedEditor, !window.isResolveStatus(), true);
               return;
             }
             if (window == selectedWindow) {

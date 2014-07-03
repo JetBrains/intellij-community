@@ -1,11 +1,9 @@
 package ru.compscicenter.edide.course;
 
-import com.google.gson.annotations.Expose;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,7 +12,6 @@ import ru.compscicenter.edide.StudyTaskManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,13 +21,11 @@ import java.util.List;
  * Time: 18:53
  */
 public class TaskFile {
-  @Expose
   private String name;
-  @Expose
   private List<Window> windows;
-  @Expose
   private int myLineNum = -1;
   private Task myTask;
+  private Window mySelectedWindow = null;
 
   public Element saveState() {
     Element fileElement = new Element("file");
@@ -44,6 +39,14 @@ public class TaskFile {
 
   public Task getTask() {
     return myTask;
+  }
+
+  public Window getSelectedWindow() {
+    return mySelectedWindow;
+  }
+
+  public void setSelectedWindow(Window selectedWindow) {
+    mySelectedWindow = selectedWindow;
   }
 
   public String getName() {
@@ -70,9 +73,9 @@ public class TaskFile {
     myLineNum = lineNum;
   }
 
-  public void create(Project project, VirtualFile baseDir, String resourseRoot) throws IOException {
+  public void create(Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
     String systemIndependentName = FileUtil.toSystemIndependentName(name);
-    String systemIndependentResourceRootName = FileUtil.toSystemIndependentName(resourseRoot);
+    String systemIndependentResourceRootName = FileUtil.toSystemIndependentName(resourseRoot.getName());
     final int index = systemIndependentName.lastIndexOf("/");
     if (index > 0) {
       systemIndependentName = systemIndependentName.substring(index + 1);
@@ -82,7 +85,7 @@ public class TaskFile {
 
   public void drawAllWindows(Editor editor) {
     for (Window window : windows) {
-      window.draw(editor, false);
+      window.draw(editor, false, false);
     }
   }
 
@@ -153,27 +156,26 @@ public class TaskFile {
     return lineCount - 1;
   }
 
-  public void updateOffsets(Project project, Editor selectedEditor) {
-    Window selectedTaskWindow = StudyTaskManager.getInstance(project).getSelectedWindow();
-    if (selectedTaskWindow != null) {
-      RangeHighlighter selectedRangeHighlighter = selectedTaskWindow.getRangeHighlighter();
+  public void updateOffsets(Editor selectedEditor) {
+    if (mySelectedWindow != null) {
+      RangeHighlighter selectedRangeHighlighter = mySelectedWindow.getRangeHighlighter();
       if (selectedRangeHighlighter != null) {
         int lineChange = selectedEditor.getDocument().getLineCount() - getLineNum();
         if (lineChange != 0) {
           int newStartLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getStartOffset());
           int newEndLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getEndOffset());
           increment(newStartLine, lineChange);
-          selectedTaskWindow.setLine(selectedTaskWindow.getLine() - lineChange);
-          setNewOffsetInLine(newEndLine, selectedTaskWindow.getStart() + selectedTaskWindow.getOffsetInLine(),
+          mySelectedWindow.setLine(mySelectedWindow.getLine() - lineChange);
+          setNewOffsetInLine(newEndLine, mySelectedWindow.getStart() + mySelectedWindow.getOffsetInLine(),
                              selectedRangeHighlighter.getEndOffset() - selectedEditor.getDocument().getLineStartOffset(newEndLine));
         }
         else {
-          int oldEnd = selectedTaskWindow.getRealStartOffset(selectedEditor) + selectedTaskWindow.getOffsetInLine();
+          int oldEnd = mySelectedWindow.getRealStartOffset(selectedEditor) + mySelectedWindow.getOffsetInLine();
           int endChange = selectedRangeHighlighter.getEndOffset() - oldEnd;
-          incrementAfterOffset(selectedTaskWindow.getLine(), selectedTaskWindow.getStart(), endChange);
+          incrementAfterOffset(mySelectedWindow.getLine(), mySelectedWindow.getStart(), endChange);
         }
         int newLength = selectedRangeHighlighter.getEndOffset() - selectedRangeHighlighter.getStartOffset();
-        selectedTaskWindow.setOffsetInLine(newLength);
+        mySelectedWindow.setOffsetInLine(newLength);
       }
     }
   }

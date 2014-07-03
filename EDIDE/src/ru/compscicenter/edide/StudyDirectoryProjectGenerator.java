@@ -112,7 +112,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
       course.setParents();
-      course.create(project, baseDir, baseCourseFile.getParent());
+      course.create(project, baseDir, new File(baseCourseFile.getParent()));
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager tm = StudyTaskManager.getInstance(project);
       tm.setCourse(course);

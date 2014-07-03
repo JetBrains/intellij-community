@@ -1,10 +1,7 @@
 package ru.compscicenter.edide;
 
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+
 import com.google.gson.annotations.Expose;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
@@ -18,10 +15,6 @@ import ru.compscicenter.edide.course.*;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
-
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,9 +39,7 @@ import java.util.Map;
 public class StudyTaskManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static Map<String, StudyTaskManager> myTaskManagers = new HashMap<String, StudyTaskManager>();
   private final Project myProject;
-  @Expose
   private Course myCourse;
-  private Window mySelectedWindow;
 
 
   public void setCourse(Course course) {
@@ -59,16 +50,8 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     myTaskManagers.put(project.getBasePath(), this);
     myProject = project;
     myCourse = null;
-    mySelectedWindow = null;
   }
 
-  public Window getSelectedWindow() {
-    return mySelectedWindow;
-  }
-
-  public void setSelectedWindow(Window selectedWindow) {
-    mySelectedWindow = selectedWindow;
-  }
 
   public Course getCourse() {
     return myCourse;

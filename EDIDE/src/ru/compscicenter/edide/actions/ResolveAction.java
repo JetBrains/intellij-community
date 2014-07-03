@@ -34,11 +34,11 @@ class ResolveAction extends AnAction {
       StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
       TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
       if (selectedTaskFile != null) {
-        selectedTaskFile.updateOffsets(project, selectedEditor);
-        Window selectedWindow = taskManager.getSelectedWindow();
+        selectedTaskFile.updateOffsets(selectedEditor);
+        Window selectedWindow = selectedTaskFile.getSelectedWindow();
         selectedWindow.setResolveStatus(true);
         selectedEditor.getMarkupModel().removeAllHighlighters();
-        selectedWindow.draw(selectedEditor, false);
+        selectedWindow.draw(selectedEditor, false, true);
         fileDocumentManager.saveAllDocuments();
         fileDocumentManager.reloadFiles(openedFile);
       }

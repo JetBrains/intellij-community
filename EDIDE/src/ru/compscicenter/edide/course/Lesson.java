@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -36,10 +37,10 @@ public class Lesson {
     this.taskList = taskList;
   }
 
-  public void create(final Project project, VirtualFile baseDir, int index, String resourseRoot) throws IOException {
+  public void create(final Project project, VirtualFile baseDir, int index, File resourseRoot) throws IOException {
     VirtualFile lessonDir =  baseDir.createChildDirectory(this, "lesson" + Integer.toString(index));
     for (int i = 0; i < taskList.size(); i++) {
-      taskList.get(i).create(project, lessonDir, i + 1, resourseRoot + "/"+lessonDir.getName() );
+      taskList.get(i).create(project, lessonDir, i + 1, new File(resourseRoot, lessonDir.getName()));
     }
 
   }

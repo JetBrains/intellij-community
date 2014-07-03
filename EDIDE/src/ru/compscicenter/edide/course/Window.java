@@ -96,7 +96,7 @@ public class Window implements Comparable{
     return possibleAnswer;
   }
 
-  public void draw(Editor editor, boolean drawSelection) {
+  public void draw(Editor editor, boolean drawSelection, boolean moveCaret) {
     if (myOffsetInLine == 0) {
       myOffsetInLine = text.length();
     }
@@ -122,7 +122,9 @@ public class Window implements Comparable{
     if (drawSelection) {
       editor.getSelectionModel().setSelection(startOffset, startOffset + myOffsetInLine);
     }
-    editor.getCaretModel().moveToOffset(startOffset);
+    if (moveCaret) {
+      editor.getCaretModel().moveToOffset(startOffset);
+    }
     rh.setGreedyToLeft(true);
     rh.setGreedyToRight(true);
   }

@@ -26,8 +26,8 @@ public class PrevWindowAction extends AnAction {
         StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
         TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
         if (selectedTaskFile != null) {
-          selectedTaskFile.updateOffsets(project, selectedEditor);
-          Window selectedWindow = taskManager.getSelectedWindow();
+          selectedTaskFile.updateOffsets(selectedEditor);
+          Window selectedWindow = selectedTaskFile.getSelectedWindow();
           Window prev = null;
           for (Window window : selectedTaskFile.getWindows()) {
             if (window == selectedWindow) {
@@ -38,8 +38,8 @@ public class PrevWindowAction extends AnAction {
 
           if (prev != null) {
             selectedEditor.getMarkupModel().removeAllHighlighters();
-            taskManager.setSelectedWindow(prev);
-            prev.draw(selectedEditor, !prev.isResolveStatus());
+            selectedTaskFile.setSelectedWindow(prev);
+            prev.draw(selectedEditor, !prev.isResolveStatus(), true);
             return;
           }
           //TODO:propose user to do next action

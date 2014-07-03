@@ -1,10 +1,13 @@
 package ru.compscicenter.edide.course;
 
 import com.google.gson.annotations.Expose;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -14,6 +17,7 @@ import java.util.List;
  * Time: 18:42
  */
 public class Task {
+  private static final Logger LOG = Logger.getInstance(Task.class.getName());
   @Expose
   private String testFile;
   @Expose
@@ -52,11 +56,23 @@ public class Task {
     this.text = text;
   }
 
-  public void create(Project project, VirtualFile baseDir, int index, String resourseRoot) throws IOException {
+  public void create(Project project, VirtualFile baseDir, int index, File resourseRoot) throws IOException {
     VirtualFile taskDir = baseDir.createChildDirectory(this, "task" + Integer.toString(index));
+    File newResourceRoot = new File(resourseRoot, taskDir.getName());
     for (int i = 0; i < taskFiles.size(); i++) {
-      taskFiles.get(i).create(project, taskDir, resourseRoot+"/"+taskDir.getName());
+      taskFiles.get(i).create(project, taskDir, newResourceRoot);
     }
+    String systemIndependentName = FileUtil.toSystemIndependentName(testFile);
+    final int i = systemIndependentName.lastIndexOf("/");
+    if (i > 0) {
+      systemIndependentName = systemIndependentName.substring(i + 1);
+    }
+      VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
+      if (ideaDir != null) {
+        FileUtil.copy(new File(newResourceRoot, testFile),
+                      new File(ideaDir.getCanonicalPath(), systemIndependentName));
+      }
+
   }
 
   public TaskFile getFile(String fileName) {
