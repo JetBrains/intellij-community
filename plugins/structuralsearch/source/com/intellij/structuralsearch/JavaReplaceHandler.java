@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.structuralsearch.impl.matcher.JavaMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -281,7 +282,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         replacement = handleSymbolReplacemenent(replacement, el);
 
         if (replacement instanceof PsiTryStatement) {
-          final List<PsiCatchSection> unmatchedCatchSections = el.getUserData(MatcherImplUtil.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY);
+          final List<PsiCatchSection> unmatchedCatchSections = el.getUserData(JavaMatchingVisitor.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY);
           final PsiCatchSection[] catches = ((PsiTryStatement)replacement).getCatchSections();
 
           if (unmatchedCatchSections != null) {
