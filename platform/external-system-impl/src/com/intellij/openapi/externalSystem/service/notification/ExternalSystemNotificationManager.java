@@ -133,6 +133,7 @@ public class ExternalSystemNotificationManager {
             public void run() {
               app.runWriteAction(new Runnable() {
                 public void run() {
+                  if (myProject.isDisposed()) return;
                   ExternalSystemUtil.ensureToolWindowContentInitialized(myProject, externalSystemId);
                   initializedExternalSystem.add(externalSystemId);
                 }
@@ -305,9 +306,11 @@ public class ExternalSystemNotificationManager {
   }
 
   @NotNull
-  private NewErrorTreeViewPanel prepareMessagesView(@NotNull final ProjectSystemId externalSystemId,
+  public NewErrorTreeViewPanel prepareMessagesView(@NotNull final ProjectSystemId externalSystemId,
                                                     @NotNull final NotificationSource notificationSource,
                                                     boolean activateView) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     final NewErrorTreeViewPanel errorTreeView;
     final String contentDisplayName = getContentDisplayName(notificationSource, externalSystemId);
     final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
