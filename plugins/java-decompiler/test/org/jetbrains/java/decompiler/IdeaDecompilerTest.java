@@ -78,7 +78,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testStubCompatibilityRt() {
-    String path = "/home/sher/classes.jar!/"; //getRtJarPath() + "!/";
+    String path = getRtJarPath() + "!/";
     VirtualFile dir = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, dir);
     doTestStubCompatibility(dir);
