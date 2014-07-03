@@ -113,21 +113,20 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
           (access & Opcodes.ACC_PRIVATE) != 0 ||
           (access & Opcodes.ACC_STATIC) != 0 ||
           "<init>".equals(methodNode.name);
+        try {
+          boolean added = false;
+          ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
+          Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
+          Type resultType = Type.getReturnType(methodNode.desc);
+          int resultSort = resultType.getSort();
 
-        ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
-        boolean added = false;
-        Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
-        Type resultType = Type.getReturnType(methodNode.desc);
-        int resultSort = resultType.getSort();
+          boolean isReferenceResult = resultSort == Type.OBJECT || resultSort == Type.ARRAY;
+          boolean isBooleanResult = Type.BOOLEAN_TYPE == resultType;
 
-        boolean isReferenceResult = resultSort == Type.OBJECT || resultSort == Type.ARRAY;
-        boolean isBooleanResult = Type.BOOLEAN_TYPE == resultType;
-
-        if (graph.transitions.length > 0) {
-          DFSTree dfs = cfg.buildDFSTree(graph.transitions);
-          boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
-          if (reducible) {
-            try {
+          if (graph.transitions.length > 0) {
+            DFSTree dfs = cfg.buildDFSTree(graph.transitions);
+            boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
+            if (reducible) {
               TIntHashSet resultOrigins = cfg.resultOrigins(className, methodNode);
               for (int i = 0; i < argumentTypes.length; i++) {
                 Type argType = argumentTypes[i];
@@ -152,38 +151,39 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze());
               }
               added = true;
-            } catch (AnalyzerException e) {
-              LOG.error(e);
             }
-          } else {
-            LOG.debug("CFG for " + method + " is not reducible");
+            else {
+              LOG.debug("CFG for " + method + " is not reducible");
+            }
           }
-        }
 
-        if (!added) {
-          method = new Method(className, methodNode.name, methodNode.desc);
-          for (int i = 0; i < argumentTypes.length; i++) {
-            Type argType = argumentTypes[i];
-            int argSort = argType.getSort();
-            boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
+          if (!added) {
+            method = new Method(className, methodNode.name, methodNode.desc);
+            for (int i = 0; i < argumentTypes.length; i++) {
+              Type argType = argumentTypes[i];
+              int argSort = argType.getSort();
+              boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
 
-            if (isReferenceArg) {
-              contractEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
-              if (isReferenceResult || isBooleanResult) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
+              if (isReferenceArg) {
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
+                if (isReferenceResult || isBooleanResult) {
+                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
+                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
+                }
+              }
+              if (Type.BOOLEAN_TYPE.equals(argType)) {
+                if (isReferenceResult || isBooleanResult) {
+                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
+                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
+                }
               }
             }
-            if (Type.BOOLEAN_TYPE.equals(argType)) {
-              if (isReferenceResult || isBooleanResult) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
-              }
+            if (isReferenceResult) {
+              parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
             }
           }
-          if (isReferenceResult) {
-            parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
-          }
+        } catch (AnalyzerException e) {
+          LOG.error("Error during processing of " + method, e);
         }
       }
     }, 0);

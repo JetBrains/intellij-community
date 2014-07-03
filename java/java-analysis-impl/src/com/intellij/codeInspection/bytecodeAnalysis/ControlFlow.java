@@ -29,13 +29,8 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 final class cfg {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.cfg");
-  static ControlFlowGraph buildControlFlowGraph(String className, MethodNode methodNode) {
-    try {
-      return new ControlFlowBuilder(className, methodNode).buildCFG();
-    } catch (AnalyzerException e) {
-      // TODO
-      throw new RuntimeException();
-    }
+  static ControlFlowGraph buildControlFlowGraph(String className, MethodNode methodNode) throws AnalyzerException {
+    return new ControlFlowBuilder(className, methodNode).buildCFG();
   }
 
   static TIntHashSet resultOrigins(String className, MethodNode methodNode) {
