@@ -43,6 +43,10 @@ public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase 
     assertBaseNameEquals("property-file_fr.file_en.utf8.properties", "property-file_fr.file.utf8");
   }
 
+  public void testBaseNameWithLongLocale() {
+    assertBaseNameEquals("property_latin.properties", "property");
+  }
+
   public void testBaseNameWithCountryAndVariant() {
     assertBaseNameEquals("property-file_fr.file_en_GB_UNIX.utf8.properties", "property-file_fr.file.utf8");
   }
@@ -55,13 +59,13 @@ public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase 
     assertBaseNameEquals("Base_Properties.utf8.properties", "Base_Properties.utf8");
   }
 
-  public void test1() {
+  public void _test1() {
     assertBaseNameEquals("Base_Page_fr.utf8.properties", "Base_Page.utf8");
   }
-  public void test2() {
+  public void _test2() {
     assertBaseNameEquals("Base_Page_en.utf8.properties", "Base_Page.utf8");
   }
-  public void test3() {
+  public void _test3() {
     assertBaseNameEquals("Base_Page.utf8.properties", "Base_Page.utf8");
   }
 

@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class PropertiesUtil {
-  private final static Pattern LOCALE_PATTERN = Pattern.compile("(_[^\\._]{2}(_[^\\._]+){0,2})\\.[^_]+$");
+  private final static Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
   private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
 
 
