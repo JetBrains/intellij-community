@@ -308,10 +308,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       @Override
       public void visitErrorElement(PsiErrorElement element) {
         super.visitErrorElement(element);
-        final PsiElement parent = element.getParent();
-        if (parent != myCurrent || !"';' expected".equals(element.getErrorDescription())) {
-          throw new MalformedPatternException(element.getErrorDescription());
-        }
+        //final PsiElement parent = element.getParent();
+        //if (parent != myCurrent || !"';' expected".equals(element.getErrorDescription())) {
+        //  throw new MalformedPatternException(element.getErrorDescription());
+        //}
       }
 
       public void setCurrent(PsiElement current) {
