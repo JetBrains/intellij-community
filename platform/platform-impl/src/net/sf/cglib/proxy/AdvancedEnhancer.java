@@ -91,7 +91,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   private static final Type CALLBACK =
     TypeUtils.parseType("net.sf.cglib.proxy.Callback");
   private static final Type CALLBACK_ARRAY =
-    Type.getType("[Lnet/sf/cglib/proxy/Callback;");
+    Type.getType(Callback[].class);
   private static final Signature CSTRUCT_NULL =
     TypeUtils.parseConstructor("");
   private static final Signature SET_THREAD_CALLBACKS =
