@@ -315,6 +315,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         }
       }
     }
+    if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+      LOG.info("Chunk " + chunk + " compilation finished");
+    }
     return compiled;
   }
 
