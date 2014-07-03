@@ -88,8 +88,7 @@ public class ClassWrapper {
 			boolean isError = false;
 			
 			try {
-				// TODO: simple check if code present?
-				if((mt.getAccessFlags() & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) == 0) { // native or abstract method, explicit or interface
+				if(mt.containsCode()) {
 					
 					int maxsec = 10 * Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
 					
