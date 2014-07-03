@@ -71,6 +71,7 @@ public class PySdkFlavorTest extends PyTestCase {
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("PyPy 2.3.1 [Python 2.7.6]", mockSdk.getVersionString());
     assertEquals(LanguageLevel.PYTHON27, flavor.getLanguageLevel(mockSdk));
+    assertEquals("__builtin__.py", PythonSdkType.getBuiltinsFileName(mockSdk));
   }
 
   public void testPyPy323VersionString() {
@@ -80,6 +81,7 @@ public class PySdkFlavorTest extends PyTestCase {
     final Sdk mockSdk = createMockSdk(flavor, versionOutput);
     assertEquals("PyPy 2.3.1 [Python 3.2.5]", mockSdk.getVersionString());
     assertEquals(LanguageLevel.PYTHON32, flavor.getLanguageLevel(mockSdk));
+    assertEquals("builtins.py", PythonSdkType.getBuiltinsFileName(mockSdk));
   }
 
   // TODO: Add tests for MayaPy and IronPython SDK flavors
