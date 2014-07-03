@@ -48,6 +48,8 @@ import java.util.Map;
 import java.util.jar.Manifest;
 
 public class IdeaDecompiler extends ClassFileDecompilers.Light {
+  private static final Logger LOG = Logger.getInstance(IdeaDecompiler.class);
+
   private static final String BANNER =
       "//\n" +
       "// Source code recreated from a .class file by IntelliJ IDEA\n" +
@@ -104,13 +106,14 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       return BANNER + saver.myResult;
     }
     catch (Exception e) {
-      Logger.getInstance(IdeaDecompiler.class).error(file.getPath(), e);
+      LOG.error(file.getUrl(), e);
       return ClsFileImpl.decompile(file);
     }
   }
 
   private static boolean canHandle(VirtualFile file) {
     if ("package-info.class".equals(file.getName())) {
+      LOG.info("skipped: " + file.getUrl());
       return false;
     }
 
@@ -136,7 +139,12 @@ public class IdeaDecompiler extends ClassFileDecompilers.Light {
       }, ClassReader.SKIP_CODE);
     }
     catch (IOException ignore) { }
-    return !isGroovy.get();
+    if (isGroovy.get()) {
+      LOG.info("skipped Groovy class: " + file.getUrl());
+      return false;
+    }
+
+    return true;
   }
 
   private static class MyByteCodeProvider implements IBytecodeProvider {
