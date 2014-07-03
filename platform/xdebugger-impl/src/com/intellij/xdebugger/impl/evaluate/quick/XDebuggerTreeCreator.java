@@ -26,8 +26,14 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,String>> {
   @NotNull private final Project myProject;
@@ -46,8 +52,25 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
   @NotNull
   @Override
   public Tree createTree(@NotNull Pair<XValue, String> descriptor) {
-    XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, myMarkers);
-    tree.setRoot(new XValueNodeImpl(tree, null, descriptor.getSecond(), descriptor.getFirst()), true);
+    final XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, myMarkers);
+    final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(), descriptor.getFirst());
+    tree.setRoot(root, true);
+    // expand root on load
+    tree.addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (node == root && !node.isLeaf()) {
+          node.getChildCount();
+        }
+      }
+
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+        if (node == root) {
+          tree.expandPath(node.getPath());
+        }
+      }
+    });
     return tree;
   }
 
