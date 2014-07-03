@@ -14,7 +14,7 @@ import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyBlockEvaluator;
+import com.jetbrains.python.psi.impl.blockEvaluator.PyBlockEvaluator;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
