@@ -1,7 +1,8 @@
-package ru.compscicenter.edide;
+package ru.compscicenter.edide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import ru.compscicenter.edide.StudyTaskManager;
 
 /**
 * User: lia

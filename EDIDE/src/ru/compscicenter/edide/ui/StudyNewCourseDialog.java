@@ -1,10 +1,11 @@
-package ru.compscicenter.edide;
+package ru.compscicenter.edide.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import org.jetbrains.annotations.Nullable;
+import ru.compscicenter.edide.StudyDirectoryProjectGenerator;
 
 import javax.swing.*;
 import java.awt.event.*;

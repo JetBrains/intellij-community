@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.google.gson.annotations.Expose;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -13,10 +14,15 @@ import java.util.List;
  * Time: 18:42
  */
 public class Task {
+  @Expose
   private String testFile;
+  @Expose
   private String name;
+  @Expose
   private String text;
+  @Expose
   private List<TaskFile> taskFiles;
+  private  Lesson myLesson;
 
   public String getTestFile() {
     return testFile;
@@ -64,9 +70,20 @@ public class Task {
 
   public Element saveState() {
     Element taskElement = new Element("task");
+    taskElement.setAttribute("testFile", testFile);
+    taskElement.setAttribute("name", name);
+    //TODO:replace with real text, not fileName
+    taskElement.setAttribute("text", text);
     for (TaskFile file: taskFiles) {
       taskElement.addContent(file.saveState());
     }
     return taskElement;
+  }
+
+  public void setParents(Lesson lesson) {
+    myLesson = lesson;
+    for (TaskFile tasFile: taskFiles) {
+      tasFile.setParents(this);
+    }
   }
 }

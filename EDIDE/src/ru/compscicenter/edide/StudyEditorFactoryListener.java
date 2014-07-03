@@ -59,10 +59,14 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       if (selectedWindow!= null && selectedWindow != window) {
         DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
-        AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.CheckAction");
-        AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.ResolveAction");
+        AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
+        AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.ResolveAction");
+        AnAction nextAction = ActionManager.getInstance().getAction("NextWindow");
+        AnAction prevAction = ActionManager.getInstance().getAction("PrevWindowAction");
         defaultActionGroup.add(action);
         defaultActionGroup.add(resolveAction);
+        defaultActionGroup.add(nextAction);
+        defaultActionGroup.add(prevAction);
         ListPopup popUp =
           JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,
                                                               DataManager.getInstance().getDataContext(e.getEditor().getComponent()),
@@ -92,10 +96,12 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
         if (!(taskManager.getSelectedWindow() == window)) {
           DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
-          AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.CheckAction");
-          AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.ResolveAction");
+          AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
+          AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.ResolveAction");
+          AnAction nextAction = ActionManager.getInstance().getAction("NextWindow");
           defaultActionGroup.add(action);
           defaultActionGroup.add(resolveAction);
+          defaultActionGroup.add(nextAction);
           ListPopup popUp =
             JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,
                                                                 DataManager.getInstance().getDataContext(e.getEditor().getComponent()),
@@ -138,7 +144,8 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 }
               }
               catch (Exception e) {
-                LOG.error(e.getStackTrace());
+                e.printStackTrace();
+                LOG.error(e.getMessage());
               }
             }
           });

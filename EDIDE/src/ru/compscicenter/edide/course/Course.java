@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.google.gson.annotations.Expose;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,11 +15,24 @@ import java.util.List;
  */
 public class Course {
 
+  @Expose
   private List<Lesson> lessons;
+  @Expose
   private String description;
+  @Expose
   private String name;
   public List<Lesson> getLessons() {
     return lessons;
+  }
+
+  public void setParents() {
+    for (Lesson lesson:lessons) {
+      lesson.setParents(this);
+    }
+  }
+
+  public void setLessons(List<Lesson> lessons) {
+    this.lessons = lessons;
   }
 
   public void create(final Project project, final VirtualFile baseDir, final String resourseRoot) {
@@ -47,5 +61,9 @@ public class Course {
 
   public String getName() {
     return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 }

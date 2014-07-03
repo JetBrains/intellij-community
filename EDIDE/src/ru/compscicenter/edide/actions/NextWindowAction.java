@@ -1,4 +1,4 @@
-package ru.compscicenter.edide;
+package ru.compscicenter.edide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import ru.compscicenter.edide.StudyEditor;
+import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.*;
 
 /**

@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,7 @@ import java.beans.PropertyChangeListener;
 * Date: 23.05.14
 * Time: 14:16
 */
-class StudyEditor implements FileEditor {
+public class StudyEditor implements FileEditor {
   private final FileEditor defaultEditor;
   private final JComponent comp;
   private String getTextForTask(VirtualFile file, Project project) {
@@ -38,7 +39,7 @@ class StudyEditor implements FileEditor {
     comp.add(taskText, BorderLayout.NORTH);
   }
 
-  FileEditor getDefaultEditor() {
+  public FileEditor getDefaultEditor() {
     return defaultEditor;
   }
 
@@ -135,18 +136,18 @@ class StudyEditor implements FileEditor {
     defaultEditor.putUserData(key, value);
   }
 
-
-  static public Editor getRecentOpenedEditor(Project project) {
-    FileEditor[] fes = FileEditorManager.getInstance(project).getAllEditors();
-    for (int i = fes.length - 1; i >= 0; i--) {
-      FileEditor fe = fes[i];
-      if (fe instanceof StudyEditor) {
-        FileEditor defaultEditor = ((StudyEditor)fe).getDefaultEditor();
-        if (defaultEditor instanceof PsiAwareTextEditorImpl) {
-          return ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
-        }
+  public static Editor getSelectedEditor(Project project) {
+    Editor selectedEditor = null;
+    FileEditor fileEditor =
+      FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
+        .getFirst();
+    if (fileEditor instanceof StudyEditor) {
+      FileEditor defaultEditor = ((StudyEditor)fileEditor).getDefaultEditor();
+      if (defaultEditor instanceof PsiAwareTextEditorImpl) {
+        selectedEditor = ((PsiAwareTextEditorImpl)defaultEditor).getEditor();
       }
     }
-    return null;
+    return selectedEditor;
   }
+
 }

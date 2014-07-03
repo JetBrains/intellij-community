@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.google.gson.annotations.Expose;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -13,8 +14,11 @@ import java.util.List;
  * Time: 18:40
  */
 public class Lesson {
+  @Expose
   private String name;
+  @Expose
   private List<Task> taskList;
+  private Course myCourse = null;
 
   public String getName() {
     return name;
@@ -46,5 +50,12 @@ public class Lesson {
       lessonElement.addContent(task.saveState());
     }
     return lessonElement;
+  }
+
+  public void setParents(Course course) {
+    myCourse = course;
+    for (Task task: taskList) {
+      task.setParents(this);
+    }
   }
 }

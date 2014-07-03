@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.ui.StudyNewCourseDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +30,7 @@ import java.util.*;
 /**
  * User: lia
  */
-class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
+public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
   private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
   public static final String REPO_URL = "https://github.com/medvector/initial-python-course/archive/master.zip";
   public static final String USER_NAME = "medvector";
@@ -110,6 +111,7 @@ class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator {
       Reader reader = new InputStreamReader(new FileInputStream(baseCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
+      course.setParents();
       course.create(project, baseDir, baseCourseFile.getParent());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager tm = StudyTaskManager.getInstance(project);
