@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -166,7 +168,7 @@ public class GithubUtil {
   @NotNull
   private static GithubUserDetailed testConnection(@NotNull Project project,
                                                    @NotNull GithubAuthDataHolder authHolder,
-                                                   @NotNull ProgressIndicator indicator) throws IOException {
+                                                   @NotNull final ProgressIndicator indicator) throws IOException {
     GithubAuthData auth = authHolder.getAuthData();
     try {
       final GithubConnection connection = new GithubConnection(auth, true);
@@ -188,14 +190,30 @@ public class GithubUtil {
   }
 
   @NotNull
+  private static ScheduledFuture<?> addCancellationListener(@NotNull Runnable run) {
+    return JobScheduler.getScheduler().scheduleWithFixedDelay(run, 1000, 300, TimeUnit.MILLISECONDS);
+  }
+
+  @NotNull
   private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
                                                             @NotNull final GithubConnection connection) {
-    return ConcurrencyUtil.newSingleScheduledThreadExecutor("Github Progress Canceller").scheduleWithFixedDelay(new Runnable() {
+    return addCancellationListener(new Runnable() {
       @Override
       public void run() {
         if (indicator.isCanceled()) connection.abort();
       }
-    }, 1000, 300, TimeUnit.MILLISECONDS);
+    });
+  }
+
+  @NotNull
+  private static ScheduledFuture<?> addCancellationListener(@NotNull final ProgressIndicator indicator,
+                                                            @NotNull final Thread thread) {
+    return addCancellationListener(new Runnable() {
+      @Override
+      public void run() {
+        if (indicator.isCanceled()) thread.interrupt();
+      }
+    });
   }
 
   public static void getValidAuthData(@NotNull final Project project,
@@ -415,6 +433,35 @@ public class GithubUtil {
       if (e instanceof RuntimeException) throw ((RuntimeException)e);
       if (e instanceof Error) throw ((Error)e);
       throw new RuntimeException(e);
+    }
+  }
+
+  public static <T> T runInterruptable(@NotNull final ProgressIndicator indicator,
+                                       @NotNull ThrowableComputable<T, IOException> task) throws IOException {
+    ScheduledFuture<?> future = null;
+    try {
+      final Thread thread = Thread.currentThread();
+      future = addCancellationListener(indicator, thread);
+
+      return task.compute();
+    }
+    finally {
+      if (future != null) future.cancel(true);
+      Thread.interrupted();
+    }
+  }
+
+  public static <T> T runInterruptable(@NotNull final ProgressIndicator indicator, @NotNull Computable<T> task) {
+    ScheduledFuture<?> future = null;
+    try {
+      final Thread thread = Thread.currentThread();
+      future = addCancellationListener(indicator, thread);
+
+      return task.compute();
+    }
+    finally {
+      if (future != null) future.cancel(true);
+      Thread.interrupted();
     }
   }
 
