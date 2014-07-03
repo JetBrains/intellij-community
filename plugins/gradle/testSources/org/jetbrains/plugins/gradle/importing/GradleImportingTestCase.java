@@ -75,7 +75,6 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     super.setUp();
     myProjectSettings = new GradleProjectSettings();
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
-    System.setProperty(GradleJavaHelper.GRADLE_JAVA_HOME_KEY, "c:\\dev\\Java\\jdk1.6.0_45\\");
     configureWrapper();
   }
 
