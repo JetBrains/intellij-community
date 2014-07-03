@@ -17,8 +17,8 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.IntToIntSetMap;
-import com.sun.istack.internal.NotNull;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
