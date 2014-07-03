@@ -134,10 +134,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.ide.SystemHealthMonitor</implementation-class>
       <headless-implementation-class/>
     </component>
