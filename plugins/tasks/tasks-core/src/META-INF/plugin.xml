@@ -134,6 +134,7 @@
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
 
     <!-- JQL support -->
     <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -75,6 +76,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
   @Override
   public void run() {
     if(myProject.isDisposed()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = ContainerUtil.newArrayList();

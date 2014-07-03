@@ -108,7 +108,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         Set<ServersTreeStructure.RemoteServerNode> nodes = getSelectedRemoteServerNodes();
         if (nodes.size() == 1) {
           RemoteServer<?> server = nodes.iterator().next().getValue();
-          ServerConnectionManager.getInstance().getOrCreateConnection(server).computeDeployments(EmptyRunnable.INSTANCE);
+          ServerConnectionManager.getInstance().getOrCreateConnection(server);
           return true;
         }
         return false;

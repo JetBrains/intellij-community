@@ -36,6 +36,10 @@
       <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
         <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider"/>
       </extensionPoint>
+      <extensionPoint name="variablesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+        <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.pattern.CopyrightVariablesProvider"/>
+      </extensionPoint>
+      
     </extensionPoints>
 
 

@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -32,6 +33,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.ABSTRACT, PsiModifier.FINAL,
     PsiModifier.NATIVE, PsiModifier.SYNCHRONIZED, PsiModifier.STRICTFP, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.DEFAULT
   };
+  public static final Key<List<PsiCatchSection>> UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY = Key.create("UnmatchedCatchSection");
   private final GlobalMatchingVisitor myMatchingVisitor;
   private PsiClass myClazz;
 
@@ -423,6 +425,19 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return element;
   }
 
+  protected boolean matchInAnyOrder(final PsiReferenceList elements, final PsiReferenceList elements2, GlobalMatchingVisitor visitor) {
+    if ((elements == null && visitor.isLeftLooseMatching()) ||
+        elements == elements2 // null
+      ) {
+      return true;
+    }
+
+    return visitor.matchInAnyOrder(
+      elements.getReferenceElements(),
+      (elements2 != null) ? elements2.getReferenceElements() : PsiElement.EMPTY_ARRAY
+    );
+  }
+  
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     final PsiClass saveClazz = this.myClazz;
     final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
@@ -474,14 +489,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final boolean templateIsEnum = clazz.isEnum();
       if (templateIsEnum && !clazz2.isEnum()) return false;
 
-      if (!myMatchingVisitor.matchInAnyOrder(clazz.getExtendsList(), clazz2.getExtendsList())) {
+      if (!matchInAnyOrder(clazz.getExtendsList(), clazz2.getExtendsList(), myMatchingVisitor)) {
         return false;
       }
 
       // check if implements is in extended classes implements
       final PsiReferenceList implementsList = clazz.getImplementsList();
       if (implementsList != null) {
-        if (!myMatchingVisitor.matchInAnyOrder(implementsList, clazz2.getImplementsList())) {
+        if (!matchInAnyOrder(implementsList, clazz2.getImplementsList(), myMatchingVisitor)) {
           final PsiReferenceList anotherExtendsList = clazz2.getExtendsList();
           final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
 
@@ -1389,7 +1404,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0 && !looseMatching) {
-        try2.putUserData(MatcherImplUtil.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY, unmatchedCatchSections);
+        try2.putUserData(UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY, unmatchedCatchSections);
       }
     }
   }
@@ -1613,7 +1628,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                   myMatchingVisitor.match(method.getModifierList(), method2.getModifierList()) &&
                                   myMatchingVisitor.matchSons(method.getParameterList(), method2.getParameterList()) &&
                                   myMatchingVisitor.match(method.getReturnTypeElement(), method2.getReturnTypeElement()) &&
-                                  myMatchingVisitor.matchInAnyOrder(method.getThrowsList(), method2.getThrowsList()) &&
+                                                    matchInAnyOrder(method.getThrowsList(), method2.getThrowsList(), myMatchingVisitor) &&
                                   myMatchingVisitor.matchSonsOptionally(method.getBody(), method2.getBody()));
     }
     finally {

@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -48,7 +50,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class EditorNotificationsImpl extends EditorNotifications {
   private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
-  private static final Key<ProgressIndicator> CURRENT_UPDATES = Key.create("CURRENT_UPDATES");
+  private static final Key<WeakReference<ProgressIndicator>> CURRENT_UPDATES = Key.create("CURRENT_UPDATES");
   private final ThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleThreadExecutor("EditorNotifications executor");
   private final MergingUpdateQueue myUpdateMerger;
 
@@ -81,13 +83,13 @@ public class EditorNotificationsImpl extends EditorNotifications {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ProgressIndicator indicator = file.getUserData(CURRENT_UPDATES);
+        ProgressIndicator indicator = SoftReference.dereference(file.getUserData(CURRENT_UPDATES));
         if (indicator != null) {
           indicator.cancel();
         }
 
         indicator = new ProgressIndicatorBase();
-        file.putUserData(CURRENT_UPDATES, indicator);
+        file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
 
         final ReadTask task = createTask(indicator, file);
         if (task == null) return;
@@ -115,7 +117,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
     return new ReadTask() {
       private boolean isOutdated() {
-        if (myProject.isDisposed() || !file.isValid() || indicator != file.getUserData(CURRENT_UPDATES)) {
+        if (myProject.isDisposed() || !file.isValid() || indicator != SoftReference.dereference(file.getUserData(CURRENT_UPDATES))) {
           return true;
         }
 

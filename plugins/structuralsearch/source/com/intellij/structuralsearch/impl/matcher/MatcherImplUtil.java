@@ -4,16 +4,12 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,7 +19,6 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class MatcherImplUtil {
-  public static final Key<List<PsiCatchSection>> UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY = Key.create("UnmatchedCatchSection");
 
   public static void transform(MatchOptions options) {
     if (options.hasVariableConstraints()) return;

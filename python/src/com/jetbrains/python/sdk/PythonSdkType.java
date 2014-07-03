@@ -143,12 +143,9 @@ public class PythonSdkType extends SdkType {
    */
   @NotNull
   @NonNls
-  public static String getBuiltinsFileName(Sdk sdk) {
-    final String version = sdk.getVersionString();
-    if (version != null && version.startsWith("Python 3")) {
-      return PyBuiltinCache.BUILTIN_FILE_3K;
-    }
-    return PyBuiltinCache.BUILTIN_FILE;
+  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
+    final LanguageLevel level = getLanguageLevelForSdk(sdk);
+    return level.isOlderThan(LanguageLevel.PYTHON30) ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
   }
 
   @NonNls
