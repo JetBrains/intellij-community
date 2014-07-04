@@ -23,6 +23,7 @@ RequestExecutionLevel user
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
 !include UAC.nsh
+!include LogicLib.nsh
 !include "InstallOptions.nsh"
 !include StrFunc.nsh
 ${UnStrStr}
@@ -100,6 +101,56 @@ FunctionEnd
 !macroend
 !insertmacro INST_UNINST_SWITCH ""
 !insertmacro INST_UNINST_SWITCH "un."
+
+Function SplitArg
+Exch $0 ; str
+Push $1 ; inQ
+Push $3 ; idx
+Push $4 ; tmp
+StrCpy $1 0
+StrCpy $3 0
+loop:
+    StrCpy $4 $0 1 $3
+    ${If} $4 == '"'
+        ${If} $1 <> 0
+            StrCpy $0 $0 "" 1
+            IntOp $3 $3 - 1
+        ${EndIf}
+        IntOp $1 $1 !
+    ${EndIf}
+    ${If} $4 == '' ; The end?
+        StrCpy $1 0
+        StrCpy $4 ' '
+    ${EndIf}
+    ${If} $4 == ' '
+    ${AndIf} $1 = 0
+        StrCpy $4 $0 $3
+        StrCpy $1 $4 "" -1
+        ${IfThen} $1 == '"' ${|} StrCpy $4 $4 -1 ${|}
+        killspace:
+            IntOp $3 $3 + 1
+            StrCpy $0 $0 "" $3
+            StrCpy $1 $0 1
+            StrCpy $3 0
+            StrCmp $1 ' ' killspace
+        Push $0 ; Remaining
+        Exch 4
+        Pop $0
+        StrCmp $4 "" 0 moreleft
+            Pop $4
+            Pop $3
+            Pop $1
+            Return
+        moreleft:
+        Exch $4
+        Exch 2
+        Pop $1
+        Pop $3
+        Return
+    ${EndIf}
+    IntOp $3 $3 + 1
+    Goto loop
+FunctionEnd
 
 Function InstDirState
 	!define InstDirState `!insertmacro InstDirStateCall`
@@ -629,6 +680,15 @@ Section "IDEA Files" CopyIdeaFiles
 ;  StrCpy $baseRegKey "HKLM"
 ;  continue_for_current_user:
 
+; ctreate association
+push "One Two Three Four"
+loop:
+    call SplitArg
+    Pop $0
+    StrCmp $0 "" done
+    MessageBox MB_OK "Item= $0"
+    goto loop
+done:
 ; create shortcuts
 
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 1" "State"
@@ -774,13 +834,24 @@ Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
   call winVersion
-  ${If} $0 == "1" 
-    ;do not ask user about creating quick launch under Windows 7  
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "1"
-  ${Else}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
-  ${EndIf}	
-;  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "$(install_for_current_user_only)"
+  StrCpy $R0 3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
+  ${If} $0 == "1"
+    MessageBox MB_OK "NumFields R0= $R0"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
+  ${EndIf}
+  ;create association
+  push ".One,.Two,.Three,.Four,.Five,.Six"
+loop:
+  call SplitArg
+  Pop $0
+  StrCmp $0 "" done
+  IntOp $R0 $R0 + 1
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+;  MessageBox MB_OK "Item= $0, R0= $R0"
+  goto loop
+done:
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
