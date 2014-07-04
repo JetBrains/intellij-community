@@ -17,12 +17,12 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface PyReferenceOwner extends PyElement {
-  @Nullable
+  @NotNull
   PsiPolyVariantReference getReference(PyResolveContext context);
 }

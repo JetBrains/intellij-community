@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,10 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
-
 /**
- * @author yole
+ * Marker interface for Python expressions that are call sites for explicit or implicit function calls.
+ *
+ * @author vlan
  */
-public interface PyBinaryExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
-  PyExpression getLeftExpression();
-  @Nullable PyExpression getRightExpression();
-
-  @Nullable
-  PyElementType getOperator();
-
-  @Nullable
-  PsiElement getPsiOperator();
-
-  boolean isOperator(String chars);
-
-  PyExpression getOppositeExpression(PyExpression expression)
-      throws IllegalArgumentException;
+public interface PyCallSiteExpression extends PyExpression {
 }
