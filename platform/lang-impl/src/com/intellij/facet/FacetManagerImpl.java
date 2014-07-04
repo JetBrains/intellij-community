@@ -132,11 +132,11 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   @Override
   @NotNull
-  public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C cofiguration,
+  public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C configuration,
                                                                           @Nullable final Facet underlying) {
-    final F facet = type.createFacet(myModule, name, cofiguration, underlying);
+    final F facet = type.createFacet(myModule, name, configuration, underlying);
     assertTrue(facet.getModule() == myModule, facet, "module");
-    assertTrue(facet.getConfiguration() == cofiguration, facet, "configuration");
+    assertTrue(facet.getConfiguration() == configuration, facet, "configuration");
     assertTrue(Comparing.equal(facet.getName(), name), facet, "name");
     assertTrue(facet.getUnderlyingFacet() == underlying, facet, "underlyingFacet");
     return facet;
