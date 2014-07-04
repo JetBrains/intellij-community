@@ -109,7 +109,9 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
           assertNotNull(file.getPath(), clsFile);
 
           PsiElement mirror = ((ClsFileImpl)clsFile).getMirror().copy();
-          collapseCodeBlocks(mirror);
+          if (textPath != null) {
+            collapseCodeBlocks(mirror);
+          }
           String decompiled = mirror.getText();
           assertTrue(file.getPath(), decompiled.contains(file.getNameWithoutExtension()));
 

@@ -52,7 +52,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class GotoRelatedFileAction extends AnAction {
+public class GotoRelatedSymbolAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {

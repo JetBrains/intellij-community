@@ -583,6 +583,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof PsiIdentifier;
   }
 
+  @Override
+  public Collection<String> getReservedWords() {
+    return Collections.singleton(PsiModifier.PACKAGE_LOCAL);
+  }
+
   private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, HashMap<String, MatchResult> matchMap) {
     if(info.getElement() ==null) {
       // no specific handling for name of method parameter since it is handled with type
