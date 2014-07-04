@@ -18,7 +18,6 @@ package org.jetbrains.java.decompiler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ import java.io.IOException;
 
 public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   public void testSimple() {
-    String path = getRtJarPath() + "!/java/lang/String.class";
+    String path = PlatformTestUtil.getRtJarPath() + "!/java/lang/String.class";
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, file);
 
@@ -78,7 +78,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testStubCompatibilityRt() {
-    String path = getRtJarPath() + "!/";
+    String path = PlatformTestUtil.getRtJarPath() + "!/";
     VirtualFile dir = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, dir);
     doTestStubCompatibility(dir);
@@ -154,10 +154,5 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
         super.visitClass(aClass);
       }
     });
-  }
-
-  private static String getRtJarPath() {
-    String home = System.getProperty("java.home");
-    return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 }
