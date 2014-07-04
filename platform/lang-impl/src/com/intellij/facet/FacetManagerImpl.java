@@ -212,7 +212,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       }
       catch (InvalidDataException e) {
         LOG.info(e);
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()));
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.configuration.0", e.getMessage()));
       }
     }
   }
@@ -413,7 +413,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         }
         else {
           final Facet underlyingFacet = facet.getUnderlyingFacet();
-          LOG.assertTrue(underlyingFacet != null, "Underlying facet is not specifed for '" + facet.getName() + "'");
+          LOG.assertTrue(underlyingFacet != null, "Underlying facet is not specified for '" + facet.getName() + "'");
           final Collection<?> facets = getFacetsByType(underlyingFacet, type.getId());
           if (facets.size() > 1) {
             LOG.error("Only one '" + type.getPresentableName() + "' facet per parent facet allowed, but " + facets.size() + " sub-facets found in facet " + underlyingFacet.getName());
