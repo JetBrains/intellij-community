@@ -7,3 +7,5 @@ To build and run the code:
   - You can get Intellij Platform source code [here](https://github.com/JetBrains/intellij-community)
 * Use Build -> Prepare Plugin for deployment to get jar with plugin.
 * Run PyCharm and install plugin.
+
+Link to our [Youtrack](http://education.myjetbrains.com/youtrack/issues/EDIDE)
