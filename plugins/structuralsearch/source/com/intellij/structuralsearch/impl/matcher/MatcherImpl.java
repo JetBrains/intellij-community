@@ -497,7 +497,13 @@ public class MatcherImpl {
         final Runnable task = tasks.removeFirst();
         try {
           task.run();
-        } catch (ProcessCanceledException e) {
+        }
+        catch (ProcessCanceledException e) {
+          ended = true;
+          clearSchedule();
+          throw e;
+        }
+        catch (StructuralSearchException e) {
           ended = true;
           clearSchedule();
           throw e;
