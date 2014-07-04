@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 public class ShowStructureSettingsAction extends AnAction implements DumbAware {
@@ -54,7 +55,8 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
         protected JComponent createSouthPanel() {
           JComponent panel = super.createSouthPanel();
           assert panel != null;
-          panel.setBorder(new CustomLineBorder(Gray._153, 1, 0,0,0));
+          CustomLineBorder line = new CustomLineBorder(Gray._153, 1, 0, 0, 0);
+          panel.setBorder(new CompoundBorder(line, new EmptyBorder(10, 5, 5, 5)));
           return panel;
         }
       }.show();
