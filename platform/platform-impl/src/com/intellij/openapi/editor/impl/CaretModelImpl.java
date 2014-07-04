@@ -338,8 +338,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       return;
     }
     if (myCurrentCaret != null) {
-      action.perform(myCurrentCaret);
-      return;
+      throw new IllegalStateException("Current caret is defined, cannot operate on other ones");
     }
     doWithCaretMerging(new Runnable() {
       public void run() {
