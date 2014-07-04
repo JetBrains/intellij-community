@@ -498,8 +498,8 @@ public class MatcherImpl {
         try {
           task.run();
         } catch (ProcessCanceledException e) {
-          tasks.clear();
           ended = true;
+          clearSchedule();
           throw e;
         }
         catch (Throwable th) {
