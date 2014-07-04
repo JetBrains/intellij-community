@@ -95,7 +95,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
-    TableScrollingUtil.installActions(this);
+    TableScrollingUtil.installActions(this, false);
   }
 
   @Override

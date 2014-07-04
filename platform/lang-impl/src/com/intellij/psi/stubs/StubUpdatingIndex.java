@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -49,8 +50,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 0, false);
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
-
-  private static final int VERSION = 27;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
@@ -199,29 +198,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   @Override
   public int getVersion() {
-    return getCumulativeVersion();
-  }
-
-  private static int getCumulativeVersion() {
-    int version = VERSION;
-    for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
-      if (fileType instanceof LanguageFileType) {
-        Language l = ((LanguageFileType)fileType).getLanguage();
-        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-        if (parserDefinition != null) {
-          final IFileElementType type = parserDefinition.getFileNodeType();
-          if (type instanceof IStubFileElementType) {
-            version += ((IStubFileElementType)type).getStubVersion();
-          }
-        }
-      }
-
-      BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-      if (builder != null) {
-        version += builder.getStubVersion();
-      }
-    }
-    return version;
+    return CumulativeStubVersion.getCumulativeVersion();
   }
 
   @NotNull

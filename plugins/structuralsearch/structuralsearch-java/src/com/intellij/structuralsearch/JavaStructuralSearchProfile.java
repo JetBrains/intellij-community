@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -24,7 +25,10 @@ import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.JavaLexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -367,5 +371,89 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   Configuration[] getPredefinedTemplates() {
     return JavaPredefinedConfigurations.createPredefinedTemplates();
+  }
+
+  @Override
+  public void provideAdditionalReplaceOptions(@NotNull PsiElement node, final ReplaceOptions options, final ReplacementBuilder builder) {
+    final String templateText = TemplateManager.getInstance(node.getProject()).createTemplate("", "", options.getReplacement()).getTemplateText();
+    node.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitElement(expression);
+      }
+
+      @Override
+      public void visitVariable(PsiVariable field) {
+        super.visitVariable(field);
+
+        final PsiExpression initializer = field.getInitializer();
+
+        if (initializer != null) {
+          final String initText = initializer.getText();
+
+          if (StructuralSearchUtil.isTypedVariable(initText)) {
+            final ParameterInfo initInfo = builder.findParameterization(Replacer.stripTypedVariableDecoration(initText));
+
+            if (initInfo != null) {
+              initInfo.setVariableInitialContext(true);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        super.visitClass(aClass);
+
+        MatchVariableConstraint constraint =
+          options.getMatchOptions().getVariableConstraint(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+        if (constraint != null) {
+          ParameterInfo e = new ParameterInfo();
+          e.setName(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+          e.setStartIndex(templateText.lastIndexOf('}'));
+          builder.addParametrization(e);
+        }
+      }
+
+      @Override
+      public void visitMethod(PsiMethod method) {
+        super.visitMethod(method);
+
+        String name = method.getName();
+        if (StructuralSearchUtil.isTypedVariable(name)) {
+          name = Replacer.stripTypedVariableDecoration(name);
+
+          ParameterInfo methodInfo = builder.findParameterization(name);
+          methodInfo.setScopeParameterization(true);
+          //if (scopedParameterizations != null) scopedParameterizations.put(method.getTextRange(), methodInfo);
+        }
+      }
+
+      @Override
+      public void visitParameter(PsiParameter parameter) {
+        super.visitParameter(parameter);
+
+        String name = parameter.getName();
+        String type = parameter.getType().getCanonicalText();
+
+        if (StructuralSearchUtil.isTypedVariable(name)) {
+          name = Replacer.stripTypedVariableDecoration(name);
+
+          if (StructuralSearchUtil.isTypedVariable(type)) {
+            type = Replacer.stripTypedVariableDecoration(type);
+          }
+          ParameterInfo nameInfo = builder.findParameterization(name);
+          ParameterInfo typeInfo = builder.findParameterization(type);
+
+          if (nameInfo != null && typeInfo != null && !(parameter.getParent() instanceof PsiCatchSection)) {
+            nameInfo.setParameterContext(false);
+            typeInfo.setParameterContext(false);
+            typeInfo.setMethodParameterContext(true);
+            nameInfo.setMethodParameterContext(true);
+            typeInfo.setElement(parameter.getTypeElement());
+          }
+        }
+      }
+    });
   }
 }

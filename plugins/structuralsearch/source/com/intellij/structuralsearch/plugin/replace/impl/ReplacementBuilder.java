@@ -9,9 +9,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -26,31 +25,13 @@ import java.util.*;
  * Date: 24.02.2004
  * Time: 15:34:57
  */
-final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
+public final class ReplacementBuilder {
   private String replacement;
   private List<ParameterInfo> parameterizations;
   private HashMap<String,MatchResult> matchMap;
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
   //private Map<TextRange,ParameterInfo> scopedParameterizations;
-
-  private static final class ParameterInfo {
-    String name;
-    int startIndex;
-    boolean parameterContext;
-    boolean methodParameterContext;
-    boolean statementContext;
-    boolean variableInitialContext;
-    int afterDelimiterPos;
-    boolean hasCommaBefore;
-    int beforeDelimiterPos;
-    boolean hasCommaAfter;
-
-    boolean scopeParameterization;
-    boolean replacementVariable;
-    
-    PsiElement myElement;
-  }
 
   ReplacementBuilder(final Project project,final ReplaceOptions options) {
     replacementVarsMap = new HashMap<String, ScriptSupport>();
@@ -68,9 +49,9 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
       final String name = template.getSegmentName(i);
 
       final ParameterInfo info = new ParameterInfo();
-      info.startIndex = offset;
-      info.name = name;
-      info.replacementVariable = options.getVariableDefinition(name) != null;
+      info.setStartIndex(offset);
+      info.setName(name);
+      info.setReplacementVariable(options.getVariableDefinition(name) != null);
 
       // find delimiter
       int pos;
@@ -80,9 +61,9 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
       if (pos >= 0) {
         if (replacement.charAt(pos) == ',') {
-          info.hasCommaBefore = true;
+          info.setHasCommaBefore(true);
         }
-        info.beforeDelimiterPos = pos;
+        info.setBeforeDelimiterPos(pos);
       }
 
       for(pos = offset; pos < replacement.length() && Character.isWhitespace(replacement.charAt(pos));) {
@@ -93,13 +74,13 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         final char ch = replacement.charAt(pos);
 
         if (ch == ';') {
-          info.statementContext = true;
+          info.setStatementContext(true);
         }
         else if (ch == ',' || ch == ')') {
-          info.parameterContext = true;
-          info.hasCommaAfter = ch == ',';
+          info.setParameterContext(true);
+          info.setHasCommaAfter(ch == ',');
         }
-        info.afterDelimiterPos = pos;
+        info.setAfterDelimiterPos(pos);
       }
 
       if (parameterizations==null) {
@@ -109,22 +90,25 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
       parameterizations.add(info);
     }
 
-    try {
-      final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
-        _replacement,
-        PatternTreeContext.Block,
-        fileType,
-        options.getMatchOptions().getDialect(),
-        options.getMatchOptions().getPatternContext(),
-        project,
-        false
-      );
-      if (elements.length > 0) {
-        final PsiElement patternNode = elements[0].getParent();
-        patternNode.accept(this);
+    final StructuralSearchProfile profile = parameterizations != null ? StructuralSearchUtil.getProfileByFileType(fileType) : null;
+    if (profile != null) {
+      try {
+        final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
+          _replacement,
+          PatternTreeContext.Block,
+          fileType,
+          options.getMatchOptions().getDialect(),
+          options.getMatchOptions().getPatternContext(),
+          project,
+          false
+        );
+        if (elements.length > 0) {
+          final PsiElement patternNode = elements[0].getParent();
+          profile.provideAdditionalReplaceOptions(patternNode, options, this);
+        }
+      } catch (IncorrectOperationException e) {
+        throw new MalformedPatternException();
       }
-    } catch (IncorrectOperationException e) {
-      throw new MalformedPatternException();
     }
   }
 
@@ -159,28 +143,28 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     int offset = 0;
 
     for (final ParameterInfo info : parameterizations) {
-      MatchResult r = matchMap.get(info.name);
-      if (info.replacementVariable) {
+      MatchResult r = matchMap.get(info.getName());
+      if (info.isReplacementVariable()) {
         offset = insertSubstitution(result, offset, info, generateReplacement(info, match));
       }
       else if (r != null) {
         offset = handleSubstitution(info, r, result, offset);
       }
       else {
-        if (info.hasCommaBefore) {
-          result.delete(info.beforeDelimiterPos + offset, info.beforeDelimiterPos + 1 + offset);
+        if (info.isHasCommaBefore()) {
+          result.delete(info.getBeforeDelimiterPos() + offset, info.getBeforeDelimiterPos() + 1 + offset);
           --offset;
         }
-        else if (info.hasCommaAfter) {
-          result.delete(info.afterDelimiterPos + offset, info.afterDelimiterPos + 1 + offset);
+        else if (info.isHasCommaAfter()) {
+          result.delete(info.getAfterDelimiterPos() + offset, info.getAfterDelimiterPos() + 1 + offset);
           --offset;
         }
-        else if (info.variableInitialContext) {
+        else if (info.isVariableInitialContext()) {
           //if (info.afterDelimiterPos > 0) {
-            result.delete(info.beforeDelimiterPos + offset, info.afterDelimiterPos + offset - 1);
-            offset -= (info.afterDelimiterPos - info.beforeDelimiterPos - 1);
+            result.delete(info.getBeforeDelimiterPos() + offset, info.getAfterDelimiterPos() + offset - 1);
+            offset -= (info.getAfterDelimiterPos() - info.getBeforeDelimiterPos() - 1);
           //}
-        } else if (info.statementContext) {
+        } else if (info.isStatementContext()) {
           offset = removeExtraSemicolon(info, offset, result, r);
         }
         offset = insertSubstitution(result, offset, info, "");
@@ -193,28 +177,28 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
   }
 
   private String generateReplacement(ParameterInfo info, MatchResult match) {
-    ScriptSupport scriptSupport = replacementVarsMap.get(info.name);
+    ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {
-      String constraint = options.getVariableDefinition(info.name).getScriptCodeConstraint();
-      scriptSupport = new ScriptSupport(StringUtil.stripQuotesAroundValue(constraint));
-      replacementVarsMap.put(info.name, scriptSupport);
+      String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
+      scriptSupport = new ScriptSupport(StringUtil.stripQuotesAroundValue(constraint), info.getName());
+      replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate((MatchResultImpl)match, null);
   }
 
   private static int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
-    if (image.length() > 0) result.insert(offset+info.startIndex,image);
+    if (image.length() > 0) result.insert(offset+ info.getStartIndex(),image);
     offset += image.length();
     return offset;
   }
 
   private int handleSubstitution(final ParameterInfo info, MatchResult match, StringBuilder result, int offset) {
-    if (info.name.equals(match.getName())) {
+    if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean forceAddingNewLine = false;
 
-      if (info.methodParameterContext) {
+      if (info.isMethodParameterContext()) {
         StringBuilder buf = new StringBuilder();
         handleMethodParameter(buf, info);
         replacementString = buf.toString();
@@ -232,7 +216,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
           if (buf.length() > 0) {
             final PsiElement parent = currentElement.getParent();
-            if (info.statementContext) {
+            if (info.isStatementContext()) {
               final PsiElement previousElement = previous.getMatchRef().getElement();
 
               if (!(previousElement instanceof PsiComment) &&
@@ -255,7 +239,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
                 buf.append('\n');
               }
             }
-            else if (info.parameterContext) {
+            else if (info.isParameterContext()) {
               buf.append(',');
             }
             else if (parent instanceof PsiClass) {
@@ -283,7 +267,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         replacementString = buf.toString();
       } else {
         StringBuilder buf = new StringBuilder();
-        if (info.statementContext) {
+        if (info.isStatementContext()) {
           forceAddingNewLine = match.getMatch() instanceof PsiComment;
         }
         buf.append(replacementString);
@@ -293,8 +277,8 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
 
       offset = insertSubstitution(result,offset,info,replacementString);
       offset = removeExtraSemicolon(info, offset, result, match);
-      if (forceAddingNewLine && info.statementContext) {
-        result.insert(info.startIndex+offset+1,'\n');
+      if (forceAddingNewLine && info.isStatementContext()) {
+        result.insert(info.getStartIndex() + offset + 1, '\n');
         offset ++;
       }
     }
@@ -302,8 +286,8 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {
-    if (info.statementContext) {
-      int index = offset+info.startIndex;
+    if (info.isStatementContext()) {
+      int index = offset+ info.getStartIndex();
       if (result.charAt(index)==';' &&
           ( match == null ||
             ( result.charAt(index-1)=='}' &&
@@ -327,7 +311,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuilder buf) {
-    if (info.statementContext) {
+    if (info.isStatementContext()) {
       final PsiElement element = r.getMatchRef().getElement();
 
       // remove extra ;
@@ -350,12 +334,12 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private ParameterInfo findParameterization(String name) {
+  public ParameterInfo findParameterization(String name) {
     if (parameterizations==null) return null;
 
     for (final ParameterInfo info : parameterizations) {
 
-      if (info.name.equals(name)) {
+      if (info.getName().equals(name)) {
         return info;
       }
     }
@@ -364,13 +348,13 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
   }
 
   private void handleMethodParameter(StringBuilder buf, ParameterInfo info) {
-    if(info.myElement==null) {
+    if(info.getElement() ==null) {
       // no specific handling for name of method parameter since it is handled with type
       return;
     }
 
-    String name = ((PsiParameter)info.myElement.getParent()).getName();
-    name = StructuralSearchUtil.isTypedVariable(name) ? stripTypedVariableDecoration(name):name;
+    String name = ((PsiParameter)info.getElement().getParent()).getName();
+    name = StructuralSearchUtil.isTypedVariable(name) ? Replacer.stripTypedVariableDecoration(name):name;
 
     final MatchResult matchResult = matchMap.get(name);
     if (matchResult == null) return;
@@ -413,86 +397,8 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-    visitElement(expression);
+  public void addParametrization(ParameterInfo e) {
+    assert parameterizations != null;
+    parameterizations.add(e);
   }
-
-  @Override public void visitVariable(PsiVariable field) {
-    super.visitVariable(field);
-
-    final PsiExpression initializer = field.getInitializer();
-
-    if (parameterizations!=null && initializer!=null) {
-      final String initText = initializer.getText();
-
-      if(StructuralSearchUtil.isTypedVariable(initText)) {
-        final ParameterInfo initInfo = findParameterization(stripTypedVariableDecoration(initText));
-
-        if (initInfo != null) {
-          initInfo.variableInitialContext = true;
-        }
-      }
-    }
-  }
-
-  @Override
-  public void visitClass(PsiClass aClass) {
-    super.visitClass(aClass);
-
-    if (parameterizations != null) {
-      MatchVariableConstraint constraint =
-        options.getMatchOptions().getVariableConstraint(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
-      if (constraint != null && parameterizations != null) {
-        ParameterInfo e = new ParameterInfo();
-        e.name = CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
-        e.startIndex = replacement.lastIndexOf('}');
-        parameterizations.add(e);
-      }
-    }
-  }
-
-  @Override public void visitMethod(PsiMethod method) {
-    super.visitMethod(method);
-
-    String name = method.getName();
-    if (StructuralSearchUtil.isTypedVariable(name)) {
-      name = stripTypedVariableDecoration(name);
-
-      ParameterInfo methodInfo = findParameterization(name);
-      methodInfo.scopeParameterization = true;
-      //if (scopedParameterizations != null) scopedParameterizations.put(method.getTextRange(), methodInfo);
-    }
-  }
-
-  @Override public void visitParameter(PsiParameter parameter) {
-    super.visitParameter(parameter);
-
-    if (parameterizations!=null) {
-      String name = parameter.getName();
-      String type = parameter.getType().getCanonicalText();
-
-      if (StructuralSearchUtil.isTypedVariable(name)) {
-        name = stripTypedVariableDecoration(name);
-
-        if (StructuralSearchUtil.isTypedVariable(type)) {
-          type = stripTypedVariableDecoration(type);
-        }
-        ParameterInfo nameInfo = findParameterization(name);
-        ParameterInfo typeInfo = findParameterization(type);
-
-        if (nameInfo!=null && typeInfo!=null && !(parameter.getParent() instanceof PsiCatchSection)) {
-          nameInfo.parameterContext=false;
-          typeInfo.parameterContext=false;
-          typeInfo.methodParameterContext=true;
-          nameInfo.methodParameterContext=true;
-          typeInfo.myElement = parameter.getTypeElement();
-        }
-      }
-    }
-  }
-
-  private String stripTypedVariableDecoration(final String type) {
-    return type.substring(1,type.length()-1);
-  }
-
 }

@@ -27,6 +27,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -260,7 +261,10 @@ public class GroovyPositionManager implements PositionManager {
 
   private static GlobalSearchScope addModuleContent(GlobalSearchScope scope) {
     if (scope instanceof ModuleWithDependenciesScope) {
-      return scope.uniteWith(((ModuleWithDependenciesScope)scope).getModule().getModuleContentWithDependenciesScope());
+      Module module = ((ModuleWithDependenciesScope)scope).getModule();
+      if (!module.isDisposed()) {
+        return scope.uniteWith(module.getModuleContentWithDependenciesScope());
+      }
     }
     return scope;
   }
