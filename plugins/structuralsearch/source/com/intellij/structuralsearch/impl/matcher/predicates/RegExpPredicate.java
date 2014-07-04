@@ -101,24 +101,14 @@ public final class RegExpPredicate extends MatchPredicate {
     boolean result = doMatch(text, start, end, context, matchedNode);
 
     if (!result) {
-      if(matchedNode instanceof PsiIdentifier) matchedNode = matchedNode.getParent();
-      // Short class name is matched with fully qualified name
-      if(matchedNode instanceof PsiJavaCodeReferenceElement || matchedNode instanceof PsiClass) {
-        PsiElement element = (matchedNode instanceof PsiJavaCodeReferenceElement)?
-                             ((PsiJavaCodeReferenceElement)matchedNode).resolve():
-                             matchedNode;
 
-        if (element instanceof PsiClass) {
-          String previousText = text;
-          text = ((PsiClass)element).getQualifiedName();
-          if (text != null && text.equals(previousText)) text = ((PsiClass)element).getName();
+      if(matchedNode instanceof PsiIdentifier) {
+        matchedNode = matchedNode.getParent();
+      }
 
-          if (text!=null) {
-            result = doMatch(text, start, end, context, matchedNode);
-          }
-        }
-      } else if (matchedNode instanceof PsiLiteralExpression) {
-        result = doMatch(matchedNode.getText(), start, end, context, matchedNode);
+      String alternativeText = context.getPattern().getAlternativeTextToMatch(matchedNode, text);
+      if (alternativeText != null) {
+        result = doMatch(alternativeText, start, end, context, matchedNode);
       }
     }
 

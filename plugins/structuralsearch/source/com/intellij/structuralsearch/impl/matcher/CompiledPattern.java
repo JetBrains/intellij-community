@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -172,5 +173,10 @@ public abstract class CompiledPattern {
 
   public boolean isToResetHandler(PsiElement element) {
     return true;
+  }
+
+  @Nullable
+  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
+    return null;
   }
 }
