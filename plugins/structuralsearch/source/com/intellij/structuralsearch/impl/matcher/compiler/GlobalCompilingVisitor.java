@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiModifier;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -61,7 +60,7 @@ public class GlobalCompilingVisitor {
   public final void handle(PsiElement element) {
 
     if ((!ourFilter.accepts(element) ||
-         element instanceof PsiIdentifier) &&
+         StructuralSearchUtil.isIdentifier(element)) &&
         context.getPattern().isRealTypedVar(element) &&
         context.getPattern().getHandlerSimple(element) == null
       ) {

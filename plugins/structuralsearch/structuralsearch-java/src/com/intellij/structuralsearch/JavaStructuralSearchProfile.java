@@ -578,6 +578,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return offset;
   }
 
+  @Override
+  public boolean isIdentifier(PsiElement element) {
+    return element instanceof PsiIdentifier;
+  }
+
   private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, HashMap<String, MatchResult> matchMap) {
     if(info.getElement() ==null) {
       // no specific handling for name of method parameter since it is handled with type

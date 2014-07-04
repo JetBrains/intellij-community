@@ -396,8 +396,7 @@ public class Replacer {
               MatchResult matchResult = i.next();
 
               if (MatchResult.LINE_MATCH.equals(matchResult.getName()) &&
-                  matchResult.getMatch() instanceof PsiMember
-                 ) {
+                  matchResult.getMatch() instanceof PsiMember) {
                 element = matchResult.getMatch();
               } else {
                 l.add( manager.createSmartPsiElementPointer(element) );

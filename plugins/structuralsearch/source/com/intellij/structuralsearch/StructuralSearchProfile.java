@@ -264,4 +264,8 @@ public abstract class StructuralSearchProfile {
   public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
     return offset;
   }
+
+  public boolean isIdentifier(PsiElement element) {
+    return false;
+  }
 }

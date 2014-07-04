@@ -102,7 +102,7 @@ public final class RegExpPredicate extends MatchPredicate {
 
     if (!result) {
 
-      if(matchedNode instanceof PsiIdentifier) {
+      if(StructuralSearchUtil.isIdentifier(matchedNode)) {
         matchedNode = matchedNode.getParent();
       }
 

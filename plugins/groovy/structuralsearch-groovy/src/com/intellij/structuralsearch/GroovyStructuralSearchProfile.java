@@ -77,4 +77,9 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
       return PsiExpression.class;
     }
   }
+
+  @Override
+  public boolean isIdentifier(PsiElement element) {
+    return element instanceof PsiIdentifier;
+  }
 }
