@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PySubscriptionExpression extends PyQualifiedExpression, PyReferenceOwner {
+public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
 
   /**
    * @return For <code>spam[x][y][n]</code> will return <code>spam</code> regardless number of its dimensions
