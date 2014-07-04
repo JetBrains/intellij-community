@@ -24,7 +24,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +31,8 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +44,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author anna
@@ -69,8 +69,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
-    InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
-    return isSuppressed(suppressor, element) || isSuppressed(getTemplateSuppressor(element), element);
+    Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    for (InspectionSuppressor suppressor : suppressors) {
+      if (suppressor != null && isSuppressed(suppressor, element)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected String getSuppressId() {
@@ -81,15 +86,25 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
-      InspectionSuppressor templateSuppressor = getTemplateSuppressor(element);
-      if (templateSuppressor != null) {
-        SuppressQuickFix[] actions = templateSuppressor.getSuppressActions(element, getShortName());
-        if (actions.length > 0) return actions;
+      THashSet<SuppressQuickFix> fixes = new THashSet<SuppressQuickFix>(new TObjectHashingStrategy<SuppressQuickFix>() {
+        @Override
+        public int computeHashCode(SuppressQuickFix object) {
+          return object.getName().hashCode();
+        }
+
+        @Override
+        public boolean equals(SuppressQuickFix o1, SuppressQuickFix o2) {
+          return o1.getName().equals(o2.getName());
+        }
+      });
+      Set<InspectionSuppressor> suppressors = getSuppressors(element);
+      for (InspectionSuppressor suppressor : suppressors) {
+        if (suppressor != null) {
+          SuppressQuickFix[] actions = suppressor.getSuppressActions(element, getShortName());
+          fixes.addAll(Arrays.asList(actions));
+        }
       }
-      InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
-      if (suppressor != null) {
-        return suppressor.getSuppressActions(element, getShortName());
-      }
+      return fixes.toArray(new SuppressQuickFix[fixes.size()]);
     }
     return SuppressQuickFix.EMPTY_ARRAY;
   }
@@ -104,15 +119,17 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
-  @Nullable
-  private static InspectionSuppressor getTemplateSuppressor(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    FileViewProvider viewProvider = file.getViewProvider();
-    Language fileLanguage = viewProvider instanceof TemplateLanguageFileViewProvider ? viewProvider.getBaseLanguage() : file.getLanguage();
-    if (fileLanguage != element.getLanguage()) {
-      return LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
+  private static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+    FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
+    if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+      LinkedHashSet<InspectionSuppressor> suppressors = new LinkedHashSet<InspectionSuppressor>();
+      ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(viewProvider.getBaseLanguage()));
+      for (Language language : viewProvider.getLanguages()) {
+        ContainerUtil.addIfNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.forLanguage(language));
+      }
+      return suppressors;
     }
-    return null;
+    return Collections.singleton(LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage()));
   }
 
   public void cleanup(Project project) {
