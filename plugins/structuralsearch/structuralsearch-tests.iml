@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="structuralsearch-java" />
+    <orderEntry type="module" module-name="java-i18n" />
   </component>
 </module>
 

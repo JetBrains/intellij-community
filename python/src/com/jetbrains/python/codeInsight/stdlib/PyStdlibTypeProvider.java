@@ -120,7 +120,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite != null) {

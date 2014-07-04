@@ -303,9 +303,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         hasReturns = returnStatements.length > 0;
       }
       else {
-        PyReferenceExpression callSite = being_checked instanceof PyReferenceExpression ? (PyReferenceExpression) being_checked : null;
-        final PyType type = callSite != null ? callable.getCallType(myTypeEvalContext, callSite)
-                                             : myTypeEvalContext.getReturnType(callable);
+        final PyType type = myTypeEvalContext.getReturnType(callable);
         hasReturns = !(type instanceof PyNoneType);
       }
       if (allowed ^ hasReturns) {

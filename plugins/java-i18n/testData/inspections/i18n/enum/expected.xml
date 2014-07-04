@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>2</line>
+    <description>Hard coded string literal</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>3</line>
+    <description>Hard coded string literal</description>
+  </problem>
+</problems>
+

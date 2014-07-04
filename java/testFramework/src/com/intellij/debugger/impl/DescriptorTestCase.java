@@ -27,14 +27,15 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.treeStructure.Tree;
 import com.sun.jdi.Value;
 
+import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -160,46 +161,52 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
   }
 
   protected void expandAll(final DebuggerTree tree, final Runnable runnable) {
-    doExpandAll(tree, runnable, new HashSet<Value>(), null);
+    expandAll(tree, runnable, new HashSet<Value>(), null);
   }
 
   protected interface NodeFilter {
-    boolean shouldExpand(DebuggerTreeNode node);
-  }
-  
-  protected void expandAll(final DebuggerTree tree, final Runnable runnable, NodeFilter filter) {
-    doExpandAll(tree, runnable, new HashSet<Value>(), filter);
+    boolean shouldExpand(TreeNode node);
   }
 
-  private void doExpandAll(final DebuggerTree tree, final Runnable runnable, final Set<Value> alreadyExpanded, final NodeFilter filter) {
-    invokeRatherLater(tree.getDebuggerContext().getSuspendContext(), new Runnable() {
+  protected void expandAll(final DebuggerTree tree, final Runnable runnable, final Set<Value> alreadyExpanded, final NodeFilter filter) {
+    expandAll(tree, runnable, alreadyExpanded, filter, tree.getDebuggerContext().getSuspendContext());
+  }
+
+  protected void expandAll(final Tree tree,
+                           final Runnable runnable,
+                           final Set<Value> alreadyExpanded,
+                           final NodeFilter filter,
+                           final SuspendContextImpl context) {
+    invokeRatherLater(context, new Runnable() {
       @Override
       public void run() {
         boolean anyCollapsed = false;
         for(int i = 0; i < tree.getRowCount(); i++) {
-          final DebuggerTreeNodeImpl treeNode = (DebuggerTreeNodeImpl)tree.getPathForRow(i).getLastPathComponent();
+          final TreeNode treeNode = (TreeNode)tree.getPathForRow(i).getLastPathComponent();
           if(tree.isCollapsed(i) && !treeNode.isLeaf()) {
-            final NodeDescriptor nodeDescriptor = treeNode.getDescriptor();
-            boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
-            if (shouldExpand) {
-              // additional checks to prevent infinite expand
-              if (nodeDescriptor instanceof ValueDescriptor) {
-                final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
-                shouldExpand = !alreadyExpanded.contains(value);
-                if (shouldExpand) {
-                  alreadyExpanded.add(value);
+            if (treeNode instanceof DebuggerTreeNodeImpl) {
+              final NodeDescriptor nodeDescriptor = ((DebuggerTreeNodeImpl)treeNode).getDescriptor();
+              boolean shouldExpand = filter == null || filter.shouldExpand(treeNode);
+              if (shouldExpand) {
+                // additional checks to prevent infinite expand
+                if (nodeDescriptor instanceof ValueDescriptor) {
+                  final Value value = ((ValueDescriptor)nodeDescriptor).getValue();
+                  shouldExpand = !alreadyExpanded.contains(value);
+                  if (shouldExpand) {
+                    alreadyExpanded.add(value);
+                  }
                 }
               }
-            }
-            if (shouldExpand) {
-              anyCollapsed = true;
-              tree.expandRow(i);
+              if (shouldExpand) {
+                anyCollapsed = true;
+                tree.expandRow(i);
+              }
             }
           }
         }
 
         if (anyCollapsed) {
-          doExpandAll(tree, runnable, alreadyExpanded, filter);
+          expandAll(tree, runnable, alreadyExpanded, filter, context);
         }
         else {
           runnable.run();

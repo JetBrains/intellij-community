@@ -142,7 +142,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static final String[] PREFIX_CANDIDATES = {
     "AppCode", "CppIde", "CidrCommon", 
-    "Python", "PyCharmCore", "UltimateLangXml", "Idea" };
+    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea" };
 
   public static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {

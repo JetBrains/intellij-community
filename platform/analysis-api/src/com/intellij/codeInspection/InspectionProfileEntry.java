@@ -16,12 +16,16 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -66,15 +70,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
-    if (suppressor != null) {
-      String toolId = getSuppressId();
-      if (suppressor.isSuppressedFor(element, toolId)) {
-        return true;
-      }
-      final String alternativeId = getAlternativeID();
-      return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
-    }
-    return false;
+    return isSuppressed(suppressor, element) || isSuppressed(getTemplateSuppressor(element), element);
   }
 
   protected String getSuppressId() {
@@ -85,12 +81,38 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool{
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
+      InspectionSuppressor templateSuppressor = getTemplateSuppressor(element);
+      if (templateSuppressor != null) {
+        SuppressQuickFix[] actions = templateSuppressor.getSuppressActions(element, getShortName());
+        if (actions.length > 0) return actions;
+      }
       InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(element.getLanguage());
       if (suppressor != null) {
         return suppressor.getSuppressActions(element, getShortName());
       }
     }
     return SuppressQuickFix.EMPTY_ARRAY;
+  }
+
+  private boolean isSuppressed(@Nullable InspectionSuppressor suppressor, @NotNull PsiElement element) {
+    if (suppressor == null) return false;
+    String toolId = getSuppressId();
+    if (suppressor.isSuppressedFor(element, toolId)) {
+      return true;
+    }
+    final String alternativeId = getAlternativeID();
+    return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
+  }
+
+  @Nullable
+  private static InspectionSuppressor getTemplateSuppressor(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    FileViewProvider viewProvider = file.getViewProvider();
+    Language fileLanguage = viewProvider instanceof TemplateLanguageFileViewProvider ? viewProvider.getBaseLanguage() : file.getLanguage();
+    if (fileLanguage != element.getLanguage()) {
+      return LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
+    }
+    return null;
   }
 
   public void cleanup(Project project) {

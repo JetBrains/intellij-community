@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
  */
-public interface PyCallExpression extends PyExpression {
+public interface PyCallExpression extends PyCallSiteExpression {
 
   /**
    * @return the expression representing the object being called (reference to a function).
