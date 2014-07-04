@@ -88,13 +88,31 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (StringUtil.endsWithChar(text, ';')) text = text.substring(0, text.length() - 1);
       else if (element instanceof PsiExpressionStatement) {
         int i = text.indexOf(';');
-        if (i != -1) text = text.substring(0,i);
+        if (i != -1) text = text.substring(0, i);
       }
     }
 
     if (text==null) text = element.getText();
 
     return text;
+  }
+
+  @Override
+  public String getMeaningfulText(PsiElement element) {
+    if (element instanceof PsiReferenceExpression &&
+        ((PsiReferenceExpression)element).getQualifierExpression() != null) {
+      final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+      if (resolve instanceof PsiClass) return element.getText();
+
+      final PsiElement referencedElement = ((PsiReferenceExpression)element).getReferenceNameElement();
+      String text = referencedElement != null ? referencedElement.getText() : "";
+
+      if (resolve == null && text.length() > 0 && Character.isUpperCase(text.charAt(0))) {
+        return element.getText();
+      }
+      return text;
+    }
+    return super.getMeaningfulText(element);
   }
 
   @Override

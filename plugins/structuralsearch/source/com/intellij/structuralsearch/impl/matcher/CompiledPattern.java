@@ -169,4 +169,8 @@ public abstract class CompiledPattern {
       if (h != null) h.reset();
     }
   }
+
+  public boolean isToResetHandler(PsiElement element) {
+    return true;
+  }
 }

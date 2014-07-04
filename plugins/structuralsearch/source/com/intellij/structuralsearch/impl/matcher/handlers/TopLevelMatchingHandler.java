@@ -17,9 +17,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
 
   public TopLevelMatchingHandler(@NotNull MatchingHandler _delegate) {
     delegate = _delegate;
-    if (_delegate instanceof ExpressionHandler) {
-      setFilter(_delegate.getFilter());
-    }
+    setFilter(_delegate.getFilter());
   }
 
   public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final MatchContext matchContext) {

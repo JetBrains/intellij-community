@@ -1,6 +1,10 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.structuralsearch.impl.matcher.strategies.ExprMatchingStrategy;
 
 /**
@@ -27,6 +31,12 @@ public class JavaCompiledPattern extends CompiledPattern {
     } else {
       return str.startsWith(TYPED_VAR_PREFIX);
     }
+  }
+
+  @Override
+  public boolean isToResetHandler(PsiElement element) {
+    return !(element instanceof PsiJavaToken) &&
+           !(element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnnotation);
   }
 
   public static final Key<String> ALL_CLASS_CONTENT_VAR_NAME_KEY = Key.create("AllClassContent");

@@ -1,9 +1,9 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
@@ -126,36 +126,8 @@ public final class RegExpPredicate extends MatchPredicate {
   }
 
   public static String getMeaningfulText(PsiElement matchedNode) {
-    String text;
-    if (matchedNode instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)matchedNode).getQualifierExpression()!=null
-       ) {
-      final PsiElement element = ((PsiReferenceExpression)matchedNode).resolve();
-      if (element instanceof PsiClass) return matchedNode.getText();
-
-      final PsiElement referencedElement = ((PsiReferenceExpression)matchedNode).getReferenceNameElement();
-      text = referencedElement != null ? referencedElement.getText():"";
-
-      if (element == null && text.length() > 0 && Character.isUpperCase(text.charAt(0))) {
-        return matchedNode.getText();
-      }
-    } else if (matchedNode instanceof PsiLiteralExpression) {
-      text = matchedNode.getText();
-      //if (text.length()>2 && text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') {
-      //  text = text.substring(1,text.length()-1);
-      //}
-    } else if (matchedNode instanceof XmlAttributeValue) {
-      text = matchedNode.getText();
-      //if (text.length()>2 &&
-      //    ( (text.charAt(0)=='"' && text.charAt(text.length()-1)=='"') ||
-      //      (text.charAt(0)=='\'' && text.charAt(text.length()-1)=='\'')
-      //    )) {
-      //  text = text.substring(1,text.length()-1);
-      //}
-    } else {
-      text = StructuralSearchUtil.getProfileByPsiElement(matchedNode).getTypedVarString(matchedNode);
-    }
-    return text;
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(matchedNode);
+    return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
   }
 
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {

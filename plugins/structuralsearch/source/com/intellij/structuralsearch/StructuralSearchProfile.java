@@ -188,6 +188,10 @@ public abstract class StructuralSearchProfile {
     }
     return element.getText();
   }
+  
+  public String getMeaningfulText(PsiElement element) {
+    return getTypedVarString(element);
+  }
 
   public PsiElement updateCurrentNode(PsiElement node) {
     return node;
