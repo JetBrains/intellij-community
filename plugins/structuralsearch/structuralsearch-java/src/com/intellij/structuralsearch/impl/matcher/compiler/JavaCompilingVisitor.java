@@ -3,6 +3,8 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
@@ -16,8 +18,12 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -149,7 +155,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     GlobalCompilingVisitor.setFilter(handler, MethodFilter.getInstance());
-    myCompilingVisitor.handleReferenceText(psiMethod.getName());
+    handleReferenceText(psiMethod.getName(), myCompilingVisitor.getContext());
   }
 
   @Override
@@ -243,7 +249,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitVariable(PsiVariable psiVariable) {
     super.visitVariable(psiVariable);
     myCompilingVisitor.getContext().getPattern().getHandler(psiVariable).setFilter(VariableFilter.getInstance());
-    myCompilingVisitor.handleReferenceText(psiVariable.getName());
+    handleReferenceText(psiVariable.getName(), myCompilingVisitor.getContext());
   }
 
   @Override
@@ -332,7 +338,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (needsSupers(psiClass, handler)) {
       ((JavaCompiledPattern)pattern).setRequestsSuperInners(true);
     }
-    myCompilingVisitor.handleReferenceText(psiClass.getName());
+    handleReferenceText(psiClass.getName(), myCompilingVisitor.getContext());
 
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());
 
@@ -428,8 +434,81 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
 
   private void handleReference(PsiJavaCodeReferenceElement reference) {
-    myCompilingVisitor.handleReferenceText(reference.getReferenceName());
+    handleReferenceText(reference.getReferenceName(), myCompilingVisitor.getContext());
   }
+
+  private static void handleReferenceText(String refname, CompileContext compileContext) {
+    if (refname == null) return;
+
+    if (compileContext.getPattern().isTypedVar(refname)) {
+      SubstitutionHandler handler = (SubstitutionHandler)compileContext.getPattern().getHandler(refname);
+      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+      if (!GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
+        return;
+      }
+
+      refname = predicate.getRegExp();
+
+      if (handler.isStrictSubtype() || handler.isSubtype()) {
+        final OptimizingSearchHelper searchHelper = compileContext.getSearchHelper();
+        if (addDescendantsOf(refname, handler.isSubtype(), searchHelper, compileContext)) {
+          searchHelper.endTransaction();
+        }
+
+        return;
+      }
+    }
+
+    GlobalCompilingVisitor.addFilesToSearchForGivenWord(refname, true, GlobalCompilingVisitor.OccurenceKind.CODE, compileContext);
+  }
+
+
+  public static boolean addDescendantsOf(final String refname, final boolean subtype, OptimizingSearchHelper searchHelper, CompileContext context) {
+    final List<PsiClass> classes = buildDescendants(refname, subtype, searchHelper, context);
+
+    for (final PsiClass aClass : classes) {
+      if (aClass instanceof PsiAnonymousClass) {
+        searchHelper.addWordToSearchInCode(((PsiAnonymousClass)aClass).getBaseClassReference().getReferenceName());
+      }
+      else {
+        searchHelper.addWordToSearchInCode(aClass.getName());
+      }
+    }
+
+    return classes.size() > 0;
+  }
+
+  private static List<PsiClass> buildDescendants(String className,
+                                                 boolean includeSelf,
+                                                 OptimizingSearchHelper searchHelper,
+                                                 CompileContext context) {
+    if (!searchHelper.doOptimizing()) return Collections.emptyList();
+    final SearchScope scope = context.getOptions().getScope();
+    if (!(scope instanceof GlobalSearchScope)) return Collections.emptyList();
+
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
+    final PsiClass[] classes = cache.getClassesByName(className, (GlobalSearchScope)scope);
+    final List<PsiClass> results = new ArrayList<PsiClass>();
+
+    final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+      public boolean execute(@NotNull PsiClass element) {
+        results.add(element);
+        return true;
+      }
+
+    };
+
+    for (PsiClass aClass : classes) {
+      ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+    }
+
+    if (includeSelf) {
+      Collections.addAll(results, classes);
+    }
+
+    return results;
+  }
+
 
   @Override
   public void visitCodeBlock(PsiCodeBlock block) {

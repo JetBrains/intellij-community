@@ -27,7 +27,7 @@ public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     lastLength = 0;
   }
 
-  protected void doAddSearchJavaReservedWordInCode(final String refname) {
+  protected void doAddSearchWordInCode(final String refname) {
     append(refname, "reserved in code:");
   }
 
@@ -42,10 +42,6 @@ public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     builder.append(str).append(refname);
   }
 
-  protected void doAddSearchWordInCode(final String refname) {
-    append(refname, "in code:");
-  }
-
   protected void doAddSearchWordInComments(final String refname) {
     append(refname, "in comments:");
   }
@@ -58,11 +54,6 @@ public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     super.endTransaction();
     builder.append("]");
     lastLength = builder.length();
-  }
-
-  public boolean addDescendantsOf(final String refname, final boolean subtype) {
-    append(refname,"descendants");
-    return false;
   }
 
   public boolean isScannedSomething() {
