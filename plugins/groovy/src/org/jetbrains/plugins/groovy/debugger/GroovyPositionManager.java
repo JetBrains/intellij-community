@@ -110,9 +110,16 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
+  private static void checkGroovyFile(@NotNull SourcePosition position) throws NoDataException {
+    if (!(position.getFile() instanceof GroovyFileBase)) {
+      throw new NoDataException();
+    }
+  }
+
   @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
+    checkGroovyFile(position);
     String qName = getOuterClassName(position);
     if (qName != null) {
       return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, qName);
@@ -281,6 +288,7 @@ public class GroovyPositionManager implements PositionManager {
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
+    checkGroovyFile(position);
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       @Override
       public List<ReferenceType> compute() {
