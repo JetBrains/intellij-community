@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>4</line>
+    <problem_class>Hard coded strings</problem_class>
+    <description>Hard coded string literal: 'xxxxx'</description>
+  </problem>
+  <problem>
+    <file>Foo.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hard coded strings</problem_class>
+    <description>Hard coded string literal: 'MYNON-NLS'</description>
+  </problem>
+</problems>
+
