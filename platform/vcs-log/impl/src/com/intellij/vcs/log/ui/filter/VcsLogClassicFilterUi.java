@@ -35,7 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  */
@@ -89,8 +91,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
    * Returns filter components which will be added to the Log toolbar.
    */
   @NotNull
-  public ActionGroup getFilterActionComponents() {
+  public ActionGroup getActionGroup() {
     return myActionGroup;
+  }
+
+  @NotNull
+  public List<JComponent> getComponents() {
+    return Arrays.<JComponent>asList(myTextFilter.getTextEditor(), myBranchFilterComponent, myUserFilterComponent,
+                                     myDateFilterComponent, myStructureFilterComponent);
   }
 
   @NotNull
