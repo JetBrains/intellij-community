@@ -60,7 +60,6 @@ public class SearchCommand {
           }
 
           public void matchingFinished() {
-            new Throwable().printStackTrace(System.out);
             findEnded();
             progress.setText(SSRBundle.message("found.progress.message", count));
           }
