@@ -103,6 +103,7 @@
     <orderEntry type="module" module-name="java-decompiler" />
     <orderEntry type="module" module-name="structuralsearch" />
     <orderEntry type="module" module-name="structuralsearch-java" />
+    <orderEntry type="module" module-name="structuralsearch-tests" scope="TEST" />
   </component>
 </module>
 
