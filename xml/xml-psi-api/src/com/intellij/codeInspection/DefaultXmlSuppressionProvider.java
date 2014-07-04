@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
+public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implements InspectionSuppressor {
 
   public static final String SUPPRESS_MARK = "suppress";
 
@@ -49,6 +49,11 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
   public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String inspectionId) {
     final XmlTag tag = element instanceof XmlFile ? ((XmlFile)element).getRootTag() : PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
     return tag != null && findSuppression(tag, inspectionId, element) != null;
+  }
+
+  @Override
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
+    return XmlSuppressableInspectionTool.getSuppressFixes(toolShortName, this);
   }
 
   @Override
