@@ -136,7 +136,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final PsiFile originalFile;
 
-    if (project == null || originalEditor.isColumnMode() || (originalFile = PsiUtilBase.getPsiFileInEditor(originalEditor, project)) == null) {
+    if (project == null || (originalFile = PsiUtilBase.getPsiFileInEditor(originalEditor, project)) == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(originalEditor, charTyped, dataContext);
       }
