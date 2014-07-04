@@ -301,7 +301,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
 
     TextWithMarkupProcessor processor = new TextWithMarkupProcessor() {
       @Override
-      void createResult(SyntaxInfo syntaxInfo) {
+      void createResult(SyntaxInfo syntaxInfo, Editor editor) {
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
