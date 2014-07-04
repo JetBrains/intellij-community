@@ -54,9 +54,9 @@ class CheckAction extends AnAction {
         VirtualFile vfOpenedFile = FileDocumentManager.getInstance().getFile(selectedEditor.getDocument());
         //TODO: replace with platform independent path join
         String testFile = basePath +
-                          "/.idea/" + selectedTaskFile.getTask().getTestFile();
+                          "/.idea/study-tests/" + selectedTaskFile.getTask().getTestFile();
         GeneralCommandLine cmd = new GeneralCommandLine();
-        cmd.setWorkDirectory(basePath + "/.idea");
+        cmd.setWorkDirectory(basePath + "/.idea/study-tests/");
         cmd.setExePath("python");
         cmd.addParameter(testFile);
         try {

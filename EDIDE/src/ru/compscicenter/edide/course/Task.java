@@ -70,7 +70,7 @@ public class Task {
       VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
       if (ideaDir != null) {
         FileUtil.copy(new File(newResourceRoot, testFile),
-                      new File(ideaDir.getCanonicalPath(), systemIndependentName));
+                      new File(new File(ideaDir.getCanonicalPath(), "study-tests"),systemIndependentName));
       }
 
   }
