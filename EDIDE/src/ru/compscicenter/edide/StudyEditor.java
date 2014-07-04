@@ -10,6 +10,8 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.HideableDecorator;
+import com.intellij.ui.HideableTitledPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +36,10 @@ public class StudyEditor implements FileEditor {
   public StudyEditor(Project project, VirtualFile file) {
     defaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
     comp = defaultEditor.getComponent();
-    JLabel taskText = new JLabel(getTextForTask(file, project));
+    final JLabel taskText = new JLabel(getTextForTask(file, project));
     taskText.setFont(new Font("Arial", Font.PLAIN, 16));
-    comp.add(taskText, BorderLayout.NORTH);
+    HideableTitledPanel hp = new HideableTitledPanel("Task text", taskText, false);
+    comp.add(hp, BorderLayout.NORTH);
   }
 
   public FileEditor getDefaultEditor() {
