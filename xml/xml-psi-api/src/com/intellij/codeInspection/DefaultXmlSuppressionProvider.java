@@ -52,11 +52,6 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
   }
 
   @Override
-  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
-    return XmlSuppressableInspectionTool.getSuppressFixes(toolShortName, this);
-  }
-
-  @Override
   public void suppressForFile(@NotNull PsiElement element, @NotNull String inspectionId) {
     final PsiFile file = element.getContainingFile();
     final XmlDocument document = ((XmlFile)file).getDocument();

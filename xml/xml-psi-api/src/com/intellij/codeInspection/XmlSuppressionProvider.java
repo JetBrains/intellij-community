@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class XmlSuppressionProvider {
+public abstract class XmlSuppressionProvider implements InspectionSuppressor {
 
   public static final ExtensionPointName<XmlSuppressionProvider> EP_NAME = new ExtensionPointName<XmlSuppressionProvider>("com.intellij.xml.xmlSuppressionProvider");
 
@@ -54,5 +54,11 @@ public abstract class XmlSuppressionProvider {
   public abstract void suppressForFile(@NotNull PsiElement element, @NotNull String inspectionId);
 
   public abstract void suppressForTag(@NotNull PsiElement element, @NotNull String inspectionId);
+
+  @Override
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
+    return XmlSuppressableInspectionTool.getSuppressFixes(toolShortName, this);
+  }
+
 
 }
