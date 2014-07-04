@@ -668,6 +668,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           index.dispose();
         }
 
+        ContentHashesSupport.flushContentHashes();
         myConnection.disconnect();
       }
       catch (Throwable e) {
@@ -701,6 +702,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
       mySerializationManagerEx.flushNameStorage();
     }
+    ContentHashesSupport.flushContentHashes();
   }
 
   @Override
@@ -1237,7 +1239,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       cleanupProcessedFlag();
 
       advanceIndexVersion(indexId);
-      
+
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {

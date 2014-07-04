@@ -78,15 +78,17 @@ public class PyCallingNonCallableInspection extends PyInspection {
       }
       if (!callable) {
         final PyType calleeType = callee != null ? myTypeEvalContext.getType(callee) : type;
+        String message = "Expression is not callable";
         if (calleeType instanceof PyClassType) {
-          registerProblem(node, String.format("'%s' object is not callable", calleeType.getName()), new PyRemoveCallQuickFix());
+          message = String.format("'%s' object is not callable", calleeType.getName());
         }
         else if (callee != null) {
-          registerProblem(node, String.format("'%s' is not callable", callee.getName()), new PyRemoveCallQuickFix());
+          final String name = callee.getName();
+          if (name != null) {
+            message = String.format("'%s' is not callable", name);
+          }
         }
-        else {
-          registerProblem(node, "Expression is not callable", new PyRemoveCallQuickFix());
-        }
+        registerProblem(node, message, new PyRemoveCallQuickFix());
       }
     }
   }

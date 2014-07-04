@@ -26,6 +26,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,9 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
       catch (NoDataException ignored) {
       }
+      catch (VMDisconnectedException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -78,6 +82,9 @@ public class CompoundPositionManager extends PositionManagerEx {
         return positionManager.getAllClasses(classPosition);
       }
       catch (NoDataException ignored) {
+      }
+      catch (VMDisconnectedException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -98,6 +105,9 @@ public class CompoundPositionManager extends PositionManagerEx {
       }
       catch (NoDataException ignored) {
       }
+      catch (VMDisconnectedException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -115,6 +125,9 @@ public class CompoundPositionManager extends PositionManagerEx {
         return positionManager.createPrepareRequest(requestor, position);
       }
       catch (NoDataException ignored) {
+      }
+      catch (VMDisconnectedException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);

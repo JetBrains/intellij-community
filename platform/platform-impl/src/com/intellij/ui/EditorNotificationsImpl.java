@@ -88,6 +88,10 @@ public class EditorNotificationsImpl extends EditorNotifications {
           indicator.cancel();
         }
 
+        if (myProject.isDisposed()) {
+          return;
+        }
+
         indicator = new ProgressIndicatorBase();
         file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
 

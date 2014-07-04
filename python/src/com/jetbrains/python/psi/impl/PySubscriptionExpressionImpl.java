@@ -68,11 +68,9 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyType res = null;
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    if (ref != null) {
-      final PsiElement resolved = ref.resolve();
-      if (resolved instanceof Callable) {
-        res = ((Callable)resolved).getCallType(context, this);
-      }
+    final PsiElement resolved = ref.resolve();
+    if (resolved instanceof Callable) {
+      res = ((Callable)resolved).getCallType(context, this);
     }
     if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
       final PyExpression indexExpression = getIndexExpression();
@@ -98,6 +96,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     return getReference(PyResolveContext.noImplicits());
   }
 
+  @NotNull
   @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     return new PyOperatorReference(this, context);

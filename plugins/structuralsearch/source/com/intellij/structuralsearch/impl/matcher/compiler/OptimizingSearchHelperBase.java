@@ -1,9 +1,5 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.impl.source.tree.ElementType;
 import gnu.trove.THashSet;
 
 /**
@@ -15,7 +11,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   private final THashSet<String> scannedComments;
   private final THashSet<String> scannedLiterals;
   protected int scanRequest;
-  private Lexer javaLexer;
+
 
   protected final CompileContext context;
 
@@ -37,23 +33,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
 
   public boolean addWordToSearchInCode(final String refname) {
     if (!scanned.contains(refname)) {
-      boolean isJavaReservedWord = false;
-
-      if (context.getOptions().getFileType() == StdFileTypes.JAVA) {
-        if (javaLexer == null) {
-          javaLexer = LanguageParserDefinitions.INSTANCE.forLanguage(StdFileTypes.JAVA.getLanguage()).createLexer(context.getProject());
-        }
-        javaLexer.start(refname);
-        isJavaReservedWord = ElementType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType()) ||
-                             ElementType.LITERAL_BIT_SET.contains(javaLexer.getTokenType());
-      }
-
-      if (isJavaReservedWord) {
-        doAddSearchJavaReservedWordInCode(refname);
-      } else {
-        doAddSearchWordInCode(refname);
-      }
-
+      doAddSearchWordInCode(refname);
       scanned.add( refname );
       return true;
     }
@@ -70,9 +50,9 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
     return false;
   }
 
-  protected abstract void doAddSearchJavaReservedWordInCode(final String refname);
-  protected abstract void doAddSearchWordInText(final String refname);
   protected abstract void doAddSearchWordInCode(final String refname);
+  protected abstract void doAddSearchWordInText(final String refname);
+
   protected abstract void doAddSearchWordInComments(final String refname);
   protected abstract void doAddSearchWordInLiterals(final String refname);
 

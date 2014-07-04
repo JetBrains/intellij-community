@@ -28,7 +28,7 @@ import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
@@ -44,24 +44,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-@SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
+@SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr", "TestOnlyProblems", "BusyWait"})
 public class TestAll implements Test {
   static {
     Logger.setFactory(TestLoggerFactory.class);
   }
-
-  private final TestCaseLoader myTestCaseLoader;
-  private long myStartTime = 0;
-  private boolean myInterruptedByOutOfTime = false;
-  private long myLastTestStartTime = 0;
-  private String myLastTestClass;
-  private int myRunTests = -1;
-  private boolean mySavingMemorySnapshot;
 
   private static final int SAVE_MEMORY_SNAPSHOT = 1;
   private static final int START_GUARD = 2;
@@ -70,11 +59,10 @@ public class TestAll implements Test {
   private static final int FILTER_CLASSES = 16;
 
   public static int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
-  private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
-  private int myLastTestTestMethodCount = 0;
-  public static final int MAX_FAILURE_TEST_COUNT = 150;
 
-  private TestRecorder myTestRecorder;
+  private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
+
+  private static final int MAX_FAILURE_TEST_COUNT = 150;
 
   private static final Filter PERFORMANCE_ONLY = new Filter() {
     @Override
@@ -103,18 +91,98 @@ public class TestAll implements Test {
     }
   };
 
-  @Override
-  public int countTestCases() {
-    List<Class> classes = myTestCaseLoader.getClasses();
+  private final TestCaseLoader myTestCaseLoader;
+  private long myStartTime = 0;
+  private boolean myInterruptedByOutOfTime = false;
+  private long myLastTestStartTime = 0;
+  private String myLastTestClass;
+  private int myRunTests = -1;
+  private boolean mySavingMemorySnapshot;
+  private int myLastTestTestMethodCount = 0;
+  private TestRecorder myTestRecorder;
 
-    int count = 0;
+  public TestAll(String packageRoot) throws Throwable {
+    this(packageRoot, getClassRoots());
+  }
 
-    for (final Object aClass : classes) {
-      Class testCaseClass = (Class)aClass;
-      Test test = getTest(testCaseClass);
-      if (test != null) count += test.countTestCases();
+  public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
+    String classFilterName = "tests/testGroups.properties";
+    if (Boolean.getBoolean("idea.ignore.predefined.groups") || (ourMode & FILTER_CLASSES) == 0) {
+      classFilterName = "";
     }
 
+    myTestCaseLoader = new TestCaseLoader(classFilterName, isPerformanceTestsRun());
+    myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
+    myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
+    fillTestCases(myTestCaseLoader, packageRoot, classRoots);
+  }
+
+  public static String[] getClassRoots() {
+    String testRoots = System.getProperty("test.roots");
+    if (testRoots != null) {
+      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
+      return testRoots.split(";");
+    }
+    String[] roots = ExternalClasspathClassLoader.getRoots();
+    if (roots != null) {
+      if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
+        System.out.println("Skipping community tests");
+        Set<String> set = normalizePaths(roots);
+        set.removeAll(normalizePaths(ExternalClasspathClassLoader.getExcludeRoots()));
+        roots = ArrayUtil.toStringArray(set);
+      }
+
+      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
+      return roots;
+    }
+    else {
+      final ClassLoader loader = TestAll.class.getClassLoader();
+      if (loader instanceof URLClassLoader) {
+        final URL[] urls = ((URLClassLoader)loader).getURLs();
+        final String[] classLoaderRoots = new String[urls.length];
+        for (int i = 0; i < urls.length; i++) {
+          classLoaderRoots[i] = VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(urls[i]));
+        }
+        System.out.println("Collecting tests from " + Arrays.toString(classLoaderRoots));
+        return classLoaderRoots;
+      }
+      return System.getProperty("java.class.path").split(File.pathSeparator);
+    }
+  }
+
+  private static Set<String> normalizePaths(String[] array) {
+    Set<String> answer = new LinkedHashSet<String>(array.length);
+    for (String path : array) {
+      answer.add(path.replace('\\', '/'));
+    }
+    return answer;
+  }
+
+  public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
+    for (String classRoot : classRoots) {
+      int oldCount = testCaseLoader.getClasses().size();
+      ClassFinder classFinder = new ClassFinder(new File(FileUtil.toSystemDependentName(classRoot)), packageRoot);
+      testCaseLoader.loadTestCases(classFinder.getClasses());
+      int newCount = testCaseLoader.getClasses().size();
+      if (newCount != oldCount) {
+        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
+      }
+    }
+
+    if (testCaseLoader.getClasses().size() == 1) {
+      testCaseLoader.clearClasses();
+    }
+
+    log("Number of test classes found: " + testCaseLoader.getClasses().size());
+  }
+
+  @Override
+  public int countTestCases() {
+    int count = 0;
+    for (Object aClass : myTestCaseLoader.getClasses()) {
+      Test test = getTest((Class)aClass);
+      if (test != null) count += test.countTestCases();
+    }
     return count;
   }
 
@@ -190,12 +258,13 @@ public class TestAll implements Test {
   @Override
   public void run(final TestResult testResult) {
     loadTestRecorder();
+
     List<Class> classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
-    for (final Class aClass : classes) {
+    for (Class<?> aClass : classes) {
       boolean recording = false;
       if (myTestRecorder != null && shouldRecord(aClass)) {
-        myTestRecorder.beginRecording(aClass, (RecordExecution) aClass.getAnnotation(RecordExecution.class));
+        myTestRecorder.beginRecording(aClass, aClass.getAnnotation(RecordExecution.class));
         recording = true;
       }
       try {
@@ -208,14 +277,12 @@ public class TestAll implements Test {
       }
       if (testResult.shouldStop()) break;
     }
+
     tryGc(10);
   }
 
-  private boolean shouldRecord(Class aClass) {
-    if (aClass.getAnnotation(RecordExecution.class) != null) {
-      return true;
-    }
-    return false;
+  private static boolean shouldRecord(Class<?> aClass) {
+    return aClass.getAnnotation(RecordExecution.class) != null;
   }
 
   private void loadTestRecorder() {
@@ -225,52 +292,42 @@ public class TestAll implements Test {
         Class<?> recorderClass = Class.forName(recorderClassName);
         myTestRecorder = (TestRecorder) recorderClass.newInstance();
       }
-      catch (ClassNotFoundException e) {
-        System.out.println("CNFE loading test recorder class: " + e);
-      }
-      catch (InstantiationException e) {
-        System.out.println("InstantiationException loading test recorder class: " + e);
-      }
-      catch (IllegalAccessException e) {
-        System.out.println("IAE loading test recorder class: " + e);
+      catch (Exception e) {
+        System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
       }
     }
   }
 
   private void runNextTest(final TestResult testResult, int totalTests, Class testCaseClass) {
     myRunTests++;
-    if (!checkAvaliableMemory(35, testResult)) {
+    if (!checkAvailableMemory(35, testResult)) {
       testResult.stop();
       return;
     }
+
     if (testResult.errorCount() + testResult.failureCount() > MAX_FAILURE_TEST_COUNT) {
-      addErrorMessage(testResult, "Too many errors. Tests stopped. Total " + myRunTests + " of " + totalTests + " tests run");
+      addErrorMessage(testResult, "Too many errors. Executed: " + myRunTests + " of " + totalTests);
       testResult.stop();
       return;
     }
+
     if (myStartTime == 0) {
-      boolean ourClassLoader = getClass().getClassLoader().getClass().getName().startsWith("com.intellij.");
-      if (!ourClassLoader) {
+      String loaderName = getClass().getClassLoader().getClass().getName();
+      if (!loaderName.startsWith("com.intellij.")) {
         beforeFirstTest();
       }
     }
     else {
       if (myInterruptedByOutOfTime) {
-        addErrorMessage(testResult,
-                        "Current Test Interrupted: OUT OF TIME! Class = " + myLastTestClass + " Total " + myRunTests + " of " +
-                        totalTests +
-                        " tests run");
+        addErrorMessage(testResult, "Time out in " + myLastTestClass + ". Executed: " + myRunTests + " of " + totalTests);
         testResult.stop();
         return;
       }
     }
 
     log("\nRunning " + testCaseClass.getName());
-    final Test test = getTest(testCaseClass);
-
+    Test test = getTest(testCaseClass);
     if (test == null) return;
-
-    myLastTestClass = null;
 
     myLastTestClass = testCaseClass.getName();
     myLastTestStartTime = System.currentTimeMillis();
@@ -279,24 +336,25 @@ public class TestAll implements Test {
     try {
       test.run(testResult);
     }
-    catch (Throwable t) {
-      if (t instanceof OutOfMemoryError) {
-        if ((ourMode & SAVE_MEMORY_SNAPSHOT) != 0) {
-          try {
-            mySavingMemorySnapshot = true;
-            log("OutOfMemoryError detected. Saving memory snapshot started");
-          }
-          finally {
-            log("Saving memory snapshot finished");
-            mySavingMemorySnapshot = false;
-          }
+    catch (OutOfMemoryError t) {
+      if ((ourMode & SAVE_MEMORY_SNAPSHOT) != 0) {
+        try {
+          mySavingMemorySnapshot = true;
+          log("OutOfMemoryError detected. Saving memory snapshot started");
+        }
+        finally {
+          log("Saving memory snapshot finished");
+          mySavingMemorySnapshot = false;
         }
       }
       testResult.addError(test, t);
     }
+    catch (Throwable t) {
+      testResult.addError(test, t);
+    }
   }
 
-  private boolean checkAvaliableMemory(int neededMemory, TestResult testResult) {
+  private boolean checkAvailableMemory(int neededMemory, TestResult testResult) {
     if ((ourMode & CHECK_MEMORY) == 0) return true;
 
     boolean possibleOutOfMemoryError = possibleOutOfMemory(neededMemory);
@@ -349,9 +407,7 @@ public class TestAll implements Test {
           try {
             adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
           }
-          catch (NoTestsRemainException e1) {
-            // Ignore
-          }
+          catch (NoTestsRemainException ignored) { }
         }
         return adapter;
       }
@@ -391,11 +447,11 @@ public class TestAll implements Test {
   }
 
   private static boolean hasPerformance(String name) {
-    return name.toLowerCase().contains("performance");
+    return name.toLowerCase(Locale.US).contains("performance");
   }
 
   @Nullable
-  private static Method safeFindMethod(Class klass, String name) {
+  private static Method safeFindMethod(Class<?> klass, String name) {
     try {
       return klass.getMethod(name);
     }
@@ -404,100 +460,25 @@ public class TestAll implements Test {
     }
   }
 
-  private static Set<String> normalizePaths(String[] array) {
-    Set<String> answer = new LinkedHashSet<String>(array.length);
-    for (String path : array) {
-      answer.add(path.replace('\\', '/'));
-    }
-    return answer;
-  }
+  private static void tryGc(int times) {
+    if ((ourMode & RUN_GC) == 0) return;
 
-  public static String[] getClassRoots() {
-    String testRoots = System.getProperty("test.roots");
-    if (testRoots != null) {
-      System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
-      return testRoots.split(";");
-    }
-    String[] roots = ExternalClasspathClassLoader.getRoots();
-    if (roots != null) {
-      if (Comparing.equal(System.getProperty(TestCaseLoader.SKIP_COMMUNITY_TESTS), "true")) {
-        System.out.println("Skipping community tests");
-        Set<String> set = normalizePaths(roots);
-        set.removeAll(normalizePaths(ExternalClasspathClassLoader.getExcludeRoots()));
-        roots = set.toArray(new String[set.size()]);
+    for (int i = 1; i < times; i++) {
+      try {
+        Thread.sleep(i * 1000);
       }
-      
-      System.out.println("Collecting tests from roots specified by classpath.file property: " + Arrays.toString(roots));
-      return roots;
-    }
-    else {
-      final ClassLoader loader = TestAll.class.getClassLoader();
-      if (loader instanceof URLClassLoader) {
-        final URL[] urls = ((URLClassLoader)loader).getURLs();
-        final String[] classLoaderRoots = new String[urls.length];
-        for (int i = 0; i < urls.length; i++) {
-          classLoaderRoots[i] = VfsUtil.urlToPath(VfsUtil.convertFromUrl(urls[i]));
-        }
-        System.out.println("Collecting tests from classloader: " + Arrays.toString(classLoaderRoots));
-        return classLoaderRoots;
+      catch (InterruptedException e) {
+        e.printStackTrace();
       }
-      return System.getProperty("java.class.path").split(File.pathSeparator);
+
+      System.gc();
+
+      long mem = Runtime.getRuntime().totalMemory();
+      log("Runtime.getRuntime().totalMemory() = " + mem);
     }
-  }
-
-  public TestAll(String packageRoot) throws Throwable {
-    this(packageRoot, getClassRoots());
-  }
-
-  public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
-    String classFilterName = "tests/testGroups.properties";
-    if (Boolean.parseBoolean(System.getProperty("idea.ignore.predefined.groups")) || (ourMode & FILTER_CLASSES) == 0) {
-      classFilterName = "";
-    }
-    myTestCaseLoader = new TestCaseLoader(classFilterName, isPerformanceTestsRun());
-    myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
-    myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
-
-    fillTestCases(myTestCaseLoader, packageRoot, classRoots);
-  }
-
-  public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
-    for (String classRoot : classRoots) {
-      int oldCount = testCaseLoader.getClasses().size();
-      ClassFinder classFinder = new ClassFinder(new File(FileUtil.toSystemDependentName(classRoot)), packageRoot);
-      testCaseLoader.loadTestCases(classFinder.getClasses());
-      int newCount = testCaseLoader.getClasses().size();
-      if (newCount != oldCount) {
-        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
-      }
-    }
-
-    if (testCaseLoader.getClasses().size() == 1) {
-      testCaseLoader.clearClasses();
-    }
-
-    log("Number of test classes found: " + testCaseLoader.getClasses().size());
   }
 
   private static void log(String message) {
     TeamCityLogger.info(message);
   }
-
-  // [myakovlev] Do not delete - it is for debugging
-  public static void tryGc(int times) {
-    if ((ourMode & RUN_GC) == 0) return;
-
-    for (int qqq = 1; qqq < times; qqq++) {
-      try {
-        Thread.sleep(qqq * 1000);
-      }
-      catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      System.gc();
-      //long mem = Runtime.getRuntime().totalMemory();
-      log("Runtime.getRuntime().totalMemory() = " + Runtime.getRuntime().totalMemory());
-    }
-  }
-
 }

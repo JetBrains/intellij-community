@@ -27,6 +27,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -109,9 +110,16 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
+  private static void checkGroovyFile(@NotNull SourcePosition position) throws NoDataException {
+    if (!(position.getFile() instanceof GroovyFileBase)) {
+      throw new NoDataException();
+    }
+  }
+
   @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
+    checkGroovyFile(position);
     String qName = getOuterClassName(position);
     if (qName != null) {
       return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, qName);
@@ -260,7 +268,10 @@ public class GroovyPositionManager implements PositionManager {
 
   private static GlobalSearchScope addModuleContent(GlobalSearchScope scope) {
     if (scope instanceof ModuleWithDependenciesScope) {
-      return scope.uniteWith(((ModuleWithDependenciesScope)scope).getModule().getModuleContentWithDependenciesScope());
+      Module module = ((ModuleWithDependenciesScope)scope).getModule();
+      if (!module.isDisposed()) {
+        return scope.uniteWith(module.getModuleContentWithDependenciesScope());
+      }
     }
     return scope;
   }
@@ -277,6 +288,7 @@ public class GroovyPositionManager implements PositionManager {
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
+    checkGroovyFile(position);
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       @Override
       public List<ReferenceType> compute() {

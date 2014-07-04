@@ -1,10 +1,11 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchException;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
@@ -29,11 +30,11 @@ import java.util.List;
 public class ScriptSupport {
   private final Script script;
 
-  public ScriptSupport(String text) {
+  public ScriptSupport(String text, String name) {
     File scriptFile = new File(text);
     GroovyShell shell = new GroovyShell();
     try {
-      script = scriptFile.exists() ? shell.parse(scriptFile):shell.parse(text);
+      script = scriptFile.exists() ? shell.parse(scriptFile):shell.parse(text, name);
     } catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
@@ -53,15 +54,14 @@ public class ScriptSupport {
       if (context == null) {
         context = result.getMatchRef().getElement();
       }
-      if (context instanceof PsiIdentifier) context = context.getParent();
+      if (StructuralSearchUtil.isIdentifier(context)) context = context.getParent();
       binding.setVariable("__context__", context);
       script.setBinding(binding);
 
       Object o = script.run();
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
-      Logger.getInstance(getClass().getName()).error(ex);
-      return StringUtil.convertLineSeparators(ex.getLocalizedMessage());
+      throw new StructuralSearchException(SSRBundle.message("groovy.script.error", ex.getMessage()));
     }
   }
 

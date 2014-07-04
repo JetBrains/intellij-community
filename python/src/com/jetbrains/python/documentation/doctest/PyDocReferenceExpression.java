@@ -38,6 +38,7 @@ public class PyDocReferenceExpression extends PyReferenceExpressionImpl {
   }
 
   @NotNull
+  @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     if (isQualified()) {
       return new PyQualifiedReference(this, context);

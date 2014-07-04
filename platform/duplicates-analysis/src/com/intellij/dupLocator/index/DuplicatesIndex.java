@@ -85,7 +85,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     @Override
     public TIntArrayList read(@NotNull DataInput in) throws IOException {
       int capacityOrValue = DataInputOutputUtil.readINT(in);
-      if (capacityOrValue > 0) {
+      if (capacityOrValue >= 0) {
         TIntArrayList list = new TIntArrayList(1);
         list.add(capacityOrValue);
         return list;

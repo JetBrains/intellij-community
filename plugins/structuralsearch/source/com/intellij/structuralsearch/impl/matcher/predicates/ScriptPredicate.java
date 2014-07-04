@@ -11,7 +11,7 @@ public class ScriptPredicate extends AbstractStringBasedPredicate {
 
   public ScriptPredicate(String name, String within) {
     super(name, within);
-    scriptSupport = new ScriptSupport(within);
+    scriptSupport = new ScriptSupport(within, name);
   }
 
   public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {

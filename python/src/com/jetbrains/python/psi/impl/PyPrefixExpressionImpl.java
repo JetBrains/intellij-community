@@ -70,13 +70,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     return getReference(PyResolveContext.noImplicits());
   }
 
+  @NotNull
   @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
-    final PyElementType t = getOperator();
-    if (t.getSpecialMethodName() != null) {
-      return new PyOperatorReference(this, context);
-    }
-    return null;
+    return new PyOperatorReference(this, context);
   }
 
   @Override
@@ -85,11 +82,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       return PyBuiltinCache.getInstance(this).getBoolType();
     }
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    if (ref != null) {
-      final PsiElement resolved = ref.resolve();
-      if (resolved instanceof Callable) {
-        return ((Callable)resolved).getCallType(context, this);
-      }
+    final PsiElement resolved = ref.resolve();
+    if (resolved instanceof Callable) {
+      // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
+      return ((Callable)resolved).getReturnType(context, key);
     }
     return null;
   }

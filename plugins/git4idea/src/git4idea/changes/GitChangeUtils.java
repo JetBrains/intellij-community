@@ -186,23 +186,37 @@ public class GitChangeUtils {
   @NotNull
   public static GitRevisionNumber resolveReference(@NotNull Project project, @NotNull VirtualFile vcsRoot,
                                                    @NotNull String reference) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
-    handler.addParameters("--timestamp", "--max-count=1", reference);
-    handler.endOptions();
-    handler.setSilent(true);
+    GitSimpleHandler handler = createRefResolveHandler(project, vcsRoot, reference);
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
     if (!stk.hasMoreTokens()) {
-      GitSimpleHandler dh = new GitSimpleHandler(project, vcsRoot, GitCommand.LOG);
-      dh.addParameters("-1", "HEAD");
-      dh.setSilent(true);
-      String out = dh.run();
-      LOG.info("Diagnostic output from 'git log -1 HEAD': [" + out + "]");
+      try {
+        GitSimpleHandler dh = new GitSimpleHandler(project, vcsRoot, GitCommand.LOG);
+        dh.addParameters("-1", "HEAD");
+        dh.setSilent(true);
+        String out = dh.run();
+        LOG.info("Diagnostic output from 'git log -1 HEAD': [" + out + "]");
+        dh = createRefResolveHandler(project, vcsRoot, reference);
+        out = dh.run();
+        LOG.info("Diagnostic output from 'git rev-list -1 --timestamp HEAD': [" + out + "]");
+      }
+      catch (VcsException e) {
+        LOG.info("Exception while trying to get some diagnostics info", e);
+      }
       throw new VcsException(String.format("The string '%s' does not represent a revision number. Output: [%s]\n Root: %s",
                                            reference, output, vcsRoot));
     }
     Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);
+  }
+
+  @NotNull
+  private static GitSimpleHandler createRefResolveHandler(@NotNull Project project, @NotNull VirtualFile root, @NotNull String reference) {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REV_LIST);
+    handler.addParameters("--timestamp", "--max-count=1", reference);
+    handler.endOptions();
+    handler.setSilent(true);
+    return handler;
   }
 
   /**
