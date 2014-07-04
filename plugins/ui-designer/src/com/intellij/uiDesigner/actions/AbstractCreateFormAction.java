@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -91,5 +92,19 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
 
   protected String getActionName(final PsiDirectory directory, final String newName) {
     return UIDesignerBundle.message("progress.creating.class", JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName);
+  }
+
+  protected class JavaNameValidator extends MyInputValidator {
+    private final Project myProject;
+
+    public JavaNameValidator(Project project, PsiDirectory directory) {
+      super(project, directory);
+      myProject = project;
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      return inputString.length() > 0 && JavaPsiFacade.getInstance(myProject).getNameHelper().isQualifiedName(inputString);
+    }
   }
 }
