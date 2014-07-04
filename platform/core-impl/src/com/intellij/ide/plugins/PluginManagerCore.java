@@ -539,8 +539,9 @@ public class PluginManagerCore {
         ArrayList<PluginId> plugins = new ArrayList<PluginId>();
         for (PluginId dependentPluginId : descriptor.getDependentPluginIds()) {
           // check for missing optional dependency
-          if (idToDescriptorMap.containsKey(dependentPluginId)) {
-            plugins.add(dependentPluginId);
+          IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependentPluginId);
+          if (dep != null) {
+            plugins.add(dep.getPluginId());
           }
         }
         return plugins.iterator();
