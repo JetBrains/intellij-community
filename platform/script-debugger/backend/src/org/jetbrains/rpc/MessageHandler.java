@@ -74,7 +74,16 @@ public abstract class MessageHandler<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPON
   public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
                                                                                  @NotNull RequestWithResponse message,
                                                                                  @NotNull PairConsumer<RESULT, AsyncResult<TRANSFORMED_RESULT>> consumer) {
-    messageManager.send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), consumer));
+    messageManager.send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), consumer, null));
+    return result;
+  }
+
+  @Override
+  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
+                                                                                 @NotNull RequestWithResponse message,
+                                                                                 @NotNull PairConsumer<RESULT, AsyncResult<TRANSFORMED_RESULT>> consumer,
+                                                                                 @Nullable ErrorConsumer<AsyncResult<TRANSFORMED_RESULT>, ERROR_DETAILS> errorConsumer) {
+    messageManager.send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), consumer, errorConsumer));
     return result;
   }
 }
