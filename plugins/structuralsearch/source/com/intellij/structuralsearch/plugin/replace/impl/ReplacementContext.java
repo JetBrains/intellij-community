@@ -2,9 +2,9 @@ package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 
 import java.util.HashMap;
@@ -43,7 +43,7 @@ public class ReplacementContext {
       for (String s : variableMap.keySet()) {
         final MatchResult matchResult = replacementInfo.getVariableMap().get(s);
         PsiElement match = matchResult.getMatchRef() != null ? matchResult.getMatch() : null;
-        if (match instanceof PsiIdentifier) match = match.getParent();
+        if (StructuralSearchUtil.isIdentifier(match)) match = match.getParent();
 
         if (match instanceof PsiNamedElement) {
           final String name = ((PsiNamedElement)match).getName();

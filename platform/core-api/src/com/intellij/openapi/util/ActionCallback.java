@@ -190,7 +190,7 @@ public class ActionCallback implements Disposable {
 
     @NotNull
     public ActionCallback create() {
-      if (myCallbacks.isEmpty()) {
+      if (isEmpty()) {
         return DONE;
       }
 
@@ -200,6 +200,14 @@ public class ActionCallback implements Disposable {
         each.doWhenDone(doneRunnable).notifyWhenRejected(result);
       }
       return result;
+    }
+
+    public boolean isEmpty() {
+      return myCallbacks.isEmpty();
+    }
+
+    public int getSize() {
+      return myCallbacks.size();
     }
 
     @NotNull

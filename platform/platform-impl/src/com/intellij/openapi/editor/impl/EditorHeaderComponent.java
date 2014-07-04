@@ -46,8 +46,13 @@ public class EditorHeaderComponent extends JPanel {
     paintGradient(g, this);
   }
 
-  public static void paintGradient(Graphics g, JComponent c) {
-    Color GRADIENT_C1 = new JBColor(c.getBackground(), JBColor.background());
+  @NotNull
+  protected JBColor getBaseBackgroundColor() {
+    return new JBColor(getBackground(), JBColor.background());
+  }
+
+  private void paintGradient(Graphics g, JComponent c) {
+    Color GRADIENT_C1 = getBaseBackgroundColor();
     Color GRADIENT_C2 = new JBColor(new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
                                               Math.max(0, GRADIENT_C1.getBlue() - 0x18)), Gray._75);
 

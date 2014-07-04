@@ -829,6 +829,7 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myStopped) return;
 
     myDebugProcess.stop();
+    myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
     myCurrentPosition = null;
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;

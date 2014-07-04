@@ -138,10 +138,7 @@ public abstract class MatchingHandler extends MatchPredicate {
     @Override public void visitElement(PsiElement element) {
       // We do not reset certain handlers because they are also bound to higher level nodes
       // e.g. Identifier handler in name is also bound to PsiMethod
-      if (!(element instanceof PsiJavaToken) &&
-          (!(element instanceof PsiJavaCodeReferenceElement) ||
-           !(element.getParent() instanceof PsiAnnotation))
-         ) {
+      if (pattern.isToResetHandler(element)) {
         MatchingHandler handler = pattern.getHandlerSimple(element);
         if (handler instanceof SubstitutionHandler) {
           handler.reset();

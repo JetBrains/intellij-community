@@ -58,4 +58,8 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspectionTest e
            "  }" +
            "}");
   }
+
+  public void testTypeParameter() {
+    doTest("class A<TypeParameter extends java.awt.Component> {}");
+  }
 }

@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -39,12 +36,13 @@ class SerializableInnerClassHasSerialVersionUIDFieldVisitor
   @Override
   public void visitClass(@NotNull PsiClass aClass) {
     // no call to super, so it doesn't drill down
-    if (aClass.isInterface() || aClass.isAnnotationType() ||
-        aClass.isEnum()) {
+    if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
       return;
     }
-    if (inspection.ignoreAnonymousInnerClasses &&
-        aClass instanceof PsiAnonymousClass) {
+    if (aClass instanceof PsiTypeParameter) {
+      return;
+    }
+    if (inspection.ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
       return;
     }
     if (aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false) != null) {
