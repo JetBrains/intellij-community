@@ -169,8 +169,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    final Executor executor = environment != null ? environment.getExecutor() : debugExecutor;
     if (runner != null && environment != null) {
-      RestartAction restartAction = new RestartAction(debugExecutor, runner, myRunContentDescriptor, environment);
+      RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, environment);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
 
@@ -216,7 +217,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     leftToolbar.addSeparator();
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
-    leftToolbar.add(new CloseAction(environment != null ? environment.getExecutor() : debugExecutor, myRunContentDescriptor, getProject()));
+    leftToolbar.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
     leftToolbar.add(new ContextHelpAction(debugExecutor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
