@@ -33,12 +33,11 @@ import javax.swing.*;
  */
 public class GitCompareBranchesDialog extends FrameWrapper {
 
-  private final Project myProject;
-  private final String myBranchName;
-  private final String myCurrentBranchName;
-  private final GitCommitCompareInfo myCompareInfo;
-  private final GitRepository myInitialRepo;
-  private final JPanel myLogPanel;
+  @NotNull private final Project myProject;
+  @NotNull private final String myBranchName;
+  @NotNull private final String myCurrentBranchName;
+  @NotNull private final GitCommitCompareInfo myCompareInfo;
+  @NotNull private final JPanel myLogPanel;
 
   public GitCompareBranchesDialog(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName,
                                   @NotNull GitCommitCompareInfo compareInfo, @NotNull GitRepository initialRepo) {
@@ -47,7 +46,6 @@ public class GitCompareBranchesDialog extends FrameWrapper {
     myCompareInfo = compareInfo;
     myProject = project;
     myBranchName = branchName;
-    myInitialRepo = initialRepo;
 
     String rootString;
     if (compareInfo.getRepositories().size() == 1 && GitUtil.getRepositoryManager(myProject).moreThanOneRoot()) {
@@ -58,12 +56,13 @@ public class GitCompareBranchesDialog extends FrameWrapper {
     }
     setTitle(String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString));
 
-    myLogPanel = new GitCompareBranchesLogPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo, myInitialRepo);
+    myLogPanel = new GitCompareBranchesLogPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo, initialRepo);
     setPreferredFocusedComponent(myLogPanel);
     setComponent(createCenterPanel());
     closeOnEsc();
   }
 
+  @NotNull
   protected JComponent createCenterPanel() {
     JPanel diffPanel = new GitCompareBranchesDiffPanel(myProject, myBranchName, myCurrentBranchName, myCompareInfo);
 
