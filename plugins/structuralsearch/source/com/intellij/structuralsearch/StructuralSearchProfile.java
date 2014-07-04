@@ -31,6 +31,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -267,5 +269,9 @@ public abstract class StructuralSearchProfile {
 
   public boolean isIdentifier(PsiElement element) {
     return false;
+  }
+
+  public Collection<String> getReservedWords() {
+    return Collections.emptySet();
   }
 }

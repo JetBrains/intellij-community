@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeFilter;
@@ -28,9 +28,13 @@ import static com.intellij.structuralsearch.MatchOptions.MODIFIER_ANNOTATION_NAM
 public class GlobalCompilingVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   private static final Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
-  private static final Set<String> ourReservedWords = new HashSet<String>(
-    Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME, PsiModifier.PACKAGE_LOCAL)
-  );
+  private static final Set<String> ourReservedWords = new HashSet<String>(Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME)) {
+    {
+      for (StructuralSearchProfile profile : Extensions.getExtensions(StructuralSearchProfile.EP_NAME)) {
+        addAll(profile.getReservedWords());
+      }
+    }
+  };
   private static final Pattern ourAlternativePattern = Pattern.compile("^\\((.+)\\)$");
   @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
   private static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
