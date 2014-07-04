@@ -42,6 +42,10 @@ public class Replacer {
     this.options = options;
   }
 
+  public static String stripTypedVariableDecoration(final String type) {
+   return type.substring(1,type.length()-1);
+ }
+
   public String testReplace(String in, String what, String by, ReplaceOptions options) throws IncorrectOperationException {
     return testReplace(in, what, by, options,false);
   }
@@ -289,7 +293,7 @@ public class Replacer {
 
     final PsiElement firstChild = el.getFirstChild();
     if (firstChild instanceof PsiComment &&
-        !(firstChild instanceof PsiDocComment) &&
+        !(firstChild instanceof PsiDocCommentBase) &&
         replacementInfo.elementToVariableNameMap.get(firstChild) == null
         ) {
       PsiElement lastElementBeforeStatementStart = firstChild;
@@ -408,7 +412,7 @@ public class Replacer {
     if (replacementBuilder==null) {
       replacementBuilder = new ReplacementBuilder(project,options);
     }
-    replacementInfo.result = replacementBuilder.process(result,replacementInfo);
+    replacementInfo.result = replacementBuilder.process(result, replacementInfo);
     replacementInfo.matchResult = result;
 
     return replacementInfo;
