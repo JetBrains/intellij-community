@@ -652,7 +652,7 @@ public class EditorWindow {
       if (myTabbedPane == null) {
         myPanel.removeAll ();
         myPanel.add (new TCompForTablessMode(this, editor), BorderLayout.CENTER);
-        myPanel.revalidate ();
+        myOwner.validate();
         return;
       }
 
@@ -686,7 +686,7 @@ public class EditorWindow {
       }
       myOwner.setCurrentWindow(this, false);
     }
-    myPanel.revalidate();
+    myOwner.validate();
   }
 
   private boolean splitAvailable() {

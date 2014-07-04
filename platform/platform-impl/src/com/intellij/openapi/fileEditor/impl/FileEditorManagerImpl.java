@@ -855,7 +855,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
         composite.getSelectedEditor().selectNotify();
 
-        final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+        // Transfer focus into editor
+        if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+          if (focusEditor) {
+            //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
+            window.setAsCurrentWindow(true);
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+          }
+        }
+
         if (newEditor) {
           if (window.isShowing()) {
             window.setPaintBlocked(true);
@@ -875,16 +884,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         //[jeka] this is a hack to support back-forward navigation
         // previously here was incorrect call to fireSelectionChanged() with a side-effect
         ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
-
-        // Transfer focus into editor
-        if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-          if (focusEditor) {
-            //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
-            window.setAsCurrentWindow(true);
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-            focusManager.toFront(window.getOwner());
-          }
-        }
 
         // Update frame and tab title
         updateFileName(file);
