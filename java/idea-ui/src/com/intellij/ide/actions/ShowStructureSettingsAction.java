@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.Gray;
+import com.intellij.ui.border.CustomLineBorder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,7 +52,10 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
         @Nullable
         @Override
         protected JComponent createSouthPanel() {
-          return null;
+          JComponent panel = super.createSouthPanel();
+          assert panel != null;
+          panel.setBorder(new CustomLineBorder(Gray._153, 1, 0,0,0));
+          return panel;
         }
       }.show();
     } else {
