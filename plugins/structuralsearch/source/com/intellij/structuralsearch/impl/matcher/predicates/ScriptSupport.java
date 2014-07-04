@@ -3,6 +3,8 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import groovy.lang.Binding;
