@@ -1321,36 +1321,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildToolWindows(String pattern) {
-      if (myActions == null) {
-        if (myActionModel == null) {
-          myActionModel = createActionModel();
-        }
-        myActions = myActionModel.getNames(true);
-      }
-      final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
-      List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
-      for (MatchResult o : matches) {
-        check();
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
-          check();
-          if (isToolWindowAction(object) && toolWindows.size() < MAX_TOOL_WINDOWS) {
-            toolWindows.add(((GotoActionModel.ActionWrapper)object).getAction());
+      final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
+      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project)) {
+        String text = action.getTemplatePresentation().getText();
+        if (text != null && StringUtil.startsWithIgnoreCase(text, pattern)) {
+          actions.add(action);
+
+          if (actions.size() == MAX_TOOL_WINDOWS) {
+            break;
           }
         }
       }
 
       check();
 
+      if (actions.isEmpty()) {
+        return;
+      }
+
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (isCanceled()) return;
-          if (toolWindows.size() > 0) {
-            myListModel.titleIndex.toolWindows = myListModel.size();
-            for (Object toolWindow : toolWindows) {
-              myListModel.addElement(toolWindow);
-            }
+          myListModel.titleIndex.toolWindows = myListModel.size();
+          for (Object toolWindow : actions) {
+            myListModel.addElement(toolWindow);
           }
         }
       });
@@ -1890,7 +1884,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (names == null) return Collections.emptyList();
       pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
       pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
-      if (model != myFileModel && !pattern.startsWith("*") && pattern.length() > 1) {
+      if (model != myFileModel && model != myActionModel && !pattern.startsWith("*") && pattern.length() > 1) {
         pattern = "*" + pattern;
       }
       final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
