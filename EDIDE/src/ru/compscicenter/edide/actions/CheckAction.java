@@ -2,18 +2,26 @@ package ru.compscicenter.edide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,15 +84,23 @@ class CheckAction extends AnAction {
           while ((line = bf_err.readLine()) != null) {
             if (line.equals("OK")) {
               testResult = "test passed";
+              selectedTaskFile.getTask().setSolved(true);
             }
             System.out.println(line);
           }
-    //        BalloonBuilder builder =
-    //                JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(testResult, MessageType.INFO, null);
-    //        Balloon balloon = builder.createBalloon();
-    //        RelativePoint where = new RelativePoint(e.getInputEvent().getComponent(), e.getInputEvent().getComponent().getLocationOnScreen());
-    //        balloon.show(where, Balloon.Position.above);
-          JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.INFORMATION_MESSAGE);
+          Color myColor = JBColor.RED;
+          if (testResult.equals("test passed")) {
+            myColor = JBColor.GREEN;
+          }
+          BalloonBuilder balloonBuilder =
+            JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(testResult, null, myColor, null);
+          Balloon balloon = balloonBuilder.createBalloon();
+         //TODO:get check button coordinates
+          RelativePoint rp  = new RelativePoint(new Point(200, 40));
+          //Component component = e.getInputEvent().getComponent();
+          //RelativePoint rp  = new RelativePoint(new Point(component.getX(), component.getY()));
+            balloon.show(rp, Balloon.Position.above);
+          //JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.INFORMATION_MESSAGE);
         }
         catch (ExecutionException e1) {
           e1.printStackTrace();

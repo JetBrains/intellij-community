@@ -22,6 +22,16 @@ public class Task {
   private String text;
   private List<TaskFile> taskFiles;
   private  Lesson myLesson;
+  private boolean mySolved = false;
+
+
+  public boolean isSolved() {
+    return mySolved;
+  }
+
+  public void setSolved(boolean solved) {
+    mySolved = solved;
+  }
 
   public List<TaskFile> getTaskFiles() {
     return taskFiles;
