@@ -332,6 +332,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runForEachCaret(@NotNull final CaretAction action) {
+    runForEachCaret(action, false);
+  }
+
+  @Override
+  public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
     myEditor.assertIsDispatchThread();
     if (!supportsMultipleCarets()) {
       action.perform(getPrimaryCaret());
@@ -343,7 +348,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     doWithCaretMerging(new Runnable() {
       public void run() {
         try {
-          Collection<Caret> sortedCarets = getAllCarets();
+          List<Caret> sortedCarets = getAllCarets();
+          if (reverseOrder) {
+            Collections.reverse(sortedCarets);
+          }
           for (Caret caret : sortedCarets) {
             myCurrentCaret = (CaretImpl)caret;
             action.perform(caret);

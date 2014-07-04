@@ -46,6 +46,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -559,23 +560,24 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myEditor.getSelectionModel().setBlockSelection(start, end);
       myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine, end.column));
     } else {
-      myEditor.getCaretModel().runForEachCaret(new CaretAction() {
+      final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+      hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          EditorModificationUtil.deleteSelectedText(myEditor);
-          final int caretOffset = myEditor.getCaretModel().getOffset();
+          EditorModificationUtil.deleteSelectedText(hostEditor);
+          final int caretOffset = hostEditor.getCaretModel().getOffset();
           int lookupStart = caretOffset - prefix;
 
-          int len = document.getTextLength();
+          int len = hostEditor.getDocument().getTextLength();
           LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
                          "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
           LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
-          document.replaceString(lookupStart, caretOffset, lookupString);
+          hostEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
 
           int offset = lookupStart + lookupString.length();
-          myEditor.getCaretModel().moveToOffset(offset);
-          myEditor.getSelectionModel().removeSelection();
+          hostEditor.getCaretModel().moveToOffset(offset);
+          hostEditor.getSelectionModel().removeSelection();
         }
       });
     }

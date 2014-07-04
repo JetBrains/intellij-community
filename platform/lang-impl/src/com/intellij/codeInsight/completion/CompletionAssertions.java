@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,9 +170,9 @@ class CompletionAssertions {
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
-    public WatchingInsertionContext(CompletionProgressIndicator indicator, char completionChar, List<LookupElement> items, Editor editor) {
-      super(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]),
-            indicator.getParameters().getOriginalFile(), editor,
+    public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
+      super(offsetMap, completionChar, items.toArray(new LookupElement[items.size()]),
+            file, editor,
             completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
             completionChar != Lookup.NORMAL_SELECT_CHAR);
     }

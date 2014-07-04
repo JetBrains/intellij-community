@@ -119,7 +119,7 @@ public abstract class EditorActionHandler {
         public void perform(Caret caret) {
           doExecute(editor, caret, dataContext);
         }
-      });
+      }, true);
     }
     else {
       doExecute(editor, contextCaret, dataContext);

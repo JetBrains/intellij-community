@@ -108,7 +108,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
   public void testMultipleCarets() {
     doTest("\"",
            "aa<caret>a <selection><caret>bbb</selection> c<selection>c<caret>c</selection>",
-           "aa<caret>a \"<selection><caret>bbb</selection>\" c\"<selection><caret>cc</selection>\"");
+           "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection><caret>cc</selection>\"");
   }
 
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {

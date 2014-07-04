@@ -199,6 +199,11 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
+  public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
+    action.perform(myCaret);
+  }
+
+  @Override
   public void runBatchCaretOperation(@NotNull Runnable runnable) {
     runnable.run();
   }

@@ -17,19 +17,16 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,63 +37,49 @@ import org.jetbrains.annotations.NotNull;
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   public static final ExtensionPointName<DequotingFilter> EP_NAME =
     ExtensionPointName.create("com.intellij.selectionDequotingFilter");
+  private TextRange myReplacedTextRange;
   private boolean myRestoreStickySelection;
-
-  private static final Key<String> REPLACEMENT_TEXT = Key.create("SelectionQuotingTypedHandler.replacementText");
-  private static final Key<TextRange> REPLACED_TEXT_RANGE = Key.create("SelectionQuotingTypedHandler.replacedTextRange");
-  private static final Key<Boolean> LTR_SELECTION = Key.create("SelectionQuotingTypedHandler.ltrSelection");
+  private boolean myLtrSelection;
 
   @Override
-  public Result checkAutoPopup(final char c, Project project, final Editor editor, final PsiFile psiFile) {
+  public Result checkAutoPopup(char c, Project project, Editor editor, PsiFile psiFile) {
     // TODO[oleg] provide adequate API not to use this hack
     // beforeCharTyped always works with removed selection
-    if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED &&  editor.getSelectionModel().hasSelection(true) && isDelimiter(c)) {
-      myRestoreStickySelection = (editor instanceof EditorEx) && ((EditorEx)editor).isStickySelection();
-
-      // first we determine replacement texts for each caret, then we apply all the changes
-      // this is to make PSI consistent with document state for the calculation of replacement text for all carets
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          String replacementText = null;
-          String selectedText = caret.getSelectedText();
-          if (!StringUtil.isEmpty(selectedText)) {
-            if (selectedText.length() > 1) {
-              final char firstChar = selectedText.charAt(0);
-              final char lastChar = selectedText.charAt(selectedText.length() - 1);
-              if (isSimilarDelimiters(firstChar, c) && lastChar == getMatchingDelimiter(firstChar) &&
-                  (isQuote(firstChar) || firstChar != c) && !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c) &&
-                  selectedText.indexOf(lastChar, 1) == selectedText.length() - 1) {
-                selectedText = selectedText.substring(1, selectedText.length() - 1);
-              }
-            }
-            final char c2 = getMatchingDelimiter(c);
-            replacementText = String.valueOf(c) + selectedText + c2;
-          }
-          caret.putUserData(REPLACEMENT_TEXT, replacementText);
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED &&  selectionModel.hasSelection() && isDelimiter(c)) {
+      String selectedText = selectionModel.getSelectedText();
+      if (selectedText.length() < 1) {
+        return super.checkAutoPopup(c, project, editor, psiFile);
+      }
+      
+      final int selectionStart = selectionModel.getSelectionStart();
+      final int selectionEnd = selectionModel.getSelectionEnd();
+      if (selectedText.length() > 1) {
+        final char firstChar = selectedText.charAt(0);
+        final char lastChar = selectedText.charAt(selectedText.length() - 1);
+        if (isSimilarDelimiters(firstChar, c) && lastChar == getMatchingDelimiter(firstChar) &&
+            (isQuote(firstChar) || firstChar != c) && !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c) &&
+            selectedText.indexOf(lastChar, 1) == selectedText.length() - 1) {
+          selectedText = selectedText.substring(1, selectedText.length() - 1);
         }
-      });
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          String replacementText = caret.getUserData(REPLACEMENT_TEXT);
-          caret.putUserData(REPLACEMENT_TEXT, null);
-          if (replacementText == null) {
-            caret.putUserData(LTR_SELECTION, null);
-            caret.putUserData(REPLACED_TEXT_RANGE, null);
-          }
-          else {
-            int selectionStart = caret.getSelectionStart();
-            int selectionEnd = caret.getSelectionEnd();
-            caret.putUserData(LTR_SELECTION, caret.getLeadSelectionOffset() != selectionEnd);
-            caret.putUserData(REPLACED_TEXT_RANGE, Registry.is("editor.smarterSelectionQuoting")
-                                                   ? new TextRange(selectionStart + 1, selectionStart + replacementText.length() - 1)
-                                                   : new TextRange(selectionStart, selectionStart + replacementText.length()));
-            caret.removeSelection();
-            editor.getDocument().replaceString(selectionStart, selectionEnd, replacementText);
-          }
-        }
-      });
+      }
+      final int caretOffset = selectionModel.getSelectionStart();
+      final char c2 = getMatchingDelimiter(c);
+      final String newText = String.valueOf(c) + selectedText + c2;
+      myLtrSelection = selectionModel.getLeadSelectionOffset() != selectionModel.getSelectionEnd();
+      if (editor instanceof EditorEx) {
+        myRestoreStickySelection = ((EditorEx)editor).isStickySelection();
+      }
+      else {
+        myRestoreStickySelection = false;
+      }
+      selectionModel.removeSelection();
+      editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
+      if (Registry.is("editor.smarterSelectionQuoting")) {
+        myReplacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
+      } else {
+        myReplacedTextRange = new TextRange(caretOffset, caretOffset + newText.length());
+      }
       return Result.STOP;
     }
     return super.checkAutoPopup(c, project, editor, psiFile);
@@ -136,41 +119,31 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result beforeCharTyped(final char charTyped, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     // TODO[oleg] remove this hack when API changes
-    final Ref<Boolean> caretUpdated = new Ref<Boolean>(Boolean.FALSE);
-    editor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        TextRange replacedTextRange = caret.getUserData(REPLACED_TEXT_RANGE);
-        caret.putUserData(REPLACED_TEXT_RANGE, null);
-        if (replacedTextRange != null) {
-          Boolean ltrSelectionBoxed = caret.getUserData(LTR_SELECTION);
-          caret.putUserData(LTR_SELECTION, null);
-          boolean ltrSelection = ltrSelectionBoxed == null ? false : ltrSelectionBoxed;
-          if (replacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
-            if (myRestoreStickySelection && editor instanceof EditorEx) {
-              EditorEx editorEx = (EditorEx)editor;
-              editorEx.setStickySelection(false);
-              caret.moveToOffset(ltrSelection ? replacedTextRange.getStartOffset() : replacedTextRange.getEndOffset());
-              editorEx.setStickySelection(true);
-              caret.moveToOffset(ltrSelection ? replacedTextRange.getEndOffset() : replacedTextRange.getStartOffset());
-            }
-            else {
-              if (ltrSelection || editor instanceof EditorWindow) {
-                caret.setSelection(replacedTextRange.getStartOffset(), replacedTextRange.getEndOffset());
-              }
-              else {
-                caret.setSelection(replacedTextRange.getEndOffset(), replacedTextRange.getStartOffset());
-              }
-              if (Registry.is("editor.smarterSelectionQuoting")) {
-                caret.moveToOffset(ltrSelection ? replacedTextRange.getEndOffset() : replacedTextRange.getStartOffset());
-              }
-            }
+    if (myReplacedTextRange != null) {
+      if (myReplacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
+        if (myRestoreStickySelection && editor instanceof EditorEx) {
+          EditorEx editorEx = (EditorEx)editor;
+          CaretModel caretModel = editorEx.getCaretModel();
+          caretModel.moveToOffset(myLtrSelection ? myReplacedTextRange.getStartOffset() : myReplacedTextRange.getEndOffset());
+          editorEx.setStickySelection(true);
+          caretModel.moveToOffset(myLtrSelection ? myReplacedTextRange.getEndOffset() : myReplacedTextRange.getStartOffset());
+        }
+        else {
+          if (myLtrSelection || editor instanceof EditorWindow) {
+            editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
           }
-          caretUpdated.set(Boolean.TRUE);
+          else {
+            editor.getSelectionModel().setSelection(myReplacedTextRange.getEndOffset(), myReplacedTextRange.getStartOffset());
+          }
+          if (Registry.is("editor.smarterSelectionQuoting")) {
+            editor.getCaretModel().moveToOffset(myLtrSelection ? myReplacedTextRange.getEndOffset() : myReplacedTextRange.getStartOffset());
+          }
         }
       }
-    });
-    return caretUpdated.get() ? Result.STOP : Result.CONTINUE;
+      myReplacedTextRange = null;
+      return Result.STOP;
+    }
+    return Result.CONTINUE;
   }
   
   public static abstract class DequotingFilter {

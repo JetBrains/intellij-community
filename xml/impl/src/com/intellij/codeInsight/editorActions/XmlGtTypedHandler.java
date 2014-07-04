@@ -20,7 +20,6 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
@@ -94,7 +93,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
 
             if (tokenType == XmlTokenType.XML_TAG_END ||
                 tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1) {
-              EditorModificationUtil.moveAllCaretsRelatively(editor, 1);
+              EditorModificationUtil.moveCaretRelatively(editor, 1);
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
               return Result.STOP;
             }
@@ -155,7 +154,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             element.getPrevSibling() !=null &&
             element.getPrevSibling().getText().equals("<")) {
           // tag is started and there is another text in the end
-          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + element.getText() + ">", false, 0);
+          EditorModificationUtil.insertStringAtCaret(editor, "</" + element.getText() + ">", false, 0);
         }
         return Result.CONTINUE;
       }
@@ -205,7 +204,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       Collection<TextRange> cdataReformatRanges = null;
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
-      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "</" + name + ">", false, 0);
+      EditorModificationUtil.insertStringAtCaret(editor, "</" + name + ">", false, 0);
       
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
         final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
@@ -214,12 +213,10 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         if (cDataContainer.requiresCdataBracesInContext(tag)) {
           @NonNls final String cDataStart = "><![CDATA[";
           final String inserted = cDataStart + "\n]]>";
-          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, inserted, false, cDataStart.length());
-          for (Caret caret : editor.getCaretModel().getAllCarets()) {
-            int caretOffset = caret.getOffset();
-            if (caretOffset >= cDataStart.length()) {
-              cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length() + 1));
-            }
+          EditorModificationUtil.insertStringAtCaret(editor, inserted, false, cDataStart.length());
+          int caretOffset = editor.getCaretModel().getOffset();
+          if (caretOffset >= cDataStart.length()) {
+            cdataReformatRanges.add(TextRange.from(caretOffset - cDataStart.length(), inserted.length() + 1));
           }
         }
       }
