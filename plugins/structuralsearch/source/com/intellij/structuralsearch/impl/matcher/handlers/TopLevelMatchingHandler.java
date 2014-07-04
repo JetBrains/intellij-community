@@ -4,7 +4,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.iterators.SiblingNodeIterator;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
 
       PsiElement elementToAdd = matchedNode;
 
-      if (patternNode instanceof PsiComment && matchedNode instanceof PsiMember) {
+      if (patternNode instanceof PsiComment && StructuralSearchUtil.isDocCommentOwner(matchedNode)) {
         // psicomment and psidoccomment are placed inside the psimember next to them so
         // simple topdown matching should do additional "dances" to cover this case.
         elementToAdd = matchedNode.getFirstChild();

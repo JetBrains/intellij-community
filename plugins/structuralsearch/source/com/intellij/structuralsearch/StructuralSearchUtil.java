@@ -161,4 +161,9 @@ public class StructuralSearchUtil {
     }
     return ourPredefinedConfigurations;
   }
+
+  public static boolean isDocCommentOwner(PsiElement match) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(match);
+    return profile != null && profile.isDocCommentOwner(match);
+  }
 }

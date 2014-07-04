@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -391,12 +390,12 @@ public class Replacer {
         if (MatchResult.LINE_MATCH.equals(r.getName())) {
           PsiElement element = r.getMatchRef().getElement();
 
-          if (element instanceof PsiDocComment) { // doc comment is not collapsed when created in block
+          if (element instanceof PsiDocCommentBase) { // doc comment is not collapsed when created in block
             if (i.hasNext()) {
               MatchResult matchResult = i.next();
 
               if (MatchResult.LINE_MATCH.equals(matchResult.getName()) &&
-                  matchResult.getMatch() instanceof PsiMember) {
+                  StructuralSearchUtil.isDocCommentOwner(matchResult.getMatch())) {
                 element = matchResult.getMatch();
               } else {
                 l.add( manager.createSmartPsiElementPointer(element) );

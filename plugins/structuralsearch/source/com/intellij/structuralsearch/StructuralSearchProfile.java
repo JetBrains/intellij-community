@@ -274,4 +274,8 @@ public abstract class StructuralSearchProfile {
   public Collection<String> getReservedWords() {
     return Collections.emptySet();
   }
+
+  public boolean isDocCommentOwner(PsiElement match) {
+    return false;
+  }
 }
