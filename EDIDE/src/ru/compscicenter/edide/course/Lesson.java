@@ -21,6 +21,14 @@ public class Lesson {
   private List<Task> taskList;
   private Course myCourse = null;
 
+  public boolean isResolved() {
+    for (Task task:taskList) {
+      if (!task.isResolved()) {
+        return false;
+      }
+    }
+    return true;
+  }
   public String getName() {
     return name;
   }

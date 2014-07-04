@@ -1,5 +1,6 @@
 package ru.compscicenter.edide.course;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -35,6 +36,15 @@ public class TaskFile {
       fileElement.addContent(window.saveState());
     }
     return fileElement;
+  }
+
+  public boolean isResolved() {
+    for (Window window : windows) {
+      if (!window.isResolveStatus()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Task getTask() {

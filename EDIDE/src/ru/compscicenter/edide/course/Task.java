@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.google.gson.annotations.Expose;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,15 +17,24 @@ import java.util.List;
  */
 public class Task {
   private static final Logger LOG = Logger.getInstance(Task.class.getName());
-  @Expose
   private String testFile;
-  @Expose
   private String name;
-  @Expose
   private String text;
-  @Expose
   private List<TaskFile> taskFiles;
   private  Lesson myLesson;
+
+  public List<TaskFile> getTaskFiles() {
+    return taskFiles;
+  }
+
+  public boolean isResolved() {
+    for (TaskFile taskFile:taskFiles) {
+      if (!taskFile.isResolved()) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   public String getTestFile() {
     return testFile;

@@ -174,4 +174,16 @@ public class Window implements Comparable{
     return -1;
   }
 
+  public Window getNext() {
+    boolean shouldReturn = false;
+    for (Window window : myTaskFile.getWindows()) {
+      if (shouldReturn) {
+        return window;
+      }
+      if (window == this) {
+        shouldReturn = true;
+      }
+    }
+    return null;
+  }
 }

@@ -1,10 +1,15 @@
 package ru.compscicenter.edide.actions;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
@@ -41,6 +46,21 @@ class ResolveAction extends AnAction {
         selectedWindow.draw(selectedEditor, false, true);
         fileDocumentManager.saveAllDocuments();
         fileDocumentManager.reloadFiles(openedFile);
+        Window nextWindow = selectedWindow.getNext();
+        if (nextWindow == null) {
+          if (selectedTaskFile.getTask().isResolved()) {
+            DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
+
+            AnAction checkAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
+            defaultActionGroup.add(checkAction);
+            ListPopup popUp =
+              JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,
+                                                                  DataManager.getInstance().getDataContext(selectedEditor.getComponent()),
+                                                                  JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+
+            popUp.showInBestPositionFor(DataManager.getInstance().getDataContext(selectedEditor.getComponent()));
+          }
+        }
       }
     }
   }

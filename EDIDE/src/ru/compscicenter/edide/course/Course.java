@@ -1,10 +1,8 @@
 package ru.compscicenter.edide.course;
 
-import com.google.gson.annotations.Expose;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -12,15 +10,11 @@ import java.util.List;
 /**
  * User: lia
  * Date: 21.06.14
- * Time: 19:00
  */
 public class Course {
 
-  @Expose
   private List<Lesson> lessons;
-  @Expose
   private String description;
-  @Expose
   private String name;
   public List<Lesson> getLessons() {
     return lessons;
