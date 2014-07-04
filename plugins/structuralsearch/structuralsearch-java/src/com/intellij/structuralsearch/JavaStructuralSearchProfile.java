@@ -35,9 +35,7 @@ import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -455,5 +453,190 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         }
       }
     });
+  }
+
+  @Override
+  public int handleSubstitution(final ParameterInfo info,
+                                MatchResult match,
+                                StringBuilder result,
+                                int offset,
+                                HashMap<String, MatchResult> matchMap) {
+    if (info.getName().equals(match.getName())) {
+      String replacementString = match.getMatchImage();
+      boolean forceAddingNewLine = false;
+
+      if (info.isMethodParameterContext()) {
+        StringBuilder buf = new StringBuilder();
+        handleMethodParameter(buf, info, matchMap);
+        replacementString = buf.toString();
+      }
+      else if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
+        // compound matches
+        StringBuilder buf = new StringBuilder();
+        MatchResult r = null;
+
+        for (final MatchResult matchResult : match.getAllSons()) {
+          MatchResult previous = r;
+          r = matchResult;
+
+          final PsiElement currentElement = r.getMatch();
+
+          if (buf.length() > 0) {
+            final PsiElement parent = currentElement.getParent();
+            if (info.isStatementContext()) {
+              final PsiElement previousElement = previous.getMatchRef().getElement();
+
+              if (!(previousElement instanceof PsiComment) &&
+                  ( buf.charAt(buf.length() - 1) != '}' ||
+                    previousElement instanceof PsiDeclarationStatement
+                  )
+                ) {
+                buf.append(';');
+              }
+
+              final PsiElement prevSibling = currentElement.getPrevSibling();
+
+              if (prevSibling instanceof PsiWhiteSpace &&
+                  prevSibling.getPrevSibling() == previous.getMatch()
+                ) {
+                // consequent statements matched so preserve whitespacing
+                buf.append(prevSibling.getText());
+              }
+              else {
+                buf.append('\n');
+              }
+            }
+            else if (info.isParameterContext()) {
+              buf.append(',');
+            }
+            else if (parent instanceof PsiClass) {
+              final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(currentElement, PsiWhiteSpace.class);
+              if (prevSibling instanceof PsiJavaToken && JavaTokenType.COMMA.equals(((PsiJavaToken)prevSibling).getTokenType())) {
+                buf.append(',');
+              }
+              else {
+                buf.append('\n');
+              }
+            }
+            else if (parent instanceof PsiReferenceList) {
+              buf.append(',');
+            }
+            else {
+              buf.append(' ');
+            }
+          }
+
+          buf.append(r.getMatchImage());
+          removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, r, buf);
+          forceAddingNewLine = currentElement instanceof PsiComment;
+        }
+
+        replacementString = buf.toString();
+      } else {
+        StringBuilder buf = new StringBuilder();
+        if (info.isStatementContext()) {
+          forceAddingNewLine = match.getMatch() instanceof PsiComment;
+        }
+        buf.append(replacementString);
+        removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, match, buf);
+        replacementString = buf.toString();
+      }
+
+      offset = Replacer.insertSubstitution(result, offset, info, replacementString);
+      offset = removeExtraSemicolon(info, offset, result, match);
+      if (forceAddingNewLine && info.isStatementContext()) {
+        result.insert(info.getStartIndex() + offset + 1, '\n');
+        offset ++;
+      }
+    }
+    return offset;
+  }
+
+  @Override
+  public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
+    if (info.isStatementContext()) {
+      return removeExtraSemicolon(info, offset, result, r);
+    }
+    return offset;
+  }
+
+  private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, HashMap<String, MatchResult> matchMap) {
+    if(info.getElement() ==null) {
+      // no specific handling for name of method parameter since it is handled with type
+      return;
+    }
+
+    String name = ((PsiParameter)info.getElement().getParent()).getName();
+    name = StructuralSearchUtil.isTypedVariable(name) ? Replacer.stripTypedVariableDecoration(name):name;
+
+    final MatchResult matchResult = matchMap.get(name);
+    if (matchResult == null) return;
+
+    if (matchResult.isMultipleMatch()) {
+      for (MatchResult result : matchResult.getAllSons()) {
+        if (buf.length() > 0) {
+          buf.append(',');
+        }
+
+        appendParameter(buf, result);
+      }
+    } else {
+      appendParameter(buf, matchResult);
+    }
+  }
+
+  private static void appendParameter(final StringBuilder buf, final MatchResult _matchResult) {
+    for(Iterator<MatchResult> j = _matchResult.getAllSons().iterator();j.hasNext();) {
+      buf.append(j.next().getMatchImage()).append(' ').append(j.next().getMatchImage());
+    }
+  }
+
+  private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuilder buf) {
+    if (info.isStatementContext()) {
+      final PsiElement element = r.getMatchRef().getElement();
+
+      // remove extra ;
+      if (buf.charAt(buf.length()-1)==';' &&
+          r.getMatchImage().charAt(r.getMatchImage().length()-1)==';' &&
+          ( element instanceof PsiReturnStatement ||
+            element instanceof PsiDeclarationStatement ||
+            element instanceof PsiExpressionStatement ||
+            element instanceof PsiAssertStatement ||
+            element instanceof PsiBreakStatement ||
+            element instanceof PsiContinueStatement ||
+            element instanceof PsiMember ||
+            element instanceof PsiIfStatement && !(((PsiIfStatement)element).getThenBranch() instanceof PsiBlockStatement) ||
+            element instanceof PsiLoopStatement && !(((PsiLoopStatement)element).getBody() instanceof PsiBlockStatement)
+          )
+        ) {
+        // contains extra ;
+        buf.deleteCharAt(buf.length()-1);
+      }
+    }
+  }
+
+  private static int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {
+    if (info.isStatementContext()) {
+      int index = offset+ info.getStartIndex();
+      if (result.charAt(index)==';' &&
+          ( match == null ||
+            ( result.charAt(index-1)=='}' &&
+              !(match.getMatch() instanceof PsiDeclarationStatement) && // array init in dcl
+              !(match.getMatch() instanceof PsiNewExpression) // array initializer
+            ) ||
+            ( !match.isMultipleMatch() &&                                                // ; in comment
+              match.getMatch() instanceof PsiComment
+            ) ||
+            ( match.isMultipleMatch() &&                                                 // ; in comment
+              match.getAllSons().get( match.getAllSons().size() - 1 ).getMatch() instanceof PsiComment
+            )
+          )
+        ) {
+        result.deleteCharAt(index);
+        --offset;
+      }
+    }
+
+    return offset;
   }
 }

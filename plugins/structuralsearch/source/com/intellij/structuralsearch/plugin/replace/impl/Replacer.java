@@ -46,6 +46,12 @@ public class Replacer {
    return type.substring(1,type.length()-1);
  }
 
+  public static int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
+   if (image.length() > 0) result.insert(offset+ info.getStartIndex(),image);
+   offset += image.length();
+   return offset;
+ }
+
   public String testReplace(String in, String what, String by, ReplaceOptions options) throws IncorrectOperationException {
     return testReplace(in, what, by, options,false);
   }
@@ -412,7 +418,7 @@ public class Replacer {
     if (replacementBuilder==null) {
       replacementBuilder = new ReplacementBuilder(project,options);
     }
-    replacementInfo.result = replacementBuilder.process(result, replacementInfo);
+    replacementInfo.result = replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType());
     replacementInfo.matchResult = result;
 
     return replacementInfo;
