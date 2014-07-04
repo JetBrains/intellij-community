@@ -120,6 +120,11 @@ public class XValuePresentationUtil {
     }
 
     @Override
+    public void renderError(@NotNull String error) {
+      myBuilder.append(error);
+    }
+
+    @Override
     public void renderSpecialSymbol(@NotNull String symbol) {
       myBuilder.append(symbol);
     }

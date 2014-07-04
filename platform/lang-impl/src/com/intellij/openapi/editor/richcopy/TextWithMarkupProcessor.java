@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
@@ -55,6 +56,12 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+/**
+ * Generates text with markup (in RTF and HTML formats) for interaction via clipboard with third-party applications.
+ *
+ * Interoperability with the following applications was tested:
+ *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail.
+ */
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
   private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
 
@@ -135,7 +142,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       SyntaxInfo syntaxInfo = context.finish();
       logSyntaxInfo(syntaxInfo);
 
-      createResult(syntaxInfo);
+      createResult(syntaxInfo, editor);
       return ObjectUtils.notNull(myResult, Collections.<RawTextWithMarkup>emptyList());
     }
     catch (Exception e) {
@@ -155,9 +162,9 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
 
   }
 
-  void createResult(SyntaxInfo syntaxInfo) {
+  void createResult(SyntaxInfo syntaxInfo, Editor editor) {
     myResult = new ArrayList<RawTextWithMarkup>(2);
-    myResult.add(new HtmlTransferableData(syntaxInfo));
+    myResult.add(new HtmlTransferableData(syntaxInfo, EditorUtil.getTabSize(editor)));
     myResult.add(new RtfTransferableData(syntaxInfo));
   }
 

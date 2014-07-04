@@ -95,7 +95,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyQualifiedExpression callSite) {
+  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel > 0) {
       return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel-1);
     }

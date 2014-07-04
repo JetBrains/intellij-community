@@ -113,11 +113,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
             if (myValueDescriptor.isString()) {
               presentation = new TypedStringValuePresentation(StringUtil.unquoteString(value), type);
             }
-            else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer) {
-              presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value), type);
-            }
             else {
-              presentation = new XRegularValuePresentation(value, type);
+              EvaluateException exception = myValueDescriptor.getEvaluateException();
+              if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer && exception == null) {
+                presentation = new XRegularValuePresentation(StringUtil.wrapWithDoubleQuote(value), type);
+              }
+              else {
+                presentation = new JavaValuePresentation(value, type, exception != null ? exception.getMessage() : null);
+              }
             }
             if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new XFullValueEvaluator() {
@@ -148,6 +151,37 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider {
         });
       }
     });
+  }
+
+  private static class JavaValuePresentation extends XValuePresentation {
+    private final String myValue;
+    private final String myType;
+    private final String myError;
+
+    public JavaValuePresentation(@NotNull String value, @Nullable String type, @Nullable String error) {
+      myValue = value;
+      myType = type;
+      myError = error;
+    }
+
+    @Nullable
+    @Override
+    public String getType() {
+      return myType;
+    }
+
+    @Override
+    public void renderValue(@NotNull XValueTextRenderer renderer) {
+      if (myError != null) {
+        if (myValue.endsWith(myError)) {
+          renderer.renderValue(myValue.substring(0, myValue.length() - myError.length()));
+        }
+        renderer.renderError(myError);
+      }
+      else {
+        renderer.renderValue(myValue);
+      }
+    }
   }
 
   String getValueString() {

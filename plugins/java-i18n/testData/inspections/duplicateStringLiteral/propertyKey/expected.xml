@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Duplicate String Literal</problem_class>
+    <description>&lt;html&gt;&lt;body&gt;Duplicate string literal found in&lt;br&gt;'Test'&lt;/body&gt;&lt;/html&gt;</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Duplicate String Literal</problem_class>
+    <description>&lt;html&gt;&lt;body&gt;Duplicate string literal found in&lt;br&gt;'Test'&lt;/body&gt;&lt;/html&gt;</description>
+  </problem>
+</problems>

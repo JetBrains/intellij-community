@@ -18,8 +18,6 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -40,7 +39,7 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
 public class JarFileSystemTest extends PlatformLangTestCase {
   public void testFindFile() throws IOException {
-    String rtJarPath = getRtJarPath();
+    String rtJarPath = PlatformTestUtil.getRtJarPath();
 
     VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
@@ -60,7 +59,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testMetaInf() {
-    VirtualFile jarRoot = findByPath(getRtJarPath() + JarFileSystem.JAR_SEPARATOR);
+    VirtualFile jarRoot = findByPath(PlatformTestUtil.getRtJarPath() + JarFileSystem.JAR_SEPARATOR);
     assertTrue(jarRoot.isDirectory());
 
     VirtualFile metaInf = jarRoot.findChild("META-INF");
@@ -119,7 +118,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testJarRootForLocalFile() throws Exception {
-    String rtJarPath = getRtJarPath();
+    String rtJarPath = PlatformTestUtil.getRtJarPath();
 
     VirtualFile rtJarFile = LocalFileSystem.getInstance().findFileByPath(rtJarPath);
     assertNotNull(rtJarFile);
@@ -134,11 +133,6 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     assertNotNull(nonJarFile);
     VirtualFile nonJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(nonJarFile);
     assertNull(nonJarRoot);
-  }
-
-  private static String getRtJarPath() {
-    String home = System.getProperty("java.home");
-    return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
   private static VirtualFile findByPath(String path) {

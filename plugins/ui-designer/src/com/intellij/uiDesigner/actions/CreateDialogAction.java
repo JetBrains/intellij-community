@@ -45,7 +45,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
   @NotNull
   protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
-    final MyInputValidator validator = new MyInputValidator(project, directory);
+    final MyInputValidator validator = new JavaNameValidator(project, directory);
 
     final MyContentPane contentPane = new MyContentPane();
 

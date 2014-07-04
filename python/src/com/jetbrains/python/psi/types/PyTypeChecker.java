@@ -496,16 +496,9 @@ public class PyTypeChecker {
   }
 
   @Nullable
-  public static AnalyzeCallResults analyzeCallSite(@Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
-    if (callSite == null) {
-      return null;
-    }
-    PsiElement parent = callSite.getParent();
-    while (parent instanceof PyParenthesizedExpression) {
-      parent = ((PyParenthesizedExpression)parent).getContainedExpression();
-    }
-    if (parent instanceof PyCallExpression) {
-      return analyzeCall((PyCallExpression)parent, context);
+  public static AnalyzeCallResults analyzeCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if (callSite instanceof PyCallExpression) {
+      return analyzeCall((PyCallExpression)callSite, context);
     }
     else if (callSite instanceof PyBinaryExpression) {
       return analyzeCall((PyBinaryExpression)callSite, context);

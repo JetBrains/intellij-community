@@ -56,10 +56,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     // TODO: Visit decorators with arguments
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      final PyExpression callee = node.getCallee();
-      if (callee instanceof PyQualifiedExpression) {
-        checkCallSite((PyQualifiedExpression)callee);
-      }
+      checkCallSite(node);
     }
 
     @Override
@@ -85,7 +82,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
-    private void checkCallSite(@Nullable PyQualifiedExpression callSite) {
+    private void checkCallSite(@Nullable PyCallSiteExpression callSite) {
       final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
       final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       if (results != null) {
