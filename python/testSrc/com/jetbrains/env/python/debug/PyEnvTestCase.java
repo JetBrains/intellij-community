@@ -311,7 +311,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
       if (parent.isFile()) {
         parent = parent.getParentFile();
       }
-      envTags = com.jetbrains.appengine.util.FileUtil.loadLines(new File(parent, TAGS_FILE));
+      envTags = com.intellij.openapi.util.io.FileUtil.loadLines(new File(parent, TAGS_FILE));
     }
     catch (IOException e) {
       envTags = Lists.newArrayList();
