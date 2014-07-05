@@ -20,6 +20,7 @@ import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.*;
@@ -641,9 +643,19 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       });
 
-      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list));
-      StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthor, true);
-      myAuthor.setEditor(comboboxEditor);
+      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list)) {
+        @Override
+        public void addNotify() {
+          super.addNotify();
+
+          // adding in addNotify to make sure the editor is ready for further customization
+          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthor, true);
+          myAuthor.setEditor(comboboxEditor);
+          EditorEx editor = (EditorEx)comboboxEditor.getEditor();
+          assert editor != null;
+          SpellCheckingEditorCustomization.getInstance(false).customize(editor);
+        }
+      };
 
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
