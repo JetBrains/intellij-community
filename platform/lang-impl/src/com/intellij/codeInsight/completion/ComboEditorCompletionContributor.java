@@ -39,9 +39,17 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
     final PsiFile file = parameters.getOriginalFile();
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {
-      final JComboBox comboBox = document.getUserData(StringComboboxEditor.COMBO_BOX_KEY);
+      JComboBox comboBox = document.getUserData(StringComboboxEditor.COMBO_BOX_KEY);
+      boolean plainPrefixMatcher = false;
+      if (comboBox == null) {
+        comboBox = document.getUserData(StringComboboxEditor.PLAIN_COMBO_BOX_KEY);
+        plainPrefixMatcher = true;
+      }
       if (comboBox != null) {
-        final CompletionResultSet resultSet = result.withPrefixMatcher(document.getText().substring(0, parameters.getOffset()));
+        String substring = document.getText().substring(0, parameters.getOffset());
+        final CompletionResultSet resultSet = plainPrefixMatcher ?
+                                              result.withPrefixMatcher(new PlainPrefixMatcher(substring)) :
+                                              result.withPrefixMatcher(substring);
         final int count = comboBox.getItemCount();
         for (int i = 0; i < count; i++) {
           final Object o = comboBox.getItemAt(i);

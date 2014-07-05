@@ -20,6 +20,7 @@ import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -638,7 +640,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           return StringUtil.shortenTextWithEllipsis(o, 30, 0);
         }
       });
+
       myAuthor = new ComboBox(ArrayUtil.toObjectArray(list));
+      StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthor, true);
+      myAuthor.setEditor(comboboxEditor);
+
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);

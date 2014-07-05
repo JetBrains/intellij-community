@@ -39,17 +39,22 @@ import javax.swing.*;
  */
 public class StringComboboxEditor extends EditorComboBoxEditor {
   public static final Key<JComboBox> COMBO_BOX_KEY = Key.create("COMBO_BOX_KEY");
+  public static final Key<JComboBox> PLAIN_COMBO_BOX_KEY = Key.create("PLAIN_COMBO_BOX_KEY");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.StringComboboxEditor");
   private final Project myProject;
 
   public StringComboboxEditor(final Project project, final FileType fileType, ComboBox comboBox) {
+    this(project, fileType, comboBox, false);
+  }
+
+  public StringComboboxEditor(final Project project, final FileType fileType, ComboBox comboBox, boolean usePlainMatcher) {
     super(project, fileType);
     myProject = project;
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText("a.dummy", StdFileTypes.PLAIN_TEXT, "", 0, true);
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     assert document != null;
-    document.putUserData(COMBO_BOX_KEY, comboBox);
+    document.putUserData(usePlainMatcher ? PLAIN_COMBO_BOX_KEY : COMBO_BOX_KEY, comboBox);
     document.putUserData(UndoConstants.DONT_RECORD_UNDO, true);
     super.setItem(document);
   }
