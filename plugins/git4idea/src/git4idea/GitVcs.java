@@ -56,6 +56,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
 import git4idea.changes.GitCommittedChangeListProvider;
@@ -328,7 +329,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this, myGit);
     }
-    NewGitUsersComponent.getInstance(myProject).activate();
+    ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
     if (!Registry.is("git.new.log")) {
       GitProjectLogManager.getInstance(myProject).activate();
     }

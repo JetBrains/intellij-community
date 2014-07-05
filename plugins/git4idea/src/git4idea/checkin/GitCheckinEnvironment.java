@@ -36,14 +36,13 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
@@ -54,7 +53,6 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepositoryFiles;
@@ -630,7 +628,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       final List<String> usersList = getUsersList(project);
-      final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
+      final Set<String> authors = new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);
@@ -673,8 +671,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return h.run();
     }
 
-    private List<String> getUsersList(final Project project) {
-      return NewGitUsersComponent.getInstance(project).get();
+    @NotNull
+    private List<String> getUsersList(@NotNull Project project) {
+      VcsUserRegistry userRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
+      return ContainerUtil.map(userRegistry.getUsers(), new Function<VcsUser, String>() {
+        @Override
+        public String fun(VcsUser user) {
+          return user.getName() + " <" + user.getEmail() + ">";
+        }
+      });
     }
 
     @Override

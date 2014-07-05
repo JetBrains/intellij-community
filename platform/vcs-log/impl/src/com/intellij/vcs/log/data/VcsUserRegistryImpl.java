@@ -24,6 +24,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +40,10 @@ import java.util.Set;
 /**
  *
  */
-public class VcsUserRegistry implements Disposable {
+public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
 
   private static final File USER_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-users");
-  private static final Logger LOG = Logger.getInstance(VcsUserRegistry.class);
+  private static final Logger LOG = Logger.getInstance(VcsUserRegistryImpl.class);
   private static final PersistentEnumeratorBase.DataFilter ACCEPT_ALL_DATA_FILTER = new PersistentEnumeratorBase.DataFilter() {
     @Override
     public boolean accept(int id) {
@@ -52,7 +53,7 @@ public class VcsUserRegistry implements Disposable {
 
   @Nullable private final PersistentEnumerator<VcsUser> myPersistentEnumerator;
 
-  VcsUserRegistry(@NotNull Project project) {
+  VcsUserRegistryImpl(@NotNull Project project) {
     final File mapFile = new File(USER_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
     Disposer.register(project, this);
     myPersistentEnumerator = initEnumerator(mapFile);
@@ -85,6 +86,7 @@ public class VcsUserRegistry implements Disposable {
     }
   }
 
+  @Override
   @NotNull
   public Set<VcsUser> getUsers() {
     try {
