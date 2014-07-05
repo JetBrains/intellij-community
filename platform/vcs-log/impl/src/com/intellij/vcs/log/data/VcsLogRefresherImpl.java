@@ -168,6 +168,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         sw.rootCompleted(root);
       }
     }.iterate(providers);
+    userRegistry.flush();
     sw.report();
     return commits;
   }
@@ -400,6 +401,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
           sw.rootCompleted(root);
         }
       }.iterate(myProviders);
+      myUserRegistry.flush();
       sw.report();
       return commits;
     }

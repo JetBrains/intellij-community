@@ -94,7 +94,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     mySettings = settings;
     myDataPackUpdateHandler = dataPackUpdateHandler;
-    myUserRegistry = new VcsUserRegistry();
+    myUserRegistry = new VcsUserRegistry(project);
 
     try {
       myHashMap = new VcsLogHashMap(myProject);

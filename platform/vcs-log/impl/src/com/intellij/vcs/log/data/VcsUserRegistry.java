@@ -15,43 +15,130 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
+import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  *
  */
-public class VcsUserRegistry {
+public class VcsUserRegistry implements Disposable {
 
-  private final Interner<VcsUser> myUserMap = new Interner<VcsUser>();
-  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+  private static final File USER_CACHE_APP_DIR = new File(PathManager.getSystemPath(), "vcs-users");
+  private static final Logger LOG = Logger.getInstance(VcsUserRegistry.class);
+  private static final PersistentEnumeratorBase.DataFilter ACCEPT_ALL_DATA_FILTER = new PersistentEnumeratorBase.DataFilter() {
+    @Override
+    public boolean accept(int id) {
+      return true;
+    }
+  };
 
-  @NotNull
-  public VcsUser addUser(@NotNull VcsUser user) {
-    myLock.writeLock().lock();
+  @Nullable private final PersistentEnumerator<VcsUser> myPersistentEnumerator;
+
+  VcsUserRegistry(@NotNull Project project) {
+    final File mapFile = new File(USER_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
+    Disposer.register(project, this);
+    myPersistentEnumerator = initEnumerator(mapFile);
+  }
+
+  @Nullable
+  private static PersistentEnumerator<VcsUser> initEnumerator(@NotNull final File mapFile) {
     try {
-      return myUserMap.intern(user);
+      return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<VcsUser>, IOException>() {
+        @Override
+        public PersistentEnumerator<VcsUser> compute() throws IOException {
+          return new PersistentEnumerator<VcsUser>(mapFile, new MyDescriptor(), Page.PAGE_SIZE);
+        }
+      }, mapFile);
     }
-    finally {
-      myLock.writeLock().unlock();
+    catch (IOException e) {
+      LOG.warn(e);
+      return null;
     }
+  }
 
+  public void addUser(@NotNull VcsUser user) {
+    try {
+      if (myPersistentEnumerator != null) {
+        myPersistentEnumerator.enumerate(user);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
   }
 
   @NotNull
   public Set<VcsUser> getUsers() {
-    myLock.readLock().lock();
     try {
-      return ContainerUtil.newHashSet(myUserMap.getValues());
+      Collection<VcsUser> users = myPersistentEnumerator != null ?
+                                  myPersistentEnumerator.getAllDataObjects(ACCEPT_ALL_DATA_FILTER) :
+                                  Collections.<VcsUser>emptySet();
+      return ContainerUtil.newHashSet(users);
     }
-    finally {
-      myLock.readLock().unlock();
+    catch (IOException e) {
+      LOG.warn(e);
+      return Collections.emptySet();
+    }
+  }
+
+  public void flush() {
+    if (myPersistentEnumerator != null) {
+      myPersistentEnumerator.force();
+    }
+  }
+
+  @Override
+  public void dispose() {
+    try {
+      if (myPersistentEnumerator != null) {
+        myPersistentEnumerator.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  private static class MyDescriptor implements KeyDescriptor<VcsUser> {
+    @Override
+    public void save(@NotNull DataOutput out, VcsUser value) throws IOException {
+      IOUtil.writeUTF(out, value.getName());
+      IOUtil.writeUTF(out, value.getEmail());
+    }
+
+    @Override
+    public VcsUser read(@NotNull DataInput in) throws IOException {
+      String name = IOUtil.readUTF(in);
+      String email = IOUtil.readUTF(in);
+      return new VcsUserImpl(name, email);
+    }
+
+    @Override
+    public int getHashCode(VcsUser value) {
+      return value.hashCode();
+    }
+
+    @Override
+    public boolean isEqual(VcsUser val1, VcsUser val2) {
+      return val1.equals(val2);
     }
   }
 }
