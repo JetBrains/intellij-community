@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
@@ -224,12 +225,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public boolean addItem(LookupElement item, PrefixMatcher matcher) {
     LookupElementPresentation presentation = renderItemApproximately(item);
-    if (containsDummyIdentifier(presentation.getItemText()) || 
-        containsDummyIdentifier(presentation.getTailText()) || 
+    if (containsDummyIdentifier(presentation.getItemText()) ||
+        containsDummyIdentifier(presentation.getTailText()) ||
         containsDummyIdentifier(presentation.getTypeText())) {
       return false;
     }
-    
+
     myMatchers.put(item, matcher);
     updateLookupWidth(item, presentation);
     synchronized (myList) {
@@ -326,17 +327,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
-    // selected item should be at the top of the visible list 
+    // selected item should be at the top of the visible list
     int top = myList.getSelectedIndex();
     if (top > 0) {
       top--; // show one element above the selected one to give the hint that there are more available via scrolling
     }
-    
+
     int firstVisibleIndex = myList.getFirstVisibleIndex();
     if (firstVisibleIndex == top) {
       return;
     }
-    
+
     ListScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
@@ -693,6 +694,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       hide();
       return false;
     }
+
+    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
 
     LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
 
