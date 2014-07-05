@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -29,14 +28,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -44,12 +42,9 @@ import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.EventObject;
 
 /**
@@ -314,88 +309,6 @@ public abstract class CompletionPhase implements Disposable {
       return indicator.nextInvocationCount(time, repeated);
     }
 
-  }
-  public static class EmptyAutoPopup extends CompletionPhase {
-    public final Editor editor;
-    private final Project project;
-    private final EditorMouseAdapter mouseListener;
-    private final CaretListener caretListener;
-    private final SelectionListener selectionListener;
-
-    public EmptyAutoPopup(CompletionProgressIndicator indicator) {
-      super(indicator);
-      editor = indicator.getEditor();
-      project = indicator.getProject();
-      MessageBusConnection connection = project.getMessageBus().connect(this);
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-        @Override
-        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-          stopAutoPopup();
-        }
-      });
-
-      mouseListener = new EditorMouseAdapter() {
-        @Override
-        public void mouseClicked(EditorMouseEvent e) {
-          stopAutoPopup();
-        }
-      };
-
-      caretListener = new CaretAdapter() {
-        @Override
-        public void caretPositionChanged(CaretEvent e) {
-          if (!TypedAction.isTypedActionInProgress()) {
-            stopAutoPopup();
-          }
-        }
-      };
-      selectionListener = new SelectionListener() {
-        @Override
-        public void selectionChanged(SelectionEvent e) {
-          stopAutoPopup();
-        }
-      };
-
-      editor.addEditorMouseListener(mouseListener);
-      editor.getCaretModel().addCaretListener(caretListener);
-      editor.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          if (!TypedAction.isTypedActionInProgress()) {
-            stopAutoPopup();
-          }
-        }
-      }, this);
-      editor.getSelectionModel().addSelectionListener(selectionListener);
-      LookupManager.getInstance(project).addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          stopAutoPopup();
-        }
-      }, this);
-    }
-
-    @Override
-    public void dispose() {
-      editor.removeEditorMouseListener(mouseListener);
-      editor.getCaretModel().removeCaretListener(caretListener);
-      editor.getSelectionModel().removeSelectionListener(selectionListener);
-    }
-
-    private static void stopAutoPopup() {
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
-    }
-
-    @Override
-    public String toString() {
-      return "EmptyAutoPopup,editor=" + editor;
-    }
-
-    @Override
-    public int newCompletionStarted(int time, boolean repeated) {
-      CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      return repeated ? time + 1 : time;
-    }
   }
 
 }

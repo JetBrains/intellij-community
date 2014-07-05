@@ -528,7 +528,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       myLookup.hideLookup(false);
       LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       return true;
     }
     return false;
