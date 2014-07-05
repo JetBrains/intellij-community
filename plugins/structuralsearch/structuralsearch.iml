@@ -16,9 +16,8 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="duplicates-analysis" />
+    <orderEntry type="module" module-name="lang-impl" />
   </component>
   <component name="copyright">
     <Base>
