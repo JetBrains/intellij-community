@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.CommonProcessors;
@@ -50,6 +51,7 @@ public class VcsLogHashMap implements Disposable {
 
   VcsLogHashMap(@NotNull Project project) throws IOException {
     final File myMapFile = new File(LOG_CACHE_APP_DIR, project.getName() + "." + project.getLocationHash());
+    Disposer.register(project, this);
     myPersistentEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumerator<Hash>, IOException>() {
       @Override
       public PersistentEnumerator<Hash> compute() throws IOException {
