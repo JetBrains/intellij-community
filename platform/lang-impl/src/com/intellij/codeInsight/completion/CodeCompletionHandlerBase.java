@@ -274,6 +274,7 @@ public class CodeCompletionHandlerBase {
     CompletionAssertions.checkEditorValid(editor);
 
     CompletionContext context = createCompletionContext(hostCopy, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostMap, initContext.getFile());
+    LookupImpl lookup = obtainLookup(editor);
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -289,7 +290,7 @@ public class CodeCompletionHandlerBase {
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
-                                                                                  initContext.getOffsetMap(), hasModifiers);
+                                                                                  initContext.getOffsetMap(), hasModifiers, lookup);
     Disposer.register(indicator, hostMap);
     Disposer.register(indicator, context.getOffsetMap());
     Disposer.register(indicator, translator);
@@ -322,13 +323,14 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private CompletionParameters createCompletionParameters(int invocationCount, final CompletionContext newContext, final Editor editor) {
+  private CompletionParameters createCompletionParameters(int invocationCount,
+                                                          final CompletionContext newContext, Editor editor) {
     final int offset = newContext.getStartOffset();
     final PsiFile fileCopy = newContext.file;
     PsiFile originalFile = fileCopy.getOriginalFile();
     final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, obtainLookup(editor));
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, editor);
   }
 
   @NotNull
@@ -568,7 +570,7 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.WatchingInsertionContext context = null;
     try {
-      Lookup lookup = indicator.getParameters().getLookup();
+      Lookup lookup = indicator.getLookup();
       CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(item, lookup);
       context = insertItemHonorBlockSelection(indicator, item, completionChar, items, update);
       CompletionLookupArranger.trackStatistics(context, update);

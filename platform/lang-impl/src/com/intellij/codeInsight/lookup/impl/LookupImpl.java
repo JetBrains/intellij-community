@@ -71,7 +71,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
+public class LookupImpl extends LightweightHint implements LookupEx, Disposable, WeighingContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
 
   private final LookupOffsets myOffsets;

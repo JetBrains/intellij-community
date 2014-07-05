@@ -135,13 +135,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      CodeCompletionHandlerBase handler,
                                      Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap,
-                                     boolean hasModifiers) {
+                                     boolean hasModifiers,
+                                     LookupImpl lookup) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
-    myLookup = (LookupImpl)parameters.getLookup();
+    myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
 
     myAdvertiserChanges.offer(new Runnable() {

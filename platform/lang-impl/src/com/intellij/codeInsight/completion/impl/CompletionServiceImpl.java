@@ -242,12 +242,12 @@ public class CompletionServiceImpl extends CompletionService{
 
     CompletionSorterImpl sorter = emptySorter();
     sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new DispreferLiveTemplates()));
-    sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PreferStartMatching(location)));
+    sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PreferStartMatching()));
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
-        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher(location)));
+        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher()));
       }
       else if ("stats".equals(id)) {
         sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
@@ -280,13 +280,13 @@ public class CompletionServiceImpl extends CompletionService{
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
 
-  public static boolean isStartMatch(LookupElement element, Lookup lookup) {
-    return getItemMatcher(element, lookup).isStartMatch(element);
+  public static boolean isStartMatch(LookupElement element, WeighingContext context) {
+    return getItemMatcher(element, context).isStartMatch(element);
   }
 
-  static PrefixMatcher getItemMatcher(LookupElement element, Lookup lookup) {
-    PrefixMatcher itemMatcher = lookup.itemMatcher(element);
-    String pattern = lookup.itemPattern(element);
+  static PrefixMatcher getItemMatcher(LookupElement element, WeighingContext context) {
+    PrefixMatcher itemMatcher = context.itemMatcher(element);
+    String pattern = context.itemPattern(element);
     if (!pattern.equals(itemMatcher.getPrefix())) {
       return itemMatcher.cloneWithPrefix(pattern);
     }

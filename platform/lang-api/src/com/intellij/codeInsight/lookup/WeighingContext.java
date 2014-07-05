@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,17 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
-public abstract class ClassifierFactory<T> {
-  private final String myId;
+public interface WeighingContext {
+  @NotNull
+  String itemPattern(@NotNull LookupElement element);
 
-  protected ClassifierFactory(String id) {
-    myId = id;
-  }
+  @NotNull
+  PrefixMatcher itemMatcher(@NotNull LookupElement item);
 
-  public String getId() {
-    return myId;
-  }
-
-  public abstract Classifier<T> createClassifier(Classifier<T> next);
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ClassifierFactory)) return false;
-
-    ClassifierFactory that = (ClassifierFactory)o;
-
-    if (!myId.equals(that.myId)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myId.hashCode();
-  }
 }

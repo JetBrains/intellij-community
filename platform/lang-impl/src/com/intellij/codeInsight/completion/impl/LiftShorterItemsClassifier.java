@@ -51,7 +51,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   @Override
-  public void addElement(LookupElement added) {
+  public void addElement(LookupElement added, ProcessingContext context) {
     myCount++;
 
     final Set<String> strings = added.getAllLookupStrings();
@@ -70,7 +70,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         }
       }
     }
-    myNext.addElement(added);
+    myNext.addElement(added, context);
 
     calculateToLift(added);
   }
