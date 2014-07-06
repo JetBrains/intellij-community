@@ -701,7 +701,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
-      myNextCommitAuthor = author.length() == 0 ? null : author;
       if (author.length() == 0) {
         myNextCommitAuthor = null;
       }
