@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -100,7 +101,8 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
       if (textRange.getEndOffset() <= startOffset) {
         break;
       }
-      if (prevVisibleLeaf.getNode().getElementType() == XmlTokenType.XML_TAG_END) {
+      IElementType prevType = prevVisibleLeaf.getNode().getElementType();
+      if (prevType == XmlTokenType.XML_TAG_END || prevType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
         startOffset = textRange.getEndOffset();
         break;
       }
