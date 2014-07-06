@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
@@ -581,7 +582,7 @@ public class CommitHelper {
     }
     else {
       if (myCustomResultHandler == null) {
-        showErrorDialogAndMoveToAnotherList(processor, errorsSize, warningsSize);
+        showErrorDialogAndMoveToAnotherList(processor, errorsSize, warningsSize, errors);
       }
       else {
         myCustomResultHandler.onFailure();
@@ -589,10 +590,11 @@ public class CommitHelper {
     }
   }
 
-  private void showErrorDialogAndMoveToAnotherList(final GeneralCommitProcessor processor, final int errorsSize, final int warningsSize) {
+  private void showErrorDialogAndMoveToAnotherList(final GeneralCommitProcessor processor, final int errorsSize, final int warningsSize,
+                                                   @NotNull final List<VcsException> errors) {
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
-        final String message;
+        String message;
         if (errorsSize > 0 && warningsSize > 0) {
           message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
         }
@@ -602,6 +604,12 @@ public class CommitHelper {
         else {
           message = VcsBundle.message("message.text.commit.finished.with.warnings");
         }
+        message += ":\n" + StringUtil.join(errors, new Function<VcsException, String>() {
+          @Override
+          public String fun(VcsException e) {
+            return e.getMessage();
+          }
+        }, "\n");
         //new VcsBalloonProblemNotifier(myProject, message, MessageType.ERROR).run();
         Messages.showErrorDialog(message, VcsBundle.message("message.title.commit"));
 
