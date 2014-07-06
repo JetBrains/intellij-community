@@ -599,10 +599,10 @@ public class CommitHelper {
           message = VcsBundle.message("message.text.commit.failed.with.errors.and.warnings");
         }
         else if (errorsSize > 0) {
-          message = VcsBundle.message("message.text.commit.failed.with.errors");
+          message = StringUtil.pluralize(VcsBundle.message("message.text.commit.failed.with.error"), errorsSize);
         }
         else {
-          message = VcsBundle.message("message.text.commit.finished.with.warnings");
+          message = StringUtil.pluralize(VcsBundle.message("message.text.commit.finished.with.warning"), warningsSize);
         }
         message += ":\n" + StringUtil.join(errors, new Function<VcsException, String>() {
           @Override
