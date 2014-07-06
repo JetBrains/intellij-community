@@ -207,7 +207,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }
         }
         catch (VcsException e) {
-          exceptions.add(e);
+          exceptions.add(cleanupExceptionText(e));
         }
       }
       catch (IOException ex) {
@@ -224,6 +224,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       });
     }
     return exceptions;
+  }
+
+  @NotNull
+  private static VcsException cleanupExceptionText(VcsException original) {
+    String msg = original.getMessage();
+    final String FATAL_PREFIX = "fatal:";
+    if (msg.startsWith(FATAL_PREFIX)) {
+      msg = msg.substring(FATAL_PREFIX.length());
+    }
+    final String DURING_EXECUTING_SUFFIX = GitSimpleHandler.DURING_EXECUTING_ERROR_MESSAGE;
+    int suffix = msg.indexOf(DURING_EXECUTING_SUFFIX);
+    if (suffix > 0) {
+      msg = msg.substring(0, suffix);
+    }
+    return new VcsException(msg.trim(), original.getCause());
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
