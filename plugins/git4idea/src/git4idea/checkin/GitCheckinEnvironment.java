@@ -706,8 +706,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myNextCommitAuthor = null;
       }
       else {
-        myNextCommitAuthor = author;
-        mySettings.saveCommitAuthor(author);
+        myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
+        mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
       myNextCommitAmend = myAmend.isSelected();
       myNextCommitAuthorDate = myAuthorDate;
@@ -729,6 +729,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
   }
+
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
     myNextCommitIsPushed = nextCommitIsPushed;
