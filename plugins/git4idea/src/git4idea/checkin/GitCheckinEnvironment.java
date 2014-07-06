@@ -26,10 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
@@ -42,7 +40,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -636,12 +633,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);
-      list = ObjectsConvertor.convert(list, new Convertor<String, String>() {
-        @Override
-        public String convert(String o) {
-          return StringUtil.shortenTextWithEllipsis(o, 30, 0);
-        }
-      });
 
       myAuthor = new ComboBox(ArrayUtil.toObjectArray(list)) {
         @Override
