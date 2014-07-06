@@ -71,9 +71,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-/**
- * Git environment for commit operations.
- */
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger log = Logger.getInstance(GitCheckinEnvironment.class.getName());
   @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
@@ -242,7 +239,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   /**
@@ -439,9 +436,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return file;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
@@ -465,21 +459,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return rc;
   }
 
-  /**
-   * Prepare delete files handler.
-   *
-   *
-   *
-   * @param project              the project
-   * @param root                 a vcs root
-   * @param files                a files to commit
-   * @param message              a message file to use
-   * @param nextCommitAuthor     a author for the next commit
-   * @param nextCommitAmend      true, if the commit should be amended
-   * @param nextCommitAuthorDate Author date timestamp to override the date of the commit or null if this overriding is not needed.
-   * @return a simple handler that does the task
-   * @throws VcsException in case of git problem
-   */
   private static void commit(Project project,
                              VirtualFile root,
                              Collection<FilePath> files,
@@ -514,10 +493,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-
-  /**
-   * {@inheritDoc}
-   */
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
@@ -557,13 +532,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  /**
-   * Sort changes by roots
-   *
-   * @param changes    a change list
-   * @param exceptions exceptions to collect
-   * @return sorted changes
-   */
   private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
     for (Change change : changes) {
@@ -594,11 +562,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return result;
   }
 
-  /**
-   * Mark root as dirty
-   *
-   * @param root a vcs root to rescan
-   */
   private void markRootDirty(final VirtualFile root) {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
@@ -612,14 +575,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAuthorDate = null;
   }
 
-  /**
-   * Checkin options for git
-   */
   private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
     private final GitVcs myVcs;
-    /**
-     * The author ComboBox, the combobox contains previously selected authors.
-     */
     private final ComboBox myAuthor;
 
     private Date myAuthorDate;
