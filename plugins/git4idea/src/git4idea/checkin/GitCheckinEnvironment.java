@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -701,7 +702,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
-      if (author.length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(author)) {
         myNextCommitAuthor = null;
       }
       else {
