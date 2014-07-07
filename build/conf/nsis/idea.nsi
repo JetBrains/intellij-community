@@ -12,6 +12,10 @@
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
+; the default count element on the page with shortcut and association(s)
+!define INSTALL_OPTION_ELEMENTS 4
+
+
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
@@ -23,9 +27,9 @@ RequestExecutionLevel user
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
 !include UAC.nsh
-!include LogicLib.nsh
 !include "InstallOptions.nsh"
 !include StrFunc.nsh
+!include LogicLib.nsh
 ${UnStrStr}
 ${UnStrLoc}
 ${UnStrRep}
@@ -98,11 +102,8 @@ Var IS_UPGRADE_60
     StrCpy $9 "Modified"
   complete:
 FunctionEnd
-!macroend
-!insertmacro INST_UNINST_SWITCH ""
-!insertmacro INST_UNINST_SWITCH "un."
 
-Function SplitArg
+Function ${un}SplitStr
 Exch $0 ; str
 Push $1 ; inQ
 Push $3 ; idx
@@ -120,9 +121,9 @@ loop:
     ${EndIf}
     ${If} $4 == '' ; The end?
         StrCpy $1 0
-        StrCpy $4 ' '
+        StrCpy $4 ','
     ${EndIf}
-    ${If} $4 == ' '
+    ${If} $4 == ','
     ${AndIf} $1 = 0
         StrCpy $4 $0 $3
         StrCpy $1 $4 "" -1
@@ -132,7 +133,7 @@ loop:
             StrCpy $0 $0 "" $3
             StrCpy $1 $0 1
             StrCpy $3 0
-            StrCmp $1 ' ' killspace
+            StrCmp $1 ',' killspace
         Push $0 ; Remaining
         Exch 4
         Pop $0
@@ -151,6 +152,12 @@ loop:
     IntOp $3 $3 + 1
     Goto loop
 FunctionEnd
+
+!macroend
+!insertmacro INST_UNINST_SWITCH ""
+!insertmacro INST_UNINST_SWITCH "un."
+
+
 
 Function InstDirState
 	!define InstDirState `!insertmacro InstDirStateCall`
@@ -668,6 +675,29 @@ skip_default_instdir:
 
 FunctionEnd
 
+Function DoAssociation
+;  Push S1
+;  Push S0
+ ; back up old value of an association
+ 
+ ReadRegStr $1 HKCR $R4 ""
+  StrCmp $1 "" skip_backup
+    StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
+    WriteRegStr HKCR $R4 "backup_val" $1
+skip_backup:
+  WriteRegStr HKCR $R4 "" "${PRODUCT_PATHS_SELECTOR}"
+  ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
+  StrCmp $0 "" 0 command_exists
+	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+command_exists:
+  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
+    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+
+;  Pop S0
+;  Pop S1
+FunctionEnd
 
 ;------------------------------------------------------------------------------
 ; Installer sections
@@ -680,15 +710,6 @@ Section "IDEA Files" CopyIdeaFiles
 ;  StrCpy $baseRegKey "HKLM"
 ;  continue_for_current_user:
 
-; ctreate association
-push "One Two Three Four"
-loop:
-    call SplitArg
-    Pop $0
-    StrCmp $0 "" done
-    MessageBox MB_OK "Item= $0"
-    goto loop
-done:
 ; create shortcuts
 
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 1" "State"
@@ -707,6 +728,26 @@ skip_desktop_shortcut:
   ${EndIf}	
 skip_quicklaunch_shortcut:
 
+  !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
+  MessageBox MB_OK "Installation process. NumFields R1= $R1"
+  IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
+do_association:
+  MessageBox MB_OK "do_association"
+  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}  
+get_user_choice:
+  MessageBox MB_OK "get_user_choice"
+  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
+  MessageBox MB_OK "field=$R2, value=$R3"
+  StrCmp $R3 1 "" next_association
+  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
+  MessageBox MB_OK "field=$R2, text R4 = $R4"
+  call DoAssociation
+next_association:  
+  MessageBox MB_OK "next_association"
+  IntOp $R2 $R2 + 1
+  IntCmp $R1 $R2 get_user_choice done get_user_choice
+
+done:   
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
@@ -745,27 +786,7 @@ skip_quicklaunch_shortcut:
 
 skip_ipr:
 
-StrCmp "${ASSOCIATION}" "" skip_association
- ; back up old value of an association
- ReadRegStr $1 HKCR ${ASSOCIATION} ""
-  StrCmp $1 "" skip_backup
-    StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
-    WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
-skip_backup:
-  WriteRegStr HKCR ${ASSOCIATION} "" "${PRODUCT_PATHS_SELECTOR}"
-  ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
-  StrCmp $0 "" 0 command_exists
-	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
-	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
-	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
-command_exists:
-  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
-    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
-
-skip_association:
-  ; Rest of script
-
-
+; Rest of script
 ; readonly section
   SectionIn RO
 !include "idea_win.nsh"
@@ -834,22 +855,30 @@ Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
   call winVersion
-  StrCpy $R0 3
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
   ${If} $0 == "1"
-    MessageBox MB_OK "NumFields R0= $R0"
+    ;MessageBox MB_OK "NumFields R0= $R0"
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
   ${EndIf}
-  ;create association
-  push ".One,.Two,.Three,.Four,.Five,.Six"
+
+  ; create association
+  StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
+  StrCpy $R0 3
+  push "${ASSOCIATION}"
 loop:
-  call SplitArg
+  call SplitStr
   Pop $0
   StrCmp $0 "" done
   IntOp $R0 $R0 + 1
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
 ;  MessageBox MB_OK "Item= $0, R0= $R0"
   goto loop
+skip_association:
+  StrCpy $R0 2
+  call winVersion
+  ${If} $0 == "1"
+  IntOp $R0 $R0 - 1
+  ${EndIf}
 done:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
@@ -861,49 +890,44 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.onInit
-  ;does admin perm. is required to uninstall?
+  ;admin perm. is required to uninstall?
   ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
   StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
+
 requred_admin_perm:
-  ;has the user admin rights?
+  ;the user has admin rights?
   UserInfo::GetAccountType
   Pop $R2
-  MessageBox MB_OK "Type of user account: $R2"
-  StrCmp $R2 "Admin" UAC_Done uninstall_location
+  StrCmp $R2 "Admin" UAC_Admin uninstall_location
 
 uninstall_location:
-  ;check if the uninstall is running from the product location
-  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe UAC_Elevate copy_uninstall
+  ;check if the uninstallation is running from the product location
+  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
 
 copy_uninstall:
-  ;copy the unistall.exe to avoid using the AU_.exe name (default) in UAC dialog
-  MessageBox MB_OK "copy to $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
-  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
-  MessageBox MB_OK "exec $APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
-  ;SetOutPath $APPDATA
-  ;MessageBox MB_OK "after copy OUTDIR = $OUTDIR"
-  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe" _?=$INSTDIR'
-  MessageBox MB_OK "Done."
-  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_Uninstall.exe"
+  ;do copy for unistall.exe
+  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   Quit
 
 UAC_Elevate:
-    !insertmacro UAC_RunElevated
-    StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
-    StrCmp 0 $0 0 UAC_Err ; Error?
-    StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
-    Quit
+  !insertmacro UAC_RunElevated
+  StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
+  StrCmp 0 $0 0 UAC_Err ; Error?
+  StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+  Quit
 UAC_ElevationAborted:
 UAC_Err:
-    Abort
+  Abort
 UAC_Success:
-    StrCmp 1 $3 UAC_Admin ;Admin?
-    StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
-    goto UAC_Elevate
+  StrCmp 1 $3 UAC_Admin ;Admin?
+  StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
+  goto UAC_Elevate
 UAC_Admin:
+  SetShellVarContext all
+  StrCpy $baseRegKey "HKLM"
 UAC_Done:
-    SetShellVarContext all
-    StrCpy $baseRegKey "HKLM"
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
@@ -939,11 +963,13 @@ Function un.ReturnBackupRegValue
   ;replace Default str with the backup value (if there is the one) and then delete backup
   ; $1 - key (for example ".java")
   ; $2 - name (for example "backup_val")
+  Push $0
   ReadRegStr $0 HKCR $1 $2
   StrCmp $0 "" "noBackup"
     WriteRegStr HKCR $1 "" $0
     DeleteRegValue HKCR $1 $2
 noBackup:  
+  Pop $0
 FunctionEnd
 
 Function un.OMDeleteRegKeyIfEmpty
@@ -1147,13 +1173,19 @@ clear_Registry:
   StrCpy $2 "MenuFolder"
   Call un.OMDeleteRegValue
 
-  StrCmp "${ASSOCIATION}" "" finish_uninstall
-  StrCpy $1 "${ASSOCIATION}"
+  StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
+  push "${ASSOCIATION}"
+loop:
+  call un.SplitStr
+  Pop $0
+  StrCmp $0 "" finish_uninstall
+  MessageBox MB_OK "Association= $0"
+  StrCpy $1 $0
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
-
+  goto loop
+  
 finish_uninstall:
-
   StrCpy $1 "$5\${PRODUCT_REG_VER}"
   StrCpy $2 "Build"
   Call un.OMDeleteRegValue
