@@ -27,6 +27,7 @@ class MyClass<T> implements A<T> {
         return super.clone();
     }
 
+    @NotNull
     @Override
     public String toString() {
         return super.toString();
