@@ -22,18 +22,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Legacy SOAP connector restored due to IDEA-120595.
+ * Legacy integration restored due to IDEA-120595.
  *
  * @author Mikhail Golubev
  */
-public class JiraSoapApi extends JiraRemoteApi {
+public class JiraLegacyApi extends JiraRemoteApi {
 
-  private static final Logger LOG = Logger.getInstance(JiraSoapApi.class);
+  private static final Logger LOG = Logger.getInstance(JiraLegacyApi.class);
 
   @NonNls private static final String RSS_SEARCH_PATH = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml";
   public static final String RSS_ISSUE_PATH = "/si/jira.issueviews:issue-xml/";
 
-  public JiraSoapApi(@NotNull JiraRepository repository) {
+  public JiraLegacyApi(@NotNull JiraRepository repository) {
     super(repository);
   }
 
@@ -99,7 +99,7 @@ public class JiraSoapApi extends JiraRemoteApi {
   @NotNull
   @Override
   public final ApiType getType() {
-    return ApiType.SOAP;
+    return ApiType.LEGACY;
   }
 
   @Override

@@ -15,7 +15,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.GsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
-import com.intellij.tasks.jira.soap.JiraSoapApi;
+import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -196,7 +196,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     return restApi;
   }
 
-  private JiraSoapApi createLegacyApi() {
+  private JiraLegacyApi createLegacyApi() {
     try {
       XmlRpcClient client = new XmlRpcClient(getUrl());
       Vector<String> parameters = new Vector<String>(Collections.singletonList(""));
@@ -208,7 +208,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     catch (Exception e) {
       LOG.error("Cannot find out JIRA version via XML-RPC", e);
     }
-    return new JiraSoapApi(this);
+    return new JiraLegacyApi(this);
   }
 
   private void ensureApiVersionDiscovered() throws Exception {
@@ -306,7 +306,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   private boolean isRestApiSupported() {
-    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.SOAP;
+    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
   }
 
   public boolean isJqlSupported() {
