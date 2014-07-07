@@ -620,6 +620,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           SpellCheckingEditorCustomization.getInstance(false).customize(editor);
         }
       };
+      myAuthor.setMinimumAndPreferredWidth(100);
 
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
