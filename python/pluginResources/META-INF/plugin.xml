@@ -4,13 +4,22 @@
 
   <id>PythonCore</id>
   <name>Python Community Edition</name>
-  <idea-version since-build="135.406" until-build="138.*"/>
-  <description>Smart editing for Python scripts</description>
-  <version>3.4.Beta.135.@@BUILD_NUMBER@@</version>
+  <idea-version since-build="138.0" until-build="138.*"/>
+
+  <description><![CDATA[
+The Python plug-in provides smart editing for Python scripts. The feature set of the plugin
+ corresponds to PyCharm IDE Community Edition.
+<br>
+<a href="http://blog.jetbrains.com/pycharm">PyCharm blog</a><br>
+<a href="http://forum.jetbrains.com/forum/PyCharm">Discussion forum</a><br>
+<a href="http://youtrack.jetbrains.com/issues/PY">Issue tracker</a><br>
+]]></description>
+
+  <version>4.0.@@BUILD_NUMBER@@</version>
   <depends>com.intellij.modules.java</depends>
 
 
-  <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
+  <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains</vendor>
   <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
