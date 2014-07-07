@@ -177,8 +177,7 @@ class PluginGroups {
       "org.jetbrains.android",
       "com.intellij.android-designer")));
     myTree.put("Database Tools", Pair.create("/plugins/DatabaseTools.png", Arrays.asList(
-      "com.intellij.sql",
-      "com.intellij.persistence.database"
+      "com.intellij.database"
     )));
     myTree.put("Other Tools", Pair.create("/plugins/OtherTools.png", Arrays.asList(
       "ByteCodeViewer",
