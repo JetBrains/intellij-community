@@ -83,21 +83,21 @@ public class EditorNotificationsImpl extends EditorNotifications {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ProgressIndicator indicator = SoftReference.dereference(file.getUserData(CURRENT_UPDATES));
+        ProgressIndicator indicator = getCurrentProgress(file);
         if (indicator != null) {
           indicator.cancel();
         }
+        file.putUserData(CURRENT_UPDATES, null);
 
-        if (myProject.isDisposed()) {
+        if (myProject.isDisposed() || !file.isValid()) {
           return;
         }
 
         indicator = new ProgressIndicatorBase();
-        file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
-
         final ReadTask task = createTask(indicator, file);
         if (task == null) return;
 
+        file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           task.computeInReadAction(indicator);
         }
@@ -121,7 +121,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
     return new ReadTask() {
       private boolean isOutdated() {
-        if (myProject.isDisposed() || !file.isValid() || indicator != SoftReference.dereference(file.getUserData(CURRENT_UPDATES))) {
+        if (myProject.isDisposed() || !file.isValid() || indicator != getCurrentProgress(file)) {
           return true;
         }
 
@@ -165,10 +165,21 @@ public class EditorNotificationsImpl extends EditorNotifications {
       }
 
       @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        updateNotifications(file);
+      public void onCanceled(@NotNull ProgressIndicator _) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (getCurrentProgress(file) == indicator) {
+              updateNotifications(file);
+            }
+          }
+        });
       }
     };
+  }
+
+  private static ProgressIndicator getCurrentProgress(VirtualFile file) {
+    return SoftReference.dereference(file.getUserData(CURRENT_UPDATES));
   }
 
 
