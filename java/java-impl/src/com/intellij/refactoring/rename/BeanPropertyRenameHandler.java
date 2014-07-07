@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
@@ -56,7 +53,11 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
   private void performInvoke(@Nullable Editor editor, DataContext dataContext) {
     final BeanProperty property = getProperty(dataContext);
-    new PropertyRenameDialog(property, editor).show();
+    assert property != null;
+    PsiNamedElement element = property.getPsiElement();
+    if (PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
+      new PropertyRenameDialog(property, editor).show();
+    }
   }
 
   public static void doRename(@NotNull final BeanProperty property, final String newName, final boolean searchInComments, boolean isPreview) {
