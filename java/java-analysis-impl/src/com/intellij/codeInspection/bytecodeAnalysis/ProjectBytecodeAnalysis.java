@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ProjectTopics;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -34,6 +36,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBusConnection;
@@ -58,8 +62,6 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
     }
   };
-  private final PsiAnnotation notNullAnnotation;
-
   private final PsiManager myPsiManager;
 
   private volatile Annotations myAnnotations = null;
@@ -82,7 +84,6 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         unloadAnnotations();
       }
     });
-    notNullAnnotation = createAnnotationFromText("@org.jetbrains.annotations.NotNull");
   }
 
   private void loadAnnotations() {
@@ -189,13 +190,13 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
 
       if (notNull && contractValue != null) {
         return new PsiAnnotation[]{
-          notNullAnnotation,
+          getNotNullAnnotation(),
           createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")")
         };
       }
       else if (notNull) {
         return new PsiAnnotation[]{
-          notNullAnnotation
+          getNotNullAnnotation()
         };
       }
       else if (contractValue != null) {
@@ -213,6 +214,16 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     }
   }
 
+  private PsiAnnotation getNotNullAnnotation() {
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, new CachedValueProvider<PsiAnnotation>() {
+      @Nullable
+      @Override
+      public Result<PsiAnnotation> compute() {
+        return Result.create(createAnnotationFromText("@" + AnnotationUtil.NOT_NULL), ModificationTracker.NEVER_CHANGED);
+      }
+    });
+  }
+
   @Nullable
   private synchronized PsiAnnotation findNotNullAnnotation(PsiModifierListOwner listOwner) {
     if (myAnnotations == null) {
@@ -223,7 +234,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       if (key == -1) {
         return null;
       }
-      return myAnnotations.notNulls.contains(key) ? notNullAnnotation : null;
+      return myAnnotations.notNulls.contains(key) ? getNotNullAnnotation() : null;
     }
     catch (IOException e) {
       LOG.debug(e);
