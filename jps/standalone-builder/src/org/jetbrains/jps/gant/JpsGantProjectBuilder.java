@@ -31,6 +31,7 @@ import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.BuilderStatisticsMessage;
 import org.jetbrains.jps.incremental.messages.BuildingTargetProgressMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
@@ -295,7 +296,12 @@ public class JpsGantProjectBuilder {
           warning(text);
           break;
         case INFO:
-          if (!text.isEmpty()) {
+          if (msg instanceof BuilderStatisticsMessage) {
+            BuilderStatisticsMessage message = (BuilderStatisticsMessage)msg;
+            myBuildInfoPrinter.printStatisticsMessage(JpsGantProjectBuilder.this, "Compilation time '" + message.getBuilderName() + "', ms",
+                                                      String.valueOf(message.getElapsedTimeMs()));
+          }
+          else if (!text.isEmpty()) {
             info(text);
           }
           break;

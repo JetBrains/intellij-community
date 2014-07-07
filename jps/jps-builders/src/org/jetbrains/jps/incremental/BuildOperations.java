@@ -21,9 +21,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
-import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -85,24 +83,6 @@ public class BuildOperations {
       }
     }
     pd.fsState.markInitialScanPerformed(target);
-  }
-
-  public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
-  void buildTarget(final T target, final CompileContext context, TargetBuilder<?, ?> builder) throws ProjectBuildException, IOException {
-
-    if (builder.getTargetTypes().contains(target.getTargetType())) {
-      DirtyFilesHolder<R, T> holder = new DirtyFilesHolderBase<R, T>(context) {
-        @Override
-        public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
-          context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
-        }
-      };
-      //noinspection unchecked
-      BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
-      ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);
-      outputConsumer.fireFileGeneratedEvent();
-      context.checkCanceled();
-    }
   }
 
   public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
