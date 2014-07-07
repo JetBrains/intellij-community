@@ -42,10 +42,10 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
 
     try {
       if (target.isFile()) {
-        client.doList(target.getFile(), target.getPegRevision(), revision, true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getFile(), target.getPegRevision(), notNullize(revision), true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
       else {
-        client.doList(target.getURL(), target.getPegRevision(), revision, true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getURL(), target.getPegRevision(), notNullize(revision), true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
     }
     catch (SVNException e) {
