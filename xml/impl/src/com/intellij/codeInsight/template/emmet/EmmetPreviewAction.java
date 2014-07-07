@@ -55,10 +55,10 @@ public class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwa
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
     return super.isValidForFile(project, editor, file) &&
            file instanceof XmlFile &&
-           ZenCodingTemplate.findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, offset), false) != null;
+           ZenCodingTemplate.findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, CustomTemplateCallback.getOffset(editor)), 
+                                                            false) != null;
   }
 
   @Override
