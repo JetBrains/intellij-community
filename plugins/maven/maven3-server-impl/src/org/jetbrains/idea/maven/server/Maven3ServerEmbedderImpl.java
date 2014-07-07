@@ -578,7 +578,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       throw new RuntimeException(e);
     }
 
-    Collection<String> activatedProfiles = collectActivatedProfiles(mavenProject, problems);
+    Collection<String> activatedProfiles = collectActivatedProfiles(mavenProject);
 
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder,
@@ -586,7 +586,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private Collection<String> collectActivatedProfiles(MavenProject mavenProject, Collection<MavenProjectProblem> problems)
+  private static Collection<String> collectActivatedProfiles(MavenProject mavenProject)
     throws RemoteException {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
@@ -599,7 +599,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       }
     }
     catch (Exception e) {
-      validate(mavenProject.getFile(), Collections.singleton(e), problems, null);
+      // don't bother user if maven failed to build parent project
+      Maven3ServerGlobals.getLogger().info(e);
     }
     return collectProfilesIds(profiles);
   }
