@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
@@ -22,9 +23,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
-import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
-import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
@@ -42,18 +41,19 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
   @NotNull
   @Override
   public Map<Integer, Collection<IntIdEquation>> map(@NotNull FileContent inputData) {
-    ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()));
-    List<Equation<Key, Value>> rawParameterEquations = rawEquations.parameterEquations;
-    List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
-
-    Collection<IntIdEquation> idParameterEquations = new ArrayList<IntIdEquation>(rawParameterEquations.size());
-    Collection<IntIdEquation> idContractEquations = new ArrayList<IntIdEquation>(rawContractEquations.size());
-
     HashMap<Integer, Collection<IntIdEquation>> map = new HashMap<Integer, Collection<IntIdEquation>>(2);
-    map.put(BytecodeAnalysisIndex.indexKey(inputData.getFile(), true), idParameterEquations);
-    map.put(BytecodeAnalysisIndex.indexKey(inputData.getFile(), false), idContractEquations);
-
     try {
+      ClassEquations rawEquations = processClass(new ClassReader(inputData.getContent()));
+      List<Equation<Key, Value>> rawParameterEquations = rawEquations.parameterEquations;
+      List<Equation<Key, Value>> rawContractEquations = rawEquations.contractEquations;
+
+      Collection<IntIdEquation> idParameterEquations = new ArrayList<IntIdEquation>(rawParameterEquations.size());
+      Collection<IntIdEquation> idContractEquations = new ArrayList<IntIdEquation>(rawContractEquations.size());
+
+      map.put(BytecodeAnalysisIndex.indexKey(inputData.getFile(), true), idParameterEquations);
+      map.put(BytecodeAnalysisIndex.indexKey(inputData.getFile(), false), idContractEquations);
+
+
       for (Equation<Key, Value> rawParameterEquation: rawParameterEquations) {
         idParameterEquations.add(myConverter.convert(rawParameterEquation));
       }
@@ -61,8 +61,13 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
         idContractEquations.add(myConverter.convert(rawContractEquation));
       }
     }
-    catch (IOException e) {
-      LOG.debug(e);
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      // incorrect bytecode may result in Runtime exceptions during analysis
+      // so here we suppose that exception is due to incorrect bytecode
+      LOG.debug("Unexpected Error during indexing of bytecode", e);
     }
     return map;
   }
@@ -182,8 +187,14 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
               parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
             }
           }
-        } catch (AnalyzerException e) {
-          LOG.debug("Error during processing of " + method, e);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          // incorrect bytecode may result in Runtime exceptions during analysis
+          // so here we suppose that exception is due to incorrect bytecode
+          LOG.debug("Unexpected Error during processing of " + method, e);
         }
       }
     }, 0);

@@ -24,7 +24,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 
 import java.util.*;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 final class cfg {
@@ -32,37 +31,31 @@ final class cfg {
     return new ControlFlowBuilder(className, methodNode).buildCFG();
   }
 
-  static TIntHashSet resultOrigins(String className, MethodNode methodNode) {
-    try {
-      Frame<SourceValue>[] frames = new Analyzer<SourceValue>(MININAL_ORIGIN_INTERPRETER).analyze(className, methodNode);
-      InsnList insns = methodNode.instructions;
-      TIntHashSet result = new TIntHashSet();
-      for (int i = 0; i < frames.length; i++) {
-        AbstractInsnNode insnNode = insns.get(i);
-        Frame<SourceValue> frame = frames[i];
-        if (frame != null) {
-          switch (insnNode.getOpcode()) {
-            case ARETURN:
-            case IRETURN:
-            case LRETURN:
-            case FRETURN:
-            case DRETURN:
-              for (AbstractInsnNode sourceInsn : frame.pop().insns) {
-                result.add(insns.indexOf(sourceInsn));
-              }
-              break;
+  static TIntHashSet resultOrigins(String className, MethodNode methodNode) throws AnalyzerException {
+    Frame<SourceValue>[] frames = new Analyzer<SourceValue>(MININAL_ORIGIN_INTERPRETER).analyze(className, methodNode);
+    InsnList insns = methodNode.instructions;
+    TIntHashSet result = new TIntHashSet();
+    for (int i = 0; i < frames.length; i++) {
+      AbstractInsnNode insnNode = insns.get(i);
+      Frame<SourceValue> frame = frames[i];
+      if (frame != null) {
+        switch (insnNode.getOpcode()) {
+          case ARETURN:
+          case IRETURN:
+          case LRETURN:
+          case FRETURN:
+          case DRETURN:
+            for (AbstractInsnNode sourceInsn : frame.pop().insns) {
+              result.add(insns.indexOf(sourceInsn));
+            }
+            break;
 
-            default:
-              break;
-          }
+          default:
+            break;
         }
       }
-      return result;
     }
-    catch (AnalyzerException e) {
-      LOG.debug(e);
-      throw new RuntimeException();
-    }
+    return result;
   }
 
   static final Interpreter<SourceValue> MININAL_ORIGIN_INTERPRETER = new SourceInterpreter() {
