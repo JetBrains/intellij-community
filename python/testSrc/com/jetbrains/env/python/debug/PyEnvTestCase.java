@@ -38,6 +38,11 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
 
+
+  public static final boolean SHOULD_RUN_REMOTE = System.getProperty("pycharm.run_remote") != null;
+
+  public static final boolean DONT_RUN_LOCAL = System.getProperty("pycharm.dont_run_local") != null;
+
   /**
    * Tags that should exist between all tags, available on all interpreters for test to run.
    * See {@link #PyEnvTestCase(String...)}
@@ -130,15 +135,16 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
       return;
     }
 
+    if (!DONT_RUN_LOCAL) {
+      TaskRunner taskRunner = new TaskRunner(roots);
 
-    TaskRunner taskRunner = new TaskRunner(roots);
+      taskRunner.runTask(testTask, testName);
+    }
 
-    taskRunner.runTask(testTask, testName);
-
-    if (PyTestRemoteSdkProvider.shouldRunRemoteSdk(testTask)) {
+    if (SHOULD_RUN_REMOTE && PyTestRemoteSdkProvider.shouldRunRemoteSdk(testTask)) {
       if (PyTestRemoteSdkProvider.canRunRemoteSdk()) {
-        taskRunner = new RemoteTaskRunner(roots);
-        taskRunner.runTask(testTask, testName);
+        TaskRunner remoteRunner = new RemoteTaskRunner(roots);
+        remoteRunner.runTask(testTask, testName);
       }
       else {
         if (PyTestRemoteSdkProvider.shouldFailWhenCantRunRemote()) {
