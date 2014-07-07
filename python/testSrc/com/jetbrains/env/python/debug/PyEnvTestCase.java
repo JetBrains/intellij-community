@@ -295,8 +295,13 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     String[] roots = envs.split(File.pathSeparator);
     for (String root : roots) {
       File virtualEnvRoot = new File(root);
-      for (File f : virtualEnvRoot.listFiles()) {
-        result.add(f.getAbsolutePath());
+      File[] virtualenvs = virtualEnvRoot.listFiles();
+      if (virtualenvs != null) {
+        for (File f : virtualenvs) {
+          result.add(f.getAbsolutePath());
+        }
+      } else {
+        LOG.error(root + " is not a directory of doesn't exist");
       }
     }
 
