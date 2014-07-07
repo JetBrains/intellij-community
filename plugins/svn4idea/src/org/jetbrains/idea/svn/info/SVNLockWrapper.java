@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.svn.info;
 
-import org.tmatesoft.svn.core.SVNLock;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.lock.Lock;
 
 import java.util.Date;
 
@@ -45,8 +47,9 @@ public class SVNLockWrapper {
   public SVNLockWrapper() {
   }
 
-  public SVNLock create() {
-    return new SVNLock(myPath, myID, myOwner, myComment, myCreationDate, myExpirationDate);
+  @NotNull
+  public Lock create() {
+    return new Lock(myOwner, myComment, myCreationDate, myExpirationDate);
   }
 
   public String getPath() {

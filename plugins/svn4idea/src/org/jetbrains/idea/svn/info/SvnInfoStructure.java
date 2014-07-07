@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.*;
 import org.xml.sax.SAXException;
 
@@ -68,8 +69,9 @@ public class SvnInfoStructure {
                            myPropRejectFile, getLock(), myDepth, createTreeConflict());
   }
 
-  private SVNLock getLock() {
-    SVNLock lock = null;
+  @Nullable
+  private Lock getLock() {
+    Lock lock = null;
 
     if (myLockWrapper != null) {
       myLockWrapper.setPath(relativeUrl);

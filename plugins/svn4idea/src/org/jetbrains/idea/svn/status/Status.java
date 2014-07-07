@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.status;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
-import org.tmatesoft.svn.core.SVNLock;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -44,8 +44,8 @@ public class Status {
   private boolean myIsCopied;
   private boolean myIsSwitched;
   private String myCopyFromURL;
-  private SVNLock myRemoteLock;
-  private SVNLock myLocalLock;
+  @Nullable private Lock myRemoteLock;
+  @Nullable private Lock myLocalLock;
   private SVNRevision myRemoteRevision;
   private String myChangelistName;
   @Nullable private TreeConflictDescription myTreeConflict;
@@ -62,8 +62,9 @@ public class Status {
       result = new Status(status.getURL(), status.getFile(), status.getKind(), status.getRevision(),
                           status.getCommittedRevision(), status.getContentsStatus(), status.getPropertiesStatus(),
                           status.getRemoteContentsStatus(), status.getRemotePropertiesStatus(), status.isLocked(),
-                          status.isCopied(), status.isSwitched(), status.getCopyFromURL(), status.getRemoteLock(),
-                          status.getLocalLock(), status.getChangelistName(), TreeConflictDescription.create(status.getTreeConflict()));
+                          status.isCopied(), status.isSwitched(), status.getCopyFromURL(), Lock.create(status.getRemoteLock()),
+                          Lock.create(status.getLocalLock()), status.getChangelistName(),
+                          TreeConflictDescription.create(status.getTreeConflict()));
       result.setIsConflicted(status.isConflicted());
       result.setNodeStatus(status.getNodeStatus());
       result.setRemoteNodeStatus(status.getRemoteNodeStatus());
@@ -87,8 +88,8 @@ public class Status {
                 boolean isCopied,
                 boolean isSwitched,
                 String copyFromURL,
-                SVNLock remoteLock,
-                SVNLock localLock,
+                @Nullable Lock remoteLock,
+                @Nullable Lock localLock,
                 String changelistName,
                 @Nullable TreeConflictDescription treeConflict) {
     myURL = url;
@@ -169,11 +170,13 @@ public class Status {
     return myCopyFromURL;
   }
 
-  public SVNLock getRemoteLock() {
+  @Nullable
+  public Lock getRemoteLock() {
     return myRemoteLock;
   }
 
-  public SVNLock getLocalLock() {
+  @Nullable
+  public Lock getLocalLock() {
     return myLocalLock;
   }
 
@@ -257,11 +260,11 @@ public class Status {
     myIsSwitched = isSwitched;
   }
 
-  public void setRemoteLock(SVNLock remoteLock) {
+  public void setRemoteLock(@Nullable Lock remoteLock) {
     myRemoteLock = remoteLock;
   }
 
-  public void setLocalLock(SVNLock localLock) {
+  public void setLocalLock(@Nullable Lock localLock) {
     myLocalLock = localLock;
   }
 

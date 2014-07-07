@@ -27,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -166,13 +166,13 @@ class SvnChangeProviderContext implements StatusReceiver {
       return;
     }
     if (status.getRemoteLock() != null) {
-      final SVNLock lock = status.getRemoteLock();
+      final Lock lock = status.getRemoteLock();
       myChangelistBuilder.processLogicallyLockedFolder(filePath.getVirtualFile(),
                                                        new LogicalLock(false, lock.getOwner(), lock.getComment(), lock.getCreationDate(),
                                                                        lock.getExpirationDate()));
     }
     if (status.getLocalLock() != null) {
-      final SVNLock lock = status.getLocalLock();
+      final Lock lock = status.getLocalLock();
       myChangelistBuilder.processLogicallyLockedFolder(filePath.getVirtualFile(),
                                                        new LogicalLock(true, lock.getOwner(), lock.getComment(), lock.getCreationDate(),
                                                                        lock.getExpirationDate()));

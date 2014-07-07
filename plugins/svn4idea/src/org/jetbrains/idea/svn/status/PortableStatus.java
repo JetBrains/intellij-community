@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNLock;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
@@ -96,8 +96,8 @@ public class PortableStatus extends Status {
                         boolean isCopied,
                         boolean isSwitched,
                         boolean isFileExternal,
-                        SVNLock remoteLock,
-                        SVNLock localLock,
+                        @Nullable Lock remoteLock,
+                        @Nullable Lock localLock,
                         Map entryProperties,
                         String changelistName,
                         int wcFormatVersion,

@@ -18,8 +18,8 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -44,7 +44,7 @@ public class Info {
   private final SVNRevision myCommittedRevision;
   private final Date myCommittedDate;
   private final String myAuthor;
-  private final SVNLock myLock;
+  @Nullable private final Lock myLock;
   private final boolean myIsRemote;
   private final String mySchedule;
   private final SVNURL myCopyFromURL;
@@ -63,14 +63,14 @@ public class Info {
     if (info.isRemote()) {
       result = new Info(info.getPath(), info.getURL(), info.getRevision(), info.getKind(), info.getRepositoryUUID(),
                            info.getRepositoryRootURL(), info.getCommittedRevision().getNumber(), info.getCommittedDate(), info.getAuthor(),
-                           info.getLock(), info.getDepth());
+                           Lock.create(info.getLock()), info.getDepth());
     }
     else {
       result = new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), info.getKind(),
                         info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()),
                         info.getAuthor(), info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(),
                         getPath(info.getConflictOldFile()), getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()),
-                        getPath(info.getPropConflictFile()), info.getLock(), info.getDepth(),
+                        getPath(info.getPropConflictFile()), Lock.create(info.getLock()), info.getDepth(),
                         TreeConflictDescription.create(info.getTreeConflict()));
     }
 
@@ -93,7 +93,7 @@ public class Info {
               String conflictNew,
               String conflictWorking,
               String propRejectFile,
-              SVNLock lock,
+              @Nullable Lock lock,
               SVNDepth depth,
               @Nullable TreeConflictDescription treeConflict) {
     myFile = file;
@@ -135,7 +135,7 @@ public class Info {
               long committedRevision,
               Date date,
               String author,
-              SVNLock lock,
+              @Nullable Lock lock,
               SVNDepth depth) {
     myIsRemote = true;
     myURL = url;
@@ -212,7 +212,8 @@ public class Info {
     return myKind;
   }
 
-  public SVNLock getLock() {
+  @Nullable
+  public Lock getLock() {
     return myLock;
   }
 
