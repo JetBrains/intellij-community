@@ -12,6 +12,7 @@
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
+!define INSTALL_OPTION_ELEMENTS 4
 Name "${MUI_PRODUCT}"
 SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
@@ -25,6 +26,8 @@ RequestExecutionLevel user
 !include UAC.nsh
 !include "InstallOptions.nsh"
 !include StrFunc.nsh
+!include LogicLib.nsh
+
 ${UnStrStr}
 ${UnStrLoc}
 ${UnStrRep}
@@ -97,6 +100,57 @@ Var IS_UPGRADE_60
     StrCpy $9 "Modified"
   complete:
 FunctionEnd
+
+Function ${un}SplitStr
+Exch $0 ; str
+Push $1 ; inQ
+Push $3 ; idx
+Push $4 ; tmp
+StrCpy $1 0
+StrCpy $3 0
+loop:
+    StrCpy $4 $0 1 $3
+    ${If} $4 == '"'
+        ${If} $1 <> 0
+            StrCpy $0 $0 "" 1
+            IntOp $3 $3 - 1
+        ${EndIf}
+        IntOp $1 $1 !
+    ${EndIf}
+    ${If} $4 == '' ; The end?
+        StrCpy $1 0
+        StrCpy $4 ','
+    ${EndIf}
+    ${If} $4 == ','
+    ${AndIf} $1 = 0
+        StrCpy $4 $0 $3
+        StrCpy $1 $4 "" -1
+        ${IfThen} $1 == '"' ${|} StrCpy $4 $4 -1 ${|}
+        killspace:
+            IntOp $3 $3 + 1
+            StrCpy $0 $0 "" $3
+            StrCpy $1 $0 1
+            StrCpy $3 0
+            StrCmp $1 ',' killspace
+        Push $0 ; Remaining
+        Exch 4
+        Pop $0
+        StrCmp $4 "" 0 moreleft
+            Pop $4
+            Pop $3
+            Pop $1
+            Return
+        moreleft:
+        Exch $4
+        Exch 2
+        Pop $1
+        Pop $3
+        Return
+    ${EndIf}
+    IntOp $3 $3 + 1
+    Goto loop
+FunctionEnd
+
 !macroend
 !insertmacro INST_UNINST_SWITCH ""
 !insertmacro INST_UNINST_SWITCH "un."
@@ -686,6 +740,23 @@ skip_default_instdir:
 
 FunctionEnd
 
+Function DoAssociation
+ ; back up old value of an association
+ ReadRegStr $1 HKCR $R4 ""
+  StrCmp $1 "" skip_backup
+    StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
+    WriteRegStr HKCR $R4 "backup_val" $1
+skip_backup:
+  WriteRegStr HKCR $R4 "" "${PRODUCT_PATHS_SELECTOR}"
+  ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
+  StrCmp $0 "" 0 command_exists
+	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+command_exists:
+  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
+    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+FunctionEnd
 
 ;------------------------------------------------------------------------------
 ; Installer sections
@@ -716,6 +787,20 @@ skip_desktop_shortcut:
   ${EndIf}	
 skip_quicklaunch_shortcut:
 
+  !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
+  IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
+do_association:
+  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}  
+get_user_choice:
+  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
+  StrCmp $R3 1 "" next_association
+  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
+  call DoAssociation
+next_association:  
+  IntOp $R2 $R2 + 1
+  IntCmp $R1 $R2 get_user_choice done get_user_choice
+
+done:   
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
@@ -753,27 +838,6 @@ skip_quicklaunch_shortcut:
 !undef Index
 
 skip_ipr:
-
-StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
- ; back up old value of an association
- ReadRegStr $1 HKCR ${ASSOCIATION} ""
- StrCmp $1 "" skip_backup
-    StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
-    WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
-skip_backup:
-  WriteRegStr HKCR ${ASSOCIATION} "" "${PRODUCT_PATHS_SELECTOR}"
-  ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
-  StrCmp $0 "" 0 command_exists
-    WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
-    WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
-    WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
-command_exists:
-  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
-    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
-
-skip_association:
-  ; Rest of script
-
 
 ; readonly section
   SectionIn RO
@@ -842,13 +906,28 @@ Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 1" "Text" "$(create_desktop_shortcut)"
   call winVersion
-  ${If} $0 == "1" 
-    ;do not ask user about creating quick launch under Windows 7  
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "1"
-  ${Else}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
-  ${EndIf}	
-;  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" "$(install_for_current_user_only)"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" "$(create_quick_launch_shortcut)"
+  ${If} $0 == "1"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
+  ${EndIf}
+  StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
+  StrCpy $R0 3
+  push "${ASSOCIATION}"
+loop:
+  call SplitStr
+  Pop $0
+  StrCmp $0 "" done
+  IntOp $R0 $R0 + 1
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+  goto loop
+skip_association:
+  StrCpy $R0 2
+  call winVersion
+  ${If} $0 == "1"
+  IntOp $R0 $R0 - 1
+  ${EndIf}
+done:
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
@@ -931,11 +1010,13 @@ Function un.ReturnBackupRegValue
   ;replace Default str with the backup value (if there is the one) and then delete backup
   ; $1 - key (for example ".java")
   ; $2 - name (for example "backup_val")
+  Push $0
   ReadRegStr $0 HKCR $1 $2
   StrCmp $0 "" "noBackup"
     WriteRegStr HKCR $1 "" $0
     DeleteRegValue HKCR $1 $2
 noBackup:  
+  Pop $0
 FunctionEnd
 
 Function un.OMDeleteRegKeyIfEmpty
@@ -1140,12 +1221,16 @@ clear_Registry:
   Call un.OMDeleteRegValue
 
   StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
-  StrCpy $1 "${ASSOCIATION}"
+  push "${ASSOCIATION}"
+loop:
+  call un.SplitStr
+  Pop $0
+  StrCmp $0 "" finish_uninstall
+  StrCpy $1 $0
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
-
+  goto loop
 finish_uninstall:
-
   StrCpy $1 "$5\${PRODUCT_REG_VER}"
   StrCpy $2 "Build"
   Call un.OMDeleteRegValue
