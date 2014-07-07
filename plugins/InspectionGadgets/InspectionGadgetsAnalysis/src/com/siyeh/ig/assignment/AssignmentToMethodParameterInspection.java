@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,6 +149,7 @@ public class AssignmentToMethodParameterInspection
 
     @Nullable
     private PsiParameter getMethodParameter(PsiExpression expression) {
+      expression = ParenthesesUtils.stripParentheses(expression);
       if (!(expression instanceof PsiReferenceExpression)) {
         return null;
       }
@@ -159,10 +161,7 @@ public class AssignmentToMethodParameterInspection
       }
       final PsiParameter parameter = (PsiParameter)variable;
       final PsiElement declarationScope = parameter.getDeclarationScope();
-      if (declarationScope instanceof PsiCatchSection) {
-        return null;
-      }
-      if (declarationScope instanceof PsiForeachStatement) {
+      if (!(declarationScope instanceof PsiMethod)) {
         return null;
       }
       return parameter;

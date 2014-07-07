@@ -25,4 +25,20 @@ class AssigmentToMethodParameterMissesCompoundAssign {
         <warning descr="Assignment to method parameter 'increased'">increased</warning> -= 10; // highlighted
     }
 
+    public void parenthesized(int p) {
+        System.out.println(p);
+        <warning descr="Assignment to method parameter '(p)'">(p)</warning> = 1;
+    }
+
+    public void leaveMyLambdaAlone() {
+        Consumer c = (p) -> {
+            p = null;
+            System.out.println(p);
+        };
+    }
+
+    interface Consumer {
+        void m(Object o);
+    }
+
 }
