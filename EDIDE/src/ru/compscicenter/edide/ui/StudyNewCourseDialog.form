@@ -25,7 +25,7 @@
               </grid>
             </constraints>
             <properties>
-              <icon value="ru/compscicenter/edide/refresh.png"/>
+              <icon value="icons/refresh.png"/>
               <text value=""/>
             </properties>
           </component>
@@ -102,7 +102,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <icon value="ru/compscicenter/edide/fatalError.png"/>
+              <icon value="icons/fatalError.png"/>
               <text value=""/>
             </properties>
           </component>

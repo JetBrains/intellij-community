@@ -2,6 +2,7 @@ package ru.compscicenter.edide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -100,6 +101,7 @@ class CheckAction extends AnAction {
           //Component component = e.getInputEvent().getComponent();
           //RelativePoint rp  = new RelativePoint(new Point(component.getX(), component.getY()));
             balloon.show(rp, Balloon.Position.above);
+          SaveAndSyncHandlerImpl.refreshOpenFiles();
           //JOptionPane.showMessageDialog(null, testResult, "", JOptionPane.INFORMATION_MESSAGE);
         }
         catch (ExecutionException e1) {
