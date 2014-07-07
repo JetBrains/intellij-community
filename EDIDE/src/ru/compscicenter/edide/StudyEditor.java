@@ -11,14 +11,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HideableTitledPanel;
+import com.intellij.ui.components.JBScrollPane;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.compscicenter.edide.course.Task;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.io.File;
+import java.io.*;
 
 /**
 * User: lia
@@ -29,24 +31,55 @@ public class StudyEditor implements FileEditor {
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
   private String getTextForTask(VirtualFile file, Project project) {
-    //int taskNum = TaskManager.getInstance(project).getTaskNumForFile(file.getName());
-    //return TaskManager.getInstance(project).getTaskText(taskNum);
-    return "Sample text";
+    Task currentTask = StudyTaskManager.getInstance(project).getTaskFile(file).getTask();
+    String textFileName = currentTask.getText();
+    File textFile = new File(file.getParent().getCanonicalPath(), textFileName);
+    StringBuilder taskText = new StringBuilder();
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(textFile)));
+      while(reader.ready()) {
+        taskText.append(reader.readLine());
+      }
+    }
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    return taskText.toString();
+  }
+
+  private JButton addButton(JComponent parentComponent, String toolTipText, Icon icon) {
+    JButton newButton = new JButton();
+    newButton.setToolTipText(toolTipText);
+    newButton.setIcon(icon);
+    newButton.setSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
+    parentComponent.add(newButton);
+    return newButton;
   }
 
   public StudyEditor(Project project, VirtualFile file) {
     myDefaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
     myComponent = myDefaultEditor.getComponent();
-    JPanel studyPanel = new JPanel(new GridLayout(2, 1));
+    JPanel studyPanel = new JPanel();
+    studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
     final JLabel taskText = new JLabel(getTextForTask(file, project));
     taskText.setFont(new Font("Arial", Font.PLAIN, 16));
-    HideableTitledPanel taskTextPanel = new HideableTitledPanel("Task text", taskText, true);
+    HideableTitledPanel taskTextPanel = new HideableTitledPanel("Task Text", taskText, true);
     studyPanel.add(taskTextPanel);
-    JPanel studyButtonPanel = new JPanel(new GridLayout(1, 6));
-    JButton checkButton = new JButton("button1");
-    checkButton.setIcon(StudyIcons.Resolve);
-    studyButtonPanel.add(checkButton);
-    studyButtonPanel.add(new JButton("button2"));
+    JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
+    JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    studyButtonPanel.add(taskActionsPanel);
+    studyButtonPanel.add(new JPanel());
+    addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
+    addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
+    addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
+    addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
+    addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
+    addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+    addButton(taskActionsPanel, "Run", StudyIcons.Run);
+
     studyPanel.add(studyButtonPanel);
     myComponent.add(studyPanel, BorderLayout.NORTH);
   }

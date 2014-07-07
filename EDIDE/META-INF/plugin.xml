@@ -65,7 +65,7 @@
 
     <action id="NextWindow" class="ru.compscicenter.edide.actions.NextWindowAction" text="NextWindowAction" description="next"
             icon="/icons/next.png">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt RIGHT"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="alt RIGHT" replace-all="true"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
     </action>
   </actions>

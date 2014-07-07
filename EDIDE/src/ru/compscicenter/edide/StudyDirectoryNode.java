@@ -6,6 +6,8 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import icons.StudyIcons;
+
 import javax.swing.*;
 
 /**
@@ -13,8 +15,6 @@ import javax.swing.*;
  * data: 6/25/14.
  */
 public class StudyDirectoryNode extends PsiDirectoryNode {
-  public static final Icon RESOLVED_TASK = AllIcons.General.InformationDialog;
-  public static final Icon UNRESOLVED_TASK = AllIcons.General.WarningDialog;
   PsiDirectory myValue;
   Project myProject;
   public StudyDirectoryNode(Project project,
@@ -28,12 +28,16 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(PresentationData data) {
+    data.setIcon(StudyIcons.UncheckedTask);
+    if (myValue.getName().contains("task")) {
+      String dirName = myValue.getName();
+      if (dirName.contains("task1") && myValue.getChildren().length != 0) {
+        if (StudyTaskManager.getInstance(myProject).getCourse().getLessons().get(0).getTaskList().get(0).isResolved()) {
+          data.setIcon(StudyIcons.CheckedTask);
+        }
+      }
+    }
 
-    //data.setIcon(UNRESOLVED_TASK);
-   String pathToIcon = StudyDirectoryNode.class.getResource("unchecked.png").getPath();
-
-    data.setIcon(new ImageIcon(pathToIcon));
-    //data.setPresentableText("my" + myValue.getName());
     if (myValue.getName().equals(myProject.getName())) {
       data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
     } else {

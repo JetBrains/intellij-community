@@ -16,4 +16,10 @@ public class StudyIcons {
   public static final Icon Resolve = load("/icons/resolve.png"); // 24*24
   public static final Icon UncheckedTask = load("/icons/unchecked.png");
   public static final Icon CheckedTask = load("/icons/checked.png");
+  public static final Icon Prev = load("/icons/prev.png");
+  public static final Icon Next = load("/icons/next.png");
+  public static final Icon Run = load("/icons/Run.png");
+  public static final Icon ShortcutReminder = load("/icons/ShortcutReminder.png");
+  public static final Icon WatchInput = load("/icons/WatchInput.png");
+  public static final Icon Refresh24 = load("/icons/refresh24.png");
 }

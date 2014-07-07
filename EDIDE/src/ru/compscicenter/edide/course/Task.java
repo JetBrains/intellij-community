@@ -80,6 +80,7 @@ public class Task {
     for (int i = 0; i < taskFiles.size(); i++) {
       taskFiles.get(i).create(project, taskDir, newResourceRoot);
     }
+    FileUtil.copy(new File(newResourceRoot, text), new File(taskDir.getCanonicalPath(), text));
     String systemIndependentName = FileUtil.toSystemIndependentName(testFile);
     final int i = systemIndependentName.lastIndexOf("/");
     if (i > 0) {
