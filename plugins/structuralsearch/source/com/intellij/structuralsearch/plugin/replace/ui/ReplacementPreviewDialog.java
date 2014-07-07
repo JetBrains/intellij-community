@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -10,11 +11,16 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -28,6 +34,7 @@ import java.awt.*;
  * Navigates through the search results
  */
 public final class ReplacementPreviewDialog extends DialogWrapper {
+  private final FileType myFileType;
   private Editor replacement;
 
   private final Project project;
@@ -41,11 +48,13 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     setTitle(SSRBundle.message("structural.replace.preview.dialog.title"));
     setOKButtonText(SSRBundle.message("replace.preview.oktext"));
     this.project = project;
+    final PsiElement element = info.getElement();
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+    myFileType = virtualFile != null ? virtualFile.getFileType() : FileTypes.PLAIN_TEXT;
     init();
 
-    final PsiElement element = info.getElement();
     Segment range = info.getSegment();
-    hilight(element.getContainingFile().getVirtualFile(), range.getStartOffset(), range.getEndOffset());
+    hilight(virtualFile, range.getStartOffset(), range.getEndOffset());
     UIUtil.setContent(replacement, replacementString,0,-1,project);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
@@ -85,17 +94,21 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JComponent centerPanel = new JPanel( new BorderLayout() );
 
-    PsiFile file;
-    replacement = UIUtil.createEditor(
-      PsiDocumentManager.getInstance(project).getDocument(
-        file = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment("", null, true)
-      ),
-      project,
-      true,
-      null
-    );
+    PsiFile file = null;
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    if (profile != null) {
+      file = profile.createCodeFragment(project, "", null);
+    }
 
-    DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);
+    if (file != null) {
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      replacement = UIUtil.createEditor(document, project, true, null);
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file,false);
+    } else {
+      final EditorFactory factory = EditorFactory.getInstance();
+      final Document document = factory.createDocument("");
+      replacement = factory.createEditor(document, project, myFileType, false);
+    }
 
     centerPanel.add(BorderLayout.NORTH,new JLabel(SSRBundle.message("replacement.code")) );
     centerPanel.add(BorderLayout.CENTER,replacement.getComponent() );
@@ -105,10 +118,10 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   }
 
   public void dispose() {
-    DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(
-      PsiDocumentManager.getInstance(project).getPsiFile(replacement.getDocument()),
-      true
-    );
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(replacement.getDocument());
+    if (file != null) {
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, true);
+    }
 
     EditorFactory.getInstance().releaseEditor(replacement);
     removeHilighter();

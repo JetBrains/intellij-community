@@ -57,10 +57,14 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     GotoTaskAction.CREATE_NEW_TASK_ACTION.setTaskName(pattern);
     if (!consumer.process(GotoTaskAction.CREATE_NEW_TASK_ACTION)) return false;
 
-    List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(myProject), pattern, everywhere);
-    if (!processTasks(cachedAndLocalTasks, consumer, cancelled)) return false;
+    TaskManager taskManager = TaskManager.getManager(myProject);
 
-    if (cachedAndLocalTasks.size() >= base.getMaximumListSizeLimit()) {
+    List<Task> allCachedAndLocalTasks = ContainerUtil.concat(taskManager.getCachedIssues(), taskManager.getLocalTasks());
+    List<Task> filteredCachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(taskManager, pattern, everywhere);
+
+    if (!processTasks(filteredCachedAndLocalTasks, consumer, cancelled)) return false;
+
+    if (filteredCachedAndLocalTasks.size() >= base.getMaximumListSizeLimit()) {
       return true;
     }
 
@@ -93,8 +97,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       // was contained in server response (as not remotely closed). Moreover on next request with pagination when the
       // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
       // number of items shown).
-      tasks.removeAll(TaskManager.getManager(myProject).getLocalTasks());
-      tasks.removeAll(TaskManager.getManager(myProject).getCachedIssues());
+      tasks.removeAll(allCachedAndLocalTasks);
       return processTasks(tasks, consumer, cancelled);
     }
     catch (InterruptedException interrupted) {

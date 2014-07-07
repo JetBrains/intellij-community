@@ -25,7 +25,6 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.net.URL;
 
 /**
  * @author Alexander Lobas
@@ -50,7 +49,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final ExternalChangeListener myChangeListener;
 
   private SceneBuilderCreator myBuilderCreator;
-  private URL myFileURL;
   private SceneBuilder mySceneBuilder;
 
   public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file, SceneBuilderProvider creatorProvider) {
@@ -178,11 +176,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     try {
       FileDocumentManager.getInstance().saveDocument(myDocument);
 
-      if (myFileURL == null) {
-        myFileURL = new File(myFile.getPath()).toURI().toURL();
-      }
-
-      mySceneBuilder = myBuilderCreator.create(myFileURL, this);
+      mySceneBuilder = myBuilderCreator.create(new File(myFile.getPath()).toURI().toURL(), this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);
@@ -191,13 +185,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     }
     catch (Throwable e) {
       showErrorPage(null, e);
-    }
-  }
-
-  private void updateSceneBuilder() {
-    if (mySceneBuilder != null) {
-      FileDocumentManager.getInstance().saveDocument(myDocument);
-      mySceneBuilder.reloadFile();
     }
   }
 
@@ -323,7 +310,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     public void checkContent() {
       if (!myRunState && !myDocument.getText().equals(myContent)) {
-        updateSceneBuilder();
+        addSceneBuilder();
         start();
       }
     }
@@ -331,7 +318,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     @Override
     public void documentChanged(DocumentEvent e) {
       if (myRunState) {
-        updateSceneBuilder();
+        addSceneBuilder();
       }
     }
   }

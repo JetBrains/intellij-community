@@ -24,7 +24,7 @@ public class DebugAssertions {
 
   public static final boolean DEBUG = SystemProperties.getBooleanProperty(
     "intellij.idea.indices.debug",
-    false && (ApplicationManager.getApplication().isEAP() || ApplicationManager.getApplication().isInternal())
+    ApplicationManager.getApplication().isInternal()
   );
 
   public static void assertTrue(boolean value) {

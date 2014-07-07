@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="properties-psi-api" exported="" />
     <orderEntry type="module" module-name="properties-psi-impl" exported="" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
 

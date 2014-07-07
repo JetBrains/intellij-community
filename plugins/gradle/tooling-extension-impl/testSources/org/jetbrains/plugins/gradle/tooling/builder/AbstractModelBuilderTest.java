@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
@@ -29,7 +28,6 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
@@ -61,13 +59,12 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
-  public static final String GRADLE_v1_9 = "1.9";
-  public static final String GRADLE_v1_10 = "1.10";
-  public static final String GRADLE_v1_11 = "1.11";
-  public static final String GRADLE_v1_12 = "1.12";
-  public static final String GRADLE_v2_0 = "2.0-rc-2";
+  public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
+    {"1.9"}, {"1.10"}, {"1.11"}, {"1.12"},
+    {"2.0"}
+  };
 
-  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
+  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
 
   private static File ourTempDir;
 
@@ -82,16 +79,9 @@ public abstract class AbstractModelBuilderTest {
     this.gradleVersion = gradleVersion;
   }
 
-  @Parameterized.Parameters
+  @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Collection<Object[]> data() {
-    Object[][] data = {
-      {GRADLE_v1_9},
-      {GRADLE_v1_10},
-      {GRADLE_v1_11},
-      {GRADLE_v1_12},
-      {GRADLE_v2_0}
-    };
-    return Arrays.asList(data);
+    return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 
 
@@ -120,21 +110,12 @@ public abstract class AbstractModelBuilderTest {
 
     GradleConnector connector = GradleConnector.newConnector();
 
-    String releaseRepoUrl = DistributionLocator.getRepoUrl(false);
-    String snapshotRepoUrl = DistributionLocator.getRepoUrl(true);
-
-    if (releaseRepoUrl == null || snapshotRepoUrl == null) {
-      connector.useGradleVersion(gradleVersion);
-    }
-    else {
-      final URI distributionUri =
-        new DistributionLocator(releaseRepoUrl, snapshotRepoUrl).getDistributionFor(GradleVersion.version(gradleVersion));
-      connector.useDistribution(distributionUri);
-    }
+    final URI distributionUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+    connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
-    int daemonMaxIdleTime = 1;
+    int daemonMaxIdleTime = 10;
     try {
-      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "1"));
+      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "10"));
     }
     catch (NumberFormatException ignore) {}
 
@@ -223,18 +204,24 @@ public abstract class AbstractModelBuilderTest {
     FileUtil.ensureExists(ourTempDir);
   }
 
-  private static class DistributionLocator {
+  public static class DistributionLocator {
     private static final String RELEASE_REPOSITORY_ENV = "GRADLE_RELEASE_REPOSITORY";
     private static final String SNAPSHOT_REPOSITORY_ENV = "GRADLE_SNAPSHOT_REPOSITORY";
     private static final String INTELLIJ_LABS_GRADLE_RELEASE_MIRROR =
       "http://services.gradle.org-mirror.labs.intellij.net/distributions";
     private static final String INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR =
       "http://services.gradle.org-mirror.labs.intellij.net/distributions-snapshots";
+    private static final String GRADLE_RELEASE_REPO = "http://services.gradle.org/distributions";
+    private static final String GRADLE_SNAPSHOT_REPO = "http://services.gradle.org/distributions-snapshots";
 
     @NotNull private final String myReleaseRepoUrl;
     @NotNull private final String mySnapshotRepoUrl;
 
-    private DistributionLocator(@NotNull String releaseRepoUrl, @NotNull String snapshotRepoUrl) {
+    public DistributionLocator() {
+      this(DistributionLocator.getRepoUrl(false), DistributionLocator.getRepoUrl(true));
+    }
+
+    public DistributionLocator(@NotNull String releaseRepoUrl, @NotNull String snapshotRepoUrl) {
       myReleaseRepoUrl = releaseRepoUrl;
       mySnapshotRepoUrl = snapshotRepoUrl;
     }
@@ -256,12 +243,16 @@ public abstract class AbstractModelBuilderTest {
       return new URI(String.format("%s/%s-%s-%s.zip", repositoryUrl, archiveName, version.getVersion(), archiveClassifier));
     }
 
-    @Nullable
-    static String getRepoUrl(boolean isSnapshotUrl) {
-      return ObjectUtils.chooseNotNull(
-        System.getenv(isSnapshotUrl ? SNAPSHOT_REPOSITORY_ENV : RELEASE_REPOSITORY_ENV),
-        UsefulTestCase.IS_UNDER_TEAMCITY ? isSnapshotUrl ? INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR : INTELLIJ_LABS_GRADLE_RELEASE_MIRROR : null
-      );
+    @NotNull
+    public static String getRepoUrl(boolean isSnapshotUrl) {
+      final String envRepoUrl = System.getenv(isSnapshotUrl ? SNAPSHOT_REPOSITORY_ENV : RELEASE_REPOSITORY_ENV);
+      if (envRepoUrl != null) return envRepoUrl;
+
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        return isSnapshotUrl ? INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR : INTELLIJ_LABS_GRADLE_RELEASE_MIRROR;
+      }
+
+      return isSnapshotUrl ? GRADLE_SNAPSHOT_REPO : GRADLE_RELEASE_REPO;
     }
   }
 }

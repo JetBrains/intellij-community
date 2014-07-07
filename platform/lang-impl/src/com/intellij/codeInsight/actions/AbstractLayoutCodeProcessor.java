@@ -93,6 +93,7 @@ public abstract class AbstractLayoutCodeProcessor {
     myProgressText = progressText;
     myCommandName = commandName;
     myPreviousCodeProcessor = previous;
+    myFilters = previous.myFilters;
   }
 
   protected AbstractLayoutCodeProcessor(Project project,

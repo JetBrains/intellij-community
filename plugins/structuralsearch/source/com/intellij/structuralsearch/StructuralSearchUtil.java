@@ -8,6 +8,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,12 @@ public class StructuralSearchUtil {
   @Nullable
   public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
     return getProfileByLanguage(element.getLanguage());
+  }
+
+  @Contract("null -> false")
+  public static boolean isIdentifier(PsiElement element) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(element);
+    return profile != null && profile.isIdentifier(element);
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
@@ -153,5 +160,10 @@ public class StructuralSearchUtil {
       ourPredefinedConfigurations = Collections.unmodifiableList(result);
     }
     return ourPredefinedConfigurations;
+  }
+
+  public static boolean isDocCommentOwner(PsiElement match) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(match);
+    return profile != null && profile.isDocCommentOwner(match);
   }
 }

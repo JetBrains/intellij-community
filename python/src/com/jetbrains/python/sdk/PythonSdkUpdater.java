@@ -126,7 +126,7 @@ public class PythonSdkUpdater implements StartupActivity {
                     updateSdk(project, null, sdk, PythonSdkType.findSkeletonsPath(sdk));
                   }
                   catch (InvalidSdkException e) {
-                    if (PythonSdkType.isRemote(sdk)) {
+                    if (PythonSdkType.isVagrant(sdk)) {
                       PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                         @Override
                         public void run() {

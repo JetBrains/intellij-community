@@ -106,7 +106,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
               }
             }
           }
-          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, tag.getName() + ">", false);
+          EditorModificationUtil.insertStringAtCaret(editor, tag.getName() + ">", false);
           return Result.STOP;
         }
       }
@@ -133,7 +133,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return Result.CONTINUE;
       if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return Result.CONTINUE;
 
-      EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, ">", false);
+      EditorModificationUtil.insertStringAtCaret(editor, ">", false);
       return Result.STOP;
     }
     return Result.CONTINUE;

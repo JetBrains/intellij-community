@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +28,12 @@ public final class CompletionParameters {
   private final PsiElement myPosition;
   private final PsiFile myOriginalFile;
   private final CompletionType myCompletionType;
-  private final Lookup myLookup;
+  private final Editor myEditor;
   private final int myOffset;
   private final int myInvocationCount;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                                 final CompletionType completionType, int offset, final int invocationCount, Lookup lookup) {
+                                 final CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
     assert offset >= position.getTextRange().getStartOffset();
     myPosition = position;
     assert position.isValid();
@@ -42,7 +41,7 @@ public final class CompletionParameters {
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
-    myLookup = lookup;
+    myEditor = editor;
   }
 
   public CompletionParameters delegateToClassName() {
@@ -50,21 +49,16 @@ public final class CompletionParameters {
   }
 
   public CompletionParameters withType(CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myLookup);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor);
   }
 
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myLookup);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor);
   }
 
   @NotNull
   public PsiElement getPosition() {
     return myPosition;
-  }
-
-  @NotNull
-  public Lookup getLookup() {
-    return myLookup;
   }
 
   @Nullable
@@ -101,7 +95,7 @@ public final class CompletionParameters {
   }
 
   public CompletionParameters withPosition(PsiElement element, int offset) {
-    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myLookup);
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor);
   }
 
   public boolean isExtendedCompletion() {
@@ -109,6 +103,6 @@ public final class CompletionParameters {
   }
 
   public Editor getEditor() {
-    return myLookup.getEditor();
+    return myEditor;
   }
 }

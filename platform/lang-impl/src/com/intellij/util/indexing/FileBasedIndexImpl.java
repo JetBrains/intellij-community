@@ -668,6 +668,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           index.dispose();
         }
 
+        ContentHashesSupport.flushContentHashes();
         myConnection.disconnect();
       }
       catch (Throwable e) {
@@ -701,6 +702,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
       mySerializationManagerEx.flushNameStorage();
     }
+    ContentHashesSupport.flushContentHashes();
   }
 
   @Override
@@ -963,9 +965,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (restrictToFile != null) {
             if (restrictToFile instanceof VirtualFileWithId) {
               final int restrictedFileId = getFileId(restrictToFile);
-              for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+              for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
                 final V value = valueIt.next();
-                if (container.getValueAssociationPredicate(value).contains(restrictedFileId)) {
+                if (valueIt.getValueAssociationPredicate().contains(restrictedFileId)) {
                   shouldContinue = processor.process(restrictToFile, value);
                   if (!shouldContinue) {
                     break;
@@ -978,9 +980,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
             final IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
             VALUES_LOOP:
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+            for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
               final V value = valueIt.next();
-              for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
+              for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
                 final int id = inputIdsIterator.next();
                 if (filter != null && !filter.containsFileId(id)) continue;
                 VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
@@ -1237,7 +1239,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       cleanupProcessedFlag();
 
       advanceIndexVersion(indexId);
-      
+
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {

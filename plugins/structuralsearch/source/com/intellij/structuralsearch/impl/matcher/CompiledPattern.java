@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
  * Class to hold compiled pattern information
  */
 public abstract class CompiledPattern {
+  public static final String ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME = "__class_unmatched__";
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;
@@ -167,5 +169,14 @@ public abstract class CompiledPattern {
     for (final MatchingHandler h : handlers.values()) {
       if (h != null) h.reset();
     }
+  }
+
+  public boolean isToResetHandler(PsiElement element) {
+    return true;
+  }
+
+  @Nullable
+  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
+    return null;
   }
 }

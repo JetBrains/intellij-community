@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 
 import java.io.File;
 import java.io.IOException;

@@ -1033,14 +1033,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 super.completionFinished(offset1, offset2, indicator, items, hasModifiers);
               }
             };
-            final Editor editor = getCompletionEditor();
-            assert editor != null: "Editor is null";
-            editor.getCaretModel().runForEachCaret(new CaretAction() {
-              @Override
-              public void perform(final Caret caret) {
-                handler.invokeCompletion(getProject(), editor, invocationCount);
-              }
-            });
+            Editor editor = getCompletionEditor();
+            handler.invokeCompletion(getProject(), editor, invocationCount);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);
@@ -1059,6 +1053,28 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public LookupElement[] completeBasic() {
     return complete(CompletionType.BASIC);
+  }
+
+
+  @Override
+  public void completeBasicAllCarets() {
+    final CaretModel caretModel = myEditor.getCaretModel();
+    final List<Caret> carets = caretModel.getAllCarets();
+
+    final Collection<Integer> originalOffsets = new ArrayList<Integer>(carets.size());
+
+    for (final Caret caret : carets) {
+      originalOffsets.add(caret.getOffset());
+    }
+    caretModel.removeSecondaryCarets();
+
+    int newOffset = 0; // To be incremented each time we complete something
+    for (final int originalOffset : originalOffsets) {
+      final int realOffsetBeforeCompletion = originalOffset + newOffset;
+      caretModel.moveToOffset(realOffsetBeforeCompletion);
+      completeBasic();
+      newOffset += (getCaretOffset() - realOffsetBeforeCompletion);
+    }
   }
 
   @Override

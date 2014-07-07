@@ -18,29 +18,53 @@ package com.jetbrains.python.sdk.flavors;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author traff
  */
 public class PyPySdkFlavor extends PythonSdkFlavor {
+  public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
+
+  private static final Pattern VERSION_RE = Pattern.compile("\\[(PyPy \\S+).*\\]");
+  private static final Pattern PYTHON_VERSION_RE = Pattern.compile("(Python \\S+).*");
+  private static final Pattern VERSION_STRING_RE = Pattern.compile("PyPy (\\S+)( \\[Python (\\S+)\\])?");
+
   private PyPySdkFlavor() {
   }
-
-  public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
 
   public boolean isValidSdkPath(@NotNull File file) {
     return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("pypy");
   }
 
-  public String getVersionRegexp() {
-    return "\\[(PyPy \\S+).*\\]";
+  @Nullable
+  @Override
+  public String getVersionStringFromOutput(@NotNull String output) {
+    final List<String> lines = Arrays.asList(StringUtil.splitByLines(output));
+    final String version = PatternUtil.getFirstMatch(lines, VERSION_RE);
+    final String pythonVersion = PatternUtil.getFirstMatch(lines, PYTHON_VERSION_RE);
+    if (version != null) {
+      final StringBuilder builder = new StringBuilder();
+      builder.append(version);
+      if (pythonVersion != null) {
+        builder.append(" [");
+        builder.append(pythonVersion);
+        builder.append("]");
+      }
+      return builder.toString();
+    }
+    return null;
   }
 
   public String getVersionOption() {
@@ -55,11 +79,19 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
 
   @Override
   public LanguageLevel getLanguageLevel(Sdk sdk) {
-    final String version = sdk.getVersionString();
-    final String prefix = getName() + " ";
-    if (version != null && version.startsWith(prefix)) {
-      String pypyVersion = version.substring(prefix.length());
-      return LanguageLevel.fromPythonVersion(getPythonVersion(pypyVersion));
+    final String versionString = sdk.getVersionString();
+    if (versionString != null) {
+      final Matcher matcher = VERSION_STRING_RE.matcher(versionString);
+      if (matcher.matches()) {
+        final String version = matcher.group(1);
+        final String pythonVersion = matcher.group(3);
+        if (pythonVersion != null) {
+          return LanguageLevel.fromPythonVersion(pythonVersion);
+        }
+        else if (version != null) {
+          return LanguageLevel.fromPythonVersion(getPythonVersion(version));
+        }
+      }
     }
     return LanguageLevel.getDefault();
   }

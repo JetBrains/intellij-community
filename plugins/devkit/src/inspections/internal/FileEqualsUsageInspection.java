@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class FileEqualsUsageInspection extends InternalInspection {
-  private static final String MESSAGE =
+  static final String MESSAGE =
     "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. " +
     "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";
 

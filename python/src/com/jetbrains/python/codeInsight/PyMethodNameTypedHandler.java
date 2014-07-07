@@ -82,7 +82,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                 if (caretOffset == chars.length() || chars.charAt(caretOffset) != ':') {
                   textToType += ':';
                 }
-                EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, textToType, true, 1 + pname.length()); // right after param name
+                EditorModificationUtil.insertStringAtCaret(editor, textToType, true, 1 + pname.length()); // right after param name
                 return Result.STOP;
               }
             }

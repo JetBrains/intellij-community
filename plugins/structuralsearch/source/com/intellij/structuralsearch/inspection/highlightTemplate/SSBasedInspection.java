@@ -18,6 +18,9 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -28,12 +31,13 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
@@ -46,9 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -56,12 +58,14 @@ import java.util.List;
 public class SSBasedInspection extends LocalInspectionTool {
   static final String SHORT_NAME = "SSBasedInspection";
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
+  private Set<String> myProblemsReported = new HashSet<String>(1);
 
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
   }
 
   public void readSettings(@NotNull Element node) throws InvalidDataException {
+    myProblemsReported.clear();
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
   }
@@ -113,9 +117,19 @@ public class SSBasedInspection extends LocalInspectionTool {
           Configuration configuration = pair.second;
           MatchContext context = pair.first;
 
-          if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
+          if (MatcherImpl.checkIfShouldAttemptToMatch(context, matchedNodes)) {
             final int nodeCount = context.getPattern().getNodeCount();
-            matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
+            try {
+              matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
+            }
+            catch (StructuralSearchException e) {
+              if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
+                Notifications.Bus.notify(new Notification(SSRBundle.message("structural.search.title"),
+                                                          SSRBundle.message("template.problem", configuration.getName()),
+                                                          e.getMessage(),
+                                                          NotificationType.ERROR), element.getProject());
+              }
+            }
             matchedNodes.reset();
           }
         }

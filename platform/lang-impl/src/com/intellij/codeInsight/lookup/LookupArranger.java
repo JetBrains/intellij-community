@@ -118,7 +118,7 @@ public abstract class LookupArranger {
 
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
-        if (CompletionServiceImpl.isStartMatch(item, lookup)) {
+        if (CompletionServiceImpl.isStartMatch(item, (LookupImpl)lookup)) {
           result.add(item);
         }
       }

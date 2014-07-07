@@ -502,19 +502,23 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (getProperties() == null) {
       return false;
     }
-    return getProperties().COUNT_FILTER_ENABLED;
+    return getProperties().isCOUNT_FILTER_ENABLED();
   }
   public void setCountFilterEnabled(boolean enabled) {
-    getProperties().COUNT_FILTER_ENABLED = enabled;
+    if (getProperties().setCOUNT_FILTER_ENABLED(enabled)) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
   public int getCountFilter() {
-    return getProperties().COUNT_FILTER;
+    return getProperties().getCOUNT_FILTER();
   }
 
   public void setCountFilter(int filter) {
-    getProperties().COUNT_FILTER = filter;
+    if (getProperties().setCOUNT_FILTER(filter)) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
@@ -522,11 +526,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (getProperties() == null) {
       return false;
     }
-    return getProperties().CLASS_FILTERS_ENABLED;
+    return getProperties().isCLASS_FILTERS_ENABLED();
   }
 
   public void setClassFiltersEnabled(boolean enabled) {
-    getProperties().CLASS_FILTERS_ENABLED = enabled;
+    if (getProperties().setCLASS_FILTERS_ENABLED(enabled)) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
@@ -535,7 +541,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public void setClassFilters(ClassFilter[] filters) {
-    getProperties().setClassFilters(filters);
+    if (getProperties().setClassFilters(filters)) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
@@ -544,7 +552,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected void setClassExclusionFilters(ClassFilter[] filters) {
-    getProperties().setClassExclusionFilters(filters);
+    if (getProperties().setClassExclusionFilters(filters)) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
@@ -552,11 +562,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     if (getProperties() == null) {
       return false;
     }
-    return getProperties().INSTANCE_FILTERS_ENABLED;
+    return getProperties().isINSTANCE_FILTERS_ENABLED();
   }
 
   public void setInstanceFiltersEnabled(boolean enabled) {
-    getProperties().INSTANCE_FILTERS_ENABLED = enabled;
+    if (getProperties().setINSTANCE_FILTERS_ENABLED(enabled)) {
+      fireBreakpointChanged();
+    }
   }
 
   @Override
@@ -565,7 +577,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public void setInstanceFilters(InstanceFilter[] filters) {
-    getProperties().setInstanceFilters(filters);
+    if (getProperties().setInstanceFilters(filters)) {
+      fireBreakpointChanged();
+    }
   }
 
   private static String getSuspendPolicy(XBreakpoint breakpoint) {
@@ -621,5 +635,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected void addInstanceFilter(long l) {
     getProperties().addInstanceFilter(l);
+  }
+
+  protected void fireBreakpointChanged() {
+    ((XBreakpointBase)myXBreakpoint).fireBreakpointChanged();
   }
 }

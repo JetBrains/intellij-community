@@ -1796,13 +1796,13 @@ public class HighlightUtil extends HighlightUtilBase {
    */
   @Nullable
   public static HighlightInfo checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
-    final PsiField initField = isIllegalForwardReferenceToField(expression, referencedField, false);
-    if (initField == null) return null;
-    String description = initField == referencedField ? JavaErrorMessages.message("illegal.self.reference") : JavaErrorMessages.message("illegal.forward.reference");
+    final Boolean isIllegalForwardReference = isIllegalForwardReferenceToField(expression, referencedField, false);
+    if (isIllegalForwardReference == null) return null;
+    String description = isIllegalForwardReference ? JavaErrorMessages.message("illegal.forward.reference") : JavaErrorMessages.message("illegal.self.reference");
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
   }
 
-  public static PsiField isIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField, boolean acceptQualified) {
+  public static Boolean isIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField, boolean acceptQualified) {
     PsiClass containingClass = referencedField.getContainingClass();
     if (containingClass == null) return null;
     if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
@@ -1821,7 +1821,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.getParentOfType(expression, PsiClass.class))) {
       return null;
     }
-    return initField;
+    return initField != referencedField;
   }
 
   /**

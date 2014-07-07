@@ -465,14 +465,10 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       final Configurable[] kids = eachGroup.getConfigurables();
       if (kids.length > 0) {
         for (Configurable eachKid : kids) {
-          if (isInvisibleNode(eachKid)) {
-            result.addAll(OptionsTree.this.buildChildren(eachKid, this, eachGroup));
-          }
-          else {
+          if (!isInvisibleNode(eachKid)) {
             result.add(new EditorNode(this, eachKid, eachGroup));
           }
         }
-
       }
       return sort(result);
     }
@@ -502,9 +498,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
       final List<EditorNode> result = new ArrayList<EditorNode>(kids.length);
       for (Configurable child : kids) {
-        if (isInvisibleNode(child)) {
-          result.addAll(buildChildren(child, parent, group));
-        }
         result.add(new EditorNode(parent, child, group));
         myContext.registerKid(configurable, child);
       }

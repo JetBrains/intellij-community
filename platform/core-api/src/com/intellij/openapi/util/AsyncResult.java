@@ -33,6 +33,15 @@ public class AsyncResult<T> extends ActionCallback {
 
   protected T myResult;
 
+  public AsyncResult() {
+  }
+
+  AsyncResult(int countToDone, @Nullable T result) {
+    super(countToDone);
+
+    myResult = result;
+  }
+
   @NotNull
   public AsyncResult<T> setDone(T result) {
     myResult = result;

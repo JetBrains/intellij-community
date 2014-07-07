@@ -26,7 +26,7 @@ public class MatchUtils {
       return ((PsiReference)element).resolve();
     }
 
-    if (element instanceof PsiTypeElement) {
+    /*if (element instanceof PsiTypeElement) {
       PsiType type = ((PsiTypeElement)element).getType();
 
       if (type instanceof PsiArrayType) {
@@ -36,7 +36,7 @@ public class MatchUtils {
         return ((PsiClassType)type).resolve();
       }
       return null;
-    }
+    }*/
     return element;
   }
 }

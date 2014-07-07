@@ -1466,7 +1466,7 @@ public abstract class ChooseByNameBase {
     return false;
   }
 
-  private static final String EXTRA_ELEM = "...";
+  public static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
   public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
@@ -1559,13 +1559,13 @@ public abstract class ChooseByNameBase {
           final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
           showCard(cardToShow, 0);
 
-          final Set<Object> filtered = filter(elements);
-
+          final boolean edt = myModel instanceof EdtSortingModel;
+          final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               if (!myCancelled.isCanceled()) {
-                myCallback.consume(filtered);
+                myCallback.consume(edt ? filter(elements) : filtered);
               }
             }
           }, myModalityState);

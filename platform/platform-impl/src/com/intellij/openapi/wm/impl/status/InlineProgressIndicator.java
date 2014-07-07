@@ -45,7 +45,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   private final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
 
-  private MyProgressBar myProgress;
+  private JProgressBar myProgress;
 
   private JPanel myComponent;
 
@@ -78,7 +78,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myCancelButton.setToolTipText(processInfo.getCancelTooltipText());
     myCancelButton.setFillBg(false);
 
-    myProgress = new MyProgressBar(JProgressBar.HORIZONTAL, compact);
+    myProgress = new JProgressBar(SwingConstants.HORIZONTAL);
+    myProgress.putClientProperty("JComponent.sizeVariant", "mini");
 
     myComponent = new MyComponent(compact, myProcessName);
     if (myCompact) {
@@ -101,7 +102,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(myCancelButton, BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
-      myProgress.setActive(false);
     } else {
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
@@ -127,7 +127,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText2.setDecorate(false);
 
       myComponent.setBorder(new EmptyBorder(2, 2, 2, 2));
-      myProgress.setActive(false);
     }
 
     if (!myCompact) {
@@ -164,21 +163,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
 
     final long delta = System.currentTimeMillis() - myLastTimeProgressWasAtZero;
-    boolean forcedIndeterminite = false;
 
-    boolean indeterminate = isIndeterminate();
-    if (!indeterminate && getFraction() == 0) {
-      if (delta > 2000 && !myCompact) {
-          indeterminate = true;
-          forcedIndeterminite = true;
-        } else {
-          forcedIndeterminite = false;
-        }
-    }
-
-    final boolean visible = getFraction() > 0 || (indeterminate || forcedIndeterminite);
-    updateVisibility(myProgress, visible);
-    if (indeterminate || forcedIndeterminite) {
+    boolean indeterminate = isIndeterminate() || getFraction() == 0 && delta > 2000 && !myCompact;
+    if (indeterminate) {
       myProgress.setIndeterminate(true);
     }
     else {
@@ -240,24 +227,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     update.run();
   }
 
-
-  private void updateVisibility(MyProgressBar bar, boolean holdsValue) {
-    if (holdsValue && !bar.isActive()) {
-      bar.setActive(true);
-      bar.revalidate();
-      bar.repaint();
-      myComponent.revalidate();
-      myComponent.repaint();
-    }
-    else if (!holdsValue && bar.isActive()) {
-      bar.setActive(false);
-      bar.revalidate();
-      bar.repaint();
-      myComponent.revalidate();
-      myComponent.repaint();
-    }
-  }
-
   protected void onProgressChange() {
     updateProgress();
   }
@@ -276,45 +245,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   public TaskInfo getInfo() {
     return myInfo;
-  }
-
-  private static class MyProgressBar extends JProgressBar {
-    private boolean myActive = true;
-    private final boolean myCompact;
-
-    public MyProgressBar(final int orient, boolean compact) {
-      super(orient);
-      myCompact = compact;
-      putClientProperty("JComponent.sizeVariant", "mini");
-    }
-
-
-    public void paint(final Graphics g) {
-      if (!myActive) return;
-      super.paint(g);
-    }
-
-    @Override
-    public void setIndeterminate(boolean newValue) {
-      super.setIndeterminate(newValue);
-      if (myCompact) {
-        setVisible(!newValue);
-      }
-    }
-
-    public boolean isActive() {
-      return myActive;
-    }
-
-
-    public Dimension getPreferredSize() {
-      if (!myActive && myCompact) return new Dimension(0, 0);
-      return super.getPreferredSize();
-    }
-
-    public void setActive(final boolean active) {
-      myActive = active;
-    }
   }
 
   private class MyComponent extends JPanel {

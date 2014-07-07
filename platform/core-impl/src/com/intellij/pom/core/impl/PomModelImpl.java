@@ -212,7 +212,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final ListIterator<Pair<PomModelAspect, PomTransaction>> blocksIterator = myBlockedAspects.listIterator(myBlockedAspects.size());
       while (blocksIterator.hasPrevious()) {
         final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
-        if (pomModelAspect == pair.getFirst() && // aspect dependance
+        if (pomModelAspect == pair.getFirst() && // aspect dependence
             PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) &&
             // target scope contain current
             getContainingFileByTree(pair.getSecond().getChangeScope()) != null  // target scope physical
@@ -234,7 +234,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final int oldLength = containingFileByTree.getTextLength();
       boolean success = synchronizer.commitTransaction(document);
       if (success) {
-        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), (PsiFileImpl)containingFileByTree, oldLength, true);
+        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
       }
     }
     if (containingFileByTree != null) {

@@ -18,7 +18,10 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -27,6 +30,10 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * @author Eugene.Kudelevsky
@@ -125,7 +132,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  protected PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
+  public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
     return null;
   }
 
@@ -183,6 +190,10 @@ public abstract class StructuralSearchProfile {
     }
     return element.getText();
   }
+  
+  public String getMeaningfulText(PsiElement element) {
+    return getTypedVarString(element);
+  }
 
   public PsiElement updateCurrentNode(PsiElement node) {
     return node;
@@ -202,5 +213,69 @@ public abstract class StructuralSearchProfile {
 
   Configuration[] getPredefinedTemplates() {
     return Configuration.EMPTY_ARRAY;
+  }
+
+  public void provideAdditionalReplaceOptions(@NotNull PsiElement node, ReplaceOptions options, ReplacementBuilder builder) {}
+
+  public int handleSubstitution(final ParameterInfo info,
+                                MatchResult match,
+                                StringBuilder result,
+                                int offset,
+                                HashMap<String, MatchResult> matchMap) {
+    return defaultHandleSubstitution(info, match, result, offset);
+  }
+
+  public static int defaultHandleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, int offset) {
+    if (info.getName().equals(match.getName())) {
+      String replacementString = match.getMatchImage();
+      boolean forceAddingNewLine = false;
+      if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
+        // compound matches
+        StringBuilder buf = new StringBuilder();
+
+        for (final MatchResult matchResult : match.getAllSons()) {
+          final PsiElement currentElement = matchResult.getMatch();
+          
+          if (buf.length() > 0) {
+            if (info.isParameterContext()) {
+              buf.append(',');
+            } else {
+              buf.append(' ');
+            }
+          }
+
+          buf.append(matchResult.getMatchImage());
+          forceAddingNewLine = currentElement instanceof PsiComment;
+        }
+        replacementString = buf.toString();
+      } else {
+        if (info.isStatementContext()) {
+          forceAddingNewLine = match.getMatch() instanceof PsiComment;
+        }
+      }
+
+      offset = Replacer.insertSubstitution(result, offset, info, replacementString);
+      if (forceAddingNewLine && info.isStatementContext()) {
+        result.insert(info.getStartIndex() + offset + 1, '\n');
+        offset ++;
+      }
+    }
+    return offset;
+  }
+
+  public int processAdditionalOptions(ParameterInfo info, int offset, StringBuilder result, MatchResult r) {
+    return offset;
+  }
+
+  public boolean isIdentifier(PsiElement element) {
+    return false;
+  }
+
+  public Collection<String> getReservedWords() {
+    return Collections.emptySet();
+  }
+
+  public boolean isDocCommentOwner(PsiElement match) {
+    return false;
   }
 }

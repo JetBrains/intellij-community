@@ -9,8 +9,9 @@ import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.util.containers.hash.LinkedHashMap;
 
 import javax.swing.*;
 import java.awt.*;
@@ -158,7 +159,7 @@ public class ReplaceDialog extends SearchDialog {
   protected java.util.List<Variable> getVariablesFromListeners() {
     ArrayList<Variable> vars = getVarsFrom(replaceCriteriaEdit);
     List<Variable> searchVars = super.getVariablesFromListeners();
-    Map<String, Variable> varsMap = new com.intellij.util.containers.hash.LinkedHashMap<String, Variable>(searchVars.size());
+    Map<String, Variable> varsMap = new LinkedHashMap<String, Variable>(searchVars.size());
 
     for(Variable var:searchVars) varsMap.put(var.getName(), var);
     for(Variable var:vars) {

@@ -60,6 +60,8 @@ import org.jetbrains.annotations.NotNull
  * @author peter
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
+  private static final int ourTimeout = 60000
+
   @Override
   protected void setUp() {
     edt {
@@ -107,7 +109,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     finally {
       def handler = debugProcess.executionResult.processHandler
       resume()
-      if (!handler.waitFor(20000)) {
+      if (!handler.waitFor(ourTimeout)) {
         if (handler instanceof OSProcessHandler) {
           OSProcessManager.instance.killProcessTree(handler.process)
         } else {
@@ -421,7 +423,7 @@ public static void main(String[] args) {
         semaphore.up();
       }
     });
-    def finished = semaphore.waitFor(10000);
+    def finished = semaphore.waitFor(ourTimeout);
     assert finished : 'Too long debugger actions'
 
     int i = 0
@@ -464,7 +466,7 @@ public static void main(String[] args) {
         println DebugUtil.currentStackTrace()
       }
     })
-    def finished = semaphore.waitFor(20000)
+    def finished = semaphore.waitFor(ourTimeout)
     assert finished : 'Too long debugger action'
     return result
   }
@@ -481,7 +483,7 @@ public static void main(String[] args) {
       item.updateRepresentation(ctx, { } as DescriptorLabelListener)
       semaphore.up()
     }
-    assert semaphore.waitFor(10000):  "too long evaluation: $item.label $item.evaluateException"
+    assert semaphore.waitFor(ourTimeout):  "too long evaluation: $item.label $item.evaluateException"
 
     String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
     assert result == expected

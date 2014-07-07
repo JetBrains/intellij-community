@@ -56,9 +56,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.RemoteSdkCredentials;
-import com.intellij.remote.RemoteSdkCredentialsHolder;
-import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -71,6 +69,7 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -143,12 +142,9 @@ public class PythonSdkType extends SdkType {
    */
   @NotNull
   @NonNls
-  public static String getBuiltinsFileName(Sdk sdk) {
-    final String version = sdk.getVersionString();
-    if (version != null && version.startsWith("Python 3")) {
-      return PyBuiltinCache.BUILTIN_FILE_3K;
-    }
-    return PyBuiltinCache.BUILTIN_FILE;
+  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
+    final LanguageLevel level = getLanguageLevelForSdk(sdk);
+    return level.isOlderThan(LanguageLevel.PYTHON30) ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
   }
 
   @NonNls
@@ -239,6 +235,15 @@ public class PythonSdkType extends SdkType {
 
   public static boolean isRemote(@Nullable Sdk sdk) {
     return PySdkUtil.isRemote(sdk);
+  }
+
+  public static boolean isVagrant(@Nullable Sdk sdk) {
+    if (sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase) sdk.getSdkAdditionalData();
+
+      return data.getRemoteConnectionType() == CredentialsType.VAGRANT;
+    }
+    return false;
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {
@@ -558,7 +563,7 @@ public class PythonSdkType extends SdkType {
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
-                if (isRemote(sdk)) {
+                if (isVagrant(sdk)) {
                   notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                     @Override
                     public void run() {

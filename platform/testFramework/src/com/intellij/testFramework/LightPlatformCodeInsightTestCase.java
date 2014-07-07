@@ -29,9 +29,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -42,6 +40,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -65,7 +64,6 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -213,10 +211,21 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   private static void setupEditorForInjectedLanguage() {
-    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
-    if (editor instanceof EditorWindow) {
-      myFile = ((EditorWindow)editor).getInjectedFile();
-      myEditor = editor;
+    if (myEditor != null) {
+      final Ref<EditorWindow> editorWindowRef = new Ref<EditorWindow>();
+      myEditor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+          if (caret == myEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
+            editorWindowRef.set((EditorWindow)editor);
+          }
+        }
+      });
+      if (!editorWindowRef.isNull()) {
+        myEditor = editorWindowRef.get();
+        myFile = editorWindowRef.get().getInjectedFile();
+      }
     }
   }
 
@@ -410,7 +419,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
     }
     else {
-      actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
+      // typed action is always executed in host editor context
+      actionManager.getTypedAction().actionPerformed(InjectedLanguageUtil.getTopLevelEditor(getEditor()), c, dataContext);
     }
   }
 

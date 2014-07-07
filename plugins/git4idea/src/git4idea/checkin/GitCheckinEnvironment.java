@@ -20,6 +20,8 @@ import com.intellij.dvcs.DvcsCommitAdditionalComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
@@ -27,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
@@ -35,15 +36,15 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
+import com.intellij.ui.StringComboboxEditor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
@@ -54,7 +55,6 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepositoryFiles;
@@ -71,9 +71,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-/**
- * Git environment for commit operations.
- */
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger log = Logger.getInstance(GitCheckinEnvironment.class.getName());
   @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
@@ -207,7 +204,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }
         }
         catch (VcsException e) {
-          exceptions.add(e);
+          exceptions.add(cleanupExceptionText(e));
         }
       }
       catch (IOException ex) {
@@ -226,8 +223,23 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
+  @NotNull
+  private static VcsException cleanupExceptionText(VcsException original) {
+    String msg = original.getMessage();
+    final String FATAL_PREFIX = "fatal:";
+    if (msg.startsWith(FATAL_PREFIX)) {
+      msg = msg.substring(FATAL_PREFIX.length());
+    }
+    final String DURING_EXECUTING_SUFFIX = GitSimpleHandler.DURING_EXECUTING_ERROR_MESSAGE;
+    int suffix = msg.indexOf(DURING_EXECUTING_SUFFIX);
+    if (suffix > 0) {
+      msg = msg.substring(0, suffix);
+    }
+    return new VcsException(msg.trim(), original.getCause());
+  }
+
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   /**
@@ -424,9 +436,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return file;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
@@ -450,21 +459,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return rc;
   }
 
-  /**
-   * Prepare delete files handler.
-   *
-   *
-   *
-   * @param project              the project
-   * @param root                 a vcs root
-   * @param files                a files to commit
-   * @param message              a message file to use
-   * @param nextCommitAuthor     a author for the next commit
-   * @param nextCommitAmend      true, if the commit should be amended
-   * @param nextCommitAuthorDate Author date timestamp to override the date of the commit or null if this overriding is not needed.
-   * @return a simple handler that does the task
-   * @throws VcsException in case of git problem
-   */
   private static void commit(Project project,
                              VirtualFile root,
                              Collection<FilePath> files,
@@ -499,10 +493,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-
-  /**
-   * {@inheritDoc}
-   */
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<VcsException>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
@@ -542,13 +532,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  /**
-   * Sort changes by roots
-   *
-   * @param changes    a change list
-   * @param exceptions exceptions to collect
-   * @return sorted changes
-   */
   private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<Change> changes, List<VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
     for (Change change : changes) {
@@ -579,11 +562,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return result;
   }
 
-  /**
-   * Mark root as dirty
-   *
-   * @param root a vcs root to rescan
-   */
   private void markRootDirty(final VirtualFile root) {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
@@ -597,14 +575,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAuthorDate = null;
   }
 
-  /**
-   * Checkin options for git
-   */
   private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
     private final GitVcs myVcs;
-    /**
-     * The author ComboBox, the combobox contains previously selected authors.
-     */
     private final ComboBox myAuthor;
 
     private Date myAuthorDate;
@@ -630,17 +602,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       final List<String> usersList = getUsersList(project);
-      final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
+      final Set<String> authors = new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
       Collections.sort(list);
-      list = ObjectsConvertor.convert(list, new Convertor<String, String>() {
+
+      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list)) {
         @Override
-        public String convert(String o) {
-          return StringUtil.shortenTextWithEllipsis(o, 30, 0);
+        public void addNotify() {
+          super.addNotify();
+
+          // adding in addNotify to make sure the editor is ready for further customization
+          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthor, true);
+          myAuthor.setEditor(comboboxEditor);
+          EditorEx editor = (EditorEx)comboboxEditor.getEditor();
+          assert editor != null;
+          SpellCheckingEditorCustomization.getInstance(false).customize(editor);
         }
-      });
-      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list));
+      };
+      myAuthor.setMinimumAndPreferredWidth(100);
+
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
@@ -673,8 +654,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return h.run();
     }
 
-    private List<String> getUsersList(final Project project) {
-      return NewGitUsersComponent.getInstance(project).get();
+    @NotNull
+    private List<String> getUsersList(@NotNull Project project) {
+      VcsUserRegistry userRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
+      return ContainerUtil.map(userRegistry.getUsers(), new Function<VcsUser, String>() {
+        @Override
+        public String fun(VcsUser user) {
+          return user.getName() + " <" + user.getEmail() + ">";
+        }
+      });
     }
 
     @Override
@@ -687,13 +675,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
-      myNextCommitAuthor = author.length() == 0 ? null : author;
-      if (author.length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(author)) {
         myNextCommitAuthor = null;
       }
       else {
-        myNextCommitAuthor = author;
-        mySettings.saveCommitAuthor(author);
+        myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
+        mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
       myNextCommitAmend = myAmend.isSelected();
       myNextCommitAuthorDate = myAuthorDate;
@@ -715,6 +702,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
   }
+
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
     myNextCommitIsPushed = nextCommitIsPushed;

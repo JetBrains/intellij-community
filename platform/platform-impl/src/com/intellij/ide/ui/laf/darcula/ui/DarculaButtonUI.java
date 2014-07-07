@@ -98,6 +98,23 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   @Override
+  protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
+    Border border = c.getBorder();
+    if (border != null && isSquare(c)) {
+      int xOff = 1;
+      Insets ins = border.getBorderInsets(c);
+      int yOff = (ins.top + ins.bottom) / 4;
+      Rectangle iconRect2 = new Rectangle(iconRect);
+      iconRect2.x += xOff;
+      iconRect2.y += yOff;
+      super.paintIcon(g, c, iconRect2);
+    }
+    else {
+      super.paintIcon(g, c, iconRect);
+    }
+  }
+
+  @Override
   public void update(Graphics g, JComponent c) {
     super.update(g, c);
     if (c instanceof JButton && ((JButton)c).isDefaultButton() && !SystemInfo.isMac) {

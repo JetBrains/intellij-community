@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyMagicLiteralRenameHandler implements RenameHandler {
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(final DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return false;
@@ -47,11 +47,7 @@ public class PyMagicLiteralRenameHandler implements RenameHandler {
 
     final PsiElement element = getElement(file, editor);
 
-    if (element == null || !PyMagicLiteralTools.isMagicLiteral(element)) {
-      return false;
-    }
-
-    return true;
+    return !((element == null) || !PyMagicLiteralTools.isMagicLiteral(element));
   }
 
   @Nullable

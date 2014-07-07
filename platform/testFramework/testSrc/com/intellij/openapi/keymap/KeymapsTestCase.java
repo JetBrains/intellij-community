@@ -200,7 +200,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control F1",               "ExternalJavaDoc", "ShowErrorDescription"},
-    { "control F10",              "RunToCursor", "javaee.UpdateRunningApplication"},
+    { "control F10",              "RunToCursor", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
     { "control F5",               "Rerun", "Run"},
     { "control N",                "FileChooser.NewFolder", "Generate", },
     { "control P",                "FileChooser.TogglePathShowing", "Print"},

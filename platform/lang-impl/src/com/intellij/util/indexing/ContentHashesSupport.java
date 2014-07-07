@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.io.IOUtil;
@@ -44,7 +45,13 @@ class ContentHashesSupport {
         FlushingDaemon.everyFiveSeconds(new Runnable() {
           @Override
           public void run() {
-            if (ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
+            flushContentHashes();
+          }
+        });
+        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+          @Override
+          public void run() {
+            flushContentHashes();
           }
         });
         ourHashesWithFileType = hashEnumerator;
@@ -53,6 +60,10 @@ class ContentHashesSupport {
         throw ex;
       }
     }
+  }
+
+  static void flushContentHashes() {
+    if (ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
 

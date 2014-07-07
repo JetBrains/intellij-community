@@ -1,12 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceList;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -14,7 +14,6 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.containers.HashMap;
@@ -62,19 +61,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   public MatchContext getMatchContext() {
     return matchContext;
-  }
-
-  protected boolean matchInAnyOrder(final PsiReferenceList elements, final PsiReferenceList elements2) {
-    if ((elements == null && isLeftLooseMatching()) ||
-        elements == elements2 // null
-      ) {
-      return true;
-    }
-
-    return matchInAnyOrder(
-      elements.getReferenceElements(),
-      (elements2 != null) ? elements2.getReferenceElements() : PsiElement.EMPTY_ARRAY
-    );
   }
 
   @Override

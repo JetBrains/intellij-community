@@ -28,6 +28,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -138,7 +139,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   public boolean isVisibleOnPopup(@NotNull B breakpoint) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
-      return properties.COUNT_FILTER_ENABLED || properties.CLASS_FILTERS_ENABLED || properties.INSTANCE_FILTERS_ENABLED;
+      return properties.isCOUNT_FILTER_ENABLED() || properties.isCLASS_FILTERS_ENABLED() || properties.isINSTANCE_FILTERS_ENABLED();
     }
     return false;
   }
@@ -150,27 +151,30 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
       return;
     }
 
+    boolean changed = false;
     try {
       String text = myPassCountField.getText().trim();
-      properties.COUNT_FILTER = !text.isEmpty() ? Integer.parseInt(text) : 0;
-      if (properties.COUNT_FILTER < 0) {
-        properties.COUNT_FILTER = 0;
-      }
+      int filter = !text.isEmpty() ? Integer.parseInt(text) : 0;
+      if (filter < 0) filter = 0;
+      changed = properties.setCOUNT_FILTER(filter);
     }
     catch (Exception ignored) {
     }
 
-    properties.COUNT_FILTER_ENABLED = properties.COUNT_FILTER > 0 && myPassCountCheckbox.isSelected();
+    changed = properties.setCOUNT_FILTER_ENABLED(properties.getCOUNT_FILTER() > 0 && myPassCountCheckbox.isSelected()) || changed;
     reloadInstanceFilters();
     reloadClassFilters();
     updateInstanceFilterEditor(true);
     updateClassFilterEditor(true);
 
-    properties.INSTANCE_FILTERS_ENABLED = myInstanceFiltersField.getText().length() > 0 && myInstanceFiltersCheckBox.isSelected();
-    properties.CLASS_FILTERS_ENABLED = myClassFiltersField.getText().length() > 0 && myClassFiltersCheckBox.isSelected();
-    properties.setClassFilters(myClassFilters);
-    properties.setClassExclusionFilters(myClassExclusionFilters);
-    properties.setInstanceFilters(myInstanceFilters);
+    changed = properties.setINSTANCE_FILTERS_ENABLED(myInstanceFiltersField.getText().length() > 0 && myInstanceFiltersCheckBox.isSelected()) || changed;
+    changed = properties.setCLASS_FILTERS_ENABLED(myClassFiltersField.getText().length() > 0 && myClassFiltersCheckBox.isSelected()) || changed;
+    changed = properties.setClassFilters(myClassFilters) || changed;
+    changed = properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
+    changed = properties.setInstanceFilters(myInstanceFilters) || changed;
+    if (changed) {
+      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+    }
   }
 
   private static void insert(JPanel panel, JComponent component) {
@@ -182,24 +186,24 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   public void loadFrom(@NotNull B breakpoint) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
-      if (properties.COUNT_FILTER > 0) {
-        myPassCountField.setText(Integer.toString(properties.COUNT_FILTER));
+      if (properties.getCOUNT_FILTER() > 0) {
+        myPassCountField.setText(Integer.toString(properties.getCOUNT_FILTER()));
       }
       else {
         myPassCountField.setText("");
       }
 
-      myPassCountCheckbox.setSelected(properties.COUNT_FILTER_ENABLED);
+      myPassCountCheckbox.setSelected(properties.isCOUNT_FILTER_ENABLED());
 
-      myInstanceFiltersCheckBox.setSelected(properties.INSTANCE_FILTERS_ENABLED);
-      myInstanceFiltersField.setEnabled(properties.INSTANCE_FILTERS_ENABLED);
-      myInstanceFiltersField.getTextField().setEditable(properties.INSTANCE_FILTERS_ENABLED);
+      myInstanceFiltersCheckBox.setSelected(properties.isINSTANCE_FILTERS_ENABLED());
+      myInstanceFiltersField.setEnabled(properties.isINSTANCE_FILTERS_ENABLED());
+      myInstanceFiltersField.getTextField().setEditable(properties.isINSTANCE_FILTERS_ENABLED());
       myInstanceFilters = properties.getInstanceFilters();
       updateInstanceFilterEditor(true);
 
-      myClassFiltersCheckBox.setSelected(properties.CLASS_FILTERS_ENABLED);
-      myClassFiltersField.setEnabled(properties.CLASS_FILTERS_ENABLED);
-      myClassFiltersField.getTextField().setEditable(properties.CLASS_FILTERS_ENABLED);
+      myClassFiltersCheckBox.setSelected(properties.isCLASS_FILTERS_ENABLED());
+      myClassFiltersField.setEnabled(properties.isCLASS_FILTERS_ENABLED());
+      myClassFiltersField.getTextField().setEditable(properties.isCLASS_FILTERS_ENABLED());
       myClassFilters = properties.getClassFilters();
       myClassExclusionFilters = properties.getClassExclusionFilters();
       updateClassFilterEditor(true);

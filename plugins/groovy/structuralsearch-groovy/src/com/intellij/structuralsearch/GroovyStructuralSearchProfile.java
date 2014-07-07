@@ -47,7 +47,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   }
 
   @Override
-  protected PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
+  public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
     GroovyCodeFragment result = new GroovyCodeFragment(project, text);
     result.setContext(context);
     return result;
@@ -76,5 +76,10 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     } else {
       return PsiExpression.class;
     }
+  }
+
+  @Override
+  public boolean isIdentifier(PsiElement element) {
+    return element instanceof PsiIdentifier;
   }
 }

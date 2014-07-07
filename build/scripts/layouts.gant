@@ -538,6 +538,7 @@ public def layoutCommunityPlugins(String home) {
       dir("lib") {
         jar("structuralsearch.jar") {
           module("structuralsearch")
+          module("structuralsearch-java")
         }
       }
     }
@@ -811,7 +812,7 @@ def layout_core(String home, String target) {
     }
 
     fileset(dir: "$home/lib") {
-      include(name: "guava-14.0.1.jar")
+      include(name: "guava-17.0.jar")
       include(name: "picocontainer.jar")
       include(name: "trove4j.jar")
       include(name: "asm.jar")

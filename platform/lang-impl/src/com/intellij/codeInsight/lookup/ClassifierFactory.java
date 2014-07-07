@@ -15,10 +15,6 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.util.ProcessingContext;
-
-import java.util.*;
-
 /**
  * @author peter
  */
@@ -34,23 +30,6 @@ public abstract class ClassifierFactory<T> {
   }
 
   public abstract Classifier<T> createClassifier(Classifier<T> next);
-
-  public static <T> Classifier<T> listClassifier() {
-    return new Classifier<T>() {
-      @Override
-      public void addElement(T t) {
-      }
-
-      @Override
-      public Iterable<T> classify(Iterable<T> source, ProcessingContext context) {
-        return source;
-      }
-
-      @Override
-      public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
-      }
-    };
-  }
 
   @Override
   public boolean equals(Object o) {

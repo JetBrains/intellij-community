@@ -273,6 +273,9 @@ public class FrameVariablesTree extends DebuggerTree {
     }
     catch (UnsupportedOperationException ignored) {
     }
+    catch (InternalException e) {
+      LOG.info(e);
+    }
     return Collections.emptyList();
   }
 

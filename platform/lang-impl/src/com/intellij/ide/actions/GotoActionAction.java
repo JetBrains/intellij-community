@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.List;
 public class GotoActionAction extends GotoActionBase implements DumbAware {
   public static final Comparator<MatchResult> ELEMENTS_COMPARATOR = new Comparator<MatchResult>() {
     @Override
-    public int compare(MatchResult o1, MatchResult o2) {
+    public int compare(@NotNull MatchResult o1, @NotNull MatchResult o2) {
       if (o1.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return -1;
       if (o2.elementName.equals(GotoActionModel.INTENTIONS_KEY)) return 1;
 
@@ -106,7 +106,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     else {
       //element could be AnAction (SearchEverywhere)
-      final AnAction action = element instanceof AnAction ? ((AnAction)element) : ((GotoActionModel.ActionWrapper)element).getAction();
+      final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
       if (action != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

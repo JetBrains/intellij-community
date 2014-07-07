@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -40,11 +41,12 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     myWeigher = weigher;
   }
 
+  @Nullable
   @Override
-  public final Comparable getWeight(LookupElement t) {
-    Comparable w = myWeights.get(t);
+  public final Comparable getWeight(LookupElement element, ProcessingContext context) {
+    Comparable w = myWeights.get(element);
     if (w == null && myWeigher.isPrefixDependent()) {
-      myWeights.put(t, w = myWeigher.weigh(t));
+      myWeights.put(element, w = myWeigher.weigh(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
     }
     return w;
   }
@@ -74,8 +76,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   }
 
   @Override
-  public void addElement(LookupElement t) {
-    Comparable weight = myWeigher.weigh(t);
+  public void addElement(LookupElement t, ProcessingContext context) {
+    Comparable weight = myWeigher.weigh(t, context.get(CompletionLookupArranger.WEIGHING_CONTEXT));
     if (weight instanceof ForceableComparable) {
       ((ForceableComparable)weight).force();
     }
@@ -87,7 +89,7 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
       }
     }
     myWeights.put(t, weight);
-    super.addElement(t);
+    super.addElement(t, context);
   }
 
 }

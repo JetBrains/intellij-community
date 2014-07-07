@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.net.HttpConfigurable;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -171,7 +173,8 @@ public class DownloadUtil {
     if (progress != null) {
       progress.setText2("Downloading " + location);
     }
-    HttpURLConnection urlConnection = HttpConfigurable.getInstance().openHttpConnection(location);
+    URLConnection urlConnection = HttpConfigurable.getInstance().openConnection(location);
+    HttpURLConnection httpURLConnection = ObjectUtils.tryCast(urlConnection, HttpURLConnection.class);
     try {
       int timeout = (int) TimeUnit.MINUTES.toMillis(2);
       urlConnection.setConnectTimeout(timeout);
@@ -182,19 +185,20 @@ public class DownloadUtil {
       substituteContentLength(progress, originalText, contentLength);
       NetUtils.copyStreamContent(progress, in, output, contentLength);
     } catch (IOException e) {
-      throw new IOException(
-        "Can not download '" + location
-        + "', response code: " + urlConnection.getResponseCode()
-        + ", response message: " + urlConnection.getResponseMessage()
-        + ", headers: " + urlConnection.getHeaderFields(),
-        e
-      );
+      String errorMessage = "Can not download '" + location + ", headers: " + urlConnection.getHeaderFields();
+      if (httpURLConnection != null) {
+        errorMessage += "', response code: " + httpURLConnection.getResponseCode()
+                        + ", response message: " + httpURLConnection.getResponseMessage();
+      }
+      throw new IOException(errorMessage, e);
     }
     finally {
-      try {
-        urlConnection.disconnect();
-      } catch (Exception e) {
-        LOG.warn("Exception at disconnect()", e);
+      if (httpURLConnection != null) {
+        try {
+          httpURLConnection.disconnect();
+        } catch (Exception e) {
+          LOG.warn("Exception at disconnect()", e);
+        }
       }
     }
   }

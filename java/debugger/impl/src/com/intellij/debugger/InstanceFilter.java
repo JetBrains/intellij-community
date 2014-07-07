@@ -94,4 +94,24 @@ public class InstanceFilter implements JDOMExternalizable{
     }
     return cFilters;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    InstanceFilter filter = (InstanceFilter)o;
+
+    if (ID != filter.ID) return false;
+    if (ENABLED != filter.ENABLED) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (int)(ID ^ (ID >>> 32));
+    result = 31 * result + (ENABLED ? 1 : 0);
+    return result;
+  }
 }

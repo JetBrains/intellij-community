@@ -467,10 +467,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final String text = field.getText();
 
     if (text.length() > 0) {
-      final String s = ScriptSupport.checkValidScript(text);
+      final String message = ScriptSupport.checkValidScript(text);
 
-      if (s != null) {
-        Messages.showErrorDialog(SSRBundle.message("invalid.groovy.script"), SSRBundle.message("invalid.groovy.script"));
+      if (message != null) {
+        Messages.showErrorDialog(message, SSRBundle.message("invalid.groovy.script"));
         field.requestFocus();
         return false;
       }

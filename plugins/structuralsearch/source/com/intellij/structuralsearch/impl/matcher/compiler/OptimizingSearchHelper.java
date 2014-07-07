@@ -21,8 +21,6 @@ public interface OptimizingSearchHelper {
 
   void endTransaction();
 
-  boolean addDescendantsOf(final String refname, final boolean subtype);
-
   boolean isScannedSomething();
 
   Set<PsiFile> getFilesSetToScan();

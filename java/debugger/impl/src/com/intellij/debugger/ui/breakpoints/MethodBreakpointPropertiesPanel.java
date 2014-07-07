@@ -25,6 +25,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
@@ -100,7 +101,12 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
 
   @Override
   public void saveTo(@NotNull XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    boolean changed = breakpoint.getProperties().WATCH_ENTRY != myWatchEntryCheckBox.isSelected();
     breakpoint.getProperties().WATCH_ENTRY = myWatchEntryCheckBox.isSelected();
+    changed = breakpoint.getProperties().WATCH_EXIT != myWatchExitCheckBox.isSelected() || changed;
     breakpoint.getProperties().WATCH_EXIT = myWatchExitCheckBox.isSelected();
+    if (changed) {
+      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+    }
   }
 }

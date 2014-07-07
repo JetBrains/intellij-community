@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyBlockEvaluator;
+import com.jetbrains.python.psi.impl.blockEvaluator.PyBlockEvaluator;
 import org.junit.Assert;
 
 import java.util.ArrayList;

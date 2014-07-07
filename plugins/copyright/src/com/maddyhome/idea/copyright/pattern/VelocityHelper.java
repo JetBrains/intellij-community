@@ -20,7 +20,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
@@ -29,6 +31,8 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
 
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class VelocityHelper
 {
@@ -43,7 +47,22 @@ public class VelocityHelper
         if (module != null) vc.put("module", new ModuleInfo(module));
         vc.put("username", System.getProperty("user.name"));
 
-        try
+        if (file != null) {
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+          if (virtualFile != null) {
+            final CopyrightVariablesProvider variablesProvider = CopyrightVariablesProviders.INSTANCE.forFileType(virtualFile.getFileType());
+            if (variablesProvider != null) {
+              final Map<String, Object> context = new HashMap<String, Object>();
+              variablesProvider.collectVariables(context, project, module, file);
+              for (Map.Entry<String, Object> entry : context.entrySet()) {
+                vc.put(entry.getKey(), entry.getValue());
+              }
+            }
+          }
+        }
+
+
+      try
         {
           StringWriter sw = new StringWriter();
           boolean stripLineBreak = false;

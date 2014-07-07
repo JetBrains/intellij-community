@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.*;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
@@ -14,15 +15,13 @@ public final class ReferencePredicate extends SubstitutionHandler {
   }
 
   public boolean match(PsiElement node, PsiElement match, MatchContext context) {
-    if (match instanceof PsiIdentifier) {
+    if (StructuralSearchUtil.isIdentifier(match)) {
       // since we pickup tokens
       match = match.getParent();
     }
 
-    PsiElement result;
-
-    result = MatchUtils.getReferencedElement(match);
-    if (result==null) {
+    PsiElement result = MatchUtils.getReferencedElement(match);
+    if (result == null) {
       result = match;
       //return false;
     }

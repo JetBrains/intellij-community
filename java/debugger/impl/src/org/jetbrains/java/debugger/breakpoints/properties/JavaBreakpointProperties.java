@@ -16,6 +16,7 @@
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.InstanceFilter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -27,18 +28,14 @@ import org.jetbrains.annotations.Nullable;
  * @author egor
  */
 public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extends XBreakpointProperties<T> {
-  @OptionTag("count-filter-enabled")
-  public boolean COUNT_FILTER_ENABLED     = false;
-  @OptionTag("count-filter")
-  public int COUNT_FILTER = 0;
+  private boolean COUNT_FILTER_ENABLED     = false;
+  private int COUNT_FILTER = 0;
 
-  @OptionTag("class-filters-enabled")
-  public boolean CLASS_FILTERS_ENABLED    = false;
+  private boolean CLASS_FILTERS_ENABLED    = false;
   private ClassFilter[] myClassFilters;
   private ClassFilter[] myClassExclusionFilters;
 
-  @OptionTag("instance-filters-enabled")
-  public boolean INSTANCE_FILTERS_ENABLED = false;
+  private boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters;
 
   @Tag("instance-filters")
@@ -47,8 +44,10 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     return myInstanceFilters != null ? myInstanceFilters : InstanceFilter.EMPTY_ARRAY;
   }
 
-  public void setInstanceFilters(InstanceFilter[] instanceFilters) {
+  public boolean setInstanceFilters(InstanceFilter[] instanceFilters) {
+    boolean changed = !Comparing.equal(myInstanceFilters, instanceFilters);
     myInstanceFilters = instanceFilters;
+    return changed;
   }
 
   public void addInstanceFilter(long l) {
@@ -64,8 +63,10 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     return myClassFilters != null ? myClassFilters : ClassFilter.EMPTY_ARRAY;
   }
 
-  public final void setClassFilters(ClassFilter[] classFilters) {
+  public final boolean setClassFilters(ClassFilter[] classFilters) {
+    boolean changed = !Comparing.equal(myClassFilters, classFilters);
     myClassFilters = classFilters;
+    return changed;
   }
 
   @Tag("class-exclusion-filters")
@@ -74,8 +75,10 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     return myClassExclusionFilters != null ? myClassExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }
 
-  public void setClassExclusionFilters(ClassFilter[] classExclusionFilters) {
+  public boolean setClassExclusionFilters(ClassFilter[] classExclusionFilters) {
+    boolean changed = !Comparing.equal(myClassExclusionFilters, classExclusionFilters);
     myClassExclusionFilters = classExclusionFilters;
+    return changed;
   }
 
   @Nullable
@@ -86,14 +89,58 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
 
   @Override
   public void loadState(T state) {
-    COUNT_FILTER_ENABLED = state.COUNT_FILTER_ENABLED;
-    COUNT_FILTER = state.COUNT_FILTER;
+    setCOUNT_FILTER_ENABLED(state.isCOUNT_FILTER_ENABLED());
+    setCOUNT_FILTER(state.getCOUNT_FILTER());
 
-    CLASS_FILTERS_ENABLED = state.CLASS_FILTERS_ENABLED;
+    setCLASS_FILTERS_ENABLED(state.isCLASS_FILTERS_ENABLED());
     myClassFilters = state.getClassFilters();
     myClassExclusionFilters = state.getClassExclusionFilters();
 
-    INSTANCE_FILTERS_ENABLED = state.INSTANCE_FILTERS_ENABLED;
+    setINSTANCE_FILTERS_ENABLED(state.isINSTANCE_FILTERS_ENABLED());
     myInstanceFilters = state.getInstanceFilters();
+  }
+
+  @OptionTag("count-filter-enabled")
+  public boolean isCOUNT_FILTER_ENABLED() {
+    return COUNT_FILTER_ENABLED;
+  }
+
+  public boolean setCOUNT_FILTER_ENABLED(boolean COUNT_FILTER_ENABLED) {
+    boolean changed = this.COUNT_FILTER_ENABLED != COUNT_FILTER_ENABLED;
+    this.COUNT_FILTER_ENABLED = COUNT_FILTER_ENABLED;
+    return changed;
+  }
+
+  @OptionTag("count-filter")
+  public int getCOUNT_FILTER() {
+    return COUNT_FILTER;
+  }
+
+  public boolean setCOUNT_FILTER(int COUNT_FILTER) {
+    boolean changed = this.COUNT_FILTER != COUNT_FILTER;
+    this.COUNT_FILTER = COUNT_FILTER;
+    return changed;
+  }
+
+  @OptionTag("class-filters-enabled")
+  public boolean isCLASS_FILTERS_ENABLED() {
+    return CLASS_FILTERS_ENABLED;
+  }
+
+  public boolean setCLASS_FILTERS_ENABLED(boolean CLASS_FILTERS_ENABLED) {
+    boolean changed = this.CLASS_FILTERS_ENABLED != CLASS_FILTERS_ENABLED;
+    this.CLASS_FILTERS_ENABLED = CLASS_FILTERS_ENABLED;
+    return changed;
+  }
+
+  @OptionTag("instance-filters-enabled")
+  public boolean isINSTANCE_FILTERS_ENABLED() {
+    return INSTANCE_FILTERS_ENABLED;
+  }
+
+  public boolean setINSTANCE_FILTERS_ENABLED(boolean INSTANCE_FILTERS_ENABLED) {
+    boolean changed = this.INSTANCE_FILTERS_ENABLED != INSTANCE_FILTERS_ENABLED;
+    this.INSTANCE_FILTERS_ENABLED = INSTANCE_FILTERS_ENABLED;
+    return changed;
   }
 }

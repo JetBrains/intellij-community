@@ -49,6 +49,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -349,7 +350,7 @@ public class GradleManager
     Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       String oldPath = projectSettings.getExternalProjectPath();
-      if (!new File(oldPath).isDirectory()) {
+      if (oldPath != null && new File(oldPath).isFile() && FileUtilRt.extensionEquals(oldPath, GradleConstants.EXTENSION)) {
         try {
           String newPath = new File(oldPath).getParentFile().getCanonicalPath();
           projectSettings.setExternalProjectPath(newPath);

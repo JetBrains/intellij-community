@@ -20,10 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.numpy.documentation.NumPyDocString;
 import com.jetbrains.numpy.documentation.NumPyDocStringParameter;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyPsiFacade;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -67,9 +64,10 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (isInsideNumPy(function)) {
-      final NumPyDocString docString = NumPyDocString.forFunction(function, callSite);
+      final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
+      final NumPyDocString docString = NumPyDocString.forFunction(function, callee);
       if (docString != null) {
         final List<NumPyDocStringParameter> returns = docString.getReturns();
         final PyPsiFacade facade = getPsiFacade(function);

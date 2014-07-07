@@ -123,14 +123,13 @@ public class TableScrollingUtil {
   }
 
 
-  public static void moveDown(JTable list, @JdkConstants.InputEventMask int modifiers) {
+  public static void moveDown(JTable list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     int size = list.getModel().getRowCount();
     if (size == 0) {
       return;
     }
     final ListSelectionModel selectionModel = list.getSelectionModel();
     int index = selectionModel.getLeadSelectionIndex();
-    boolean cycleScrolling = UISettings.getInstance().CYCLE_SCROLLING;
     final int indexToSelect;
     if (index < size - 1) {
       indexToSelect = index + 1;
@@ -153,11 +152,10 @@ public class TableScrollingUtil {
     }
   }
 
-  public static void moveUp(JTable list, @JdkConstants.InputEventMask int modifiers) {
+  public static void moveUp(JTable list, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
     int size = list.getModel().getRowCount();
     final ListSelectionModel selectionModel = list.getSelectionModel();
     int index = selectionModel.getMinSelectionIndex();
-    boolean cycleScrolling = UISettings.getInstance().CYCLE_SCROLLING;
     int indexToSelect;
     if (index > 0) {
       indexToSelect = index - 1;
@@ -249,6 +247,10 @@ public class TableScrollingUtil {
   }
 
   public static void installActions(final JTable list) {
+    installActions(list, UISettings.getInstance().CYCLE_SCROLLING);
+  }
+
+  public static void installActions(final JTable list, final boolean cycleScrolling) {
     ActionMap actionMap = list.getActionMap();
     actionMap.put(ListScrollingUtil.SCROLLUP_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -262,12 +264,12 @@ public class TableScrollingUtil {
     });
     actionMap.put(ListScrollingUtil.SELECT_PREVIOUS_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveUp(list, e.getModifiers());
+        moveUp(list, e.getModifiers(), cycleScrolling);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_NEXT_ROW_ACTION_ID, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        moveDown(list, e.getModifiers());
+        moveDown(list, e.getModifiers(), cycleScrolling);
       }
     });
     actionMap.put(ListScrollingUtil.SELECT_LAST_ROW_ACTION_ID, new AbstractAction() {

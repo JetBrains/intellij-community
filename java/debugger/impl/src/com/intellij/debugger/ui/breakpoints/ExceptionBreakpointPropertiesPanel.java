@@ -25,6 +25,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
@@ -107,7 +108,12 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
 
   @Override
   public void saveTo(@NotNull XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
+    boolean changed = breakpoint.getProperties().NOTIFY_CAUGHT != myNotifyCaughtCheckBox.isSelected();
     breakpoint.getProperties().NOTIFY_CAUGHT = myNotifyCaughtCheckBox.isSelected();
+    changed = breakpoint.getProperties().NOTIFY_UNCAUGHT != myNotifyUncaughtCheckBox.isSelected() || changed;
     breakpoint.getProperties().NOTIFY_UNCAUGHT = myNotifyUncaughtCheckBox.isSelected();
+    if (changed) {
+      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+    }
   }
 }

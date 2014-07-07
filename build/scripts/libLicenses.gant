@@ -178,7 +178,7 @@ libraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant_groovy2.0-1.9.
 libraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)", url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "Antlr", libraryName: "antlr.jar", version: "3.4", license: "BSD", url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html")
-libraryLicense(name: "Guava", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
+libraryLicense(name: "Guava", version: "17.0", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Guava", libraryName: "guava-tools", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Groovy", version: "2.2.1", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
 libraryLicense(name: "Gson", version: "2.2.4", libraryName: "gson", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/")

@@ -91,5 +91,10 @@ public abstract class XValuePresentation {
      * Appends {@code symbol} which is not part of the value
      */
     void renderSpecialSymbol(@NotNull String symbol);
+
+    /**
+     * Appends red colored {@code error}
+     */
+    void renderError(@NotNull String error);
   }
 }

@@ -131,7 +131,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
-        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, "{");
+        EditorModificationUtil.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP;
       }
@@ -169,7 +169,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
 
-    EditorModificationUtil.moveAllCaretsRelatively(editor, 1);
+    EditorModificationUtil.moveCaretRelatively(editor, 1);
     return true;
   }
 
@@ -209,7 +209,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (balance == 0) {
-      EditorModificationUtil.moveAllCaretsRelatively(editor, 1);
+      EditorModificationUtil.moveCaretRelatively(editor, 1);
       return true;
     }
 
@@ -248,12 +248,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (balance == 1) {
-      if (editor.getCaretModel().supportsMultipleCarets()) {
-        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, ">", 0);
-      }
-      else {
-        editor.getDocument().insertString(offset, ">");
-      }
+      editor.getDocument().insertString(offset, ">");
     }
   }
 

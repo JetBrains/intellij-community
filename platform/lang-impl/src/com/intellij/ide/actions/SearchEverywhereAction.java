@@ -491,30 +491,36 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return (SearchListModel)myList.getModel();
   }
 
-  private void onFocusLost() {
+  private ActionCallback onFocusLost() {
+    final ActionCallback result = new ActionCallback();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myCalcThread != null) {
-          myCalcThread.cancel();
-          //myCalcThread = null;
-        }
-        myAlarm.cancelAllRequests();
-        if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
-          myBalloon.cancel();
-          myPopup.cancel();
-        }
-
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ActionToolbarImpl.updateAllToolbarsImmediately();
+        try {
+          if (myCalcThread != null) {
+            myCalcThread.cancel();
+            //myCalcThread = null;
           }
-        });
+          myAlarm.cancelAllRequests();
+          if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
+            myBalloon.cancel();
+            myPopup.cancel();
+          }
+
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              ActionToolbarImpl.updateAllToolbarsImmediately();
+            }
+          });
+        } finally {
+          result.setDone();
+        }
       }
     });
+    return result;
   }
 
   private SearchTextField getField() {
@@ -566,19 +572,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myList.repaint();
       return;
     }
+    Runnable onDone = null;
 
     AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       if (value instanceof PsiElement) {
-        NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
+        onDone = new Runnable() {
+          public void run() {
+            NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
+          }
+        };
         return;
       }
       else if (isVirtualFile(value)) {
-        OpenFileDescriptor navigatable = new OpenFileDescriptor(project, (VirtualFile)value);
-        if (navigatable.canNavigate()) {
-          navigatable.navigate(true);
-          return;
-        }
+        onDone = new Runnable() {
+          public void run() {
+            OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
+          }
+        };
+        return;
       }
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
@@ -596,23 +608,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               ((ChooseRunConfigurationPopup.ItemWrapper)value).perform(project, executor, DataManager.getInstance().getDataContext(c));
             } else {
               GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
+              if (isToolWindowAction(value)) return;
             }
           }
         });
         return;
       }
       else if (value instanceof Navigatable) {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+        onDone = new Runnable() {
           @Override
           public void run() {
             OpenSourceUtil.navigate(true, (Navigatable)value);
           }
-        });
+        };
+        return;
       }
     }
     finally {
       token.finish();
-      onFocusLost();
+      final ActionCallback callback = onFocusLost();
+      if (onDone != null) {
+        callback.doWhenDone(onDone);
+      }
     }
     focusManager.requestDefaultFocus(true);
   }
@@ -1304,36 +1321,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildToolWindows(String pattern) {
-      if (myActions == null) {
-        if (myActionModel == null) {
-          myActionModel = createActionModel();
-        }
-        myActions = myActionModel.getNames(true);
-      }
-      final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
-      List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
-      for (MatchResult o : matches) {
-        check();
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
-          check();
-          if (isToolWindowAction(object) && toolWindows.size() < MAX_TOOL_WINDOWS) {
-            toolWindows.add(((GotoActionModel.ActionWrapper)object).getAction());
+      final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
+      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project)) {
+        String text = action.getTemplatePresentation().getText();
+        if (text != null && StringUtil.startsWithIgnoreCase(text, pattern)) {
+          actions.add(action);
+
+          if (actions.size() == MAX_TOOL_WINDOWS) {
+            break;
           }
         }
       }
 
       check();
 
+      if (actions.isEmpty()) {
+        return;
+      }
+
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (isCanceled()) return;
-          if (toolWindows.size() > 0) {
-            myListModel.titleIndex.toolWindows = myListModel.size();
-            for (Object toolWindow : toolWindows) {
-              myListModel.addElement(toolWindow);
-            }
+          myListModel.titleIndex.toolWindows = myListModel.size();
+          for (Object toolWindow : actions) {
+            myListModel.addElement(toolWindow);
           }
         }
       });
@@ -1873,7 +1884,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (names == null) return Collections.emptyList();
       pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
       pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
-      if (model != myFileModel && !pattern.startsWith("*") && pattern.length() > 1) {
+      if (model != myFileModel && model != myActionModel && !pattern.startsWith("*") && pattern.length() > 1) {
         pattern = "*" + pattern;
       }
       final ArrayList<MatchResult> results = new ArrayList<MatchResult>();

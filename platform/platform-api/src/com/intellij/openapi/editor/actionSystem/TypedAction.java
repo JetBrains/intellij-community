@@ -107,10 +107,6 @@ public class TypedAction {
     CommandProcessor.getInstance().executeCommand(CommonDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
   }
 
-  public static boolean isTypedActionInProgress() {
-    return CommandProcessor.getInstance().getCurrentCommand() instanceof TypingCommand;
-  }
-
   private class TypingCommand implements Runnable {
     private final Editor myEditor;
     private final char myCharTyped;

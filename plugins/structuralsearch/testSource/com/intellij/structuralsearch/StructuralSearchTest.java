@@ -155,7 +155,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s48 = "class '_ { String '_; }";
 
   private static final String s49 = "class C { void a() throws java.lang.RuntimeException {} } class B { BufferedString t2;}";
-  private static final String s50 = "class '_ { '_ '_() thows RuntimeException; }";
+  private static final String s50 = "class '_ { '_ '_() throws RuntimeException; }";
 
   private static final String s51 = "class C extends B { } class B extends A { } class E {}";
   private static final String s52 = "class '_ extends '_ {  }";

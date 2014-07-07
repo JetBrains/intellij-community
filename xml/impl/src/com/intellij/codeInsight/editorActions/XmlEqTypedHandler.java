@@ -18,20 +18,16 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public class XmlEqTypedHandler extends TypedHandlerDelegate {
-  private final List<Caret> caretsForInsertingQuotes = ContainerUtil.newSmartList();
+  private boolean needToInsertQuotes = false;
 
   @Override
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
@@ -39,12 +35,10 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
     if (WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
       boolean inXml = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
       if (c == '=' && inXml) {
-        for(Caret caret : editor.getCaretModel().getAllCarets()) {
-          PsiElement at = file.findElementAt(caret.getOffset() - 1);
-          PsiElement atParent = at != null ? at.getParent() : null;
-          if(atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null) {
-            caretsForInsertingQuotes.add(caret);
-          }
+        PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+        PsiElement atParent = at != null ? at.getParent() : null;
+        if(atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null) {
+          needToInsertQuotes = atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null;
         }
       }
     }
@@ -54,15 +48,13 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    for (Caret caret : caretsForInsertingQuotes) {
-      int offset = caret.getOffset();
+    if (needToInsertQuotes) {
+      int offset = editor.getCaretModel().getOffset();
       editor.getDocument().insertString(offset, "\"\"");
-      caret.moveToOffset(offset + 1);
-    }
-    if (editor.getCaretModel().getAllCarets().size() == caretsForInsertingQuotes.size()) {
+      editor.getCaretModel().moveToOffset(offset + 1);
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
     }
-    caretsForInsertingQuotes.clear();
+    needToInsertQuotes = false;
     return super.charTyped(c, project, editor, file);
   }
 }
