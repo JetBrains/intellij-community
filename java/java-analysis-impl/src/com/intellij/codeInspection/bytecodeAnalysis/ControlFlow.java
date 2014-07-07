@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
@@ -25,10 +24,10 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 
 import java.util.*;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 final class cfg {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.cfg");
   static ControlFlowGraph buildControlFlowGraph(String className, MethodNode methodNode) throws AnalyzerException {
     return new ControlFlowBuilder(className, methodNode).buildCFG();
   }
@@ -61,7 +60,7 @@ final class cfg {
       return result;
     }
     catch (AnalyzerException e) {
-      LOG.error(e);
+      LOG.debug(e);
       throw new RuntimeException();
     }
   }

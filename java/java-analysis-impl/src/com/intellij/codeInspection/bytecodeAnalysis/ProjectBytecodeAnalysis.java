@@ -49,8 +49,8 @@ import java.util.Collection;
  * @author lambdamix
  */
 public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
+  public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   private static final PsiAnnotation[] NO_DATA = new PsiAnnotation[0];
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis");
   private static final CharTableImpl charTable = new CharTableImpl();
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
     @Override
@@ -90,17 +90,17 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     loadParameterAnnotations(annotations);
     loadContractAnnotations(annotations);
     myAnnotations = annotations;
-    LOG.info("NotNull annotations: " + myAnnotations.notNulls.size());
-    LOG.info("Contract annotations: " + myAnnotations.contracts.size());
+    LOG.debug("NotNull annotations: " + myAnnotations.notNulls.size());
+    LOG.debug("Contract annotations: " + myAnnotations.contracts.size());
   }
 
   private void unloadAnnotations() {
     myAnnotations = null;
-    LOG.info("unloaded");
+    LOG.debug("unloaded");
   }
 
   private void loadParameterAnnotations(Annotations annotations) {
-    LOG.info("initializing parameter annotations");
+    LOG.debug("initializing parameter annotations");
     final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.NotNull, Value.Top));
 
     processValues(true, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
@@ -113,10 +113,10 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       }
     });
 
-    LOG.info("parameter equations are constructed");
-    LOG.info("equations: " + solver.getSize());
+    LOG.debug("parameter equations are constructed");
+    LOG.debug("equations: " + solver.getSize());
     TIntObjectHashMap<Value> solutions = solver.solve();
-    LOG.info("parameter equations are solved");
+    LOG.debug("parameter equations are solved");
     BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, annotations);
   }
 
@@ -137,7 +137,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   }
 
   private void loadContractAnnotations(Annotations annotations) {
-    LOG.info("initializing contract annotations");
+    LOG.debug("initializing contract annotations");
     final IntIdSolver solver = new IntIdSolver(new ELattice<Value>(Value.Bot, Value.Top));
     processValues(false, new FileBasedIndex.ValueProcessor<Collection<IntIdEquation>>() {
       @Override
@@ -148,10 +148,10 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         return true;
       }
     });
-    LOG.info("contract equations are constructed");
-    LOG.info("equations: " + solver.getSize());
+    LOG.debug("contract equations are constructed");
+    LOG.debug("equations: " + solver.getSize());
     TIntObjectHashMap<Value> solutions = solver.solve();
-    LOG.info("contract equations are solved");
+    LOG.debug("contract equations are solved");
     BytecodeAnalysisConverter.getInstance().addAnnotations(solutions, annotations);
   }
 
@@ -208,7 +208,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.debug(e);
       return NO_DATA;
     }
   }
@@ -226,7 +226,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       return myAnnotations.notNulls.contains(key) ? notNullAnnotation : null;
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.debug(e);
       return null;
     }
   }
@@ -245,7 +245,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       return contractValue != null ? createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")") : null;
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.debug(e);
       return null;
     }
   }

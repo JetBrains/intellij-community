@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
@@ -28,11 +27,12 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
+
 /**
  * @author lambdamix
  */
 public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEquation>, FileContent> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer");
   final BytecodeAnalysisConverter myConverter;
 
   public ClassDataIndexer(BytecodeAnalysisConverter converter) {
@@ -62,7 +62,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.debug(e);
     }
     return map;
   }
@@ -183,7 +183,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
             }
           }
         } catch (AnalyzerException e) {
-          LOG.info("Error during processing of " + method, e);
+          LOG.debug("Error during processing of " + method, e);
         }
       }
     }, 0);

@@ -19,7 +19,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -39,12 +38,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
+
 /**
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter implements ApplicationComponent {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter");
   private static final String VERSION = "BytecodeAnalysisConverter.Enumerators";
 
   public static BytecodeAnalysisConverter getInstance() {
@@ -76,14 +76,14 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       }, new Runnable() {
         @Override
         public void run() {
-          LOG.error("Error during initialization of enumerators");
+          LOG.info("Error during initialization of enumerators in bytecode analysis. Re-initializing.");
           IOUtil.deleteAllFilesStartingWith(keysDir);
           version ++;
         }
       });
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.error("Re-initialization of enumerators in bytecode analysis failed.", e);
     }
     // TODO: is it enough for rebuilding indices?
     PropertiesComponent.getInstance().setValue(VERSION, String.valueOf(version));
@@ -97,7 +97,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       myCompoundKeyEnumerator.close();
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.debug(e);
     }
   }
 
@@ -124,7 +124,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
           int[] compoundKey = mkCompoundKey(id);
           int rawId = myCompoundKeyEnumerator.enumerate(compoundKey);
           if (rawId <= 0) {
-            LOG.error("raw key is not positive");
+            LOG.error("raw key should be positive. rawId = " + rawId);
           }
           ids[idI] = id.stable ? rawId : -rawId;
           idI++;
@@ -138,7 +138,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
     int rawKey = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));
     if (rawKey <= 0) {
-      LOG.error("raw key is not positive");
+      LOG.error("raw key should be positive. rawKey = " + rawKey);
     }
 
     int key = equation.id.stable ? rawKey : -rawKey;
@@ -205,7 +205,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
 
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
     if (psiClass == null) {
-      LOG.info("PsiClass was null for " + psiMethod.getName());
+      LOG.debug("PsiClass was null for " + psiMethod.getName());
       return null;
     }
     PsiClass outerClass = psiClass.getContainingClass();
@@ -262,7 +262,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   private boolean writeClass(int[] compoundKey, int i, PsiClass psiClass, int dimensions) throws IOException {
     PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
     if (psiFile == null) {
-      LOG.info("getContainingFile was null for " + psiClass.getQualifiedName());
+      LOG.debug("getContainingFile was null for " + psiClass.getQualifiedName());
       return false;
     }
     String packageName = psiFile.getPackageName();
@@ -304,7 +304,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         return true;
       }
       else {
-        LOG.info("resolve was null for " + ((PsiClassType)psiType).getClassName());
+        LOG.debug("resolve was null for " + ((PsiClassType)psiType).getClassName());
         return false;
       }
     }
@@ -346,7 +346,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
         compoundKey = myCompoundKeyEnumerator.valueOf(key);
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.debug(e);
       }
 
       if (compoundKey != null) {
@@ -369,7 +369,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
             clauses.add(contractElement(arity, (InOut)direction, value));
           }
           catch (IOException e) {
-            LOG.error(e);
+            LOG.debug(e);
           }
         }
       }
