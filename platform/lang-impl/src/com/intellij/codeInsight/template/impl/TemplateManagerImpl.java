@@ -296,8 +296,16 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return !(customLiveTemplate instanceof CustomLiveTemplateBase) || ((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
   }
 
-  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate, @NotNull Editor editor, @NotNull PsiFile file) {
-    return customLiveTemplate.isApplicable(file, CustomTemplateCallback.getOffset(editor), false);
+  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
+                                     @NotNull Editor editor,
+                                     @NotNull PsiFile file) {
+    return isApplicable(customLiveTemplate, editor, file, false);
+  }
+
+  public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
+                                     @NotNull Editor editor,
+                                     @NotNull PsiFile file, boolean wrapping) {
+    return customLiveTemplate.isApplicable(file, CustomTemplateCallback.getOffset(editor), wrapping);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
@@ -566,7 +574,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, boolean selectionOnly) {
     List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
-      if ((!selectionOnly || template.supportsWrapping()) && isApplicable(template, editor, file)) {
+      if ((!selectionOnly || template.supportsWrapping()) && isApplicable(template, editor, file, selectionOnly)) {
         result.add(template);
       }
     }
