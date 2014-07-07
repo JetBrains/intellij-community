@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -29,7 +28,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
  */
 public interface BrowseClient extends SvnClient {
 
-  void list(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable SVNDepth depth, @Nullable ISVNDirEntryHandler handler)
+  void list(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable SVNDepth depth, @Nullable DirectoryEntryConsumer handler)
     throws VcsException;
 
   long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException;

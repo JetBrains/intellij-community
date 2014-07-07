@@ -34,7 +34,7 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
                    @Nullable SVNDepth depth,
-                   @Nullable ISVNDirEntryHandler handler) throws VcsException {
+                   @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);
 
     SVNLogClient client = myVcs.getSvnKitManager().createLogClient();
@@ -69,26 +69,26 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   }
 
   @Nullable
-  private static ISVNDirEntryHandler wrapHandler(@Nullable ISVNDirEntryHandler handler) {
+  private static ISVNDirEntryHandler wrapHandler(@Nullable DirectoryEntryConsumer handler) {
     return handler == null ? null : new SkipEmptyNameDirectoriesHandler(handler);
   }
 
   public static class SkipEmptyNameDirectoriesHandler implements ISVNDirEntryHandler {
 
-    @NotNull private final ISVNDirEntryHandler handler;
+    @NotNull private final DirectoryEntryConsumer handler;
 
-    public SkipEmptyNameDirectoriesHandler(@NotNull ISVNDirEntryHandler handler) {
+    public SkipEmptyNameDirectoriesHandler(@NotNull DirectoryEntryConsumer handler) {
       this.handler = handler;
     }
 
     @Override
     public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
       if (!isEmptyNameDirectory(dirEntry)) {
-        handler.handleDirEntry(dirEntry);
+        handler.consume(DirectoryEntry.create(dirEntry));
       }
     }
 
-    private static boolean isEmptyNameDirectory(SVNDirEntry dirEntry) {
+    private static boolean isEmptyNameDirectory(@NotNull SVNDirEntry dirEntry) {
       return SVNNodeKind.DIR.equals(dirEntry.getKind()) && StringUtil.isEmpty(dirEntry.getName());
     }
   }

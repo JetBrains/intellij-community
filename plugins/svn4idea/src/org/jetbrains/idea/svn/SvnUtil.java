@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
@@ -581,9 +583,11 @@ public class SvnUtil {
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
     SvnTarget target = SvnTarget.fromURL(createUrl(url));
     final Ref<Boolean> result = new Ref<Boolean>(true);
-    ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        if (dirEntry != null) {
+    DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
+
+      @Override
+      public void consume(final DirectoryEntry entry) throws SVNException {
+        if (entry != null) {
           result.set(false);
         }
       }

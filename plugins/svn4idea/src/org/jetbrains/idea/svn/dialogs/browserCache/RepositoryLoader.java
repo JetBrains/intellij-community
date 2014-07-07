@@ -24,6 +24,8 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -56,7 +58,7 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void setResults(final Pair<RepositoryTreeNode, Expander> data, final List<SVNDirEntry> children) {
+  private void setResults(final Pair<RepositoryTreeNode, Expander> data, final List<DirectoryEntry> children) {
     myCache.put(data.first.getURL().toString(), children);
     refreshNode(data.first, children, data.second);
   }
@@ -114,14 +116,16 @@ class RepositoryLoader extends Loader {
     }
 
     public void run() {
-      final Collection<SVNDirEntry> entries = new TreeSet<SVNDirEntry>();
+      final Collection<DirectoryEntry> entries = new TreeSet<DirectoryEntry>();
       final RepositoryTreeNode node = myData.first;
       final SvnVcs vcs = node.getVcs();
       SvnAuthenticationProvider.forceInteractive();
 
-      ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          entries.add(dirEntry);
+      DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
+
+        @Override
+        public void consume(final DirectoryEntry entry) throws SVNException {
+          entries.add(entry);
         }
       };
       try {
@@ -142,7 +146,7 @@ class RepositoryLoader extends Loader {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          setResults(myData, new ArrayList<SVNDirEntry>(entries));
+          setResults(myData, new ArrayList<DirectoryEntry>(entries));
           startNext();
         }
       });

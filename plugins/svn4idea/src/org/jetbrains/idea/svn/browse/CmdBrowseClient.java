@@ -26,7 +26,10 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -47,7 +50,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
                    @Nullable SVNDepth depth,
-                   @Nullable ISVNDirEntryHandler handler) throws VcsException {
+                   @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);
 
     List<String> parameters = new ArrayList<String>();
@@ -85,15 +88,15 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     return listener.getCommittedRevision();
   }
 
-  private static void parseOutput(@NotNull SVNURL url, @NotNull CommandExecutor command, @Nullable ISVNDirEntryHandler handler)
-    throws VcsException, SVNException {
+  private static void parseOutput(@NotNull SVNURL url, @NotNull CommandExecutor command, @Nullable DirectoryEntryConsumer handler)
+  throws VcsException, SVNException {
     try {
       TargetLists lists = CommandUtil.parse(command.getOutput(), TargetLists.class);
 
       if (handler != null && lists != null) {
         for (TargetList list : lists.lists) {
           for (Entry entry : list.entries) {
-            handler.handleDirEntry(entry.toDirEntry(url));
+            handler.consume(entry.toDirectoryEntry(url));
           }
         }
       }
@@ -149,16 +152,10 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
       return commit != null ? commit.date : null;
     }
 
-    public SVNDirEntry toDirEntry(@NotNull SVNURL url) throws SVNException {
+    public DirectoryEntry toDirectoryEntry(@NotNull SVNURL url) throws SVNException {
       // TODO: repository is not used for now
-      SVNDirEntry entry =
-        new SVNDirEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), SVNNodeKind.parseKind(kind), size, false, revision(),
-                        date(), author());
-
-      entry.setRelativePath(name);
-      entry.setLock(lock != null ? lock.toLock(entry.getRelativePath()) : null);
-
-      return entry;
+      return new DirectoryEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), SVNNodeKind.parseKind(kind), revision(),
+                                date(), author(), name);
     }
   }
 
@@ -190,9 +187,5 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
     @XmlElement(name = "expires")
     public Date expires;
-
-    public SVNLock toLock(@NotNull String path) {
-      return new SVNLock(path, token, owner, comment, created, expires);
-    }
   }
 }

@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
@@ -88,13 +90,15 @@ public class DefaultConfigLoader {
   }
 
   @NotNull
-  private static ISVNDirEntryHandler createHandler(final SvnBranchConfigurationNew result, final SVNURL rootPath) {
-    return new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        if (SVNNodeKind.DIR.equals(dirEntry.getKind())) {
-          SVNURL childUrl = rootPath.appendPath(dirEntry.getName(), false);
+  private static DirectoryEntryConsumer createHandler(final SvnBranchConfigurationNew result, final SVNURL rootPath) {
+    return new DirectoryEntryConsumer() {
 
-          if (StringUtil.endsWithIgnoreCase(dirEntry.getName(), DEFAULT_TRUNK_NAME)) {
+      @Override
+      public void consume(final DirectoryEntry entry) throws SVNException {
+        if (SVNNodeKind.DIR.equals(entry.getKind())) {
+          SVNURL childUrl = rootPath.appendPath(entry.getName(), false);
+
+          if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
             result.setTrunkUrl(childUrl.toString());
           }
           else {

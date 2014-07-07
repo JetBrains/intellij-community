@@ -53,6 +53,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.*;
@@ -504,7 +505,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       //e.getPresentation().setText(SvnBundle.message("repository.browser.new.folder.action"), true);
       if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
+        DirectoryEntry entry = node.getSVNDirEntry();
         e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
       } else {
         e.getPresentation().setEnabled(false);
@@ -541,7 +542,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setText("Compare With...", true);
       if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
+        DirectoryEntry entry = node.getSVNDirEntry();
         e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
       } else {
         e.getPresentation().setEnabled(false);
@@ -858,7 +859,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       final boolean running = ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
       if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
+        DirectoryEntry entry = node.getSVNDirEntry();
         e.getPresentation().setEnabled((entry == null || entry.getKind() == SVNNodeKind.DIR) && (! running));
       } else {
         e.getPresentation().setEnabled(false);
@@ -900,7 +901,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setText("_Checkout...", true);
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
+        DirectoryEntry entry = node.getSVNDirEntry();
         e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
       } else {
         e.getPresentation().setEnabled(false);
@@ -1052,14 +1053,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     SVNURL url = selectedNode.getURL();
 
     String relativePath = "";
-    final SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
-    if (dirEntry != null) {
-      if (dirEntry.getRepositoryRoot() != null) {
-        if (! dirEntry.getRepositoryRoot().equals(url)) {
-          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toDecodedString());
+    final DirectoryEntry entry = selectedNode.getSVNDirEntry();
+    if (entry != null) {
+      if (entry.getRepositoryRoot() != null) {
+        if (! entry.getRepositoryRoot().equals(url)) {
+          relativePath = SVNPathUtil.getRelativePath(entry.getRepositoryRoot().toString(), url.toDecodedString());
         }
       } else {
-        relativePath = dirEntry.getRelativePath();
+        relativePath = entry.getRelativePath();
       }
     } else {
       relativePath = url.getPath();

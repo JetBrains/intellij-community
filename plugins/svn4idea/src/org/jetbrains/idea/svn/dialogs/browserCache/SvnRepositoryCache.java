@@ -18,15 +18,14 @@ package org.jetbrains.idea.svn.dialogs.browserCache;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.containers.SoftHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class SvnRepositoryCache {
-  private final Map<String, List<SVNDirEntry>> myMap;
+  private final Map<String, List<DirectoryEntry>> myMap;
   private final Map<String, String> myErrorsMap;
 
   public static SvnRepositoryCache getInstance() {
@@ -34,12 +33,12 @@ public class SvnRepositoryCache {
   }
   
   private SvnRepositoryCache() {
-    myMap = new SoftHashMap<String, List<SVNDirEntry>>();
+    myMap = new SoftHashMap<String, List<DirectoryEntry>>();
     myErrorsMap = new SoftHashMap<String, String>();
   }
 
   @Nullable
-  public List<SVNDirEntry> getChildren(final String parent) {
+  public List<DirectoryEntry> getChildren(final String parent) {
     return myMap.get(parent);
   }
 
@@ -53,7 +52,7 @@ public class SvnRepositoryCache {
     myErrorsMap.put(parent, error);
   }
 
-  public void put(final String parent, List<SVNDirEntry> children) {
+  public void put(final String parent, List<DirectoryEntry> children) {
     myErrorsMap.remove(parent);
     myMap.put(parent, children);
   }
@@ -64,8 +63,8 @@ public class SvnRepositoryCache {
   }
 
   public void clear(final String repositoryRootUrl) {
-    for (Iterator<Map.Entry<String, List<SVNDirEntry>>> iterator = myMap.entrySet().iterator(); iterator.hasNext();) {
-      final Map.Entry<String, List<SVNDirEntry>> entry = iterator.next();
+    for (Iterator<Map.Entry<String, List<DirectoryEntry>>> iterator = myMap.entrySet().iterator(); iterator.hasNext();) {
+      final Map.Entry<String, List<DirectoryEntry>> entry = iterator.next();
       if (entry.getKey().startsWith(repositoryRootUrl)) {
         iterator.remove();
       }

@@ -40,6 +40,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
@@ -478,12 +480,14 @@ public class SvnChangeList implements CommittedChangeList {
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
       SvnTarget target = SvnTarget.fromURL(fullPath, revisionNumber);
 
-      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, SVNDepth.INFINITY, new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          final String childPath = path + '/' + dirEntry.getRelativePath();
+      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, SVNDepth.INFINITY, new DirectoryEntryConsumer() {
+
+        @Override
+        public void consume(final DirectoryEntry entry) throws SVNException {
+          final String childPath = path + '/' + entry.getRelativePath();
 
           if (!duplicates.contains(Pair.create(isBefore, childPath))) {
-            final ContentRevision contentRevision = createRevision(childPath, isBefore, SVNNodeKind.DIR.equals(dirEntry.getKind()));
+            final ContentRevision contentRevision = createRevision(childPath, isBefore, SVNNodeKind.DIR.equals(entry.getKind()));
             result.add(new Change(isBefore ? contentRevision : null, isBefore ? null : contentRevision));
           }
         }
