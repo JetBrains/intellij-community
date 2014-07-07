@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -20,5 +19,5 @@ public interface AnnotateClient extends SvnClient {
                 @Nullable SVNRevision pegRevision,
                 boolean includeMergedRevisions,
                 @Nullable DiffOptions diffOptions,
-                @Nullable ISVNAnnotateHandler handler) throws VcsException;
+                @Nullable AnnotationConsumer handler) throws VcsException;
 }

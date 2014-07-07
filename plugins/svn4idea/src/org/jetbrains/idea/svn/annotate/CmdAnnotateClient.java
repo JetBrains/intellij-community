@@ -10,7 +10,6 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -19,7 +18,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -34,7 +32,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
                        @Nullable SVNRevision pegRevision,
                        boolean includeMergedRevisions,
                        @Nullable DiffOptions diffOptions,
-                       @Nullable final ISVNAnnotateHandler handler) throws VcsException {
+                       @Nullable final AnnotationConsumer handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
     parameters.add("--revision");
@@ -48,7 +46,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     parseOutput(command.getOutput(), handler);
   }
 
-  public void parseOutput(@NotNull String output, @Nullable ISVNAnnotateHandler handler) throws VcsException {
+  public void parseOutput(@NotNull String output, @Nullable AnnotationConsumer handler) throws VcsException {
     try {
       BlameInfo info = CommandUtil.parse(output, BlameInfo.class);
 
@@ -66,12 +64,11 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     }
   }
 
-  private static void invokeHandler(ISVNAnnotateHandler handler, LineEntry entry) throws SVNException {
-    // line numbers in our api start from 0 - not from 1 like in svn output
-    // "line" value is not used in handlers - so null is passed
-    handler
-      .handleLine(entry.date(), entry.revision(), entry.author(), null, entry.mergedDate(), entry.mergedRevision(), entry.mergedAuthor(),
-                  entry.mergedPath(), entry.lineNumber - 1);
+  private static void invokeHandler(@NotNull AnnotationConsumer handler, @NotNull LineEntry entry) throws SVNException {
+    if (entry.commit != null) {
+      // line numbers in our api start from 0 - not from 1 like in svn output
+      handler.consume(entry.lineNumber - 1, entry.commit.build(), entry.mergedCommit());
+    }
   }
 
   @XmlRootElement(name = "blame")
@@ -97,51 +94,9 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     @XmlElement(name = "merged")
     public MergedEntry merged;
 
-    public long revision() {
-      return revision(commit);
-    }
-
     @Nullable
-    public String author() {
-      return author(commit);
-    }
-
-    @Nullable
-    public Date date() {
-      return date(commit);
-    }
-
-    @Nullable
-    public String mergedPath() {
-      return merged != null ? merged.path : null;
-    }
-
-    public long mergedRevision() {
-      return merged != null ? revision(merged.commit) : 0;
-    }
-
-    @Nullable
-    public String mergedAuthor() {
-      return merged != null ? author(merged.commit) : null;
-    }
-
-    @Nullable
-    public Date mergedDate() {
-      return merged != null ? date(merged.commit) : null;
-    }
-
-    private static long revision(@Nullable CommitInfo.Builder commit) {
-      return commit != null ? commit.getRevision() : 0;
-    }
-
-    @Nullable
-    private static String author(@Nullable CommitInfo.Builder commit) {
-      return commit != null ? commit.getAuthor() : null;
-    }
-
-    @Nullable
-    private static Date date(@Nullable CommitInfo.Builder commit) {
-      return commit != null ? commit.getDate() : null;
+    public CommitInfo mergedCommit() {
+      return merged != null && merged.commit != null ? merged.commit.build() : null;
     }
   }
 

@@ -43,7 +43,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -121,7 +120,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           }
 
           // ignore mime type=true : IDEA-19562
-          final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(progress, result);
+          final AnnotationConsumer annotateHandler = createAnnotationHandler(progress, result);
 
           final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
                                              SvnUtil.checkRepositoryVersion15(myVcs, url);
@@ -250,7 +249,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     byte[] data = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(wasUrl), svnRevision, svnRevision);
     final String contents = LoadTextUtil.getTextByBinaryPresentation(data, charset == null ? CharsetToolkit.UTF8_CHARSET : charset).toString();
     final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), current);
-    final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
+    final AnnotationConsumer annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
     final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate() &&
                                        SvnUtil.checkRepositoryVersion15(myVcs, wasUrl.toString());
@@ -260,42 +259,18 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return result;
   }
 
-  private ISVNAnnotateHandler createAnnotationHandler(final ProgressIndicator progress, final BaseSvnFileAnnotation result) {
-    return new ISVNAnnotateHandler() {
-      public void handleLine(Date date, long revision, String author, String line) {
-        // deprecated - not called
-      }
+  @NotNull
+  private static AnnotationConsumer createAnnotationHandler(@Nullable final ProgressIndicator progress,
+                                                            @NotNull final BaseSvnFileAnnotation result) {
+    return new AnnotationConsumer() {
 
-      public void handleLine(final Date date,
-                             final long revision,
-                             final String author,
-                             final String line,
-                             final Date mergedDate,
-                             final long mergedRevision,
-                             final String mergedAuthor,
-                             final String mergedPath,
-                             final int lineNumber) throws SVNException {
+      @Override
+      public void consume(int lineNumber, @NotNull CommitInfo info, @Nullable CommitInfo mergeInfo) throws SVNException {
         if (progress != null) {
           progress.checkCanceled();
         }
-        if (revision == -1) return;
 
-        CommitInfo info = new CommitInfo.Builder(revision, date, author).build();
-        CommitInfo mergeInfo =
-          mergedDate != null && revision > mergedRevision ? new CommitInfo.Builder(mergedRevision, mergedDate, mergedAuthor).build() : null;
-
-        result.setLineInfo(lineNumber, info, mergeInfo);
-      }
-
-      public boolean handleRevision(final Date date, final long revision, final String author, final File contents)
-        throws SVNException {
-        if (progress != null) {
-          progress.checkCanceled();
-        }
-        return false;
-      }
-
-      public void handleEOF() {
+        result.setLineInfo(lineNumber, info, mergeInfo != null && info.getRevision() > mergeInfo.getRevision() ? mergeInfo : null);
       }
     };
   }
