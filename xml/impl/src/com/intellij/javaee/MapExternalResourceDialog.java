@@ -106,7 +106,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
 
     ColoredTreeCellRenderer renderer = new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree,
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
