@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
@@ -367,7 +368,12 @@ public class XDebugSessionImpl implements XDebugSession {
   private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler,
                                                              boolean register,
                                                              final boolean temporary) {
-    Collection<? extends B> breakpoints = myDebuggerManager.getBreakpointManager().getBreakpoints(handler.getBreakpointTypeClass());
+    Collection<? extends B> breakpoints = ApplicationManager.getApplication().runReadAction(new Computable<Collection<? extends B>>() {
+      @Override
+      public Collection<? extends B> compute() {
+        return myDebuggerManager.getBreakpointManager().getBreakpoints(handler.getBreakpointTypeClass());
+      }
+    });
     for (B b : breakpoints) {
       handleBreakpoint(handler, b, register, temporary);
     }

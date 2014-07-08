@@ -322,15 +322,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
       // breakpoints should be initialized after all processAttached listeners work
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          XDebugSession session = getSession().getXDebugSession();
-          if (session != null) {
-            session.initBreakpoints();
-          }
-        }
-      });
+      XDebugSession session = getSession().getXDebugSession();
+      if (session != null) {
+        session.initBreakpoints();
+      }
 
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
       final String transportName = DebuggerBundle.getTransportName(getConnection());
