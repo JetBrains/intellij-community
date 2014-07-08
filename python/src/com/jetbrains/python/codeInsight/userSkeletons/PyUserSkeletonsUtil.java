@@ -75,7 +75,7 @@ public class PyUserSkeletonsUtil {
   public static VirtualFile getUserSkeletonsDirectory() {
     if (ourUserSkeletonsDirectory == null) {
       for (String path : getPossibleUserSkeletonsPaths()) {
-        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().findFileByPath(path);
+        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
         if (ourUserSkeletonsDirectory != null) {
           break;
         }

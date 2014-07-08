@@ -25,10 +25,21 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+
 /**
  * User: catherine
  */
 public class DocStringUtil {
+  private static final String PARAMETERS = "Parameters";
+  private static final Pattern NUMPY_PARAMETERS_SECTION = Pattern.compile(PARAMETERS + "[ \\t]*\\n[ \\t]*[-]{" + PARAMETERS.length() + "}");
+  private static final String RETURNS = "Returns";
+  private static final Pattern NUMPY_RETURNS_SECTION = Pattern.compile(RETURNS + "[ \\t]*\\n[ \\t]*[-]{" + RETURNS.length() + "}");
+  private static final String SEE_ALSO = "See Also";
+  private static final Pattern NUMPY_SEE_ALSO_SECTION = Pattern.compile(SEE_ALSO + "[ \\t]*\\n[ \\t]*[-]{" + SEE_ALSO.length() + "}");
+  private static final String EXAMPLES = "Examples";
+  private static final Pattern NUMPY_EXAMPLES_SECTION = Pattern.compile(EXAMPLES + "[ \\t]*\\n[ \\t]*[-]{" + EXAMPLES.length() + "}");
+
   private DocStringUtil() {
   }
 
@@ -45,7 +56,10 @@ public class DocStringUtil {
     if (isSphinxDocString(text)) {
       return new SphinxDocString(text);
     }
-    return new EpydocString(text);
+    else if (isEpydocDocString(text)) {
+      return new EpydocString(text);
+    }
+    return null;
   }
 
   public static boolean isSphinxDocString(@NotNull String text) {
@@ -54,6 +68,14 @@ public class DocStringUtil {
 
   public static boolean isEpydocDocString(@NotNull String text) {
     return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
+  }
+
+  public static boolean isNumpyDocString(@NotNull String text) {
+    return text.contains("ndarray") ||
+           NUMPY_PARAMETERS_SECTION.matcher(text).find() ||
+           NUMPY_RETURNS_SECTION.matcher(text).find() ||
+           NUMPY_SEE_ALSO_SECTION.matcher(text).find() ||
+           NUMPY_EXAMPLES_SECTION.matcher(text).find();
   }
 
   /**
