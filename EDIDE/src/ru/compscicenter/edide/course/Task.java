@@ -23,6 +23,7 @@ public class Task {
   private List<TaskFile> taskFiles;
   private  Lesson myLesson;
   private boolean mySolved = false;
+  private int myIndex;
 
 
   public boolean isSolved() {
@@ -74,10 +75,11 @@ public class Task {
     this.text = text;
   }
 
-  public void create(Project project, VirtualFile baseDir, int index, File resourseRoot) throws IOException {
-    VirtualFile taskDir = baseDir.createChildDirectory(this, "task" + Integer.toString(index));
+  public void create(Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
+    VirtualFile taskDir = baseDir.createChildDirectory(this, "task" + Integer.toString(myIndex + 1));
     File newResourceRoot = new File(resourseRoot, taskDir.getName());
     for (int i = 0; i < taskFiles.size(); i++) {
+      taskFiles.get(i).setIndex(i);
       taskFiles.get(i).create(project, taskDir, newResourceRoot);
     }
     FileUtil.copy(new File(newResourceRoot, text), new File(taskDir.getCanonicalPath(), text));
@@ -120,5 +122,47 @@ public class Task {
     for (TaskFile tasFile: taskFiles) {
       tasFile.setParents(this);
     }
+  }
+
+  public Task next() {
+    Lesson currentLesson = this.myLesson;
+    Task nextTask = null;
+    boolean foundNext = false;
+    for (Task task:currentLesson.getTaskList()) {
+      if (foundNext) {
+        nextTask = task;
+      }
+      if (task == this) {
+        foundNext = true;
+      }
+    }
+    if (nextTask != null) {
+      return nextTask;
+    }
+    Lesson nextLesson = currentLesson.next();
+    if (nextLesson == null) {
+      return nextTask;
+    }
+    for (Task task:nextLesson.getTaskList()) {
+      if (foundNext) {
+        nextTask = task;
+      }
+      if (task == this) {
+        foundNext = true;
+      }
+    }
+    return nextTask;
+  }
+
+  public void setIndex(int index) {
+    myIndex = index;
+  }
+
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public Lesson getLesson() {
+    return myLesson;
   }
 }

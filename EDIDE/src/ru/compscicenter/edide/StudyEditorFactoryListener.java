@@ -58,9 +58,6 @@ class myCaretAdapter extends CaretAdapter {
               HintManager.getInstance().showInformationHint(selectedEditor, "You should select some task window");
             }
             else {
-              //selectedEditor.getMarkupModel().removeAllHighlighters();
-              //selectedTaskFile.setSelectedWindow(currentWindow);
-              //currentWindow.draw(selectedEditor, !currentWindow.isResolveStatus(), false);
               return;
             }
           }
@@ -77,8 +74,8 @@ class myCaretAdapter extends CaretAdapter {
               else {
                 DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
-                AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
-                AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.ResolveAction");
+                AnAction action = ActionManager.getInstance().getAction("CheckAction");
+                AnAction resolveAction = ActionManager.getInstance().getAction("ResolveAction");
                 AnAction nextAction = ActionManager.getInstance().getAction("NextWindow");
                 AnAction prevAction = ActionManager.getInstance().getAction("PrevWindowAction");
                 defaultActionGroup.add(action);
@@ -126,8 +123,8 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
       if (selectedWindow != null && selectedWindow != window) {
         DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
-        AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
-        AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.ResolveAction");
+        AnAction action = ActionManager.getInstance().getAction("CheckAction");
+        AnAction resolveAction = ActionManager.getInstance().getAction("ResolveAction");
         AnAction nextAction = ActionManager.getInstance().getAction("NextWindow");
         AnAction prevAction = ActionManager.getInstance().getAction("PrevWindowAction");
         defaultActionGroup.add(action);
@@ -162,8 +159,8 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
         if (!(selectedWindow == window)) {
           DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
-          AnAction action = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
-          AnAction resolveAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.ResolveAction");
+          AnAction action = ActionManager.getInstance().getAction("CheckAction");
+          AnAction resolveAction = ActionManager.getInstance().getAction("ResolveAction");
           AnAction nextAction = ActionManager.getInstance().getAction("NextWindow");
           defaultActionGroup.add(action);
           defaultActionGroup.add(resolveAction);
@@ -205,7 +202,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                   }
                   taskFile.setLineNum(editor.getDocument().getLineCount());
                   editor.addEditorMouseListener(new MyMouseListener(taskFile));
-                  editor.getCaretModel().addCaretListener(new myCaretAdapter());
+                  //editor.getCaretModel().addCaretListener(new myCaretAdapter());
                   editor.getMarkupModel().removeAllHighlighters();
                   taskFile.drawAllWindows(editor);
                 }
@@ -224,5 +221,7 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
   @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
     LOG.info("Editor released\n");
+    event.getEditor().getMarkupModel().removeAllHighlighters();
+    event.getEditor().getSelectionModel().removeSelection();
   }
 }

@@ -40,7 +40,8 @@ public class Course {
             public void run() {
               try {
                 for (int i = 0; i < lessons.size(); i++) {
-                  lessons.get(i).create(project, baseDir, i + 1, resourseRoot);
+                  lessons.get(i).setIndex(i);
+                  lessons.get(i).create(project, baseDir, resourseRoot);
                 }
               }
               catch (IOException e) {

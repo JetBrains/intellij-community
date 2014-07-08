@@ -51,7 +51,7 @@ class ResolveAction extends AnAction {
           if (selectedTaskFile.getTask().isResolved()) {
             DefaultActionGroup defaultActionGroup = new DefaultActionGroup();
 
-            AnAction checkAction = ActionManager.getInstance().getAction("ru.compscicenter.edide.actions.CheckAction");
+            AnAction checkAction = ActionManager.getInstance().getAction("CheckAction");
             defaultActionGroup.add(checkAction);
             ListPopup popUp =
               JBPopupFactory.getInstance().createActionGroupPopup("What should we do with selected task window?", defaultActionGroup,

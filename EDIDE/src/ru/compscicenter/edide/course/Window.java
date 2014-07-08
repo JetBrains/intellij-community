@@ -26,6 +26,15 @@ public class Window implements Comparable{
   private RangeHighlighter myRangeHighlighter = null;
   private int myOffsetInLine = text.length();
   private TaskFile myTaskFile;
+  private int myIndex = -1;
+
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public void setIndex(int index) {
+    myIndex = index;
+  }
 
   public Element saveState() {
     Element windowElement = new Element("window");

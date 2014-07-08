@@ -1,35 +1,57 @@
 package ru.compscicenter.edide;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HideableTitledPanel;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.compscicenter.edide.course.Task;
+import ru.compscicenter.edide.actions.CheckAction;
+import ru.compscicenter.edide.actions.NextTaskAction;
+import ru.compscicenter.edide.course.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 
 /**
-* User: lia
-* Date: 23.05.14
-* Time: 14:16
-*/
+ * User: lia
+ * Date: 23.05.14
+ * Time: 14:16
+ */
 public class StudyEditor implements FileEditor {
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
+  private JButton myCheckButton;
+  private JButton myNextTaskButton;
+
+  public JButton getCheckButton() {
+    return myCheckButton;
+  }
+
   private String getTextForTask(VirtualFile file, Project project) {
     Task currentTask = StudyTaskManager.getInstance(project).getTaskFile(file).getTask();
     String textFileName = currentTask.getText();
@@ -37,7 +59,7 @@ public class StudyEditor implements FileEditor {
     StringBuilder taskText = new StringBuilder();
     try {
       BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(textFile)));
-      while(reader.ready()) {
+      while (reader.ready()) {
         taskText.append(reader.readLine());
       }
     }
@@ -59,29 +81,49 @@ public class StudyEditor implements FileEditor {
     return newButton;
   }
 
-  public StudyEditor(Project project, VirtualFile file) {
+  public StudyEditor(final Project project, VirtualFile file) {
     myDefaultEditor = TextEditorProvider.getInstance().createEditor(project, file);
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
     final JLabel taskText = new JLabel(getTextForTask(file, project));
-    taskText.setFont(new Font("Arial", Font.PLAIN, 16));
+    int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+    String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+    taskText.setFont(new Font(fontName, Font.PLAIN, fontSize));
     HideableTitledPanel taskTextPanel = new HideableTitledPanel("Task Text", taskText, true);
     studyPanel.add(taskTextPanel);
     JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
     JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     studyButtonPanel.add(taskActionsPanel);
     studyButtonPanel.add(new JPanel());
-    addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
+    myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
-    addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
+    myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
     addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
     addButton(taskActionsPanel, "Run", StudyIcons.Run);
-
     studyPanel.add(studyButtonPanel);
     myComponent.add(studyPanel, BorderLayout.NORTH);
+    myCheckButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        CheckAction checkAction = (CheckAction)ActionManager.getInstance().getAction("CheckAction");
+        checkAction.check(project);
+      }
+    });
+
+    myNextTaskButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        NextTaskAction nextTaskAction = (NextTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
+        nextTaskAction.nextTask(project);
+      }
+    });
+  }
+
+  public JButton getNextTaskButton() {
+    return myNextTaskButton;
   }
 
   public FileEditor getDefaultEditor() {
@@ -181,6 +223,18 @@ public class StudyEditor implements FileEditor {
     myDefaultEditor.putUserData(key, value);
   }
 
+
+  public static StudyEditor getSelectedStudyEditor(Project project) {
+    StudyEditor selectedStudyEditor = null;
+    FileEditor fileEditor =
+      FileEditorManagerImpl.getInstanceEx(project).getSplitters().getCurrentWindow().getSelectedEditor().getSelectedEditorWithProvider()
+        .getFirst();
+    if (fileEditor instanceof StudyEditor) {
+      selectedStudyEditor = (StudyEditor)fileEditor;
+    }
+    return selectedStudyEditor;
+  }
+
   public static Editor getSelectedEditor(Project project) {
     Editor selectedEditor = null;
     FileEditor fileEditor =
@@ -194,5 +248,4 @@ public class StudyEditor implements FileEditor {
     }
     return selectedEditor;
   }
-
 }

@@ -20,6 +20,7 @@ public class Lesson {
   @Expose
   private List<Task> taskList;
   private Course myCourse = null;
+  private int myIndex = -1;
 
   public boolean isResolved() {
     for (Task task:taskList) {
@@ -45,10 +46,11 @@ public class Lesson {
     this.taskList = taskList;
   }
 
-  public void create(final Project project, VirtualFile baseDir, int index, File resourseRoot) throws IOException {
-    VirtualFile lessonDir =  baseDir.createChildDirectory(this, "lesson" + Integer.toString(index));
+  public void create(final Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
+    VirtualFile lessonDir =  baseDir.createChildDirectory(this, "lesson" + Integer.toString(myIndex + 1));
     for (int i = 0; i < taskList.size(); i++) {
-      taskList.get(i).create(project, lessonDir, i + 1, new File(resourseRoot, lessonDir.getName()));
+      taskList.get(i).setIndex(i);
+      taskList.get(i).create(project, lessonDir, new File(resourseRoot, lessonDir.getName()));
     }
 
   }
@@ -66,5 +68,20 @@ public class Lesson {
     for (Task task: taskList) {
       task.setParents(this);
     }
+  }
+
+  public Lesson next() {
+    if (myIndex + 1 >= myCourse.getLessons().size()) {
+      return null;
+    }
+    return myCourse.getLessons().get(myIndex + 1);
+  }
+
+  public void setIndex(int index) {
+    myIndex = index;
+  }
+
+  public int getIndex() {
+    return myIndex;
   }
 }

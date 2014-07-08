@@ -27,6 +27,7 @@ public class TaskFile {
   private int myLineNum = -1;
   private Task myTask;
   private Window mySelectedWindow = null;
+  private int myIndex;
 
   public Element saveState() {
     Element fileElement = new Element("file");
@@ -142,6 +143,9 @@ public class TaskFile {
       window.setParent(this);
     }
     Collections.sort(windows);
+    for (int i = 0; i < windows.size(); i++) {
+      windows.get(i).setIndex(i);
+    }
   }
 
   public void setNewOffsetInLine(int startLine, int startOffset, int defaultOffet) {
@@ -188,5 +192,9 @@ public class TaskFile {
         mySelectedWindow.setOffsetInLine(newLength);
       }
     }
+  }
+
+  public void setIndex(int index) {
+    myIndex = index;
   }
 }
