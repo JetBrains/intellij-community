@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,25 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Set;
 
 public abstract class WebBrowserUrlProvider {
   public static final ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
-
-  private final boolean myDeprecatedMethodOverridden;
-
-  protected WebBrowserUrlProvider() {
-    boolean deprecatedMethodOverridden;
-    try {
-      deprecatedMethodOverridden =
-        getClass().getMethod("canHandleElement", PsiElement.class, PsiFile.class, Ref.class).getDeclaringClass() != WebBrowserUrlProvider.class ||
-        getClass().getMethod("canHandle", PsiElement.class, PsiFile.class, Ref.class).getDeclaringClass() != WebBrowserUrlProvider.class;
-    }
-    catch (Throwable ignored) {
-      deprecatedMethodOverridden = false;
-    }
-    myDeprecatedMethodOverridden = deprecatedMethodOverridden;
-  }
 
   /**
    * Browser exceptions are printed in Error Dialog when user presses any browser button
@@ -55,39 +37,7 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 14
-   */
-  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Set<Url>> result) {
-    Ref<Collection<Url>> ref = Ref.create();
-    @SuppressWarnings("deprecation")
-    boolean canHandle = canHandle(element, psiFile, ref);
-    if (!ref.isNull()) {
-      result.set(ContainerUtil.newHashSet(ref.get()));
-    }
-    return canHandle;
-  }
-
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  public boolean canHandle(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Collection<Url>> result) {
-    return false;
-  }
-
   public boolean canHandleElement(@NotNull OpenInBrowserRequest request) {
-    if (myDeprecatedMethodOverridden) {
-      Ref<Set<Url>> resultRef = Ref.create();
-      //noinspection deprecation
-      if (canHandleElement(request.getElement(), request.getFile(), resultRef)) {
-        request.setResult(resultRef.get());
-        return true;
-      }
-    }
-
     try {
       Collection<Url> urls = getUrls(request);
       if (!urls.isEmpty()) {
@@ -103,30 +53,12 @@ public abstract class WebBrowserUrlProvider {
 
   @Nullable
   protected Url getUrl(@NotNull OpenInBrowserRequest request, @NotNull VirtualFile virtualFile) throws BrowserException {
-    //noinspection deprecation
-    return myDeprecatedMethodOverridden ? getUrl(request.getElement(), request.getFile(), virtualFile) : null;
-  }
-
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  @Nullable
-  /**
-   * @deprecated to remove in IDEA 14
-   */
-  public Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
     return null;
   }
 
   @NotNull
   public Collection<Url> getUrls(@NotNull OpenInBrowserRequest request) throws BrowserException {
     return ContainerUtil.createMaybeSingletonList(getUrl(request, request.getVirtualFile()));
-  }
-
-  @SuppressWarnings({"UnusedParameters", "UnusedDeclaration"})
-  @Nullable
-  @Deprecated
-  public String getOpenInBrowserActionText(@NotNull PsiFile file) {
-    return null;
   }
 
   @Nullable
