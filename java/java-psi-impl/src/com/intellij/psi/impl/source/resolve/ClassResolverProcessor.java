@@ -38,6 +38,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   @NotNull
   private final PsiFile myContainingFile;
   private final PsiElement myPlace;
+  private final PsiResolveHelper myResolveHelper;
   private PsiClass myAccessClass = null;
   private List<ClassCandidateInfo> myCandidates = null;
   private boolean myHasAccessibleCandidate;
@@ -67,6 +68,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         }
       }
     }
+    myResolveHelper = JavaPsiFacade.getInstance(containingFile.getProject()).getResolveHelper();
   }
 
   @NotNull
@@ -252,8 +254,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private boolean checkAccessibility(final PsiClass aClass) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(aClass.getProject());
-    return facade.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
+    return myResolveHelper.isAccessible(aClass, myPlace, myAccessClass);
   }
 
   @Override
