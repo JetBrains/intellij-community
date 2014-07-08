@@ -194,14 +194,16 @@ public class PyTypeTest extends PyTestCase {
            "def foo(*args):\n" +
            "    '''@rtype: C{str}'''\n" +
            "    return args[0]" +
-           "expr = foo('')");
+           "expr = foo('')"
+    );
   }
 
   public void testEpydocParamType() {
     doTest("str",
            "def foo(s):\n" +
            "    '''@type s: C{str}'''\n" +
-           "    expr = s");
+           "    expr = s"
+    );
   }
 
   public void testEpydocIvarType() {
@@ -385,7 +387,8 @@ public class PyTypeTest extends PyTestCase {
            "    return 1\n" +
            "g = f\n" +
            "h = g\n" +
-           "expr = h()\n");
+           "expr = h()\n"
+    );
   }
 
   public void testPropertyOfUnionType() {
@@ -454,7 +457,8 @@ public class PyTypeTest extends PyTestCase {
            "\n" +
            "    def __init__(self):\n" +
            "        self.foo = 3\n" +
-           "        expr = self.foo\n");
+           "        expr = self.foo\n"
+    );
   }
 
   // PY-7215
@@ -465,7 +469,8 @@ public class PyTypeTest extends PyTestCase {
            "        yield 10\n" +
            "    return list(g())\n" +
            "\n" +
-           "expr = f()\n");
+           "expr = f()\n"
+    );
   }
 
   public void testGeneratorNextType() {
@@ -508,7 +513,8 @@ public class PyTypeTest extends PyTestCase {
     doTest("list[list]",
            "def f():\n" +
            "    return [f()]\n" +
-           "expr = f()\n");
+           "expr = f()\n"
+    );
   }
 
   // PY-5084
@@ -519,7 +525,8 @@ public class PyTypeTest extends PyTestCase {
            "    if isinstance(x, int):\n" +
            "        print(x)\n" +
            "    else:\n" +
-           "        expr = x\n");
+           "        expr = x\n"
+    );
   }
 
   // PY-5614
@@ -606,7 +613,8 @@ public class PyTypeTest extends PyTestCase {
            "    :rtype: T\n" +
            "    '''\n" +
            "def bar(x):\n" +
-           "    expr = foo(x)\n");
+           "    expr = foo(x)\n"
+    );
   }
 
   public void testIterationTypeFromGetItem() {
@@ -866,6 +874,13 @@ public class PyTypeTest extends PyTestCase {
            "expr = C(10).foo()\n");
   }
 
+  // PY-8836
+  public void testNumpyArrayIntMultiplicationType() {
+    doMultiFileTest("ndarray",
+                    "import numpy as np\n" +
+                    "expr = np.ones(10) * 2\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
@@ -876,6 +891,18 @@ public class PyTypeTest extends PyTestCase {
   }
 
   private void doTest(final String expectedType, final String text) {
+    PyExpression expr = parseExpr(text);
+    TypeEvalContext context = getTypeEvalContext(expr);
+    PyType actual = context.getType(expr);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(expectedType, actualType);
+  }
+
+  public static final String TEST_DIRECTORY = "/types/";
+
+  private void doMultiFileTest(final String expectedType, final String text) {
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
     PyExpression expr = parseExpr(text);
     TypeEvalContext context = getTypeEvalContext(expr);
     PyType actual = context.getType(expr);
