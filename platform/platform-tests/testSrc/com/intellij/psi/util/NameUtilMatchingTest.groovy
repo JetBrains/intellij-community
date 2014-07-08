@@ -522,12 +522,6 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("*e", "fileIndex", "file", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  public void "test first letter case match is important"() {
-    assertPreference("*pim", "PNGImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*pim", "PImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*er", "Error", "exchangeRequest", NameUtil.MatchingCaseSensitivity.NONE)
-  }
-
   public void testPreferences() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
@@ -569,6 +563,14 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testMatchStartDoesntMatterForDegree() {
     assertNoPreference(" path", "getAbsolutePath", "findPath", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+  }
+
+  public void testPreferStartMatching() {
+    assertPreference("*tree", "FooTree", "Tree", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testPreferContiguousMatching() {
+    assertPreference("*mappablejs", "mappable-js.scope.js", "MappableJs.js", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testMeaningfulMatchingDegree() {

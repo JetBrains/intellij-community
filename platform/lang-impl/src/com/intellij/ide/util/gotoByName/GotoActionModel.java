@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -58,7 +58,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
+public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
   @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
   @NonNls public static final String INTENTIONS_KEY = "$$$INTENTIONS_KEY$$$";
   @Nullable private final Project myProject;
@@ -73,7 +73,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   protected final SearchableOptionsRegistrar myIndex;
   protected final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
     @Override
-    public int compare(AnAction o1, AnAction o2) {
+    public int compare(@NotNull AnAction o1, @NotNull AnAction o2) {
       int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
       if (compare == 0 && !o1.equals(o2)) {
         return o1.hashCode() - o2.hashCode();
@@ -124,7 +124,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public String getCheckBoxName() {
-    return IdeBundle.message("checkbox.other.included");
+    return null;
   }
 
   @Override
@@ -144,21 +144,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public boolean loadInitialCheckBoxState() {
-    PropertiesComponent propertiesComponent = getPropertiesStorage();
-    return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded")) &&
-           propertiesComponent.isTrueValue("GoToAction.allIncluded");
-  }
-
-  private PropertiesComponent getPropertiesStorage() {
-    return myProject != null ? PropertiesComponent.getInstance(myProject) : PropertiesComponent.getInstance();
+    return true;
   }
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
-    PropertiesComponent propertiesComponent = getPropertiesStorage();
-    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded"))) {
-      propertiesComponent.setValue("GoToAction.allIncluded", Boolean.toString(state));
-    }
   }
 
   @Override
@@ -166,7 +156,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return new DefaultListCellRenderer() {
 
       @Override
-      public Component getListCellRendererComponent(final JList list,
+      public Component getListCellRendererComponent(@NotNull final JList list,
                                                     final Object value,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         final JPanel panel = new JPanel(new BorderLayout());
@@ -175,22 +165,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         Color bg = UIUtil.getListBackground(isSelected);
         panel.setBackground(bg);
 
-        Color groupFg = isSelected ? UIUtil.getListForeground() : UIUtil.getLabelDisabledForeground();
+        Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getLabelDisabledForeground();
 
         if (value instanceof ActionWrapper) {
-
           final ActionWrapper actionWithParentGroup = (ActionWrapper)value;
 
           final AnAction anAction = actionWithParentGroup.getAction();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
           final Icon icon = templatePresentation.getIcon();
 
-          final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
-
-          final AnActionEvent event = updateActionBeforeShow(anAction, dataContext);
-          final Presentation presentation = event.getPresentation();
-
-          final Color fg = defaultActionForeground(isSelected, presentation);
+          final Color fg = defaultActionForeground(isSelected, actionWithParentGroup.getPresentation());
 
           final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText(), fg, bg, icon);
           panel.add(actionLabel, BorderLayout.WEST);
@@ -269,7 +253,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   @Override
-  public int compare(Object o1, Object o2) {
+  public int compare(@NotNull Object o1, @NotNull Object o2) {
+    if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
+    if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
+
     if (o1 instanceof OptionDescription && !(o2 instanceof OptionDescription)) {
       return 1;
     }
@@ -298,14 +285,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
-    if (isSelected) {
-      return UIUtil.getListSelectionForeground();
-    }
-
-    if (!presentation.isEnabled() || !presentation.isVisible()) {
-      return UIUtil.getInactiveTextColor();
-    }
-
+    if (isSelected) return UIUtil.getListSelectionForeground();
+    if (!presentation.isEnabled() || !presentation.isVisible()) return UIUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
   }
 
@@ -332,12 +313,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
     List<Object> objects = new ArrayList<Object>();
     final AnAction act = myActionManager.getAction(id);
+    DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
     if (act != null) {
       final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
       final MatchMode matchMode = actionMatches(pattern, act);
       final String groupName = myActionsMap.get(act);
       if (map.put(act, groupName) == null) {
-        objects.add(new ActionWrapper(act, groupName, matchMode));
+        objects.add(new ActionWrapper(act, groupName, matchMode, dataContext));
       }
       if (checkBoxState) {
         final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
@@ -348,7 +330,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           final AnAction anAction = myActionManager.getAction(id);
           map.put(anAction, null);
           if (anAction != null) {
-            objects.add(new ActionWrapper(anAction, null, MatchMode.NON_MENU));
+            objects.add(new ActionWrapper(anAction, null, MatchMode.NON_MENU, dataContext));
           }
         }
       }
@@ -356,7 +338,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       for (String intentionText : myIntentions.keySet()) {
         final ApplyIntentionAction intentionAction = myIntentions.get(intentionText);
         if (actionMatches(pattern, intentionAction) != MatchMode.NONE) {
-          objects.add(new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION));
+          objects.add(new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext));
         }
       }
     }
@@ -400,7 +382,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
             AnAction action = converter.provide(description);
             if (action != null) {
               String title = getGroupName(description);
-              objects.add(new ActionWrapper(action, title, MatchMode.NAME));
+              objects.add(new ActionWrapper(action, title, MatchMode.NAME, dataContext));
             }
             objects.add(description);
           }
@@ -534,6 +516,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return compiledPattern;
   }
 
+  @NotNull
+  @Override
+  public SortedSet<Object> sort(@NotNull Set<Object> elements) {
+    TreeSet<Object> objects = ContainerUtil.newTreeSet(this);
+    objects.addAll(elements);
+    return objects;
+  }
+
   protected enum MatchMode {
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
@@ -633,7 +623,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public boolean useMiddleMatching() {
-    return false;
+    return true;
   }
 
   private final ThreadLocal<PatternMatcher> myMatcher = new ThreadLocal<PatternMatcher>() {
@@ -647,14 +637,17 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
   
   public static class ActionWrapper implements Comparable<ActionWrapper>{
-    private AnAction myAction;
-    private MatchMode myMode;
-    private String myGroupName;
+    private final AnAction myAction;
+    private final MatchMode myMode;
+    private final String myGroupName;
+    private final DataContext myDataContext;
+    private Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, String groupName, MatchMode mode) {
+    public ActionWrapper(@NotNull AnAction action, String groupName, MatchMode mode, DataContext dataContext) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
+      myDataContext = dataContext;
     }
 
     public AnAction getAction() {
@@ -667,18 +660,30 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     @Override
     public int compareTo(@NotNull ActionWrapper o) {
-      final int compared = myMode.compareTo(o.getMode());
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        boolean p1Enable = visible();
+        boolean p2enable = o.visible();
+        if (p1Enable && !p2enable) return -1;
+        if (!p1Enable && p2enable) return 1;
+      }
+
+      int compared = myMode.compareTo(o.getMode());
       return compared != 0
              ? compared
              : StringUtil.compare(myAction.getTemplatePresentation().getText(), o.getAction().getTemplatePresentation().getText(), true);
     }
 
-    public String getGroupName() {
-      return myGroupName;
+    private boolean visible() {
+      return getPresentation().isEnabledAndVisible();
     }
 
-    public void setGroupName(String groupName) {
-      myGroupName = groupName;
+    public Presentation getPresentation() {
+      if (myPresentation != null) return myPresentation;
+      return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+    }
+
+    public String getGroupName() {
+      return myGroupName;
     }
 
     @Override

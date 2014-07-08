@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
@@ -976,17 +977,22 @@ public class GitUtil {
   @NotNull
   public static List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull VirtualFile root,
                                                       @NotNull Collection<String> affectedPaths, boolean relativePaths) {
+    ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
     List<Change> affectedChanges = new ArrayList<Change>();
     for (String path : affectedPaths) {
       String absolutePath = relativePaths ? toAbsolute(root, path) : path;
       VirtualFile file = findRefreshFileOrLog(absolutePath);
       if (file != null) {
-        Change change = ChangeListManager.getInstance(project).getChange(file);
+        Change change = changeListManager.getChange(file);
         if (change != null) {
           affectedChanges.add(change);
         }
         else {
-          LOG.warn("Change is not found for " + file.getPath());
+          String message = "Change is not found for " + file.getPath();
+          if (changeListManager.isInUpdate()) {
+            message += " because ChangeListManager is being updated.";
+          }
+          LOG.warn(message);
         }
       }
     }

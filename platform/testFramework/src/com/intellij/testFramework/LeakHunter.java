@@ -24,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.ui.UIUtil;
@@ -206,7 +207,7 @@ public class LeakHunter {
             while (backLink != null) {
               String valueStr;
               try {
-                valueStr = String.valueOf(backLink.value);
+                valueStr = backLink.value instanceof FList ? "FList" : String.valueOf(backLink.value);
               }
               catch (Throwable e) {
                 valueStr = "("+e.getMessage()+" while computing .toString())";

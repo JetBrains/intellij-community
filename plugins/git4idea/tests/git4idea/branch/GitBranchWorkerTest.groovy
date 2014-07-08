@@ -75,10 +75,6 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
   }
 
-  public void tearDown() {
-    super.tearDown();
-  }
-
   public void "test create new branch without problems"() {
     checkoutNewBranch "feature", [ ]
 

@@ -6,6 +6,7 @@ import gnu.trove.TDoubleArrayList;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.JsonReaderEx;
 
 import java.util.ArrayList;
@@ -103,12 +104,12 @@ public final class JsonReaders {
     }
   }
 
-  public static String convertRawEnumName(String enumValue) {
+  public static String convertRawEnumName(@NotNull String enumValue) {
     StringBuilder builder = new StringBuilder(enumValue.length() + 4);
     boolean prevIsLowerCase = false;
     for (int i = 0; i < enumValue.length(); i++) {
       char c = enumValue.charAt(i);
-      if (c == '-') {
+      if (c == '-' || c == ' ') {
         builder.append('_');
         continue;
       }

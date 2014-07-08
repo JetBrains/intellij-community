@@ -652,6 +652,11 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext) {
+    return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true);
+  }
+
+  public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
+                                   @NotNull XSuspendContext suspendContext, boolean handleLogMessage) {
     XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
     String condition = breakpoint.getCondition();
     if (condition != null && evaluator != null) {
@@ -663,7 +668,7 @@ public class XDebugSessionImpl implements XDebugSession {
       }
     }
 
-    if (breakpoint.isLogMessage()) {
+    if (handleLogMessage && breakpoint.isLogMessage()) {
       String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
       final XSourcePosition position = breakpoint.getSourcePosition();
       final OpenFileHyperlinkInfo hyperlinkInfo =

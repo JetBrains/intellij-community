@@ -19,25 +19,21 @@ import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
-public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable{
+public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable {
   private EditorColorsScheme myColorsScheme;
-  private final EditorColorsManager myEditorColorsManager;
-  @Deprecated
-  @NonNls public static final String DEFAULT_SCHEME_NAME = EditorColorsManager.DEFAULT_SCHEME_NAME; // it is API, let's do not break it and do not inline constant
 
+  /**
+   * @noinspection UnusedParameters
+   */
   public UsageTreeColorsScheme(EditorColorsManager editorColorsManager) {
-    myEditorColorsManager = editorColorsManager;
   }
 
   public static UsageTreeColorsScheme getInstance() {
@@ -56,14 +52,9 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    if (myColorsScheme == null){
-      Color color = UIUtil.getTreeTextBackground();
-      if (color != null && ColorUtil.isDark(color)) {
-        myColorsScheme = (EditorColorsScheme)myEditorColorsManager.getGlobalScheme().clone();
-      }
-      else {
-        myColorsScheme = (EditorColorsScheme)myEditorColorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME).clone();
-      }
+    if (myColorsScheme == null) {
+      EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground());
+      myColorsScheme = (EditorColorsScheme)scheme.clone();
     }
     myColorsScheme.readExternal(element);
   }

@@ -174,11 +174,15 @@ public class LineStatusTracker {
   private RangeHighlighter createHighlighter(final Range range) {
     LOG.assertTrue(!myReleased, "Already released");
 
-    TextRange textRange = getCurrentTextRange(range);
+    int first =
+      range.getOffset1() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset1());
+
+    int second =
+      range.getOffset2() >= myDocument.getLineCount() ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getOffset2());
 
     final RangeHighlighter highlighter = DocumentMarkupModel.forDocument(myDocument, myProject, true)
-      .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.FIRST - 1, null,
-                           HighlighterTargetArea.LINES_IN_RANGE);
+      .addRangeHighlighter(first, second, HighlighterLayer.FIRST - 1, null, HighlighterTargetArea.LINES_IN_RANGE);
+
     final TextAttributes attr = LineStatusTrackerDrawing.getAttributesFor(range);
     highlighter.setErrorStripeMarkColor(attr.getErrorStripeColor());
     highlighter.setThinErrorStripeMark(true);

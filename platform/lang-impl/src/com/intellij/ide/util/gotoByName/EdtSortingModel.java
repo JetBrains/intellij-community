@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.intellij.ide.util.gotoByName;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 
-public class DebugAssertions {
-  private static final Logger LOG = Logger.getInstance(DebugAssertions.class);
+import java.util.Set;
+import java.util.SortedSet;
 
-  public static final boolean DEBUG = SystemProperties.getBooleanProperty(
-    "intellij.idea.indices.debug",
-    ApplicationManager.getApplication().isInternal()
-  );
-
-  public static void assertTrue(boolean value) {
-    if (!value) {
-      LOG.assertTrue(false);
-    }
-  }
+public interface EdtSortingModel {
+  @NotNull
+  SortedSet<Object> sort(@NotNull Set<Object> elements);
 }

@@ -54,6 +54,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -114,7 +115,7 @@ public class JavaDebugProcess extends XDebugProcess {
                     Breakpoint breakpoint = descriptors.get(0).getFirst();
                     XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
                     if (xBreakpoint != null) {
-                      getSession().breakpointReached(xBreakpoint, null, context);
+                      ((XDebugSessionImpl)getSession()).breakpointReached(xBreakpoint, null, context, false);
                       return;
                     }
                   }

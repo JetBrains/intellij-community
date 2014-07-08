@@ -52,7 +52,17 @@ public abstract class ValueContainer<Value> {
   public abstract IntPredicate getValueAssociationPredicate(Value value);
 
   @NotNull
-  public abstract Iterator<Value> getValueIterator();
+  public abstract ValueIterator<Value> getValueIterator();
+
+  public interface ValueIterator<Value> extends Iterator<Value> {
+    @NotNull
+    IntIterator getInputIdsIterator();
+
+    @NotNull
+    IntPredicate getValueAssociationPredicate();
+
+    Object getFileSetObject();
+  }
 
   @NotNull
   public abstract List<Value> toValueList();

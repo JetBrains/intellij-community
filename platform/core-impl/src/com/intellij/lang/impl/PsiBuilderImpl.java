@@ -1342,6 +1342,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
 
+      if (custom != null) {
+        ThreeState customResult = custom.fun(oldNode, newNode, myTreeStructure);
+
+        if (customResult != ThreeState.UNSURE) {
+          return customResult;
+        }
+      }
       if (newNode instanceof Token) {
         final IElementType type = newNode.getTokenType();
         final Token token = (Token)newNode;
@@ -1374,9 +1381,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                  ? ThreeState.YES
                  : ThreeState.NO;
         }
-      }
-      if (custom != null) {
-        return custom.fun(oldNode, newNode, myTreeStructure);
       }
 
       return ThreeState.UNSURE;

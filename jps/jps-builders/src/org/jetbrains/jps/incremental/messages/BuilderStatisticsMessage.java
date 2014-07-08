@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package org.jetbrains.jps.incremental.messages;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SystemProperties;
+/**
+ * @author nik
+ */
+public class BuilderStatisticsMessage extends BuildMessage {
+  private final String myBuilderName;
+  private final long myElapsedTimeMs;
 
-public class DebugAssertions {
-  private static final Logger LOG = Logger.getInstance(DebugAssertions.class);
+  public BuilderStatisticsMessage(String builderName, long elapsedTimeMs) {
+    super(builderName + " elapsed " + elapsedTimeMs + "ms", Kind.INFO);
+    myBuilderName = builderName;
+    myElapsedTimeMs = elapsedTimeMs;
+  }
 
-  public static final boolean DEBUG = SystemProperties.getBooleanProperty(
-    "intellij.idea.indices.debug",
-    ApplicationManager.getApplication().isInternal()
-  );
+  public String getBuilderName() {
+    return myBuilderName;
+  }
 
-  public static void assertTrue(boolean value) {
-    if (!value) {
-      LOG.assertTrue(false);
-    }
+  public long getElapsedTimeMs() {
+    return myElapsedTimeMs;
   }
 }

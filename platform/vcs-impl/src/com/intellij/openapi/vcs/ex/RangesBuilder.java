@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -30,22 +31,20 @@ import java.util.List;
 public class RangesBuilder {
   private List<Range> myRanges;
 
-  public RangesBuilder(Document current, Document upToDate) throws FilesTooBigForDiffException {
+  public RangesBuilder(@NotNull Document current, @NotNull Document upToDate) throws FilesTooBigForDiffException {
     this(new DocumentWrapper(current).getLines(), new DocumentWrapper(upToDate).getLines(), 0, 0);
   }
 
-  public RangesBuilder(List<String> current, List<String> upToDate, int shift, int uShift) throws FilesTooBigForDiffException {
+  public RangesBuilder(@NotNull List<String> current, @NotNull List<String> upToDate, int shift, int uShift) throws FilesTooBigForDiffException {
     myRanges = new LinkedList<Range>();
 
     Diff.Change ch = Diff.buildChanges(ArrayUtil.toStringArray(upToDate), ArrayUtil.toStringArray(current));
-
 
     while (ch != null) {
       Range range = Range.createOn(ch, shift, uShift);
       myRanges.add(range);
       ch = ch.link;
     }
-
   }
 
   public List<Range> getRanges() {

@@ -1,6 +1,6 @@
 some
  <caret>te
- <caret>xt
+<caret>xt
 other
 <caret>
 

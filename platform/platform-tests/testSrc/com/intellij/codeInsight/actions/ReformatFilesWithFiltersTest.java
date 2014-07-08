@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -24,11 +11,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.psi.search.GlobalSearchScopesCore.directoryScope;
@@ -223,13 +212,30 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     PsiFile testJs1 = fileTree.addTestFile("testJs1.js", "empty content");
 
     GlobalSearchScope testScope = directoryScope(test, true);
+
+    Logger logger = Logger.getInstance(getClass());
+    logFiles(logger, "Previously formatted files: ", myMockCodeStyleManager.getFormattedFiles());
+
     reformatWithRearrange(myWorkingDirectory, testScope);
+    logFiles(logger, "Currently formatted files: ", myMockCodeStyleManager.getFormattedFiles());
+    logFiles(logger, "Should be formatted", ContainerUtil.newArrayList(testJava1, testPhp1, testJs1));
+
     assertWasFormatted(testJava1, testPhp1, testJs1);
     assertWasNotFormatted(java2, php2, js2);
 
     reformatAndOptimize(myWorkingDirectory, testScope);
     assertWasFormatted(testJava1, testPhp1, testJs1);
     assertWasNotFormatted(java2, php2, js2);
+  }
+
+  private void logFiles(Logger log, String message, Collection<PsiFile> files) {
+    StringBuilder builder;
+    builder = new StringBuilder();
+    builder.append(message).append('\n');
+    for (PsiFile file : myMockCodeStyleManager.getFormattedFiles()) {
+      builder.append(file).append('\n');
+    }
+    log.info(builder.toString());
   }
 
   public void assertWasFormatted(PsiFile... files) {

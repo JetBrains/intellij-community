@@ -804,8 +804,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return History.KEY.is(dataId) ? myHistory : null;
   }
 
-  public JTree getPreferredFocusedComponent() {
-    return myTree.getTree();
+  public JComponent getPreferredFocusedComponent() {
+    return mySearch;//myTree.getTree();
   }
 
   @Override

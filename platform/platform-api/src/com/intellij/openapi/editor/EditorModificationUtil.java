@@ -40,7 +40,9 @@ public class EditorModificationUtil {
 
   public static void deleteSelectedText(Editor editor) {
     deleteSelectedTextNoScrolling(editor);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   private static void deleteSelectedTextNoScrolling(Editor editor) {
@@ -106,13 +108,21 @@ public class EditorModificationUtil {
     insertStringAtCaret(editor, s, false, true);
   }
 
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode) {
+    return insertStringAtCaret(editor, s, toProcessOverwriteMode, s.length());
+  }
+
   public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
     return insertStringAtCaret(editor, s, toProcessOverwriteMode, toMoveCaret, s.length());
   }
 
+  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, int caretShift) {
+    return insertStringAtCaret(editor, s, toProcessOverwriteMode, true, caretShift);
+  }
+
   public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     int result = insertStringAtCaretNoScrolling(editor, s, toProcessOverwriteMode, toMoveCaret, caretShift);
-    if (toMoveCaret) {
+    if (toMoveCaret && editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
     return result;
@@ -478,6 +488,11 @@ public class EditorModificationUtil {
         caret.moveToOffset(caret.getOffset() + caretShift);
       }
     });
+  }
+
+  public static void moveCaretRelatively(@NotNull Editor editor, final int caretShift) {
+    CaretModel caretModel = editor.getCaretModel();
+    caretModel.moveToOffset(caretModel.getOffset() + caretShift);
   }
 
   /** @deprecated use {@link #pasteTransferable(Editor, Producer)} (to remove in IDEA 14) */

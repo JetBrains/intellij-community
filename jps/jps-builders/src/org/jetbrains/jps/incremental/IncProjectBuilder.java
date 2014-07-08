@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
@@ -37,6 +38,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -70,6 +72,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -113,6 +116,7 @@ public class IncProjectBuilder {
   private final float myTotalTargetsWork;
   private final int myTotalModuleLevelBuilderCount;
   private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<Future>());
+  private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = ContainerUtil.newConcurrentMap();
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
                            @Nullable Callbacks.ConstantAffectionResolver constantSearch, final boolean isTestMode) {
@@ -356,6 +360,7 @@ public class IncProjectBuilder {
       context.processMessage(new ProgressMessage("Running 'after' tasks"));
       runTasks(context, myBuilderRegistry.getAfterTasks());
       TimingLog.LOG.debug("'after' tasks finished");
+      sendElapsedTimeMessages(context);
     }
     finally {
       for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
@@ -367,6 +372,12 @@ public class IncProjectBuilder {
       context.processMessage(new ProgressMessage("Finished, saving caches..."));
     }
 
+  }
+
+  private void sendElapsedTimeMessages(CompileContext context) {
+    for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
+      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), entry.getValue().get()/1000000));
+    }
   }
 
   private void startTempDirectoryCleanupTask() {
@@ -822,10 +833,30 @@ public class IncProjectBuilder {
     
     final List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
     for (TargetBuilder<?, ?> builder : builders) {
-      BuildOperations.buildTarget(target, context, builder);
+      buildTarget(target, context, builder);
       updateDoneFraction(context, 1.0f / builders.size());
     }
     return true;
+  }
+
+  private <R extends BuildRootDescriptor, T extends BuildTarget<R>>
+  void buildTarget(final T target, final CompileContext context, TargetBuilder<?, ?> builder) throws ProjectBuildException, IOException {
+
+    if (builder.getTargetTypes().contains(target.getTargetType())) {
+      DirtyFilesHolder<R, T> holder = new DirtyFilesHolderBase<R, T>(context) {
+        @Override
+        public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
+          context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
+        }
+      };
+      //noinspection unchecked
+      BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
+      long start = System.nanoTime();
+      ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);
+      incBuilderElapsedTime(builder, System.nanoTime() - start);
+      outputConsumer.fireFileGeneratedEvent();
+      context.checkCanceled();
+    }
   }
 
   private static <T extends BuildRootDescriptor>
@@ -1105,7 +1136,9 @@ public class IncProjectBuilder {
 
           for (ModuleLevelBuilder builder : builders) {
             processDeletedPaths(context, chunk.getTargets());
+            long start = System.nanoTime();
             final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
+            incBuilderElapsedTime(builder, System.nanoTime() - start);
 
             doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
@@ -1167,6 +1200,13 @@ public class IncProjectBuilder {
     }
 
     return doneSomething;
+  }
+
+  private void incBuilderElapsedTime(Builder builder, long timeNanos) {
+    if (!myElapsedTimeNanosByBuilder.containsKey(builder)) {
+      myElapsedTimeNanosByBuilder.putIfAbsent(builder, new AtomicLong());
+    }
+    myElapsedTimeNanosByBuilder.get(builder).addAndGet(timeNanos);
   }
 
   private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {
