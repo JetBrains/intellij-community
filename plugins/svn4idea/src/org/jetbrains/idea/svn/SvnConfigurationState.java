@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.xmlb.annotations.*;
+import org.jetbrains.idea.svn.api.Depth;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -70,6 +71,7 @@ public class SvnConfigurationState {
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
   public boolean FORCE_UPDATE;
   public boolean IGNORE_EXTERNALS;
+  public Depth UPDATE_DEPTH = Depth.UNKNOWN;
 
   @Tag("configuration")
   public static class ConfigurationDirectory {

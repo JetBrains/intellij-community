@@ -76,9 +76,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private SvnAuthenticationManager myInteractiveManager;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
-  // TODO: update depth is not stored in configuration as SVNDepth has wrong type for DefaultJDOMExternalizer
-  // TODO: check if it should be stored
-  public Depth UPDATE_DEPTH = Depth.UNKNOWN;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
@@ -182,11 +179,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public Depth getUpdateDepth() {
-    return UPDATE_DEPTH;
+    return myState.UPDATE_DEPTH;
   }
 
   public void setUpdateDepth(Depth updateDepth) {
-    this.UPDATE_DEPTH = updateDepth;
+    myState.UPDATE_DEPTH = updateDepth;
   }
 
   public UseAcceleration getUseAcceleration() {
