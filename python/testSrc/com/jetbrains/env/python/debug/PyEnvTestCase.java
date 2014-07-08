@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyTestRemoteSdkProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -39,9 +40,9 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
 
 
-  public static final boolean SHOULD_RUN_REMOTE = System.getProperty("pycharm.run_remote") != null;
+  public static final boolean RUN_REMOTE = SystemProperties.getBooleanProperty("pycharm.run_remote", false);
 
-  public static final boolean DONT_RUN_LOCAL = System.getProperty("pycharm.dont_run_local") != null;
+  public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
 
   /**
    * Tags that should exist between all tags, available on all interpreters for test to run.
@@ -135,13 +136,13 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
       return;
     }
 
-    if (!DONT_RUN_LOCAL) {
+    if (RUN_LOCAL) {
       TaskRunner taskRunner = new TaskRunner(roots);
 
       taskRunner.runTask(testTask, testName);
     }
 
-    if (SHOULD_RUN_REMOTE && PyTestRemoteSdkProvider.shouldRunRemoteSdk(testTask)) {
+    if (RUN_REMOTE && PyTestRemoteSdkProvider.shouldRunRemoteSdk(testTask)) {
       if (PyTestRemoteSdkProvider.canRunRemoteSdk()) {
         TaskRunner remoteRunner = new RemoteTaskRunner(roots);
         remoteRunner.runTask(testTask, testName);
