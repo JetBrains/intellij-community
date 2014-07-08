@@ -99,6 +99,8 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
+    myLocalCourseBaseFileName = null;
+    myDefaultSelectedCourseName = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
 
