@@ -379,7 +379,7 @@ public class XDebuggerTestUtil {
     }
   }
 
-  private static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
+  public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
     return ApplicationManager.getApplication().runReadAction(new Computable<XBreakpoint<?>[]>() {
       public XBreakpoint<?>[] compute() {
         return breakpointManager.getAllBreakpoints();

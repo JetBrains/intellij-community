@@ -20,7 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Couple;
@@ -51,6 +50,8 @@ import static com.google.common.collect.Lists.newLinkedList;
  * And documentation here: http://docs.emmet.io/filters/bem/
  */
 public class BemEmmetFilter extends ZenCodingFilter {
+  public static final String SUFFIX = "bem";
+
   private static final Key<BemState> BEM_STATE = Key.create("BEM_STATE");
 
   private static final String ELEMENT_SEPARATOR = "__";
@@ -95,13 +96,14 @@ public class BemEmmetFilter extends ZenCodingFilter {
 
   @NotNull
   @Override
-  public String getSuffix() {
-    return "bem";
+  public String getDisplayName() {
+    return "BEM";
   }
 
+  @NotNull
   @Override
-  public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    return EmmetOptions.getInstance().isBemFilterEnabledByDefault();
+  public String getSuffix() {
+    return SUFFIX;
   }
 
   @Override

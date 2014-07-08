@@ -90,6 +90,10 @@
                      key="assignment.to.for.loop.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.assignment.AssignmentToForLoopParameterInspection"/>
+    <localInspection language="JAVA" shortName="AssignmentToLambdaParameter" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="assignment.to.lambda.parameter.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.assignment.AssignmentToLambdaParameterInspection"/>
     <localInspection language="JAVA" shortName="AssignmentToMethodParameter" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assignment.to.method.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"

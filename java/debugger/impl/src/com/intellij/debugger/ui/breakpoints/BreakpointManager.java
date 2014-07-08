@@ -689,34 +689,6 @@ public class BreakpointManager {
     }
   }
 
-  // copied from XDebugSessionImpl processDependencies
-  public void processBreakpointHit(@NotNull final Breakpoint breakpoint) {
-    XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();
-    XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-    if (!dependentBreakpointManager.isMasterOrSlave(xBreakpoint)) {
-      return;
-    }
-    List<XBreakpoint<?>> breakpoints = dependentBreakpointManager.getSlaveBreakpoints(xBreakpoint);
-    for (final XBreakpoint<?> slaveBreakpoint : breakpoints) {
-      DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-        @Override
-        public void run() {
-          slaveBreakpoint.setEnabled(true);
-        }
-      });
-    }
-
-    if (dependentBreakpointManager.getMasterBreakpoint(xBreakpoint) != null && !dependentBreakpointManager.isLeaveEnabled(xBreakpoint)) {
-      DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
-        @Override
-        public void run() {
-          breakpoint.setEnabled(false);
-        }
-      });
-      //myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(breakpoint);
-    }
-  }
-
   @Nullable
   public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
     XDependentBreakpointManager dependentBreakpointManager = ((XBreakpointManagerImpl)getXBreakpointManager()).getDependentBreakpointManager();

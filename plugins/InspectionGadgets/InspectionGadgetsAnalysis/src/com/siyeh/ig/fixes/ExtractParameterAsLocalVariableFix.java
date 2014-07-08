@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractParameterAsLocalVariableFix
@@ -46,8 +47,15 @@ public class ExtractParameterAsLocalVariableFix
 
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiReferenceExpression parameterReference =
-      (PsiReferenceExpression)descriptor.getPsiElement();
+    final PsiElement element = descriptor.getPsiElement();
+    if (!(element instanceof PsiExpression)) {
+      return;
+    }
+    final PsiExpression expression = ParenthesesUtils.stripParentheses((PsiExpression)element);
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return;
+    }
+    final PsiReferenceExpression parameterReference = (PsiReferenceExpression)expression;
     final PsiElement target = parameterReference.resolve();
     if (!(target instanceof PsiParameter)) {
       return;
@@ -102,12 +110,12 @@ public class ExtractParameterAsLocalVariableFix
     if (reference == null) {
       return;
     }
-    final PsiElement element = reference.getElement();
-    if (!(element instanceof PsiReferenceExpression)) {
+    final PsiElement referenceElement = reference.getElement();
+    if (!(referenceElement instanceof PsiReferenceExpression)) {
       return;
     }
     final PsiReferenceExpression firstReference =
-      (PsiReferenceExpression)element;
+      (PsiReferenceExpression)referenceElement;
     final PsiElement[] children = body.getChildren();
     final int startIndex;
     final int endIndex;

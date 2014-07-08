@@ -74,14 +74,16 @@ class NSScrollerHelper {
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
 
     ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSScrollerChangesObserver");
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleScrollerStyleChanged:"), APPEARANCE_CALLBACK, "v@")) {
-      throw new RuntimeException("Cannot add observer method");
-    }
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleBehaviorChanged:"), BEHAVIOR_CALLBACK, "v@")) {
-      throw new RuntimeException("Cannot add observer method");
-    }
+    if (!ID.NIL.equals(delegateClass)) {
+      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleScrollerStyleChanged:"), APPEARANCE_CALLBACK, "v@")) {
+        throw new RuntimeException("Cannot add observer method");
+      }
+      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleBehaviorChanged:"), BEHAVIOR_CALLBACK, "v@")) {
+        throw new RuntimeException("Cannot add observer method");
+      }
 
-    Foundation.registerObjcClassPair(delegateClass);
+      Foundation.registerObjcClassPair(delegateClass);
+    }
     ID delegate = invoke("NSScrollerChangesObserver", "new");
 
     try {

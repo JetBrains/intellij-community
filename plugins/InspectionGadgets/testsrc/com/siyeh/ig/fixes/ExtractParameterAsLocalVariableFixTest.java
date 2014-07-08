@@ -20,6 +20,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.assignment.AssignmentToCatchBlockParameterInspection;
 import com.siyeh.ig.assignment.AssignmentToForLoopParameterInspection;
+import com.siyeh.ig.assignment.AssignmentToLambdaParameterInspection;
 import com.siyeh.ig.assignment.AssignmentToMethodParameterInspection;
 
 /**
@@ -35,7 +36,8 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     return new BaseInspection[] {
       new AssignmentToMethodParameterInspection(),
       inspection2,
-      new AssignmentToCatchBlockParameterInspection()
+      new AssignmentToCatchBlockParameterInspection(),
+      new AssignmentToLambdaParameterInspection()
     };
   }
 
@@ -79,6 +81,23 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
+  public void testParenthesizedExpression() {
+    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+           "class X {" +
+           "  void m(int i) {" +
+           "    (/**/i)++;" +
+           "    System.out.println(i);" +
+           "  }" +
+           "}",
+           "class X {\n" +
+           "    void m(int i) {\n" +
+           "        int i1 = i;\n" +
+           "        (i1)++;\n" +
+           "        System.out.println(i1);\n" +
+           "    }\n" +
+           "}");
+  }
+
   public void testSimpleForeach() {
     doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
@@ -96,7 +115,7 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
     );
   }
 
-  public void testSimleCatchBlock() {
+  public void testSimpleCatchBlock() {
     doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "class X {" +

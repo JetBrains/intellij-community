@@ -44,8 +44,8 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
                                             ((PsiMethod) psiElement).hasModifierProperty(PsiModifier.NATIVE))) {
       int errorOffset = getErrorElementOffset(psiElement);
       int elementEndOffset = psiElement.getTextRange().getEndOffset();
-      final CharSequence text = editor.getDocument().getCharsSequence();
       if (psiElement instanceof PsiEnumConstant) {
+        final CharSequence text = editor.getDocument().getCharsSequence();
         final int commaOffset = CharArrayUtil.shiftForwardUntil(text, elementEndOffset, ",");
         if (commaOffset < text.length()) {
           elementEndOffset = commaOffset + 1;
@@ -53,18 +53,13 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
       }
 
       if (errorOffset >= 0 && errorOffset < elementEndOffset) {
+        final CharSequence text = editor.getDocument().getCharsSequence();
         if (text.charAt(errorOffset) == ' ' && text.charAt(errorOffset + 1) == ';') {
           errorOffset++;
         }
       }
 
       editor.getCaretModel().moveToOffset(errorOffset >= 0 ? errorOffset : elementEndOffset);
-      if (errorOffset < 0 &&
-          isModified &&
-          (elementEndOffset == text.length() || text.charAt(elementEndOffset) == '\n') &&
-          (psiElement instanceof PsiExpressionStatement || psiElement instanceof PsiDeclarationStatement)) {
-        JavaSmartEnterProcessor.plainEnter(editor);
-      }
       return isModified;
     }
     return false;

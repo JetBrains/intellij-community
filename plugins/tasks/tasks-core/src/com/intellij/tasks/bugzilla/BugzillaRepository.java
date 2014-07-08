@@ -1,10 +1,12 @@
 package com.intellij.tasks.bugzilla;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.TaskState;
@@ -25,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
@@ -32,6 +36,11 @@ import java.util.*;
 @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
 @Tag("Bugzilla")
 public class BugzillaRepository extends BaseRepositoryImpl {
+
+  private static final Logger LOG = Logger.getInstance(BugzillaRepository.class);
+
+  // Copied from SendTimeTrackingInformationDialog
+  public static final Pattern TIME_SPENT_PATTERN = Pattern.compile("([0-9]+)d ([0-9]+)h ([0-9]+)m");
 
   private Version myVersion;
 
@@ -170,6 +179,29 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     request.execute();
   }
 
+  @Override
+  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
+    LOG.debug(String.format("Last post: %s, time spent from last: %s, time spent: %s",
+                            task.getLastPost(), task.getTimeSpentFromLastPost(), timeSpent));
+    Matcher matcher = TIME_SPENT_PATTERN.matcher(timeSpent);
+    if (matcher.find()) {
+      int days = Integer.valueOf(matcher.group(1));
+      int hours = Integer.valueOf(matcher.group(2));
+      int minutes = Integer.valueOf(matcher.group(3));
+      BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
+        .requireAuthentication(true)
+        .withParameter("ids", newVector(task.getId()))
+        // the number of hours worked on the bug as double
+        .withParameter("work_time", days * 24 + hours + minutes / 60.0);
+      if (!StringUtil.isEmptyOrSpaces(comment)) {
+        request.withParameter("comment", newHashTable("body", comment, "is_private", false));
+      }
+      request.execute();
+    } else {
+      LOG.error("Illegal time spent format: " + timeSpent);
+    }
+  }
+
   /**
    * @return pair where first element is list of project names and second is list of component names (will be empty for Bugzilla < 4.2)
    */
@@ -227,7 +259,6 @@ public class BugzillaRepository extends BaseRepositoryImpl {
     return new Vector<T>(Arrays.asList(elements));
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   private static <K, V> Hashtable<K, V> newHashTable(Object... pairs) {
     assert pairs.length % 2 == 0;
     Hashtable<K, V> table = new Hashtable<K, V>();
@@ -254,11 +285,12 @@ public class BugzillaRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    int baseFeatures = super.getFeatures();
+    int features = super.getFeatures();
+    // Status and work time updates are available through Bug.update method which is available only in Bugzilla 4.0+
     if (myVersion != null && myVersion.isOrGreaterThan(4, 0)) {
-      baseFeatures |= STATE_UPDATING;
+      return features | STATE_UPDATING | TIME_MANAGEMENT;
     }
-    return baseFeatures;
+    return features;
   }
 
   private class BugzillaXmlRpcRequest {

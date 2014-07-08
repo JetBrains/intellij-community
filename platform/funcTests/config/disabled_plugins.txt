@@ -78,7 +78,6 @@ com.jetbrains.jarFinder
 com.jetbrains.php.framework
 com.intellij.seam.pages
 JSR45Plugin
-com.intellij.sql
 ActionScript Profiler
 JavaScriptDebugger
 com.intellij.tapestry
@@ -92,7 +91,7 @@ org.jetbrains.android
 com.intellij.gwt
 com.intellij.spring.data
 JSIntentionPowerPack
-com.intellij.persistence.database
+com.intellij.database
 com.intellij.seam
 ClearcasePlugin
 SourceSafe

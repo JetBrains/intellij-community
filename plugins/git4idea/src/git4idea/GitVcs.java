@@ -69,7 +69,6 @@ import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
-import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.GitProjectLogManager;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;
@@ -369,7 +368,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-    NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
 
     if (myBranchWidget != null) {

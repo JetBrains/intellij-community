@@ -18,13 +18,23 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.HintListener;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -40,14 +50,6 @@ import java.util.EventObject;
  */
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
-
-  private static final TextAttributes ourReferenceAttributes = new TextAttributes();
-
-  static {
-    ourReferenceAttributes.setForegroundColor(JBColor.BLUE);
-    ourReferenceAttributes.setEffectColor(JBColor.BLUE);
-    ourReferenceAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
-  }
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     @Override
@@ -139,8 +141,12 @@ public abstract class AbstractValueHint {
     }
 
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      TextAttributes attributes = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
+      attributes = NavigationUtil.patchAttributesColor(attributes, myCurrentRange, myEditor);
+
       myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
-                                                                    HighlighterLayer.SELECTION + 1, ourReferenceAttributes,
+                                                                    HighlighterLayer.SELECTION + 1, attributes,
                                                                     HighlighterTargetArea.EXACT_RANGE);
       Component internalComponent = myEditor.getContentComponent();
       myStoredCursor = internalComponent.getCursor();

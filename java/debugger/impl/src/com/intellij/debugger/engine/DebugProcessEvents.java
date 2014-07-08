@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -321,15 +322,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
       // breakpoints should be initialized after all processAttached listeners work
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          XDebugSession session = getSession().getXDebugSession();
-          if (session != null) {
-            session.initBreakpoints();
-          }
-        }
-      });
+      XDebugSession session = getSession().getXDebugSession();
+      if (session != null) {
+        session.initBreakpoints();
+      }
 
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
       final String transportName = DebuggerBundle.getTransportName(getConnection());
@@ -463,7 +459,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         if (requestHit && requestor instanceof Breakpoint) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
-          myBreakpointManager.processBreakpointHit((Breakpoint)requestor);
+          XDebugSession session = getSession().getXDebugSession();
+          if (session != null) {
+            XBreakpoint breakpoint = ((Breakpoint)requestor).getXBreakpoint();
+            if (breakpoint != null) {
+              ((XDebugSessionImpl)session).processDependencies(breakpoint);
+            }
+          }
         }
 
         if(!requestHit || resumePreferred) {

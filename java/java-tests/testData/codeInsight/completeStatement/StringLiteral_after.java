@@ -1,7 +1,6 @@
 
 class foo {
     {
-        String s = "a";
-        <caret>
+        String s = "a";<caret>
     }
 }

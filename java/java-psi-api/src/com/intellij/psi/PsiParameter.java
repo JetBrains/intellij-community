@@ -37,7 +37,7 @@ public interface PsiParameter extends PsiVariable {
   };
 
   /**
-   * Returns the element (method, foreach statement or catch block) in which the
+   * Returns the element (method, lambda expression, foreach statement or catch block) in which the
    * parameter is declared.
    *
    * @return the declaration scope for the parameter.

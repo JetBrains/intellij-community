@@ -177,7 +177,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     appendIdeaLibrary(home, result, "junit.jar");
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
-    appendIdeaLibrary(plugins + "DatabaseSupport", result, "database-impl.jar", "jdbc-console.jar");
+    appendIdeaLibrary(plugins + "DatabaseTools", result, "database-impl.jar", "jdbc-console.jar");
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
     appendIdeaLibrary(plugins + "Spring", result,

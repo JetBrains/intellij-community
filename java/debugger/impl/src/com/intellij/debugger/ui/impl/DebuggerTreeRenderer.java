@@ -22,15 +22,14 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -119,18 +118,6 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return nodeIcon;
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    if (component != null && ColorUtil.isDark(component.getBackground()) != ColorUtil.isDark(globalScheme.getDefaultBackground())) {
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-      if (scheme != null) {
-        return scheme;
-      }
-    }
-    return globalScheme;
-  }
-
   public static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
                                                     NodeDescriptorImpl descriptor,
                                                     EditorColorsScheme colorsScheme,
@@ -139,11 +126,11 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   public static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor, boolean multiline) {
-    return getDescriptorText(debuggerContext, descriptor, getColorScheme(null), multiline, true);
+    return getDescriptorText(debuggerContext, descriptor, DebuggerUIUtil.getColorScheme(null), multiline, true);
   }
 
   public static SimpleColoredText getDescriptorTitle(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor) {
-    return getDescriptorText(debuggerContext, descriptor, getColorScheme(null), false, false);
+    return getDescriptorText(debuggerContext, descriptor, DebuggerUIUtil.getColorScheme(null), false, false);
   }
 
   private static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,

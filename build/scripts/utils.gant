@@ -893,3 +893,28 @@ binding.setVariable("reassignAltClickToMultipleCarets", {String communityHome ->
   patchedKeymapFile = new File("${paths.sandbox}/classes/production/platform-resources/idea/Keymap_Default.xml")
   patchedKeymapFile.write(defaultKeymapContent)
 })
+
+// modules used in Upsource and in Kotlin as an API to IDEA
+binding.setVariable("analysisApiModules", [
+    "analysis-api",
+    "boot",
+    "core-api",
+    "duplicates-analysis",
+    "editor-ui-api",
+    "editor-ui-ex",
+    "extensions",
+    "indexing-api",
+    "java-analysis-api",
+    "java-indexing-api",
+    "java-psi-api",
+    "java-structure-view",
+    "jps-model-api",
+    "jps-model-serialization",
+    "projectModel-api",
+    "structure-view-api",
+    "util",
+    "util-rt",
+    "xml-analysis-api",
+    "xml-psi-api",
+    "xml-structure-view-api",
+])

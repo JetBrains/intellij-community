@@ -59,6 +59,11 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
         append(text, simpleTextAttributes);
+        String location = presentation.getLocationString();
+        if (!StringUtil.isEmpty(location)) {
+          SimpleTextAttributes attributes = SimpleTextAttributes.merge(simpleTextAttributes, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), attributes, false);
+        }
       }
       else {
         boolean first = true;
@@ -82,11 +87,10 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
           boolean isMain = simpleTextAttributes != SimpleTextAttributes.GRAYED_ATTRIBUTES;
           append(each.getText(), simpleTextAttributes, isMain);
         }
-      }
-
-      final String location = presentation.getLocationString();
-      if (!StringUtil.isEmpty(location)) {
-        append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAY_ATTRIBUTES, false);
+        String location = presentation.getLocationString();
+        if (!StringUtil.isEmpty(location)) {
+          append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAY_ATTRIBUTES, false);
+        }
       }
 
       setToolTipText(presentation.getTooltip());
@@ -119,7 +123,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     return addColorToSimpleTextAttributes(simpleTextAttributes, color);
   }
 
-  private SimpleTextAttributes addColorToSimpleTextAttributes(SimpleTextAttributes simpleTextAttributes, Color color) {
+  private static SimpleTextAttributes addColorToSimpleTextAttributes(SimpleTextAttributes simpleTextAttributes, Color color) {
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
       textAttributes.setForegroundColor(color);

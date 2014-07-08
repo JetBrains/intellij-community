@@ -5,7 +5,6 @@ public class MyJavaClass {
 
     {
 
-        List l = new ArrayList(239);
-        <caret>
+        List l = new ArrayList(239);<caret>
     }
 }

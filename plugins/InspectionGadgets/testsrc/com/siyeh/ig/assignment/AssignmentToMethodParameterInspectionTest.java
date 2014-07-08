@@ -1,14 +1,32 @@
 package com.siyeh.ig.assignment;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class AssignmentToMethodParameterInspectionTest extends IGInspectionTestCase {
+/**
+ * @author bas
+ */
+public class AssignmentToMethodParameterInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final AssignmentToMethodParameterInspection inspection =
-      new AssignmentToMethodParameterInspection();
+  public void testAssigmentToMethodParameterMissesCompoundAssign() {
+    myFixture.enableInspections(new AssignmentToMethodParameterInspection());
+    doTest();
+  }
+
+  public void testIgnoreTransformationOfParameter() {
+    final AssignmentToMethodParameterInspection inspection = new AssignmentToMethodParameterInspection();
     inspection.ignoreTransformationOfOriginalParameter = true;
-    doTest("com/siyeh/igtest/assignment/method_parameter",
-           inspection);
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return null;
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/assignment/method_parameter";
   }
 }

@@ -38,15 +38,6 @@ public abstract class XmlSuppressionProvider implements InspectionSuppressor {
     return false;
   }
 
-  public static XmlSuppressionProvider getProvider(@NotNull PsiFile file) {
-    for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.isProviderAvailable(file)) {
-        return provider;
-      }
-    }
-    throw new RuntimeException("No providers found for " + file);
-  }
-
   public abstract boolean isProviderAvailable(@NotNull PsiFile file);
 
   public abstract boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String inspectionId);

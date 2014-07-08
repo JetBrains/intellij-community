@@ -21,6 +21,9 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -39,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author ven
@@ -187,5 +191,33 @@ public final class NavigationUtil {
     }
 
     return false;
+  }
+
+  /**
+   * Patches attributes to be visible under debugger active line
+   */
+  @SuppressWarnings("UseJBColor")
+  public static TextAttributes patchAttributesColor(TextAttributes attributes, @NotNull TextRange range, @NotNull Editor editor) {
+    int lineStart = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+    int lineEnd = editor.offsetToLogicalPosition(range.getEndOffset()).line;
+    for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+      if (!highlighter.isValid()) continue;
+      if (highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
+        int line = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
+        if (line >= lineStart && line <= lineEnd) {
+          TextAttributes textAttributes = highlighter.getTextAttributes();
+          if (textAttributes != null) {
+            Color color = textAttributes.getBackgroundColor();
+            if (color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128) {
+              TextAttributes clone = attributes.clone();
+              clone.setForegroundColor(Color.orange);
+              clone.setEffectColor(Color.orange);
+              return clone;
+            }
+          }
+        }
+      }
+    }
+    return attributes;
   }
 }

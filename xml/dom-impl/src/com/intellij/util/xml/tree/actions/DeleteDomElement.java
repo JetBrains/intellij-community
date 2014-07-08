@@ -30,6 +30,7 @@ import com.intellij.util.xml.ElementPresentation;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomFileElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Sergey.Vasiliev
@@ -56,12 +57,12 @@ public class DeleteDomElement extends BaseDomTreeAction {
       
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
-      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode) + "?", ApplicationBundle.message("action.remove"),
+      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", "Remove",
                                                   Messages.getQuestionIcon());
       if (ret == Messages.OK) {
       new WriteCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)) {
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) throws Throwable {
           domElement.undefine();
         }
       }.execute();
@@ -90,7 +91,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
 
     if (enabled) {
-      e.getPresentation().setText(getPresentationText(selectedNode));
+      e.getPresentation().setText(getPresentationText(selectedNode, ApplicationBundle.message("action.remove")));
     }
     else {
       e.getPresentation().setText(ApplicationBundle.message("action.remove"));
@@ -99,8 +100,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
     e.getPresentation().setIcon(AllIcons.General.Remove);
   }
 
-  private static String getPresentationText(final SimpleNode selectedNode) {
-    String removeString = ApplicationBundle.message("action.remove");
+  private static String getPresentationText(final SimpleNode selectedNode, String removeString) {
     final ElementPresentation presentation = ((BaseDomElementNode)selectedNode).getDomElement().getPresentation();
     removeString += " " + presentation.getTypeName() +
                                 (presentation.getElementName() == null || presentation.getElementName().trim().length() == 0? "" : ": " + presentation.getElementName());

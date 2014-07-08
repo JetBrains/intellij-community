@@ -22,11 +22,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Used by LanguageFolding class if more than one FoldingBuilder were specified
@@ -52,11 +54,14 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     final List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
+    final Set<TextRange> rangesCoveredByDescriptors = ContainerUtil.newHashSet();
 
     for (FoldingBuilder builder : myBuilders) {
       for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(builder, root, document, quick)) {
-        descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
-        descriptors.add(descriptor);
+        if (rangesCoveredByDescriptors.add(descriptor.getRange())) {
+          descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
+          descriptors.add(descriptor);
+        }
       }
     }
 

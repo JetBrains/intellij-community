@@ -641,6 +641,11 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'FileNotFoundException', 'File'
   }
 
+  public void testHonorFirstLetterCase() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems 0, 'posIdMap', 'PImageDecoder', 'PNGImageDecoder'
+  }
+
   public void testGlobalStaticMemberStats() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)

@@ -171,7 +171,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
               descriptor = new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), converted, position.column);
             } else {
               if (((DiffPanelImpl) panel).getEditor1().getDocument().getTextLength() == 0) {
-                FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), 0), true);
+                FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, myFragmentedContent.getFile(), 0),
+                                                                        true);
                 return;
               }
 
@@ -281,11 +282,13 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     FragmentedEditorHighlighter bh = fragmentedContent.getBeforeHighlighter();
     if (bh != null) {
-      ((EditorEx) ((DiffPanelImpl) currentPanel).getEditor1()).setHighlighter(bh);
+      ((EditorEx) ((DiffPanelImpl) myHorizontal).getEditor1()).setHighlighter(bh);
+      ((EditorEx) ((DiffPanelImpl) myVertical).getEditor1()).setHighlighter(bh);
     }
     FragmentedEditorHighlighter ah = fragmentedContent.getAfterHighlighter();
     if (ah != null) {
-      ((EditorEx) ((DiffPanelImpl) currentPanel).getEditor2()).setHighlighter(ah);
+      ((EditorEx) ((DiffPanelImpl) myHorizontal).getEditor2()).setHighlighter(ah);
+      ((EditorEx) ((DiffPanelImpl) myVertical).getEditor2()).setHighlighter(ah);
     }
     if (((DiffPanelImpl) currentPanel).getEditor1() != null) {
       highlightTodo(true, fragmentedContent.getBeforeTodoRanges());
@@ -403,7 +406,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   private static final Icon ourIcon = PlatformIcons.CHECK_ICON;
-  
+
   private class PopupAction extends DumbAwareAction {
     private final AnAction myUsual;
     private final AnAction myNumbered;
@@ -680,7 +683,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
   private class MyNextDiffAction extends DumbAwareAction {
     private boolean myEnabled;
-    
+
     private MyNextDiffAction() {
       super("Next Change", "Next Change", AllIcons.Actions.NextOccurence);
     }

@@ -141,6 +141,11 @@ final class BuildSession implements Runnable, CanceledStatus {
             CustomBuilderMessage builderMessage = (CustomBuilderMessage)buildMessage;
             response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
+          else if (buildMessage instanceof BuilderStatisticsMessage) {
+            BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
+            LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + message.getElapsedTimeMs() + " ms");
+            response = null;
+          }
           else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;
             if (buildMessage instanceof ProgressMessage) {

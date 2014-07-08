@@ -132,14 +132,8 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   }
 
   @NotNull
-  private FileType substituteFileType(VirtualFile file, FileType fileType) {
-    Project project = getProject();
-    return SubstitutedFileType.substituteFileType(file, fileType, project);
-  }
-
-  @NotNull
   public FileType getSubstitutedFileType() {
-    return substituteFileType(myFile, myFileType);
+    return SubstitutedFileType.substituteFileType(myFile, myFileType, getProject());
   }
 
   @TestOnly

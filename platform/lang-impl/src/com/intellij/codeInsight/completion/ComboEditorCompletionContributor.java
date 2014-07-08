@@ -40,13 +40,9 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {
       JComboBox comboBox = document.getUserData(StringComboboxEditor.COMBO_BOX_KEY);
-      boolean plainPrefixMatcher = false;
-      if (comboBox == null) {
-        comboBox = document.getUserData(StringComboboxEditor.PLAIN_COMBO_BOX_KEY);
-        plainPrefixMatcher = true;
-      }
       if (comboBox != null) {
         String substring = document.getText().substring(0, parameters.getOffset());
+        boolean plainPrefixMatcher = Boolean.TRUE.equals(document.getUserData(StringComboboxEditor.USE_PLAIN_PREFIX_MATCHER));
         final CompletionResultSet resultSet = plainPrefixMatcher ?
                                               result.withPrefixMatcher(new PlainPrefixMatcher(substring)) :
                                               result.withPrefixMatcher(substring);
