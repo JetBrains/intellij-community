@@ -113,7 +113,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
       MyFragmentsCollector collector = new MyFragmentsCollector(profile, ((LanguageFileType)type).getLanguage());
       DuplocateVisitor visitor = profile.createVisitor(collector, true);
-      visitor.visitNode(inputData.getPsiFile());
+      visitor.visitNode(((FileContentImpl)inputData).getPsiFileAccountingForUnsavedDocument());
 
       return collector.getMap();
     }
