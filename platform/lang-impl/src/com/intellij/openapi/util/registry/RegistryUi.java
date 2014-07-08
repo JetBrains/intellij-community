@@ -380,6 +380,8 @@ public class RegistryUi implements Disposable {
       myLabel.setIcon(null);
       myLabel.setText(null);
       myLabel.setHorizontalAlignment(SwingConstants.LEFT);
+      Color fg = isSelected ? table.getSelectionForeground() : table.getForeground();
+      Color bg = isSelected ? table.getSelectionBackground() : table.getBackground();
       
       if (v != null) {
         switch (column) {
@@ -396,7 +398,7 @@ public class RegistryUi implements Disposable {
             } else if (v.isBoolean()) {
               final JCheckBox box = new JCheckBox();
               box.setSelected(v.asBoolean());
-              box.setBackground(table.getBackground());
+              box.setBackground(bg);
               return box;
             } else {
               myLabel.setText(v.asString());
@@ -406,8 +408,8 @@ public class RegistryUi implements Disposable {
         myLabel.setOpaque(true);
 
         myLabel.setFont(myLabel.getFont().deriveFont(v.isChangedFromDefault() ? Font.BOLD : Font.PLAIN));
-        myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-        myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+        myLabel.setForeground(fg);
+        myLabel.setBackground(bg);
       }
 
       return myLabel;
