@@ -96,4 +96,15 @@
       <skipForDefaultProject/>
     </component>
   </project-components>
+
+  <actions>
+    <action id="ChooseNextSubsequentPropertyValueEditorAction"
+            class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Next"
+            text="Choose Next Property Value Editor"
+            use-shortcut-of="MethodDown"/>
+    <action id="ChoosePrevSubsequentPropertyValueEditorAction"
+            class="com.intellij.lang.properties.editor.ChooseSubsequentPropertyValueEditorAction$Prev"
+            text="Choose Previous Property Value Editor"
+            use-shortcut-of="MethodUp"/>
+  </actions>
 </idea-plugin>
