@@ -655,45 +655,51 @@ public class XDebugSessionImpl implements XDebugSession {
     return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true);
   }
 
-  public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
-                                   @NotNull XSuspendContext suspendContext, boolean handleLogMessage) {
-    XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
-    String condition = breakpoint.getCondition();
-    if (condition != null && evaluator != null) {
-      LOG.debug("evaluating condition: " + condition);
-      boolean result = evaluator.evaluateCondition(condition);
-      LOG.debug("condition evaluates to " + result);
-      if (!result) {
-        return false;
-      }
-    }
+  public void breakpointReachedNoProcessing(@NotNull final XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext) {
+    breakpointReached(breakpoint, null, suspendContext, false);
+  }
 
-    if (handleLogMessage && breakpoint.isLogMessage()) {
-      String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
-      final XSourcePosition position = breakpoint.getSourcePosition();
-      final OpenFileHyperlinkInfo hyperlinkInfo =
-        position != null ? new OpenFileHyperlinkInfo(myProject, position.getFile(), position.getLine()) : null;
-      printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", text, hyperlinkInfo);
-    }
-
-    if (evaluatedLogExpression != null) {
-      printMessage(evaluatedLogExpression, null, null);
-    }
-    else {
-      String expression = breakpoint.getLogExpression();
-      if (expression != null && evaluator != null) {
-        LOG.debug("evaluating log expression: " + expression);
-        final String message = evaluator.evaluateMessage(expression);
-        if (message != null) {
-          printMessage(message, null, null);
+  private boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
+                                   @NotNull XSuspendContext suspendContext, boolean doProcessing) {
+    if (doProcessing) {
+      XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
+      String condition = breakpoint.getCondition();
+      if (condition != null && evaluator != null) {
+        LOG.debug("evaluating condition: " + condition);
+        boolean result = evaluator.evaluateCondition(condition);
+        LOG.debug("condition evaluates to " + result);
+        if (!result) {
+          return false;
         }
       }
-    }
 
-    processDependencies(breakpoint);
+      if (breakpoint.isLogMessage()) {
+        String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
+        final XSourcePosition position = breakpoint.getSourcePosition();
+        final OpenFileHyperlinkInfo hyperlinkInfo =
+          position != null ? new OpenFileHyperlinkInfo(myProject, position.getFile(), position.getLine()) : null;
+        printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", text, hyperlinkInfo);
+      }
 
-    if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
-      return false;
+      if (evaluatedLogExpression != null) {
+        printMessage(evaluatedLogExpression, null, null);
+      }
+      else {
+        String expression = breakpoint.getLogExpression();
+        if (expression != null && evaluator != null) {
+          LOG.debug("evaluating log expression: " + expression);
+          final String message = evaluator.evaluateMessage(expression);
+          if (message != null) {
+            printMessage(message, null, null);
+          }
+        }
+      }
+
+      processDependencies(breakpoint);
+
+      if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
+        return false;
+      }
     }
 
     myActiveNonLineBreakpoint = !(breakpoint instanceof XLineBreakpoint<?>) ? breakpoint : null;
@@ -707,7 +713,8 @@ public class XDebugSessionImpl implements XDebugSession {
       }
     });
 
-    if (breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
+
+    if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
     }
     return true;
@@ -732,7 +739,7 @@ public class XDebugSessionImpl implements XDebugSession {
     });
   }
 
-  private void processDependencies(final XBreakpoint<?> breakpoint) {
+  public void processDependencies(final XBreakpoint<?> breakpoint) {
     XDependentBreakpointManager dependentBreakpointManager = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager();
     if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return;
 

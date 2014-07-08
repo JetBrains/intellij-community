@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -463,7 +464,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         if (requestHit && requestor instanceof Breakpoint) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
-          myBreakpointManager.processBreakpointHit((Breakpoint)requestor);
+          XDebugSession session = getSession().getXDebugSession();
+          if (session != null) {
+            XBreakpoint breakpoint = ((Breakpoint)requestor).getXBreakpoint();
+            if (breakpoint != null) {
+              ((XDebugSessionImpl)session).processDependencies(breakpoint);
+            }
+          }
         }
 
         if(!requestHit || resumePreferred) {
