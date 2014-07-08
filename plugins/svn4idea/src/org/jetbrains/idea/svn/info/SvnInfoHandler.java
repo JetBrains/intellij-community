@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -279,7 +280,7 @@ public class SvnInfoHandler extends DefaultHandler {
     myElementsMap.put("lock", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
-        return new Lock();
+        return new LockElement();
       }
     });
     myElementsMap.put("token", new Getter<ElementHandlerBase>() {
@@ -793,14 +794,14 @@ public class SvnInfoHandler extends DefaultHandler {
     }
   }
 
-  private static class Lock extends ElementHandlerBase {
-    private Lock() {
+  private static class LockElement extends ElementHandlerBase {
+    private LockElement() {
       super(new String[]{"token", "owner", "comment", "created"}, new String[]{});
     }
 
     @Override
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper = new SVNLockWrapper();
+      structure.myLockBuilder = new Lock.Builder();
     }
 
     @Override
@@ -819,7 +820,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setID(s);
+      structure.myLockBuilder.setToken(s);
     }
   }
 
@@ -834,7 +835,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setOwner(s);
+      structure.myLockBuilder.setOwner(s);
     }
   }
 
@@ -849,7 +850,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setComment(s);
+      structure.myLockBuilder.setComment(s);
     }
   }
 
@@ -864,7 +865,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myLockWrapper.setCreationDate(SVNDate.parseDate(s));
+      structure.myLockBuilder.setCreationDate(SVNDate.parseDate(s));
     }
   }
 

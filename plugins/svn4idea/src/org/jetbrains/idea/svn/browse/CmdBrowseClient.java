@@ -26,6 +26,7 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -137,8 +138,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     @XmlElement(name = "commit")
     public Commit commit;
 
-    @XmlElement(name = "lock")
-    public Lock lock;
+    public Lock.Builder lock;
 
     public long revision() {
       return commit != null ? commit.revision : 0;
@@ -169,23 +169,5 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
     @XmlElement(name = "date")
     public Date date;
-  }
-
-  public static class Lock {
-
-    @XmlElement(name = "token")
-    public String token;
-
-    @XmlElement(name = "owner")
-    public String owner;
-
-    @XmlElement(name = "comment")
-    public String comment;
-
-    @XmlElement(name = "created")
-    public Date created;
-
-    @XmlElement(name = "expires")
-    public Date expires;
   }
 }

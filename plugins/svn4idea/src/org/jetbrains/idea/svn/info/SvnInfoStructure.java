@@ -54,7 +54,7 @@ public class SvnInfoStructure {
   public String myConflictNew;
   public String myConflictWorking;
   public String myPropRejectFile;
-  public SVNLockWrapper myLockWrapper;
+  public Lock.Builder myLockBuilder;
   public SVNDepth myDepth;
   public String myChangelistName;
   public long myWcSize;
@@ -71,14 +71,7 @@ public class SvnInfoStructure {
 
   @Nullable
   private Lock getLock() {
-    Lock lock = null;
-
-    if (myLockWrapper != null) {
-      myLockWrapper.setPath(relativeUrl);
-      lock = myLockWrapper.create();
-    }
-
-    return lock;
+    return myLockBuilder != null ? myLockBuilder.build() : null;
   }
 
   private org.jetbrains.idea.svn.conflict.TreeConflictDescription createTreeConflict() throws SAXException, SVNException {

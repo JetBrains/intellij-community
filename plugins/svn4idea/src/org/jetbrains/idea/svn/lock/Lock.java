@@ -15,9 +15,11 @@
  */
 package org.jetbrains.idea.svn.lock;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNLock;
 
+import javax.xml.bind.annotation.*;
 import java.util.Date;
 
 /**
@@ -30,24 +32,25 @@ public class Lock {
   private final String myOwner;
   private final String myComment;
   private final Date myCreationDate;
-  private final Date myExpirationDate;
+  @Nullable private final Date myExpirationDate;
 
   @Nullable
   public static Lock create(@Nullable SVNLock lock) {
     Lock result = null;
 
     if (lock != null) {
-      result = new Lock(lock.getOwner(), lock.getComment(), lock.getCreationDate(), lock.getExpirationDate());
+      result = new Lock.Builder().setOwner(lock.getOwner()).setComment(lock.getComment()).setCreationDate(lock.getCreationDate())
+        .setExpirationDate(lock.getExpirationDate()).build();
     }
 
     return result;
   }
 
-  public Lock(String owner, String comment, Date creationDate, Date expirationDate) {
-    myOwner = owner;
-    myComment = comment;
-    myCreationDate = creationDate;
-    myExpirationDate = expirationDate;
+  public Lock(@NotNull Lock.Builder builder) {
+    myOwner = builder.owner;
+    myComment = builder.comment;
+    myCreationDate = builder.created;
+    myExpirationDate = builder.expires;
   }
 
   public String getComment() {
@@ -58,11 +61,68 @@ public class Lock {
     return myCreationDate;
   }
 
+  @Nullable
   public Date getExpirationDate() {
     return myExpirationDate;
   }
 
   public String getOwner() {
     return myOwner;
+  }
+
+  @XmlAccessorType(XmlAccessType.NONE)
+  @XmlType(name = "lock")
+  @XmlRootElement(name = "lock")
+  public static class Builder {
+
+    @XmlElement(name = "token")
+    private String token;
+
+    @XmlElement(name = "owner")
+    private String owner;
+
+    @XmlElement(name = "comment")
+    private String comment;
+
+    @XmlElement(name = "created")
+    private Date created;
+
+    @XmlElement(name = "expires")
+    @Nullable private Date expires;
+
+    @NotNull
+    public Builder setToken(String token) {
+      this.token = token;
+      return this;
+    }
+
+    @NotNull
+    public Builder setOwner(String owner) {
+      this.owner = owner;
+      return this;
+    }
+
+    @NotNull
+    public Builder setComment(String comment) {
+      this.comment = comment;
+      return this;
+    }
+
+    @NotNull
+    public Builder setCreationDate(Date creationDate) {
+      this.created = creationDate;
+      return this;
+    }
+
+    @NotNull
+    public Builder setExpirationDate(@Nullable Date expirationDate) {
+      this.expires = expirationDate;
+      return this;
+    }
+
+    @NotNull
+    public Lock build() {
+      return new Lock(this);
+    }
   }
 }
