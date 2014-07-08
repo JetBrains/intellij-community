@@ -4,6 +4,9 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -60,22 +63,28 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
       UsefulTestCase.edt(new Runnable() {
         @Override
         public void run() {
-          try {
-            DjangoAdmin.createProject(
-              myFixture.getProject(),
-              sdk,
-              contentRoot,
-              WEB_SITE_NAME,
-              "myMainApp",
-              templateDir,
-              djangoPath,
-              false,
-              false
-            );
-          }
-          catch (final ExecutionException ex) {
-            Assert.fail(ex.toString());
-          }
+
+          new WriteAction() {
+            @Override
+            protected void run(@NotNull Result result) throws Throwable {
+              try {
+                DjangoAdmin.createProject(
+                  myFixture.getProject(),
+                  sdk,
+                  contentRoot,
+                  WEB_SITE_NAME,
+                  "myMainApp",
+                  templateDir,
+                  djangoPath,
+                  false,
+                  false
+                );
+              }
+              catch (final ExecutionException ex) {
+                Assert.fail(ex.toString());
+              }
+            }
+          }.execute();
         }
       });
 
@@ -92,8 +101,16 @@ public class DjangoProjectCreationTest extends PyEnvTestCase {
       Assert.assertNotNull(DjangoNames.SETTINGS_FILE + " not created", settingsPy);
       Assert.assertEquals("Bad file name for settings", DjangoNames.SETTINGS_FILE, settingsPy.getName());
 
+
       final PyBlockEvaluator evaluator = new PyBlockEvaluator();
-      evaluator.evaluate(settingsPy);
+
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          evaluator.evaluate(settingsPy);
+        }
+      });
+
 
       final List<String> templateDirsFromConfig = evaluator.getValueAsStringList(DjangoNames.TEMPLATE_DIRS_SETTING);
       Assert.assertThat(String.format("Failed to find %s in %s", DjangoNames.TEMPLATE_DIRS_SETTING, settingsPy), templateDirsFromConfig,

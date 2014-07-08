@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -119,7 +120,18 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
     runProcess(sdkHome, s);
 
     try {
-      testing();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            testing();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+
       Assert.assertTrue(s.waitFor(60000));
       XDebuggerTestUtil.waitForSwing();
       after();
@@ -169,11 +181,12 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
       config.addContentRoots(DjangoTestsConfigurationType.getInstance().getDjangoTestsFactory().equals(factory));
       config.setSdkHome(sdkHome);
       config.setWorkingDirectory(getWorkingFolder());
-      configure(config);
 
       new WriteAction() {
         @Override
         protected void run(Result result) throws Throwable {
+          configure(config);
+
           RunManagerEx.getInstanceEx(project).addConfiguration(settings, false);
           RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
           Assert.assertSame(settings, RunManagerEx.getInstanceEx(project).getSelectedConfiguration());
