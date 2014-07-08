@@ -41,7 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -332,10 +331,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
       files = GradleBuildClasspathManager.getInstance(file.getProject()).getModuleClasspathEntries(modulePath);
 
-      for (final VirtualFile root : files) {
-        result = result.uniteWith(new NonClasspathDirectoryScope(root));
-      }
-      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result, modulePath);
+      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
     }
     return result;
   }

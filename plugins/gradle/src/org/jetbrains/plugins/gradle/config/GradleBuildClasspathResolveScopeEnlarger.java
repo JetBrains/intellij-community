@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.ResolveScopeEnlarger;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -42,7 +42,7 @@ public class GradleBuildClasspathResolveScopeEnlarger extends ResolveScopeEnlarg
       final List<VirtualFile> roots = gradleClassFinder.getClassRoots();
       for (VirtualFile root : roots) {
         if (VfsUtilCore.isAncestor(root, file, true)) {
-          return NonClasspathDirectoryScope.compose(roots);
+          return NonClasspathDirectoriesScope.compose(roots);
         }
       }
     }
