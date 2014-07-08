@@ -230,9 +230,6 @@
       <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis</implementation-class>
-    </component>
   </project-components>
 
   <module-components>

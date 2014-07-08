@@ -1509,6 +1509,8 @@
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
+    <projectService serviceInterface="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"
+                    serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"

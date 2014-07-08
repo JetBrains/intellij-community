@@ -18,7 +18,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,7 +27,6 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -49,23 +47,19 @@ import java.util.Collection;
 /**
  * @author lambdamix
  */
-public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
+public class ProjectBytecodeAnalysis {
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
-  private static final PsiAnnotation[] NO_DATA = new PsiAnnotation[0];
+  private final Project myProject;
 
   private volatile Annotations myAnnotations = null;
 
-  private static final NotNullLazyKey<ProjectBytecodeAnalysis, Project>
-    INSTANCE_KEY = ServiceManager.createLazyKey(ProjectBytecodeAnalysis.class);
-
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return ServiceManager.getService(project, ProjectBytecodeAnalysis.class);
   }
 
   public ProjectBytecodeAnalysis(Project project) {
-    super(project);
-
+    myProject = project;
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
@@ -172,7 +166,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     try {
       int key = getKey(listOwner);
       if (key == -1) {
-        return NO_DATA;
+        return PsiAnnotation.EMPTY_ARRAY;
       }
       boolean notNull = myAnnotations.notNulls.contains(key);
       String contractValue = myAnnotations.contracts.get(key);
@@ -194,12 +188,12 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
         };
       }
       else {
-        return NO_DATA;
+        return PsiAnnotation.EMPTY_ARRAY;
       }
     }
     catch (IOException e) {
       LOG.debug(e);
-      return NO_DATA;
+      return PsiAnnotation.EMPTY_ARRAY;
     }
   }
 
