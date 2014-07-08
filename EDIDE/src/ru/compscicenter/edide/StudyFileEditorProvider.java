@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import ru.compscicenter.edide.course.TaskFile;
 
 /**
 * User: lia
@@ -18,7 +19,8 @@ class StudyFileEditorProvider implements FileEditorProvider {
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return defaultTextEditorProvider.accept(project, file);
+    TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(file);
+    return taskFile != null;
   }
 
   @NotNull
