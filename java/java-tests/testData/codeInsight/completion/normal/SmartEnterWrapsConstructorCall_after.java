@@ -8,7 +8,6 @@ class Tester {
   }
 
   public void test1() {
-      build(new EntityBuilder());
-      <caret>
+      build(new EntityBuilder());<caret>
   }
 }
