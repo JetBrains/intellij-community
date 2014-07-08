@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +75,8 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
         if (myMergeByTextAttributes && !myPieces.isEmpty()) {
           Element element = myPieces.get(myPieces.size() - 1);
           if (element.getEnd() >= offset + relativeStart &&
-              element.getAttributes().equals(iterator.getTextAttributes()) &&
-              element.getElementType().equals(iterator.getTokenType())) {
+              Comparing.equal(element.getAttributes(), iterator.getTextAttributes()) &&
+              Comparing.equal(element.getElementType(), iterator.getTokenType())) {
             merged = true;
             myPieces.add(new Element(element.getStart(),
                                      offset + relativeEnd,
