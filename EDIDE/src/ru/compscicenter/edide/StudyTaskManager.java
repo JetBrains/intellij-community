@@ -2,7 +2,6 @@ package ru.compscicenter.edide;
 
 
 
-import com.google.gson.annotations.Expose;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
@@ -102,7 +101,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
               Window window = new Window();
               window.setLine(windowElement.getAttribute("line").getIntValue());
               window.setStart(windowElement.getAttribute("start").getIntValue());
-              window.setOffsetInLine(windowElement.getAttribute("myOffsetInLine").getIntValue());
+              window.setLength(windowElement.getAttribute("myOffsetInLine").getIntValue());
               window.setText(windowElement.getAttributeValue("text"));
               window.setHint(windowElement.getAttributeValue("hint"));
               window.setPossibleAnswer(windowElement.getAttributeValue("possibleAnswer"));

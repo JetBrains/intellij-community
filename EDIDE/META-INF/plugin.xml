@@ -66,6 +66,8 @@
     <action id="NextTaskAction" class="ru.compscicenter.edide.actions.NextTaskAction" text="NextTaskAction" description="Next Task"/>
     <action id="PreviousTaskAction" class="ru.compscicenter.edide.actions.PreviousTaskAction" text="PreviousTaskAction"
             description="Previous Task"/>
+    <action id="RefreshTaskAction" class="ru.compscicenter.edide.actions.RefreshTaskAction" text="RefreshTaskAction"
+            description="Refresh current task"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -24,9 +24,12 @@ public class Window implements Comparable{
   private String possibleAnswer = "";
   private boolean myResolveStatus = false;
   private RangeHighlighter myRangeHighlighter = null;
-  private int myOffsetInLine = text.length();
+  private int myLength = text.length();
   private TaskFile myTaskFile;
   private int myIndex = -1;
+  private int myInitialLine = -1;
+  private int myInitialStart = -1;
+  private int myInitialLength = -1;
 
   public int getIndex() {
     return myIndex;
@@ -44,7 +47,7 @@ public class Window implements Comparable{
     windowElement.setAttribute("hint", hint);
     windowElement.setAttribute("possibleAnswer", possibleAnswer);
     windowElement.setAttribute("myResolveStatus", Boolean.toString(myResolveStatus));
-    windowElement.setAttribute("myOffsetInLine", Integer.toString(myOffsetInLine));
+    windowElement.setAttribute("myLength", Integer.toString(myLength));
     return windowElement;
   }
 
@@ -64,12 +67,12 @@ public class Window implements Comparable{
     myResolveStatus = resolveStatus;
   }
 
-  public int getOffsetInLine() {
-    return myOffsetInLine;
+  public int getLength() {
+    return myLength;
   }
 
-  public void setOffsetInLine(int offsetInLine) {
-    myOffsetInLine = offsetInLine;
+  public void setLength(int length) {
+    myLength = length;
   }
 
 
@@ -106,8 +109,8 @@ public class Window implements Comparable{
   }
 
   public void draw(Editor editor, boolean drawSelection, boolean moveCaret) {
-    if (myOffsetInLine == 0) {
-      myOffsetInLine = text.length();
+    if (myLength == 0) {
+      myLength = text.length();
     }
     TextAttributes defaultTestAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
@@ -121,7 +124,7 @@ public class Window implements Comparable{
     int startOffset = editor.getDocument().getLineStartOffset(line) + start;
 
     RangeHighlighter
-      rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myOffsetInLine, HighlighterLayer.LAST + 1,
+      rh = editor.getMarkupModel().addRangeHighlighter(startOffset, startOffset + myLength, HighlighterLayer.LAST + 1,
                                                        new TextAttributes(defaultTestAttributes.getForegroundColor(),
                                                                           defaultTestAttributes.getBackgroundColor(), color,
                                                                           defaultTestAttributes.getEffectType(),
@@ -129,7 +132,7 @@ public class Window implements Comparable{
                                                        HighlighterTargetArea.EXACT_RANGE);
     myRangeHighlighter = rh;
     if (drawSelection) {
-      editor.getSelectionModel().setSelection(startOffset, startOffset + myOffsetInLine);
+      editor.getSelectionModel().setSelection(startOffset, startOffset + myLength);
     }
     if (moveCaret) {
       editor.getCaretModel().moveToOffset(startOffset);
@@ -150,8 +153,23 @@ public class Window implements Comparable{
     return editor.getDocument().getLineStartOffset(line) + start;
   }
 
-  public void setParent(TaskFile file) {
+  public void init(TaskFile file) {
+    myInitialLine = line;
+    myInitialLength = myLength;
+    myInitialStart = start;
     myTaskFile = file;
+  }
+
+  public int getInitialLine() {
+    return myInitialLine;
+  }
+
+  public int getInitialStart() {
+    return myInitialStart;
+  }
+
+  public int getInitialLength() {
+    return myInitialLength;
   }
 
   public TaskFile getTaskFile() {
@@ -194,5 +212,11 @@ public class Window implements Comparable{
       }
     }
     return null;
+  }
+
+  public void reset() {
+    line = myInitialLine;
+    start = myInitialStart;
+    myLength = myInitialLength;
   }
 }

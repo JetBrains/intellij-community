@@ -34,7 +34,7 @@ public class NextTaskAction extends AnAction {
     Task nextTask = currentTask.next();
     if (nextTask == null) {
       BalloonBuilder balloonBuilder =
-        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You've already solved all the tasks!", MessageType.INFO, null);
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("It's the last task", MessageType.INFO, null);
       Balloon balloon = balloonBuilder.createBalloon();
       StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
       balloon.showInCenterOf(selectedStudyEditor.getNextTaskButton());
@@ -48,8 +48,10 @@ public class NextTaskAction extends AnAction {
     TaskFile nextFile = nextTask.getTaskFiles().iterator().next();
     if (nextFile != null) {
       try {
+
         VirtualFile taskDir =
           project.getBaseDir().findChild("lesson" + String.valueOf(lessonIndex + 1)).findChild("task" + String.valueOf(nextTaskIndex + 1));
+
         FileEditorManager.getInstance(project).openFile(taskDir.findChild(nextTask.getTaskFiles().iterator().next().getName()), true);
       }
       catch (NullPointerException e) {

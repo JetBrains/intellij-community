@@ -8,6 +8,8 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
@@ -29,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.actions.CheckAction;
 import ru.compscicenter.edide.actions.NextTaskAction;
 import ru.compscicenter.edide.actions.PreviousTaskAction;
+import ru.compscicenter.edide.actions.RefreshTaskAction;
 import ru.compscicenter.edide.course.*;
+import ru.compscicenter.edide.course.Window;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +53,7 @@ public class StudyEditor implements FileEditor {
   private JButton myCheckButton;
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
+  private JButton myRefreshButton;
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -102,15 +107,20 @@ public class StudyEditor implements FileEditor {
     JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     studyButtonPanel.add(taskActionsPanel);
     studyButtonPanel.add(new JPanel());
+    initializeButtons(project, studyPanel, studyButtonPanel, taskActionsPanel);
+    studyPanel.add(studyButtonPanel);
+    myComponent.add(studyPanel, BorderLayout.NORTH);
+  }
+
+  private void initializeButtons(final Project project, JPanel studyPanel, JPanel studyButtonPanel, JPanel taskActionsPanel) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
-    addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
+    myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
     addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
     addButton(taskActionsPanel, "Run", StudyIcons.Run);
-    studyPanel.add(studyButtonPanel);
-    myComponent.add(studyPanel, BorderLayout.NORTH);
+
     myCheckButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -131,6 +141,13 @@ public class StudyEditor implements FileEditor {
       public void actionPerformed(ActionEvent e) {
         PreviousTaskAction prevTaskAction = (PreviousTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
         prevTaskAction.previousTask(project);
+      }
+    });
+    myRefreshButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        RefreshTaskAction refreshTaskAction = (RefreshTaskAction)ActionManager.getInstance().getAction("RefreshTaskAction");
+        refreshTaskAction.refresh(project);
       }
     });
   }

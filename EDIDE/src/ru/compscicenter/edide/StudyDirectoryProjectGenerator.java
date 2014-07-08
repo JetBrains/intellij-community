@@ -103,18 +103,18 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
     myDefaultSelectedCourseName = null;
     StudyNewCourseDialog dlg = new StudyNewCourseDialog(project, this);
     dlg.show();
-
-    File baseCourseFile = getBaseCourseFile();
-    if (baseCourseFile == null) {
-      LOG.error("user didn't choose any course files");
-      return;
-    }
     try {
+      File baseCourseFile = getBaseCourseFile();
+      if (baseCourseFile == null) {
+        LOG.error("user didn't choose any course files");
+        return;
+      }
       Reader reader = new InputStreamReader(new FileInputStream(baseCourseFile));
       Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
       Course course = gson.fromJson(reader, Course.class);
       course.setParents();
       course.create(project, baseDir, new File(baseCourseFile.getParent()));
+      course.setResourcePath(baseCourseFile.getAbsolutePath());
       VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
       StudyTaskManager tm = StudyTaskManager.getInstance(project);
       tm.setCourse(course);

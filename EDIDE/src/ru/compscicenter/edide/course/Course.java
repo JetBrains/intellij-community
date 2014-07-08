@@ -16,6 +16,8 @@ public class Course {
   private List<Lesson> lessons;
   private String description;
   private String name;
+  private String myResourcePath = "";
+
   public List<Lesson> getLessons() {
     return lessons;
   }
@@ -59,5 +61,13 @@ public class Course {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setResourcePath(String resourcePath) {
+    myResourcePath = resourcePath;
+  }
+
+  public String getResourcePath() {
+    return myResourcePath;
   }
 }

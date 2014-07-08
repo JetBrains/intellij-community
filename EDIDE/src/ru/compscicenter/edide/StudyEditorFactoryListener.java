@@ -99,7 +99,7 @@ class myCaretAdapter extends CaretAdapter {
 }
 
 class StudyEditorFactoryListener implements EditorFactoryListener {
-  private static final Logger LOG = Logger.getInstance(StudyDirectoryProjectGenerator.class.getName());
+  private static final Logger LOG = Logger.getInstance(StudyEditorFactoryListener.class.getName());
 
   class MyMouseListener extends EditorMouseAdapter {
     private final TaskFile myTaskFile;

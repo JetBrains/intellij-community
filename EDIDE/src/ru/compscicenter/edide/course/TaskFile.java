@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -9,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import ru.compscicenter.edide.StudyTaskManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -140,7 +138,7 @@ public class TaskFile {
   public void setParents(Task task) {
     myTask = task;
     for (Window window : windows) {
-      window.setParent(this);
+      window.init(this);
     }
     Collections.sort(windows);
     for (int i = 0; i < windows.size(); i++) {
@@ -180,16 +178,16 @@ public class TaskFile {
           int newEndLine = getLineNumByOffset(selectedEditor, selectedRangeHighlighter.getEndOffset());
           increment(newStartLine, lineChange);
           mySelectedWindow.setLine(mySelectedWindow.getLine() - lineChange);
-          setNewOffsetInLine(newEndLine, mySelectedWindow.getStart() + mySelectedWindow.getOffsetInLine(),
+          setNewOffsetInLine(newEndLine, mySelectedWindow.getStart() + mySelectedWindow.getLength(),
                              selectedRangeHighlighter.getEndOffset() - selectedEditor.getDocument().getLineStartOffset(newEndLine));
         }
         else {
-          int oldEnd = mySelectedWindow.getRealStartOffset(selectedEditor) + mySelectedWindow.getOffsetInLine();
+          int oldEnd = mySelectedWindow.getRealStartOffset(selectedEditor) + mySelectedWindow.getLength();
           int endChange = selectedRangeHighlighter.getEndOffset() - oldEnd;
           incrementAfterOffset(mySelectedWindow.getLine(), mySelectedWindow.getStart(), endChange);
         }
         int newLength = selectedRangeHighlighter.getEndOffset() - selectedRangeHighlighter.getStartOffset();
-        mySelectedWindow.setOffsetInLine(newLength);
+        mySelectedWindow.setLength(newLength);
       }
     }
   }
