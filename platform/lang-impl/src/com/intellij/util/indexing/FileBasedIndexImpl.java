@@ -1142,13 +1142,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final TIntHashSet copy = new TIntHashSet();
             final ValueContainer<V> container = index.getData(dataKey);
 
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+            for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
               final V value = valueIt.next();
               if (valueChecker != null && !valueChecker.value(value)) {
                 continue;
               }
 
-              ValueContainer.IntIterator iterator = container.getInputIdsIterator(value);
+              ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
 
               if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
                 while (iterator.hasNext()) {
@@ -1162,7 +1162,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
               else {
                 mainIntersection.forEach(new TIntProcedure() {
-                  final ValueContainer.IntPredicate predicate = container.getValueAssociationPredicate(value);
+                  final ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
 
                   @Override
                   public boolean execute(int id) {
