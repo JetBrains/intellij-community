@@ -168,4 +168,13 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     }
     return null;
   }
+
+  @Nullable
+  @Override
+  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+    if (callable instanceof PyFunction) {
+      return getCallType((PyFunction)callable, null, context);
+    }
+    return null;
+  }
 }
