@@ -78,9 +78,7 @@
             icon="AllIcons.Nodes.PpWeb">
     </action>
 
-    <group id="OpenInBrowserGroup"
-           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction"
-           text="Open in _Browser" description="Open selected file in browser" icon="AllIcons.Nodes.PpWeb">
+    <group id="OpenInBrowserGroup" class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction">
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </group>
