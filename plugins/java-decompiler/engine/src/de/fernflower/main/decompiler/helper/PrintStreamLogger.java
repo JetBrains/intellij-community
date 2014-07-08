@@ -35,15 +35,15 @@ public class PrintStreamLogger implements IFernflowerLogger {
 	
 	
 	public void writeMessage(String message, int severity) {
-    if(severity >= this.severity) {
-      stream.println(InterpreterUtil.getIndentString(indent)+names[severity]+": "+message);
-    }
+		if (severity >= this.severity) {
+			stream.println(InterpreterUtil.getIndentString(indent) + names[severity] + ": " + message);
+		}
 	}
 
-  public void writeMessage(String message, Throwable t) {
-    t.printStackTrace(stream);
-    writeMessage(message, ERROR);
-  }
+	public void writeMessage(String message, Throwable t) {
+		t.printStackTrace(stream);
+		writeMessage(message, ERROR);
+	}
 
 	public void startClass(String classname) {
 		stream.println(InterpreterUtil.getIndentString(indent++)+"Processing class "+classname+" ...");

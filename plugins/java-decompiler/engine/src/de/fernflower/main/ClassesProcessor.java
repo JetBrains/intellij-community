@@ -165,13 +165,14 @@ public class ClassesProcessor {
 
 						HashSet<String> setNestedClasses = mapNestedClassReferences.get(superClass);
 						if(setNestedClasses != null) {
-              StructClass scl = supernode.classStruct;
-              StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
-              for(int i=0;i<inner.getStringentries().size();i++) {
-                String nestedClass = inner.getStringentries().get(i)[0];
-                if(!setNestedClasses.contains(nestedClass)) {
-                  continue;
-                }
+
+							StructClass scl = supernode.classStruct;
+							StructInnerClassesAttribute inner = (StructInnerClassesAttribute) scl.getAttributes().getWithKey("InnerClasses");
+							for(int i = 0; i < inner.getStringentries().size(); i++) {
+								String nestedClass = inner.getStringentries().get(i)[0];
+								if (!setNestedClasses.contains(nestedClass)) {
+									continue;
+								}
 								
 								if(setVisited.contains(nestedClass)) {
 									continue;

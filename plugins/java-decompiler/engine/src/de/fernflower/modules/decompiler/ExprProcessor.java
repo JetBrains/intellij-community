@@ -129,9 +129,11 @@ public class ExprProcessor implements CodeConstants {
 		FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
 		DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
-		// try {
-		// DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
-		// } catch(Exception ex) {ex.printStackTrace();}
+//		try {
+//			DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
+//		} catch (Exception ex) {
+//			ex.printStackTrace();
+//		}
 
 		// collect finally entry points
 		Set<String> setFinallyShortRangeEntryPoints = new HashSet<String>();
@@ -210,6 +212,14 @@ public class ExprProcessor implements CodeConstants {
 					} else if (!setFinallyShortRangeEntryPoints.contains(nd.id) && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {
 						ndentrypoints.removeLast(); // currentEntrypoint should
 													// not be null at this point
+					}
+
+					// handling of entry point loops
+					int succ_entry_index = ndentrypoints.indexOf(nd.id);
+					if(succ_entry_index >= 0) { // we are in a loop (e.g. continue in a finally block), drop all entry points in the list beginning with succ_entry_index 
+						for(int elements_to_remove = ndentrypoints.size() - succ_entry_index; elements_to_remove > 0; elements_to_remove--) {
+							ndentrypoints.removeLast();
+						}
 					}
 
 					String ndentrykey = buildEntryPointKey(ndentrypoints);
