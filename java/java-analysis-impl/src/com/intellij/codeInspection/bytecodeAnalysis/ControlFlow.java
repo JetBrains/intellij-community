@@ -17,10 +17,11 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
-import org.jetbrains.org.objectweb.asm.tree.InsnList;
-import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.*;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.*;
 
@@ -56,6 +57,27 @@ final class cfg {
       }
     }
     return result;
+  }
+
+  static boolean[] leakingParameters(String className, MethodNode methodNode) throws AnalyzerException {
+    Frame<ParamsValue>[] frames = new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
+    InsnList insns = methodNode.instructions;
+    LeakingParametersCollector collector = new LeakingParametersCollector(methodNode);
+    for (int i = 0; i < frames.length; i++) {
+      AbstractInsnNode insnNode = insns.get(i);
+      Frame<ParamsValue> frame = frames[i];
+      if (frame != null) {
+        switch (insnNode.getType()) {
+          case AbstractInsnNode.LABEL:
+          case AbstractInsnNode.LINE:
+          case AbstractInsnNode.FRAME:
+            break;
+          default:
+            frame.execute(insnNode, collector);
+        }
+      }
+    }
+    return collector.leaking;
   }
 
   static final Interpreter<SourceValue> MININAL_ORIGIN_INTERPRETER = new SourceInterpreter() {
@@ -391,5 +413,279 @@ final class DFSTree {
 
   final boolean isDescendant(int child, int parent) {
     return preOrder[parent] <= preOrder[child] && postOrder[child] <= postOrder[parent];
+  }
+}
+
+final class ParamsValue implements Value {
+  @NotNull final boolean[] params;
+  final int size;
+
+  ParamsValue(@NotNull boolean[] params, int size) {
+    this.params = params;
+    this.size = size;
+  }
+
+  @Override
+  public int getSize() {
+    return size;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null) return false;
+    ParamsValue that = (ParamsValue)o;
+    return (this.size == that.size && Arrays.equals(this.params, that.params));
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * Arrays.hashCode(params) + size;
+  }
+}
+
+class ParametersUsage extends Interpreter<ParamsValue> {
+  final ParamsValue val1;
+  final ParamsValue val2;
+  int called = -1;
+  final int rangeStart;
+  final int rangeEnd;
+  final int arity;
+  final int shift;
+
+  ParametersUsage(MethodNode methodNode) {
+    super(ASM5);
+    arity = Type.getArgumentTypes(methodNode.desc).length;
+    boolean[] emptyParams = new boolean[arity];
+    val1 = new ParamsValue(emptyParams, 1);
+    val2 = new ParamsValue(emptyParams, 2);
+
+    shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
+    rangeStart = shift;
+    rangeEnd = arity + shift;
+  }
+
+  @Override
+  public ParamsValue newValue(Type type) {
+    if (type == null) return val1;
+    called++;
+    if (type == Type.VOID_TYPE) return null;
+    if (called < rangeEnd && rangeStart <= called) {
+      boolean[] params = new boolean[arity];
+      params[called - shift] = true;
+      return type.getSize() == 1 ? new ParamsValue(params, 1) : new ParamsValue(params, 2);
+    }
+    else {
+      return type.getSize() == 1 ? val1 : val2;
+    }
+  }
+
+  @Override
+  public ParamsValue newOperation(final AbstractInsnNode insn) {
+    int size;
+    switch (insn.getOpcode()) {
+      case LCONST_0:
+      case LCONST_1:
+      case DCONST_0:
+      case DCONST_1:
+        size = 2;
+        break;
+      case LDC:
+        Object cst = ((LdcInsnNode) insn).cst;
+        size = cst instanceof Long || cst instanceof Double ? 2 : 1;
+        break;
+      case GETSTATIC:
+        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
+        break;
+      default:
+        size = 1;
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public ParamsValue copyOperation(AbstractInsnNode insn, ParamsValue value) {
+    return value;
+  }
+
+  @Override
+  public ParamsValue unaryOperation(AbstractInsnNode insn, ParamsValue value) {
+    int size;
+    switch (insn.getOpcode()) {
+      case CHECKCAST:
+        return new ParamsValue(value.params, Type.getObjectType(((TypeInsnNode)insn).desc).getSize());
+      case LNEG:
+      case DNEG:
+      case I2L:
+      case I2D:
+      case L2D:
+      case F2L:
+      case F2D:
+      case D2L:
+        size = 2;
+        break;
+      case GETFIELD:
+        size = Type.getType(((FieldInsnNode) insn).desc).getSize();
+        break;
+      default:
+        size = 1;
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public ParamsValue binaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2) {
+    int size;
+    switch (insn.getOpcode()) {
+      case LALOAD:
+      case DALOAD:
+      case LADD:
+      case DADD:
+      case LSUB:
+      case DSUB:
+      case LMUL:
+      case DMUL:
+      case LDIV:
+      case DDIV:
+      case LREM:
+      case DREM:
+      case LSHL:
+      case LSHR:
+      case LUSHR:
+      case LAND:
+      case LOR:
+      case LXOR:
+        size = 2;
+        break;
+      default:
+        size = 1;
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public ParamsValue ternaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2, ParamsValue value3) {
+    return val1;
+  }
+
+  @Override
+  public ParamsValue naryOperation(AbstractInsnNode insn, List<? extends ParamsValue> values) {
+    int size;
+    int opcode = insn.getOpcode();
+    if (opcode == MULTIANEWARRAY) {
+      size = 1;
+    } else {
+      String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc : ((MethodInsnNode) insn).desc;
+      size = Type.getReturnType(desc).getSize();
+    }
+    return size == 1 ? val1 : val2;
+  }
+
+  @Override
+  public void returnOperation(AbstractInsnNode insn, ParamsValue value, ParamsValue expected) {}
+
+  @Override
+  public ParamsValue merge(ParamsValue v1, ParamsValue v2) {
+    if (v1.equals(v2)) return v1;
+    boolean[] params = new boolean[arity];
+    boolean[] params1 = v1.params;
+    boolean[] params2 = v2.params;
+    for (int i = 0; i < arity; i++) {
+        params[i] = params1[i] || params2[i];
+    }
+    return new ParamsValue(params, Math.min(v1.size, v2.size));
+  }
+}
+
+class LeakingParametersCollector extends ParametersUsage {
+  final boolean[] leaking;
+  LeakingParametersCollector(MethodNode methodNode) {
+    super(methodNode);
+    leaking = new boolean[arity];
+  }
+
+  @Override
+  public ParamsValue unaryOperation(AbstractInsnNode insn, ParamsValue value) {
+    switch (insn.getOpcode()) {
+      case GETFIELD:
+      case ARRAYLENGTH:
+      case MONITORENTER:
+      case INSTANCEOF:
+      case IRETURN:
+      case ARETURN:
+      case IFNONNULL:
+      case IFNULL:
+      case IFEQ:
+      case IFNE:
+        boolean[] params = value.params;
+        for (int i = 0; i < arity; i++) {
+          leaking[i] |= params[i];
+        }
+        break;
+      default:
+    }
+    return super.unaryOperation(insn, value);
+  }
+
+  @Override
+  public ParamsValue binaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2) {
+    switch (insn.getOpcode()) {
+      case IALOAD:
+      case LALOAD:
+      case FALOAD:
+      case DALOAD:
+      case AALOAD:
+      case BALOAD:
+      case CALOAD:
+      case SALOAD:
+      case PUTFIELD:
+        boolean[] params = value1.params;
+        for (int i = 0; i < arity; i++) {
+          leaking[i] |= params[i];
+        }
+        break;
+      default:
+    }
+    return super.binaryOperation(insn, value1, value2);
+  }
+
+  @Override
+  public ParamsValue ternaryOperation(AbstractInsnNode insn, ParamsValue value1, ParamsValue value2, ParamsValue value3) {
+    switch (insn.getOpcode()) {
+      case IASTORE:
+      case LASTORE:
+      case FASTORE:
+      case DASTORE:
+      case AASTORE:
+      case BASTORE:
+      case CASTORE:
+      case SASTORE:
+        boolean[] params = value1.params;
+        for (int i = 0; i < arity; i++) {
+          leaking[i] |= params[i];
+        }
+        break;
+      default:
+    }
+    return super.ternaryOperation(insn, value1, value2, value3);
+  }
+
+  @Override
+  public ParamsValue naryOperation(AbstractInsnNode insn, List<? extends ParamsValue> values) {
+    switch (insn.getOpcode()) {
+      case INVOKESTATIC:
+      case INVOKESPECIAL:
+      case INVOKEVIRTUAL:
+      case INVOKEINTERFACE:
+        for (ParamsValue value : values) {
+          boolean[] params = value.params;
+          for (int i = 0; i < arity; i++) {
+            leaking[i] |= params[i];
+          }
+        }
+        break;
+      default:
+    }
+    return super.naryOperation(insn, values);
   }
 }

@@ -27,13 +27,16 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
 
 /**
  * @author lambdamix
@@ -68,6 +71,49 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     checkCompoundIds(TestConverterData.InnerClass.class);
     checkCompoundIds(TestConverterData.GenericStaticNestedClass.class);
     checkCompoundIds(TestAnnotation.class);
+  }
+
+  public void testLeakingParametersAnalysis() throws IOException {
+    checkLeakingParameters(LeakingParametersData.class);
+  }
+
+  private void checkLeakingParameters(Class<?> jClass) throws IOException {
+    final HashMap<Method, boolean[]> map = new HashMap<Method, boolean[]>();
+
+    // collecting leakedParameters
+    final ClassReader classReader = new ClassReader(jClass.getCanonicalName());
+      classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+          final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
+          final Method method = new Method(classReader.getClassName(), name, desc);
+          return new MethodVisitor(Opcodes.ASM5, node) {
+            @Override
+            public void visitEnd() {
+              super.visitEnd();
+              try {
+                map.put(method, cfg.leakingParameters(classReader.getClassName(), node));
+              }
+              catch (AnalyzerException ignore) {}
+            }
+          };
+        }
+      }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+    for (java.lang.reflect.Method jMethod : jClass.getDeclaredMethods()) {
+      Method method = new Method(Type.getType(jClass).getInternalName(), jMethod.getName(), Type.getMethodDescriptor(jMethod));
+      Annotation[][] annotations = jMethod.getParameterAnnotations();
+      for (int i = 0; i < annotations.length; i++) {
+        boolean isLeaking = false;
+        Annotation[] parameterAnnotations = annotations[i];
+        for (Annotation parameterAnnotation : parameterAnnotations) {
+          if (parameterAnnotation.annotationType() == ExpectLeaking.class) {
+            isLeaking = true;
+          }
+        }
+        assertEquals(method.toString() + " #" + i, isLeaking, map.get(method)[i]);
+      }
+    }
   }
 
   private void checkAnnotations(Class<?> javaClass) {

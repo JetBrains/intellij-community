@@ -127,33 +127,77 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
 
           boolean isReferenceResult = resultSort == Type.OBJECT || resultSort == Type.ARRAY;
           boolean isBooleanResult = Type.BOOLEAN_TYPE == resultType;
+          boolean isInterestingResult = isReferenceResult || isBooleanResult;
+          boolean maybeLeakingParameter = false;
+          for (Type argType : argumentTypes) {
+            int argSort = argType.getSort();
+            if (argSort == Type.OBJECT || argSort == Type.ARRAY || (isInterestingResult && Type.BOOLEAN_TYPE.equals(argType))) {
+              maybeLeakingParameter = true;
+              break;
+            }
+          }
 
           if (graph.transitions.length > 0) {
             DFSTree dfs = cfg.buildDFSTree(graph.transitions);
             boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
             if (reducible) {
               TIntHashSet resultOrigins = cfg.resultOrigins(className, methodNode);
+              boolean[] leakingParameters = maybeLeakingParameter ? cfg.leakingParameters(className, methodNode) : null;
+              boolean shouldComputeResult = isReferenceResult;
+
+              if (!shouldComputeResult && isInterestingResult && maybeLeakingParameter) {
+                loop: for (int i = 0; i < argumentTypes.length; i++) {
+                  Type argType = argumentTypes[i];
+                  int argSort = argType.getSort();
+                  boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
+                  boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
+                  if ((isReferenceArg || isBooleanArg) && !leakingParameters[i]) {
+                    shouldComputeResult = true;
+                    break loop;
+                  }
+                }
+              }
+
+              Equation<Key, Value> resultEquation =
+                shouldComputeResult ? new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze() : null;
+
               for (int i = 0; i < argumentTypes.length; i++) {
                 Type argType = argumentTypes[i];
                 int argSort = argType.getSort();
                 boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
                 boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
                 if (isReferenceArg) {
-                  parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze());
+                  if (leakingParameters[i]) {
+                    parameterEquations.add(new NonNullInAnalysis(new RichControlFlow(graph, dfs), new In(i), stable).analyze());
+                  } else {
+                    parameterEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
+                  }
                 }
-                if (isReferenceResult || isBooleanResult) {
-                  if (isReferenceArg) {
+                if (isReferenceArg && isInterestingResult) {
+                  if (leakingParameters[i]) {
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins, stable).analyze());
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins, stable).analyze());
+                  } else {
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), resultEquation.rhs));
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), resultEquation.rhs));
                   }
-                  if (isBooleanArg) {
+                }
+                if (isBooleanArg && isInterestingResult) {
+                  if (leakingParameters[i]) {
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins, stable).analyze());
                     contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins, stable).analyze());
+                  } else {
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), resultEquation.rhs));
+                    contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), resultEquation.rhs));
                   }
                 }
               }
               if (isReferenceResult) {
-                contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze());
+                if (resultEquation != null) {
+                  contractEquations.add(resultEquation);
+                } else {
+                  contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze());
+                }
               }
               added = true;
             }
@@ -168,23 +212,22 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
               Type argType = argumentTypes[i];
               int argSort = argType.getSort();
               boolean isReferenceArg = argSort == Type.OBJECT || argSort == Type.ARRAY;
+              boolean isBooleanArg = Type.BOOLEAN_TYPE.equals(argType);
 
               if (isReferenceArg) {
-                contractEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
-                if (isReferenceResult || isBooleanResult) {
-                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
-                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
-                }
+                parameterEquations.add(new Equation<Key, Value>(new Key(method, new In(i), stable), new Final<Key, Value>(Value.Top)));
               }
-              if (Type.BOOLEAN_TYPE.equals(argType)) {
-                if (isReferenceResult || isBooleanResult) {
-                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
-                  contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
-                }
+              if (isReferenceArg && isInterestingResult) {
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), new Final<Key, Value>(Value.Top)));
+              }
+              if (isBooleanArg && isInterestingResult) {
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), new Final<Key, Value>(Value.Top)));
+                contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), new Final<Key, Value>(Value.Top)));
               }
             }
             if (isReferenceResult) {
-              parameterEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
+              contractEquations.add(new Equation<Key, Value>(new Key(method, new Out(), stable), new Final<Key, Value>(Value.Top)));
             }
           }
         }
