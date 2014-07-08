@@ -27,8 +27,6 @@ import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import junit.framework.Assert;
 
 import java.io.IOException;
