@@ -1,9 +1,11 @@
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,11 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   private HttpClient createClient() {
     HttpClient client = new HttpClient(new MultiThreadedHttpConnectionManager());
     configureHttpClient(client);
+    // After CertificateManager became application service it no longer "automagically" preliminarily
+    // initializes default SSL context as required for trackers written in httpclient 3.x.
+    // Clients that use httpclient 4.x (see NewBaseRepositoryImpl.getHttpClient) install SSL context explicitly though.
+    // This workaround allows to install context properly as soon as HTTP client is needed.
+    ServiceManager.getService(CertificateManager.class);
     return client;
   }
 
@@ -76,7 +83,8 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
       client.getParams().setCredentialCharset("UTF-8");
       client.getParams().setAuthenticationPreemptive(true);
       client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(getUsername(), getPassword()));
-    } else {
+    }
+    else {
       client.getState().clearCredentials();
       client.getParams().setAuthenticationPreemptive(false);
     }
