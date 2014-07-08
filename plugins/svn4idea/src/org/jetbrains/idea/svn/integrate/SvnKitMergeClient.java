@@ -4,9 +4,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
@@ -39,7 +39,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
   public void merge(@NotNull SvnTarget source,
                     @NotNull SVNRevisionRange range,
                     @NotNull File destination,
-                    @Nullable SVNDepth depth,
+                    @Nullable Depth depth,
                     boolean dryRun,
                     boolean recordOnly,
                     boolean force,
@@ -49,7 +49,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
 
     try {
       createClient(diffOptions, handler).doMerge(source.getURL(), source.getPegRevision(), Collections.singletonList(range), destination,
-                                                 depth, true, force, dryRun, recordOnly);
+                                                 toDepth(depth), true, force, dryRun, recordOnly);
     }
     catch (SVNException e) {
       throw new VcsException(e);
@@ -60,7 +60,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
   public void merge(@NotNull SvnTarget source1,
                     @NotNull SvnTarget source2,
                     @NotNull File destination,
-                    @Nullable SVNDepth depth,
+                    @Nullable Depth depth,
                     boolean useAncestry,
                     boolean dryRun,
                     boolean recordOnly,
@@ -72,7 +72,7 @@ public class SvnKitMergeClient extends BaseSvnClient implements MergeClient {
 
     try {
       createClient(diffOptions, handler).doMerge(source1.getURL(), source1.getPegRevision(), source2.getURL(), source2.getPegRevision(),
-                                                 destination, depth, useAncestry, force, dryRun, recordOnly);
+                                                 destination, toDepth(depth), useAncestry, force, dryRun, recordOnly);
     }
     catch (SVNException e) {
       throw new VcsException(e);

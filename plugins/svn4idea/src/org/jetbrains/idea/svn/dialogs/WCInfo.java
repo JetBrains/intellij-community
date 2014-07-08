@@ -20,22 +20,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 
 public class WCInfo implements WCPaths {
   private final boolean myIsWcRoot;
-  private final SVNDepth myStickyDepth;
+  private final Depth myStickyDepth;
   @NotNull private final RootUrlInfo myRootInfo;
 
-  public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, SVNDepth stickyDepth) {
+  public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, Depth stickyDepth) {
     myRootInfo = rootInfo;
     myIsWcRoot = isWcRoot;
     myStickyDepth = stickyDepth;
   }
 
-  public SVNDepth getStickyDepth() {
+  public Depth getStickyDepth() {
     return myStickyDepth;
   }
 

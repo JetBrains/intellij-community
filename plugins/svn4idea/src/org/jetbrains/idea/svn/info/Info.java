@@ -17,9 +17,9 @@ package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -53,7 +53,7 @@ public class Info {
   private final File myConflictNewFile;
   private final File myConflictWrkFile;
   private final File myPropConflictFile;
-  private final SVNDepth myDepth;
+  private final Depth myDepth;
   @Nullable private final TreeConflictDescription myTreeConflict;
 
   @NotNull
@@ -63,14 +63,14 @@ public class Info {
     if (info.isRemote()) {
       result = new Info(info.getPath(), info.getURL(), info.getRevision(), info.getKind(), info.getRepositoryUUID(),
                            info.getRepositoryRootURL(), info.getCommittedRevision().getNumber(), info.getCommittedDate(), info.getAuthor(),
-                           Lock.create(info.getLock()), info.getDepth());
+                           Lock.create(info.getLock()), Depth.from(info.getDepth()));
     }
     else {
       result = new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), info.getKind(),
                         info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()),
                         info.getAuthor(), info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(),
                         getPath(info.getConflictOldFile()), getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()),
-                        getPath(info.getPropConflictFile()), Lock.create(info.getLock()), info.getDepth(),
+                        getPath(info.getPropConflictFile()), Lock.create(info.getLock()), Depth.from(info.getDepth()),
                         TreeConflictDescription.create(info.getTreeConflict()));
     }
 
@@ -94,7 +94,7 @@ public class Info {
               String conflictWorking,
               String propRejectFile,
               @Nullable Lock lock,
-              SVNDepth depth,
+              Depth depth,
               @Nullable TreeConflictDescription treeConflict) {
     myFile = file;
     myURL = url;
@@ -136,7 +136,7 @@ public class Info {
               Date date,
               String author,
               @Nullable Lock lock,
-              SVNDepth depth) {
+              Depth depth) {
     myIsRemote = true;
     myURL = url;
     myRevision = revision;
@@ -245,7 +245,7 @@ public class Info {
     return myURL;
   }
 
-  public SVNDepth getDepth() {
+  public Depth getDepth() {
     return myDepth;
   }
 

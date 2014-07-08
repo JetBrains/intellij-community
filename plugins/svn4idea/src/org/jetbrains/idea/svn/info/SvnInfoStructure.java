@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
@@ -55,7 +56,7 @@ public class SvnInfoStructure {
   public String myConflictWorking;
   public String myPropRejectFile;
   public Lock.Builder myLockBuilder;
-  public SVNDepth myDepth;
+  public Depth myDepth;
   public String myChangelistName;
   public long myWcSize;
   public Date myCorrectCommittedDate;

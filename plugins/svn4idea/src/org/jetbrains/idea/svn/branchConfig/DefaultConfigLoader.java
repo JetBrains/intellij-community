@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.info.Info;
@@ -69,7 +70,7 @@ public class DefaultConfigLoader {
           SVNURL rootPath = baseUrl.removePathTail();
           SvnTarget target = SvnTarget.fromURL(rootPath);
 
-          vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, createHandler(result, rootPath));
+          vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, rootPath));
           break;
         }
         if (SVNPathUtil.removeTail(baseUrl.getPath()).length() == 0) {

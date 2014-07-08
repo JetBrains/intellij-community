@@ -27,12 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -89,7 +89,7 @@ public class SvnTreeConflictResolver {
     if (myRevertPath == null) return;
     final File ioFile = myRevertPath.getIOFile();
     final Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
-    myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+    myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
     if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
       FileUtil.delete(ioFile);
     }
@@ -99,7 +99,7 @@ public class SvnTreeConflictResolver {
   public void resolveSelectMineFull(TreeConflictDescription d) throws VcsException {
     final File ioFile = myPath.getIOFile();
 
-    myVcs.getFactory(ioFile).createConflictClient().resolve(ioFile, SVNDepth.INFINITY, true, true, true);
+    myVcs.getFactory(ioFile).createConflictClient().resolve(ioFile, Depth.INFINITY, true, true, true);
     pathDirty(myPath);
   }
 
@@ -110,11 +110,11 @@ public class SvnTreeConflictResolver {
       myCommittedRevision = new SvnRevisionNumber(status.getCommittedRevision());
     }
     if (status == null || SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
       updateIoFile(ioFile, SVNRevision.HEAD);
       return;
     } else if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
       updateIoFile(ioFile, SVNRevision.HEAD);
       FileUtil.delete(ioFile);
       return;
@@ -122,7 +122,7 @@ public class SvnTreeConflictResolver {
       final Set<File> usedToBeAdded = new HashSet<File>();
       if (myPath.isDirectory()) {
         StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
-        statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, SVNDepth.INFINITY, false, false, false, false,
+        statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false,
                               new StatusConsumer() {
                                 @Override
                                 public void consume(Status status) throws SVNException {
@@ -132,7 +132,7 @@ public class SvnTreeConflictResolver {
                                 }
                               }, null);
       }
-      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, SVNDepth.INFINITY, null);
+      myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
       for (File wasAdded : usedToBeAdded) {
         FileUtil.delete(wasAdded);
       }
@@ -143,9 +143,9 @@ public class SvnTreeConflictResolver {
   private void updateIoFile(@NotNull File ioFile, @NotNull final SVNRevision revision) throws SvnBindException {
     if (! ioFile.exists()) {
       File parent = ioFile.getParentFile();
-      myVcs.getFactory(parent).createUpdateClient().doUpdate(parent, revision, SVNDepth.INFINITY, true, false);
+      myVcs.getFactory(parent).createUpdateClient().doUpdate(parent, revision, Depth.INFINITY, true, false);
     } else {
-      myVcs.getFactory(ioFile).createUpdateClient().doUpdate(ioFile, revision, SVNDepth.INFINITY, false, false);
+      myVcs.getFactory(ioFile).createUpdateClient().doUpdate(ioFile, revision, Depth.INFINITY, false, false);
     }
   }
 }

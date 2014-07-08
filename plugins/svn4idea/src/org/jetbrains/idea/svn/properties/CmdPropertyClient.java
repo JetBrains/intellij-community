@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
@@ -63,7 +64,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public void getProperty(@NotNull SvnTarget target,
                           @NotNull String property,
                           @Nullable SVNRevision revision,
-                          @Nullable SVNDepth depth,
+                          @Nullable Depth depth,
                           @Nullable ISVNPropertyHandler handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
 
@@ -77,7 +78,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   @Override
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
-                   @Nullable SVNDepth depth,
+                   @Nullable Depth depth,
                    @Nullable ISVNPropertyHandler handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     fillListParameters(target, revision, depth, parameters, true);
@@ -90,7 +91,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public void setProperty(@NotNull File file,
                           @NotNull String property,
                           @Nullable SVNPropertyValue value,
-                          @Nullable SVNDepth depth,
+                          @Nullable Depth depth,
                           boolean force) throws VcsException {
     runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
   }
@@ -101,7 +102,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     currentProperties.putAll(properties);
 
     for (String propertyName : currentProperties.nameSet()) {
-      setProperty(file, propertyName, currentProperties.getSVNPropertyValue(propertyName), SVNDepth.EMPTY, true);
+      setProperty(file, propertyName, currentProperties.getSVNPropertyValue(propertyName), Depth.EMPTY, true);
     }
   }
 
@@ -109,7 +110,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   private SVNProperties collectPropertiesToDelete(@NotNull File file) throws VcsException {
     final SVNProperties result = new SVNProperties();
 
-    list(SvnTarget.fromFile(file), null, SVNDepth.EMPTY, new ISVNPropertyHandler() {
+    list(SvnTarget.fromFile(file), null, Depth.EMPTY, new ISVNPropertyHandler() {
       @Override
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         // null indicates property will be deleted
@@ -140,7 +141,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   private void runSetProperty(@NotNull SvnTarget target,
                               @NotNull String property,
                               @Nullable SVNRevision revision,
-                              @Nullable SVNDepth depth,
+                              @Nullable Depth depth,
                               @Nullable SVNPropertyValue value,
                               boolean force) throws VcsException {
     List<String> parameters = new ArrayList<String>();
@@ -169,7 +170,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   private void fillListParameters(@NotNull SvnTarget target,
                                   @Nullable SVNRevision revision,
-                                  @Nullable SVNDepth depth,
+                                  @Nullable Depth depth,
                                   @NotNull List<String> parameters,
                                   boolean verbose) {
     CommandUtil.put(parameters, target);

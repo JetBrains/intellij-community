@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
@@ -130,7 +131,7 @@ class RepositoryLoader extends Loader {
       };
       try {
         SvnTarget target = SvnTarget.fromURL(node.getURL());
-        vcs.getFactoryFromSettings().createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, handler);
+        vcs.getFactoryFromSettings().createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
       }
       catch (final VcsException e) {
         SwingUtilities.invokeLater(new Runnable() {

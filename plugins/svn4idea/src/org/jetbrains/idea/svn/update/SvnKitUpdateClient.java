@@ -18,9 +18,9 @@ package org.jetbrains.idea.svn.update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -41,10 +41,10 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
   protected boolean myLocksOnDemand;
 
   @Override
-  public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+  public long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SvnBindException {
     try {
-      return getClient().doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
+      return getClient().doUpdate(path, revision, toDepth(depth), allowUnversionedObstructions, depthIsSticky);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -56,10 +56,10 @@ public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
                        SVNURL url,
                        SVNRevision pegRevision,
                        SVNRevision revision,
-                       SVNDepth depth,
+                       Depth depth,
                        boolean allowUnversionedObstructions, boolean depthIsSticky) throws SvnBindException {
     try {
-      return getClient().doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
+      return getClient().doSwitch(path, url, pegRevision, revision, toDepth(depth), allowUnversionedObstructions, depthIsSticky);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

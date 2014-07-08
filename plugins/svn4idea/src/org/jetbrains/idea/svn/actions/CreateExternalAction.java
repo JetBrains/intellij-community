@@ -37,13 +37,13 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
@@ -112,7 +112,7 @@ public class CreateExternalAction extends DumbAwareAction {
             if (pi != null && pi.isCanceled()) throw new SVNCancelException();
           }
         });
-        client.doUpdate(ioFile, SVNRevision.HEAD, SVNDepth.UNKNOWN, false, false);
+        client.doUpdate(ioFile, SVNRevision.HEAD, Depth.UNKNOWN, false, false);
         vf.refresh(true, true, new Runnable() {
           @Override
           public void run() {
@@ -149,7 +149,7 @@ public class CreateExternalAction extends DumbAwareAction {
     } else {
       newValue = createExternalDefinitionString(url, target);
     }
-    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), SVNDepth.EMPTY,
+    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), Depth.EMPTY,
                                                false);
     return false;
   }

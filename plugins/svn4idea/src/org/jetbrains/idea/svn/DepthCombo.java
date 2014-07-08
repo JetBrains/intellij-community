@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
 
 import javax.swing.*;
 
@@ -27,27 +27,27 @@ public class DepthCombo extends JComboBox {
     setToolTipText(SvnBundle.message("label.depth.description"));
   }
 
-  public SVNDepth getDepth() {
-    return ((SVNDepthWithName) super.getSelectedItem()).getDepth();
+  public Depth getDepth() {
+    return ((DepthWithName) super.getSelectedItem()).getDepth();
   }
 
-  private final static SVNDepthWithName [] ourForUpdate = {new SVNDepthWithName(SVNDepth.UNKNOWN, "working copy"),
-    new SVNDepthWithName(SVNDepth.EMPTY), new SVNDepthWithName(SVNDepth.FILES), new SVNDepthWithName(SVNDepth.IMMEDIATES),
-    new SVNDepthWithName(SVNDepth.INFINITY)};
-  private final static SVNDepthWithName [] ourForCheckout = {
-    new SVNDepthWithName(SVNDepth.EMPTY), new SVNDepthWithName(SVNDepth.FILES), new SVNDepthWithName(SVNDepth.IMMEDIATES),
-    new SVNDepthWithName(SVNDepth.INFINITY)};
+  private final static DepthWithName [] ourForUpdate = {new DepthWithName(Depth.UNKNOWN, "working copy"),
+    new DepthWithName(Depth.EMPTY), new DepthWithName(Depth.FILES), new DepthWithName(Depth.IMMEDIATES),
+    new DepthWithName(Depth.INFINITY)};
+  private final static DepthWithName [] ourForCheckout = {
+    new DepthWithName(Depth.EMPTY), new DepthWithName(Depth.FILES), new DepthWithName(Depth.IMMEDIATES),
+    new DepthWithName(Depth.INFINITY)};
 
-  private static class SVNDepthWithName {
-    private final SVNDepth myDepth;
+  private static class DepthWithName {
+    private final Depth myDepth;
     private final String myName;
 
-    private SVNDepthWithName(SVNDepth depth) {
+    private DepthWithName(Depth depth) {
       myDepth = depth;
       myName = myDepth.toString();
     }
 
-    private SVNDepthWithName(SVNDepth depth, String name) {
+    private DepthWithName(Depth depth, String name) {
       myDepth = depth;
       myName = name;
     }
@@ -57,7 +57,7 @@ public class DepthCombo extends JComboBox {
       return myName;
     }
 
-    public SVNDepth getDepth() {
+    public Depth getDepth() {
       return myDepth;
     }
   }

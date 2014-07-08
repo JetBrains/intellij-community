@@ -26,8 +26,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -147,7 +147,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   private static List<String> buildParameters(@NotNull String path,
                                               @Nullable SVNRevision pegRevision,
                                               @Nullable SVNRevision revision,
-                                              @Nullable SVNDepth depth) {
+                                              @Nullable Depth depth) {
     List<String> parameters = ContainerUtil.newArrayList();
 
     CommandUtil.put(parameters, depth);
@@ -167,12 +167,12 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       throw new SvnBindException("Can not find existing parent file");
     }
 
-    return parseResult(base, execute(buildParameters(path.getAbsolutePath(), SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY), path));
+    return parseResult(base, execute(buildParameters(path.getAbsolutePath(), SVNRevision.UNDEFINED, revision, Depth.EMPTY), path));
   }
 
   @Override
   public Info doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
-    CommandExecutor command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toDecodedString(), pegRevision, revision, SVNDepth.EMPTY), null);
+    CommandExecutor command = execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, buildParameters(url.toDecodedString(), pegRevision, revision, Depth.EMPTY), null);
 
     return parseResult(null, command.getOutput());
   }

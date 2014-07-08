@@ -51,10 +51,10 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -289,7 +289,7 @@ public class MergeFromTheirsResolver {
         // TODO: is used. Command line also does not support automatic directory creation.
         // TODO: Need to check additionally if there are cases when directory does not exist and add corresponding code.
         myVcs.getFactory(myOldFilePath.getIOFile()).createAddClient()
-          .add(myOldFilePath.getIOFile(), SVNDepth.EMPTY, true, false, true, null);
+          .add(myOldFilePath.getIOFile(), Depth.EMPTY, true, false, true, null);
       }
       catch (VcsException e) {
         context.handleException(e, true);

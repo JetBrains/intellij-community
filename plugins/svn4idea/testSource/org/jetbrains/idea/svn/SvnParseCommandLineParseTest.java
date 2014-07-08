@@ -24,11 +24,11 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.*;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -614,7 +614,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
 
   private Info createStubInfo(final String basePath, final String baseUrl) throws SVNException {
     return new Info(basePath, SVNURL.parseURIEncoded(baseUrl), SVNRevision.HEAD, SVNNodeKind.FILE, "",
-                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, SVNDepth.EMPTY);
+                           SVNURL.parseURIEncoded("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
   }
 
   public void testStatusInExternalMove() throws Exception {

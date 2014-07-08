@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -33,7 +34,7 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   @Override
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
-                   @Nullable SVNDepth depth,
+                   @Nullable Depth depth,
                    @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);
 
@@ -42,10 +43,10 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
 
     try {
       if (target.isFile()) {
-        client.doList(target.getFile(), target.getPegRevision(), notNullize(revision), true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getFile(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
       else {
-        client.doList(target.getURL(), target.getPegRevision(), notNullize(revision), true, depth, SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getURL(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
     }
     catch (SVNException e) {

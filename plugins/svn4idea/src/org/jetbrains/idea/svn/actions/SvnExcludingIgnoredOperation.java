@@ -26,14 +26,14 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
 
 public class SvnExcludingIgnoredOperation {
   private final Operation myImportAction;
-  private final SVNDepth myDepth;
+  private final Depth myDepth;
   private final Filter myFilter;
 
-  public SvnExcludingIgnoredOperation(final Project project, final Operation importAction, final SVNDepth depth) {
+  public SvnExcludingIgnoredOperation(final Project project, final Operation importAction, final Depth depth) {
     myImportAction = importAction;
     myDepth = depth;
 
@@ -101,7 +101,7 @@ public class SvnExcludingIgnoredOperation {
   }
 
   public void execute(final VirtualFile file) throws VcsException {
-    if (SVNDepth.INFINITY.equals(myDepth)) {
+    if (Depth.INFINITY.equals(myDepth)) {
       executeDown(file);
       return;
     }
@@ -110,12 +110,12 @@ public class SvnExcludingIgnoredOperation {
       return;
     }
 
-    if (SVNDepth.EMPTY.equals(myDepth)) {
+    if (Depth.EMPTY.equals(myDepth)) {
       return;
     }
 
     for (VirtualFile child : file.getChildren()) {
-      if (SVNDepth.FILES.equals(myDepth) && child.isDirectory()) {
+      if (Depth.FILES.equals(myDepth) && child.isDirectory()) {
         continue;
       }
       operation(child);

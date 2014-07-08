@@ -34,10 +34,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -87,12 +87,12 @@ public class SvnChangeProvider implements ChangeProvider {
       final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), partner);
 
       for (FilePath path : zipper.getRecursiveDirs()) {
-        walker.go(path, SVNDepth.INFINITY);
+        walker.go(path, Depth.INFINITY);
       }
 
       partner.setFileProvider(fileProvider);
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-        walker.go(item.getDir(), SVNDepth.IMMEDIATES);
+        walker.go(item.getDir(), Depth.IMMEDIATES);
       }
 
       processCopiedAndDeleted(context, dirtyScope);
@@ -179,7 +179,7 @@ public class SvnChangeProvider implements ChangeProvider {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, ProgressManager.getInstance().getProgressIndicator());
     final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
-    walker.go(path, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES);
+    walker.go(path, recursive ? Depth.INFINITY : Depth.IMMEDIATES);
     processCopiedAndDeleted(context, null);
   }
 

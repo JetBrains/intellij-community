@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -54,7 +54,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public long doStatus(final File path,
                        final SVNRevision revision,
-                       final SVNDepth depth,
+                       final Depth depth,
                        boolean remote,
                        boolean reportAll,
                        boolean includeIgnored,
@@ -139,7 +139,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   private static void putParameters(@NotNull List<String> parameters,
                                     @NotNull File path,
-                                    @Nullable SVNDepth depth,
+                                    @Nullable Depth depth,
                                     boolean remote,
                                     boolean reportAll,
                                     boolean includeIgnored,
@@ -236,7 +236,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public Status doStatus(File path, boolean remote) throws SvnBindException {
     final Status[] svnStatus = new Status[1];
-    doStatus(path, SVNRevision.UNDEFINED, SVNDepth.EMPTY, remote, false, false, false, new StatusConsumer() {
+    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, new StatusConsumer() {
       @Override
       public void consume(Status status) throws SVNException {
         svnStatus[0] = status;

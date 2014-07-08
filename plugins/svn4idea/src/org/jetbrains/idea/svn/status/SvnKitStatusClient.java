@@ -18,9 +18,9 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -51,7 +51,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public long doStatus(File path,
                        SVNRevision revision,
-                       SVNDepth depth,
+                       Depth depth,
                        boolean remote,
                        boolean reportAll,
                        boolean includeIgnored,
@@ -60,7 +60,7 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
                        Collection changeLists) throws SvnBindException {
     try {
       return getStatusClient()
-        .doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, new ISVNStatusHandler() {
+        .doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals, new ISVNStatusHandler() {
           @Override
           public void handleStatus(SVNStatus status) throws SVNException {
             handler.consume(Status.create(status));

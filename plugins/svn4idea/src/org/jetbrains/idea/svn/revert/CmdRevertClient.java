@@ -4,14 +4,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.FileStatusResultParser;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -32,7 +29,7 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH + OPTIONAL_COMMENT);
 
   @Override
-  public void revert(@NotNull File[] paths, @Nullable SVNDepth depth, @Nullable ProgressTracker handler) throws VcsException {
+  public void revert(@NotNull File[] paths, @Nullable Depth depth, @Nullable ProgressTracker handler) throws VcsException {
     if (paths.length > 0) {
       List<String> parameters = prepareParameters(paths, depth);
 
@@ -46,7 +43,7 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
     }
   }
 
-  private static List<String> prepareParameters(File[] paths, SVNDepth depth) {
+  private static List<String> prepareParameters(File[] paths, Depth depth) {
     ArrayList<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, paths);

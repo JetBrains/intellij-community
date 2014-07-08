@@ -45,11 +45,11 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -301,7 +301,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     };
 
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+    Depth depth = Depth.allOrEmpty(recursive);
 
     for (VirtualFile file : files) {
       try {

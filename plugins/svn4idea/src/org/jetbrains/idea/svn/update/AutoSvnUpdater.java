@@ -29,7 +29,7 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -66,7 +66,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     final SvnConfiguration configuration17 = SvnConfiguration.getInstance(myProject);
     configuration17.setForceUpdate(false);
     configuration17.setUpdateLockOnDemand(false);
-    configuration17.setUpdateDepth(SVNDepth.INFINITY);
+    configuration17.setUpdateDepth(Depth.INFINITY);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     for (FilePath root : myRoots) {
       configureUpdateRootInfo(root, configuration17.getUpdateRootInfo(root.getIOFile(), vcs));

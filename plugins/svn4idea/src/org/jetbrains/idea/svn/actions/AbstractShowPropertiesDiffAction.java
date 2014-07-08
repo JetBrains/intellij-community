@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
-import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -276,7 +276,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
     final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
 
-    vcs.getFactory(target).createPropertyClient().list(target, revision, SVNDepth.EMPTY, propertyHandler);
+    vcs.getFactory(target).createPropertyClient().list(target, revision, Depth.EMPTY, propertyHandler);
 
     return toSortedStringPresentation(lines);
   }

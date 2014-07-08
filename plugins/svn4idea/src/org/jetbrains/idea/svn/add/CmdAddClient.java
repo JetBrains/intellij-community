@@ -4,14 +4,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.FileStatusResultParser;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -33,7 +30,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
 
   @Override
   public void add(@NotNull File file,
-                  @Nullable SVNDepth depth,
+                  @Nullable Depth depth,
                   boolean makeParents,
                   boolean includeIgnored,
                   boolean force,
@@ -48,7 +45,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
     parser.parse(command.getOutput());
   }
 
-  private static List<String> prepareParameters(File file, SVNDepth depth, boolean makeParents, boolean includeIgnored, boolean force) {
+  private static List<String> prepareParameters(File file, Depth depth, boolean makeParents, boolean includeIgnored, boolean force) {
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, file);

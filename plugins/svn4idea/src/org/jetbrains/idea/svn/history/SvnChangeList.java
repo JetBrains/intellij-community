@@ -40,6 +40,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -480,7 +481,7 @@ public class SvnChangeList implements CommittedChangeList {
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
       SvnTarget target = SvnTarget.fromURL(fullPath, revisionNumber);
 
-      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, SVNDepth.INFINITY, new DirectoryEntryConsumer() {
+      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, Depth.INFINITY, new DirectoryEntryConsumer() {
 
         @Override
         public void consume(final DirectoryEntry entry) throws SVNException {

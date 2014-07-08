@@ -45,6 +45,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -538,10 +539,10 @@ public class SvnUtil {
     }
   }
 
-  public static SVNDepth getDepth(final SvnVcs vcs, final File file) {
+  public static Depth getDepth(final SvnVcs vcs, final File file) {
     Info info = vcs.getInfo(file);
 
-    return info != null && info.getDepth() != null ? info.getDepth() : SVNDepth.UNKNOWN;
+    return info != null && info.getDepth() != null ? info.getDepth() : Depth.UNKNOWN;
   }
 
   public static boolean seemsLikeVersionedDir(final VirtualFile file) {
@@ -593,7 +594,7 @@ public class SvnUtil {
       }
     };
 
-    vcs.getFactory(target).createBrowseClient().list(target, null, SVNDepth.IMMEDIATES, handler);
+    vcs.getFactory(target).createBrowseClient().list(target, null, Depth.IMMEDIATES, handler);
     return result.get();
   }
 

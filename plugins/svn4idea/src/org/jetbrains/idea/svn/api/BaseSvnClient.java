@@ -10,6 +10,7 @@ import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -150,6 +151,11 @@ public abstract class BaseSvnClient implements SvnClient {
   protected static SVNDiffOptions toDiffOptions(@Nullable DiffOptions options) {
     return options != null ? new SVNDiffOptions(options.isIgnoreAllWhitespace(), options.isIgnoreAmountOfWhitespace(),
                                                 options.isIgnoreEOLStyle()) : null;
+  }
+
+  @Nullable
+  protected static SVNDepth toDepth(@Nullable Depth depth) {
+    return depth != null ? SVNDepth.fromString(depth.getName()) : null;
   }
 
   @NotNull

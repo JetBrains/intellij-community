@@ -5,9 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -39,7 +39,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
   public void checkout(@NotNull SvnTarget source,
                        @NotNull File destination,
                        @Nullable SVNRevision revision,
-                       @Nullable SVNDepth depth,
+                       @Nullable Depth depth,
                        boolean ignoreExternals,
                        boolean force,
                        @NotNull WorkingCopyFormat format,
@@ -57,7 +57,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
     client.setEventHandler(toEventHandler(handler));
 
     try {
-      client.doCheckout(source.getURL(), destination, source.getPegRevision(), revision, depth, force);
+      client.doCheckout(source.getURL(), destination, source.getPegRevision(), revision, toDepth(depth), force);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

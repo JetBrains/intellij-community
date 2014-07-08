@@ -44,13 +44,13 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
@@ -70,7 +70,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final SVNRevision revision,
-                                final SVNDepth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
+                                final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     if (! target.exists()) {
       target.mkdirs();
     }
@@ -96,7 +96,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                final File target,
                                final String url,
                                final SVNRevision revision,
-                               final SVNDepth depth,
+                               final Depth depth,
                                final boolean ignoreExternals,
                                final Listener listener, final WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
@@ -191,7 +191,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
-  public static void doExport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
+  public static void doExport(final Project project, final File target, final SVNURL url, final Depth depth,
                               final boolean ignoreExternals, final boolean force, final String eolStyle) {
     try {
       final VcsException[] exception = new VcsException[1];
@@ -222,7 +222,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static void doImport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
+  public static void doImport(final Project project, final File target, final SVNURL url, final Depth depth,
                               final boolean includeIgnored, final String message) {
     final Ref<String> errorMessage = new Ref<String>();
     final SvnVcs vcs = SvnVcs.getInstance(project);

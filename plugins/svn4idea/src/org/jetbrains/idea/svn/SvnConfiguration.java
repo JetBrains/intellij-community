@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.auth.SvnInteractiveAuthenticationProvider;
@@ -33,7 +34,6 @@ import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -78,7 +78,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   // TODO: update depth is not stored in configuration as SVNDepth has wrong type for DefaultJDOMExternalizer
   // TODO: check if it should be stored
-  public SVNDepth UPDATE_DEPTH = SVNDepth.UNKNOWN;
+  public Depth UPDATE_DEPTH = Depth.UNKNOWN;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
@@ -181,11 +181,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myState.sslProtocols = sslProtocols;
   }
 
-  public SVNDepth getUpdateDepth() {
+  public Depth getUpdateDepth() {
     return UPDATE_DEPTH;
   }
 
-  public void setUpdateDepth(SVNDepth updateDepth) {
+  public void setUpdateDepth(Depth updateDepth) {
     this.UPDATE_DEPTH = updateDepth;
   }
 

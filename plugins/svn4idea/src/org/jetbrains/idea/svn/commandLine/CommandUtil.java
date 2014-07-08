@@ -4,8 +4,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -90,12 +90,12 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable SVNDepth depth) {
+  public static void put(@NotNull List<String> parameters, @Nullable Depth depth) {
     put(parameters, depth, false);
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable SVNDepth depth, boolean sticky) {
-    if (depth != null && !SVNDepth.UNKNOWN.equals(depth)) {
+  public static void put(@NotNull List<String> parameters, @Nullable Depth depth, boolean sticky) {
+    if (depth != null && !Depth.UNKNOWN.equals(depth)) {
       parameters.add("--depth");
       parameters.add(depth.getName());
 

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
@@ -99,7 +100,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
 
   private static void fillParameters(@NotNull List<String> parameters,
                                      @Nullable SVNRevision revision,
-                                     @Nullable SVNDepth depth,
+                                     @Nullable Depth depth,
                                      boolean depthIsSticky,
                                      boolean allowUnversionedObstructions) {
 
@@ -133,7 +134,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
  }
 
   @Override
-  public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+  public long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SvnBindException {
     checkWorkingCopy(path);
 
@@ -152,7 +153,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
                        SVNURL url,
                        SVNRevision pegRevision,
                        SVNRevision revision,
-                       SVNDepth depth,
+                       Depth depth,
                        boolean allowUnversionedObstructions,
                        boolean depthIsSticky) throws SvnBindException {
     checkWorkingCopy(path);

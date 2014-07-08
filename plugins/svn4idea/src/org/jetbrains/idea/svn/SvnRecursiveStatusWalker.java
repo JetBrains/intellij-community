@@ -31,11 +31,11 @@ import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -64,7 +64,7 @@ public class SvnRecursiveStatusWalker {
     myHandler = new MyHandler();
   }
 
-  public void go(final FilePath rootPath, final SVNDepth depth) throws SvnBindException {
+  public void go(final FilePath rootPath, final Depth depth) throws SvnBindException {
     final MyItem root = createItem(rootPath, depth, false);
     myQueue.add(root);
 
@@ -120,11 +120,11 @@ public class SvnRecursiveStatusWalker {
 
   private static class MyItem {
     @NotNull private final FilePath myPath;
-    @NotNull private final SVNDepth myDepth;
+    @NotNull private final Depth myDepth;
     @NotNull private final StatusClient myStatusClient;
     private final boolean myIsInnerCopyRoot;
 
-    private MyItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot, @NotNull StatusClient statusClient) {
+    private MyItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot, @NotNull StatusClient statusClient) {
       myPath = path;
       myDepth = depth;
       myStatusClient = statusClient;
@@ -137,7 +137,7 @@ public class SvnRecursiveStatusWalker {
     }
 
     @NotNull
-    public SVNDepth getDepth() {
+    public Depth getDepth() {
       return myDepth;
     }
 
@@ -151,13 +151,13 @@ public class SvnRecursiveStatusWalker {
     }
   }
 
-  private void processRecursively(final VirtualFile vFile, final SVNDepth prevDepth) {
-    if (SVNDepth.EMPTY.equals(prevDepth)) return;
+  private void processRecursively(final VirtualFile vFile, final Depth prevDepth) {
+    if (Depth.EMPTY.equals(prevDepth)) return;
     if (myPartner.isIgnoredIdeaLevel(vFile)) {
       myReceiver.processIgnored(vFile);
       return;
     }
-    final SVNDepth newDepth = SVNDepth.INFINITY.equals(prevDepth) ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+    final Depth newDepth = Depth.INFINITY.equals(prevDepth) ? Depth.INFINITY : Depth.EMPTY;
 
     final File ioFile = new File(vFile.getPath());
     final Processor<File> processor;
@@ -184,7 +184,7 @@ public class SvnRecursiveStatusWalker {
         return true;
       }
     };
-    if (SVNDepth.EMPTY.equals(newDepth)) {
+    if (Depth.EMPTY.equals(newDepth)) {
       directoryFilter = Processor.TRUE;
       processor = new Processor<File>() {
         @Override
@@ -209,7 +209,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   @NotNull
-  private MyItem createItem(@NotNull FilePath path, @NotNull SVNDepth depth, boolean isInnerCopyRoot) {
+  private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
     StatusClient statusClient =
       myVcs.getFactory(path.getIOFile()).createStatusClient(myPartner.getFileProvider(), myPartner.getEventHandler());
 
@@ -292,7 +292,7 @@ public class SvnRecursiveStatusWalker {
             //myReceiver.processUnversioned(vFile);
             //processRecursively(vFile, myCurrentItem.getDepth());
           } else {
-            final MyItem childItem = createItem(new FilePathImpl(vFile), SVNDepth.INFINITY, true);
+            final MyItem childItem = createItem(new FilePathImpl(vFile), Depth.INFINITY, true);
             myQueue.add(childItem);
           }
         } else {

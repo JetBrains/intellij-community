@@ -29,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -72,7 +72,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     if (paths.length == 0) return new CommitInfo[]{CommitInfo.EMPTY};
 
     final List<String> parameters = new ArrayList<String>();
-    CommandUtil.put(parameters, SVNDepth.EMPTY);
+    CommandUtil.put(parameters, Depth.EMPTY);
     CommandUtil.put(parameters, false, "--no-unlock");
     CommandUtil.put(parameters, false, "--keep-changelists");
     CommandUtil.putChangeLists(parameters, null);

@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
@@ -48,7 +49,7 @@ public class BranchesLoader {
     if (!passive) {
       // TODO: Implement ability to specify interactive/non-interactive auth mode for clients
       DirectoryEntryConsumer handler = createConsumer(branchesUrl, result);
-      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, SVNDepth.IMMEDIATES, handler);
+      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
     }
     else {
       ISVNDirEntryHandler handler = createHandler(branchesUrl, result);

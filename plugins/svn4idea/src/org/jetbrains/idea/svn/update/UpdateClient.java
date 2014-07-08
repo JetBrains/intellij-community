@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -32,7 +32,7 @@ import java.io.File;
  */
 public interface UpdateClient extends SvnClient {
 
-  long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+  long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SvnBindException;
 
   void setUpdateLocksOnDemand(boolean locksOnDemand);
@@ -41,7 +41,7 @@ public interface UpdateClient extends SvnClient {
                 SVNURL url,
                 SVNRevision pegRevision,
                 SVNRevision revision,
-                SVNDepth depth,
+                Depth depth,
                 boolean allowUnversionedObstructions,
                 boolean depthIsSticky) throws SvnBindException;
 

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -78,7 +77,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
   private SvnInfoStructure createPending() {
     SvnInfoStructure pending = new SvnInfoStructure();
-    pending.myDepth = SVNDepth.INFINITY;
+    pending.myDepth = org.jetbrains.idea.svn.api.Depth.INFINITY;
 
     return pending;
   }
@@ -614,7 +613,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myDepth = SVNDepth.fromString(s);
+      structure.myDepth = org.jetbrains.idea.svn.api.Depth.from(s);
     }
   }
 

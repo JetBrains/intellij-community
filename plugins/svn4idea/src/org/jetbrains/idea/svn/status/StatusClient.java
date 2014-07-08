@@ -16,9 +16,9 @@
 package org.jetbrains.idea.svn.status;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -37,7 +37,7 @@ public interface StatusClient extends SvnClient {
    */
   long doStatus(File path,
                 SVNRevision revision,
-                SVNDepth depth,
+                Depth depth,
                 boolean remote,
                 boolean reportAll,
                 boolean includeIgnored,

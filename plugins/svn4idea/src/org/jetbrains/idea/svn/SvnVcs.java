@@ -65,6 +65,7 @@ import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.CmdClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
@@ -806,7 +807,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     List<WCInfo> result = new ArrayList<WCInfo>(getAllWcInfos());
 
     for (RootUrlInfo info : getSvnFileUrlMapping().getErrorRoots()) {
-      result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), SVNDepth.UNKNOWN));
+      result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), Depth.UNKNOWN));
     }
 
     return result;
