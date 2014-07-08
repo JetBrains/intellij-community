@@ -15,8 +15,12 @@
  */
 package org.jetbrains.idea.devkit;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +38,15 @@ public class PluginProjectWizardTest extends NewProjectWizardTestCase {
     VirtualFile baseDir = project.getBaseDir();
     VirtualFile virtualFile = VfsUtilCore.findRelativeFile("META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);
+
+    RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
+    assertNotNull(configuration);
+    ConfigurationType type = configuration.getType();
+    assertNotNull(type);
+    assertEquals(DevKitBundle.message("run.configuration.title"), type.getDisplayName());
+
+    VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
+    assertEquals(1, files.length);
   }
 
   public void testProjectWithoutSdk() throws Exception {

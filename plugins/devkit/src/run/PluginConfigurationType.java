@@ -39,7 +39,7 @@ public class PluginConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private String myVmParameters;
 
-  PluginConfigurationType() {
+  public PluginConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         final PluginRunConfiguration runConfiguration = new PluginRunConfiguration(project, this, "");
