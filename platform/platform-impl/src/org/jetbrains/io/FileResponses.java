@@ -85,12 +85,12 @@ public class FileResponses {
 
     try {
       long fileLength = raf.length();
-      if (request.getMethod() != HttpMethod.HEAD) {
+      if (request.method() != HttpMethod.HEAD) {
         HttpHeaders.setContentLength(response, fileLength);
       }
 
       channel.write(response);
-      if (request.getMethod() != HttpMethod.HEAD) {
+      if (request.method() != HttpMethod.HEAD) {
         if (channel.pipeline().get(SslHandler.class) == null) {
           // no encryption - use zero-copy
           channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
