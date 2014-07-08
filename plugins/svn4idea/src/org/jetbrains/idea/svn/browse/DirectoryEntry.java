@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn.browse;
 
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -29,34 +32,29 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
 
   private final String myName;
   private final SVNNodeKind myKind;
-  private final long myRevision;
-  private final Date myDate;
-  private final String myAuthor;
+  @NotNull private final CommitInfo myCommitInfo;
   private final String myPath;
   private final SVNURL myUrl;
   private final SVNURL myRepositoryRoot;
 
   @NotNull
   public static DirectoryEntry create(@NotNull SVNDirEntry entry) {
-    return new DirectoryEntry(entry.getURL(), entry.getRepositoryRoot(), entry.getName(), entry.getKind(), entry.getRevision(), entry.getDate(),
-                     entry.getAuthor(), entry.getRelativePath());
+    return new DirectoryEntry(entry.getURL(), entry.getRepositoryRoot(), entry.getName(), entry.getKind(),
+                              new CommitInfo.Builder(entry.getRevision(), entry.getDate(), entry.getAuthor()).build(),
+                              entry.getRelativePath());
   }
 
   public DirectoryEntry(SVNURL url,
                         SVNURL repositoryRoot,
                         String name,
                         SVNNodeKind kind,
-                        long revision,
-                        Date date,
-                        String author,
+                        @Nullable CommitInfo commitInfo,
                         String path) {
     myUrl = url;
     myRepositoryRoot = repositoryRoot;
     myName = name;
     myKind = kind;
-    myRevision = revision;
-    myDate = date;
-    myAuthor = author;
+    myCommitInfo = ObjectUtils.notNull(commitInfo, CommitInfo.EMPTY);
     myPath = path;
   }
 
@@ -77,15 +75,15 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
   }
 
   public Date getDate() {
-    return myDate;
+    return myCommitInfo.getDate();
   }
 
   public long getRevision() {
-    return myRevision;
+    return myCommitInfo.getRevision();
   }
 
   public String getAuthor() {
-    return myAuthor;
+    return myCommitInfo.getAuthor();
   }
 
   public String getRelativePath() {

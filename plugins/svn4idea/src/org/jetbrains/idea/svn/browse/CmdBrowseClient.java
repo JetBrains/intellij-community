@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -39,7 +40,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -135,39 +135,15 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     @XmlElement(name = "size")
     public long size;
 
-    @XmlElement(name = "commit")
-    public Commit commit;
+    public CommitInfo.Builder commit;
 
     public Lock.Builder lock;
 
-    public long revision() {
-      return commit != null ? commit.revision : 0;
-    }
-
-    public String author() {
-      return commit != null ? commit.author : "";
-    }
-
-    public Date date() {
-      return commit != null ? commit.date : null;
-    }
-
+    @NotNull
     public DirectoryEntry toDirectoryEntry(@NotNull SVNURL url) throws SVNException {
       // TODO: repository is not used for now
-      return new DirectoryEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), SVNNodeKind.parseKind(kind), revision(),
-                                date(), author(), name);
+      return new DirectoryEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), SVNNodeKind.parseKind(kind),
+                                commit != null ? commit.build() : null, name);
     }
-  }
-
-  public static class Commit {
-
-    @XmlAttribute(name = "revision")
-    public long revision;
-
-    @XmlElement(name = "author")
-    public String author;
-
-    @XmlElement(name = "date")
-    public Date date;
   }
 }

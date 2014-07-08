@@ -18,11 +18,11 @@ package org.jetbrains.idea.svn.dialogs.browserCache;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -92,8 +92,7 @@ public class SyntheticWorker {
   }
 
   public static DirectoryEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
-    return new DirectoryEntry(newUrl, repositoryUrl, name, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNRevision.UNDEFINED.getNumber(), null, null,
-                     null);
+    return new DirectoryEntry(newUrl, repositoryUrl, name, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, CommitInfo.EMPTY, null);
   }
 
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
