@@ -232,7 +232,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     StringBuilder builder;
     builder = new StringBuilder();
     builder.append(message).append('\n');
-    for (PsiFile file : myMockCodeStyleManager.getFormattedFiles()) {
+    for (PsiFile file : files) {
       builder.append(file).append('\n');
     }
     log.info(builder.toString());
