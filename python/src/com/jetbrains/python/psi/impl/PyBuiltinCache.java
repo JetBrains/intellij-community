@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -126,7 +128,7 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public static PyFile getSkeletonFile(@NotNull Project project, @NotNull Sdk sdk, @NotNull String name) {
+  public static PyFile getSkeletonFile(final @NotNull Project project, @NotNull Sdk sdk, @NotNull String name) {
     SdkTypeId sdkType = sdk.getSdkType();
     if (sdkType instanceof PythonSdkType) {
       // dig out the builtins file, create an instance based on it
@@ -136,12 +138,20 @@ public class PyBuiltinCache {
           final String builtins_url = url + "/" + name;
           File builtins = new File(VfsUtilCore.urlToPath(builtins_url));
           if (builtins.isFile() && builtins.canRead()) {
-            VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
+            final VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
             if (builtins_vfile != null) {
-              PsiFile file = PsiManager.getInstance(project).findFile(builtins_vfile);
-              if (file instanceof PyFile) {
-                return (PyFile)file;
-              }
+              final Ref<PyFile> result = Ref.create();
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  PsiFile file = PsiManager.getInstance(project).findFile(builtins_vfile);
+                  if (file instanceof PyFile) {
+                    result.set((PyFile)file);
+                  }
+                }
+              });
+              return result.get();
+
             }
           }
         }
