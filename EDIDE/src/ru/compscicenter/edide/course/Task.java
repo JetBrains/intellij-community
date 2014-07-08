@@ -126,32 +126,14 @@ public class Task {
 
   public Task next() {
     Lesson currentLesson = this.myLesson;
-    Task nextTask = null;
-    boolean foundNext = false;
-    for (Task task:currentLesson.getTaskList()) {
-      if (foundNext) {
-        nextTask = task;
-      }
-      if (task == this) {
-        foundNext = true;
-      }
-    }
-    if (nextTask != null) {
-      return nextTask;
+    if (myIndex + 1 < myLesson.getTaskList().size()) {
+      return myLesson.getTaskList().get(myIndex + 1);
     }
     Lesson nextLesson = currentLesson.next();
     if (nextLesson == null) {
-      return nextTask;
+      return null;
     }
-    for (Task task:nextLesson.getTaskList()) {
-      if (foundNext) {
-        nextTask = task;
-      }
-      if (task == this) {
-        foundNext = true;
-      }
-    }
-    return nextTask;
+    return nextLesson.getTaskList().iterator().next();
   }
 
   public void setIndex(int index) {
@@ -164,5 +146,17 @@ public class Task {
 
   public Lesson getLesson() {
     return myLesson;
+  }
+
+  public Task prev() {
+    Lesson currentLesson = this.myLesson;
+    if (myIndex - 1 >= 0) {
+      return myLesson.getTaskList().get(myIndex - 1);
+    }
+    Lesson prevLesson = currentLesson.prev();
+    if (prevLesson == null) {
+      return null;
+    }
+    return prevLesson.getTaskList().get(prevLesson.getTaskList().size() - 1);
   }
 }

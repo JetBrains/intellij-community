@@ -84,4 +84,11 @@ public class Lesson {
   public int getIndex() {
     return myIndex;
   }
+
+  public Lesson prev() {
+    if (myIndex - 1 < 0) {
+      return null;
+    }
+    return myCourse.getLessons().get(myIndex - 1);
+  }
 }

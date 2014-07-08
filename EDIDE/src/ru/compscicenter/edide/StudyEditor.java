@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.compscicenter.edide.actions.CheckAction;
 import ru.compscicenter.edide.actions.NextTaskAction;
+import ru.compscicenter.edide.actions.PreviousTaskAction;
 import ru.compscicenter.edide.course.*;
 
 import javax.swing.*;
@@ -47,9 +48,14 @@ public class StudyEditor implements FileEditor {
   private final JComponent myComponent;
   private JButton myCheckButton;
   private JButton myNextTaskButton;
+  private JButton myPrevTaskButton;
 
   public JButton getCheckButton() {
     return myCheckButton;
+  }
+
+  public JButton getPrevTaskButton() {
+    return myPrevTaskButton;
   }
 
   private String getTextForTask(VirtualFile file, Project project) {
@@ -97,7 +103,7 @@ public class StudyEditor implements FileEditor {
     studyButtonPanel.add(taskActionsPanel);
     studyButtonPanel.add(new JPanel());
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
-    addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
+    myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
@@ -118,6 +124,13 @@ public class StudyEditor implements FileEditor {
       public void actionPerformed(ActionEvent e) {
         NextTaskAction nextTaskAction = (NextTaskAction)ActionManager.getInstance().getAction("NextTaskAction");
         nextTaskAction.nextTask(project);
+      }
+    });
+    myPrevTaskButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        PreviousTaskAction prevTaskAction = (PreviousTaskAction)ActionManager.getInstance().getAction("PreviousTaskAction");
+        prevTaskAction.previousTask(project);
       }
     });
   }

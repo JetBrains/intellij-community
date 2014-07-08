@@ -21,23 +21,23 @@ import ru.compscicenter.edide.course.TaskFile;
  * author: liana
  * data: 7/8/14.
  */
-public class NextTaskAction extends AnAction {
+public class PreviousTaskAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(NextTaskAction.class.getName());
 
-  public void nextTask(Project project) {
+  public void previousTask(Project project) {
     Editor selectedEditor = StudyEditor.getSelectedEditor(project);
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     VirtualFile openedFile = fileDocumentManager.getFile(selectedEditor.getDocument());
     StudyTaskManager taskManager = StudyTaskManager.getInstance(selectedEditor.getProject());
     TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
     Task currentTask = selectedTaskFile.getTask();
-    Task nextTask = currentTask.next();
+    Task nextTask = currentTask.prev();
     if (nextTask == null) {
       BalloonBuilder balloonBuilder =
-        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("You've already solved all the tasks!", MessageType.INFO, null);
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("It's already the first task", MessageType.INFO, null);
       Balloon balloon = balloonBuilder.createBalloon();
       StudyEditor selectedStudyEditor = StudyEditor.getSelectedStudyEditor(project);
-      balloon.showInCenterOf(selectedStudyEditor.getNextTaskButton());
+      balloon.showInCenterOf(selectedStudyEditor.getPrevTaskButton());
       return;
     }
     for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
@@ -57,9 +57,8 @@ public class NextTaskAction extends AnAction {
       }
     }
   }
-
   public void actionPerformed(AnActionEvent e) {
-    // TODO: find some free shortcuts :(
-    nextTask(e.getProject());
+    // TODO: insert action logic here
   }
 }
+
