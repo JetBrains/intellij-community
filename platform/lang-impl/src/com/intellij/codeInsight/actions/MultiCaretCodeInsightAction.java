@@ -34,6 +34,16 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Base class for PSI-aware editor actions that need to support multiple carets.
+ * Recognizes multi-root PSI and injected fragments, so different carets might be processed in context of different
+ * {@link com.intellij.openapi.editor.Editor} and {@link com.intellij.psi.PsiFile} instances.
+ * <p>
+ * Implementations should implement {@link #getHandler()} method, and might override {@link
+ * #isValidFor(com.intellij.openapi.project.Project, com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.psi.PsiFile)} method.
+ *
+ * @see com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler
+ */
 public abstract class MultiCaretCodeInsightAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -56,7 +66,13 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            iterateOverCarets(project, hostEditor, getHandler());
+            MultiCaretCodeInsightActionHandler handler = getHandler();
+            try {
+              iterateOverCarets(project, hostEditor, handler);
+            }
+            finally {
+              handler.postInvoke();
+            }
           }
         });
       }
@@ -119,6 +135,10 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
     }, true);
   }
 
+  /**
+   * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
+   * <code>true</code>, action is considered enabled.
+   */
   protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     return true;
   }
