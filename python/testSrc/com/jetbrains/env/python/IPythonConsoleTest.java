@@ -3,6 +3,7 @@ package com.jetbrains.env.python;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -38,9 +39,15 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForReady();
         addTextToEditor("sys?");
-        PsiFile psi =
-          PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
-        Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiFile psi =
+              PsiDocumentManager.getInstance(getProject())
+                .getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
+            Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
+          }
+        });
       }
     });
   }
@@ -65,10 +72,16 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForReady();
         addTextToEditor("sys?");
-        PsiFile psi =
-          PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
-        //TreeUtil.ensureParsed(psi.getNode());
-        assertTrue(PsiTreeUtil.hasErrorElements(psi));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiFile psi =
+              PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
+            //TreeUtil.ensureParsed(psi.getNode());
+            assertTrue(PsiTreeUtil.hasErrorElements(psi));
+          }
+        });
+
       }
 
       @Override

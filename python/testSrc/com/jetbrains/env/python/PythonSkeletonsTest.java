@@ -1,6 +1,7 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -121,9 +122,14 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
                                   "expr = slice(1, 2).start\n");
         final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
         final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getFile());
-        final PyType type = context.getType(expr);
-        final String actualType = PythonDocumentationProvider.getTypeName(type, context);
-        assertEquals("int", actualType);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final PyType type = context.getType(expr);
+            final String actualType = PythonDocumentationProvider.getTypeName(type, context);
+            assertEquals("int", actualType);
+          }
+        });
       }
     });
   }
@@ -141,13 +147,18 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         final Project project = myFixture.getProject();
         final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
         assertNotNull(builtins);
-        final PyClass cls = builtins.findTopLevelClass("int");
-        assertNotNull(cls);
-        final Property prop = cls.findProperty("real", true);
-        assertNotNull(prop);
-        assertIsNotNull(prop.getGetter());
-        assertIsNotNull(prop.getSetter());
-        assertIsNotNull(prop.getDeleter());
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final PyClass cls = builtins.findTopLevelClass("int");
+            assertNotNull(cls);
+            final Property prop = cls.findProperty("real", true);
+            assertNotNull(prop);
+            assertIsNotNull(prop.getGetter());
+            assertIsNotNull(prop.getSetter());
+            assertIsNotNull(prop.getDeleter());
+          }
+        });
       }
 
       private void assertIsNotNull(Maybe<Callable> accessor) {
