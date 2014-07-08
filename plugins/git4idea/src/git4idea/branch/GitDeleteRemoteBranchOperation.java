@@ -23,12 +23,10 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
-import git4idea.jgit.GitHttpAdapter;
 import git4idea.push.GitSimplePushResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -166,15 +164,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       LOG.warn("No urls are defined for remote: " + remote);
       return GitCommandResult.error("There is no urls defined for remote " + remote.getName());
     }
-    if (GitHttpAdapter.shouldUseJGit(remoteUrl)) {
-      String fullBranchName = branchName.startsWith(GitBranch.REFS_HEADS_PREFIX) ? branchName : GitBranch.REFS_HEADS_PREFIX + branchName;
-      String spec = ":" + fullBranchName;
-      GitSimplePushResult simplePushResult = GitHttpAdapter.push(repository, remote.getName(), remoteUrl, spec);
-      return convertSimplePushResultToCommandResult(simplePushResult);
-    }
-    else {
-      return pushDeletionNatively(repository, remoteName, remoteUrl, branchName);
-    }
+    return pushDeletionNatively(repository, remoteName, remoteUrl, branchName);
   }
 
   @NotNull

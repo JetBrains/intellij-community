@@ -15,7 +15,11 @@
  */
 package com.intellij.xdebugger.frame;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Represents a suspended state of a debug process
@@ -38,4 +42,11 @@ public abstract class XSuspendContext {
     return executionStack != null ? new XExecutionStack[]{executionStack} : XExecutionStack.EMPTY_ARRAY;
   }
 
+  public void computeExecutionStacks(XExecutionStackContainer container) {
+    container.addExecutionStack(Arrays.asList(getExecutionStacks()), true);
+  }
+
+  public interface XExecutionStackContainer extends XValueCallback {
+    void addExecutionStack(@NotNull List<? extends XExecutionStack> executionStacks, final boolean last);
+  }
 }

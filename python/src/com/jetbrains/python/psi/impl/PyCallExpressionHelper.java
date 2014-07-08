@@ -365,14 +365,14 @@ public class PyCallExpressionHelper {
 
   /**
    * Returns argument if it exists and has appropriate type
-   * @param parameter argument
-   * @param argClass expected class
+   * @param parameter  argument
+   * @param argClass   expected class
    * @param expression call expression
-   * @param <T> expected class
+   * @param <T>        expected class
    * @return argument expression or null if has wrong type of does not exist
    */
   @Nullable
-  public static  <T extends PsiElement> T getArgument(
+  public static <T extends PsiElement> T getArgument(
     @NotNull final FunctionParameter parameter,
     @NotNull final Class<T> argClass,
     @NotNull final PyCallExpression expression) {
@@ -449,7 +449,7 @@ public class PyCallExpressionHelper {
             }
           }
           if (init != null) {
-            final PyType t = init.getCallType(context, (PyReferenceExpression)callee);
+            final PyType t = init.getCallType(context, call);
             if (cls != null) {
               if (init.getContainingClass() != cls) {
                 if (t instanceof PyCollectionType) {
@@ -474,11 +474,11 @@ public class PyCallExpressionHelper {
           }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
           if (providedType instanceof PyCallableType) {
-            return ((PyCallableType)providedType).getCallType(context, (PyReferenceExpression)callee);
+            return ((PyCallableType)providedType).getCallType(context, call);
           }
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
-            return callable.getCallType(context, (PyReferenceExpression)callee);
+            return callable.getCallType(context, call);
           }
         }
       }
@@ -489,13 +489,7 @@ public class PyCallExpressionHelper {
         final PyType type = context.getType(callee);
         if (type instanceof PyCallableType) {
           final PyCallableType callableType = (PyCallableType)type;
-          final PyQualifiedExpression callSite = callee instanceof PyQualifiedExpression ? (PyQualifiedExpression)callee : null;
-          if (callSite != null) {
-            return callableType.getCallType(context, callSite);
-          }
-          else {
-            return callableType.getReturnType(context);
-          }
+          return callableType.getCallType(context, call);
         }
         return null;
       }

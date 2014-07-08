@@ -559,10 +559,16 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
 
-    MavenModel model = MavenModelConverter
-      .convertModel(mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-                    mavenProject.getArtifacts(), (rootNode == null ? Collections.emptyList() : rootNode.getChildren()),
-                    mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
+    MavenModel model = null;
+    try {
+      model = MavenModelConverter
+        .convertModel(mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
+                      mavenProject.getArtifacts(), (rootNode == null ? Collections.emptyList() : rootNode.getChildren()),
+                      mavenProject.getExtensionArtifacts(), getLocalRepositoryFile());
+    }
+    catch (Exception e) {
+      validate(mavenProject.getFile(), Collections.singleton(e), problems, null);
+    }
 
     RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
     try {
@@ -580,25 +586,36 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+  private static Collection<String> collectActivatedProfiles(MavenProject mavenProject)
+    throws RemoteException {
     // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
     // parent's profiles do not contain settings' profiles.
 
     List<Profile> profiles = new ArrayList<Profile>();
-    while (mavenProject != null) {
-      profiles.addAll(mavenProject.getActiveProfiles());
-      mavenProject = mavenProject.getParent();
+    try {
+      while (mavenProject != null) {
+        profiles.addAll(mavenProject.getActiveProfiles());
+        mavenProject = mavenProject.getParent();
+      }
+    }
+    catch (Exception e) {
+      // don't bother user if maven failed to build parent project
+      Maven3ServerGlobals.getLogger().info(e);
     }
     return collectProfilesIds(profiles);
   }
 
 
-  private void validate(File file,
-                        Collection<Exception> exceptions,
-                        Collection<MavenProjectProblem> problems,
-                        Collection<MavenId> unresolvedArtifacts) throws RemoteException {
-    for (Exception each : exceptions) {
+  private void validate(@NotNull File file,
+                        @NotNull Collection<Exception> exceptions,
+                        @NotNull Collection<MavenProjectProblem> problems,
+                        @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
+    for (Throwable each : exceptions) {
       Maven3ServerGlobals.getLogger().info(each);
+
+      if(each instanceof IllegalStateException && each.getCause() != null) {
+        each = each.getCause();
+      }
 
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
@@ -619,7 +636,9 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
         problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getMessage()));
       }
     }
-    unresolvedArtifacts.addAll(retrieveUnresolvedArtifactIds());
+    if (unresolvedArtifacts != null) {
+      unresolvedArtifacts.addAll(retrieveUnresolvedArtifactIds());
+    }
   }
 
   private Set<MavenId> retrieveUnresolvedArtifactIds() {

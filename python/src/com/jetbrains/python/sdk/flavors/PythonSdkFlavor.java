@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public abstract class PythonSdkFlavor {
+  private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
   public static Collection<String> appendSystemPythonPath(@NotNull Collection<String> pythonPath) {
@@ -158,53 +159,40 @@ public abstract class PythonSdkFlavor {
     return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
-  public String getVersionString(String sdkHome) {
-    return getVersionStringFromOutput(getVersionFromOutput(sdkHome, getVersionOption(), getVersionRegexp()));
+  @Nullable
+  public String getVersionString(@Nullable String sdkHome) {
+    if (sdkHome == null) {
+      return null;
+    }
+    final String runDirectory = new File(sdkHome).getParent();
+    final ProcessOutput processOutput = PySdkUtil.getProcessOutput(runDirectory, new String[]{sdkHome, getVersionOption()}, 10000);
+    return getVersionStringFromOutput(processOutput);
   }
 
-  public String getVersionStringFromOutput(String version) {
-    return version;
+  @Nullable
+  public String getVersionStringFromOutput(@NotNull ProcessOutput processOutput) {
+    if (processOutput.getExitCode() != 0) {
+      String errors = processOutput.getStderr();
+      if (StringUtil.isEmpty(errors)) {
+        errors = processOutput.getStdout();
+      }
+      LOG.warn("Couldn't get interpreter version: process exited with code " + processOutput.getExitCode() + "\n" + errors);
+      return null;
+    }
+    final String result = getVersionStringFromOutput(processOutput.getStderr());
+    if (result != null) {
+      return result;
+    }
+    return getVersionStringFromOutput(processOutput.getStdout());
   }
 
-
-  public String getVersionRegexp() {
-    return "(Python \\S+).*";
+  @Nullable
+  public String getVersionStringFromOutput(@NotNull String output) {
+    return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
   public String getVersionOption() {
     return "-V";
-  }
-
-  @Nullable
-  public String getVersionFromOutput(ProcessOutput processOutput) {
-    return getVersionFromOutput(getVersionRegexp(), processOutput);
-  }
-
-  @Nullable
-  protected static String getVersionFromOutput(String sdkHome, String versionOpt, String versionRegexp) {
-    String runDirectory = new File(sdkHome).getParent();
-    final ProcessOutput processOutput = PySdkUtil.getProcessOutput(runDirectory, new String[]{sdkHome, versionOpt}, 10000);
-
-    return getVersionFromOutput(versionRegexp, processOutput);
-  }
-
-  @Nullable
-  private static String getVersionFromOutput(String version_regexp, ProcessOutput process_output) {
-    if (process_output.getExitCode() != 0) {
-      String err = process_output.getStderr();
-      if (StringUtil.isEmpty(err)) {
-        err = process_output.getStdout();
-      }
-      LOG.warn("Couldn't get interpreter version: process exited with code " + process_output.getExitCode() + "\n" + err
-      );
-      return null;
-    }
-    Pattern pattern = Pattern.compile(version_regexp);
-    final String result = PatternUtil.getFirstMatch(process_output.getStderrLines(), pattern);
-    if (result != null) {
-      return result;
-    }
-    return PatternUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
   }
 
   public Collection<String> getExtraDebugOptions() {

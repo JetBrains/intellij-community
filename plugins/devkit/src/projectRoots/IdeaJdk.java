@@ -27,14 +27,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.cls.BytePointer;
-import com.intellij.util.cls.ClsFormatException;
-import com.intellij.util.cls.ClsUtil;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -43,16 +41,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
- * User: anna
- * Date: Nov 22, 2004
+ * @author anna
+ * @since Nov 22, 2004
  */
 public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static final Icon ADD_SDK = DevkitIcons.Add_sdk;
@@ -176,7 +177,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     appendIdeaLibrary(home, result, "junit.jar");
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
-    appendIdeaLibrary(plugins + "DatabaseSupport", result, "database-impl.jar", "jdbc-console.jar");
+    appendIdeaLibrary(plugins + "DatabaseTools", result, "database-impl.jar", "jdbc-console.jar");
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
     appendIdeaLibrary(plugins + "Spring", result,
@@ -262,26 +263,33 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return false;
   }
 
-  private static int getIdeaClassFileVersion(final Sdk ideaSdk) {
-    int result = -1;
-    File apiJar = getOpenApiJar(ideaSdk.getHomePath());
-    if (apiJar == null) return -1;
-    final VirtualFile mainClassFile = JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(apiJar.getPath()) +
-                                                                                 "!/com/intellij/psi/PsiManager.class");
-    if (mainClassFile != null) {
-      final BytePointer ptr;
-      try {
-        ptr = new BytePointer(mainClassFile.contentsToByteArray(), 6);
-        result = ClsUtil.readU2(ptr);
-      }
-      catch (IOException e) {
-        // ignore
-      }
-      catch (ClsFormatException e) {
-        // ignore
+  private static int getIdeaClassFileVersion(Sdk ideaSdk) {
+    try {
+      File apiJar = getOpenApiJar(ideaSdk.getHomePath());
+      if (apiJar != null) {
+        ZipFile zipFile = ZipFileCache.acquire(apiJar.getPath());
+        try {
+          ZipEntry entry = zipFile.getEntry("com/intellij/psi/PsiManager.class");
+          if (entry != null) {
+            DataInputStream stream = new DataInputStream(zipFile.getInputStream(entry));
+            try {
+              if (stream.skip(6) == 6) {
+                return stream.readUnsignedShort();
+              }
+            }
+            finally {
+              stream.close();
+            }
+          }
+        }
+        finally {
+          ZipFileCache.release(zipFile);
+        }
       }
     }
-    return result;
+    catch (IOException ignored) { }
+
+    return -1;
   }
 
   @Nullable

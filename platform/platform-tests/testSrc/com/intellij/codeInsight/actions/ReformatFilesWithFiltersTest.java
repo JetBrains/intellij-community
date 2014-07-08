@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.psi.search.GlobalSearchScopesCore.directoryScope;
@@ -208,10 +198,50 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     assertWasNotFormatted(java2, php2, js1, js2, js3);
   }
 
+  public void testIDEA126830() throws IOException {
+    TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
+
+    fileTree.createDirectoryAndMakeItCurrent("src");
+    PsiFile java2 = fileTree.addTestFile("Test2.java", "empty content");
+    PsiFile php2 = fileTree.addTestFile("Pair2.php", "empty content");
+    PsiFile js2 = fileTree.addTestFile("Pair2.js", "empty content");
+
+    PsiDirectory test = fileTree.createDirectoryAndMakeItCurrent("test");
+    PsiFile testJava1 = fileTree.addTestFile("testJava1.java", "empty content");
+    PsiFile testPhp1 = fileTree.addTestFile("testPhp1.php", "empty content");
+    PsiFile testJs1 = fileTree.addTestFile("testJs1.js", "empty content");
+
+    GlobalSearchScope testScope = directoryScope(test, true);
+
+    Logger logger = Logger.getInstance(getClass());
+    logFiles(logger, "Previously formatted files: ", myMockCodeStyleManager.getFormattedFiles());
+
+    reformatWithRearrange(myWorkingDirectory, testScope);
+    logFiles(logger, "Currently formatted files: ", myMockCodeStyleManager.getFormattedFiles());
+    logFiles(logger, "Should be formatted", ContainerUtil.newArrayList(testJava1, testPhp1, testJs1));
+
+    assertWasFormatted(testJava1, testPhp1, testJs1);
+    assertWasNotFormatted(java2, php2, js2);
+
+    reformatAndOptimize(myWorkingDirectory, testScope);
+    assertWasFormatted(testJava1, testPhp1, testJs1);
+    assertWasNotFormatted(java2, php2, js2);
+  }
+
+  private void logFiles(Logger log, String message, Collection<PsiFile> files) {
+    StringBuilder builder;
+    builder = new StringBuilder();
+    builder.append(message).append('\n');
+    for (PsiFile file : files) {
+      builder.append(file).append('\n');
+    }
+    log.info(builder.toString());
+  }
+
   public void assertWasFormatted(PsiFile... files) {
     final Set<PsiFile> formattedFiles = myMockCodeStyleManager.getFormattedFiles();
     for (PsiFile file : files) {
-      assertTrue(file.getName() + "should be formatted", formattedFiles.contains(file));
+      assertTrue(file.getName() + " should be formatted", formattedFiles.contains(file));
     }
   }
 
@@ -228,6 +258,24 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
 
   public void reformatDirectoryWithScopeFilter(@NotNull PsiDirectory directory, @Nullable SearchScope scope) {
     reformatDirectory(directory, null, scope);
+  }
+
+  public void reformatWithRearrange(@NotNull PsiDirectory directory, @Nullable SearchScope scope) {
+    myMockCodeStyleManager.clearFormattedFiles();
+    AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(getProject(), directory, true, false);
+    ReformatCodeAction.registerScopeFilter(processor, scope);
+
+    processor = new RearrangeCodeProcessor(processor, null);
+    processor.run();
+  }
+
+  private void reformatAndOptimize(@NotNull PsiDirectory workingDirectory, @NotNull GlobalSearchScope scope) {
+    myMockCodeStyleManager.clearFormattedFiles();
+    AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(getProject(), workingDirectory, true, false);
+    ReformatCodeAction.registerScopeFilter(processor, scope);
+
+    processor = new OptimizeImportsProcessor(processor);
+    processor.run();
   }
 
   public void reformatDirectory(@NotNull PsiDirectory directory, @Nullable String mask, @Nullable SearchScope scope) {

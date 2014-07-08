@@ -1335,7 +1335,7 @@ trait T {
   public int field = 4
 }
 
-class C extends T {
+class C implements T {
 
   void foo() {
     print T__fie<caret>ld
@@ -1374,7 +1374,7 @@ trait T {
   public int field = 4
 }
 
-class C extends T {}
+class C implements T {}
 
 new C().T__fiel<caret>d
 ''', GrField)
@@ -1445,4 +1445,31 @@ def v = new B() as A
 print v.A<caret>__foo
 ''', GrField)
   }
+
+  void testTraitField1() {
+    resolveByText('''
+      trait T {
+        public foo = 4
+      }
+
+      class X implements T{
+        def bar() {
+          print fo<caret>o
+        }
+      }
+''', null)
+  }
+
+  void testTraitField2() {
+    resolveByText('''
+      trait T {
+        public foo
+
+        def bar() {
+          print fo<caret>o
+        }
+      }
+''', PsiField)
+  }
+
 }

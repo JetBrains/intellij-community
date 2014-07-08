@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,18 @@
  */
 package com.intellij.ide;
 
-import org.jetbrains.annotations.NonNls;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClassUtilCore {
-  @NonNls static final String FILE_CACHE = "fileCache";
-  @NonNls static final String URL_CACHE = "urlCache";// See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4167874
-
   public static void clearJarURLCache() {
     try {
       Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
 
-      clearMap(jarFileFactory.getDeclaredField(FILE_CACHE));
-      clearMap(jarFileFactory.getDeclaredField(URL_CACHE));
+      clearMap(jarFileFactory.getDeclaredField("fileCache"));
+      clearMap(jarFileFactory.getDeclaredField("urlCache"));
     }
     catch (Exception ignore) {
       // Do nothing.

@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.module.JpsTypedModule;
+import org.jetbrains.jps.model.runConfiguration.JpsRunConfiguration;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
 
@@ -59,6 +60,9 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
   @NotNull
   <P extends JpsElement>
   Iterable<JpsTypedRunConfiguration<P>> getRunConfigurations(JpsRunConfigurationType<P> type);
+
+  @NotNull
+  List<JpsRunConfiguration> getRunConfigurations();
 
   @NotNull
   <P extends JpsElement>

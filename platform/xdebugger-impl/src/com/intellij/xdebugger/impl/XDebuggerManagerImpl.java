@@ -206,10 +206,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private XDebugSessionImpl startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
                                          final XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
+    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(process);
 
     XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.get(contentToReuse) : null;
     if (oldSessionData == null) {
-      oldSessionData = new XDebugSessionData(myWatchesManager.getWatches(session.getSessionName()));
+      oldSessionData = new XDebugSessionData(session.getWatchExpressions());
     }
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes

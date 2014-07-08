@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     final NodeDescriptorImpl descriptor = getDescriptor();
     myIcon = DebuggerTreeRenderer.getDescriptorIcon(descriptor);
     final DebuggerContextImpl context = getTree().getDebuggerContext();
-    myText = DebuggerTreeRenderer.getDescriptorText(context, descriptor, DebuggerTreeRenderer.getColorScheme(myTree), false);
+    myText = DebuggerTreeRenderer.getDescriptorText(context, descriptor, DebuggerUIUtil.getColorScheme(myTree), false);
     if (descriptor instanceof ValueDescriptor) {
       final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(context.getDebugProcess());
       myMarkupTooltipText = markup != null? markup.getToolTipText() : null;

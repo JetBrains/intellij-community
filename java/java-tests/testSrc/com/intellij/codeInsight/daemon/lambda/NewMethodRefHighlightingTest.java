@@ -261,6 +261,18 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRejectReceiverTypesForConstructorRefs() {
+    doTest();
+  }
+
+  public void testEnumValuesMethod() throws Exception {
+    doTest();
+  }
+
+  public void testMissedApplicableMemberContainingClassSubstitution() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

@@ -124,7 +124,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
     assert defaultGenerator != null;
-    expand(key, callback, null, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
+    expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
   }
 
   @Nullable
@@ -179,15 +179,15 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
 
-  public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable String surroundedText,
+  public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback,
                             @NotNull ZenCodingGenerator defaultGenerator,
                             @NotNull Collection<? extends ZenCodingFilter> extraFilters,
                             boolean expandPrimitiveAbbreviations, int segmentsLimit) {
-    final ZenCodingNode node = parse(key, callback, defaultGenerator, surroundedText);
+    final ZenCodingNode node = parse(key, callback, defaultGenerator, null);
     if (node == null) {
       return;
     }
-    if (surroundedText == null && node instanceof TemplateNode) {
+    if (node instanceof TemplateNode) {
       if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
         TemplateManagerImpl templateManager = (TemplateManagerImpl)callback.getTemplateManager();
         Map<TemplateImpl, String> template2Argument = templateManager.findMatchingTemplates(callback.getFile(), callback.getEditor(), null, TemplateSettings.getInstance());
@@ -204,13 +204,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     List<ZenCodingFilter> filters = getFilters(node, context);
     filters.addAll(extraFilters);
 
-
-    if (surroundedText == null) {
-      callback.deleteTemplateKey(key);
-      // commit is required. otherwise injections placed after caret will be broken
-      PsiDocumentManager.getInstance(callback.getProject()).commitDocument(callback.getEditor().getDocument());
-    }
-    expand(node, generator, filters, surroundedText, callback, expandPrimitiveAbbreviations, segmentsLimit);
+    callback.deleteTemplateKey(key);
+    expand(node, generator, filters, null, callback, expandPrimitiveAbbreviations, segmentsLimit);
   }
 
   private static void expand(ZenCodingNode node,
@@ -514,7 +509,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         if (!regularTemplateWithSamePrefixExists) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
           final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
-          expand(templatePrefix, callback, null, generator, extraFilters, false, 0);
+          expand(templatePrefix, callback, generator, extraFilters, false, 0);
           if (!generatedTemplate.isNull()) {
             final TemplateImpl template = generatedTemplate.get();
             template.setKey(templatePrefix);

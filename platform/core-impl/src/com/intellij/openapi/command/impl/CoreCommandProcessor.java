@@ -158,6 +158,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void finishCommand(final Project project, final Object command, final Throwable throwable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
+    fireCommandFinished();
   }
 
   protected void fireCommandFinished() {

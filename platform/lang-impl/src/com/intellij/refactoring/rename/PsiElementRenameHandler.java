@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -82,7 +83,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
   }
 
-  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, Editor editor) {
+  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, @Nullable Editor editor) {
     if (element != null && !canRename(project, editor, element)) {
       return;
     }
@@ -105,9 +106,8 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   static boolean canRename(Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
     String message = renameabilityStatus(project, element);
-    if (message != null) {
-      if (!message.isEmpty()) showErrorMessage(project, editor, message);
-
+    if (StringUtil.isNotEmpty(message)) {
+      showErrorMessage(project, editor, message);
       return false;
     }
     return true;

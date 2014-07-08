@@ -909,7 +909,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
     for (TextRange range : info.getRanges()) {
-      TextAttributes attr = patchAttributesColor(attributes, range, editor);
+      TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                                        HighlighterLayer.SELECTION + 1,
                                                                                        attr,
@@ -918,32 +918,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     return new HighlightersSet(highlighters, editor, cursor, info);
-  }
-
-
-  /**
-   * Patches attributes to be visible under debugger active line
-   */
-  @SuppressWarnings("UseJBColor")
-  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor) {
-    int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-    for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-      if (!highlighter.isValid()) continue;
-      if (highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE &&
-          editor.offsetToLogicalPosition(highlighter.getStartOffset()).line == line) {
-        TextAttributes textAttributes = highlighter.getTextAttributes();
-        if (textAttributes != null) {
-          Color color = textAttributes.getBackgroundColor();
-          if (color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128) {
-            TextAttributes clone = attributes.clone();
-            clone.setForegroundColor(Color.orange);
-            clone.setEffectColor(Color.orange);
-            return clone;
-          }
-        }
-      }
-    }
-    return attributes;
   }
 
 

@@ -33,9 +33,7 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -61,7 +59,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl myEvaluationContext = null;
 
-  private JavaExecutionStack[] myExecutionStacks;
+  private JavaExecutionStack myActiveExecutionStack;
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
@@ -231,27 +229,48 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Nullable
   @Override
   public XExecutionStack getActiveExecutionStack() {
-    for (JavaExecutionStack stack : myExecutionStacks) {
-      if (stack.getThreadProxy().equals(myThread)) {
-        return stack;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public XExecutionStack[] getExecutionStacks() {
-    return myExecutionStacks;
+    return myActiveExecutionStack;
   }
 
   public void initExecutionStacks(ThreadReferenceProxyImpl newThread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Collection<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
-    Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
-    for (ThreadReferenceProxyImpl thread : threads) {
-      res.add(new JavaExecutionStack(thread, myDebugProcess, thread == myThread));
-    }
-    myExecutionStacks = res.toArray(new JavaExecutionStack[res.size()]);
     myThread = newThread;
+    if (newThread != null) {
+      myActiveExecutionStack = new JavaExecutionStack(newThread, myDebugProcess, true);
+    }
   }
+
+  @Override
+  public void computeExecutionStacks(final XExecutionStackContainer container) {
+    myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
+      @Override
+      public void contextAction() throws Exception {
+        List<JavaExecutionStack> res = new ArrayList<JavaExecutionStack>();
+        Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
+        JavaExecutionStack currentStack = null;
+        for (ThreadReferenceProxyImpl thread : threads) {
+          boolean current = thread == myThread;
+          JavaExecutionStack stack = new JavaExecutionStack(thread, myDebugProcess, current);
+          if (!current) {
+            res.add(stack);
+          }
+          else {
+            currentStack = stack;
+          }
+        }
+        Collections.sort(res, THREADS_COMPARATOR);
+        if (currentStack != null) {
+          res.add(0, currentStack);
+        }
+        container.addExecutionStack(res, true);
+      }
+    });
+  }
+
+  private static final Comparator<JavaExecutionStack> THREADS_COMPARATOR = new Comparator<JavaExecutionStack>() {
+    @Override
+    public int compare(JavaExecutionStack th1, JavaExecutionStack th2) {
+      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
+    }
+  };
 }

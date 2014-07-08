@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class VFileMoveEvent extends VFileEvent {
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VFileMoveEvent(final Object requestor, @NotNull final VirtualFile file, final VirtualFile newParent) {
+  public VFileMoveEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
     super(requestor, false);
     myFile = file;
     myNewParent = newParent;
@@ -43,6 +43,7 @@ public class VFileMoveEvent extends VFileEvent {
     return myFile;
   }
 
+  @NotNull
   public VirtualFile getNewParent() {
     return myNewParent;
   }
@@ -51,11 +52,13 @@ public class VFileMoveEvent extends VFileEvent {
     return myOldParent;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "VfsEvent[move " + myFile.getName() +" from " + myOldParent + " to " + myNewParent + "]";
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myFile.getPath();
@@ -72,6 +75,7 @@ public class VFileMoveEvent extends VFileEvent {
     return myFile.isValid() && Comparing.equal(myFile.getParent(), myOldParent) && myOldParent.isValid();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -85,9 +89,9 @@ public class VFileMoveEvent extends VFileEvent {
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = myFile.hashCode();
+    int result = myFile.hashCode();
     result = 31 * result + myOldParent.hashCode();
     result = 31 * result + myNewParent.hashCode();
     return result;

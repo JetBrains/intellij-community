@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class XmlSuppressionProvider {
+public abstract class XmlSuppressionProvider implements InspectionSuppressor {
 
   public static final ExtensionPointName<XmlSuppressionProvider> EP_NAME = new ExtensionPointName<XmlSuppressionProvider>("com.intellij.xml.xmlSuppressionProvider");
 
@@ -38,15 +38,6 @@ public abstract class XmlSuppressionProvider {
     return false;
   }
 
-  public static XmlSuppressionProvider getProvider(@NotNull PsiFile file) {
-    for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.isProviderAvailable(file)) {
-        return provider;
-      }
-    }
-    throw new RuntimeException("No providers found for " + file);
-  }
-
   public abstract boolean isProviderAvailable(@NotNull PsiFile file);
 
   public abstract boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String inspectionId);
@@ -54,5 +45,11 @@ public abstract class XmlSuppressionProvider {
   public abstract void suppressForFile(@NotNull PsiElement element, @NotNull String inspectionId);
 
   public abstract void suppressForTag(@NotNull PsiElement element, @NotNull String inspectionId);
+
+  @Override
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, String toolShortName) {
+    return XmlSuppressableInspectionTool.getSuppressFixes(toolShortName, this);
+  }
+
 
 }

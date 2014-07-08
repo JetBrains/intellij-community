@@ -21,15 +21,20 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DiffPanelState extends SimpleDiffPanelState {
-  public DiffPanelState(ContentChangeListener changeListener, Project project, @NotNull Disposable parentDisposable) {
-    super(project,changeListener, parentDisposable);
+  protected final int myDiffDividerPolygonsOffset;
+
+  public DiffPanelState(ContentChangeListener changeListener,
+                        Project project,
+                        int diffDividerPolygonsOffset,
+                        @NotNull Disposable parentDisposable) {
+    super(project, changeListener, parentDisposable);
+    myDiffDividerPolygonsOffset = diffDividerPolygonsOffset;
   }
 
   public void setContents(final DiffContent content1, final DiffContent content2) {

@@ -53,6 +53,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -196,7 +197,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
     }
@@ -340,6 +341,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
 
         final Object[] variants = reference.getVariants();
+        //noinspection ConstantConditions
         if (variants == null) {
           LOG.error("Reference=" + reference);
         }
@@ -365,6 +367,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
           }
           else {
+            //noinspection deprecation
             LookupElement element = LookupItemUtil.objectToLookupItem(completion);
             usedWords.add(element.getLookupString());
             result.addElement(element);
@@ -434,7 +437,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
                                                       CompletionParameters parameters) {
     PsiNameValuePair pair = PsiTreeUtil.getParentOfType(insertedElement, PsiNameValuePair.class);
-    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)pair.getParent();
+    PsiAnnotationParameterList parameterList = (PsiAnnotationParameterList)ObjectUtils.assertNotNull(pair).getParent();
     PsiAnnotation anno = (PsiAnnotation)parameterList.getParent();
     boolean showClasses = psiElement().afterLeaf("(").accepts(insertedElement);
     PsiClass annoClass = null;
@@ -507,7 +510,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
-          if (shortcut != null) {
+          if (StringUtil.isNotEmpty(shortcut)) {
             return "Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods";
           }
         }
@@ -517,7 +520,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
         final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
-        if (shortcut != null) {
+        if (StringUtil.isNotEmpty(shortcut)) {
           return CompletionBundle.message("completion.smart.hint", shortcut);
         }
       }
@@ -528,7 +531,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       if (psiTypes.length > 0) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR)) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
-          if (shortcut != null) {
+          if (StringUtil.isNotEmpty(shortcut)) {
             for (final PsiType psiType : psiTypes) {
               final PsiType type = PsiUtil.extractIterableTypeParameter(psiType, false);
               if (type != null) {
@@ -539,7 +542,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST)) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
-          if (shortcut != null) {
+          if (StringUtil.isNotEmpty(shortcut)) {
             for (final PsiType psiType : psiTypes) {
               if (psiType instanceof PsiArrayType) {
                 final PsiType componentType = ((PsiArrayType)psiType).getComponentType();
@@ -553,7 +556,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN)) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
-          if (shortcut != null) {
+          if (StringUtil.isNotEmpty(shortcut)) {
             return CompletionBundle.message("completion.smart.chain.hint", shortcut);
           }
         }
@@ -639,9 +642,12 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiFile file = context.getFile();
 
     if (file instanceof PsiJavaFile) {
-      JavaCompletionUtil.initOffsets(file, context.getOffsetMap());
+      if (context.getInvocationCount() > 0) {
+        autoImport(file, context.getStartOffset() - 1, context.getEditor());
+        PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
+      }
 
-      autoImport(file, context.getStartOffset() - 1, context.getEditor());
+      JavaCompletionUtil.initOffsets(file, context.getOffsetMap());
 
       if (context.getCompletionType() == CompletionType.BASIC) {
         if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {

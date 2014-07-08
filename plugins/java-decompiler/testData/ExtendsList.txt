@@ -1,0 +1,19 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
+
+
+public class ExtendsList {
+
+    public ExtendsList() {
+    }
+
+    static <T extends Comparable<? super T>> T m1(T var0) {
+        return null;
+    }
+
+    static <T extends Object & Comparable<? super T>> T m2(T var0) {
+        return null;
+    }
+}

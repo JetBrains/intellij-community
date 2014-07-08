@@ -54,7 +54,7 @@ public class FindByXPathAction extends AnAction {
         }
     }
 
-    private void executeSearch(final Project project, final Module module) {
+    private void executeSearch(@NotNull final Project project, final Module module) {
         final Config settings = XPathAppComponent.getInstance().getConfig();
         final XPathProjectComponent projectComponent = XPathProjectComponent.getInstance(project);
 

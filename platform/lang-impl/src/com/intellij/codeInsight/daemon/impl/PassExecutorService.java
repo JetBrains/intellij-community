@@ -26,6 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +49,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -127,7 +130,9 @@ public class PassExecutorService implements Disposable {
           TextEditorHighlightingPass textEditorHighlightingPass = convertToTextHighlightingPass(pass, document, nextPassId, prevId);
           document = textEditorHighlightingPass.getDocument();
           documentBoundPasses.putValue(fileEditor, textEditorHighlightingPass);
-          documentToEditors.putValue(document, fileEditor);
+          if (document != null) {
+            documentToEditors.putValue(document, fileEditor);
+          }
           prevId = textEditorHighlightingPass.getId();
         }
       }
@@ -165,7 +170,7 @@ public class PassExecutorService implements Disposable {
       }
     }
 
-    if (CHECK_CONSISTENCY) {
+    if (CHECK_CONSISTENCY && !ApplicationInfoImpl.isInPerformanceTest()) {
       assertConsistency(freePasses, toBeSubmitted, threadsToStartCountdown);
     }
 

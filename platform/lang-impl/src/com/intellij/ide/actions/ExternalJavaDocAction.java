@@ -37,6 +37,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class ExternalJavaDocAction extends AnAction {
 
     final List<String> urls = provider.getUrlFor(element, originalElement);
     if (urls != null && !urls.isEmpty()) {
-      showExternalJavadoc(urls);
+      showExternalJavadoc(urls, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     }
     else if (provider instanceof ExternalDocumentationProvider) {
       final ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
@@ -89,7 +90,7 @@ public class ExternalJavaDocAction extends AnAction {
     }
   }
 
-  public static void showExternalJavadoc(List<String> urls) {
+  public static void showExternalJavadoc(List<String> urls, Component component) {
     final HashSet<String> set = new HashSet<String>(urls);
     if (set.size() > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root", ArrayUtil.toStringArray(set)) {
@@ -98,7 +99,7 @@ public class ExternalJavaDocAction extends AnAction {
           BrowserUtil.browse(selectedValue);
           return FINAL_CHOICE;
         }
-      }).showInBestPositionFor(DataManager.getInstance().getDataContext());
+      }).showInBestPositionFor(DataManager.getInstance().getDataContext(component));
     }
     else if (set.size() == 1) {
       BrowserUtil.browse(urls.get(0));

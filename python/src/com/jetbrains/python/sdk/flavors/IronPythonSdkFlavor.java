@@ -17,17 +17,22 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PatternUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class IronPythonSdkFlavor extends PythonSdkFlavor {
+  public static final Pattern VERSION_RE = Pattern.compile("\\w+ ([0-9\\.]+).*");
+
   private IronPythonSdkFlavor() {
   }
 
@@ -64,13 +69,11 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
     return name.equals("ipy.exe") || name.equals("ipy64.exe");
   }
 
-  public String getVersionStringFromOutput(String version) {
-    return getName() + " " + version;
-  }
-
+  @Nullable
   @Override
-  public String getVersionRegexp() {
-    return "\\w+ ([0-9\\.]+).*";
+  public String getVersionStringFromOutput(@NotNull String output) {
+    final String match = PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
+    return match != null ? getName() + " " + match : null;
   }
 
   @Override

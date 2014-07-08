@@ -17,8 +17,10 @@ package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -30,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> {
@@ -41,6 +41,8 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
     if (literalExpression.getLiteralElementType() != JavaTokenType.STRING_LITERAL) {
       return;  // not a string literal
     }
+
+    if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
 
     final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
     if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, Collections.singleton(AnnotationUtil.NON_NLS), false, false)) {

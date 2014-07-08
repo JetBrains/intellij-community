@@ -252,7 +252,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param filePaths         the first file is tested only; the others are just copied along the first.
    * @return highlighting duration in milliseconds.
    */
-  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls @NotNull String... filePaths);
+  long testHighlighting(boolean checkWarnings,
+                        boolean checkInfos,
+                        boolean checkWeakWarnings,
+                        @TestDataFile @NonNls @NotNull String... filePaths);
 
   long testHighlightingAllFiles(boolean checkWarnings,
                                 boolean checkInfos,
@@ -377,7 +380,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Runs basic completion in caret position in fileBefore.
    * Implies that there is only one completion variant and it was inserted automatically, and checks the result file text with fileAfter
    */
-  void testCompletion(@TestDataFile @NonNls @NotNull String fileBefore, @NotNull @TestDataFile @NonNls String fileAfter, @NotNull String... additionalFiles);
+  void testCompletion(@TestDataFile @NonNls @NotNull String fileBefore,
+                      @NotNull @TestDataFile @NonNls String fileAfter,
+                      @NotNull String... additionalFiles);
 
   void testCompletionTyping(@NotNull @TestDataFile @NonNls String fileBefore,
                             @NotNull String toType,
@@ -433,6 +438,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * @return null if the only item was auto-completed
+   * @see #completeBasicAllCarets()
    */
   LookupElement[] completeBasic();
 
@@ -495,6 +501,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Renames element at caret using injected {@link com.intellij.refactoring.rename.RenameHandler}s.
    * Very close to {@link #renameElementAtCaret(String)} but uses handlers.
+   *
    * @param newName new name for the element.
    */
   void renameElementAtCaretUsingHandler(@NotNull String newName);
@@ -532,4 +539,21 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param caresAboutInjection true if the fixture should look for an injection at caret, false otherwise.
    */
   void setCaresAboutInjection(boolean caresAboutInjection);
+
+  /**
+   * Completes basically (see {@link #completeBasic()}) <strong>all</strong>
+   * carets (places marked with {@link #CARET_MARKER} in file. Example:
+   * <pre>
+   *   PyC&lt;caret&gt; is IDE for Py&lt;caret&gt;
+   * </pre>
+   * should be completed to
+   * <pre>
+   *   PyCharm is IDE for Python
+   * </pre>
+   * Actually, it works just like {@link #completeBasic()} but supports
+   * several  {@link #CARET_MARKER}
+   *
+   * @see #completeBasic()
+   */
+  void completeBasicAllCarets();
 }

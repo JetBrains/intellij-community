@@ -25,6 +25,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
+import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
@@ -62,6 +63,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -887,6 +889,12 @@ public abstract class ChooseByNameBase {
       }
     });
     myTextPopup.show(layeredPane);
+    if (myTextPopup instanceof AbstractPopup) {
+      Window window = ((AbstractPopup)myTextPopup).getPopupWindow();
+      if (window instanceof JDialog) {
+        ((JDialog)window).getRootPane().putClientProperty(WindowAction.NO_WINDOW_ACTIONS, Boolean.TRUE);
+      }
+    }
   }
 
   private JLayeredPane getLayeredPane() {
@@ -1458,7 +1466,7 @@ public abstract class ChooseByNameBase {
     return false;
   }
 
-  private static final String EXTRA_ELEM = "...";
+  public static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
   public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
@@ -1551,13 +1559,13 @@ public abstract class ChooseByNameBase {
           final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
           showCard(cardToShow, 0);
 
-          final Set<Object> filtered = filter(elements);
-
+          final boolean edt = myModel instanceof EdtSortingModel;
+          final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               if (!myCancelled.isCanceled()) {
-                myCallback.consume(filtered);
+                myCallback.consume(edt ? filter(elements) : filtered);
               }
             }
           }, myModalityState);

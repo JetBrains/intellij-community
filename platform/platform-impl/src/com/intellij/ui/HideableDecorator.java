@@ -53,6 +53,7 @@ public class HideableDecorator {
     };
     myPanel.add(myTitledSeparator, BorderLayout.NORTH);
     myTitledSeparator.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    updateIcon();
     myTitledSeparator.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
@@ -64,6 +65,12 @@ public class HideableDecorator {
         }
       }
     });
+  }
+
+  private void updateIcon() {
+    final Icon icon = myOn ? AllIcons.General.SplitDown : AllIcons.General.SplitRight;
+    myTitledSeparator.getLabel().setIcon(icon);
+    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(icon, 0.5f));
   }
 
   public void setContentComponent(@Nullable JComponent content) {
@@ -101,8 +108,7 @@ public class HideableDecorator {
 
   protected void on() {
     myOn = true;
-    myTitledSeparator.getLabel().setIcon(AllIcons.General.SplitDown);
-    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.SplitDown, 0.5f));
+    updateIcon();
     myTitledSeparator.getLabel().setIconTextGap(5);
     if (myContent != null) {
       myContent.setVisible(true);
@@ -114,8 +120,7 @@ public class HideableDecorator {
 
   protected void off() {
     myOn = false;
-    myTitledSeparator.getLabel().setIcon(AllIcons.General.SplitRight);
-    myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(AllIcons.General.SplitRight, 0.5f));
+    updateIcon();
     if (myContent != null) {
       myContent.setVisible(false);
       myPreviousContentSize = myContent.getSize();

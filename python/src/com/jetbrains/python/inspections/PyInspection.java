@@ -15,10 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,7 +38,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public abstract class PyInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class PyInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -60,12 +57,13 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
     return true;
   }
 
+  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable final PsiElement element) {
-    List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    List<SuppressQuickFix> result = new ArrayList<SuppressQuickFix>();
     result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for statement", PyStatement.class) {
       @Override
-      protected PsiElement getContainer(PsiElement context) {
+      public PsiElement getContainer(PsiElement context) {
         if (PsiTreeUtil.getParentOfType(context, PyStatementList.class, false, ScopeOwner.class) != null ||
             PsiTreeUtil.getParentOfType(context, PyFunction.class, PyClass.class) == null) {
           return super.getContainer(context);
@@ -75,7 +73,7 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
     });
     result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for function", PyFunction.class));
     result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for class", PyClass.class));
-    return result.toArray(new SuppressIntentionAction[result.size()]);
+    return result.toArray(new SuppressQuickFix[result.size()]);
   }
 
   @Override
@@ -131,7 +129,7 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
     return m.matches() && SuppressionUtil.isInspectionToolIdMentioned(m.group(1), getSuppressId());
   }
 
-  private String getSuppressId() {
+  protected String getSuppressId() {
     return getShortName().replace("Inspection", "");
   }
 }

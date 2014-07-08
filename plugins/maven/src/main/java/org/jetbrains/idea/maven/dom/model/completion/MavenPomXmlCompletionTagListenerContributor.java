@@ -16,6 +16,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
@@ -31,7 +32,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
   private final Set<String> myHandledTags = ImmutableSet.of("dependency");
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (TemplateManager.getInstance(parameters.getOriginalFile().getProject()).getActiveTemplate(parameters.getEditor()) != null) {
       return; // Don't brake the template.
     }

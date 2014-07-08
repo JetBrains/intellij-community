@@ -56,6 +56,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
         return false;
       }
     };
+    myEditorTextField.setFontInheritedFromLAF(false);
   }
 
   @Override

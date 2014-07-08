@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ public class IndexPattern {
     }
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -93,6 +94,7 @@ public class IndexPattern {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myPatternString.hashCode();
     result = 29 * result + (myCaseSensitive ? 1 : 0);

@@ -18,7 +18,6 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
@@ -94,12 +93,11 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            Set<Object> dependencies,
                            boolean neverExpands) {
-    assert range.getStartOffset() + 1 < range.getEndOffset() : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
+    assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
     myElement = node;
-    ProperTextRange.assertProperRange(range);
+    TextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
-    assert getRange().getLength() >= 2 : "range:" + getRange();
     myDependencies = dependencies;
     assert !myDependencies.contains(null);
     myNeverExpands = neverExpands;

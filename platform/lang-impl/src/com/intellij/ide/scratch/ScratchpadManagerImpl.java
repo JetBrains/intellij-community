@@ -18,22 +18,28 @@ package com.intellij.ide.scratch;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 public class ScratchpadManagerImpl extends ScratchpadManager implements Disposable {
   private final Project myProject;
-  private final Map<String, Integer> myExtensionsCounterMap = ContainerUtil.newHashMap();
+  private Integer myIndex = 0;
   private Language myLatestLanguage;
 
   public ScratchpadManagerImpl(@NotNull Project project) {
     myProject = project;
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar == null) return;
+    if (statusBar.getWidget(ScratchWidget.ID) != null) return;
+    ScratchWidget widget = new ScratchWidget(myProject);
+    statusBar.addWidget(widget, "before Encoding", myProject);
+    statusBar.updateWidget(ScratchWidget.ID);
+    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, widget);
   }
 
   @NotNull
@@ -43,7 +49,7 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
-        String name = generateFileName(language);
+        String name = generateFileName();
         return ScratchpadFileSystem.getScratchFileSystem().addFile(name, language, calculatePrefix(ScratchpadManagerImpl.this.myProject));
       }
     });
@@ -60,14 +66,10 @@ public class ScratchpadManagerImpl extends ScratchpadManager implements Disposab
   }
 
   @NotNull
-  private String generateFileName(@NotNull Language language) {
-    LanguageFileType associatedFileType = language.getAssociatedFileType();
-    String ext = associatedFileType != null ? associatedFileType.getDefaultExtension() : "unknown";
-    Integer prev = myExtensionsCounterMap.get(ext);
-    int updated = prev == null ? 1 : ++prev;
-    myExtensionsCounterMap.put(ext, updated);
-    String index = updated == 1 ? "" : updated + ".";
-    return "scratch." + index + ext;
+  private String generateFileName() {
+    int updated = myIndex++;
+    String index = updated == 0 ? "" : "." + updated;
+    return "scratch" + index;
   }
 
   @Override

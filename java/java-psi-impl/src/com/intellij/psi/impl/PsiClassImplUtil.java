@@ -760,7 +760,6 @@ public class PsiClassImplUtil {
   @NotNull
   private static PsiClass[] getSupersInner(@NotNull PsiClass psiClass) {
     PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
-    PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
 
     if (psiClass.isInterface()) {
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), true);
@@ -792,6 +791,7 @@ public class PsiClassImplUtil {
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
     }
 
+    PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
     PsiClass[] interfaces = resolveClassReferenceList(implementsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
 
     PsiClass superClass = getSuperClass(psiClass);

@@ -18,13 +18,14 @@ package com.intellij.util.xml.impl;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.patterns.XmlPatterns;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class DomReferenceContributor extends PsiReferenceContributor{
   @Override
-  public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
 
     registrar.registerReferenceProvider(XmlPatterns.xmlTag(), provider);

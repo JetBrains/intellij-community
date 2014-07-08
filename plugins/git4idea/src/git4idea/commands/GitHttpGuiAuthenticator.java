@@ -25,13 +25,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.vcsUtil.AuthDialog;
-import git4idea.jgit.GitHttpAuthDataProvider;
+import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,15 +127,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return login;
     }
 
-    final AuthDialog dialog = new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        dialog.show();
-      }
-    }, myModalityState == null ? ModalityState.defaultModalityState() : myModalityState);
-
-    if (!dialog.isOK()) {
+    AuthDialog dialog = showAuthDialog(url, login);
+    if (dialog == null || !dialog.isOK()) {
       myWasCancelled = true;
       return "";
     }
@@ -147,6 +141,19 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     myPasswordKey = makeKey(myUrl, myLogin);
 
     return myLogin;
+  }
+
+  @Nullable
+  private AuthDialog showAuthDialog(final String url, final String login) {
+    final Ref<AuthDialog> dialog = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
+        dialog.get().show();
+      }
+    }, myModalityState == null ? ModalityState.defaultModalityState() : myModalityState);
+    return dialog.get();
   }
 
   @Override

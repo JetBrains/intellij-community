@@ -44,14 +44,7 @@ import java.util.regex.Matcher;
 /**
  * @author peter
  */
-public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
-  @NotNull
-  @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return getSuppressActions(getShortName());
-
-  }
-
+public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
   public static SuppressQuickFix[] getSuppressActions(String name) {
     final HighlightDisplayKey displayKey = HighlightDisplayKey.find(name);
     return new SuppressQuickFix[] {
@@ -59,11 +52,6 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
       new SuppressForMemberFix(displayKey, false),
       new SuppressForMemberFix(displayKey, true),
     };
-  }
-
-  @Override
-  public boolean isSuppressedFor(@NotNull final PsiElement element) {
-    return isElementToolSuppressedIn(element, getID());
   }
 
   public static boolean isElementToolSuppressedIn(final PsiElement place, final String toolId) {

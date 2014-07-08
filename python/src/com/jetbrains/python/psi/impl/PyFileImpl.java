@@ -419,6 +419,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.CLASS_DECLARATION, PyClass.class);
   }
 
+  @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
     return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);

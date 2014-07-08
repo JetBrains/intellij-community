@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PathListReferenceProvider;
+import org.jetbrains.annotations.NotNull;
 import org.testng.IMethodSelector;
 
 import static com.intellij.patterns.XmlPatterns.*;
@@ -55,7 +56,7 @@ public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
                                                         .withParent(xmlTag().withName("suite-files")
                                                                       .withParent(xmlTag().withName("suite")))));
 
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(ourTestClassPattern, new JavaClassReferenceProvider());
     registrar.registerReferenceProvider(ourListenerClassPattern, new JavaClassReferenceProvider());
 

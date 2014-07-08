@@ -35,16 +35,17 @@ public class AuthDialog extends DialogWrapper {
   public AuthDialog(@NotNull Project project, @NotNull String title, @Nullable String description, @Nullable String login, @Nullable String password, boolean rememberByDefault) {
     super(project, false);
     setTitle(title);
-    boolean rememberPassword = decideOnShowRememberPasswordOption(password, rememberByDefault);
+    Boolean rememberPassword = decideOnShowRememberPasswordOption(password, rememberByDefault);
     authPanel = new AuthenticationPanel(description, login, password, rememberPassword);
     init();
   }
 
-  private static boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
+  @Nullable
+  private static Boolean decideOnShowRememberPasswordOption(@Nullable String password, boolean rememberByDefault) {
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
     // if password saving is disabled, don't show the checkbox.
     if (passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-      return false;
+      return null;
     }
     // if password is prefilled, it is expected to continue remembering it.
     if (!StringUtil.isEmptyOrSpaces(password)) {

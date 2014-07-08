@@ -291,12 +291,11 @@ public class TemplateState implements Disposable {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
     myTemplate = template;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
     myProcessor = processor;
 
-    DocumentReference[] refs =
-      myDocument == null ? null : new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)};
+    DocumentReference[] refs = myDocument != null 
+                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)} 
+                               : null;
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
       public void undo() {

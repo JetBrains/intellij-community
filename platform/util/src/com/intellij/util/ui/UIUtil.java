@@ -273,14 +273,10 @@ public class UIUtil {
           try {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
-            Field field = device.getClass().getDeclaredField("scale");
-            if (field != null) {
-              field.setAccessible(true);
-              Object scale = field.get(device);
-              if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
-                ourRetina.set(true);
-                return true;
-              }
+            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+            if (scale != null && scale.intValue() == 2) {
+              ourRetina.set(true);
+              return true;
             }
           }
           catch (AWTError ignore) {}
@@ -925,20 +921,24 @@ public class UIUtil {
     return UIManager.getBorder("Button.border");
   }
 
+  @NotNull
   public static Icon getErrorIcon() {
-    return UIManager.getIcon("OptionPane.errorIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
   }
 
+  @NotNull
   public static Icon getInformationIcon() {
-    return UIManager.getIcon("OptionPane.informationIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
   }
 
+  @NotNull
   public static Icon getQuestionIcon() {
-    return UIManager.getIcon("OptionPane.questionIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
   }
 
+  @NotNull
   public static Icon getWarningIcon() {
-    return UIManager.getIcon("OptionPane.warningIcon");
+    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
   }
 
   public static Icon getBalloonInformationIcon() {
@@ -2096,6 +2096,17 @@ public class UIUtil {
     }
   }
 
+  public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
+    final Ref<T> result = Ref.create();
+    invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        result.set(computable.compute());
+      }
+    });
+    return result.get();
+  }
+
   public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
@@ -2225,20 +2236,10 @@ public class UIUtil {
   }
 
   @Nullable
-  public static ComboPopup getComboBoxPopup(JComboBox comboBox) {
+  public static ComboPopup getComboBoxPopup(@NotNull JComboBox comboBox) {
     final ComboBoxUI ui = comboBox.getUI();
     if (ui instanceof BasicComboBoxUI) {
-      try {
-        final Field popup = BasicComboBoxUI.class.getDeclaredField("popup");
-        popup.setAccessible(true);
-        return (ComboPopup)popup.get(ui);
-      }
-      catch (NoSuchFieldException e) {
-        return null;
-      }
-      catch (IllegalAccessException e) {
-        return null;
-      }
+      return ReflectionUtil.getField(BasicComboBoxUI.class, ui, ComboPopup.class, "popup");
     }
 
     return null;
@@ -2904,17 +2905,12 @@ public class UIUtil {
   public static String getCurrentKeyboardLayout() {
     InputContext instance = InputContext.getInstance();
     Class<? extends InputContext> instanceClass = instance.getClass();
-    if (instanceClass.getSuperclass().getName().equals("sun.awt.im.InputContext")) {
+    Class<?> superclass = instanceClass.getSuperclass();
+    if (superclass.getName().equals("sun.awt.im.InputContext")) {
       try {
-        Field f = instanceClass.getSuperclass().getDeclaredField("inputMethodLocator");
-        f.setAccessible(true);
-        Object o = f.get(instance);
-        f = o.getClass().getDeclaredField("locale");
-        f.setAccessible(true);
-        o = f.get(o);
-        if (o instanceof Locale) {
-          return ((Locale)o).getLanguage().toUpperCase(Locale.getDefault());
-        }
+        Object inputMethodLocator = ReflectionUtil.getField(superclass, instance, null, "inputMethodLocator");
+        Locale locale = ReflectionUtil.getField(inputMethodLocator.getClass(), inputMethodLocator, Locale.class, "locale");
+        return locale.getLanguage().toUpperCase(Locale.getDefault());
       }
       catch (Exception ignored) {
       }

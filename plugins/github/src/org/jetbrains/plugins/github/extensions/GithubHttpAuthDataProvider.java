@@ -17,7 +17,7 @@ package org.jetbrains.plugins.github.extensions;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
-import git4idea.jgit.GitHttpAuthDataProvider;
+import git4idea.remote.GitHttpAuthDataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubAuthData;

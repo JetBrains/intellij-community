@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.messages.Topic;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -217,6 +218,7 @@ public abstract class FindManager {
    * @param element the element to find the usages for.
    */
   public abstract void findUsages(@NotNull PsiElement element);
+  public abstract void findUsagesInScope(@NotNull PsiElement element, @NotNull SearchScope searchScope);
 
   /**
    * Shows the Find Usages dialog (if {@code showDialog} is true} and performs the Find Usages operation for the

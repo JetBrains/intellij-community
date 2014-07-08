@@ -531,36 +531,36 @@ Function leaveUninstallOldVersionDialog
   !insertmacro INSTALLOPTIONS_READ $2 "UninstallOldVersions.ini" "Settings" "State"
   StrCmp $2 2 enable_disable
   Goto done
-  
+
 enable_disable:
-  !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field 2" "State"  
-  StrCmp $0 1 enable disable 
+  !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field 2" "State"
+  StrCmp $0 1 enable disable
 enable:
   StrCpy $1 ""
   Goto setFlag
 disable:
-  Call setState  
+  Call setState
   StrCpy $1 "DISABLED"
 
-setFlag:  
+setFlag:
   Push $1
   Call setFlags
-done:  
+done:
   Pop $4
-  Pop $1 
+  Pop $1
   StrCmp $2 0 skip_abort
   Pop $2
   Abort
-skip_abort:  
+skip_abort:
   StrCpy $2 "OK"
 FunctionEnd
 
 Function setFlags
-  Pop $1 
+  Pop $1
   !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
   StrCpy $4 3
-  ; change flags of fields in according of master checkbox 
-loop:  
+  ; change flags of fields in according of master checkbox
+loop:
   !insertmacro INSTALLOPTIONS_READ $1 "UninstallOldVersions.ini" "Field $4" "HWND"
   EnableWindow $1 $0
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $4" "Flags" "$1"
@@ -573,7 +573,7 @@ FunctionEnd
 Function setState
   !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
   StrCpy $4 3
-  ; change state of fields in according of master checkbox 
+  ; change state of fields in according of master checkbox
 loop:
   !insertmacro INSTALLOPTIONS_READ $1 "UninstallOldVersions.ini" "Field $4" "HWND"
   SendMessage $1 ${BM_SETCHECK} 0 "0"
@@ -750,21 +750,28 @@ skip_quicklaunch_shortcut:
 "${Index}-Skip:"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
     '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
-
-  ; back up old value of .java
- StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" java_association
- StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 skip_ipr
-java_association: 
- ReadRegStr $1 HKCR ".java" ""
- StrCmp $1 "" skip_backup
-   StrCmp $1 "IntelliJIdeaProjectFile" skip_backup
-   WriteRegStr HKCR ".java" "backup_val" $1
-skip_backup:
-  WriteRegStr HKCR ".java" "" "IntelliJIdeaProjectFile"
 !undef Index
 
 skip_ipr:
 
+StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
+ ; back up old value of an association
+ ReadRegStr $1 HKCR ${ASSOCIATION} ""
+ StrCmp $1 "" skip_backup
+    StrCmp $1 ${PRODUCT_PATHS_SELECTOR} skip_backup
+    WriteRegStr HKCR ${ASSOCIATION} "backup_val" $1
+skip_backup:
+  WriteRegStr HKCR ${ASSOCIATION} "" "${PRODUCT_PATHS_SELECTOR}"
+  ReadRegStr $0 HKCR ${PRODUCT_PATHS_SELECTOR} ""
+  StrCmp $0 "" 0 command_exists
+    WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
+    WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
+    WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+command_exists:
+  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
+    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+
+skip_association:
   ; Rest of script
 
 
@@ -772,7 +779,7 @@ skip_ipr:
   SectionIn RO
 !include "idea_win.nsh"
 
-  IntCmp $IS_UPGRADE_60 1 skip_properties 
+  IntCmp $IS_UPGRADE_60 1 skip_properties
   SetOutPath $INSTDIR\bin
   File "${PRODUCT_PROPERTIES_FILE}"
   File "${PRODUCT_VM_OPTIONS_FILE}"
@@ -851,6 +858,44 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 
 Function un.onInit
+  ;admin perm. is required to uninstall?
+  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
+
+requred_admin_perm:
+  ;the user has admin rights?
+  UserInfo::GetAccountType
+  Pop $R2
+  StrCmp $R2 "Admin" UAC_Admin uninstall_location
+
+uninstall_location:
+  ;check if the uninstallation is running from the product location
+  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
+
+copy_uninstall:
+  ;do copy for unistall.exe
+  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  Quit
+
+UAC_Elevate:
+  !insertmacro UAC_RunElevated
+  StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
+  StrCmp 0 $0 0 UAC_Err ; Error?
+  StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+  Quit
+UAC_ElevationAborted:
+UAC_Err:
+  Abort
+UAC_Success:
+  StrCmp 1 $3 UAC_Admin ;Admin?
+  StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
+  goto UAC_Elevate
+UAC_Admin:
+  SetShellVarContext all
+  StrCpy $baseRegKey "HKLM"
+UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
@@ -1094,10 +1139,8 @@ clear_Registry:
   StrCpy $2 "MenuFolder"
   Call un.OMDeleteRegValue
 
-  StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA Community Edition" restore_java_association
-  StrCmp "${PRODUCT_FULL_NAME}" "IntelliJ IDEA" 0 finish_uninstall
-restore_java_association:
-  StrCpy $1 ".java"
+  StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
+  StrCpy $1 "${ASSOCIATION}"
   StrCpy $2 "backup_val"
   Call un.ReturnBackupRegValue
 

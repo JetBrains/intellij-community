@@ -51,6 +51,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     File testHgDir = new File(pluginRoot, FileUtil.toSystemDependentName(pathToHg));
 
     File cacheDir = new File(testHgDir, "cache");
+    File testDirStateFile = new File(testHgDir, "dirstate");
     File testBranchFile = new File(testHgDir, "branch");
     File testBookmarkFile = new File(testHgDir, "bookmarks");
     File testCurrentBookmarkFile = new File(testHgDir, "bookmarks.current");
@@ -58,6 +59,7 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     File testLocalTagFile = new File(testHgDir, "localtags");
     FileUtil.copyDir(cacheDir, new File(myHgDir, "cache"));
     FileUtil.copy(testBranchFile, new File(myHgDir, "branch"));
+    FileUtil.copy(testDirStateFile, new File(myHgDir, "dirstate"));
     FileUtil.copy(testBookmarkFile, new File(myHgDir, "bookmarks"));
     FileUtil.copy(testCurrentBookmarkFile, new File(myHgDir, "bookmarks.current"));
     FileUtil.copy(testTagFile, new File(myHgDir.getParentFile(), ".hgtags"));
@@ -70,8 +72,12 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     myLocalTags = readRefs(testLocalTagFile);
   }
 
-  public void testHEAD() {
-    assertEquals("25e44c95b2612e3cdf29a704dabf82c77066cb67", myRepositoryReader.readCurrentRevision());
+  public void testCurrentRecision() {
+    assertEquals("33ef48b940a9797973c3becd9d3a181593f5b57a", myRepositoryReader.readCurrentRevision());
+  }
+
+  public void testTip() {
+    assertEquals("25e44c95b2612e3cdf29a704dabf82c77066cb67", myRepositoryReader.readCurrentTipRevision());
   }
 
   public void testCurrentBranch() {

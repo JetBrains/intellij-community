@@ -27,9 +27,12 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+
+import java.io.File;
 
 import static org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder.*;
 
@@ -64,9 +67,8 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
           NotificationData notification = new NotificationData(
             group, errorMessage, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
 
-          final VirtualFile virtualFile = ExternalSystemUtil.waitForTheFile(path);
-          if (virtualFile != null) {
-            notification.setNavigatable(new OpenFileDescriptor(project, virtualFile));
+          if (path != null) {
+            notification.setNavigatable(new MyNavigatable(new File(path), project));
           }
 
           ExternalSystemNotificationManager.getInstance(project).showNotification(id.getProjectSystemId(), notification);
@@ -81,5 +83,41 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
     if (start == -1) return null;
     int end = str.indexOf(close, start + open.length());
     return end != -1 ? str.substring(start + open.length(), end) : null;
+  }
+
+  private static class MyNavigatable implements Navigatable {
+
+    private final @NotNull File myFile;
+    private final @NotNull Project myProject;
+    private volatile OpenFileDescriptor openFileDescriptor;
+
+    public MyNavigatable(@NotNull File file, @NotNull Project project) {
+      myFile = file;
+      myProject = project;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      OpenFileDescriptor fileDescriptor = openFileDescriptor;
+      if (fileDescriptor == null) {
+        final VirtualFile virtualFile = ExternalSystemUtil.waitForTheFile(myFile.getPath());
+        if (virtualFile != null) {
+          openFileDescriptor = fileDescriptor = new OpenFileDescriptor(myProject, virtualFile);
+        }
+      }
+      if (fileDescriptor != null && fileDescriptor.canNavigate()) {
+        fileDescriptor.navigate(requestFocus);
+      }
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return myFile.exists();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
   }
 }

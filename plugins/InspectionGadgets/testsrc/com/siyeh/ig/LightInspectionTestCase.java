@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -34,9 +35,13 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     for (String environmentClass : getEnvironmentClasses()) {
       myFixture.addClass(environmentClass);
     }
-    myFixture.enableInspections(getInspection());
+    final InspectionProfileEntry inspection = getInspection();
+    if (inspection != null) {
+      myFixture.enableInspections(inspection);
+    }
   }
 
+  @Nullable
   protected abstract InspectionProfileEntry getInspection();
 
   @NonNls

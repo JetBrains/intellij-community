@@ -152,6 +152,35 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     }
   }
 
+  public void testPathNormalization() throws Exception {
+    checkFileName("///", "");
+  }
+  public void testPathNormalization2() throws Exception {
+    checkFileName("\\\\", "/");
+  }
+  public void testPathNormalization3() throws Exception {
+    checkFileName("//", "/////");
+  }
+
+  private void checkFileName(String prefix, String suffix) throws IOException {
+    final File tempDirectory = createTempDirectory();
+
+    final VirtualFile temp = getVirtualFile(tempDirectory);
+    String name = "toCreate.txt";
+    final VirtualFilePointer fileToCreatePointer = createPointerByFile(new File(tempDirectory.getPath() + prefix + name +suffix), null);
+    assertFalse(fileToCreatePointer.isValid());
+    assertNull(fileToCreatePointer.getFile());
+
+    VirtualFile child = createChildData(temp, name);
+
+    assertTrue(fileToCreatePointer.isValid());
+    assertEquals(child, fileToCreatePointer.getFile());
+
+    delete(child);
+    assertFalse(fileToCreatePointer.isValid());
+    assertNull(fileToCreatePointer.getFile());
+  }
+
   public void testMovePointedFile() throws Exception {
     File tempDirectory = createTempDirectory();
     final File moveTarget = new File(tempDirectory, "moveTarget");
@@ -605,34 +634,37 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     };
     Disposable disposable = Disposer.newDisposable();
     VirtualFileManager.getInstance().addVirtualFileListener(listener, disposable);
-    int N = Timings.adjustAccordingToMySpeed(1000, false);
-    System.out.println("N = " + N);
-    for (int i=0;i< N;i++) {
-      assertNotNull(pointer.getFile());
-      FileUtil.delete(ioPtrBase);
-      doVfsRefresh();
+    try {
+      int N = Timings.adjustAccordingToMySpeed(1000, false);
+      System.out.println("N = " + N);
+      for (int i=0;i< N;i++) {
+        assertNotNull(pointer.getFile());
+        FileUtil.delete(ioPtrBase);
+        doVfsRefresh();
 
-      // ptr is now null, cached as map
+        // ptr is now null, cached as map
 
-      final VirtualFile v = LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr);
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() throws Throwable {
-          v.delete(this); //inc FS modCount
-          LocalFileSystem.getInstance().findFileByIoFile(ioSand).createChildData(this, ioSandPtr.getName());
-        }
-      }.execute().throwException();
+        final VirtualFile v = LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr);
+        new WriteCommandAction.Simple(getProject()) {
+          @Override
+          protected void run() throws Throwable {
+            v.delete(this); //inc FS modCount
+            LocalFileSystem.getInstance().findFileByIoFile(ioSand).createChildData(this, ioSandPtr.getName());
+          }
+        }.execute().throwException();
 
-      // ptr is still null
+        // ptr is still null
 
-      assertTrue(ioPtrBase.mkdirs());
-      assertTrue(ioPtr.createNewFile());
+        assertTrue(ioPtrBase.mkdirs());
+        assertTrue(ioPtr.createNewFile());
 
-      stressRead(pointer);
-      doVfsRefresh();
+        stressRead(pointer);
+        doVfsRefresh();
+      }
     }
-
-    Disposer.dispose(disposable); // unregister listener early
+    finally {
+      Disposer.dispose(disposable); // unregister listener early
+    }
   }
 
   private static void stressRead(@NotNull final VirtualFilePointer pointer) {
@@ -665,7 +697,6 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
   }
 
   public void testManyPointersUpdatePerformance() throws IOException {
-    FilePointerPartNode.pushDebug(false, disposable);
     LoggingListener listener = new LoggingListener();
     final List<VFileEvent> events = new ArrayList<VFileEvent>();
     final File ioTempDir = createTempDirectory();
@@ -685,16 +716,17 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
       }
     }).assertTiming();
   }
+
   public void testMultipleCreationOfTheSamePointerPerformance() throws IOException {
-    FilePointerPartNode.pushDebug(false, disposable);
     final LoggingListener listener = new LoggingListener();
-    final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
+    final String url = VfsUtilCore.pathToUrl("/a/b/c/d/e");
+    final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
     TempFileSystem.getInstance();
-    PlatformTestUtil.startPerformanceTest("same url vfp create", 500, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("same url vfp create", 5000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
-        for (int i=0; i<1000000; i++) {
-          VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
+        for (int i=0; i<10000000; i++) {
+          VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
           assertSame(pointer, thePointer);
         }
       }

@@ -17,7 +17,7 @@ package org.jetbrains.jps.classFilesIndex;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.asm4.Type;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.Set;
 

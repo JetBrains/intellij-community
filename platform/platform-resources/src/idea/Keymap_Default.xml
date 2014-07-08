@@ -90,9 +90,6 @@
   <action id="Generate">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
   </action>
-  <action id="CloneElement">
-    <keyboard-shortcut first-keystroke="shift F5"/>
-  </action>
   <action id="EditorChooseLookupItemReplace">
     <keyboard-shortcut first-keystroke="TAB"/>
   </action>
@@ -899,6 +896,9 @@
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
   </action>
+  <action id="FileChooser.GotoDesktop">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="FileChooser.GotoProject">
     <keyboard-shortcut first-keystroke="control 2"/>
   </action>
@@ -909,6 +909,7 @@
     <keyboard-shortcut first-keystroke="alt INSERT"/>
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
+
   <action id="PopupHector">
     <keyboard-shortcut first-keystroke="ctrl alt shift H"/>
   </action>

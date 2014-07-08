@@ -17,15 +17,14 @@ package org.jetbrains.jps.classFilesIndex.indexer.impl;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.asm4.*;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.classFilesIndex.AsmUtil;
 import org.jetbrains.jps.classFilesIndex.TObjectIntHashMapExternalizer;
 import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFileIndexer;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,9 +44,9 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
   public Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map(final ClassReader inputData, final Mappings mappings) {
     final Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map =
       new HashMap<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>>();
-    final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.ASM4) {
+    final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.ASM5) {
       @Override
-      public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
+      public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         final Type returnType = Type.getReturnType(desc);
         if (AsmUtil.isPrimitiveOrArrayOfPrimitives(returnType.getDescriptor()) || "<init>".equals(name)) {
           return;
@@ -69,7 +68,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
         }
       }
     };
-    inputData.accept(new ClassVisitor(Opcodes.ASM4) {
+    inputData.accept(new ClassVisitor(Opcodes.ASM5) {
       @Override
       public MethodVisitor visitMethod(final int access,
                                        final String name,

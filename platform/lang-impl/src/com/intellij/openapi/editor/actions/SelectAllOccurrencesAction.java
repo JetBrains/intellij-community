@@ -42,10 +42,12 @@ public class SelectAllOccurrencesAction extends EditorAction {
     public void doExecute(Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
+      boolean wholeWordsSearch = false;
       if (!caret.hasSelection()) {
         TextRange wordSelectionRange = getSelectionRange(editor, caret);
         if (wordSelectionRange != null) {
           setSelection(editor, caret, wordSelectionRange);
+          wholeWordsSearch = true;
         }
       }
 
@@ -61,7 +63,7 @@ public class SelectAllOccurrencesAction extends EditorAction {
       FindModel model = new FindModel();
       model.setStringToFind(selectedText);
       model.setCaseSensitive(true);
-      model.setWholeWordsOnly(true);
+      model.setWholeWordsOnly(wholeWordsSearch);
 
       int searchStartOffset = 0;
       FindResult findResult = findManager.findString(editor.getDocument().getCharsSequence(), searchStartOffset, model);

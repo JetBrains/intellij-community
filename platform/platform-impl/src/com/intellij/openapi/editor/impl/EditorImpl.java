@@ -83,6 +83,7 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
@@ -879,9 +880,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           repaintLines(caretLine, caretLine);
         }
         fireFocusGained();
-        if (myGutterNeedsUpdate) {
-          updateGutterSize();
-        }
       }
 
       @Override
@@ -892,6 +890,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           repaintLines(caretLine, caretLine);
         }
         fireFocusLost();
+      }
+    });
+
+    new UiNotifyConnector(myEditorComponent, new Activatable.Adapter(){
+      @Override
+      public void showNotify() {
+        if (myGutterNeedsUpdate) {
+          updateGutterSize();
+        }
       }
     });
 
@@ -2075,7 +2082,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void paintComposedTextDecoration(@NotNull Graphics2D g) {
-    if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
+    if (myInputMethodRequestsHandler != null
+        && myInputMethodRequestsHandler.composedText != null
+        && myInputMethodRequestsHandler.composedTextRange != null) {
       VisualPosition visStart =
         offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getStartOffset(), myDocument.getTextLength()));
       int y = visibleLineToY(visStart.line) + getAscent() + 1;
@@ -3884,12 +3893,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return calcColumnNumber(offset, lineIndex, true, myDocument.getImmutableCharSequence());
   }
 
-  public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware, CharSequence documentCharSequence) {
+  public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware, @NotNull CharSequence documentCharSequence) {
     if (myDocument.getTextLength() == 0) return 0;
 
-    int start = myDocument.getLineStartOffset(lineIndex);
-    if (start == offset) return 0;
-    int column = EditorUtil.calcColumnNumber(this, documentCharSequence, start, offset, EditorUtil.getTabSize(this));
+    int lineStartOffset = myDocument.getLineStartOffset(lineIndex);
+    if (lineStartOffset == offset) return 0;
+    int column = EditorUtil.calcColumnNumber(this, documentCharSequence, lineStartOffset, offset);
 
     if (softWrapAware) {
       int line = offsetToLogicalLine(offset, false);
@@ -4767,21 +4776,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static final Field decrButtonField;
-  private static final Field incrButtonField;
-
-  static {
-    try {
-      decrButtonField = BasicScrollBarUI.class.getDeclaredField("decrButton");
-      decrButtonField.setAccessible(true);
-
-      incrButtonField = BasicScrollBarUI.class.getDeclaredField("incrButton");
-      incrButtonField.setAccessible(true);
-    }
-    catch (NoSuchFieldException e) {
-      throw new IllegalStateException(e);
-    }
-  }
+  private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
+  private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
   class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";

@@ -17,6 +17,8 @@ public class RedmineProject {
   private String name;
   // Missing in Project information sent as part of issue
   private String identifier;
+  // Available only for subprojects
+  private RedmineProject parent;
 
   @Override
   public final boolean equals(Object o) {
@@ -61,6 +63,11 @@ public class RedmineProject {
   @Attribute("identifier")
   public void setIdentifier(@NotNull String identifier) {
     this.identifier = identifier;
+  }
+
+  @Nullable
+  public RedmineProject getParent() {
+    return parent;
   }
 
   @Override

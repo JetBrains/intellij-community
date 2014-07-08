@@ -529,12 +529,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   @Override
-  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
-                                     boolean neverExpands)
-  {
-    if (startOffset + 1 >= endOffset) {
-      LOG.error("Invalid offsets: ("+startOffset+", "+endOffset+")");
-    }
+  public FoldRegion createFoldRegion(int startOffset,
+                                     int endOffset,
+                                     @NotNull String placeholder,
+                                     @Nullable FoldingGroup group,
+                                     boolean neverExpands) {
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     LOG.assertTrue(region.isValid());
     return region;
@@ -550,7 +549,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       }
     });
   }
-
 
   private void notifyListenersOnFoldRegionStateChange(@NotNull FoldRegion foldRegion) {
     for (FoldingListener listener : myListeners) {

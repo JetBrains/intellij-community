@@ -82,6 +82,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -185,7 +186,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     VirtualFile result;
+    final String path = fromFile.getPath();
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
+      VfsRootAccess.allowRootAccess(path);
+      Disposer.register(myTestRootDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          VfsRootAccess.disallowRootAccess(path);
+        }
+      });
       VirtualFile fromVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fromFile);
       if (fromVFile == null) {
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
@@ -217,7 +226,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assert file != null : targetFile;
       result = file;
     }
-    result.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, fromFile.getPath());
+    result.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, path);
     return result;
   }
 
@@ -231,20 +240,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
     }
-    else {
-      final File targetFile = new File(getTempDirPath() + "/" + targetPath);
-      try {
-        FileUtil.copyDir(fromFile, targetFile);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
-      Assert.assertNotNull(file);
-      file.refresh(false, true);
-      return file;
+    final File targetFile = new File(getTempDirPath() + "/" + targetPath);
+    try {
+      FileUtil.copyDir(fromFile, targetFile);
     }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+    Assert.assertNotNull(file);
+    file.refresh(false, true);
+    return file;
   }
 
   @NotNull
@@ -1026,14 +1033,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 super.completionFinished(offset1, offset2, indicator, items, hasModifiers);
               }
             };
-            final Editor editor = getCompletionEditor();
-            assert editor != null: "Editor is null";
-            editor.getCaretModel().runForEachCaret(new CaretAction() {
-              @Override
-              public void perform(final Caret caret) {
-                handler.invokeCompletion(getProject(), editor, invocationCount);
-              }
-            });
+            Editor editor = getCompletionEditor();
+            handler.invokeCompletion(getProject(), editor, invocationCount);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);
@@ -1052,6 +1053,28 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public LookupElement[] completeBasic() {
     return complete(CompletionType.BASIC);
+  }
+
+
+  @Override
+  public void completeBasicAllCarets() {
+    final CaretModel caretModel = myEditor.getCaretModel();
+    final List<Caret> carets = caretModel.getAllCarets();
+
+    final Collection<Integer> originalOffsets = new ArrayList<Integer>(carets.size());
+
+    for (final Caret caret : carets) {
+      originalOffsets.add(caret.getOffset());
+    }
+    caretModel.removeSecondaryCarets();
+
+    int newOffset = 0; // To be incremented each time we complete something
+    for (final int originalOffset : originalOffsets) {
+      final int realOffsetBeforeCompletion = originalOffset + newOffset;
+      caretModel.moveToOffset(realOffsetBeforeCompletion);
+      completeBasic();
+      newOffset += (getCaretOffset() - realOffsetBeforeCompletion);
+    }
   }
 
   @Override

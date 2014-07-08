@@ -220,9 +220,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  protected Set<String> getStringsToSearch(final PsiElement element) {
+  protected Set<String> getStringsToSearch(@NotNull final PsiElement element) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      return getStringsToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+      return aPackage == null ? Collections.<String>emptySet() : getStringsToSearch(aPackage);
     }
 
     final Set<String> result = new HashSet<String>();
@@ -264,7 +265,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (element instanceof XmlAttributeValue) {
           ContainerUtil.addIfNotNull(result, ((XmlAttributeValue)element).getValue());
-        } else {
+        }
+        else {
           LOG.error("Unknown element type: " + element);
         }
       }
@@ -306,7 +308,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       @Override
       public Boolean compute() {
         if (ThrowSearchUtil.isSearchable (element) && options instanceof JavaThrowFindUsagesOptions && options.isUsages) {
-          ThrowSearchUtil.Root root = options.getUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY);
+          ThrowSearchUtil.Root root = ((JavaThrowFindUsagesOptions)options).getRoot();
           if (root == null) {
             final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
             if (roots != null && roots.length > 0) {
@@ -346,6 +348,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
         else if (classOptions.isImplementingClasses){
           if (!addImplementingClasses(psiClass, processor, classOptions)) return false;
+        }
+
+        if (classOptions.isImplementingClasses) {
           FunctionalExpressionSearch.search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(
             new PsiElementProcessor<PsiFunctionalExpression>() {
               @Override
@@ -755,6 +760,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   }
 
+  @NotNull
   @Override
   public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, @NotNull final SearchScope searchScope) {
     if (target instanceof PsiMethod) {

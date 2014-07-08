@@ -371,6 +371,13 @@ public class IconUtil {
   }
 
   public static Icon scale(@NotNull final Icon source, double _scale) {
+    final int hiDPIscale;
+    if (source instanceof ImageIcon) {
+      Image image = ((ImageIcon)source).getImage();
+      hiDPIscale = RetinaImage.isAppleHiDPIScaledImage(image) || image instanceof JBHiDPIScaledImage ? 2 : 1;
+    } else {
+      hiDPIscale = 1;
+    }
     final double scale = Math.min(32, Math.max(.1, _scale));
     return new Icon() {
       @Override
@@ -389,12 +396,12 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return (int)(source.getIconWidth() * scale);
+        return (int)(source.getIconWidth() * scale) / hiDPIscale;
       }
 
       @Override
       public int getIconHeight() {
-        return (int)(source.getIconHeight() * scale);
+        return (int)(source.getIconHeight() * scale) / hiDPIscale;
       }
     };
 

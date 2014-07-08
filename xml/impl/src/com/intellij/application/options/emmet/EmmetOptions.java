@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options.emmet;
 
+import com.intellij.codeInsight.template.emmet.filters.BemEmmetFilter;
+import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
@@ -26,11 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * User: zolotov
- * Date: 2/20/13
- */
 @State(
   name = "EmmetOptions",
   storages = {
@@ -39,23 +38,45 @@ import java.util.Map;
     )}
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, ExportableComponent {
+  /**
+   * @deprecated delete after IDEA 14
+   */
   private boolean myBemFilterEnabledByDefault = false;
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
   private boolean myPreviewEnabled = false;
+  private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
   @NotNull
   private Map<String, Integer> prefixes = ContainerUtil.newHashMap();
 
-
+  /**
+   * @deprecated delete after IDEA 14
+   */
   public boolean isBemFilterEnabledByDefault() {
     return myBemFilterEnabledByDefault;
   }
 
+  /**
+   * @deprecated delete after IDEA 14
+   */
   public void setBemFilterEnabledByDefault(boolean enableBemFilterByDefault) {
     myBemFilterEnabledByDefault = enableBemFilterByDefault;
   }
+
+  @NotNull
+  public Set<String> getFiltersEnabledByDefault() {
+    return myFiltersEnabledByDefault;
+  }
+
+  public void setFiltersEnabledByDefault(@NotNull Set<String> filtersEnabledByDefault) {
+    myFiltersEnabledByDefault = filtersEnabledByDefault;
+  }
+
+  public boolean isFilterEnabledByDefault(@NotNull ZenCodingFilter filter) {
+    return myFiltersEnabledByDefault.contains(filter.getSuffix());
+  } 
 
   public void setEmmetExpandShortcut(int emmetExpandShortcut) {
     myEmmetExpandShortcut = emmetExpandShortcut;
@@ -126,6 +147,11 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   @Override
   public void loadState(final EmmetOptions state) {
     XmlSerializerUtil.copyBean(state, this);
+    
+    // todo delete after IDEA 14
+    if (myFiltersEnabledByDefault.isEmpty() && myBemFilterEnabledByDefault) {
+      myFiltersEnabledByDefault.add(BemEmmetFilter.SUFFIX);
+    }
   }
 
   public static EmmetOptions getInstance() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +31,7 @@ import java.util.List;
 /**
  * Provides services for working with the modules of a project.
  */
-public abstract class ModuleManager {
+public abstract class ModuleManager extends SimpleModificationTracker {
   /**
    * Returns the module manager instance for the current project.
    *

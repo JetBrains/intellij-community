@@ -19,14 +19,19 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitCommit;
@@ -36,12 +41,15 @@ import git4idea.MessageManager;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
+import git4idea.ui.ChangesBrowserWithRollback;
+import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -119,26 +127,41 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
-                                                             untrackedFiles, operationName, null);
+  public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, root, relativePaths, operationName, null);
   }
 
   @Override
-  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
-                                                      @NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Could not " + StringUtil.capitalize(operationName);
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
+  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal,
+                                                      @NotNull VirtualFile root, @NotNull final Collection<String> relativePaths) {
+    final String title = "Could not " + StringUtil.capitalize(operationName);
+    final String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
 
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, StringUtil.stripHtml(description, true), rollbackProposal);
-    dialog.setTitle(title);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
+    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
       @Override
-      public void run() {
-        myFacade.showDialog(dialog);
+      public VirtualFile fun(String absolutePath) {
+        return GitUtil.findRefreshFileOrLog(absolutePath);
       }
     });
-    return dialog.isOK();
+
+    return UIUtil.invokeAndWaitIfNeeded(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        JComponent filesBrowser;
+        if (untrackedFiles.isEmpty()) {
+          filesBrowser = new GitSimplePathsBrowser(myProject, absolutePaths);
+        }
+        else {
+          filesBrowser = new SelectFilesDialog.VirtualFileList(myProject, untrackedFiles, false, false);
+        }
+        DialogWrapper dialog = new UntrackedFilesRollBackDialog(myProject, filesBrowser, StringUtil.stripHtml(description, true),
+                                                                rollbackProposal);
+        dialog.setTitle(title);
+        myFacade.showDialog(dialog);
+        return dialog.isOK();
+      }
+    });
   }
 
   @NotNull
@@ -148,8 +171,16 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force) {
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, changes, operation, true);
+  public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
+                                      @NotNull String operation, boolean isForcePossible) {
+    JComponent fileBrowser;
+    if (!changes.isEmpty()) {
+      fileBrowser = new ChangesBrowserWithRollback(project, changes);
+    }
+    else {
+      fileBrowser = new GitSimplePathsBrowser(project, paths);
+    }
+    return GitSmartOperationDialog.showAndGetAnswer(myProject, fileBrowser, operation, isForcePossible);
   }
 
   @Override
@@ -177,13 +208,17 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
            "After resolving conflicts you also probably would want to commit your files to the current branch.";
   }
 
-  private static class UntrackedFilesDialog extends SelectFilesDialog {
+  private static class UntrackedFilesRollBackDialog extends DialogWrapper {
 
+    @NotNull private final JComponent myFilesBrowser;
+    @NotNull private final String myPrompt;
     @NotNull private final String myRollbackProposal;
 
-    public UntrackedFilesDialog(@NotNull Project project, @NotNull Collection<VirtualFile> originalFiles, @NotNull String prompt,
-                                @NotNull String rollbackProposal) {
-      super(project, new ArrayList<VirtualFile>(originalFiles), prompt, null, false, false, false);
+    public UntrackedFilesRollBackDialog(@NotNull Project project, @NotNull JComponent filesBrowser, @NotNull String prompt,
+                                        @NotNull String rollbackProposal) {
+      super(project);
+      myFilesBrowser = filesBrowser;
+      myPrompt = prompt;
       myRollbackProposal = rollbackProposal;
       setOKButtonText("Rollback");
       setCancelButtonText("Don't rollback");
@@ -197,6 +232,21 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       panel.add(new JBLabel(XmlStringUtil.wrapInHtml(myRollbackProposal)));
       panel.add(buttons);
       return panel;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myFilesBrowser;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      JLabel label = new JLabel(myPrompt);
+      label.setUI(new MultiLineLabelUI());
+      label.setBorder(new EmptyBorder(5, 1, 5, 1));
+      return label;
     }
   }
 }

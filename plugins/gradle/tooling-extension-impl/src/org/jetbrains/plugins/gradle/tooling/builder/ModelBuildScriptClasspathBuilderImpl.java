@@ -17,9 +17,10 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ResolutionStrategy;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.Dependency;
+import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.plugins.ide.idea.model.ModuleLibrary;
 import org.gradle.plugins.ide.idea.model.Path;
 import org.gradle.util.GradleVersion;
@@ -31,7 +32,6 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
-import org.jetbrains.plugins.gradle.tooling.internal.ConfigurationDelegate;
 
 import java.io.File;
 import java.util.*;
@@ -43,6 +43,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService {
 
+  private static final String COMPILE_SCOPE = "COMPILE";
+  private static final String PLUS_CONFIGURATION = "plus";
+  private static final String MINUS_CONFIGURATION = "minus";
+  private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<String, BuildScriptClasspathModelImpl>();
 
   @Override
@@ -72,44 +76,49 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
           }
         }
       }
-      Configuration configuration = project.getBuildscript().getConfigurations().findByName("classpath");
-      if (configuration == null) return null;
+      Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
+      if (classpathConfiguration == null) return null;
 
-      final ResolutionStrategy resolutionStrategy = configuration.getResolutionStrategy();
-      configuration = new ConfigurationDelegate(configuration.copy()) {
-        @Override
-        public ResolutionStrategy getResolutionStrategy() {
-          return resolutionStrategy;
-        }
-      };
+      final Configuration configuration;
+      final IdeaModule ideaModule = ideaPlugin.getModel().getModule();
+      final ConfigurationContainer configurations = ideaModule.getProject().getConfigurations();
+
+      if (classpathConfiguration.getState() == Configuration.State.UNRESOLVED) {
+        configuration = classpathConfiguration;
+        configurations.add(configuration);
+      }
+      else {
+        configuration = configurations.maybeCreate(UUID.randomUUID().toString());
+        configuration.getDependencies().addAll(classpathConfiguration.getAllDependencies());
+        configuration.getArtifacts().addAll(classpathConfiguration.getAllArtifacts());
+      }
 
       Collection<Configuration> plusConfigurations = Collections.singletonList(configuration);
 
       final Map<String, Map<String, Collection<Configuration>>> scopes =
-        new HashMap<String, Map<String, Collection<Configuration>>>(ideaPlugin.getModel().getModule().getScopes());
+        new HashMap<String, Map<String, Collection<Configuration>>>(ideaModule.getScopes());
 
       Map<String, Map<String, Collection<Configuration>>> buildScriptScope = new HashMap<String, Map<String, Collection<Configuration>>>();
       Map<String, Collection<Configuration>> plusConfiguration = new HashMap<String, Collection<Configuration>>();
-      plusConfiguration.put("plus", plusConfigurations);
-      if (scopes.get("COMPILE") != null) {
-        plusConfiguration.put("minus", scopes.get("COMPILE").get("plus"));
+      plusConfiguration.put(PLUS_CONFIGURATION, plusConfigurations);
+      if (scopes.get(COMPILE_SCOPE) != null) {
+        plusConfiguration.put(MINUS_CONFIGURATION, scopes.get(COMPILE_SCOPE).get(PLUS_CONFIGURATION));
       }
-      buildScriptScope.put("COMPILE", plusConfiguration);
-      ideaPlugin.getModel().getModule().setScopes(buildScriptScope);
-      ideaPlugin.getModel().getModule().getProject().getConfigurations().add(configuration);
-      final Set<Dependency> buildScriptDependencies = ideaPlugin.getModel().getModule().resolveDependencies();
+      buildScriptScope.put(COMPILE_SCOPE, plusConfiguration);
+      ideaModule.setScopes(buildScriptScope);
+      final Set<Dependency> buildScriptDependencies = ideaModule.resolveDependencies();
       for (Dependency dependency : buildScriptDependencies) {
         if (dependency instanceof ModuleLibrary) {
           ModuleLibrary moduleLibrary = (ModuleLibrary)dependency;
-          if ("COMPILE".equals(moduleLibrary.getScope())) {
+          if (COMPILE_SCOPE.equals(moduleLibrary.getScope())) {
             buildScriptClasspath.add(new ClasspathEntryModelImpl(
               convert(moduleLibrary.getClasses()), convert(moduleLibrary.getSources()), convert(moduleLibrary.getJavadoc())));
           }
         }
       }
 
-      ideaPlugin.getModel().getModule().setScopes(scopes);
-      ideaPlugin.getModel().getModule().getProject().getConfigurations().remove(configuration);
+      ideaModule.setScopes(scopes);
+      configurations.remove(configuration);
     }
 
     cache.put(project.getPath(), buildScriptClasspath);

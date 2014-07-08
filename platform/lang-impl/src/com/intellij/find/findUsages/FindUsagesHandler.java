@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,10 @@ import java.util.Collections;
  */
 public abstract class FindUsagesHandler {
   // return this handler if you want to cancel the search
+  @NotNull
   public static final FindUsagesHandler NULL_HANDLER = new FindUsagesHandler(PsiUtilCore.NULL_PSI_ELEMENT){};
 
+  @NotNull
   private final PsiElement myPsiElement;
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {
@@ -81,7 +83,8 @@ public abstract class FindUsagesHandler {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public static FindUsagesOptions createFindUsagesOptions(final Project project, @Nullable final DataContext dataContext) {
+  @NotNull
+  public static FindUsagesOptions createFindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
     FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, dataContext);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isSearchForTextOccurrences = true;
@@ -92,6 +95,7 @@ public abstract class FindUsagesHandler {
   public FindUsagesOptions getFindUsagesOptions() {
     return getFindUsagesOptions(null);
   }
+
   @NotNull
   public FindUsagesOptions getFindUsagesOptions(@Nullable final DataContext dataContext) {
     FindUsagesOptions options = createFindUsagesOptions(getProject(), dataContext);
@@ -185,7 +189,7 @@ public abstract class FindUsagesHandler {
   }
 
   @Nullable
-  protected Collection<String> getStringsToSearch(final PsiElement element) {
+  protected Collection<String> getStringsToSearch(@NotNull final PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
         @Override
@@ -202,6 +206,7 @@ public abstract class FindUsagesHandler {
     return false;
   }
 
+  @NotNull
   public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     return ReferencesSearch.search(target, searchScope, false).findAll();
   }

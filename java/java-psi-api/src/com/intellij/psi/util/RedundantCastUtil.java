@@ -518,7 +518,9 @@ public class RedundantCastUtil {
                   return;
                 }
               }
-            }
+            } 
+          } else {
+            return;
           }
         }
         if (parent instanceof PsiThrowStatement) {

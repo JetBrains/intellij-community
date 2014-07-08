@@ -461,7 +461,7 @@ class Foo {
   }
 
   @Override
-  protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar", "test escape string characters in soutv"]) {
       runnable.run();
       return;

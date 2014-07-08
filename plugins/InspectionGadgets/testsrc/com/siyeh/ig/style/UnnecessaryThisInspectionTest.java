@@ -134,6 +134,13 @@ public class UnnecessaryThisInspectionTest extends LightInspectionTestCase {
   }
 
 
+  public void testLambdaMethodRefSelfRefs() {
+    doTest("class Main {" +
+           "    Runnable lambdaExpression = () -> System.out.println(this.lambdaExpression);" +
+           "    Runnable methodReference = this.methodReference::run;" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new UnnecessaryThisInspection();

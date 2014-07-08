@@ -15,16 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -39,13 +44,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -55,12 +59,12 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
-  public static final String GRADLE_v1_9 = "1.9";
-  public static final String GRADLE_v1_10 = "1.10";
-  public static final String GRADLE_v1_11 = "1.11";
-  public static final String GRADLE_v1_12 = "1.12-rc-1";
+  public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
+    {"1.9"}, {"1.10"}, {"1.11"}, {"1.12"},
+    {"2.0"}
+  };
 
-  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
+  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
 
   private static File ourTempDir;
 
@@ -75,15 +79,9 @@ public abstract class AbstractModelBuilderTest {
     this.gradleVersion = gradleVersion;
   }
 
-  @Parameterized.Parameters
+  @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Collection<Object[]> data() {
-    Object[][] data = {
-      {AbstractModelBuilderTest.GRADLE_v1_9},
-      {AbstractModelBuilderTest.GRADLE_v1_10},
-      {AbstractModelBuilderTest.GRADLE_v1_11},
-      {AbstractModelBuilderTest.GRADLE_v1_12}
-    };
-    return Arrays.asList(data);
+    return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 
 
@@ -112,21 +110,12 @@ public abstract class AbstractModelBuilderTest {
 
     GradleConnector connector = GradleConnector.newConnector();
 
-    String releaseRepoUrl = DistributionLocator.getRepoUrl(false);
-    String snapshotRepoUrl = DistributionLocator.getRepoUrl(true);
-
-    if (releaseRepoUrl == null || snapshotRepoUrl == null) {
-      connector.useGradleVersion(gradleVersion);
-    }
-    else {
-      final URI distributionUri =
-        new DistributionLocator(releaseRepoUrl, snapshotRepoUrl).getDistributionFor(GradleVersion.version(gradleVersion));
-      connector.useDistribution(distributionUri);
-    }
+    final URI distributionUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+    connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
-    int daemonMaxIdleTime = 1;
+    int daemonMaxIdleTime = 10;
     try {
-      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "1"));
+      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "10"));
     }
     catch (NumberFormatException ignore) {}
 
@@ -136,11 +125,29 @@ public abstract class AbstractModelBuilderTest {
     final ProjectImportAction projectImportAction = new ProjectImportAction(false);
     projectImportAction.addExtraProjectModelClasses(getModels());
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-    File initScript = GradleExecutionHelper.generateInitScript(false);
+    File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
     assertNotNull(initScript);
     buildActionExecutor.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     allModels = buildActionExecutor.run();
     assertNotNull(allModels);
+  }
+
+  @NotNull
+  private Set<Class> getToolingExtensionClasses() {
+    final Set<Class> classes = ContainerUtil.<Class>set(
+      // gradle-tooling-extension-api jar
+      ProjectImportAction.class,
+      // gradle-tooling-extension-impl jar
+      ModelBuildScriptClasspathBuilderImpl.class
+    );
+
+    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
+    return classes;
+  }
+
+  @NotNull
+  protected Set<Class> doGetToolingExtensionClasses() {
+    return Collections.emptySet();
   }
 
   @After
@@ -152,6 +159,43 @@ public abstract class AbstractModelBuilderTest {
 
   protected abstract Set<Class> getModels();
 
+
+  protected <T> Map<String, T> getModulesMap(final Class<T> aClass) {
+    final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
+
+    final String filterKey = "to_filter";
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
+      @Override
+      public Pair<String, T> fun(IdeaModule module) {
+        final T value = allModels.getExtraProject(module, aClass);
+        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+        return Pair.create(key, value);
+      }
+    });
+
+    map.remove(filterKey);
+    return map;
+  }
+
+  protected void assertBuildClasspath(String projectPath, String... classpath) {
+    final Map<String, BuildScriptClasspathModel> classpathModelMap = getModulesMap(BuildScriptClasspathModel.class);
+    final BuildScriptClasspathModel classpathModel = classpathModelMap.get(projectPath);
+
+    assertNotNull(classpathModel);
+
+    final List<? extends ClasspathEntryModel> classpathEntryModels = classpathModel.getClasspath().getAll();
+    assertEquals(classpath.length, classpathEntryModels.size());
+
+    for (int i = 0, length = classpath.length; i < length; i++) {
+      String classpathEntry = classpath[i];
+      final ClasspathEntryModel classpathEntryModel = classpathEntryModels.get(i);
+      assertNotNull(classpathEntryModel);
+      assertEquals(1, classpathEntryModel.getClasses().size());
+      final String path = classpathEntryModel.getClasses().iterator().next();
+      assertEquals(classpathEntry, new File(path).getName());
+    }
+  }
+
   private static void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
 
@@ -160,18 +204,24 @@ public abstract class AbstractModelBuilderTest {
     FileUtil.ensureExists(ourTempDir);
   }
 
-  private static class DistributionLocator {
+  public static class DistributionLocator {
     private static final String RELEASE_REPOSITORY_ENV = "GRADLE_RELEASE_REPOSITORY";
     private static final String SNAPSHOT_REPOSITORY_ENV = "GRADLE_SNAPSHOT_REPOSITORY";
     private static final String INTELLIJ_LABS_GRADLE_RELEASE_MIRROR =
       "http://services.gradle.org-mirror.labs.intellij.net/distributions";
     private static final String INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR =
       "http://services.gradle.org-mirror.labs.intellij.net/distributions-snapshots";
+    private static final String GRADLE_RELEASE_REPO = "http://services.gradle.org/distributions";
+    private static final String GRADLE_SNAPSHOT_REPO = "http://services.gradle.org/distributions-snapshots";
 
     @NotNull private final String myReleaseRepoUrl;
     @NotNull private final String mySnapshotRepoUrl;
 
-    private DistributionLocator(@NotNull String releaseRepoUrl, @NotNull String snapshotRepoUrl) {
+    public DistributionLocator() {
+      this(DistributionLocator.getRepoUrl(false), DistributionLocator.getRepoUrl(true));
+    }
+
+    public DistributionLocator(@NotNull String releaseRepoUrl, @NotNull String snapshotRepoUrl) {
       myReleaseRepoUrl = releaseRepoUrl;
       mySnapshotRepoUrl = snapshotRepoUrl;
     }
@@ -193,12 +243,16 @@ public abstract class AbstractModelBuilderTest {
       return new URI(String.format("%s/%s-%s-%s.zip", repositoryUrl, archiveName, version.getVersion(), archiveClassifier));
     }
 
-    @Nullable
-    static String getRepoUrl(boolean isSnapshotUrl) {
-      return ObjectUtils.chooseNotNull(
-        System.getenv(isSnapshotUrl ? SNAPSHOT_REPOSITORY_ENV : RELEASE_REPOSITORY_ENV),
-        UsefulTestCase.IS_UNDER_TEAMCITY ? isSnapshotUrl ? INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR : INTELLIJ_LABS_GRADLE_RELEASE_MIRROR : null
-      );
+    @NotNull
+    public static String getRepoUrl(boolean isSnapshotUrl) {
+      final String envRepoUrl = System.getenv(isSnapshotUrl ? SNAPSHOT_REPOSITORY_ENV : RELEASE_REPOSITORY_ENV);
+      if (envRepoUrl != null) return envRepoUrl;
+
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        return isSnapshotUrl ? INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR : INTELLIJ_LABS_GRADLE_RELEASE_MIRROR;
+      }
+
+      return isSnapshotUrl ? GRADLE_SNAPSHOT_REPO : GRADLE_RELEASE_REPO;
     }
   }
 }

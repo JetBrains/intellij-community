@@ -187,6 +187,18 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
 
+  public void testFromNestedToOuterMethodRef() throws Exception {
+    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    try {
+      projectExtension.setLanguageLevel(LanguageLevel.HIGHEST);
+      doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+    }
+    finally {
+      projectExtension.setLanguageLevel(oldLevel);
+    }
+  }
+
   @NotNull
   @Override
   protected String getTestRoot() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,9 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
   }
 
   public void testImportingFromTwoProviders() throws Exception {
-    File file = createTempFile("Foo.java", "class Foo {}");
+    File dir = createTempDirectory();
+    File file = new File(dir, "Foo.java");
+    FileUtil.writeToFile(file, "class Foo {}");
     Module module = importProjectFrom(file.getParent(), null, new ImportFromSourcesProvider(),
                                       new EclipseProjectImportProvider(new EclipseImportBuilder()));
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();

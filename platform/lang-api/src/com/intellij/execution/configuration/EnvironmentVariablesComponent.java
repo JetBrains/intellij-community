@@ -43,30 +43,30 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
 
-  private final EnvironmentVariablesTextField myEnvsTextField;
+  private final EnvironmentVariablesTextFieldWithBrowseButton myEnvVars;
 
   public EnvironmentVariablesComponent() {
     super();
-    myEnvsTextField = new EnvironmentVariablesTextField();
-    setComponent(myEnvsTextField.getComponent());
+    myEnvVars = new EnvironmentVariablesTextFieldWithBrowseButton();
+    setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {
-    myEnvsTextField.setEnvs(envs);
+    myEnvVars.setEnvs(envs);
   }
 
   @NotNull
   public Map<String, String> getEnvs() {
-    return myEnvsTextField.getEnvs();
+    return myEnvVars.getEnvs();
   }
 
   public boolean isPassParentEnvs() {
-    return myEnvsTextField.isPassParentEnvs();
+    return myEnvVars.isPassParentEnvs();
   }
 
   public void setPassParentEnvs(final boolean passParentEnvs) {
-    myEnvsTextField.setPassParentEnvs(passParentEnvs);
+    myEnvVars.setPassParentEnvs(passParentEnvs);
   }
 
   public static void readExternal(Element element, Map<String, String> envs) {
@@ -93,12 +93,10 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   private static void splitVars(final Map<String, String> envs, final String val) {
     if (val != null) {
       final String[] envVars = val.split(";");
-      if (envVars != null) {
-        for (String envVar : envVars) {
-          final int idx = envVar.indexOf('=');
-          if (idx > -1) {
-            envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
-          }
+      for (String envVar : envVars) {
+        final int idx = envVar.indexOf('=');
+        if (idx > -1) {
+          envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
         }
       }
     }
@@ -134,11 +132,11 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   @Override
   public void addChangeListener(final ChangeListener changeListener) {
-    myEnvsTextField.addChangeListener(changeListener);
+    myEnvVars.addChangeListener(changeListener);
   }
 
   @Override
   public void removeChangeListener(final ChangeListener changeListener) {
-    myEnvsTextField.removeChangeListener(changeListener);
+    myEnvVars.removeChangeListener(changeListener);
   }
 }

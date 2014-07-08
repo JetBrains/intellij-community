@@ -23,17 +23,25 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
   private final String myNullText;
   private final Map<Sdk, SdkModificator> mySdkModifiers;
   public static final String SEPARATOR = "separator";
 
-  public PySdkListCellRenderer() {
+  final Pattern PYTHON_PATTERN = Pattern.compile("(\\d\\.?\\d\\.?\\d?)[ ]*\\(([^\\(\\)]*)\\)|(\\d\\.?\\d\\.?\\d?)[ ]*([^\\(\\)]*)");
+  private boolean isShortVersion;
+
+  public PySdkListCellRenderer(boolean shortVersion) {
+    isShortVersion = shortVersion;
     myNullText = "";
     mySdkModifiers = null;
   }
@@ -50,13 +58,21 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.getHomePath());
       final Icon icon = flavor != null ? flavor.getIcon() : ((SdkType)sdk.getSdkType()).getIcon();
 
-      final String name;
+      String name;
       if (mySdkModifiers != null && mySdkModifiers.containsKey(sdk)) {
         name = mySdkModifiers.get(sdk).getName();
       }
       else {
         name = sdk.getName();
       }
+      if (name.startsWith("Remote")) name = name.substring(7);
+      final String flavorName = flavor == null ? "Python" : flavor.getName();
+      if (name.startsWith(flavorName)) name = name.substring(flavorName.length() + 1);
+
+      if (isShortVersion){
+        name = shortenName(name);
+      }
+
       if (PythonSdkType.isInvalid(sdk)) {
         setText("[invalid] " + name);
         setIcon(wrapIconWithWarningDecorator(icon));
@@ -78,6 +94,28 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       setSeparator();
     else if (item == null)
       setText(myNullText);
+  }
+
+  private String shortenName(@NotNull String name) {
+    final Matcher matcher = PYTHON_PATTERN.matcher(name);
+    if (matcher.matches()) {
+      String path = matcher.group(2);
+      if (path != null) {
+        name = matcher.group(1) + " at " + path;
+      }
+      else {
+        path = matcher.group(4);
+        final int index = path.lastIndexOf(File.separator);
+        if (index > 0) {
+          path = path.substring(index);
+        }
+        name = matcher.group(3) + " at ..." + path;
+      }
+    }
+    else if (new File(name).exists()) {
+      name = "..." + File.separator + new File(name).getParentFile().getParentFile().getName();
+    }
+    return name;
   }
 
   private static LayeredIcon wrapIconWithWarningDecorator(Icon icon) {

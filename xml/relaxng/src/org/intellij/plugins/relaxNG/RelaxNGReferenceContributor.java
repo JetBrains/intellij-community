@@ -21,6 +21,7 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.position.PatternFilter;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.plugins.relaxNG.references.PrefixReferenceProvider;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
@@ -36,7 +37,7 @@ public class RelaxNGReferenceContributor extends PsiReferenceContributor {
     RNG_TAG_PATTERN.withLocalName("element", "attribute"));
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[]{
       "name"
     }, new PatternFilter(xmlAttributeValue().withParent(NAME_PATTERN)), true, new PrefixReferenceProvider());

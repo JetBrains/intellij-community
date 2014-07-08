@@ -485,7 +485,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return debuggerSession;
   }
 
-  private static class MockConfiguration implements ModuleRunConfiguration {
+  public static class MockConfiguration implements ModuleRunConfiguration {
     @Override
     @NotNull
     public Module[] getModules() {
@@ -521,7 +521,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     @Override
     @NotNull
     public ConfigurationType getType() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return UnknownConfigurationType.INSTANCE;
     }
 
     @Override

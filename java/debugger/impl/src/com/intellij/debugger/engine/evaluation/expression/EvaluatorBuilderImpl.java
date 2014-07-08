@@ -220,37 +220,48 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitForStatement(PsiForStatement statement) {
-      PsiStatement initializer = statement.getInitialization();
-      Evaluator initializerEvaluator = null;
-      if(initializer != null){
-        initializer.accept(this);
-        initializerEvaluator = myResult;
-      }
-
-      PsiExpression condition = statement.getCondition();
-      Evaluator conditionEvaluator = null;
-      if(condition != null) {
-        condition.accept(this);
-        conditionEvaluator = myResult;
-      }
-
-      PsiStatement update = statement.getUpdate();
-      Evaluator updateEvaluator = null;
-      if(update != null){
-        update.accept(this);
-        updateEvaluator = myResult;
-      }
-
-      PsiStatement body = statement.getBody();
-      if(body == null) return;
-      body.accept(this);
-      Evaluator bodyEvaluator = myResult;
+      Evaluator initializerEvaluator = accept(statement.getInitialization());
+      Evaluator conditionEvaluator = accept(statement.getCondition());
+      Evaluator updateEvaluator = accept(statement.getUpdate());
+      Evaluator bodyEvaluator = accept(statement.getBody());
+      if (bodyEvaluator == null) return;
 
       String label = null;
       if(statement.getParent() instanceof PsiLabeledStatement) {
         label = ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier().getText();
       }
       myResult = new ForStatementEvaluator(initializerEvaluator, conditionEvaluator, updateEvaluator, bodyEvaluator, label);
+    }
+
+    @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      try {
+        String iterationParameterName = statement.getIterationParameter().getName();
+        myCurrentFragmentEvaluator.setInitialValue(iterationParameterName, null);
+        SyntheticVariableEvaluator iterationParameterEvaluator = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName);
+
+        Evaluator iteratedValueEvaluator = accept(statement.getIteratedValue());
+        Evaluator bodyEvaluator = accept(statement.getBody());
+        if (bodyEvaluator == null) return;
+
+        String label = null;
+        if(statement.getParent() instanceof PsiLabeledStatement) {
+          label = ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier().getText();
+        }
+        myResult = new ForeachStatementEvaluator(iterationParameterEvaluator, iteratedValueEvaluator, bodyEvaluator, label);
+      }
+      catch (EvaluateException e) {
+        throw new EvaluateRuntimeException(e);
+      }
+    }
+
+    @Nullable
+    private Evaluator accept(@Nullable PsiElement element) {
+      if (element == null || element instanceof PsiEmptyStatement) {
+        return null;
+      }
+      element.accept(this);
+      return myResult;
     }
 
     @Override

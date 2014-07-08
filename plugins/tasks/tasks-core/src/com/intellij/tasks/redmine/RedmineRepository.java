@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -46,6 +47,12 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     @Override
     public String getName() {
       return "-- from all projects --";
+    }
+
+    @Nullable
+    @Override
+    public String getIdentifier() {
+      return getName();
     }
 
     @Override
@@ -108,7 +115,11 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     // /users/current.json. Unfortunately this endpoint may be unavailable on some old servers (see IDEA-122845)
     // and in this case we have to come back to requesting issues in this case to test anything at all.
     HttpClient client = getHttpClient();
-    HttpResponse response = client.execute(new HttpGet(getRestApiUrl("users", "current.json")));
+    URIBuilder uriBuilder = new URIBuilder(getRestApiUrl("users", "current.json"));
+    if (isUseApiKeyAuthentication()) {
+      uriBuilder.addParameter("key", getAPIKey());
+    }
+    HttpResponse response = client.execute(new HttpGet(uriBuilder.build()));
     //TaskUtil.prettyFormatResponseToLog(LOG, response);
     int code = response.getStatusLine().getStatusCode();
     if (code == HttpStatus.SC_NOT_FOUND) {
@@ -144,9 +155,9 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     //  builder.addParameter("fields[]", "subject").addParameter("operators[subject]", "~").addParameter("values[subject][]", query);
     //}
     // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
-    if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
-      builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
-    }
+    //if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
+    //  builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
+    //}
     if (isUseApiKeyAuthentication()) {
       builder.addParameter("key", myAPIKey);
     }
@@ -157,14 +168,27 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   }
 
   public List<RedmineProject> fetchProjects() throws Exception {
-    URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
-    if (isUseApiKeyAuthentication()) {
-      builder.addParameter("key", myAPIKey);
-    }
     HttpClient client = getHttpClient();
-    HttpGet method = new HttpGet(builder.toString());
-    ProjectsWrapper wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
-    myProjects = wrapper.getProjects();
+    // Download projects with pagination (IDEA-125056, IDEA-125157)
+    List<RedmineProject> allProjects = new ArrayList<RedmineProject>();
+    int offset = 0;
+    ProjectsWrapper wrapper;
+    do {
+      URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
+      builder.addParameter("offset", String.valueOf(offset));
+      builder.addParameter("limit", "50");
+      if (isUseApiKeyAuthentication()) {
+        builder.addParameter("key", myAPIKey);
+      }
+
+      HttpGet method = new HttpGet(builder.toString());
+      wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
+      offset += wrapper.getProjects().size();
+      allProjects.addAll(wrapper.getProjects());
+    }
+    while (wrapper.getTotalCount() > allProjects.size() || wrapper.getProjects().isEmpty());
+
+    myProjects = allProjects;
     return Collections.unmodifiableList(myProjects);
   }
 
@@ -189,7 +213,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   }
 
   private boolean isUseApiKeyAuthentication() {
-    return !StringUtil.isEmptyOrSpaces(myAPIKey) && !isUseHttpAuthentication();
+    return !isUseHttpAuthentication() && StringUtil.isNotEmpty(myAPIKey);
   }
 
   @Override
@@ -203,17 +227,17 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    if (!super.isConfigured() || StringUtil.isEmpty(myUsername)) return false;
+    if (!super.isConfigured()) return false;
     if (isUseHttpAuthentication()) {
-      return StringUtil.isNotEmpty(myPassword);
+      return StringUtil.isNotEmpty(myPassword) && StringUtil.isNotEmpty(myUsername);
     }
-    return !StringUtil.isEmptyOrSpaces(myAPIKey);
+    return StringUtil.isNotEmpty(myAPIKey);
   }
 
   @Nullable
   @Override
   public String extractId(@NotNull String taskName) {
-    return ID_PATTERN.matcher(taskName).matches()? taskName : null;
+    return ID_PATTERN.matcher(taskName).matches() ? taskName : null;
   }
 
   @Override

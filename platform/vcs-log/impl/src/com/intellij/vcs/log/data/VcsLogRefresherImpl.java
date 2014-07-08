@@ -45,7 +45,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private final Project myProject;
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
-  @NotNull private final VcsUserRegistry myUserRegistry;
+  @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final Consumer<Exception> myExceptionHandler;
   private final int myRecentCommitCount;
@@ -57,7 +57,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   public VcsLogRefresherImpl(@NotNull final Project project,
                              @NotNull VcsLogHashMap hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                             @NotNull final VcsUserRegistry userRegistry,
+                             @NotNull final VcsUserRegistryImpl userRegistry,
                              @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
                              @NotNull final Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler, int recentCommitsCount) {
@@ -154,7 +154,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull
   private static Map<VirtualFile, List<? extends TimedVcsCommit>> loadRecentCommitsFromVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                                                            @NotNull final Map<VirtualFile, VcsLogProvider.Requirements> requirements,
-                                                                                           @NotNull final VcsUserRegistry userRegistry,
+                                                                                           @NotNull final VcsUserRegistryImpl userRegistry,
                                                                                            @NotNull final Map<Hash, VcsCommitMetadata> topCommitsDetailsCache)
     throws VcsException {
     final StopWatch sw = StopWatch.start("loading commits");
@@ -168,6 +168,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         sw.rootCompleted(root);
       }
     }.iterate(providers);
+    userRegistry.flush();
     sw.report();
     return commits;
   }
@@ -200,7 +201,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     return map;
   }
 
-  private static void storeUsersAndDetails(@NotNull List<? extends VcsCommitMetadata> metadatas, @NotNull VcsUserRegistry userRegistry,
+  private static void storeUsersAndDetails(@NotNull List<? extends VcsCommitMetadata> metadatas, @NotNull VcsUserRegistryImpl userRegistry,
                                            @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache) {
     for (VcsCommitMetadata detail : metadatas) {
       userRegistry.addUser(detail.getAuthor());
@@ -400,6 +401,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
           sw.rootCompleted(root);
         }
       }.iterate(myProviders);
+      myUserRegistry.flush();
       sw.report();
       return commits;
     }

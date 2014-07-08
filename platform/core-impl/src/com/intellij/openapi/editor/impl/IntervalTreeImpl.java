@@ -295,14 +295,14 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
 
     /**
-     *     packing/unpacking cachedDeltaUpToRoot field parts
-     *     Bits layout:
-     *     XXXXXXXXNMMMMMMMM where
-     *     XXXXXXXX - 31bit int containing cached delta up to root
-     *     N        - 1bit flag.  if set then all deltas up to root are null
-     *     MMMMMMMM - 32bit int containing this node modification count
+     * packing/unpacking cachedDeltaUpToRoot field parts
+     * Bits layout:
+     * XXXXXXXXNMMMMMMMM where
+     * XXXXXXXX - 31bit int containing cached delta up to root
+     * N        - 1bit flag.  if set then all deltas up to root are null
+     * MMMMMMMM - 32bit int containing this node modification count
      */
-    private static AtomicFieldUpdater<IntervalNode, Long> cachedDeltaUpdater = AtomicFieldUpdater.forLongField(IntervalNode.class);
+    private static final AtomicFieldUpdater<IntervalNode, Long> cachedDeltaUpdater = AtomicFieldUpdater.forLongFieldIn(IntervalNode.class);
 
     private void setCachedValues(int deltaUpToRoot, boolean allDeltaUpToRootAreNull, int modCount) {
       cachedDeltaUpToRoot = packValues(deltaUpToRoot, allDeltaUpToRootAreNull, modCount);

@@ -1,0 +1,14 @@
+class A<T> {
+  T foo(){
+    return null;
+  }
+}
+
+class B extends A<Object> {
+  Object foo(){return super.foo();}
+
+  void bar() {
+    foo();
+    if (foo() == null) return;
+  }
+}

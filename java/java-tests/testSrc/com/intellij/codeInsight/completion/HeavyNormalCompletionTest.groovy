@@ -26,6 +26,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
@@ -94,7 +96,7 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
   
   static class CacheVerifyingContributor extends CompletionContributor {
     @Override
-    void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(parameters.position, PsiClass)
       for (ci in OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, true)) {
         assert ci.element.valid

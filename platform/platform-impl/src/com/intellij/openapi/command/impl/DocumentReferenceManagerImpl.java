@@ -27,11 +27,14 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +43,8 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
   private final Map<Document, DocumentReference> myDocToRef = new WeakKeyWeakValueHashMap<Document, DocumentReference>();
-  private final Map<VirtualFile, DocumentReference> myFileToRef = new WeakKeyWeakValueHashMap<VirtualFile, DocumentReference>();
+
+  private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<FilePath, DocumentReference>();
 
   @Override
@@ -57,7 +61,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
         VirtualFile f = event.getFile();
         DocumentReference ref = myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
         if (ref != null) {
-          myFileToRef.put(f, ref);
+          f.putUserData(FILE_TO_REF_KEY, new WeakReference<DocumentReference>(ref));
           ((DocumentReferenceByVirtualFile)ref).update(f);
         }
       }
@@ -76,7 +80,8 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
 
         assert files != null : f;
         for (VirtualFile each : files) {
-          DocumentReference ref = myFileToRef.remove(each);
+          DocumentReference ref = SoftReference.dereference(each.getUserData(FILE_TO_REF_KEY));
+          each.putUserData(FILE_TO_REF_KEY, null);
           if (ref != null) {
             myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
           }
@@ -128,10 +133,10 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     assertInDispatchThread();
     assert file.isValid() : "file is invalid: " + file;
 
-    DocumentReference result = myFileToRef.get(file);
+    DocumentReference result = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
     if (result == null) {
       result = new DocumentReferenceByVirtualFile(file);
-      myFileToRef.put(file, result);
+      file.putUserData(FILE_TO_REF_KEY, new WeakReference<DocumentReference>(result));
     }
     return result;
   }

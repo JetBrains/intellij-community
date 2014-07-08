@@ -22,8 +22,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -138,8 +138,7 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/" + TEMP_DIR_MARKER + testName + "_"+ RNG.nextInt(1000));
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
+    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
   }
 
   @Override
@@ -205,23 +204,11 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static void cleanupSwingDataStructures() throws Exception {
-    Class<?> aClass = Class.forName("javax.swing.KeyboardManager");
-
-    Method get = aClass.getMethod("getCurrentManager");
-    get.setAccessible(true);
-    Object manager = get.invoke(null);
-    {
-      Field mapF = aClass.getDeclaredField("componentKeyStrokeMap");
-      mapF.setAccessible(true);
-      Object map = mapF.get(manager);
-      ((Map)map).clear();
-    }
-    {
-      Field mapF = aClass.getDeclaredField("containerMap");
-      mapF.setAccessible(true);
-      Object map = mapF.get(manager);
-      ((Map)map).clear();
-    }
+    Object manager = ReflectionUtil.getDeclaredMethod(Class.forName("javax.swing.KeyboardManager"), "getCurrentManager").invoke(null);
+    Map componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
+    componentKeyStrokeMap.clear();
+    Map containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
+    containerMap.clear();
   }
 
   protected CompositeException checkForSettingsDamage() throws Exception {

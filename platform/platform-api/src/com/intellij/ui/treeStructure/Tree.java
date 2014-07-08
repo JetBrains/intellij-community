@@ -753,6 +753,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     UIUtil.setLineStyleAngled(this);
   }
 
+  @NotNull
   public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<T> filter) {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return (T[])Array.newInstance(nodeType, 0);

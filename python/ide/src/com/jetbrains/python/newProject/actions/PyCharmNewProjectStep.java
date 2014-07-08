@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.newProject.actions;
 
+import com.google.common.collect.Lists;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.internal.statistic.UsageTrigger;
@@ -172,8 +173,17 @@ public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAwa
         return o1.getName().compareTo(o2.getName());
       }
     });
+
+    List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
     for (DirectoryProjectGenerator generator : generators) {
-      add(new ProjectSpecificAction(callback, generator));
+      if (generator instanceof PythonProjectGenerator)
+        add(new ProjectSpecificAction(callback, generator));
+      else
+        pluginSpecificGenerators.add(generator);
+    }
+
+    if (!pluginSpecificGenerators.isEmpty()) {
+      add(new PluginSpecificProjectsStep(callback, pluginSpecificGenerators));
     }
   }
 

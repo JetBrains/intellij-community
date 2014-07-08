@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.List;
 
 public class CaretImpl extends UserDataHolderBase implements Caret {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretImpl");
@@ -185,7 +186,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
         final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
         CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, false);
         final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(myOffset);
-        if (!myEditor.getCaretModel().myIgnoreWrongMoves && !positionByOffsetAfterMove.equals(logicalPosition)) {
+        if (!positionByOffsetAfterMove.equals(logicalPosition)) {
           StringBuilder debugBuffer = new StringBuilder();
           moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, debugBuffer, true);
           int textStart = Math.max(0, Math.min(offset, myOffset) - 1);
@@ -436,7 +437,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
                                              boolean fireListeners) {
     assertIsDispatchThread();
     if (debugBuffer != null) {
-      debugBuffer.append("Start moveToLogicalPosition(). Locate before soft wrap: " + locateBeforeSoftWrap + ", position: " + pos + "\n");
+      debugBuffer.append("Start moveToLogicalPosition(). Locate before soft wrap: ").append(locateBeforeSoftWrap).append(", position: ")
+        .append(pos).append("\n");
     }
     myDesiredX = -1;
     validateCallContext();
@@ -473,7 +475,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     }
     else if (line > lineCount - 1) {
       if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical line (" + line + ") to " + (lineCount - 1) + " as it is greater than total document lines number\n");
+        debugBuffer.append("Resetting target logical line (").append(line).append(") to ").append(lineCount - 1)
+          .append(" as it is greater than total document lines number\n");
       }
       line = lineCount - 1;
       softWrapLinesBefore = 0;
@@ -493,10 +496,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
           softWrapColumns -= column - lineEndColumnNumber;
         }
         if (debugBuffer != null) {
-          debugBuffer.append(
-            "Resetting target logical column (" + oldColumn + ") to " + lineEndColumnNumber +
-            " because caret is not allowed to be located after line end (offset: " +lineEndOffset + ", "
-            + "logical position: " + endLinePosition+ "). Current soft wrap columns value: " + softWrapColumns+ "\n");
+          debugBuffer.append("Resetting target logical column (").append(oldColumn).append(") to ").append(lineEndColumnNumber)
+            .append(" because caret is not allowed to be located after line end (offset: ").append(lineEndOffset).append(", ")
+            .append("logical position: ").append(endLinePosition).append("). Current soft wrap columns value: ").append(softWrapColumns)
+            .append("\n");
         }
       }
     }
@@ -518,8 +521,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     setCurrentLogicalCaret(logicalPositionToUse);
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
     if (debugBuffer != null) {
-      debugBuffer.append("Resulting logical position to use: " + myLogicalCaret+
-                         ". It's mapped to offset " + offset+ "\n");
+      debugBuffer.append("Resulting logical position to use: ").append(myLogicalCaret).append(". It's mapped to offset ").append(offset).append("\n");
     }
 
     FoldRegion collapsedAt = myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset);
@@ -552,7 +554,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
     updateOffsetsFromLogicalPosition();
     if (debugBuffer != null) {
-      debugBuffer.append("Storing offset " + myOffset + " (mapped from logical position " + myLogicalCaret + ")\n");
+      debugBuffer.append("Storing offset ").append(myOffset).append(" (mapped from logical position ").append(myLogicalCaret).append(")\n");
     }
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
@@ -561,12 +563,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
-    if (locateBeforeSoftWrap && SoftWrapHelper.isCaretAfterSoftWrap(myEditor)) {
+    if (locateBeforeSoftWrap && SoftWrapHelper.isCaretAfterSoftWrap(this)) {
       int lineToUse = myVisibleCaret.line - 1;
       if (lineToUse >= 0) {
         final VisualPosition visualPosition = new VisualPosition(lineToUse, EditorUtil.getLastVisualLineColumnNumber(myEditor, lineToUse));
         if (debugBuffer != null) {
-          debugBuffer.append("Adjusting caret position by moving it before soft wrap. Moving to visual position "+ visualPosition+"\n");
+          debugBuffer.append("Adjusting caret position by moving it before soft wrap. Moving to visual position ").append(visualPosition).append("\n");
         }
         final LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(visualPosition);
         final int tmpOffset = myEditor.logicalPositionToOffset(logicalPosition);
@@ -814,7 +816,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     int y = myEditor.visualPositionToXY(visualPosition).y;
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
-    java.util.List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
+    List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
     for (SoftWrap softWrap : softWraps) {
       height += StringUtil.countNewLines(softWrap.getText()) * lineHeight;
     }
@@ -1449,6 +1451,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     validateContext(false);
     MyRangeMarker marker = mySelectionMarker;
     return marker != null && marker.isValid() && isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset;
+  }
+
+  public EditorImpl getEditor() {
+    return myEditor;
   }
 
   /**

@@ -52,7 +52,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
       parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
       addAllClasses(parameters, _result);

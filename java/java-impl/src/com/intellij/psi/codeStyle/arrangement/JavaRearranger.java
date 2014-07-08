@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
@@ -34,8 +35,6 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -46,10 +45,10 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.*;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
 
 /**
  * @author Denis Zhdanov
@@ -250,16 +249,29 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
         setupOverriddenMethods(parseInfo);
       }
     }
-    setupFieldInitializationDependencies(parseInfo.getFieldDependencyRoots());
+    List<ArrangementEntryDependencyInfo> fieldDependencyRoots = parseInfo.getFieldDependencyRoots();
+    if (!fieldDependencyRoots.isEmpty()) {
+      setupFieldInitializationDependencies(fieldDependencyRoots, settings, parseInfo);
+    }
     return parseInfo.getEntries();
   }
 
+  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> fieldDependencyRoots,
+                                                   @NotNull ArrangementSettings settings,
+                                                   @NotNull JavaArrangementParseInfo parseInfo)
+  {
+    Collection<JavaElementArrangementEntry> fields = parseInfo.getFields();
+    List<JavaElementArrangementEntry> arrangedFields = ArrangementEngine.arrange(fields, settings.getSections(), settings.getRulesSortedByPriority(), null);
 
-  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> list) {
-    for (ArrangementEntryDependencyInfo info : list) {
-      JavaElementArrangementEntry anchorField = info.getAnchorEntry();
-      for (ArrangementEntryDependencyInfo fieldUsedInInitialization : info.getDependentEntriesInfos()) {
-        anchorField.addDependency(fieldUsedInInitialization.getAnchorEntry());
+    for (ArrangementEntryDependencyInfo root : fieldDependencyRoots) {
+      JavaElementArrangementEntry anchorField = root.getAnchorEntry();
+      final int anchorEntryIndex = arrangedFields.indexOf(anchorField);
+
+      for (ArrangementEntryDependencyInfo fieldInInitializerInfo : root.getDependentEntriesInfos()) {
+        JavaElementArrangementEntry fieldInInitializer = fieldInInitializerInfo.getAnchorEntry();
+        if (arrangedFields.indexOf(fieldInInitializer) > anchorEntryIndex) {
+          anchorField.addDependency(fieldInInitializer);
+        }
       }
     }
   }

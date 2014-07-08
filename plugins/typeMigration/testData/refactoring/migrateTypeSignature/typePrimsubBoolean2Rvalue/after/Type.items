@@ -1,0 +1,10 @@
+Types:
+PsiField:myField : boolean
+PsiParameter:p : boolean
+PsiReferenceExpression:myField : boolean
+PsiReferenceExpression:p : boolean
+
+Conversions:
+
+New expression type changes:
+Fails:

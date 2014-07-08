@@ -34,6 +34,7 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
 
   @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/html; class=java.io.Reader; charset=UTF-8", "HTML text");
 
+  private final int myTabSize;
   private StringBuilder    myResultBuffer;
   private ColorRegistry    myColorRegistry;
   private FontNameRegistry myFontNameRegistry;
@@ -47,11 +48,13 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
   private int     myFontFamily;
   private boolean myBold;
   private boolean myItalic;
+  private int     myCurrentColumn;
 
   private final TIntObjectHashMap<String> myColors = new TIntObjectHashMap<String>();
 
-  public HtmlTransferableData(@NotNull SyntaxInfo syntaxInfo) {
+  public HtmlTransferableData(@NotNull SyntaxInfo syntaxInfo, int tabSize) {
     super(syntaxInfo, FLAVOR);
+    myTabSize = tabSize;
   }
 
   @Override
@@ -61,6 +64,8 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
     myFontNameRegistry = mySyntaxInfo.getFontNameRegistry();
     myDefaultForeground = myForeground = mySyntaxInfo.getDefaultForeground();
     myDefaultBackground = myBackground = mySyntaxInfo.getDefaultBackground();
+    myBold = myItalic = false;
+    myCurrentColumn = 0;
     myMaxLength = maxLength;
     try {
       buildColorMap();
@@ -164,8 +169,15 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
         case '<': myResultBuffer.append("&lt;"); break;
         case '>': myResultBuffer.append("&gt;"); break;
         case '&': myResultBuffer.append("&amp;"); break;
+        case ' ': myResultBuffer.append("&#32;"); break;
+        case '\n': myResultBuffer.append("<br>"); myCurrentColumn = 0; break;
+        case '\t':
+          int newColumn = (myCurrentColumn / myTabSize + 1) * myTabSize;
+          for (; myCurrentColumn < newColumn; myCurrentColumn++) myResultBuffer.append("&#32;");
+          break;
         default: myResultBuffer.append(c);
       }
+      myCurrentColumn++;
     }
   }
 

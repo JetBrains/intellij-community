@@ -20,8 +20,8 @@ import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.*;
 import org.jetbrains.jps.intellilang.model.InstrumentationException;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +53,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   public PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
                              InstrumentationType instrumentation,
                              InstrumentationClassFinder classFinder) {
-    super(Opcodes.ASM4, classvisitor);
+    super(Opcodes.ASM5, classvisitor);
     myPatternAnnotationClassName = patternAnnotationClassName;
 
     myInstrumentationType = instrumentation;
@@ -156,7 +156,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       mv.visitFieldInsn(GETSTATIC, myClassName, PATTERN_CACHE_NAME, JAVA_UTIL_REGEX_PATTERN);
       mv.visitIntInsn(BIPUSH, i++);
       mv.visitLdcInsn(pattern);
-      mv.visitMethodInsn(INVOKESTATIC, "java/util/regex/Pattern", "compile", "(Ljava/lang/String;)Ljava/util/regex/Pattern;");
+      mv.visitMethodInsn(INVOKESTATIC, "java/util/regex/Pattern", "compile", "(Ljava/lang/String;)Ljava/util/regex/Pattern;", false);
       mv.visitInsn(AASTORE);
     }
   }
@@ -164,7 +164,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   // add assert startup code
   private void initAssertions(MethodVisitor mv) {
     mv.visitLdcInsn(Type.getType("L" + myClassName + ";"));
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z", false);
     Label l0 = new Label();
     mv.visitJumpInsn(IFNE, l0);
     mv.visitInsn(ICONST_1);
@@ -251,14 +251,14 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
           final Ref<String> patternString = new Ref<String>(null);
           // dig into annotation class and check if it is annotated with pattern annotation.
           // if yes, load the pattern string from the pattern annotation and associate it with this annotation
-          final ClassVisitor visitor = new ClassVisitor(Opcodes.ASM4) {
+          final ClassVisitor visitor = new ClassVisitor(Opcodes.ASM5) {
             @Override
             public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
               if (patternString.get() != null || !myPatternAnnotationClassName.equals(Type.getType(desc).getClassName())) {
                 return null; // already found or is not pattern annotation
               }
               // dig into pattern annotation in order to discover the pattern string
-              return new AnnotationVisitor(Opcodes.ASM4) {
+              return new AnnotationVisitor(Opcodes.ASM5) {
                 public void visit(@NonNls String name, Object value) {
                   if ("value".equals(name) && value instanceof String) {
                     patternString.set((String)value);

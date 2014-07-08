@@ -59,8 +59,8 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
          "another text here");
     executeSelectAllAction();
     checkResult("some <selection>t<caret>ext</selection>\n" +
-                "some texts\n" +
-                "some texts\n" +
+                "some <selection>t<caret>ext</selection>s\n" +
+                "some <selection>t<caret>ext</selection>s\n" +
                 "another <selection>t<caret>ext</selection> here");
     assertEquals(0, hintCount);
   }

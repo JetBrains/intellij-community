@@ -17,15 +17,18 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ConcurrentMapsTest extends TestCase {
-  public static final TObjectHashingStrategy<String> CUSTOM_STRATEGY = new TObjectHashingStrategy<String>() {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class ConcurrentMapsTest {
+  private static final TObjectHashingStrategy<String> CUSTOM_STRATEGY = new TObjectHashingStrategy<String>() {
     @Override
     public int computeHashCode(String object) {
       return Character.toLowerCase(object.charAt(object.length() - 1));
@@ -37,8 +40,9 @@ public class ConcurrentMapsTest extends TestCase {
     }
   };
 
+  @Test
   public void testKeysRemovedWhenIdentityStrategyIsUsed() {
-    ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
+    @SuppressWarnings("unchecked") ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
 
     tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
@@ -50,6 +54,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
+  @Test
   public void testRemoveFromSoftEntrySet() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(this, this);
@@ -61,6 +66,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test
   public void testRemoveFromWeakEntrySet() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(this, this);
@@ -72,6 +78,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test
   public void testTossedWeakKeysAreRemoved() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -87,13 +94,15 @@ public class ConcurrentMapsTest extends TestCase {
   }
 
   public static void tryGcSoftlyReachableObjects() {
-    SoftReference reference = new SoftReference(new Object());
+    SoftReference<?> reference = new SoftReference<Object>(new Object());
     List<Object> list = ContainerUtil.newArrayList();
     while (reference.get() != null) {
-      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
+      int chunk = (int)Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE);
+      list.add(new SoftReference<byte[]>(new byte[chunk / 2]));
     }
   }
 
+  @Test
   public void testTossedSoftKeysAreRemoved() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -108,6 +117,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
+  @Test
   public void testTossedWeakValueIsRemoved() {
     ConcurrentWeakValueHashMap<Object, Object> map = new ConcurrentWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -121,6 +131,7 @@ public class ConcurrentMapsTest extends TestCase {
     map.put(this, this);
     assertEquals(1, map.underlyingMapSize());
   }
+  @Test
   public void testTossedSoftValueIsRemoved() {
     ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -135,6 +146,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
+  @Test
   public void testCustomStrategy() {
     SoftHashMap<String, String> map = new SoftHashMap<String, String>(CUSTOM_STRATEGY);
 
@@ -145,6 +157,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test
   public void testCustomStrategyForConcurrentSoft() {
     ConcurrentSoftHashMap<String, String> map = new ConcurrentSoftHashMap<String, String>(CUSTOM_STRATEGY);
 
@@ -156,6 +169,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test
   public void testCustomStrategyForConcurrentWeakSoft() {
     ConcurrentWeakKeySoftValueHashMap<String, String> map = new ConcurrentWeakKeySoftValueHashMap<String, String>(1,1,1,CUSTOM_STRATEGY);
 
@@ -167,6 +181,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test
   public void testTossedSoftKeyAndValue() {
     SoftKeySoftValueHashMap<Object, Object> map = new SoftKeySoftValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
@@ -179,6 +194,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertTrue(map.isEmpty());
   }
 
+  @Test
   public void testTossedWeakKeyAndValue() {
     WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());

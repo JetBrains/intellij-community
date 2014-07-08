@@ -18,7 +18,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -33,6 +32,7 @@ public class RedundantCast18Test extends InspectionTestCase {
   public void testLambdaContext() throws Exception { doTest(); }
   public void testMethodRefContext() throws Exception { doTest(); }
   public void testExpectedSupertype() throws Exception { doTest(); }
+  public void testForeachValue() throws Exception { doTest(); }
 
   @Override
   protected Sdk getTestProjectSdk() {

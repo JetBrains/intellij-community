@@ -17,7 +17,6 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @NotNull private final Condition<Integer> myWideSelectionCondition;
   private boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
-  private boolean invertLineColor;
   private boolean myForceDontPaintLines = false;
   private boolean mySkinny = false;
 
@@ -281,17 +279,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                                           final boolean isExpanded,
                                           final boolean hasBeenExpanded,
                                           final boolean isLeaf) {
-    if (!shouldPaintLines()) return;
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF()) {
-      if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
-        invertLineColor = tree.getSelectionModel().isRowSelected(row) && tree.hasFocus();
-      }
+    if (shouldPaintLines()) {
       super.paintHorizontalPartOfLeg(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
-      invertLineColor = false;
     }
   }
 
   private boolean shouldPaintLines() {
+    if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      return false;
+    }
     return myForceDontPaintLines || !"None".equals(tree.getClientProperty("JTree.lineStyle"));
   }
 
@@ -302,41 +298,26 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF() && shouldPaintLines()) {
-      invertLineColor = UIUtil.isUnderAlloyIDEALookAndFeel() && tree.hasFocus() && tree.getSelectionModel().isPathSelected(path);
+    if (shouldPaintLines()) {
       super.paintVerticalPartOfLeg(g, clipBounds, insets, path);
-      invertLineColor = false;
     }
   }
 
   @Override
   protected void paintVerticalLine(Graphics g, JComponent c, int x, int top, int bottom) {
-    if (!shouldPaintLines()) return;
-    if (tree.hasFocus() && UIUtil.isUnderAlloyIDEALookAndFeel()) {
-      int y0, y1 = top;
-      while (y1 < bottom) {
-        y0 = y1;
-        final int row = tree.getRowForPath(tree.getClosestPathForLocation(x, y0 + 1));
-        invertLineColor = tree.isRowSelected(row);
-        g.setColor(getHashColor());
-        final Rectangle bounds = tree.getRowBounds(row);
-        y1 = bounds.y + bounds.height;
-        super.paintVerticalLine(g, c, x, y0, Math.min(bottom, y1));
-      }
-      invertLineColor = false;
-    } else {
+    if (shouldPaintLines()) {
       super.paintVerticalLine(g, c, x, top, bottom);
     }
   }
 
   @Override
   protected Color getHashColor() {
-    if (invertLineColor && !ComparatorUtil.equalsNullable(UIUtil.getTreeSelectionForeground(), UIUtil.getTreeForeground())) {
-      final Color c = UIUtil.getTreeSelectionForeground();
-      if (c != null) {
-        return c.darker();
-      }
-    }
+    //if (invertLineColor && !ComparatorUtil.equalsNullable(UIUtil.getTreeSelectionForeground(), UIUtil.getTreeForeground())) {
+    //  final Color c = UIUtil.getTreeSelectionForeground();
+    //  if (c != null) {
+    //    return c.darker();
+    //  }
+    //}
     return super.getHashColor();
   }
 

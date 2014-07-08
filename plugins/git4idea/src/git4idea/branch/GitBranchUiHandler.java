@@ -58,22 +58,24 @@ public interface GitBranchUiHandler {
 
   /**
    * Show notification about "untracked files would be overwritten by merge/checkout".
-   * @param untrackedFiles
    */
-  void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles);
+  void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths);
 
   boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
-                                               @NotNull Collection<VirtualFile> untrackedFiles);
+                                               @NotNull VirtualFile root, @NotNull Collection<String> relativePaths);
 
   /**
    * Shows the dialog proposing to execute the operation (checkout or merge) smartly, i.e. stash-execute-unstash.
+   *
    * @param project
-   * @param changes   local changes that would be overwritten by checkout or merge.
-   * @param operation operation name
-   * @param force     can the operation be executed force (force checkout is possible, force merge - not).
+   * @param changes         local changes that would be overwritten by checkout or merge.
+   * @param paths           paths reported by Git (in most cases this is covered by {@code changes}.
+   * @param operation       operation name: checkout or merge
+   * @param isForcePossible can the operation be executed force (force checkout is possible, force merge - not).
    * @return the code of the decision.
    */
-  int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force);
+  int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
+                               @NotNull String operation, boolean isForcePossible);
 
   boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull Map<GitRepository, List<GitCommit>> history,
                                            @NotNull String unmergedBranch, @NotNull List<String> mergedToBranches,

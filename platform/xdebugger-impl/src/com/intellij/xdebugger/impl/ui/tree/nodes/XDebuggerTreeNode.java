@@ -189,4 +189,8 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
       component.append(link.getLinkText(), link.getTextAttributes(), link);
     }
   }
+
+  void invokeNodeUpdate(Runnable runnable) {
+    myTree.getLaterInvocator().offer(runnable);
+  }
 }

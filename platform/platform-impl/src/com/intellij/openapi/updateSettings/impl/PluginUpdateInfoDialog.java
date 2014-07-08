@@ -16,9 +16,13 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,20 +65,46 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected void doOKAction() {
-    if (downloadPlugins() && toRestart()) {
-      restart();
-    }
-
     super.doOKAction();
+    final Ref<Boolean> result = new Ref<Boolean>();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        UpdateChecker.saveDisabledToUpdatePlugins();
+        result.set(UpdateChecker.install(myUploadedPlugins));
+      }
+    };
+
+    final String progressTitle = "Download plugins...";
+    if (downloadModal()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, null);
+    } else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, progressTitle, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          runnable.run();
+        }
+
+        @Override
+        public void onSuccess() {
+          final Boolean installed = result.get();
+          if (installed != null && installed.booleanValue()) {
+            final String pluginName;
+            if (myUploadedPlugins.size() == 1) {
+              final PluginDownloader firstItem = ContainerUtil.getFirstItem(myUploadedPlugins);
+              pluginName = firstItem != null ? firstItem.getPluginName() : null;
+            }
+            else {
+              pluginName = null;
+            }
+            PluginManagerMain.notifyPluginsWereInstalled(pluginName, null);
+          }
+        }
+      });
+    }
   }
 
-  protected boolean toRestart() {
-    return PluginManagerConfigurable.showRestartIDEADialog() == Messages.YES;
-  }
-
-  private boolean downloadPlugins() {
-    UpdateChecker.saveDisabledToUpdatePlugins();
-    return UpdateChecker.install(myUploadedPlugins);
+  protected boolean downloadModal() {
+    return false;
   }
 
   private class PluginUpdateInfoPanel {

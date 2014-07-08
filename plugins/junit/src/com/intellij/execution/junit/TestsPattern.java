@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -69,7 +68,7 @@ public class TestsPattern extends TestPackage {
   public Task findTests() {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     final Project project = myConfiguration.getProject();
-    final Set<String> classNames = new HashSet<String>();
+    final Set<String> classNames = new LinkedHashSet<String>();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = getTestClass(project, className);
       if (psiClass != null&& JUnitUtil.isTestClass(psiClass)) {

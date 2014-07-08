@@ -177,6 +177,7 @@ public class AllIcons {
     public static final Icon Atrule = IconLoader.getIcon("/css/atrule.png"); // 16x16
     public static final Icon Import = IconLoader.getIcon("/css/import.png"); // 16x16
     public static final Icon Property = IconLoader.getIcon("/css/property.png"); // 16x16
+    public static final Icon Pseudo_class = IconLoader.getIcon("/css/pseudo-class.png"); // 16x16
     public static final Icon Pseudo_element = IconLoader.getIcon("/css/pseudo-element.png"); // 16x16
     public static final Icon Toolwindow = IconLoader.getIcon("/css/toolwindow.png"); // 13x13
 
@@ -769,6 +770,7 @@ public class AllIcons {
     public static final Icon DataTables = IconLoader.getIcon("/nodes/DataTables.png"); // 16x16
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.png"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.png"); // 16x16
+    public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.png"); // 16x16
     public static final Icon Ejb = IconLoader.getIcon("/nodes/ejb.png"); // 16x16
     public static final Icon EjbBusinessMethod = IconLoader.getIcon("/nodes/ejbBusinessMethod.png"); // 16x16
     public static final Icon EjbCmpField = IconLoader.getIcon("/nodes/ejbCmpField.png"); // 16x16
@@ -836,6 +838,7 @@ public class AllIcons {
     public static final Icon PinToolWindow = IconLoader.getIcon("/nodes/pinToolWindow.png"); // 13x13
     public static final Icon Plugin = IconLoader.getIcon("/nodes/plugin.png"); // 16x16
     public static final Icon PluginJB = IconLoader.getIcon("/nodes/pluginJB.png"); // 16x16
+    public static final Icon PluginLogo = IconLoader.getIcon("/nodes/pluginLogo.png"); // 32x32
     public static final Icon Pluginnotinstalled = IconLoader.getIcon("/nodes/pluginnotinstalled.png"); // 16x16
     public static final Icon Pluginobsolete = IconLoader.getIcon("/nodes/pluginobsolete.png"); // 16x16
     public static final Icon PluginRestart = IconLoader.getIcon("/nodes/pluginRestart.png"); // 16x16

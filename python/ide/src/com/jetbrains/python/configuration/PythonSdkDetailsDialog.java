@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.FactoryMap;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -286,8 +287,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         myModifiedModificators.add(modificator);
       }
       final Sdk oldSdk = myProjectSdksModel.findSdk(sdk);
-      if (oldSdk == null)
+      if (oldSdk == null) {
         myProjectSdksModel.addSdk(sdk);
+      }
       refreshSdkList();
       mySdkList.setSelectedValue(sdk, true);
       mySdkListChanged = true;
@@ -452,15 +454,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
             return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
           }
         });
-        sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
+        sdk =
+          SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
       }
-      final PythonPathEditor pathEditor =
-        new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
-          @Override
-          protected void onReloadButtonClicked() {
-            reloadSdk();
-          }
-        };
+      final PythonPathEditor pathEditor = createPathEditor(sdk);
       final SdkModificator sdkModificator = myModificators.get(sdk);
 
       PythonPathDialog dialog = new PythonPathDialog(myProject, pathEditor);
@@ -474,6 +471,42 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         }
       }
       updateOkButton();
+    }
+  }
+
+  private PythonPathEditor createPathEditor(final Sdk sdk) {
+    if (PySdkUtil.isRemote(sdk)) {
+      return new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
+        private final PyRemoteSdkAdditionalDataBase myRemoteSdkData = (PyRemoteSdkAdditionalDataBase) sdk.getSdkAdditionalData();
+        @Override
+        protected void onReloadButtonClicked() {
+          reloadSdk();
+        }
+
+        @Override
+        protected String getPresentablePath(VirtualFile value) {
+          String path = value.getPath();
+          return myRemoteSdkData.getPathMappings().convertToRemote(path);
+        }
+
+        @Override
+        protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
+          toolbarDecorator.setAddActionUpdater(new AnActionButtonUpdater() {
+            @Override
+            public boolean isEnabled(AnActionEvent e) {
+              return false; //TODO: implement adding remote path
+            }
+          });
+        }
+      };
+    }
+    else {
+      return new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
+        @Override
+        protected void onReloadButtonClicked() {
+          reloadSdk();
+        }
+      };
     }
   }
 }

@@ -138,7 +138,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
 
       method = (PyFunction)PyUtil.addElementToStatementList(method, clsStmtList, PyNames.INIT.equals(method.getName()));
       if (myReplaceUsage) {
-        showTemplateBuilder(method, problemElement.getContainingFile());
+        showTemplateBuilder(method);
       }
     }
     catch (IncorrectOperationException ignored) {
@@ -158,9 +158,10 @@ public class AddMethodQuickFix implements LocalQuickFix {
     return pyClass != null ? new PyClassTypeImpl(pyClass, false) : null;
   }
 
-  private static void showTemplateBuilder(PyFunction method, PsiFile file) {
+  private static void showTemplateBuilder(@NotNull PyFunction method) {
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
-
+    final PsiFile file = method.getContainingFile();
+    if (file == null) return;
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);
     ParamHelper.walkDownParamArray(
       method.getParameterList().getParameters(),

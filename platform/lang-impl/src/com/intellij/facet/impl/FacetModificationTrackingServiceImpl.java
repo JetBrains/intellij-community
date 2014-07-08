@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ModificationTrackerListener;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,8 @@ import java.util.Map;
  * @author nik
  */
 public class FacetModificationTrackingServiceImpl extends FacetModificationTrackingService {
-  private final Map<Facet, Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
-    new THashMap<Facet, Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>>>();
+  private final Map<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
+    new THashMap<Facet, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>>();
 
   public FacetModificationTrackingServiceImpl(final Module module) {
     module.getMessageBus().connect().subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener());
@@ -44,14 +45,14 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
 
   @Override
   @NotNull
-  public FacetModificationTracker getFacetModificationTracker(@NotNull final Facet facet) {
+  public ModificationTracker getFacetModificationTracker(@NotNull final Facet facet) {
     return getFacetInfo(facet).first;
   }
 
-  private Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> getFacetInfo(final Facet facet) {
-    Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
+  private Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> getFacetInfo(final Facet facet) {
+    Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
     if (pair == null) {
-      pair = Pair.create(new FacetModificationTracker(), EventDispatcher.create(ModificationTrackerListener.class));
+      pair = Pair.create(new SimpleModificationTracker(), EventDispatcher.create(ModificationTrackerListener.class));
       myModificationsTrackers.put(facet, pair);
     }
     return pair;
@@ -59,8 +60,8 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
 
   @Override
   public void incFacetModificationTracker(@NotNull final Facet facet) {
-    final Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
-    pair.first.myModificationCount ++;
+    final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
+    pair.first.incModificationCount();
     pair.second.getMulticaster().modificationCountChanged(facet);
   }
 
@@ -74,21 +75,12 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
     getFacetInfo(facet).second.removeListener(listener);
   }
 
-  private static class FacetModificationTracker implements ModificationTracker {
-    private long myModificationCount;
-
-    @Override
-    public long getModificationCount() {
-      return myModificationCount;
-    }
-  }
-
   private class FacetModificationTrackingListener extends FacetManagerAdapter {
     @Override
     public void facetConfigurationChanged(@NotNull final Facet facet) {
-      final Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
+      final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
       if (pair != null) {
-        pair.first.myModificationCount++;
+        pair.first.incModificationCount();
         pair.second.getMulticaster().modificationCountChanged(facet);
       }
     }

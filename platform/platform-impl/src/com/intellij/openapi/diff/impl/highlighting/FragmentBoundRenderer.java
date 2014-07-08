@@ -88,11 +88,10 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
         drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, width + editorWidth, true,width);
 
         int j = points.size() - 1;
-        final int finalX = width + editorWidth + width;
+        final int finalX = width + editorWidth;
         for (; j > 0; j--) {
           if (points.get(j).getFirst() >= finalX) break;
         }
-        j = j == 0 ? 0 : j - 1;
         myOffsetsConsumer.consume(points.get(j).getSecond());
 
       } else {
@@ -101,8 +100,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
         gr.setColor(getColor().darker());
         drawCurved(gr, 0, r.y, TornLineParams.ourLight, points, 0, false,0);
 
-        int i = getLastPointInBeforeGutter(width, points);
-        myOffsetsConsumer.consume(points.get(i).getSecond());
+        myOffsetsConsumer.consume(points.get(0).getSecond());
       }
     } finally {
       gr.dispose();
@@ -142,8 +140,7 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
   private int getLastPointInBeforeGutter(int width, List<Couple<Integer>> points) {
     int i = 0;
     for (; i < points.size(); i++) {
-      Couple<Integer> integerIntegerPair = points.get(i);
-      if (integerIntegerPair.getFirst() >= width) break;
+      if (points.get(i).getFirst() >= width) break;
     }
     i = i == 0 ? 0 : i - 1;
     return i;

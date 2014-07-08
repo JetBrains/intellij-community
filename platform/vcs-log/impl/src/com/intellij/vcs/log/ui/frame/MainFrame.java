@@ -16,6 +16,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterUi;
@@ -35,6 +37,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,7 +55,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   @NotNull private final BranchesPanel myBranchesPanel;
   @NotNull private final DetailsPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
-  private final JComponent myToolbar;
+  @NotNull private final JComponent myToolbar;
+  @NotNull private final RepositoryChangesBrowser myChangesBrowser;
 
   public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiImpl vcsLogUI, @NotNull Project project,
                    @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log,
@@ -71,14 +75,14 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myBranchesPanel.setVisible(settings.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
-    final RepositoryChangesBrowser changesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
-    changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
-    changesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
-    setDefaultEmptyText(changesBrowser);
+    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
+    myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
+    myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
+    setDefaultEmptyText(myChangesBrowser);
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);
-    myChangesLoadingPane.add(changesBrowser);
+    myChangesLoadingPane.add(myChangesBrowser);
 
-    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(changesBrowser);
+    final CommitSelectionListener selectionChangeListener = new CommitSelectionListener(myChangesBrowser);
     myGraphTable.getSelectionModel().addListSelectionListener(selectionChangeListener);
     myGraphTable.getSelectionModel().addListSelectionListener(myDetailsPanel);
     updateWhenDetailsAreLoaded(selectionChangeListener);
@@ -110,6 +114,9 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         changesBrowserSplitter.dispose();
       }
     });
+    myGraphTable.resetDefaultFocusTraversalKeys();
+    setFocusTraversalPolicyProvider(true);
+    setFocusTraversalPolicy(new MyFocusPolicy());
   }
 
   /**
@@ -202,7 +209,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUiImpl.TOOLBAR_ACTION_GROUP));
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(myFilterUi.getFilterActionComponents());
+    mainGroup.add(myFilterUi.getActionGroup());
     mainGroup.addSeparator();
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, mainGroup, true);
@@ -355,4 +362,14 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       e.getPresentation().setEnabled(areGraphActionsEnabled());
     }
   }
+
+  private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull
+    @Override
+    protected List<Component> getOrderedComponents() {
+      return ContainerUtil.concat(Arrays.<Component>asList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent()),
+                                  myFilterUi.getComponents());
+    }
+  }
+
 }

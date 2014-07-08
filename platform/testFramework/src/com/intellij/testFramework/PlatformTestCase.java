@@ -48,8 +48,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -142,7 +140,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  private static String[] PREFIX_CANDIDATES = new String[] { "AppCode", "CppIde", "Python", "PyCharmCore", "UltimateLangXml", "Idea" };
+  private static final String[] PREFIX_CANDIDATES = {
+    "AppCode", "CppIde", "CidrCommon", 
+    "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea" };
 
   public static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
@@ -410,8 +410,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     try {
       Project project = getProject();
-      DirectoryIndexImpl directoryIndex =
-      project != null ? (DirectoryIndexImpl)DirectoryIndex.getInstance(project) : null;
       disposeProject(result);
 
       if (project != null) {
@@ -787,7 +785,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     setContentOnDisk(temp, bom, content, charset);
 
     myFilesToDelete.add(temp);
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    final VirtualFile file = getVirtualFile(temp);
     assert file != null : temp;
     return file;
   }
@@ -841,7 +839,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         result.setResult(dir.createChildData(null, name));
       }
     }.execute().throwException().getResultObject();
@@ -850,7 +848,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         result.setResult(dir.createChildDirectory(null, name));
       }
     }.execute().throwException().getResultObject();

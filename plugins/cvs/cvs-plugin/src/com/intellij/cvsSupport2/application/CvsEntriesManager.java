@@ -35,8 +35,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -53,15 +53,15 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
-  private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new HashMap<VirtualFile, CvsInfo>();
+  private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new THashMap<VirtualFile, CvsInfo>();
 
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
   private final Collection<CvsEntriesListener> myEntriesListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myIsActive = 0;
-  private final Collection<String> myFilesToRefresh = new HashSet<String>();
+  private final Collection<String> myFilesToRefresh = new THashSet<String>();
 
-  private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new HashMap<String, CvsConnectionSettings>();
+  private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<String, CvsConnectionSettings>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
   private final MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
   private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
@@ -116,8 +116,9 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   @NotNull
   private synchronized CvsInfo getInfoFor(VirtualFile parent) {
+    if (parent == null) return CvsInfo.getDummyCvsInfo();
     if (!myInfoByParentDirectoryPath.containsKey(parent)) {
-      CvsInfo cvsInfo = new CvsInfo(parent, this);
+      CvsInfo cvsInfo = new CvsInfo(parent);
       myInfoByParentDirectoryPath.put(cvsInfo.getKey(), cvsInfo);
     }
     return myInfoByParentDirectoryPath.get(parent);

@@ -56,9 +56,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.RemoteSdkCredentials;
-import com.intellij.remote.RemoteSdkCredentialsHolder;
-import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -71,10 +69,10 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -96,6 +94,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class PythonSdkType extends SdkType {
+  public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
@@ -143,12 +142,9 @@ public class PythonSdkType extends SdkType {
    */
   @NotNull
   @NonNls
-  public static String getBuiltinsFileName(Sdk sdk) {
-    final String version = sdk.getVersionString();
-    if (version != null && version.startsWith("Python 3")) {
-      return PyBuiltinCache.BUILTIN_FILE_3K;
-    }
-    return PyBuiltinCache.BUILTIN_FILE;
+  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
+    final LanguageLevel level = getLanguageLevelForSdk(sdk);
+    return level.isOlderThan(LanguageLevel.PYTHON30) ? PyBuiltinCache.BUILTIN_FILE : PyBuiltinCache.BUILTIN_FILE_3K;
   }
 
   @NonNls
@@ -239,6 +235,15 @@ public class PythonSdkType extends SdkType {
 
   public static boolean isRemote(@Nullable Sdk sdk) {
     return PySdkUtil.isRemote(sdk);
+  }
+
+  public static boolean isVagrant(@Nullable Sdk sdk) {
+    if (sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase) sdk.getSdkAdditionalData();
+
+      return data.getRemoteConnectionType() == CredentialsType.VAGRANT;
+    }
+    return false;
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {
@@ -554,11 +559,11 @@ public class PythonSdkType extends SdkType {
             public void run(@NotNull ProgressIndicator indicator) {
               try {
                 final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
-                PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, null, sdk);
+                PythonSdkUpdater.updateSdk(project, ownerComponent, sdk, skeletonsPath);
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
-                if (isRemote(sdk)) {
+                if (isVagrant(sdk)) {
                   notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                     @Override
                     public void run() {
@@ -647,9 +652,6 @@ public class PythonSdkType extends SdkType {
         }
       }
     }
-    else {
-      addRemoteLibrariesRoot(sdkModificator, sdkHome);
-    }
 
     PyUserSkeletonsUtil.addUserSkeletonsRoot(sdkModificator);
     addSkeletonsRoot(sdkModificator, sdkHome);
@@ -697,14 +699,6 @@ public class PythonSdkType extends SdkType {
     final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
     assert builtins_root != null : "Cannot find skeletons path " + skeletonsPath + " in VFS";
     sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
-  }
-
-  private static void addRemoteLibrariesRoot(@NotNull SdkModificator sdkModificator, String sdkHome) {
-    @NonNls final String librariesRoot = PySdkUtil.getRemoteSourcesLocalPath(sdkHome);
-    new File(librariesRoot).mkdirs();
-    final VirtualFile remoteLibraries = LocalFileSystem.getInstance().refreshAndFindFileByPath(librariesRoot);
-    assert remoteLibraries != null : "Cannot find remote libraries path " + librariesRoot + " in VFS";
-    sdkModificator.addRoot(remoteLibraries, OrderRootType.CLASSES);
   }
 
   protected static void addHardcodedPaths(SdkModificator sdkModificator) {

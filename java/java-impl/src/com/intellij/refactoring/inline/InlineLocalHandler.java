@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -147,15 +148,18 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final Ref<Boolean> inlineAll = new Ref<Boolean>(true);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int occurrencesCount = refsToInlineList.size();
-      final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
-      inlineLocalDialog.show();
-      if (!inlineLocalDialog.isOK()){
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        return;
-      }
-      if (refExpr != null && inlineLocalDialog.isInlineThis()) {
-        refsToInlineList = Collections.<PsiElement>singletonList(refExpr);
-        inlineAll.set(false);
+      if (refExpr != null && occurrencesCount > 1  || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
+        final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
+        inlineLocalDialog.show();
+        if (!inlineLocalDialog.isOK()){
+          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+          return;
+        }
+
+        if (refExpr != null && inlineLocalDialog.isInlineThis()) {
+          refsToInlineList = Collections.<PsiElement>singletonList(refExpr);
+          inlineAll.set(false);
+        }
       }
     }
 
@@ -280,7 +284,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         finally {
           final RefactoringEventData afterData = new RefactoringEventData();
           afterData.addElement(containingClass);
-          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, afterData);
+          project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, afterData);
         }
       }
     };

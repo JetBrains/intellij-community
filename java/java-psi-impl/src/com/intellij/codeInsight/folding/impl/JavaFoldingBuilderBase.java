@@ -41,13 +41,11 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -703,6 +701,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     else if (element instanceof PsiComment) {
       return settings.isCollapseEndOfLineComments();
     }
+    else if (isLiteralExpression(element)
+             && element.getParent() instanceof PsiExpressionList
+             && (element.getParent().getParent() instanceof PsiCallExpression
+                 || element.getParent().getParent() instanceof PsiAnonymousClass)) {
+      return settings.isInlineParameterNamesForLiteralCallArguments();
+    }
     else {
       LOG.error("Unknown element:" + element);
       return false;
@@ -725,6 +729,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         if (!dumb) {
           addMethodGenericParametersFolding(expression, foldElements, document, quick);
+          inlineLiteralArgumentsNames(expression, foldElements, quick);
         }
 
         super.visitMethodCallExpression(expression);
@@ -734,6 +739,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       public void visitNewExpression(PsiNewExpression expression) {
         if (!dumb) {
           addGenericParametersFolding(expression, foldElements, document, quick);
+          inlineLiteralArgumentsNames(expression, foldElements, quick);
         }
 
         super.visitNewExpression(expression);
@@ -745,6 +751,64 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         super.visitComment(comment);
       }
     });
+  }
+
+  private static void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression,
+                                                  @NotNull List<FoldingDescriptor> foldElements,
+                                                  boolean quick)
+  {
+    if (quick || !JavaCodeFoldingSettings.getInstance().isInlineParameterNamesForLiteralCallArguments()) {
+      return;
+    }
+    PsiExpressionList callArgumentsList = expression.getArgumentList();
+    if (callArgumentsList == null) {
+      return;
+    }
+
+    PsiExpression[] callArguments = callArgumentsList.getExpressions();
+    if (callArguments.length > 1) {
+      PsiParameter[] parameters = null;
+      boolean isResolved = false;
+
+      for (int i = 0; i < callArguments.length; i++) {
+        PsiExpression callArgument = callArguments[i];
+
+        if (callArgument.getType() != null && isLiteralExpression(callArgument)) {
+          if (!isResolved) {
+            PsiMethod method = expression.resolveMethod();
+            isResolved = true;
+            if (method == null) {
+              return;
+            }
+            parameters = method.getParameterList().getParameters();
+            if (parameters.length != callArguments.length) {
+              return;
+            }
+          }
+
+          PsiParameter methodParam = parameters[i];
+          if (TypeConversionUtil.isAssignable(methodParam.getType(), callArgument.getType())) {
+            TextRange range = callArgument.getTextRange();
+            String placeholderText = methodParam.getName() + ": " + callArgument.getText();
+            foldElements.add(new NamedFoldingDescriptor(callArgument, range.getStartOffset(), range.getEndOffset(), null, placeholderText));
+          }
+        }
+      }
+    }
+  }
+
+  @Contract("null -> false")
+  private static boolean isLiteralExpression(@Nullable PsiElement callArgument) {
+    if (callArgument instanceof PsiLiteralExpression)
+      return true;
+
+    if (callArgument instanceof PsiPrefixExpression) {
+      PsiPrefixExpression expr = (PsiPrefixExpression)callArgument;
+      IElementType tokenType = expr.getOperationTokenType();
+      return JavaTokenType.MINUS.equals(tokenType) && expr.getOperand() instanceof PsiLiteralExpression;
+    }
+
+    return false;
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,

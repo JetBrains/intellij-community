@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,25 +33,30 @@ public class EditorHeaderComponent extends JPanel {
   }
 
   @Override
-  public void paint(Graphics g) {
-    final Graphics2D g2 = (Graphics2D)g;
+  public void paint(@NotNull Graphics g) {
+    Graphics2D g2 = (Graphics2D)g;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     super.paint(g);
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
+  protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
     paintGradient(g, this);
   }
 
-  public static void paintGradient(Graphics g, JComponent c) {
-    Color GRADIENT_C1 = new JBColor(c.getBackground(), JBColor.background());
+  @NotNull
+  protected JBColor getBaseBackgroundColor() {
+    return new JBColor(getBackground(), JBColor.background());
+  }
+
+  private void paintGradient(Graphics g, JComponent c) {
+    Color GRADIENT_C1 = getBaseBackgroundColor();
     Color GRADIENT_C2 = new JBColor(new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18),
                                               Math.max(0, GRADIENT_C1.getBlue() - 0x18)), Gray._75);
 
-    final Graphics2D g2d = (Graphics2D)g;
+    Graphics2D g2d = (Graphics2D)g;
 
     if (!UIUtil.isUnderGTKLookAndFeel()) {
       g2d.setPaint(UIUtil.getGradientPaint(0, 0, GRADIENT_C1, 0, c.getHeight(), GRADIENT_C2));

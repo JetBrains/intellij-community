@@ -1,0 +1,9 @@
+Types:
+PsiParameter:p : java.util.List
+PsiReferenceExpression:p : java.util.List
+
+Conversions:
+
+New expression type changes:
+Fails:
+p->java.util.List

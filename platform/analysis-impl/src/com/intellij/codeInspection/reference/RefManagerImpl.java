@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
@@ -84,7 +85,7 @@ public class RefManagerImpl extends RefManager {
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
-  public RefManagerImpl(@NotNull Project project, AnalysisScope scope, @NotNull GlobalInspectionContext context) {
+  public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
@@ -97,6 +98,14 @@ public class RefManagerImpl extends RefManager {
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
         myLanguageExtensions.put(extension.getLanguage(), extension);
+      }
+    }
+    if (scope != null) {
+      for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+        //init all ref modules in scope
+        if (scope.containsModule(module)) {
+          getRefModule(module);
+        }
       }
     }
   }
@@ -294,7 +303,8 @@ public class RefManagerImpl extends RefManager {
   public void findAllDeclarations() {
     if (!myDeclarationsFound) {
       long before = System.currentTimeMillis();
-      getScope().accept(myProjectIterator);
+      final AnalysisScope scope = getScope();
+      scope.accept(myProjectIterator);
       myDeclarationsFound = true;
 
       LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before));
@@ -559,15 +569,31 @@ public class RefManagerImpl extends RefManager {
     if (module == null) {
       return null;
     }
-    if (myModules == null) {
-      myModules = new THashMap<Module, RefModule>();
+    myLock.readLock().lock();
+    try {
+      if (myModules != null) {
+        RefModule refModule = myModules.get(module);
+        if (refModule != null) {
+          return refModule;
+        }
+      }
     }
-    RefModule refModule = myModules.get(module);
-    if (refModule == null) {
-      refModule = new RefModuleImpl(module, this);
+    finally {
+      myLock.readLock().unlock();
+    }
+
+    myLock.writeLock().lock();
+    try {
+      if (myModules == null) {
+        myModules = new THashMap<Module, RefModule>();
+      }
+      final RefModule refModule = new RefModuleImpl(module, this);
       myModules.put(module, refModule);
+      return refModule;
     }
-    return refModule;
+    finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   @Override

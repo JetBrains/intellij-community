@@ -23,6 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +32,9 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
@@ -37,6 +42,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -50,6 +56,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
@@ -934,4 +941,73 @@ public class GitUtil {
     return !output.trim().isEmpty();
   }
 
+  @Nullable
+  public static VirtualFile findRefreshFileOrLog(@NotNull String absolutePath) {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absolutePath);
+    if (file == null) {
+      file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
+    }
+    if (file == null) {
+      LOG.warn("VirtualFile not found for " + absolutePath);
+    }
+    return file;
+  }
+
+  @NotNull
+  public static String toAbsolute(@NotNull VirtualFile root, @NotNull String relativePath) {
+    return StringUtil.trimEnd(root.getPath(), "/") + "/" + StringUtil.trimStart(relativePath, "/");
+  }
+
+  @NotNull
+  public static Collection<String> toAbsolute(@NotNull final VirtualFile root, @NotNull Collection<String> relativePaths) {
+    return ContainerUtil.map(relativePaths, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return toAbsolute(root, s);
+      }
+    });
+  }
+
+  /**
+   * Given the list of paths converts them to the list of {@link Change Changes} found in the {@link ChangeListManager},
+   * i.e. this works only for local changes. </br>
+   * Paths can be absolute or relative to the repository.
+   * If a path is not found in the local changes, it is ignored, but the fact is logged.
+   */
+  @NotNull
+  public static List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull VirtualFile root,
+                                                      @NotNull Collection<String> affectedPaths, boolean relativePaths) {
+    ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+    List<Change> affectedChanges = new ArrayList<Change>();
+    for (String path : affectedPaths) {
+      String absolutePath = relativePaths ? toAbsolute(root, path) : path;
+      VirtualFile file = findRefreshFileOrLog(absolutePath);
+      if (file != null) {
+        Change change = changeListManager.getChange(file);
+        if (change != null) {
+          affectedChanges.add(change);
+        }
+        else {
+          String message = "Change is not found for " + file.getPath();
+          if (changeListManager.isInUpdate()) {
+            message += " because ChangeListManager is being updated.";
+          }
+          LOG.warn(message);
+        }
+      }
+    }
+    return affectedChanges;
+  }
+
+  public static void showPathsInDialog(@NotNull Project project, @NotNull Collection<String> absolutePaths, @NotNull String title,
+                                       @Nullable String description) {
+    DialogBuilder builder = new DialogBuilder(project);
+    builder.setCenterPanel(new GitSimplePathsBrowser(project, absolutePaths));
+    if (description != null) {
+      builder.setNorthPanel(new MultiLineLabel(description));
+    }
+    builder.addOkAction();
+    builder.setTitle(title);
+    builder.show();
+  }
 }

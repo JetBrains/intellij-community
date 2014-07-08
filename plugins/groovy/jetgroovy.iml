@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="ByteCodeViewer" />
     <orderEntry type="module" module-name="properties-psi-api" />
     <orderEntry type="module" module-name="groovy-psi" exported="" />
+    <orderEntry type="module" module-name="external-system-api" />
   </component>
 </module>
 

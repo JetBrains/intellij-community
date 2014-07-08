@@ -129,7 +129,7 @@ public class VfsUtilCore {
       if (length > 0) {
         length++;
       }
-      length += parent.getName().length();
+      length += parent.getNameSequence().length();
       parent = parent.getParent();
     }
 
@@ -141,7 +141,7 @@ public class VfsUtilCore {
       if (index < length) {
         chars[--index] = separator;
       }
-      String name = parent.getName();
+      CharSequence name = parent.getNameSequence();
       for (int i = name.length() - 1; i >= 0; i--) {
         chars[--index] = name.charAt(i);
       }

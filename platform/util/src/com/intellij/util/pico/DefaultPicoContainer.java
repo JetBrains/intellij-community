@@ -165,9 +165,20 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   @Override
   public ComponentAdapter unregisterComponent(Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
-
     componentAdapters.remove(adapter);
-
+    if (adapter instanceof AssignableToComponentAdapter) {
+      classNameToAdapter.remove(((AssignableToComponentAdapter)adapter).getAssignableToClassName());
+    }
+    else {
+      do {
+        FList<ComponentAdapter> oldList = nonAssignableComponentAdapters.get();
+        FList<ComponentAdapter> newList = oldList.without(adapter);
+        if (nonAssignableComponentAdapters.compareAndSet(oldList, newList)) {
+          break;
+        }
+      }
+      while (true);
+    }
     return adapter;
   }
 

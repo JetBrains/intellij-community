@@ -128,7 +128,7 @@ public class ChangeBufferingList implements Cloneable {
         if (someElementsNumberEstimation < MAX_FILES) {
           if (removals == 0) {
             if (DEBUG) {
-              ValueContainer.IntIterator sorted = SortedFileIdSetIterator.getTransientIterator(new ChangesIterator());
+              ValueContainer.IntIterator sorted = SortedFileIdSetIterator.getTransientIterator(new ChangesIterator(changes, length));
               int lastIndex = 0;
               while(sorted.hasNext()) {
                 currentChanges[lastIndex++] = sorted.next();
@@ -220,8 +220,15 @@ public class ChangeBufferingList implements Cloneable {
 
   public boolean isEmpty() {
     if (randomAccessContainer == null) {
-      if (changes == null) return true;
-      if (removals == 0) return length == 0;
+      if (changes == null) {
+        if (DEBUG) DebugAssertions.assertTrue(checkSet.isEmpty());
+        return true;
+      }
+      if (removals == 0) {
+        boolean b = length == 0;
+        if (DEBUG) DebugAssertions.assertTrue(b == checkSet.isEmpty());
+        return b;
+      }
     }
     // todo we can calculate isEmpty in more cases (without container)
     RandomAccessIntContainer intContainer = getRandomAccessContainer();
@@ -246,7 +253,7 @@ public class ChangeBufferingList implements Cloneable {
   public ValueContainer.IntIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && removals == 0) {
-      ValueContainer.IntIterator iterator = new ChangesIterator();
+      ValueContainer.IntIterator iterator = new ChangesIterator(changes, length);
       if (DEBUG) {
         iterator = SortedFileIdSetIterator.getTransientIterator(iterator);
         DebugAssertions.assertTrue(iterator.size() == length);
@@ -260,8 +267,15 @@ public class ChangeBufferingList implements Cloneable {
     return checkSet;
   }
 
-  private class ChangesIterator implements ValueContainer.IntIterator {
+  private static class ChangesIterator implements ValueContainer.IntIterator {
     private int cursor;
+    private final int length;
+    private final int[] changes;
+
+    ChangesIterator(int[] _changes, int _length) {
+      changes = _changes;
+      length = _length;
+    }
 
     @Override
     public boolean hasNext() {
@@ -287,7 +301,7 @@ public class ChangeBufferingList implements Cloneable {
 
     @Override
     public ValueContainer.IntIterator createCopyInInitialState() {
-      return new ChangesIterator();
+      return new ChangesIterator(changes, length);
     }
   }
 }

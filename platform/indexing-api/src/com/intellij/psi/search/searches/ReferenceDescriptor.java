@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 * @author max
 */
 public class ReferenceDescriptor {
+  @NotNull
   public static final Function<PsiReference, ReferenceDescriptor> MAPPER = new Function<PsiReference, ReferenceDescriptor>() {
     @Override
     public ReferenceDescriptor fun(PsiReference psiReference) {
@@ -36,7 +37,7 @@ public class ReferenceDescriptor {
   private final PsiFile file;
   private final int offset;
 
-  ReferenceDescriptor(@NotNull PsiFile file, int offset) {
+  private ReferenceDescriptor(@NotNull PsiFile file, int offset) {
     this.file = file;
     this.offset = offset;
   }

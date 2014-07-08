@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
-
-import java.lang.reflect.Field;
 
 /**
  * @author Alexey.Ushakov
@@ -37,9 +36,7 @@ public class WinProcessManager {
     if (process.getClass().getName().equals("java.lang.Win32Process") ||
         process.getClass().getName().equals("java.lang.ProcessImpl")) {
       try {
-        Field f = process.getClass().getDeclaredField("handle");
-        f.setAccessible(true);
-        long handle = f.getLong(process);
+        long handle = ReflectionUtil.getField(process.getClass(), process, long.class, "handle");
 
         Kernel32 kernel = Kernel32.INSTANCE;
         WinNT.HANDLE winHandle = new WinNT.HANDLE();

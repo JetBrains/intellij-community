@@ -3,26 +3,42 @@ package com.siyeh.igtest.assignment.method_parameter;
 class AssigmentToMethodParameterMissesCompoundAssign {
 
     public void incrementParameter(int value) {
-        value++; // not flagged by the inspection
+        <warning descr="Assignment to method parameter 'value'">value</warning>++; // not flagged by the inspection
     }
 
     public void compoundAssignParameter(int value) {
-        value += 1;  // flagged by the inspection
+        <warning descr="Assignment to method parameter 'value'">value</warning> += 1;  // flagged by the inspection
     }
 
     public void compoundAssignParameter(int value, int increment) {
-        value += increment; // flagged by the inspection
+        <warning descr="Assignment to method parameter 'value'">value</warning> += increment; // flagged by the inspection
     }
 
     public void foo(String s) {
         System.out.println(s);
-        s = "other";
+        <warning descr="Assignment to method parameter 's'">s</warning> = "other";
         System.out.println(s);
     }
 
     public void method(int decreased, int increased) {
-        decreased += 10; // not highlighted
-        increased -= 10; // highlighted
+        <warning descr="Assignment to method parameter 'decreased'">decreased</warning> += 10; // not highlighted
+        <warning descr="Assignment to method parameter 'increased'">increased</warning> -= 10; // highlighted
+    }
+
+    public void parenthesized(int p) {
+        System.out.println(p);
+        <warning descr="Assignment to method parameter '(p)'">(p)</warning> = 1;
+    }
+
+    public void leaveMyLambdaAlone() {
+        Consumer c = (p) -> {
+            p = null;
+            System.out.println(p);
+        };
+    }
+
+    interface Consumer {
+        void m(Object o);
     }
 
 }

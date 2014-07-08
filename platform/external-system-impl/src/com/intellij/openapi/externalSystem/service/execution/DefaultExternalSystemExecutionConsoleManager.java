@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
@@ -66,5 +67,10 @@ public class DefaultExternalSystemExecutionConsoleManager implements ExternalSys
   @Override
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
     return true;
+  }
+
+  @Override
+  public AnAction[] getRestartActions() {
+    return new AnAction[0];
   }
 }

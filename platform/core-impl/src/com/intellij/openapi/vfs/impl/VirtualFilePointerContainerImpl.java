@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TraceableDisposable;
@@ -56,7 +57,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
                                          @NotNull Disposable parentDisposable,
                                          @Nullable VirtualFilePointerListener listener) {
     //noinspection HardCodedStringLiteral
-    super(TRACE_CREATION
+    super(TRACE_CREATION && !ApplicationInfoImpl.isInPerformanceTest()
           ? new Throwable("parent = '" + parentDisposable + "' (" + parentDisposable.getClass() + "); listener=" + listener)
           : null);
     myVirtualFilePointerManager = manager;

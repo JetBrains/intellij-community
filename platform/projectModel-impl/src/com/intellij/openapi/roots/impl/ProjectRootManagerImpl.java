@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private String myProjectSdkName;
   private String myProjectSdkType;
 
-  private long myModificationCount = 0;
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
   private final OrderRootsCache myRootsCache;
@@ -418,7 +417,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     clearScopesCaches();
 
-    myModificationCount++;
+    incModificationCount();
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     psiManager.dropResolveCaches();
@@ -525,7 +524,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     @Override
     public void afterLibraryAdded(final Library newLibrary) {
-      myModificationCount++;
+      incModificationCount();
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
@@ -538,7 +537,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     @Override
     public void afterLibraryRenamed(final Library library) {
-      myModificationCount++;
+      incModificationCount();
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
@@ -551,7 +550,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     @Override
     public void beforeLibraryRemoved(final Library library) {
-      myModificationCount++;
+      incModificationCount();
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
@@ -564,7 +563,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     @Override
     public void afterLibraryRemoved(final Library library) {
-      myModificationCount++;
+      incModificationCount();
       mergeRootsChangesDuring(new Runnable() {
         @Override
         public void run() {
@@ -674,10 +673,5 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myInsideRootsChange = false;
       }
     }
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myModificationCount;
   }
 }

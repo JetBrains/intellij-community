@@ -61,7 +61,7 @@ public class EmmetPreviewUtil {
       if (generator != null && generator instanceof XmlZenCodingGenerator) {
         final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
         if (templatePrefix != null) {
-          ZenCodingTemplate.expand(templatePrefix, callback, null, generator, Collections.<ZenCodingFilter>emptyList(), expandPrimitiveAbbreviations, 0);
+          ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.<ZenCodingFilter>emptyList(), expandPrimitiveAbbreviations, 0);
           TemplateImpl template = generatedTemplate.get();
           String templateText = template != null ? template.getTemplateText() : null;
           if (!StringUtil.isEmpty(templateText)) {

@@ -21,7 +21,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
@@ -230,9 +230,10 @@ public class PyDocstringInspection extends PyInspection {
     }
   }
 
+  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
-    List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    List<SuppressQuickFix> result = new ArrayList<SuppressQuickFix>();
     if (element != null) {
       if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
         result.add(new PySuppressInspectionFix(getShortName().replace("Inspection", ""), "Suppress for function", PyFunction.class));
@@ -241,6 +242,6 @@ public class PyDocstringInspection extends PyInspection {
         result.add(new PySuppressInspectionFix(getShortName().replace("Inspection", ""), "Suppress for class", PyClass.class));
       }
     }
-    return result.toArray(new SuppressIntentionAction[result.size()]);
+    return result.toArray(new SuppressQuickFix[result.size()]);
   }
 }

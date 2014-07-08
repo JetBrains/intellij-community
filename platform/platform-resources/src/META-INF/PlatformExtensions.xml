@@ -283,6 +283,7 @@
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
 
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
+    <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
 
@@ -302,6 +303,7 @@
 
     <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
+    <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager"/>
     <httpRequestHandler implementation="com.intellij.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
     <postStartupActivity implementation="org.jetbrains.ide.BuiltInServerManagerImpl$MyPostStartupActivity"/>
 

@@ -38,6 +38,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.zmlx.hg4idea.util.HgUtil.HEAD_REFERENCE;
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
 public class HgLogProvider implements VcsLogProvider {
@@ -118,7 +119,11 @@ public class HgLogProvider implements VcsLogProvider {
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), TIP_REFERENCE, HgRefManager.HEAD, root));
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(currentRevision), HEAD_REFERENCE, HgRefManager.HEAD, root));
+    }
+    String tipRevision = repository.getTipRevision();
+    if (tipRevision != null) { // null => fresh repository
+      refs.add(myVcsObjectsFactory.createRef(myVcsObjectsFactory.createHash(tipRevision), TIP_REFERENCE, HgRefManager.TIP, root));
     }
     for (HgNameWithHashInfo tagInfo : tags) {
       refs.add(myVcsObjectsFactory.createRef(tagInfo.getHash(), tagInfo.getName(), HgRefManager.TAG, root));
@@ -175,6 +180,12 @@ public class HgLogProvider implements VcsLogProvider {
           filterParameters.add(prepareParameter("branch", branchName));
           atLeastOneBranchExists = true;
         }
+        else if (branchName.equals(HEAD_REFERENCE)) {
+          filterParameters.add(prepareParameter("branch", "."));
+          filterParameters.add("-r");
+          filterParameters.add("::."); //all ancestors for current revision;
+          atLeastOneBranchExists = true;
+        }
       }
       if (!atLeastOneBranchExists) { // no such branches => filter matches nothing
         return Collections.emptyList();
@@ -190,18 +201,19 @@ public class HgLogProvider implements VcsLogProvider {
     if (filterCollection.getDateFilter() != null) {
       StringBuilder args = new StringBuilder();
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-      filterParameters.add("-r");
+      filterParameters.add("-d");
       VcsLogDateFilter filter = filterCollection.getDateFilter();
       if (filter.getAfter() != null) {
-        args.append("date('>").append(dateFormatter.format(filter.getAfter())).append("')");
+        if (filter.getBefore() != null) {
+          args.append(dateFormatter.format(filter.getAfter())).append(" to ").append(dateFormatter.format(filter.getBefore()));
+        }
+        else {
+          args.append('>').append(dateFormatter.format(filter.getAfter()));
+        }
       }
 
-      if (filter.getBefore() != null) {
-        if (args.length() > 0) {
-          args.append(" and ");
-        }
-
-        args.append("date('<").append(dateFormatter.format(filter.getBefore())).append("')");
+      else if (filter.getBefore() != null) {
+        args.append('<').append(dateFormatter.format(filter.getBefore()));
       }
       filterParameters.add(args.toString());
     }

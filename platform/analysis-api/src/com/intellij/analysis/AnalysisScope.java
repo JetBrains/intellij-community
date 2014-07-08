@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -238,6 +239,29 @@ public class AnalysisScope {
     else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == CUSTOM) {
       myFilesSet = new HashSet<VirtualFile>();
       accept(createFileSearcher());
+    }
+    else if (myType == VIRTUAL_FILES) {
+      final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      for (Iterator<VirtualFile> iterator = myFilesSet.iterator(); iterator.hasNext(); ) {
+        final VirtualFile vFile = iterator.next();
+        VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+          @NotNull
+          @Override
+          public Result visitFileEx(@NotNull VirtualFile file) {
+            boolean ignored = fileIndex.isIgnored(file);
+            if (!ignored && !file.isDirectory()) {
+              files.add(file);
+            }
+            return ignored ? SKIP_CHILDREN : CONTINUE;
+          }
+        });
+
+        if (vFile.isDirectory()) {
+          iterator.remove();
+        }
+      }
+      myFilesSet.addAll(files);
     }
   }
 

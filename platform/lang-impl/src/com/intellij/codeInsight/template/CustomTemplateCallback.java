@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -69,7 +70,7 @@ public class CustomTemplateCallback {
 
   @NotNull
   public PsiElement getContext() {
-    return getContext(myFile, myOffset);
+    return getContext(myFile, getOffset(), myInInjectedFragment);
   }
 
   public int getOffset() {
@@ -140,13 +141,22 @@ public class CustomTemplateCallback {
 
   public void deleteTemplateKey(@NotNull String key) {
     int caretAt = myEditor.getCaretModel().getOffset();
-    myEditor.getDocument().deleteString(caretAt - key.length(), caretAt);
+    int templateStart = caretAt - key.length();
+    myEditor.getDocument().deleteString(templateStart, caretAt);
+    myEditor.getCaretModel().moveToOffset(templateStart);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    myEditor.getSelectionModel().removeSelection();
   }
 
   @NotNull
   public static PsiElement getContext(@NotNull PsiFile file, int offset) {
+    return getContext(file, offset, true);
+  }
+
+  @NotNull
+  public static PsiElement getContext(@NotNull PsiFile file, int offset, boolean searchInInjectedFragment) {
     PsiElement element = null;
-    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+    if (searchInInjectedFragment && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     }
     if (element == null) {

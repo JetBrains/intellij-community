@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -24,8 +25,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,10 +52,16 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   public UnindexedFilesUpdater(final Project project, boolean onStartup) {
     myProject = project;
     myOnStartup = onStartup;
+    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        DumbService.getInstance(project).cancelTask(UnindexedFilesUpdater.this);
+      }
+    });
   }
 
   private void updateUnindexedFiles(ProgressIndicator indicator) {
-    PushedFilePropertiesUpdater.getInstance(myProject).performPushTasks(indicator);
+    PushedFilePropertiesUpdater.getInstance(myProject).pushAllPropertiesNow();
 
     indicator.setIndeterminate(true);
     indicator.setText(IdeBundle.message("progress.indexing.scanning"));

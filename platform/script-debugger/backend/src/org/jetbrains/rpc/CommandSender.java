@@ -26,6 +26,11 @@ public interface CommandSender<ERROR_DETAILS> {
                                                       @NotNull RequestWithResponse message,
                                                       @NotNull PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer);
 
+  <RESULT, MAIN_RESULT> AsyncResult<MAIN_RESULT> send(@NotNull AsyncResult<MAIN_RESULT> result,
+                                                      @NotNull RequestWithResponse message,
+                                                      @NotNull PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer,
+                                                      @Nullable ErrorConsumer<AsyncResult<MAIN_RESULT>, ERROR_DETAILS> errorConsumer);
+
   <RESULT, MAIN_RESULT> AsyncResult<MAIN_RESULT> send(@NotNull RequestWithResponse message,
                                                       @NotNull PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer);
 }

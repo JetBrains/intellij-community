@@ -29,6 +29,6 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    UpdateChecker.updateAndShowResult(e.getData(CommonDataKeys.PROJECT), false, null, UpdateSettings.getInstance());
+    UpdateChecker.updateAndShowResult(e.getData(CommonDataKeys.PROJECT), false, UpdateSettings.getInstance());
   }
 }

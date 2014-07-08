@@ -75,10 +75,6 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
   }
 
-  public void tearDown() {
-    super.tearDown();
-  }
-
   public void "test create new branch without problems"() {
     checkoutNewBranch "feature", [ ]
 
@@ -205,7 +201,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     boolean notificationShown = false;
     checkoutOrMerge operation, "feature", [
-            showUntrackedFilesNotification : { String s, Collection c -> notificationShown = true }
+      showUntrackedFilesNotification: { String s, VirtualFile root, Collection c -> notificationShown = true }
     ]
 
     assertTrue "Untracked files notification was not shown", notificationShown
@@ -224,15 +220,15 @@ class GitBranchWorkerTest extends GitPlatformTest {
     def untracked = ["untracked.txt"]
     untrackedFileOverwrittenBy(myCommunity, "feature", untracked)
 
-    Collection<VirtualFile> untrackedFiles = null;
+    Collection<String> untrackedPaths = null;
     checkoutOrMerge operation, "feature", [
-            showUntrackedFilesDialogWithRollback : {  String s, String p, Collection files -> untrackedFiles = files; false }
+      showUntrackedFilesDialogWithRollback: {
+        String s, String p, VirtualFile root, Collection<String> files -> untrackedPaths = files; false
+      }
     ]
 
-    assertTrue "Untracked files dialog was not shown", untrackedFiles != null
-    assertEquals "Incorrect set of untracked files was shown in the dialog",
-                 untracked,
-                 untrackedFiles.collect { FileUtil.getRelativePath(myCommunity.root.path, it.path, '/'.toCharacter()) }
+    assertTrue "Untracked files dialog was not shown", untrackedPaths != null
+    assertEquals "Incorrect set of untracked files was shown in the dialog", untracked.asList(), untrackedPaths.asList()
   }
 
   public void "test checkout with local changes overwritten by checkout should show smart checkout dialog"() {
@@ -252,7 +248,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     List<Change> changes = null;
     checkoutOrMerge(operation, "feature", [
-            showSmartOperationDialog: { Project p, List<Change> cs, String op, boolean force ->
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean force ->
               changes = cs
               DialogWrapper.CANCEL_EXIT_CODE
             }
@@ -349,7 +345,9 @@ class GitBranchWorkerTest extends GitPlatformTest {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     checkoutOrMerge(operation, "feature", [
-            showSmartOperationDialog : { Project p, List<Change> cs, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE },
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean f
+        -> GitSmartOperationDialog.CANCEL_EXIT_CODE
+      },
     ] as GitBranchUiHandler )
 
     assertNull "Notification was unexpectedly shown:" + myVcsNotifier.lastNotification, myVcsNotifier.lastNotification
@@ -372,8 +370,10 @@ class GitBranchWorkerTest extends GitPlatformTest {
 
     def rollbackMsg = null
     checkoutOrMerge(operation, "feature", [
-            showSmartOperationDialog : { Project p, List<Change> cs, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE },
-            notifyErrorWithRollbackProposal: { String t, String m, String rp -> rollbackMsg = m ; false }
+      showSmartOperationDialog       : {
+        Project p, List<Change> cs, Collection<String> paths, String op, boolean f -> GitSmartOperationDialog.CANCEL_EXIT_CODE
+      },
+      notifyErrorWithRollbackProposal: { String t, String m, String rp -> rollbackMsg = m; false }
     ] as GitBranchUiHandler )
 
     assertNotNull "Rollback proposal was not shown", rollbackMsg
@@ -384,7 +384,7 @@ class GitBranchWorkerTest extends GitPlatformTest {
     prepareLocalChangesOverwrittenBy(myUltimate)
 
     def uiHandler = [
-      showSmartOperationDialog: { Project p, List<Change> cs, String op, boolean force ->
+      showSmartOperationDialog: { Project p, List<Change> cs, Collection<String> paths, String op, boolean force ->
         GitSmartOperationDialog.FORCE_EXIT_CODE;
       },
     ] as GitBranchUiHandler
@@ -711,7 +711,12 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
 
     @Override
-    int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull String operation, boolean force) {
+    int showSmartOperationDialog(
+      @NotNull Project project,
+      @NotNull List<Change> changes,
+      @NotNull Collection<String> paths,
+      @NotNull String operation,
+      boolean isForcePossible) {
       GitSmartOperationDialog.SMART_EXIT_CODE
     }
 
@@ -741,12 +746,13 @@ class GitBranchWorkerTest extends GitPlatformTest {
     }
 
     @Override
-    void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
+    void showUntrackedFilesNotification(@NotNull String operationName, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
       throw new UnsupportedOperationException()
     }
 
     @Override
-    boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal, @NotNull Collection<VirtualFile> untrackedFiles) {
+    boolean showUntrackedFilesDialogWithRollback(
+      @NotNull String operationName, @NotNull String rollbackProposal, @NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
       throw new UnsupportedOperationException()
     }
 

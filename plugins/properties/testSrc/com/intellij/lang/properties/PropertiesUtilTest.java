@@ -16,13 +16,16 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesUtilTest extends TestCase {
+public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testBaseNameWithoutLocale() {
     assertBaseNameEquals("property-file.properties", "property-file");
@@ -40,6 +43,10 @@ public class PropertiesUtilTest extends TestCase {
     assertBaseNameEquals("property-file_fr.file_en.utf8.properties", "property-file_fr.file.utf8");
   }
 
+  public void testBaseNameWithLongLocale() {
+    assertBaseNameEquals("property_latin.properties", "property");
+  }
+
   public void testBaseNameWithCountryAndVariant() {
     assertBaseNameEquals("property-file_fr.file_en_GB_UNIX.utf8.properties", "property-file_fr.file.utf8");
   }
@@ -52,24 +59,18 @@ public class PropertiesUtilTest extends TestCase {
     assertBaseNameEquals("Base_Properties.utf8.properties", "Base_Properties.utf8");
   }
 
-  public void test1() {
+  public void _test1() {
     assertBaseNameEquals("Base_Page_fr.utf8.properties", "Base_Page.utf8");
   }
-  public void test2() {
+  public void _test2() {
     assertBaseNameEquals("Base_Page_en.utf8.properties", "Base_Page.utf8");
   }
-  public void test3() {
+  public void _test3() {
     assertBaseNameEquals("Base_Page.utf8.properties", "Base_Page.utf8");
   }
 
-  private static void assertBaseNameEquals(final String propertyFileName, final String expectedBaseName) {
-    final String actualBaseName = PropertiesUtil.getBaseName(new StubVirtualFile() {
-      @NotNull
-      @Override
-      public String getName() {
-        return propertyFileName;
-      }
-    });
+  private void assertBaseNameEquals(final String propertyFileName, final String expectedBaseName) {
+    final String actualBaseName = PropertiesUtil.getBaseName(myFixture.configureByText(propertyFileName, ""));
     assertEquals(expectedBaseName, actualBaseName);
   }
 }

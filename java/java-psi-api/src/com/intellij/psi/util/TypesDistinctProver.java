@@ -57,7 +57,7 @@ public class TypesDistinctProver {
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(extendsBound);
           if (boundClass1 == null) return false;
 
-          if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass2.getQualifiedName())) {
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass2.getQualifiedName()) && !(boundClass1 instanceof PsiTypeParameter)) {
             return !CommonClassNames.JAVA_LANG_OBJECT.equals(boundClass1.getQualifiedName());
           }
 
@@ -121,7 +121,7 @@ public class TypesDistinctProver {
           if (substitutedType1 instanceof PsiWildcardType && !((PsiWildcardType)substitutedType1).isBounded()) return true;
         }
       }
-      return false;
+      if (level < 2) return false;
     }
 
     final PsiClass boundClass1 = classResolveResult1.getElement();

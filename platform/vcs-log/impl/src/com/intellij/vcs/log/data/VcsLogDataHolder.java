@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -75,7 +76,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
    */
   @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
 
-  private final VcsUserRegistry myUserRegistry;
+  private final VcsUserRegistryImpl myUserRegistry;
 
   private final VcsLogHashMap myHashMap;
   private final ContainingBranchesGetter myContainingBranchesGetter;
@@ -94,7 +95,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     mySettings = settings;
     myDataPackUpdateHandler = dataPackUpdateHandler;
-    myUserRegistry = new VcsUserRegistry();
+    myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
       myHashMap = new VcsLogHashMap(myProject);
@@ -325,7 +326,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public VcsUserRegistry getUserRegistry() {
+  public VcsUserRegistryImpl getUserRegistry() {
     return myUserRegistry;
   }
 }

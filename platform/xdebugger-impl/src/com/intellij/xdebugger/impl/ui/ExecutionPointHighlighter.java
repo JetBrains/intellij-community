@@ -65,6 +65,7 @@ public class ExecutionPointHighlighter {
 
         mySourcePosition = position;
 
+        clearDescriptor();
         myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
         //see IDEA-125645 and IDEA-63459
         //myOpenFileDescriptor.setUseCurrentWindow(true);
@@ -84,11 +85,18 @@ public class ExecutionPointHighlighter {
         updateRequested.set(false);
 
         removeHighlighter();
-        myOpenFileDescriptor = null;
+        clearDescriptor();
         myEditor = null;
         myGutterIconRenderer = null;
       }
     });
+  }
+
+  private void clearDescriptor() {
+    if (myOpenFileDescriptor != null) {
+      myOpenFileDescriptor.dispose();
+      myOpenFileDescriptor = null;
+    }
   }
 
   public void navigateTo() {

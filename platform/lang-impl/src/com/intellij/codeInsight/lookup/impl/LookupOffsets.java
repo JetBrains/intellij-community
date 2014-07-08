@@ -51,10 +51,7 @@ public class LookupOffsets {
   private void updateLookupStart(int minPrefixLength) {
     int offset = getPivotOffset();
     int start = offset - minPrefixLength - myAdditionalPrefix.length() + myRemovedPrefix;
-    if (start < 0) {
-      LOG.error("Invalid start offset: o=" + offset + ", mpl=" + minPrefixLength + ", ap=" + myAdditionalPrefix + ", rp=" + myRemovedPrefix);
-      return;
-    }
+    start = Math.max(Math.min(start, myEditor.getDocument().getTextLength()), 0);
     if (myLookupStartMarker != null) {
       if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
         return;

@@ -68,4 +68,6 @@ public interface XDebuggerActions {
 
   @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
+
+  @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
 }

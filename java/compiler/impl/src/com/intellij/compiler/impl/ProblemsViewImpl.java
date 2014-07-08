@@ -157,9 +157,10 @@ public class ProblemsViewImpl extends ProblemsView{
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final ToolWindowManager twManager = ToolWindowManager.getInstance(myProject);
-        final ToolWindow tw = twManager.getToolWindow(PROBLEMS_TOOLWINDOW_ID);
-        tw.setIcon(active ? myActiveIcon : myPassiveIcon);
+        final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID);
+        if (tw != null) {
+          tw.setIcon(active ? myActiveIcon : myPassiveIcon);
+        }
       }
     }, myProject.getDisposed());
   }

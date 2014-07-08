@@ -26,5 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface FileViewProviderFactory {
+  @NotNull
   FileViewProvider createFileViewProvider(@NotNull VirtualFile file, Language language, @NotNull PsiManager manager, boolean eventSystemEnabled);
 }

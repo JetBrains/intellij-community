@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private void fillModel(List<CvsRootConfiguration> configurations) {
     for (final CvsRootConfiguration configuration : configurations) {
-      myModel.addElement(configuration.getMyCopy());
+      myModel.addElement(configuration.clone());
     }
   }
 
@@ -198,8 +198,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   private void copySelectedConfiguration() {
     if (!saveSelectedConfiguration()) return;
-    final CvsRootConfiguration newConfig = mySelection.getMyCopy();
-    myModel.addElement(newConfig);
+    myModel.addElement(mySelection.clone());
     myList.setSelectedIndex(myModel.getSize() - 1);
   }
 

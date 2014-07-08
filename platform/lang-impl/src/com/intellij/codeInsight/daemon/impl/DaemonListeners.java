@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.Disposable;
@@ -599,6 +600,7 @@ public class DaemonListeners implements Disposable {
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.getDescription() == null) return;
+          if (IdeTooltipManager.getInstance().hasCurrent()) return;
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);
           shown = true;
         }

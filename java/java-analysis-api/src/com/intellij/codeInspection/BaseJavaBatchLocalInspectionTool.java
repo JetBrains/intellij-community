@@ -26,18 +26,8 @@ import org.jetbrains.annotations.Nullable;
  *  - work with PSI or document only and
  *  - don't provide {@link com.intellij.codeInsight.intention.IntentionAction} for quick fixes/suppression, making do with {@link LocalQuickFix} only.
  */
-public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements BatchSuppressableTool {
-  @NotNull
-  @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(getShortName()));
-  }
-
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
-    return isSuppressedFor(element, this);
-  }
-
+public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool {
+  @Deprecated
   public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
     BatchSuppressManager manager = BatchSuppressManager.SERVICE.getInstance();
     String alternativeId;

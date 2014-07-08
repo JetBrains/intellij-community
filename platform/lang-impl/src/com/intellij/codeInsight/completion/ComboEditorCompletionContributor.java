@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.StringComboboxEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,7 +31,7 @@ import javax.swing.*;
 public class ComboEditorCompletionContributor extends CompletionContributor{
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getInvocationCount() == 0) {
       return;
     }
@@ -38,9 +39,13 @@ public class ComboEditorCompletionContributor extends CompletionContributor{
     final PsiFile file = parameters.getOriginalFile();
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {
-      final JComboBox comboBox = document.getUserData(StringComboboxEditor.COMBO_BOX_KEY);
+      JComboBox comboBox = document.getUserData(StringComboboxEditor.COMBO_BOX_KEY);
       if (comboBox != null) {
-        final CompletionResultSet resultSet = result.withPrefixMatcher(document.getText().substring(0, parameters.getOffset()));
+        String substring = document.getText().substring(0, parameters.getOffset());
+        boolean plainPrefixMatcher = Boolean.TRUE.equals(document.getUserData(StringComboboxEditor.USE_PLAIN_PREFIX_MATCHER));
+        final CompletionResultSet resultSet = plainPrefixMatcher ?
+                                              result.withPrefixMatcher(new PlainPrefixMatcher(substring)) :
+                                              result.withPrefixMatcher(substring);
         final int count = comboBox.getItemCount();
         for (int i = 0; i < count; i++) {
           final Object o = comboBox.getItemAt(i);

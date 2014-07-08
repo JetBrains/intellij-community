@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
@@ -61,7 +63,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
 
   protected NamedConfigurable myCurrentConfigurable;
-  private final Splitter mySplitter = new Splitter(false, .2f);
+  private final JBSplitter mySplitter;
 
   @NonNls public static final String TREE_OBJECT = "treeObject";
   @NonNls public static final String TREE_NAME = "treeName";
@@ -79,7 +81,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     public void queryPlace(@NotNull final Place place) {
     }
   });
-  private JScrollPane myMaster;
+  private JComponent myMaster;
 
   public void setHistory(final History history) {
     myHistory = history;
@@ -128,6 +130,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
+
+    mySplitter = new JBSplitter(false, .2f);
+    mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
+    mySplitter.setHonorComponentsMinimumSize(true);
+    if (Registry.is("ide.new.project.settings")) {
+      mySplitter.setDividerWidth(1);
+      mySplitter.setShowDividerIcon(false);
+      mySplitter.getDivider().setBackground(Gray._153.withAlpha(128));
+      mySplitter.setShowDividerControls(false);
+      mySplitter.setOrientation(mySplitter.getOrientation());
+    }
+
     installAutoScroll();
     reInitWholePanelIfNeeded();
   }
@@ -163,8 +177,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    left.add(myNorthPanel, BorderLayout.NORTH);
-    myMaster = ScrollPaneFactory.createScrollPane(myTree);
+    if (Registry.is("ide.new.project.settings")) {
+      ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
+      DefaultActionGroup group = createToolbarActionGroup();
+      if (group != null) {
+        decorator.setActionGroup(group);
+      }
+      //left.add(myNorthPanel, BorderLayout.NORTH);
+      myMaster = decorator.setPanelBorder(new EmptyBorder(0, 0, 0, 0)).createPanel();
+    } else {
+      left.add(myNorthPanel, BorderLayout.NORTH);
+      myMaster = ScrollPaneFactory.createScrollPane(myTree);
+    }
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 
@@ -245,7 +269,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return myHistory == null || !myHistory.isNavigatingNow();
   }
 
-  private void initToolbar() {
+  protected DefaultActionGroup createToolbarActionGroup() {
     final ArrayList<AnAction> actions = createActions(false);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -257,6 +281,14 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           group.add(action);
         }
       }
+      return group;
+    }
+    return null;
+  }
+
+  private void initToolbar() {
+    DefaultActionGroup group = createToolbarActionGroup();
+    if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
       myNorthPanel.add(component, BorderLayout.NORTH);
     }
@@ -270,6 +302,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return new Dimension(800, 600);
   }
 
+  @NotNull 
   public JComponent createComponent() {
     reInitWholePanelIfNeeded();
 

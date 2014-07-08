@@ -707,4 +707,52 @@ print new Abcd()
 ''')
     }
   }
+
+  void testTraitField() {
+    myFixture.with {
+      configureByText('a.groovy', '''\
+trait T {
+    public int f<caret>oo = 5
+
+    def bar() {
+        print foo
+    }
+}
+
+class X implements T {
+   def bar() {
+      print T__foo
+   }
+}
+
+trait T2 extends T {
+    def bar() {
+        print T__foo //actually this ref is unresolved since super fields are not visible in extending traits
+    }
+}
+''')
+      renameElementAtCaret("baz")
+      checkResult('''\
+trait T {
+    public int baz = 5
+
+    def bar() {
+        print baz
+    }
+}
+
+class X implements T {
+   def bar() {
+      print T__baz
+   }
+}
+
+trait T2 extends T {
+    def bar() {
+        print T__foo //actually this ref is unresolved since super fields are not visible in extending traits
+    }
+}
+''')
+    }
+  }
 }

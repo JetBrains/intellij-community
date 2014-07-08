@@ -26,8 +26,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
-import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
@@ -51,7 +51,7 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     HgTestUtil.updateDirectoryMappings(myProject, myRepository);
-    HgRepository hgRepository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRepository);
+    HgRepository hgRepository = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     assertNotNull(hgRepository);
     myValidator = HgReferenceValidator.newInstance(hgRepository);
     cd(myRepository);

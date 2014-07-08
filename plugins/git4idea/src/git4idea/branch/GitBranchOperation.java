@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -261,21 +260,21 @@ abstract class GitBranchOperation {
    * If some repositories succeeded, shows a dialog with the list of these files and a proposal to rollback the operation of those
    * repositories.
    */
-  protected void fatalUntrackedFilesError(@NotNull Collection<VirtualFile> untrackedFiles) {
+  protected void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
     if (wereSuccessful()) {
-      showUntrackedFilesDialogWithRollback(untrackedFiles);
+      showUntrackedFilesDialogWithRollback(root, relativePaths);
     }
     else {
-      showUntrackedFilesNotification(untrackedFiles);
+      showUntrackedFilesNotification(root, relativePaths);
     }
   }
 
-  private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    myUiHandler.showUntrackedFilesNotification(getOperationName(), untrackedFiles);
+  private void showUntrackedFilesNotification(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    myUiHandler.showUntrackedFilesNotification(getOperationName(), root, relativePaths);
   }
 
-  private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
-    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), untrackedFiles);
+  private void showUntrackedFilesDialogWithRollback(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), root, relativePaths);
     if (ok) {
       rollback();
     }
@@ -293,7 +292,7 @@ abstract class GitBranchOperation {
     for (GitRepository repository : repositories) {
       try {
         Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(myGit, repository, currentBranch, otherBranch);
-        List<Change> changesInRepo = convertPathsToChanges(repository, diff, false);
+        List<Change> changesInRepo = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), diff, false);
         if (!changesInRepo.isEmpty()) {
           changes.put(repository, changesInRepo);
         }
@@ -324,7 +323,9 @@ abstract class GitBranchOperation {
     String currentBranch, String nextBranch) {
 
     // get changes overwritten by checkout from the error message captured from Git
-    List<Change> affectedChanges = convertPathsToChanges(currentRepository, localChangesOverwrittenBy.getRelativeFilePaths(), true);
+    List<Change> affectedChanges = GitUtil.findLocalChangesForPaths(myProject, currentRepository.getRoot(),
+                                                                    localChangesOverwrittenBy.getRelativeFilePaths(), true
+    );
     // get all other conflicting changes
     // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
     Map<GitRepository, List<Change>> conflictingChangesInRepositories =
@@ -339,34 +340,4 @@ abstract class GitBranchOperation {
 
     return Pair.create(allConflictingRepositories, affectedChanges);
   }
-
-  /**
-   * Given the list of paths converts them to the list of {@link com.intellij.openapi.vcs.changes.Change Changes} found in the {@link com.intellij.openapi.vcs.changes.ChangeListManager},
-   * i.e. this works only for local changes.
-   * Paths can be absolute or relative to the repository.
-   * If a path is not in the local changes, it is ignored.
-   */
-  @NotNull
-  private List<Change> convertPathsToChanges(@NotNull GitRepository repository,
-                                             @NotNull Collection<String> affectedPaths, boolean relativePaths) {
-    List<Change> affectedChanges = new ArrayList<Change>();
-    for (String path : affectedPaths) {
-      VirtualFile file;
-      if (relativePaths) {
-        file = repository.getRoot().findFileByRelativePath(FileUtil.toSystemIndependentName(path));
-      }
-      else {
-        file = myFacade.getVirtualFileByPath(path);
-      }
-
-      if (file != null) {
-        Change change = myFacade.getChangeListManager(myProject).getChange(file);
-        if (change != null) {
-          affectedChanges.add(change);
-        }
-      }
-    }
-    return affectedChanges;
-  }
-
 }

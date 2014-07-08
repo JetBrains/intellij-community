@@ -19,6 +19,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,7 +66,7 @@ public class InconsistentPropertiesEndsInspectionProvider implements Inconsisten
           final IProperty property = file.findPropertyByKey(commonKey);
           assert property != null;
           final String propertyValue = property.getValue();
-          if (propertyValue == null) {
+          if (StringUtil.isEmptyOrSpaces(propertyValue)) {
             continue;
           }
           final char lastChar = propertyValue.charAt(propertyValue.length() - 1);

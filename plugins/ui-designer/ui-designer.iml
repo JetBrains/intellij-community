@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="asm5" level="project" />
     <orderEntry type="module" module-name="java-i18n" exported="" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
 
@@ -38,24 +37,7 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
                                final VcsShowConfirmationOption confirmationOption,
                                @Nullable String okActionName, @Nullable String cancelActionName, boolean showDoNotAskOption) {
     super(project, false, confirmationOption, prompt, showDoNotAskOption);
-    myFileList = new ChangesTreeList<FilePath>(project, originalFiles, true, true, null, null) {
-      protected DefaultTreeModel buildTreeModel(final List<FilePath> changes, ChangeNodeDecorator changeNodeDecorator) {
-        return new TreeModelBuilder(project, false).buildModelFromFilePaths(changes);
-      }
-
-      protected List<FilePath> getSelectedObjects(final ChangesBrowserNode node) {
-        return node.getAllFilePathsUnder();
-      }
-
-      @Nullable
-      protected FilePath getLeadSelectedObject(final ChangesBrowserNode node) {
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof FilePath) {
-          return (FilePath) userObject;
-        }
-        return null;
-      }
-    };
+    myFileList = new FilePathChangesTreeList(project, originalFiles, true, true, null, null);
     if (okActionName != null) {
       getOKAction().putValue(Action.NAME, okActionName);
     }

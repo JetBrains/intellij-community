@@ -141,4 +141,11 @@ public class RefreshQueueImpl extends RefreshQueue {
   public void processSingleEvent(@NotNull VFileEvent event) {
     new RefreshSessionImpl(Collections.singletonList(event)).launch();
   }
+
+  public static boolean isRefreshInProgress() {
+    RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
+    synchronized (refreshQueue.mySessions) {
+      return !refreshQueue.mySessions.isEmpty();
+    }
+  }
 }

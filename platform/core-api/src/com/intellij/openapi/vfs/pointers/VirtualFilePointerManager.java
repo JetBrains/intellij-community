@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.intellij.openapi.vfs.pointers;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class VirtualFilePointerManager implements Disposable, ModificationTracker {
+public abstract class VirtualFilePointerManager extends SimpleModificationTracker implements Disposable {
   public static VirtualFilePointerManager getInstance() {
     return ServiceManager.getService(VirtualFilePointerManager.class);
   }

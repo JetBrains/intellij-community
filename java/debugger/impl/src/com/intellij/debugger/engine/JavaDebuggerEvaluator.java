@@ -20,7 +20,6 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -60,6 +59,11 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
                        @NotNull final XEvaluationCallback callback,
                        @Nullable XSourcePosition expressionPosition) {
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+
       @Override
       public void threadAction() {
         WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), TextWithImportsImpl.fromXExpression(

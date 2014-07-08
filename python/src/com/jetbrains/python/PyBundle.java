@@ -27,6 +27,7 @@ import java.util.ResourceBundle;
 // A copy of Ruby's.
 
 /**
+ * TODO: Copy/paste  with Django and PyBDD bundles
  * Resource bundle access.
  * Date: Nov 25, 2008 2:36:10 AM
  */

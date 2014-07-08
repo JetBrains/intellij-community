@@ -43,11 +43,11 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   @Nullable
-  public abstract Comparable getWeight(T t);
+  public abstract Comparable getWeight(T t, ProcessingContext context);
 
   @Override
-  public void addElement(T t) {
-    myNext.addElement(t);
+  public void addElement(T t, ProcessingContext context) {
+    myNext.addElement(t, context);
   }
 
   @Override
@@ -55,7 +55,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
-      final Comparable weight = getWeight(t);
+      final Comparable weight = getWeight(t, context);
       if (weight == null) {
         if (nulls == null) nulls = new SmartList<T>();
         nulls.add(t);
@@ -89,7 +89,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
     Map<T, String> weights = new IdentityHashMap<T, String>();
     for (T t : map.keySet()) {
-      weights.put(t, String.valueOf(getWeight(t)));
+      weights.put(t, String.valueOf(getWeight(t, context)));
     }
     if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       for (T t : map.keySet()) {

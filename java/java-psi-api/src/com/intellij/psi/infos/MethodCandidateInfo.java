@@ -158,6 +158,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return level;
   }
 
+  @NotNull
   public PsiSubstitutor getSiteSubstitutor() {
     PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
     if (myTypeArguments != null) {

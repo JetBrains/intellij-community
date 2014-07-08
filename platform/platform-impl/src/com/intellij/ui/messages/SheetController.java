@@ -16,7 +16,9 @@
 package com.intellij.ui.messages;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -34,7 +36,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * Created by Denis Fokin
@@ -120,9 +121,6 @@ public class SheetController {
       if (buttonTitle.equals(focusedButton)) {
         myFocusedButton = buttons[i];
       }
-      if (buttonTitle.equals("Cancel")) {
-        myResult = "Cancel";
-      }
     }
 
     if (myFocusedButton == null) {
@@ -130,7 +128,7 @@ public class SheetController {
     }
 
     if (myResult == null) {
-      myResult = buttonTitles[0];
+      myResult = Messages.CANCEL_BUTTON;
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);

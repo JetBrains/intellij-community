@@ -615,99 +615,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement) {
-    return new DocumentationCollector() {
-
-      @Override
-      @Nullable
-      public String getDocumentation() throws Exception {
-        final DocumentationProvider provider = ApplicationManager.getApplication().runReadAction(
-            new Computable<DocumentationProvider>() {
-              @Override
-              public DocumentationProvider compute() {
-                return getProviderFromElement(element, originalElement);
-              }
-            }
-        );
-        if (myParameterInfoController != null) {
-          final String doc = ApplicationManager.getApplication().runReadAction(
-              new NullableComputable<String>() {
-                @Override
-                public String compute() {
-                  return generateParameterInfoDocumentation(provider);
-                }
-              }
-          );
-          if (doc != null) return doc;
-        }
-        if (provider instanceof ExternalDocumentationProvider) {
-          final List<String> urls = ApplicationManager.getApplication().runReadAction(
-              new NullableComputable<List<String>>() {
-                @Override
-                public List<String> compute() {
-                  final SmartPsiElementPointer originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
-                  final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
-                  if (((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement)) {
-                    return provider.getUrlFor(element, originalElement);
-                  }
-                  return null;
-                }
-              }
-          );
-          if (urls != null) {
-            final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, element, urls);
-            if (doc != null) return doc;
-          }
-        }
-        return ApplicationManager.getApplication().runReadAction(
-            new Computable<String>() {
-              @Override
-              @Nullable
-              public String compute() {
-                final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
-                return provider.generateDoc(element, originalElement != null ? originalElement.getElement() : null);
-              }
-            }
-        );
-      }
-
-      @Nullable
-      private String generateParameterInfoDocumentation(DocumentationProvider provider) {
-        final Object[] objects = myParameterInfoController.getSelectedElements();
-
-        if (objects.length > 0) {
-          @NonNls StringBuffer sb = null;
-
-          for (Object o : objects) {
-            PsiElement parameter = null;
-            if (o instanceof PsiElement) {
-              parameter = (PsiElement)o;
-            }
-
-            if (parameter != null) {
-              final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
-              final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
-              if (str2 == null) continue;
-              if (sb == null) sb = new StringBuffer();
-              sb.append(str2);
-              sb.append("<br>");
-            }
-            else {
-              sb = null;
-              break;
-            }
-          }
-
-          if (sb != null) return sb.toString();
-        }
-        return null;
-      }
-
-      @Override
-      @Nullable
-      public PsiElement getElement() {
-        return element.isValid() ? element : null;
-      }
-    };
+    return new DefaultDocumentationCollector(element, originalElement);
   }
 
   @Nullable
@@ -813,7 +721,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               component.setText(component.getText(), element, true, clearHistory);
             }
             else {
-              component.setData(element, documentationText, clearHistory);
+              component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl());
             }
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
@@ -945,6 +853,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                 public PsiElement getElement() {
                   return psiElement;
                 }
+
+                @Nullable
+                @Override
+                public String getEffectiveExternalUrl() {
+                  return url;
+                }
               }, component);
               processed = true;
             }
@@ -991,6 +905,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               //}
 
               return psiElement;
+            }
+
+            @Nullable
+            @Override
+            public String getEffectiveExternalUrl() {
+              return url;
             }
           }, component);
       }
@@ -1062,5 +982,122 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     String getDocumentation() throws Exception;
     @Nullable
     PsiElement getElement();
+    @Nullable
+    String getEffectiveExternalUrl();
+  }
+
+  private class DefaultDocumentationCollector implements DocumentationCollector {
+
+    private final PsiElement myElement;
+    private final PsiElement myOriginalElement;
+
+    private String myEffectiveUrl;
+
+    public DefaultDocumentationCollector(PsiElement element, PsiElement originalElement) {
+      myElement = element;
+      myOriginalElement = originalElement;
+    }
+
+    @Override
+    @Nullable
+    public String getDocumentation() throws Exception {
+      final DocumentationProvider provider = ApplicationManager.getApplication().runReadAction(
+          new Computable<DocumentationProvider>() {
+            @Override
+            public DocumentationProvider compute() {
+              return getProviderFromElement(myElement, myOriginalElement);
+            }
+          }
+      );
+      if (myParameterInfoController != null) {
+        final String doc = ApplicationManager.getApplication().runReadAction(
+            new NullableComputable<String>() {
+              @Override
+              public String compute() {
+                return generateParameterInfoDocumentation(provider);
+              }
+            }
+        );
+        if (doc != null) return doc;
+      }
+      if (provider instanceof ExternalDocumentationProvider) {
+        final List<String> urls = ApplicationManager.getApplication().runReadAction(
+            new NullableComputable<List<String>>() {
+              @Override
+              public List<String> compute() {
+                final SmartPsiElementPointer originalElementPtr = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+                final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
+                if (((ExternalDocumentationProvider)provider).hasDocumentationFor(myElement, originalElement)) {
+                  return provider.getUrlFor(myElement, originalElement);
+                }
+                return null;
+              }
+            }
+        );
+        if (urls != null) {
+          for (String url : urls) {
+            final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, myElement, Collections.singletonList(url));
+            if (doc != null) {
+              myEffectiveUrl = url;
+              return doc;
+            }
+          }
+        }
+      }
+      return ApplicationManager.getApplication().runReadAction(
+          new Computable<String>() {
+            @Override
+            @Nullable
+            public String compute() {
+              final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+              return provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
+            }
+          }
+      );
+    }
+
+    @Nullable
+    private String generateParameterInfoDocumentation(DocumentationProvider provider) {
+      final Object[] objects = myParameterInfoController.getSelectedElements();
+
+      if (objects.length > 0) {
+        @NonNls StringBuffer sb = null;
+
+        for (Object o : objects) {
+          PsiElement parameter = null;
+          if (o instanceof PsiElement) {
+            parameter = (PsiElement)o;
+          }
+
+          if (parameter != null) {
+            final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
+            final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
+            if (str2 == null) continue;
+            if (sb == null) sb = new StringBuffer();
+            sb.append(str2);
+            sb.append("<br>");
+          }
+          else {
+            sb = null;
+            break;
+          }
+        }
+
+        if (sb != null) return sb.toString();
+      }
+      return null;
+    }
+
+    @Override
+    @Nullable
+    public PsiElement getElement() {
+      return myElement.isValid() ? myElement : null;
+    }
+
+    @Nullable
+    @Override
+    public String getEffectiveExternalUrl() {
+      return myEffectiveUrl;
+    }
   }
 }

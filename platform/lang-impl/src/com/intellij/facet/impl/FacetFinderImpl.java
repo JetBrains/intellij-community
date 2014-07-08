@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Disposer;
@@ -123,36 +124,43 @@ public class FacetFinderImpl extends FacetFinder {
     return Collections.<F>emptyList();
   }
 
-  private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends ProjectWideFacetAdapter<F>
-                                                                           implements ModificationTracker, Disposable {
-    private long myModificationCount;
-
+  private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
     public AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
       ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }
 
     @Override
     public void facetAdded(final F facet) {
-      myModificationCount++;
+      incModificationCount();
     }
 
     @Override
     public void facetRemoved(final F facet) {
-      myModificationCount++;
+      incModificationCount();
     }
 
     @Override
     public void facetConfigurationChanged(final F facet) {
-      myModificationCount++;
+      incModificationCount();
+    }
+
+    @Override
+    public void firstFacetAdded() {
+
+    }
+
+    @Override
+    public void beforeFacetRemoved(F facet) {
+
+    }
+
+    @Override
+    public void allFacetsRemoved() {
+
     }
 
     @Override
     public void dispose() {
-    }
-
-    @Override
-    public long getModificationCount() {
-      return myModificationCount;
     }
   }
 }

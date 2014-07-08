@@ -98,7 +98,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        UpdateChecker.updateAndShowResult(null, false, null, UpdateSettings.getInstance());
+        UpdateChecker.updateAndShowResult(null, false, UpdateSettings.getInstance());
       }
     })));
     footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));

@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
+ * @see MultiMap#createConcurrentSet()
  * @author peter
  */
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {

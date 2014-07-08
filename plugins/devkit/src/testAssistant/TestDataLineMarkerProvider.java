@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,13 +63,16 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
         return new LineMarkerInfo<PsiMethod>(
           method, method.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
           GutterIconRenderer.Alignment.LEFT);
-      }
+      }                                                                                         
     } else if (element instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)element;
       final String basePath = getTestDataBasePath(psiClass);
       if (basePath != null) {
+        PsiModifierList modifierList = psiClass.getModifierList();
+        assert modifierList != null;
         return new LineMarkerInfo<PsiClass>(
-          psiClass, psiClass.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new GutterIconNavigationHandler<PsiClass>() {
+          psiClass, modifierList.getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL,
+          new TooltipProvider(basePath), new GutterIconNavigationHandler<PsiClass>() {
           @Override
           public void navigate(MouseEvent e, PsiClass elt) {
             final VirtualFile baseDir = VfsUtil.findFileByIoFile(new File(basePath), true);
@@ -76,7 +80,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
               new OpenFileDescriptor(psiClass.getProject(), baseDir).navigate(true);
             }
           }
-        }, 
+        },
           GutterIconRenderer.Alignment.LEFT);
       }
     }
@@ -101,7 +105,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     if (testDataPath == null) {
       return false;
     }
-    List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
+    List<String> fileNames = new TestDataReferenceCollector(testDataPath, TestDataGuessByExistingFilesUtil.getTestName(name)).collectTestDataReferences(method);
     return fileNames != null && !fileNames.isEmpty();
   }
 
@@ -144,4 +148,33 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     return null;
   }
 
+  private static class TooltipProvider implements Function<PsiClass, String> {
+    @NotNull private final String myBasePath;
+
+    public TooltipProvider(@NotNull String basePath) {
+      myBasePath = basePath;
+    }
+
+    @Override
+    public String fun(PsiClass aClass) {
+      return myBasePath;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof TooltipProvider)) return false;
+
+      TooltipProvider provider = (TooltipProvider)o;
+
+      if (!myBasePath.equals(provider.myBasePath)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myBasePath.hashCode();
+    }
+  }
 }

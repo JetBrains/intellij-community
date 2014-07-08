@@ -30,9 +30,10 @@ import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -55,6 +56,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -66,6 +68,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -273,7 +276,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
                                        @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
-    Application application = ApplicationManager.getApplication();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.assertIsDispatchThread();
     if (application.isWriteAccessAllowed()) {
       throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
@@ -282,14 +285,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
+
+    // refresh will fire write actions interfering with highlighting
+    while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunning()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
     setUpdateByTimerEnabled(false);
     FileStatusMap fileStatusMap = getFileStatusMap();
-    for (int ignoreId : toIgnore) {
-      fileStatusMap.markFileUpToDate(document, ignoreId);
-    }
     fileStatusMap.allowDirt(canChangeDocument);
 
     Map<FileEditor, HighlightingPass[]> map = new HashMap<FileEditor, HighlightingPass[]>();
@@ -300,6 +306,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
       assert array.length != 0 : "Highlighting is disabled for the file " + file;
       map.put(textEditor, array);
     }
+    for (int ignoreId : toIgnore) {
+      fileStatusMap.markFileUpToDate(document, ignoreId);
+    }
+
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {

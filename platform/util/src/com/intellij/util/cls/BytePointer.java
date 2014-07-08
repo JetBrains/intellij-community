@@ -15,6 +15,7 @@
  */
 package com.intellij.util.cls;
 
+/** @deprecated to be removed in IDEA 15 */
 public class BytePointer {
   public final byte[] bytes;
   public int offset;

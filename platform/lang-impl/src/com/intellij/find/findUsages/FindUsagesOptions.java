@@ -21,7 +21,6 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -31,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
+public class FindUsagesOptions implements Cloneable {
+  @NotNull
   public SearchScope searchScope;
 
   public boolean isSearchForTextOccurrences = true;
@@ -46,15 +46,17 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
   public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
     String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();
     List<SearchScope> predefined = ScopeChooserCombo.getPredefinedScopes(project, dataContext, true, false, false, false);
+    SearchScope resultScope = null;
     for (SearchScope scope : predefined) {
       if (scope.getDisplayName().equals(defaultScopeName)) {
-        searchScope = scope;
+        resultScope = scope;
         break;
       }
     }
-    if (searchScope == null) {
-      searchScope = ProjectScope.getProjectScope(project);
+    if (resultScope == null) {
+      resultScope = ProjectScope.getProjectScope(project);
     }
+    searchScope = resultScope;
   }
 
   public FindUsagesOptions(@NotNull SearchScope searchScope) {
@@ -63,9 +65,15 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
 
   @Override
   public FindUsagesOptions clone() {
-    return (FindUsagesOptions)super.clone();
+    try {
+      return (FindUsagesOptions)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -74,13 +82,12 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
 
     if (isSearchForTextOccurrences != that.isSearchForTextOccurrences) return false;
     if (isUsages != that.isUsages) return false;
-    if (searchScope != null ? !searchScope.equals(that.searchScope) : that.searchScope != null) return false;
-
-    return true;
+    return searchScope.equals(that.searchScope);
   }
 
+  @Override
   public int hashCode() {
-    int result = searchScope == null ? 0 : searchScope.hashCode();
+    int result = searchScope.hashCode();
     result = 31 * result + (isSearchForTextOccurrences ? 1 : 0);
     result = 31 * result + (isUsages ? 1 : 0);
     return result;

@@ -92,6 +92,15 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return ids != null && !ids.isEmpty();
   }
 
+  @Nullable
+  public Set<PluginId> getRequiredPlugins(PluginId pluginId) {
+    return myDependentToRequiredListMap.get(pluginId);
+  }
+
+  public boolean isLoaded(PluginId pluginId) {
+    return myEnabled.get(pluginId) != null;
+  }
+
   public boolean appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
     final PluginId descrId = descriptor.getPluginId();
     final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);

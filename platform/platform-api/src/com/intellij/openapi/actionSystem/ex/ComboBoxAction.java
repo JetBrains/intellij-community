@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private boolean myMouseInside = false;
     private JBPopup myPopup;
     private boolean myForceTransparent = false;
+    private Boolean myForceEnabled = null;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -201,6 +202,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
+    @Override
+    public void setEnabled(final boolean enabled) {
+      super.setEnabled(enabled);
+      myForceEnabled = enabled;
+    }
+
     public void setForceTransparent(boolean transparent) {
       myForceTransparent = transparent;
     }
@@ -284,9 +291,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void updateUI() {
       super.updateUI();
-      if (!UIUtil.isUnderGTKLookAndFeel()) {
-        setBorder(UIUtil.getButtonBorder());
-      }
+      //if (!UIUtil.isUnderGTKLookAndFeel()) {
+      //  setBorder(UIUtil.getButtonBorder());
+      //}
+      //((JComponent)getParent().getParent()).revalidate();
     }
 
     protected class MyButtonModel extends DefaultButtonModel {
@@ -359,12 +367,20 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
+    public Font getFont() {
+      return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
+    }
+
+    @Override
     public void paint(Graphics g) {
       GraphicsUtil.setupAntialiasing(g);
       GraphicsUtil.setupAAPainting(g);
       final Dimension size = getSize();
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
 
+      final Color textColor = (myForceEnabled == null ? myPresentation.isEnabled() : myForceEnabled)
+                      ? UIManager.getColor("Panel.foreground")
+                      : UIUtil.getInactiveTextColor();
       if (myForceTransparent) {
         final Icon icon = getIcon();
         int x = 7;
@@ -375,7 +391,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         if (!StringUtil.isEmpty(getText())) {
           final Font font = getFont();
           g.setFont(font);
-          g.setColor(UIManager.getColor("Panel.foreground"));
+          g.setColor(textColor);
           g.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
         }
       } else {
@@ -410,7 +426,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         if (!StringUtil.isEmpty(getText())) {
           final Font font = getFont();
           g2.setFont(font);
-          g2.setColor(UIManager.getColor("Panel.foreground"));
+          g2.setColor(textColor);
           g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
         }
       }
@@ -440,6 +456,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     protected void updateButtonSize() {
       invalidate();
       repaint();
+      setSize(getPreferredSize());
     }
   }
 }

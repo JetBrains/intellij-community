@@ -602,4 +602,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
                                                                              @NotNull PsiType expectedType) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

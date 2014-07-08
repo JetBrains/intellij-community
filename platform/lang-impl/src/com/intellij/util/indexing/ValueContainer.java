@@ -52,7 +52,17 @@ public abstract class ValueContainer<Value> {
   public abstract IntPredicate getValueAssociationPredicate(Value value);
 
   @NotNull
-  public abstract Iterator<Value> getValueIterator();
+  public abstract ValueIterator<Value> getValueIterator();
+
+  public interface ValueIterator<Value> extends Iterator<Value> {
+    @NotNull
+    IntIterator getInputIdsIterator();
+
+    @NotNull
+    IntPredicate getValueAssociationPredicate();
+
+    Object getFileSetObject();
+  }
 
   @NotNull
   public abstract List<Value> toValueList();
@@ -65,9 +75,9 @@ public abstract class ValueContainer<Value> {
   }
 
   public final boolean forEach(@NotNull ContainerAction<Value> action) {
-    for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (final ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
-      for (final IntIterator intIterator = getInputIdsIterator(value); intIterator.hasNext();) {
+      for (final IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
         if (!action.perform(intIterator.next(), value)) return false;
       }
     }

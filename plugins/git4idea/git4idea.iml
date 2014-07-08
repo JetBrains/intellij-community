@@ -48,17 +48,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="jgit-2.1.0">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jgit/org.eclipse.jgit-2.1.0.201209190230-r.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/jgit/org.eclipse.jgit-2.1.0.201209190230-r_source.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="dvcs" exported="" />
     <orderEntry type="library" scope="TEST" name="cucumber-jvm" level="project" />

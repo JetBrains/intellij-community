@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -314,7 +315,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project,
-                                              @NotNull ChooseByNameModel model,
+                                              @NotNull final ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
                                               @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow,
@@ -323,8 +324,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow,
-                                                       initialIndex);
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex) {
+      @NotNull
+      @Override
+      protected Set<Object> filter(@NotNull Set<Object> elements) {
+        return model instanceof EdtSortingModel ? super.filter(((EdtSortingModel)model).sort(elements)) : super.filter(elements);
+      }
+    };
 
     if (project != null) {
       project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.AbsentInformationException;
@@ -191,6 +192,18 @@ public class PositionManagerImpl implements PositionManager {
     if (psiClass != null) {
       final PsiElement element = psiClass.getNavigationElement();
       return element.getContainingFile();
+    }
+    else {
+      // for now just take the first file with the required name
+      // TODO: if there are more than one, we can try matching package name and sourcePath if available
+      try {
+        PsiFile[] files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project));
+        if (files.length > 0) {
+          return files[0];
+        }
+      }
+      catch (AbsentInformationException ignore) {
+      }
     }
 
     return null;

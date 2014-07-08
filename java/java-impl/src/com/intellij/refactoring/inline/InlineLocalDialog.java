@@ -23,15 +23,15 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
-public class InlineLocalDialog extends InlineOptionsDialog {
+public class InlineLocalDialog extends AbstractInlineLocalDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   private final PsiVariable myVariable;
 
   private int myOccurrencesNumber = -1;
 
-  public InlineLocalDialog(Project project, PsiVariable variable, PsiJavaCodeReferenceElement ref, int occurrencesCount) {
-    super(project, true, variable);
+  public InlineLocalDialog(Project project, PsiVariable variable, final PsiJavaCodeReferenceElement ref, int occurrencesCount) {
+    super(project, variable, ref, occurrencesCount);
     myVariable = variable;
     myInvokedOnReference = ref != null;
 

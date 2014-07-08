@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -134,6 +135,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         }
         final PsiVariable variable = (PsiVariable)target;
         if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
+          return;
+        }
+        if (variable instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(expression, (PsiField)variable, true) != null) {
           return;
         }
         registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

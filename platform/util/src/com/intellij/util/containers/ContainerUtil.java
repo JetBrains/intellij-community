@@ -2061,8 +2061,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract("null -> true")
-  public static <T> boolean isEmpty(List<T> list) {
-    return list == null || list.isEmpty();
+  public static <T> boolean isEmpty(Collection<T> collection) {
+    return collection == null || collection.isEmpty();
   }
 
   private interface ConcurrentMapFactory {

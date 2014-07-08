@@ -24,8 +24,9 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.NullableConsumer;
-import com.intellij.util.ui.CenteredIcon;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonSdkChooserCombo;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
@@ -43,11 +44,12 @@ import icons.PythonIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -60,7 +62,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   private boolean myInstallFramework;
   private TextFieldWithBrowseButton myLocationField;
   protected final File myProjectDirectory;
-  private Button myCreateButton;
+  private ActionButtonWithText myCreateButton;
   private JLabel myErrorLabel;
   private AnAction myCreateAction;
 
@@ -86,7 +88,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       });
     }
 
-    myCreateAction = new AnAction("Create    ", "Create Project", getIcon()) {
+    myCreateAction = new AnAction("Create", "Create Project", getIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         boolean isValid = checkValid();
@@ -103,25 +105,31 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   @Override
   public JPanel createPanel() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 450));
+    final JPanel scrollPanel = new JPanel(new BorderLayout());
 
-    final JPanel panel = createBasePanel();
-    mainPanel.add(panel, BorderLayout.NORTH);
-
-    final JPanel advancedSettings = createAdvancedSettings();
-    if (advancedSettings != null)
-      mainPanel.add(advancedSettings, BorderLayout.CENTER);
-
-    final JPanel bottomPanel = new JPanel(new BorderLayout());
-    myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
-
-    myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
+    mainPanel.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 400));
     myErrorLabel = new JLabel("");
     myErrorLabel.setForeground(JBColor.RED);
-    bottomPanel.add(myErrorLabel, BorderLayout.SOUTH);
-    bottomPanel.add(myCreateButton, BorderLayout.CENTER);
-    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+    myCreateButton = new Button(myCreateAction, myCreateAction.getTemplatePresentation());
 
+    final JPanel panel = createBasePanel();
+    scrollPanel.add(panel, BorderLayout.NORTH);
+    final JPanel advancedSettings = createAdvancedSettings();
+    if (advancedSettings != null) {
+      scrollPanel.add(advancedSettings, BorderLayout.CENTER);
+    }
+    final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+    final JPanel bottomPanel = new JPanel(new BorderLayout());
+
+
+    myCreateButton.setPreferredSize(new Dimension(mainPanel.getPreferredSize().width, 40));
+    bottomPanel.add(myErrorLabel, BorderLayout.NORTH);
+    bottomPanel.add(myCreateButton, BorderLayout.EAST);
+    mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     return mainPanel;
   }
 
@@ -236,7 +244,7 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         return false;
       }
       if (myProjectGenerator instanceof PythonProjectGenerator) {
-        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValitation();
+        final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getSdk());
         if (!warningResult.isOk()) {
           setWarningText(warningResult.getErrorMessage());
         }
@@ -265,14 +273,21 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
         final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
         final boolean onlyWithCache =
           PythonSdkFlavor.getFlavor(sdk) instanceof JythonSdkFlavor || PythonSdkFlavor.getFlavor(sdk) instanceof PyPySdkFlavor;
+        String warningText = frameworkName + " will be installed on selected interpreter";
         try {
           if (onlyWithCache && packageManager.cacheIsNotNull() || !onlyWithCache) {
-            final PyPackage pip = packageManager.findPackage("pip");
-            myInstallFramework = pip != null;
-            setWarningText(frameworkName + " will be installed on selected interpreter");
+            final PyPackage pip = packageManager.findInstalledPackage("pip");
+            myInstallFramework = true;
+            if (pip == null) {
+              warningText = "pip and " + warningText;
+            }
+            setWarningText(warningText);
           }
         }
         catch (PyExternalProcessException ignored) {
+          myInstallFramework = true;
+          warningText = "pip and " + warningText;
+          setWarningText(warningText);
         }
         if (!myInstallFramework) {
           setErrorText("No " + frameworkName + " support installed in selected interpreter");
@@ -339,24 +354,12 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
   }
 
   private static class Button extends ActionButtonWithText {
-    private static final Icon DEFAULT_ICON = PythonIcons.Python.Python;
+    private final Border myBorder;
 
     public Button(AnAction action, Presentation presentation) {
-      super(action,
-            wrapIcon(presentation),
-            "NewProject",
-            new Dimension(32, 32));
-      setBorder(new EmptyBorder(3, 3, 3, 3));
-    }
-
-    @Override
-    public String getToolTipText() {
-      return null;
-    }
-
-    @Override
-    protected int horizontalTextAlignment() {
-      return SwingConstants.RIGHT;
+      super(action, presentation, "NewProject", new Dimension(70, 50));
+      myBorder = UIUtil.isUnderDarcula() ? UIUtil.getButtonBorder() : BorderFactory.createLineBorder(UIUtil.getBorderColor());
+      setBorder(myBorder);
     }
 
     @Override
@@ -364,11 +367,29 @@ abstract public class AbstractProjectSettingsStep extends AbstractActionWithPane
       return 8;
     }
 
-    private static Presentation wrapIcon(Presentation presentation) {
-      Icon original = presentation.getIcon();
-      CenteredIcon centered = new CenteredIcon(original != null ? original : DEFAULT_ICON, 40, 40, false);
-      presentation.setIcon(centered);
-      return presentation;
+    @Override
+    public Insets getInsets() {
+      return new Insets(5,10,5,5);
+    }
+
+    @Override
+    protected int horizontalTextAlignment() {
+      return SwingConstants.LEFT;
+    }
+
+    @Override
+    public String getToolTipText() {
+      return null;
+    }
+
+    protected void processMouseEvent(MouseEvent e) {
+      super.processMouseEvent(e);
+      if (e.getID() == MouseEvent.MOUSE_ENTERED) {
+        setBorder(null);
+      }
+      else if (e.getID() == MouseEvent.MOUSE_EXITED) {
+        setBorder(myBorder);
+      }
     }
   }
 

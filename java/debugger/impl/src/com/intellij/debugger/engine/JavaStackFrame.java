@@ -151,6 +151,11 @@ public class JavaStackFrame extends XStackFrame {
     }
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+
+      @Override
       public void threadAction() {
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(), children, node);
@@ -202,8 +207,13 @@ public class JavaStackFrame extends XStackFrame {
         }
       }
 
+      DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+      if (debugProcess == null) {
+        return;
+      }
+
       // add last method return value if any
-      final Pair<Method, Value> methodValuePair = debuggerContext.getDebugProcess().getLastExecutedMethod();
+      final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
       if (methodValuePair != null) {
         ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(stackDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
@@ -222,11 +232,10 @@ public class JavaStackFrame extends XStackFrame {
 
       final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
       if (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-        if (thisObjectReference != null && evaluationContext.getDebugProcess().getVirtualMachineProxy().canGetSyntheticAttribute())  {
+        if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute())  {
           final ReferenceType thisRefType = thisObjectReference.referenceType();
           if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
             final ClassType clsType = (ClassType)thisRefType;
-            final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
             final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
             for (Field field : clsType.fields()) {
               if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil

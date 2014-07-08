@@ -244,12 +244,20 @@ public interface CaretModel {
   List<CaretState> getCaretsAndSelections();
 
   /**
-   * Executes the given task for each existing caret. Carets are iterated in their position order. Set of carets to iterate over is
+   * Same as {@link #runForEachCaret(CaretAction, boolean)} with <code>reverseOrder</code> set to <code>false</code>
+   */
+  void runForEachCaret(@NotNull CaretAction action);
+
+  /**
+   * Executes the given task for each existing caret. Set of carets to iterate over is
    * determined in the beginning and is not affected by the potential carets addition or removal by the task being executed.
    * At the end, merging of carets and selections is performed, so that no two carets will occur at the same logical position and
    * no two selection will overlap after this method is finished.
+   * <p>
+   * Carets are iterated in position order (top-to-bottom) if <code>reverseOrder</code> is <code>false</code>, and in reverse order
+   * if it's <code>true</code>.
    */
-  void runForEachCaret(@NotNull CaretAction action);
+  void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder);
 
   /**
    * Executes the given task, performing caret merging afterwards. Caret merging will not happen until the operation is finished.

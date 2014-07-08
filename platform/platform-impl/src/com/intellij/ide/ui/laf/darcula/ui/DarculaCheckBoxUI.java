@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,9 +74,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       g.fillRect(0, 0, size.width, size.height);
     }
 
-    if (b.isSelected() && b.getSelectedIcon() != null) {
+    final boolean selected = b.isSelected();
+    final boolean enabled = b.isEnabled();
+    if (selected && b.getSelectedIcon() != null) {
       b.getSelectedIcon().paintIcon(b, g, iconRect.x + 4, iconRect.y + 2);
-    } else if (!b.isSelected() && b.getIcon() != null) {
+    } else if (!selected && b.getIcon() != null) {
       b.getIcon().paintIcon(b, g, iconRect.x + 4, iconRect.y + 2);
     } else {
       final int x = iconRect.x + 3;
@@ -98,15 +100,18 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       final boolean armed = b.getModel().isArmed();
 
       if (c.hasFocus()) {
-        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed), w/2, h, getFocusedBackgroundColor2(armed)));
-        g.fillRoundRect(0, 0, w - 2, h - 2, 4, 4);
+        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected), w/2, h, getFocusedBackgroundColor2(armed, selected)));
+        g.fillRoundRect(0, 0, w, h, 4, 4);
 
         DarculaUIUtil.paintFocusRing(g, 1, 1, w - 2, h - 2);
       } else {
-        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(), w / 2, h, getBackgroundColor2()));
-        g.fillRoundRect(0, 0, w, h - 1 , 4, 4);
+        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected), w / 2, h, getBackgroundColor2(enabled,
+                                                                                                                           selected)));
+        g.fillRoundRect(0, 0, w, h , 4, 4);
 
-        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBorderColor1(b.isEnabled()), w / 2, h, getBorderColor2(b.isEnabled())));
+        final Color borderColor1 = getBorderColor1(enabled, selected);
+        final Color borderColor2 = getBorderColor2(enabled, selected);
+        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, borderColor1, w / 2, h, borderColor2));
         g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? 1 : 0), w, h - 1, 4, 4);
 
         g.setPaint(getInactiveFillColor());
@@ -114,14 +119,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       }
 
       if (b.getModel().isSelected()) {
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-        g.setStroke(new BasicStroke(1 *2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-        g.setPaint(getShadowColor(b.isEnabled()));
-        g.drawLine(4, 7, 7, 11);
-        g.drawLine(7, 11, w, 2);
-        g.setPaint(getCheckSignColor(b.isEnabled()));
-        g.drawLine(4, 5, 7, 9);
-        g.drawLine(7, 9, w, 0);
+        paintCheckSign(g, enabled, w, h);
       }
       g.translate(-x, -y);
       config.restore();
@@ -142,51 +140,72 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     }
   }
 
+  protected void paintCheckSign(Graphics2D g, boolean enabled, int w, int h) {
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    g.setStroke(new BasicStroke(1 *2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+    g.setPaint(getShadowColor(enabled, true));
+    g.drawLine(4, 7, 7, 11);
+    g.drawLine(7, 11, w, 2);
+    g.setPaint(getCheckSignColor(enabled, true));
+    g.drawLine(4, 5, 7, 9);
+    g.drawLine(7, 9, w, 0);
+  }
+
   protected Color getInactiveFillColor() {
     return getColor("inactiveFillColor", Gray._40.withAlpha(180));
   }
 
-  protected Color getBorderColor1(boolean enabled) {
-    return enabled ? getColor("borderColor1", Gray._120.withAlpha(0x5a))
-                   : getColor("disabledBorderColor1", Gray._120.withAlpha(90));
+  protected Color getBorderColor1(boolean enabled, boolean selected) {
+    return enabled ? getColor("borderColor1", Gray._120.withAlpha(0x5a), selected)
+                   : getColor("disabledBorderColor1", Gray._120.withAlpha(90), selected);
   }
 
-  protected Color getBorderColor2(boolean enabled) {
-    return enabled ? getColor("borderColor2", Gray._105.withAlpha(90))
-                   : getColor("disabledBorderColor2", Gray._105.withAlpha(90));
+  protected Color getBorderColor2(boolean enabled, boolean selected) {
+    return enabled ? getColor("borderColor2", Gray._105.withAlpha(90), selected)
+                   : getColor("disabledBorderColor2", Gray._105.withAlpha(90), selected);
   }
 
-  protected Color getBackgroundColor1() {
-    return getColor("backgroundColor1", Gray._110);
+  protected Color getBackgroundColor1(boolean enabled, boolean selected) {
+    return getColor("backgroundColor1", Gray._110, selected);
   }
 
-  protected Color getBackgroundColor2() {
-    return getColor("backgroundColor2", Gray._95);
+  protected Color getBackgroundColor2(boolean enabled, boolean selected) {
+    return getColor("backgroundColor2", Gray._95, selected);
   }
 
-  protected Color getCheckSignColor(boolean enabled) {
-    return enabled ? getColor("checkSignColor", Gray._170)
-                   : getColor("checkSignColorDisabled", Gray._120);
+  protected Color getCheckSignColor(boolean enabled, boolean selected) {
+    return enabled ? getColor("checkSignColor", Gray._170, selected)
+                   : getColor("checkSignColorDisabled", Gray._120, selected);
   }
 
-  protected Color getShadowColor(boolean enabled) {
-    return enabled ? getColor("shadowColor", Gray._30)
-                   : getColor("shadowColorDisabled", Gray._60);
+  protected Color getShadowColor(boolean enabled, boolean selected) {
+    return enabled ? getColor("shadowColor", Gray._30, selected)
+                   : getColor("shadowColorDisabled", Gray._60, selected);
   }
 
-  protected Color getFocusedBackgroundColor1(boolean armed) {
-    return armed ? getColor("focusedArmed.backgroundColor1", Gray._100)
-                 : getColor("focused.backgroundColor1", Gray._120);
+  protected Color getFocusedBackgroundColor1(boolean armed, boolean selected) {
+    return armed ? getColor("focusedArmed.backgroundColor1", Gray._100, selected)
+                 : getColor("focused.backgroundColor1", Gray._120, selected);
   }
 
-  protected Color getFocusedBackgroundColor2(boolean armed) {
-    return armed ? getColor("focusedArmed.backgroundColor2", Gray._55)
-                 : getColor("focused.backgroundColor2", Gray._75);
+  protected Color getFocusedBackgroundColor2(boolean armed, boolean selected) {
+    return armed ? getColor("focusedArmed.backgroundColor2", Gray._55, selected)
+                 : getColor("focused.backgroundColor2", Gray._75, selected);
   }
 
   protected static Color getColor(String shortPropertyName, Color defaultValue) {
     final Color color = UIManager.getColor("CheckBox.darcula." + shortPropertyName);
     return color == null ? defaultValue : color;
+  }
+
+  protected static Color getColor(String shortPropertyName, Color defaultValue, boolean selected) {
+    if (selected) {
+      final Color color = getColor(shortPropertyName + ".selected", null);
+      if (color != null) {
+        return color;
+      }
+    }
+    return getColor(shortPropertyName, defaultValue);
   }
 
   @Override

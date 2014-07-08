@@ -40,6 +40,7 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -65,6 +66,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -98,6 +100,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final JComponent mySettingsPanel;
   private final MyShowSettingsButton myShowSettingsButton;
   private boolean myIgnoreFontSizeSliderChange;
+  private String myEffectiveExternalUrl;
 
   private static class Context {
     final SmartPsiElementPointer element;
@@ -461,7 +464,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myForwardStack.clear();
     }
     updateControlState();
-    setData(element, text, clearHistory);
+    setData(element, text, clearHistory, null);
     if (clean) {
       myIsEmpty = false;
     }
@@ -480,7 +483,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myBackStack.clear();
   }
 
-  public void setData(PsiElement _element, String text, final boolean clearHistory) {
+  public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl) {
+    myEffectiveExternalUrl = effectiveExternalUrl;
     if (myElement != null) {
       myBackStack.push(saveContext());
       myForwardStack.clear();
@@ -641,8 +645,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(AnActionEvent e) {
       super.actionPerformed(e);
-      if (myHint.isVisible()) {
-        myHint.cancel();
+      final JBPopup hint = myHint;
+      if (hint != null && hint.isVisible()) {
+        hint.cancel();
       }
     }
 
@@ -682,10 +687,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
 
         if (!processed) {
-          final List<String> urls = provider.getUrlFor(element, originalElement);
-          assert urls != null : provider;
-          assert !urls.isEmpty() : provider;
-          ExternalJavaDocAction.showExternalJavadoc(urls);
+          final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+          final List<String> urls;
+          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
+            urls = Collections.singletonList(myEffectiveExternalUrl);
+          } else {
+            urls = provider.getUrlFor(element, originalElement);
+            assert urls != null : provider;
+            assert !urls.isEmpty() : provider;
+          }
+          ExternalJavaDocAction.showExternalJavadoc(urls, component);
         }
       }
     }

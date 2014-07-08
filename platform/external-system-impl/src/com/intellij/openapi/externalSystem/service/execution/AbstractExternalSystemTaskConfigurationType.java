@@ -109,7 +109,9 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
 
   @NotNull
   public static String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
-    return generateName(project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames());
+    return generateName(
+      project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames(), settings.getExecutionName()
+    );
   }
 
   @NotNull
@@ -121,8 +123,16 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   public static String generateName(@NotNull Project project,
                                     @NotNull ProjectSystemId externalSystemId,
                                     @Nullable String externalProjectPath,
-                                    @NotNull List<String> taskNames)
-  {
+                                    @NotNull List<String> taskNames) {
+    return generateName(project, externalSystemId, externalProjectPath, taskNames, null);
+  }
+
+  @NotNull
+  public static String generateName(@NotNull Project project,
+                                    @NotNull ProjectSystemId externalSystemId,
+                                    @Nullable String externalProjectPath,
+                                    @NotNull List<String> taskNames,
+                                    @Nullable String executionName) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     AbstractExternalSystemSettings<?, ?,?> s = manager.getSettingsProvider().fun(project);
@@ -168,12 +178,16 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     }
 
     buffer.append("[");
-    if (!taskNames.isEmpty()) {
+    if (!StringUtil.isEmpty(executionName)) {
+      buffer.append(executionName);
+    }
+    else if (!taskNames.isEmpty()) {
       for (String taskName : taskNames) {
         buffer.append(taskName).append(" ");
       }
       buffer.setLength(buffer.length() - 1);
     }
+
     buffer.append("]");
 
     return buffer.toString();

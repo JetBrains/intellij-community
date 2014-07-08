@@ -41,7 +41,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
   public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
   @Override
-  public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final XmlAttributeValuePattern attributeValueInFxml = XmlPatterns.xmlAttributeValue().inVirtualFile(
       virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION));
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER))

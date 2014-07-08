@@ -146,7 +146,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project), StdFileTypes.XML);
       final TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
         @Override
-        public boolean execute(PsiElement element, int offsetInElement) {
+        public boolean execute(@NotNull PsiElement element, int offsetInElement) {
           final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
           final String className = tag == null ? null : tag.getAttributeValue("className");
           if (className != null && tag.getLocalName().endsWith("patternClass")) {

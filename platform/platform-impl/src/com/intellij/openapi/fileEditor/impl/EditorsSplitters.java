@@ -833,6 +833,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       });
       final EditorWindow window = windowRef.get();
       LOG.assertTrue(window != null);
+      VirtualFile focusedFile = null;
 
       for (int i = 0; i < fileElements.size(); i++) {
         final Element file = fileElements.get(i);
@@ -845,6 +846,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
           fileEditorManager.openFileImpl4(window, entry.myFile, entry, isCurrentInTab, isCurrentInTab, pin, i);
+          if (isCurrentInTab) {
+            focusedFile = entry.myFile;
+          }
           if (document != null) {
             // This is just to make sure document reference is kept on stack till this point
             // so that document is available for folding state deserialization in HistoryEntry constructor
@@ -858,6 +862,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             LOG.error(e);
           }
         }
+      }
+      if (focusedFile != null) {
+        getManager().addSelectionRecord(focusedFile, window);
       }
       return window.myPanel;
     }

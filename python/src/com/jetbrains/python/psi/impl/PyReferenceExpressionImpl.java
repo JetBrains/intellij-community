@@ -57,13 +57,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     super(astNode);
   }
 
-  @Override
   @NotNull
+  @Override
   public PsiPolyVariantReference getReference() {
     return getReference(PyResolveContext.defaultContext());
   }
 
   @NotNull
+  @Override
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PsiFile file = getContainingFile();
     final PyExpression qualifier = getQualifier();

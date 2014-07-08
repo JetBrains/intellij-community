@@ -41,7 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -79,7 +78,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
   private static final Pattern MAIN_CLASS_NAME_PATTERN = Pattern.compile("\nSTARTER_MAIN_CLASS=(.*)\n");
 
-  public static final GroovyScriptType INSTANCE = new GradleScriptType();
+  public static final GradleScriptType INSTANCE = new GradleScriptType();
 
   private GradleScriptType() {
     super(GradleConstants.EXTENSION);
@@ -264,7 +263,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
         if (scriptPath == null) {
           throw new CantRunException("Target script is undefined");
         }
-        params.getProgramParametersList().add("--build-file");
+        params.getProgramParametersList().add("--project-dir");
         params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
         params.getProgramParametersList().addParametersString(scriptParameters);
@@ -273,7 +272,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
   }
 
   @NotNull
-  private static String findMainClass(VirtualFile gradleHome, VirtualFile script, Project project) {
+  private static String findMainClass(VirtualFile gradleHome, @Nullable VirtualFile script, Project project) {
     final String userDefined = System.getProperty("gradle.launcher.class");
     if (StringUtil.isNotEmpty(userDefined)) {
       return userDefined;
@@ -298,9 +297,12 @@ public class GradleScriptType extends GroovyRunnableScriptType {
       }
     }
 
-    final PsiFile grFile = PsiManager.getInstance(project).findFile(script);
-    if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
-      return "org.gradle.BootstrapMain";
+    final PsiFile grFile;
+    if (script != null) {
+      grFile = PsiManager.getInstance(project).findFile(script);
+      if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
+        return "org.gradle.BootstrapMain";
+      }
     }
 
     return "org.gradle.launcher.GradleMain";
@@ -329,10 +331,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
       files = GradleBuildClasspathManager.getInstance(file.getProject()).getModuleClasspathEntries(modulePath);
 
-      for (final VirtualFile root : files) {
-        result = result.uniteWith(new NonClasspathDirectoryScope(root));
-      }
-      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result, modulePath);
+      result = new ExternalModuleBuildGlobalSearchScope(module.getProject(), result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
     }
     return result;
   }

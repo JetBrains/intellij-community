@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -29,7 +30,7 @@ import com.intellij.openapi.editor.Editor;
 public class CompletionContributorForInplaceRename extends CompletionContributor {
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final Editor editor = parameters.getEditor();
     final TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null) {

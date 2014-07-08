@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.WeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,20 +33,22 @@ import java.util.List;
  */
 public class MockFileManager implements FileManager {
   private final PsiManagerEx myManager;
-  private final FactoryMap<VirtualFile,FileViewProvider> myViewProviders = new FactoryMap<VirtualFile, FileViewProvider>() {
+  // in mock tests it's LightVirtualFile, they're only alive when they're referenced, 
+  // and there can not be several instances representing the same file
+  private final WeakFactoryMap<VirtualFile, FileViewProvider> myViewProviders = new WeakFactoryMap<VirtualFile, FileViewProvider>() {
     @Override
-    protected FileViewProvider create(final VirtualFile key) {
+    protected FileViewProvider create(VirtualFile key) {
       return new SingleRootFileViewProvider(myManager, key);
     }
   };
 
   @Override
   @NotNull
-  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean eventSystemEnabled) {
+  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled) {
     return new SingleRootFileViewProvider(myManager, file, eventSystemEnabled);
   }
 
-  public MockFileManager(final PsiManagerEx manager) {
+  public MockFileManager(PsiManagerEx manager) {
     myManager = manager;
   }
 
@@ -76,7 +78,7 @@ public class MockFileManager implements FileManager {
   @Override
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    final FileViewProvider provider = findCachedViewProvider(vFile);
+    FileViewProvider provider = findCachedViewProvider(vFile);
     return provider.getPsi(provider.getBaseLanguage());
   }
 

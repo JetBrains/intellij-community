@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
@@ -31,6 +32,7 @@ import java.util.Iterator;
 * @author peter
 */
 public class MinusculeMatcher implements Matcher {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.MinusculeMatcher");
   /**
    * Lowercase humps don't work for parts separated by these characters
    * Need either an explicit uppercase letter or the same separator character in prefix
@@ -137,6 +139,10 @@ public class MinusculeMatcher implements Matcher {
   }
 
   public int matchingDegree(@NotNull String name) {
+    return matchingDegree(name, false);
+  }
+
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
     FList<TextRange> iterable = matchingFragments(name);
     if (iterable == null) return Integer.MIN_VALUE;
     if (iterable.isEmpty()) return 0;
@@ -176,7 +182,7 @@ public class MinusculeMatcher implements Matcher {
           else if (isHumpStart) matchingCase += 1; // if a lowercase matches lowercase hump start, that also means something 
         } else if (isHumpStart) {
           // disfavor hump starts where pattern letter case doesn't match name case
-          matchingCase -= 20;
+          matchingCase -= 1;
         }
       }
     }
@@ -188,8 +194,9 @@ public class MinusculeMatcher implements Matcher {
 
     return (wordStart ? 1000 : 0) + 
            integral * 10 + 
-           matchingCase * (startMatch ? 10 : 1) + // in start matches, case is more important; in middle matches - fragment length (integral)
+           matchingCase * (startMatch && valueStartCaseMatch ? 10 : 1) +
            (afterSeparator ? 0 : 2) + 
+           (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
   }
 
@@ -213,7 +220,7 @@ public class MinusculeMatcher implements Matcher {
   }
 
   @Nullable
-  public FList<TextRange> matchingFragments(@NotNull String name) {
+  private FList<TextRange> calcMatchingFragments(@NotNull String name) {
     MatchingState state = myMatchingState.get();
     state.initializeState(name);
     try {
@@ -222,6 +229,22 @@ public class MinusculeMatcher implements Matcher {
     finally {
       state.releaseState();
     }
+  }
+
+  @Nullable
+  public FList<TextRange> matchingFragments(@NotNull String name) {
+    long start = System.currentTimeMillis();
+    FList<TextRange> result = calcMatchingFragments(name);
+    if (System.currentTimeMillis() - start > 1000 &&
+        // if there's little free memory, it might have been the gc affecting the performance
+        Runtime.getRuntime().freeMemory() > Runtime.getRuntime().totalMemory() * 3 / 10) {
+      start = System.currentTimeMillis();
+      calcMatchingFragments(name);
+      if (System.currentTimeMillis() - start > 1000) {
+        LOG.error("Too long name matching: name=" + name + "; prefix=" + new String(myPattern));
+      }
+    }
+    return result;
   }
 
   /**

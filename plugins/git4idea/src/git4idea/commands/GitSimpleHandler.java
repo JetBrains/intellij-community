@@ -34,6 +34,9 @@ import java.io.File;
  * simple commands.
  */
 public class GitSimpleHandler extends GitTextHandler {
+
+  public static final String DURING_EXECUTING_ERROR_MESSAGE = "during executing";
+
   /**
    * Stderr output
    */
@@ -235,7 +238,7 @@ public class GitSimpleHandler extends GitTextHandler {
     });
     runInCurrentThread(null);
     if (ex[0] != null) {
-      throw new VcsException(ex[0].getMessage() + " during executing " + printableCommandLine(), ex[0]);
+      throw new VcsException(ex[0].getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), ex[0]);
     }
     if (result[0] == null) {
       throw new VcsException("The git command returned null: " + printableCommandLine());

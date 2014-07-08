@@ -393,6 +393,89 @@ class foo {
     assertInstanceOf(resolved, PsiMethod)
   }
 
+  void testSuperInTrait1() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait T2 {
+    void on() {
+        println "T2"
+    }
+}
+
+trait LoggingHandler extends T1 implements T2 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T1", clazz.qualifiedName)
+  }
+
+  void testSuperInTrait2() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait T2 {
+    void on() {
+        println "T2"
+    }
+}
+
+trait LoggingHandler implements T1, T2 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T2", clazz.qualifiedName)
+  }
+
+  void testSuperInTrait3() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait LoggingHandler extends T1 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T1", clazz.qualifiedName)
+  }
+
+  void testSuperInTrait4() {
+    def clazz = resolveByText('''
+trait T1 {
+    void on() {
+        println "T1"
+    }
+}
+
+trait LoggingHandler implements T1 {
+    void on() {
+        super.o<caret>n()
+    }
+}
+''', PsiMethod).containingClass
+
+    assertEquals("T1", clazz.qualifiedName)
+  }
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

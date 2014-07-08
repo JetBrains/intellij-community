@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,14 +41,14 @@ class XValueTextRendererImpl extends XValueTextRendererBase {
 
   @Override
   protected void renderRawValue(@NotNull String value, @NotNull TextAttributesKey key) {
-    TextAttributes textAttributes = XValuePresentationUtil.getColorScheme().getAttributes(key);
+    TextAttributes textAttributes = DebuggerUIUtil.getColorScheme().getAttributes(key);
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append(value, attributes);
   }
 
   @Override
   public void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength) {
-    TextAttributes textAttributes = XValuePresentationUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.STRING);
+    TextAttributes textAttributes = DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.STRING);
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append("\"", attributes);
     XValuePresentationUtil.renderValue(value, myText, attributes, maxLength, additionalSpecialCharsToHighlight);
@@ -57,6 +58,11 @@ class XValueTextRendererImpl extends XValueTextRendererBase {
   @Override
   public void renderComment(@NotNull String comment) {
     myText.append(comment, SimpleTextAttributes.GRAY_ATTRIBUTES);
+  }
+
+  @Override
+  public void renderError(@NotNull String error) {
+    myText.append(error, SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   @Override

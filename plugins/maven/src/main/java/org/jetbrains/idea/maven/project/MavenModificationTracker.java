@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
@@ -25,55 +25,44 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class MavenModificationTracker implements ModificationTracker {
-  private long myCounter = 0;
-
+public class MavenModificationTracker extends SimpleModificationTracker {
   public MavenModificationTracker(MavenProjectsManager manager) {
     manager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
       public void profilesChanged() {
-        inc();
+        incModificationCount();
       }
 
       @Override
       public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
-        inc();
+        incModificationCount();
       }
 
       @Override
       public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
-        inc();
+        incModificationCount();
       }
 
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
-        inc();
+        incModificationCount();
       }
 
       @Override
       public void pluginsResolved(MavenProject project) {
-        inc();
+        incModificationCount();
       }
 
       @Override
       public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        inc();
+        incModificationCount();
       }
 
       @Override
       public void artifactsDownloaded(MavenProject project) {
-        inc();
+        incModificationCount();
       }
     });
-  }
-
-  private void inc() {
-    myCounter++;
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myCounter;
   }
 }

@@ -135,13 +135,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      CodeCompletionHandlerBase handler,
                                      Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap,
-                                     boolean hasModifiers) {
+                                     boolean hasModifiers,
+                                     LookupImpl lookup) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
-    myLookup = (LookupImpl)parameters.getLookup();
+    myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
 
     myAdvertiserChanges.offer(new Runnable() {
@@ -528,7 +529,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       myLookup.hideLookup(false);
       LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup(this));
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       return true;
     }
     return false;
@@ -759,8 +760,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         catch (ProcessCanceledException ignore) {
         }
         catch (Throwable t) {
-          LOG.error(t);
           cancel();
+          LOG.error(t);
         }
       }
     }

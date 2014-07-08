@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -367,7 +368,7 @@ public class XDebuggerTestUtil {
 
   public static void removeAllBreakpoints(@NotNull final Project project) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
+    XBreakpoint<?>[] breakpoints = getBreakpoints(breakpointManager);
     for (final XBreakpoint b : breakpoints) {
       new WriteAction() {
         @Override
@@ -376,6 +377,14 @@ public class XDebuggerTestUtil {
         }
       }.execute();
     }
+  }
+
+  public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<XBreakpoint<?>[]>() {
+      public XBreakpoint<?>[] compute() {
+        return breakpointManager.getAllBreakpoints();
+      }
+    });
   }
 
   public static <B extends XBreakpoint<?>>
@@ -390,7 +399,7 @@ public class XDebuggerTestUtil {
 
   public static void setBreakpointCondition(Project project, int line, final String condition) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
+    for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
       if (breakpoint instanceof XLineBreakpoint) {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 
@@ -408,7 +417,7 @@ public class XDebuggerTestUtil {
 
   public static void setBreakpointLogExpression(Project project, int line, final String logExpression) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {
+    for (XBreakpoint breakpoint : getBreakpoints(breakpointManager)) {
       if (breakpoint instanceof XLineBreakpoint) {
         final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
 

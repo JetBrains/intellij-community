@@ -15,21 +15,18 @@
  */
 package com.intellij.remoteServer.agent.util;
 
-import com.intellij.remoteServer.agent.RemoteAgent;
 import com.intellij.remoteServer.agent.annotation.ChildCall;
 import com.intellij.remoteServer.agent.annotation.FinalCall;
 
 /**
  * @author michael.golubev
  */
-public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGitAgentDeployment> extends RemoteAgent {
+public interface CloudGitAgent<C extends CloudAgentConfigBase, D extends CloudGitAgentDeployment> extends CloudAgent {
 
   void connect(C config, CloudAgentErrorHandler errorHandler, CloudAgentLogger logger);
 
   @FinalCall
   void disconnect();
-
-  DeploymentData[] getDeployments();
 
   @ChildCall
   D createDeployment(String deploymentName, CloudLoggingHandler loggingHandler);

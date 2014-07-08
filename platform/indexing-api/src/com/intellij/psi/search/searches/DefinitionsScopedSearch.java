@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,16 +63,17 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     private final SearchScope myScope;
     private final boolean myCheckDeep;
 
-    public SearchParameters(PsiElement element) {
+    public SearchParameters(@NotNull PsiElement element) {
       this(element, element.getUseScope(), true);
     }
 
-    public SearchParameters(final PsiElement element, SearchScope scope, final boolean checkDeep) {
+    public SearchParameters(@NotNull PsiElement element, @NotNull SearchScope scope, final boolean checkDeep) {
       myElement = element;
       myScope = scope;
       myCheckDeep = checkDeep;
     }
 
+    @NotNull
     public PsiElement getElement() {
       return myElement;
     }
@@ -81,6 +82,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       return myCheckDeep;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
         @Override

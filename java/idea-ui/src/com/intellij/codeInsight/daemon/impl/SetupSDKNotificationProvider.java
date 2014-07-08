@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,13 +53,14 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
     });
   }
 
+  @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
     if (file.getFileType() == JavaClassFileType.INSTANCE) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);

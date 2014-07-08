@@ -160,11 +160,11 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findAssignableField(@NotNull Class<?> clazz, @NotNull final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
+  public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
     Field result = processFields(clazz, new Condition<Field>() {
       @Override
       public boolean value(Field field) {
-        return fieldName.equals(field.getName()) && fieldType.isAssignableFrom(field.getType());
+        return fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()));
       }
     });
     if (result != null) return result;
@@ -186,7 +186,10 @@ public class ReflectionUtil {
 
   private static Field processFields(@NotNull Class clazz, @NotNull Condition<Field> checker) {
     for (Field field : clazz.getDeclaredFields()) {
-      if (checker.value(field)) return field;
+      if (checker.value(field)) {
+        field.setAccessible(true);
+        return field;
+      }
     }
     final Class superClass = clazz.getSuperclass();
     if (superClass != null) {
@@ -201,7 +204,7 @@ public class ReflectionUtil {
     return null;
   }
 
-  public static void resetField(@NotNull Class clazz, @NotNull Class type, @NotNull String name)  {
+  public static void resetField(@NotNull Class clazz, @Nullable("null means of any type") Class type, @NotNull String name)  {
     try {
       resetField(null, findField(clazz, type, name));
     }
@@ -209,7 +212,7 @@ public class ReflectionUtil {
       LOG.info(e);
     }
   }
-  public static void resetField(@NotNull Object object, @NotNull Class type, @NotNull String name)  {
+  public static void resetField(@NotNull Object object, @Nullable("null means any type") Class type, @NotNull String name)  {
     try {
       resetField(object, findField(object.getClass(), type, name));
     }
@@ -257,7 +260,10 @@ public class ReflectionUtil {
   @Nullable
   public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class... parameters) {
     for (final Method method : methods) {
-      if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) return method;
+      if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
+        method.setAccessible(true);
+        return method;
+      }
     }
     return null;
   }
@@ -322,10 +328,9 @@ public class ReflectionUtil {
     return method == null ? null : method.getDeclaringClass();
   }
 
-  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> fieldType, @NotNull @NonNls String fieldName) {
+  public static <T> T getField(@NotNull Class objectClass, Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      field.setAccessible(true);
       return (T)field.get(object);
     }
     catch (NoSuchFieldException e) {
@@ -336,6 +341,22 @@ public class ReflectionUtil {
       LOG.debug(e);
       return null;
     }
+  }
+
+  // returns true if value was set
+  public static <T> boolean setField(@NotNull Class objectClass, Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName, T value) {
+    try {
+      final Field field = findAssignableField(objectClass, fieldType, fieldName);
+      field.set(object, value);
+      return true;
+    }
+    catch (NoSuchFieldException e) {
+      LOG.debug(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.debug(e);
+    }
+    return false;
   }
 
   public static Type resolveVariableInHierarchy(@NotNull TypeVariable variable, @NotNull Class aClass) {
@@ -369,21 +390,8 @@ public class ReflectionUtil {
     // method getConstructorAccessorMethod is not necessary since JDK7, use acquireConstructorAccessor return value instead
     assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
   }
-  private static final Method acquireConstructorAccessorMethod;
-  private static final Method getConstructorAccessorMethod;
-  static {
-    try {
-      Method accessor = Constructor.class.getDeclaredMethod("acquireConstructorAccessor");
-      accessor.setAccessible(true);
-      acquireConstructorAccessorMethod = accessor;
-      Method get = Constructor.class.getDeclaredMethod("getConstructorAccessor");
-      get.setAccessible(true);
-      getConstructorAccessorMethod = get;
-    }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  private static final Method acquireConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "acquireConstructorAccessor");
+  private static final Method getConstructorAccessorMethod = getDeclaredMethod(Constructor.class, "getConstructorAccessor");
 
   @NotNull
   public static ConstructorAccessor getConstructorAccessor(@NotNull Constructor constructor) {
@@ -429,17 +437,11 @@ public class ReflectionUtil {
   }
 
   public static void resetThreadLocals() {
-    try {
-      Field field = Thread.class.getDeclaredField("threadLocals");
-      field.setAccessible(true);
-      field.set(Thread.currentThread(), null);
-    }
-    catch (Throwable e) {
-      LOG.info(e);
-    }
+    resetField(Thread.currentThread(), null, "threadLocals");
   }
 
-  public static @Nullable Class getGrandCallerClass() {
+  @Nullable
+  public static Class getGrandCallerClass() {
     int stackFrameCount = 3;
     Class callerClass = findCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class

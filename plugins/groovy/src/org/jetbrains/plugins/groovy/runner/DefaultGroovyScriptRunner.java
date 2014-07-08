@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
+import org.jetbrains.plugins.groovy.grape.GrabDependencies;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -118,7 +119,9 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
 
-    addClasspathFromRootModel(module, tests, params, true);
+    if (!GrabDependencies.GRAPE_RUNNER.equals(mainClass)) {
+      addClasspathFromRootModel(module, tests, params, true);
+    }
 
     if (params.getVMParametersList().getPropertyValue(GroovycOSProcessHandler.GRAPE_ROOT) == null) {
       String sysRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);

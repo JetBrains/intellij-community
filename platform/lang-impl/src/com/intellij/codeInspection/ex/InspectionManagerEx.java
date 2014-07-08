@@ -90,16 +90,13 @@ public class InspectionManagerEx extends InspectionManagerBase {
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);
     }
-    if (tool instanceof BatchSuppressableTool) {
-      LocalQuickFix[] actions = ((BatchSuppressableTool)tool).getBatchSuppressActions(null);
-      return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
-        @Override
-        public SuppressIntentionAction fun(final LocalQuickFix fix) {
-          return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
-        }
-      });
-    }
-    return null;
+    LocalQuickFix[] actions = tool.getBatchSuppressActions(null);
+    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
+      @Override
+      public SuppressIntentionAction fun(final LocalQuickFix fix) {
+        return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
+      }
+    });
   }
 
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -98,7 +99,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     marker.setValid(true);
     RMNode<T> node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
-    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
+    if (DEBUG && !ApplicationInfoImpl.isInPerformanceTest() && node.intervals.size() > DUPLICATE_LIMIT) {
       l.readLock().lock();
       try {
         String msg = errMsg(node);

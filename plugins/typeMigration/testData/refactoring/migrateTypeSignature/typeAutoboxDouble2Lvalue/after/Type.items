@@ -1,0 +1,13 @@
+Types:
+PsiParameter:p : java.lang.Double
+PsiReferenceExpression:p : java.lang.Double
+PsiReferenceExpression:p : java.lang.Double
+PsiReferenceExpression:p : java.lang.Double
+
+Conversions:
+myField -> $
+myFieldSuper2 -> $
+myFieldSuper3 -> $
+
+New expression type changes:
+Fails:

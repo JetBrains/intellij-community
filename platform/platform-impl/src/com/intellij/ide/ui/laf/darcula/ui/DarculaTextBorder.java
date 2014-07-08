@@ -70,10 +70,10 @@ public class DarculaTextBorder implements Border, UIResource {
   }
 
   private static Color getBorderColor(boolean enabled) {
+    // in sync with ComboBox's border color
     if (UIUtil.isUnderDarcula()) {
       return enabled ? Gray._100 : Gray._83;
     }
-    // disabled color is the same as ComboBox's border has
-    return enabled ? Gray._100 : Gray._150;
+    return Gray._150;
   }
 }

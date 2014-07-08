@@ -66,6 +66,7 @@ public class XExpressionState {
   }
 
   public XExpression toXExpression() {
+    checkConverted();
     return new XExpressionImpl(myExpression, Language.findLanguageByID(myLanguage), myCustomInfo);
   }
 }

@@ -149,7 +149,7 @@ public class GitConfig {
       ini.load(configFile);
     }
     catch (IOException e) {
-      LOG.error(new RepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
+      LOG.warn(new RepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
       return emptyConfig;
     }
 

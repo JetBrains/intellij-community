@@ -133,7 +133,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     myExecuteActionHandler.addToCommandHistoryAndExecute(myConsole, myConsoleView, text);
   }
 
-  static abstract class ConsoleExecuteActionHandler {
+  public static abstract class ConsoleExecuteActionHandler {
     private final ConsoleHistoryModel myCommandHistoryModel;
 
     private boolean myAddToHistory = true;
@@ -156,10 +156,14 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       myAddToHistory = addCurrentToHistory;
     }
 
+    /**
+     * @deprecated
+     */
     protected void beforeExecution(@NotNull LanguageConsoleImpl console) {
     }
 
-    final void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+    protected void runExecuteAction(@NotNull LanguageConsoleImpl console, @Nullable LanguageConsoleView consoleView) {
+      //noinspection deprecation
       beforeExecution(console);
 
       String text = console.prepareExecuteAction(myAddToHistory, myPreserveMarkup, true);

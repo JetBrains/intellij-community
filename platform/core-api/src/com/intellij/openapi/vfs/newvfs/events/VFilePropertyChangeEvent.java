@@ -91,6 +91,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myPropertyName;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myFile.getPath();
@@ -131,6 +132,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return result;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String toString() {

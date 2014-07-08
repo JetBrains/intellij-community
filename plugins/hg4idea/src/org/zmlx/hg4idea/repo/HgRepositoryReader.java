@@ -19,8 +19,10 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
+import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -28,6 +30,9 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +58,7 @@ public class HgRepositoryReader {
   @NotNull private final File myCurrentBookmark; //.hg/bookmarks.current
   @NotNull private final File myTagsFile; //.hgtags  - not in .hg directory!!!
   @NotNull private final File myLocalTagsFile;  // .hg/localtags
+  @NotNull private final File myDirStateFile;  // .hg/dirstate
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
   private final boolean myStatusInBranchFile;
   @NotNull final HgVcs myVcs;
@@ -70,6 +76,7 @@ public class HgRepositoryReader {
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
     myLocalTagsFile = new File(myHgDir, "localtags");
     myTagsFile = new File(myHgDir.getParentFile(), ".hgtags");
+    myDirStateFile = new File(myHgDir, "dirstate");
     myVcsObjectsFactory = ServiceManager.getService(vcs.getProject(), VcsLogObjectsFactory.class);
   }
 
@@ -98,6 +105,36 @@ public class HgRepositoryReader {
    */
   @Nullable
   public String readCurrentRevision() {
+    if (!isDirStateInfoAvailable()) return null;
+    try {
+      return Hex.encodeHexString(readBytesFromFile(myDirStateFile, 20));
+    }
+    catch (IOException e) {
+      // dirState exists if not fresh,  if we could not load dirState info repository must be corrupted
+      throw new RepoStateException("IOException while trying to read current repository state information.", e);
+    }
+  }
+
+  @NotNull
+  public byte[] readBytesFromFile(@NotNull File file, int len) throws IOException {
+    byte[] bytes;
+    final InputStream stream = new FileInputStream(file);
+    try {
+      bytes = FileUtil.loadBytes(stream, len);
+    }
+    finally {
+      stream.close();
+    }
+    return bytes;
+  }
+
+  /**
+   * Finds tip revision value.
+   *
+   * @return The tip revision hash, or <b>{@code null}</b> if tip revision is unknown - it is the initial repository state.
+   */
+  @Nullable
+  public String readCurrentTipRevision() {
     if (!isBranchInfoAvailable()) return null;
     String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
     String head = branchesWithHeads[0];
@@ -111,6 +148,10 @@ public class HgRepositoryReader {
   private boolean isBranchInfoAvailable() {
     myBranchHeadsFile = identifyBranchHeadFile(myVcs.getVersion(), myCacheDir);
     return !isFresh() && myBranchHeadsFile.exists();
+  }
+
+  private boolean isDirStateInfoAvailable() {
+    return myDirStateFile.exists();
   }
 
   /**

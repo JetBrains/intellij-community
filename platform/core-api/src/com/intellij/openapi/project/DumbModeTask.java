@@ -15,14 +15,18 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public abstract class DumbModeTask {
+public abstract class DumbModeTask implements Disposable {
 
   public abstract void performInDumbMode(@NotNull ProgressIndicator indicator);
 
+  @Override
+  public void dispose() {
+  }
 }

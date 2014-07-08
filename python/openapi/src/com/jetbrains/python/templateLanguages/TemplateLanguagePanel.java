@@ -1,18 +1,19 @@
 package com.jetbrains.python.templateLanguages;
 
+import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 public class TemplateLanguagePanel extends JPanel {
-  private TextFieldWithBrowseButton myTemplatesFolder;
+  private JTextField myTemplatesFolder;
   private JPanel myMainPanel;
   private JLabel myTemplatesFolderLabel;
   private JComboBox myTemplateLanguage;
@@ -26,12 +27,12 @@ public class TemplateLanguagePanel extends JPanel {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.withTreeRootVisible(true);
     descriptor.setShowFileSystemRoots(true);
-    myTemplatesFolder.addBrowseFolderListener("Select Template Folder",
-                                              "Select template folder", null, descriptor);
     List<String> templateConfigurations = TemplatesService.getAllTemplateLanguages();
     for (String configuration : templateConfigurations) {
-      myTemplateLanguage.addItem(configuration);
+      if (!configuration.equals(TemplatesService.WEB2PY))
+        myTemplateLanguage.addItem(configuration);
     }
+    myTemplatesFolder.setText(DEFAULT_TEMPLATES_FOLDER);
   }
 
   public String getTemplatesFolder() {
@@ -41,10 +42,6 @@ public class TemplateLanguagePanel extends JPanel {
   public String getTemplateLanguage() {
     final Object selectedItem = myTemplateLanguage.getSelectedItem();
     return selectedItem != null ? (String)selectedItem : null;
-  }
-
-  public void setTemplatesRoot(String contentRoot) {
-    myTemplatesFolder.setText(FileUtil.toSystemDependentName(contentRoot) + File.separator + DEFAULT_TEMPLATES_FOLDER);
   }
 
   public void setTemplateLanguage(String language) {
@@ -57,7 +54,20 @@ public class TemplateLanguagePanel extends JPanel {
     holder.setTemplateLanguage((String)templateLanguage);
   }
 
+  public void setTemplatesFolder(@NotNull final String folder) {
+    myTemplatesFolder.setText(folder);
+  }
+
   public Dimension getLabelSize() {
     return new JBLabel("Template language:").getPreferredSize();
+  }
+
+  public void registerValidators(final FacetValidatorsManager validatorsManager) {
+    myTemplateLanguage.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validatorsManager.validate();
+      }
+    });
   }
 }

@@ -19,6 +19,8 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
@@ -259,6 +261,16 @@ public class DebuggerUIUtil {
     BreakpointsDialogFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
 
     return balloon;
+  }
+
+  @NotNull
+  public static EditorColorsScheme getColorScheme() {
+    return EditorColorsUtil.getGlobalOrDefaultColorScheme();
+  }
+
+  @NotNull
+  public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
+    return EditorColorsUtil.getColorSchemeForComponent(component);
   }
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {

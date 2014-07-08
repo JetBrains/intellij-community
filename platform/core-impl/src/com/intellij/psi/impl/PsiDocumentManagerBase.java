@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -290,7 +291,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
       // run after commit actions outside write action
       runAfterCommitActions(document);
-      if (DebugUtil.DO_EXPENSIVE_CHECKS) {
+      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationInfoImpl.isInPerformanceTest()) {
         checkAllElementsValid(document, reason);
       }
     }

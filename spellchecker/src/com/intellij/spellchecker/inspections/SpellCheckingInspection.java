@@ -40,7 +40,7 @@ import java.awt.*;
 import java.util.Set;
 
 
-public class SpellCheckingInspection extends LocalInspectionTool implements BatchSuppressableTool {
+public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
   @Override
@@ -66,12 +66,8 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Batc
       if(strategy instanceof SuppressibleSpellcheckingStrategy) {
         return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
       }
-      final InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(language);
-      if (suppressor != null) {
-        return suppressor.getSuppressActions(element, getShortName());
-      }
     }
-    return SuppressQuickFix.EMPTY_ARRAY;
+    return super.getBatchSuppressActions(element);
   }
 
   private static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element, @NotNull Language language) {
@@ -90,8 +86,7 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Batc
     if (strategy instanceof SuppressibleSpellcheckingStrategy) {
       return ((SuppressibleSpellcheckingStrategy)strategy).isSuppressedFor(element, getShortName());
     }
-    final InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(language);
-    return suppressor != null && suppressor.isSuppressedFor(element, getShortName());
+    return super.isSuppressedFor(element);
   }
 
   @Override

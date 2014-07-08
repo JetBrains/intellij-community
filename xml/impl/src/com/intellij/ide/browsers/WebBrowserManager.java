@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -29,13 +26,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/web-browsers.xml")})
-public class WebBrowserManager implements PersistentStateComponent<Element>, ModificationTracker {
+public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users
@@ -47,8 +41,6 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   private static final UUID DEFAULT_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
 
   private List<ConfigurableWebBrowser> browsers;
-
-  private long modificationCount;
 
   DefaultBrowser defaultBrowser = DefaultBrowser.SYSTEM;
 
@@ -87,7 +79,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowser != DefaultBrowser.SYSTEM) {
-      state.setAttribute("default", defaultBrowser.name().toLowerCase());
+      state.setAttribute("default", defaultBrowser.name().toLowerCase(Locale.ENGLISH));
     }
 
     for (ConfigurableWebBrowser browser : browsers) {
@@ -185,7 +177,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase());
+        defaultBrowser = DefaultBrowser.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
@@ -245,7 +237,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
 
   void setList(@NotNull List<ConfigurableWebBrowser> value) {
     browsers = value;
-    modificationCount++;
+    incModificationCount();
   }
 
   @NotNull
@@ -286,7 +278,7 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
                                final BrowserSpecificSettings specificSettings) {
     final ConfigurableWebBrowser browser = new ConfigurableWebBrowser(id, family, name, path, active, specificSettings);
     browsers.add(browser);
-    modificationCount++;
+    incModificationCount();
     return browser;
   }
 
@@ -370,10 +362,5 @@ public class WebBrowserManager implements PersistentStateComponent<Element>, Mod
       }
     }
     return null;
-  }
-
-  @Override
-  public long getModificationCount() {
-    return modificationCount;
   }
 }

@@ -101,7 +101,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public ResourceBundle getResourceBundle() {
-    return PropertiesImplUtil.getResourceBundle(getContainingFile());
+    return PropertiesImplUtil.getResourceBundle(this);
   }
 
   @NotNull
@@ -127,6 +127,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     XmlTag rootTag = myFile.getRootTag();
     XmlTag entry = rootTag.createChildTag("entry", "", value, false);
     entry.setAttribute("key", key);
+    rootTag.addSubTag(entry, false);
     return new XmlProperty(entry, this);
   }
 

@@ -132,7 +132,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
     Application application = ApplicationManager.getApplication();
-    document = JDOMXIncluder.resolve(document, url.toExternalForm(), application != null && application.isUnitTestMode());
+    readExternal(document, url, application != null && application.isUnitTestMode());
+  }
+
+  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude) throws InvalidDataException, FileNotFoundException {
+    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude);
     Element rootElement = document.getRootElement();
     internJDOMElement(rootElement);
     readExternal(document.getRootElement());
@@ -340,6 +344,18 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getCategory() {
     return myCategory;
+  }
+
+  @SuppressWarnings("UnusedDeclaration") // Used in Upsource
+  @Nullable
+  public MultiMap<String, Element> getExtensionsPoints() {
+    return myExtensionsPoints;
+  }
+
+  @SuppressWarnings("UnusedDeclaration") // Used in Upsource
+  @Nullable
+  public MultiMap<String, Element> getExtensions() {
+    return myExtensions;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

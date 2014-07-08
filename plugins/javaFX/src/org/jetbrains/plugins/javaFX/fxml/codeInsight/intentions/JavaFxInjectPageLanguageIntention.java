@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlProlog;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,6 +131,9 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (ContainerUtil.isEmpty(getAvailableLanguages(project))) {
+      return false;
+    }
     setText(getFamilyName());
     return element.isValid();
   }

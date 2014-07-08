@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -49,10 +50,10 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -664,5 +665,20 @@ public class ExternalSystemApiUtil {
     };
     //noinspection unchecked
     return (T)loader.loadClass(clazz.getName()).newInstance();
+  }
+
+  @Contract("_, null -> false")
+  public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
+    return module != null && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+  }
+
+  @Contract("_, null -> false")
+  public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
+    return module != null && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+  }
+
+  @Nullable
+  public static String getExternalProjectPath(@Nullable Module module) {
+    return module != null ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
   }
 }

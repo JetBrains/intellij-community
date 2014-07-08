@@ -1482,7 +1482,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
             final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
             if (activate) {
-              myAttractionCount++;
+              // See IDEA-93683, bounce attraction should not disable further focus attraction
+              if (!(policy instanceof LayoutAttractionPolicy.Bounce)) {
+                myAttractionCount++;
+              }
               policy.attract(content, myRunnerUi);
             }
             else {

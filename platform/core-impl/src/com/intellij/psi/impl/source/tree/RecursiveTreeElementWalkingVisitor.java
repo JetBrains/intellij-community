@@ -58,6 +58,7 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
   private final WalkingState<ASTNode> myWalkingState = new WalkingState<ASTNode>(ASTTreeGuide.instance) {
     @Override
     public void elementFinished(@NotNull ASTNode element) {
+      RecursiveTreeElementWalkingVisitor.this.elementFinished(element);
     }
 
     @Override
@@ -65,6 +66,9 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
       ((TreeElement)element).acceptTree(RecursiveTreeElementWalkingVisitor.this);
     }
   };
+
+  protected void elementFinished(@NotNull ASTNode element) {
+  }
 
   @Override
   public void visitLeaf(LeafElement leaf) {

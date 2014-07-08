@@ -267,6 +267,16 @@ public class CaretModelWindow implements CaretModel {
   }
 
   @Override
+  public void runForEachCaret(@NotNull final CaretAction action, boolean reverseOrder) {
+    myDelegate.runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        action.perform(createInjectedCaret(caret));
+      }
+    }, reverseOrder);
+  }
+
+  @Override
   public void runBatchCaretOperation(@NotNull Runnable runnable) {
     myDelegate.runBatchCaretOperation(runnable);
   }

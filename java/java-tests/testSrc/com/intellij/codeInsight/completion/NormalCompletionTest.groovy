@@ -1216,6 +1216,12 @@ class XInternalError {}
 
   public void testConstantInAnno() { doTest() }
 
+  public void testCharsetName() {
+    myFixture.addClass("package java.nio.charset; public class Charset { public static Charset forName(String s) {} }")
+    configureByTestName()
+    assert myFixture.lookupElementStrings.contains('UTF-8')
+  }
+
   public void testInnerClassInExtendsGenerics() {
     def text = "package bar; class Foo extends List<Inne<caret>> { public static class Inner {} }"
     myFixture.configureFromExistingVirtualFile(myFixture.addClass(text).containingFile.virtualFile)

@@ -10,10 +10,7 @@ import com.intellij.remoteServer.agent.impl.util.SequentialTaskExecutor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.lang.reflect.*;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -79,34 +76,19 @@ public class ThreadInvocationHandler implements InvocationHandler {
           return cached;
         }
 
+        Object result;
         Class<?> childClass = child.getClass();
-        Class<?>[] childInterfaces = childClass.getInterfaces();
-        LOG.assertTrue(childInterfaces.length == 1, "Child class is expected to implement single child interface");
-        Class<?> childInterface = childInterfaces[0];
-
-        Class<?> callerChildInterface;
-        try {
-          callerChildInterface = myCallerClassLoader.loadClass(childInterface.getName());
-        }
-        catch (ClassNotFoundException e) {
-          LOG.error(e);
-          return null;
-        }
-
-        Object preWrappedChild;
-        if (myPreWrapperFactory == null) {
-          preWrappedChild = child;
+        if (childClass.isArray()) {
+          Class<?> componentType = childClass.getComponentType();
+          int length = Array.getLength(child);
+          result = Array.newInstance(componentType, length);
+          for (int i = 0; i < length; i++) {
+            Array.set(result, i, createChildProxy(Array.get(child, i)));
+          }
         }
         else {
-          preWrappedChild = Proxy.newProxyInstance(myCallerClassLoader,
-                                                   new Class[]{callerChildInterface},
-                                                   myPreWrapperFactory.createWrapperInvocationHandler(child));
+          result = createChildProxy(child);
         }
-
-        Object result = Proxy.newProxyInstance(myCallerClassLoader,
-                                               new Class[]{callerChildInterface},
-                                               new ThreadInvocationHandler(myTaskExecutor, myCallerClassLoader, preWrappedChild,
-                                                                           myPreWrapperFactory));
 
         myChild2Wrapped.put(child, result);
         return result;
@@ -149,5 +131,36 @@ public class ThreadInvocationHandler implements InvocationHandler {
         });
       }
     }
+  }
+
+  private Object createChildProxy(Object child) {
+    Class<?> childClass = child.getClass();
+    Class<?>[] childInterfaces = childClass.getInterfaces();
+    LOG.assertTrue(childInterfaces.length == 1, "Child class is expected to implement single child interface");
+    Class<?> childInterface = childInterfaces[0];
+
+    Class<?> callerChildInterface;
+    try {
+      callerChildInterface = myCallerClassLoader.loadClass(childInterface.getName());
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+      return null;
+    }
+
+    Object preWrappedChild;
+    if (myPreWrapperFactory == null) {
+      preWrappedChild = child;
+    }
+    else {
+      preWrappedChild = Proxy.newProxyInstance(myCallerClassLoader,
+                                               new Class[]{callerChildInterface},
+                                               myPreWrapperFactory.createWrapperInvocationHandler(child));
+    }
+
+    return Proxy.newProxyInstance(myCallerClassLoader,
+                                  new Class[]{callerChildInterface},
+                                  new ThreadInvocationHandler(myTaskExecutor, myCallerClassLoader, preWrappedChild,
+                                                              myPreWrapperFactory));
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,13 +44,12 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
-  static final List<String> ourAdditionalRoots = new ArrayList<String>();
+  private static final Set<String> ourAdditionalRoots = new THashSet<String>();
   private static boolean insideGettingRoots;
 
   @TestOnly
@@ -68,7 +68,12 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = allowedRoots();
+      Set<String> allowed = ApplicationManager.getApplication().runReadAction(new Computable<Set<String>>() {
+        @Override
+        public Set<String> compute() {
+          return allowedRoots();
+        }
+      });
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
@@ -128,20 +133,15 @@ public class VfsRootAccess {
       if (!project.isInitialized()) {
         return null; // all is allowed
       }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
-            allowed.add(root.getPath());
-          }
-          for (VirtualFile root : getAllRoots(project)) {
-            allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
-          }
-          String location = project.getBasePath();
-          assert location != null : project;
-          allowed.add(FileUtil.toSystemIndependentName(location));
-        }
-      });
+      for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+        allowed.add(root.getPath());
+      }
+      for (VirtualFile root : getAllRoots(project)) {
+        allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
+      }
+      String location = project.getBasePath();
+      assert location != null : project;
+      allowed.add(FileUtil.toSystemIndependentName(location));
     }
 
     allowed.addAll(ourAdditionalRoots);

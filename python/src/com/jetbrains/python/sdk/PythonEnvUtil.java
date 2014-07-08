@@ -86,9 +86,4 @@ public class PythonEnvUtil {
   public static void addToPythonPath(@NotNull Map<String, String> env, String value) {
     addPathToEnv(env, PYTHONPATH, value);
   }
-
-  public static List<String> getPathListFromEnv(@NotNull Map<String, String> env, String envKey) {
-    String pythonPath = env.get(envKey);
-    return pythonPath != null ? Lists.newArrayList(pythonPath.split(File.pathSeparator)) : null;
-  }
 }

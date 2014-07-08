@@ -120,7 +120,7 @@
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
-      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction"/>
+      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
       <separator/>
       <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
       <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
@@ -269,7 +269,6 @@
       <separator/>
       <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
-      <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
       <group id="IntroduceActionsGroup" popup="true">
@@ -638,6 +637,7 @@
       <separator/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
       <action id="ToggleTemporaryLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleTemporaryLineBreakpointAction"/>
+      <action id="ToggleBreakpointEnabled" class="com.intellij.xdebugger.impl.actions.ToggleBreakpointEnabledAction"/>
       <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
       <separator/>
 
@@ -681,6 +681,7 @@
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
+      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">

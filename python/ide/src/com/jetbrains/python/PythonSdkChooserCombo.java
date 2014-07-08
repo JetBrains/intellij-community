@@ -19,20 +19,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
-import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkService;
 import com.jetbrains.python.sdk.PythonSdkDetailsStep;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -58,14 +54,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     }
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
-    comboBox.setRenderer(new SdkListCellRenderer("<no interpreter>") {
-      @Override
-      protected Icon getSdkIcon(Sdk sdk) {
-        final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-        final Icon icon = flavor != null ? flavor.getIcon() : ((SdkType)sdk.getSdkType()).getIcon();
-        return sdk instanceof PyDetectedSdk ? IconLoader.getTransparentIcon(icon) : icon;
-      }
-    });
+    comboBox.setRenderer(new PySdkListCellRenderer(true));
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         showOptions(project);

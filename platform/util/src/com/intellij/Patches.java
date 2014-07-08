@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,4 +145,10 @@ public class Patches {
    * which need to be changed when migrated to JDK 7
    */
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
+
+  /**
+   * AtomicIntegerFieldUpdater does not work when SecurityManager is installed
+   * fixed in JDK8
+   */
+  public static final boolean JDK_BUG_ID_7103570 = true;
 }

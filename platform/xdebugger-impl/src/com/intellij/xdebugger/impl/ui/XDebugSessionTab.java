@@ -168,7 +168,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
-    final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
+    final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    final Executor executor = environment != null ? environment.getExecutor() : debugExecutor;
     if (runner != null && environment != null) {
       RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor, environment);
       leftToolbar.add(restartAction);
@@ -222,7 +223,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
     leftToolbar.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
-    leftToolbar.add(new ContextHelpAction(executor.getHelpId()));
+    leftToolbar.add(new ContextHelpAction(debugExecutor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
     topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
@@ -236,6 +237,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       registerFileMatcher(runConfiguration);
       initLogConsoles(runConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
     }
+
+    final DefaultActionGroup focus = new DefaultActionGroup();
+    focus.add(ActionManager.getInstance().getAction(XDebuggerActions.FOCUS_ON_BREAKPOINT));
+    myUi.getOptions().setAdditionalFocusActions(focus);
 
     rebuildViews();
   }

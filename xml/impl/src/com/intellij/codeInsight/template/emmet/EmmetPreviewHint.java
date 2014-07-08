@@ -65,7 +65,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myParentEditor || event.getEditor() == myEditor || event.getEditor() == topLevelEditor) {
-          hide();
+          Disposer.dispose(EmmetPreviewHint.this);
         }
       }
     }, this);
@@ -176,6 +176,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
                              maxHeight > contentSize.getHeight() ? (int)size.getHeight() : maxHeight);
       }
 
+      @NotNull
       @Override
       public Insets getInsets() {
         return new Insets(1, 2, 0, 0);

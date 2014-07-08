@@ -18,15 +18,18 @@ package com.intellij.psi;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
+import com.intellij.psi.impl.compiled.StubBuildingVisitor;
+import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 
@@ -75,6 +78,35 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     doTest(clsPath, txtPath);
   }
 
+  public void testStrayInnersFiltering() throws IOException {
+    String path = JavaTestUtil.getJavaTestDataPath() + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
+    VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
+    assertNotNull(path, file);
+
+    InnerClassSourceStrategy<VirtualFile> strategy = new InnerClassSourceStrategy<VirtualFile>() {
+      @Override
+      public VirtualFile findInnerClass(String innerName, VirtualFile outerClass) {
+        String baseName = outerClass.getNameWithoutExtension();
+        VirtualFile child = outerClass.getParent().findChild(baseName + "$" + innerName + ".class");
+        // stray inner classes should be filtered out
+        assert child != null : innerName + " is not an inner class of " + outerClass;
+        return child;
+      }
+
+      @Override
+      public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
+        try {
+          byte[] bytes = innerClass.contentsToByteArray();
+          new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
+        }
+        catch (IOException ignored) { }
+      }
+    };
+    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("do.not.know.yet", true);
+    StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, strategy, stub, 0, null);
+    new ClassReader(file.contentsToByteArray()).accept(visitor, ClassReader.SKIP_FRAMES);
+  }
+
   private void doTest() {
     doTest(getTestName(false));
   }
@@ -85,11 +117,9 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   }
 
   private static void doTest(String clsPath, String txtPath) {
-    VirtualFileSystem fs = clsPath.contains("!/") ? JarFileSystem.getInstance() : LocalFileSystem.getInstance();
-    VirtualFile vFile = fs.findFileByPath(clsPath);
-    assertNotNull(clsPath, vFile);
-    PsiFile clsFile = getPsiManager().findFile(vFile);
-    assertNotNull(vFile.getPath(), clsFile);
+    VirtualFileSystem fs = clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local();
+    VirtualFile file = fs.findFileByPath(clsPath);
+    assertNotNull(clsPath, file);
 
     String expected;
     try {
@@ -100,6 +130,6 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
       return;
     }
 
-    assertEquals(expected, ((ClsFileImpl)clsFile).getMirror().getText());
+    assertEquals(expected, ClsFileImpl.decompile(file).toString());
   }
 }

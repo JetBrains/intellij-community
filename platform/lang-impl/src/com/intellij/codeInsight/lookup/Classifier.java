@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
  * @author peter
  */
 public abstract class Classifier<T> {
-  public abstract void addElement(T t);
+  public abstract void addElement(T t, ProcessingContext context);
 
   public abstract Iterable<T> classify(Iterable<T> source, ProcessingContext context);
 

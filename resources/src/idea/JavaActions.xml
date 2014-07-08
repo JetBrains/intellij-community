@@ -117,7 +117,7 @@
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
-      <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>
+      <!--Moved to XDebugger <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>-->
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
@@ -184,7 +184,6 @@
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
-      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.debugger.ui.breakpoints.actions.FocusOnBreakpointAction"/>
       <add-to-group group-id="DebuggerActions" anchor="first"/>
     </group>
 

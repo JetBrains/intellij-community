@@ -16,15 +16,15 @@
 package com.intellij.openapi.actionSystem.ex;
 
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
+import java.awt.event.InputEvent;
 import java.util.Comparator;
-import java.util.List;
 
 
 public abstract class ActionManagerEx extends ActionManager {
@@ -98,14 +98,13 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isTransparentOnlyActionsUpdateNow();
 
-  @NotNull
-  public List<String> getAbbreviations() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  public List<String> findActionIdsByAbbreviation(String abbreviation) {
-    return Collections.emptyList();
+  public void fireBeforeActionPerformed(String actionId, InputEvent event) {
+    final AnAction action = getAction(actionId);
+    if (action != null) {
+      final DataContext context = DataManager.getInstance().getDataContext();
+      final AnActionEvent e = new AnActionEvent(event, context, ActionPlaces.UNKNOWN, action.getTemplatePresentation(), this, 0);
+      fireBeforeActionPerformed(action, context, e);
+    }
   }
 }
 

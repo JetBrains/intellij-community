@@ -24,6 +24,7 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.ProblemsView;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -156,7 +157,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       myTask.addMessage(msg);
     }
     if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
-      ProblemsViewImpl.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
+      ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
     }
   }
 

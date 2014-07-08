@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,10 +146,10 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     infoPanel.add(new JLabel("Scopes are processed from top to bottom with Local colors first.",
                                 MessageType.INFO.getDefaultIcon(), SwingConstants.LEFT));
-    final JButton editScopes = new JButton("Manage Scopes...");
+    JButton editScopes = new JButton("Manage Scopes...");
     editScopes.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(@NotNull ActionEvent e) {
         EditScopesDialog.showDialog(myManager.getProject(), null, true);
       }
     });

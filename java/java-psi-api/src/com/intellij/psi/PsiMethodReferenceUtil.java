@@ -33,6 +33,7 @@ public class PsiMethodReferenceUtil {
 
   public static boolean hasReceiver(PsiType[] parameterTypes, QualifierResolveResult qualifierResolveResult, PsiMethodReferenceExpression methodRef) {
     if (parameterTypes.length > 0 && 
+        !methodRef.isConstructor() &&
         isReceiverType(parameterTypes[0], qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()) &&
         isStaticallyReferenced(methodRef)) {
       return true;

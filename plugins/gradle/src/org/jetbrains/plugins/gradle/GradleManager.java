@@ -30,9 +30,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
@@ -51,8 +49,11 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
@@ -74,11 +75,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -198,9 +195,20 @@ public class GradleManager
 
   @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+    final Set<String> additionalEntries = ContainerUtilRt.newHashSet();
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
+      ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(extension.getClass()));
+      for (Class aClass : extension.getExtraProjectModelClasses()) {
+        ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(aClass));
+      }
       extension.enhanceRemoteProcessing(parameters);
     }
+
+    final PathsList classPath = parameters.getClassPath();
+    for (String entry : additionalEntries) {
+      classPath.add(entry);
+    }
+
     parameters.getVMParametersList().addProperty(
       ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
   }
@@ -342,7 +350,7 @@ public class GradleManager
     Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       String oldPath = projectSettings.getExternalProjectPath();
-      if (!new File(oldPath).isDirectory()) {
+      if (oldPath != null && new File(oldPath).isFile() && FileUtilRt.extensionEquals(oldPath, GradleConstants.EXTENSION)) {
         try {
           String newPath = new File(oldPath).getParentFile().getCanonicalPath();
           projectSettings.setExternalProjectPath(newPath);

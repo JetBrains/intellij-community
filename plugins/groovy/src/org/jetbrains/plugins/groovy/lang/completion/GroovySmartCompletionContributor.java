@@ -377,7 +377,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
   }
 

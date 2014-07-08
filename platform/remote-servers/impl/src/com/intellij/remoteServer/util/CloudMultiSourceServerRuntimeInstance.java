@@ -4,11 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
 import com.intellij.remoteServer.agent.util.CloudGitAgent;
-import com.intellij.remoteServer.agent.util.DeploymentData;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnector;
@@ -31,16 +29,11 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   AC extends CloudAgentConfigBase,
   A extends CloudGitAgent<AC, ?>,
   SC extends AC>
-  extends CloudServerRuntimeInstance<DC> {
+  extends CloudServerRuntimeInstance<DC, A, SC> {
 
   private static final Logger LOG = Logger.getInstance("#" + CloudMultiSourceServerRuntimeInstance.class.getName());
 
-  private final A myAgent;
-  private final AgentTaskExecutor myAgentTaskExecutor;
-
   private final ServerType<?> myServerType;
-  private final SC myConfiguration;
-  private final ServerTaskExecutor myTasksExecutor;
 
   public CloudMultiSourceServerRuntimeInstance(ServerType<?> serverType,
                                                SC configuration,
@@ -51,20 +44,21 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
                                                String specificJarPath,
                                                Class<A> agentInterface,
                                                String agentClassName) throws Exception {
-    myServerType = serverType;
-    myConfiguration = configuration;
-    myTasksExecutor = tasksExecutor;
+    super(configuration,
+          tasksExecutor,
+          libraries,
+          commonJarClasses,
+          specificsModuleName,
+          specificJarPath,
+          agentInterface,
+          agentClassName);
 
-    RemoteAgentManager agentManager = RemoteAgentManager.getInstance();
-    myAgent = agentManager.createAgent(agentManager.createReflectiveThreadProxyFactory(getClass().getClassLoader()),
-                                       libraries,
-                                       commonJarClasses,
-                                       specificsModuleName,
-                                       specificJarPath,
-                                       agentInterface,
-                                       agentClassName,
-                                       getClass());
-    myAgentTaskExecutor = new AgentTaskExecutor();
+    myServerType = serverType;
+  }
+
+  @Override
+  public A getAgent() {
+    return super.getAgent();
   }
 
   @NotNull
@@ -74,37 +68,37 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   }
 
   public void connect(final ServerConnector.ConnectionCallback<DC> callback) {
-    myAgentTaskExecutor.execute(new Computable() {
+    getAgentTaskExecutor().execute(new Computable() {
 
-                                  @Override
-                                  public Object compute() {
-                                    doConnect(myConfiguration,
-                                              new CloudAgentLogger() {
+                                     @Override
+                                     public Object compute() {
+                                       doConnect(getConfiguration(),
+                                                 new CloudAgentLogger() {
 
-                                                @Override
-                                                public void debugEx(Exception e) {
-                                                  LOG.debug(e);
-                                                }
+                                                   @Override
+                                                   public void debugEx(Exception e) {
+                                                     LOG.debug(e);
+                                                   }
 
-                                                @Override
-                                                public void debug(String message) {
-                                                  LOG.debug(message);
-                                                }
-                                              });
-                                    return null;
-                                  }
-                                }, new CallbackWrapper() {
+                                                   @Override
+                                                   public void debug(String message) {
+                                                     LOG.debug(message);
+                                                   }
+                                                 });
+                                       return null;
+                                     }
+                                   }, new CallbackWrapper() {
 
-                                  @Override
-                                  public void onSuccess(Object result) {
-                                    callback.connected(CloudMultiSourceServerRuntimeInstance.this);
-                                  }
+                                     @Override
+                                     public void onSuccess(Object result) {
+                                       callback.connected(CloudMultiSourceServerRuntimeInstance.this);
+                                     }
 
-                                  @Override
-                                  public void onError(String message) {
-                                    callback.errorOccurred(message);
-                                  }
-                                }
+                                     @Override
+                                     public void onError(String message) {
+                                       callback.errorOccurred(message);
+                                     }
+                                   }
     );
   }
 
@@ -112,7 +106,7 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   public void deploy(@NotNull final DeploymentTask<DC> task,
                      @NotNull final DeploymentLogManager logManager,
                      @NotNull final ServerRuntimeInstance.DeploymentOperationCallback callback) {
-    myTasksExecutor.submit(new ThrowableRunnable<Exception>() {
+    getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
 
       @Override
       public void run() throws Exception {
@@ -122,59 +116,14 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   }
 
   @Override
-  public void computeDeployments(@NotNull final ServerRuntimeInstance.ComputeDeploymentsCallback callback) {
-    myTasksExecutor.submit(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        myAgentTaskExecutor.execute(new Computable<DeploymentData[]>() {
-
-                                      @Override
-                                      public DeploymentData[] compute() {
-                                        return myAgent.getDeployments();
-                                      }
-                                    },
-                                    new CallbackWrapper<DeploymentData[]>() {
-
-                                      @Override
-                                      public void onSuccess(DeploymentData[] deployments) {
-                                        for (DeploymentData deployment : deployments) {
-                                          callback.addDeployment(deployment.getName());
-                                        }
-                                        callback.succeeded();
-                                      }
-
-                                      @Override
-                                      public void onError(String message) {
-                                        callback.errorOccurred(message);
-                                      }
-                                    }
-        );
-      }
-    }, callback);
-  }
-
-  @Override
   public void disconnect() {
-    myTasksExecutor.submit(new Runnable() {
+    getTaskExecutor().submit(new Runnable() {
 
       @Override
       public void run() {
-        myAgent.disconnect();
+        getAgent().disconnect();
       }
     });
-  }
-
-  @Override
-  public ServerTaskExecutor getTaskExecutor() {
-    return myTasksExecutor;
-  }
-
-  protected final A getAgent() {
-    return myAgent;
-  }
-
-  protected final AgentTaskExecutor getAgentTaskExecutor() {
-    return myAgentTaskExecutor;
   }
 
   public CloudDeploymentRuntime createDeploymentRuntime(final DeployToServerRunConfiguration<?, DC> runConfiguration)
@@ -225,8 +174,9 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
     throw new ServerRuntimeException("Unknown deployment source");
   }
 
-  public CloudConfigurationBase getConfiguration() {
-    return (CloudConfigurationBase)myConfiguration;
+  @Override
+  protected CloudApplicationRuntime createApplicationRuntime(String applicationName) {
+    return new CloudGitApplicationRuntime(this, applicationName, null);
   }
 
   protected abstract void doConnect(SC configuration, CloudAgentLogger logger);

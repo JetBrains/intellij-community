@@ -30,7 +30,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -58,6 +57,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -314,6 +314,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           LOG.info("No java source root descriptor for th e item found =" + item);
         }
       }
+    }
+    if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
+      LOG.info("Chunk " + chunk + " compilation finished");
     }
     return compiled;
   }

@@ -100,7 +100,7 @@ public class LiveTemplateBuilder {
         int endOffset = -1;
         Iterator<VarOccurence> it = myVariableOccurrences.iterator();
         while (it.hasNext()) {
-          VarOccurence occurence = it.next();
+          VarOccurence occurence = it.next();             
           if (occurence.myName.equals(myLastEndVarName)) {
             endOffset = occurence.myOffset;
             break;
@@ -126,7 +126,7 @@ public class LiveTemplateBuilder {
     List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurrences);
     Collections.sort(variableOccurrences, new Comparator<VarOccurence>() {
       @Override
-      public int compare(VarOccurence o1, VarOccurence o2) {
+      public int compare(@NotNull VarOccurence o1, @NotNull VarOccurence o2) {
         if (o1.myOffset < o2.myOffset) {
           return -1;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ libraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", li
 libraryLicense(name: "Ant", version: "1.7", license: "Apache 2.0", url: "http://ant.apache.org/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm", version: "3.3", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
 libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm4", version: "4.0", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
-libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm5", version: "5.0.1", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
+libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm5", version: "5.0.3 (with patches by JetBrains)", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
 libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm-tools", version: "4.0", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
 libraryLicense(name: "Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/", licenseUrl: "http://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/axis-1.4.0/axis.LICENSE")
 libraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "Apache", url: "http://cglib.sourceforge.net/", licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html")
@@ -177,9 +177,8 @@ libraryLicense(name: "DTDParser", version: "1.13", license: "LGPL", url: "http:/
 libraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant_groovy2.0-1.9.8.jar", license: "Apache 2.0", url: "http://gant.codehaus.org/", licenseUrl: "http://gant.codehaus.org/Licence")
 libraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)", url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html")
 libraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar", license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html")
-libraryLicense(name: "javahl", version: "1.7.2", libraryName: "javahl.jar", license: "Apache", url: "http://subversion.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Antlr", libraryName: "antlr.jar", version: "3.4", license: "BSD", url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html")
-libraryLicense(name: "Guava", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
+libraryLicense(name: "Guava", version: "17.0", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Guava", libraryName: "guava-tools", version: "14.0.1", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "Groovy", version: "2.2.1", license: "Apache 2.0", url: "http://groovy.codehaus.org/")
 libraryLicense(name: "Gson", version: "2.2.4", libraryName: "gson", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/")
@@ -191,7 +190,6 @@ libraryLicense(name: "Jaxen", version: "", license: "modified Apache", url: "htt
 libraryLicense(name: "JavaHelp", version: "2.0_02", license: "included as license/javahelp_license.html in IntelliJ IDEA distribution", url: "http://java.sun.com/products/javahelp/")
 libraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License", url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5")
 libraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/", licenseUrl: "http://www.jdom.org/docs/faq.html#a0030")
-libraryLicense(name: "jgit-2.1.0", version: "2.1.0.201209190230", license: "EDL/BSD", url: "http://www.eclipse.org/jgit/", licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", attachedTo: "git4idea")
 libraryLicense(name: "javawriter", libraryName: "javawriter", license: "Apache 2.0", url: "https://github.com/square/javawriter")
 libraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "1.1-preview 2006-05-04 11:55:37", license: "BSD ", url: "http://www.jgoodies.com/freeware/forms/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
 libraryLicense(name: "JGoodies Looks", libraryName: "jgoodies-looks", version: "2.4.2", license: "BSD ", url: "http://www.jgoodies.com/freeware/looks/", licenseUrl: "http://www.jgoodies.com/downloads/libraries.html")
@@ -252,7 +250,7 @@ libraryLicense(name: "XML-RPC", libraryName: "XmlRPC", version: "2.0", license: 
 libraryLicense(name: "XStream", version: "1.4.3", license: "BSD", url: "http://xstream.codehaus.org/", licenseUrl: "http://xstream.codehaus.org/license.html")
 libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-redist.jar", version: "8.0.x", license: "link (commercial license)", url: "http://yourkit.com/", licenseUrl: "http://www.yourkit.com/purchase/license.html")
 libraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
-libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Alpha2", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "Netty", libraryName: "Netty", version: "4.1.0.Beta1", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "2.22", license: "New BSD License", url: "https://github.com/EsotericSoftware/kryo", licenseUrl: "https://github.com/EsotericSoftware/kryo/blob/master/license.txt")
 libraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "0.3", license: "Apache 2.0", url: "https://github.com/dain/snappy", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Cucumber-Java", libraryName: "cucumber-java", version: "1.0.14", license: "MIT License", url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
@@ -278,7 +276,10 @@ libraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr-runtime-4.1.jar", ve
 libraryLicense(name: "minlog", libraryName: "minlog-1.2.jar", version: "1.2", license: "BSD", url: "https://github.com/EsotericSoftware/minlog", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "ReflectASM", libraryName: "reflectasm-1.0.7.jar", version: "1.0.7", license: "BSD", url: "https://github.com/EsotericSoftware/reflectasm", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.2", license: "Apache 2.0", url: "http://objenesis.org/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
+jetbrainsLibrary("Coverage")
+jetbrainsLibrary("CoverageReport")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
 jetbrainsLibrary("optimizedFileManager.jar")
+jetbrainsLibrary("fernflower.jar")

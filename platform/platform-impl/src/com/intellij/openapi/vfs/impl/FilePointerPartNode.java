@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,7 +41,7 @@ class FilePointerPartNode {
   volatile int useCount;
 
   private int pointersUnder = 1;   // number of alive pointers in this node plus all nodes beneath
-  private static volatile boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
+  private static final VirtualFileManager ourFileManager = VirtualFileManager.getInstance();
 
   FilePointerPartNode(@NotNull String part, FilePointerPartNode parent, Pair<VirtualFile,String> fileAndUrl) {
     this.part = part;
@@ -56,8 +55,71 @@ class FilePointerPartNode {
     return part + (children.length == 0 ? "" : " -> "+children.length);
   }
 
+  // returns the node and length of matched characters in that node, or null if there is no match
+  int position(@Nullable VirtualFile parent, boolean separator, @NotNull CharSequence childName, @NotNull FilePointerPartNode[] outNode) {
+    checkConsistency();
+
+    int partStart;
+    if (parent == null) {
+      partStart = 0;
+      outNode[0] = this;
+    }
+    else {
+      VirtualFile gparent = parent.getParent();
+      partStart = position(gparent, gparent != null && !StringUtil.equals(gparent.getNameSequence(), "/"), parent.getNameSequence(), outNode);
+      if (partStart == -1) return -1;
+    }
+
+    boolean childSeparator = false;
+    if (separator) {
+      if (partStart == outNode[0].part.length()) {
+        childSeparator = true;
+      }
+      else {
+        int sepIndex = indexOfFirstDifferentChar("/", 0, outNode[0].part, partStart);
+        if (sepIndex != 1) return -1;
+        partStart++;
+      }
+    }
+    int index = indexOfFirstDifferentChar(childName, 0, outNode[0].part, partStart);
+
+    if (index == childName.length()) {
+      return partStart+index;
+    }
+
+    if (partStart + index == outNode[0].part.length()) {
+      // go to children
+      for (FilePointerPartNode child : outNode[0].children) {
+        int childPos = child.position(null, childSeparator, childName.subSequence(index, childName.length()), outNode);
+        if (childPos != -1) return childPos;
+      }
+    }
+    // else there is no match
+    return -1;
+  }
+
+  // appends to "out" all nodes under this node whose path (beginning from this node) starts in prefix.subSequence(start), then parent.getPath(), then childName
+  void getPointersUnder(@Nullable VirtualFile parent,
+                        boolean separator,
+                        @NotNull CharSequence childName,
+                        @NotNull List<FilePointerPartNode> out) {
+    FilePointerPartNode[] outNode = new FilePointerPartNode[1];
+    int position = position(parent, separator, childName, outNode);
+    if (position != -1) {
+      FilePointerPartNode node = outNode[0];
+      addAllPointersUnder(node, out);
+    }
+  }
+
+  private static void addAllPointersUnder(@NotNull FilePointerPartNode node, @NotNull List<FilePointerPartNode> out) {
+    if (node.leaf != null) out.add(node);
+    for (FilePointerPartNode child : node.children) {
+      addAllPointersUnder(child, out);
+    }
+  }
+
   boolean getPointersUnder(@NotNull String path, int start, @NotNull List<FilePointerPartNode> out) {
-    checkStructure();
+    checkConsistency();
     if (pointersUnder == 0) return false;
     // invariant: upper nodes are matched
     int index = indexOfFirstDifferentChar(path, start);
@@ -76,12 +138,18 @@ class FilePointerPartNode {
     return false;
   }
 
-  void checkStructure() {
-    if (!DEBUG) return;
+  private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
+  void checkConsistency() {
+    if (UNIT_TEST && !ApplicationInfoImpl.isInPerformanceTest()) {
+      doCheckConsistency();
+    }
+  }
+
+  private void doCheckConsistency() {
     int childSum = 0;
     for (FilePointerPartNode child : children) {
       childSum += child.pointersUnder;
-      child.checkStructure();
+      child.doCheckConsistency();
       assert child.parent == this;
     }
     if (leaf != null) childSum++;
@@ -157,56 +225,68 @@ class FilePointerPartNode {
     return false;
   }
 
-  private int indexOfFirstDifferentChar(@NotNull String path, int start) {
-    return indexOfFirstDifferentChar(path, start, part, 0, !SystemInfo.isFileSystemCaseSensitive);
+  private int indexOfFirstDifferentChar(@NotNull CharSequence path, int start) {
+    return indexOfFirstDifferentChar(path, start, part, 0);
   }
 
   @NotNull
   // returns pair.second != null always
   Pair<VirtualFile, String> update() {
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
-
     long lastUpdated = myLastUpdated;
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    long fsModCount = fileManager.getModificationCount();
+    long fsModCount = ourFileManager.getModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;
+    boolean changed = false;
 
     if (url == null) {
       url = file.getUrl();
       if (!file.isValid()) file = null;
+      changed = true;
     }
     boolean fileIsValid = file != null && file.isValid();
     if (file != null && !fileIsValid) {
       file = null;
+      changed = true;
     }
     if (file == null) {
-      file = fileManager.findFileByUrl(url);
+      file = ourFileManager.findFileByUrl(url);
       fileIsValid = file != null && file.isValid();
+      if (file != null) {
+        changed = true;
+      }
     }
     if (file != null) {
       if (fileIsValid) {
         url = file.getUrl(); // refresh url, it can differ
+        changed |= !url.equals(fileAndUrl.second);
       }
       else {
         file = null; // can't find, try next time
+        changed = true;
       }
     }
-    assert url != null;
-    Pair<VirtualFile, String> result = Pair.create(file, url);
-    myFileAndUrl = result;
+    Pair<VirtualFile, String> result;
+    if (changed) {
+      result = Pair.create(file, url);
+      myFileAndUrl = result;
+    }
+    else {
+      result = fileAndUrl;
+    }
     myLastUpdated = fsModCount;
     return result;
   }
 
-  private static int indexOfFirstDifferentChar(@NotNull String s1, int start1, @NotNull String s2, int start2, boolean ignoreCase) {
+  private static int indexOfFirstDifferentChar(@NotNull CharSequence s1, int start1, @NotNull String s2, int start2) {
+    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
     int len1 = s1.length();
     int len2 = s2.length();
     while (start1 < len1 && start2 < len2) {
       char c1 = s1.charAt(start1);
       char c2 = s2.charAt(start2);
-      if (ignoreCase ? !StringUtil.charsEqualIgnoreCase(c1, c2) : c1 != c2) {
+      if (!StringUtil.charsEqual(c1, c2, ignoreCase)) {
         return start1;
       }
       start1++;
@@ -230,17 +310,5 @@ class FilePointerPartNode {
 
   int getPointersUnder() {
     return pointersUnder;
-  }
-
-  @TestOnly
-  public static void pushDebug(boolean newDebug, @NotNull Disposable disposable) {
-    final boolean oldDebug = DEBUG;
-    DEBUG = newDebug;
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        DEBUG = oldDebug;
-      }
-    });
   }
 }

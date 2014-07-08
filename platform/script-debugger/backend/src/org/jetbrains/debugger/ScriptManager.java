@@ -19,13 +19,10 @@ public interface ScriptManager {
   boolean containsScript(Script script);
 
   /**
-   * Demands that script text should be replaced with a new one if possible. VM may get resumed
-   * after this command (this is defined by {@link ChangeDescription#isStackModified()}). In this
-   * case a standard 'suspended' notification is expected in a moment.
-   *
-   * @param newSource new text of script
+   * Demands that script text should be replaced with a new one if possible. VM may get resumed after this command
    */
-  AsyncResult<?> setSourceOnRemote(@NotNull Script script, @NotNull String newSource, boolean preview);
+  @NotNull
+  AsyncResult<?> setSourceOnRemote(@NotNull Script script, @NotNull CharSequence newSource, boolean preview);
 
   void forEachScript(@NotNull Processor<Script> scriptProcessor);
 

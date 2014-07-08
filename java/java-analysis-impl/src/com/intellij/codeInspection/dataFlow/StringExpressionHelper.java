@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,18 +161,20 @@ public class StringExpressionHelper {
   @NotNull
   public static Set<PsiMethodCallExpression> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
     final Set<PsiMethodCallExpression> callExpressions = new com.intellij.util.containers.HashSet<PsiMethodCallExpression>();
-    MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference psiReference) {
-        final PsiMethodCallExpression methodCallExpression =
-          PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethodCallExpression.class);
+    final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<PsiReference>();
 
-        if (methodCallExpression != null) {
-          callExpressions.add(methodCallExpression);
-        }
-        return true;
+    MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(consumer);
+
+    for (PsiReference psiReference : consumer.getResults()) {
+      final PsiMethodCallExpression methodCallExpression =
+        PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethodCallExpression.class);
+
+      if (methodCallExpression != null) {
+        callExpressions.add(methodCallExpression);
       }
-    });
+    }
+
+
     return callExpressions;
   }
 }

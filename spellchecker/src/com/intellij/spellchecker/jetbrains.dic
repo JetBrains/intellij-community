@@ -57,6 +57,7 @@ cdata
 cglib
 changelist
 charset
+charsets
 checkbox
 checkboxes
 checksum
@@ -219,6 +220,7 @@ jpeg
 jpdl
 jquery
 jsessionid
+jshint
 json
 junit
 keepduplicates

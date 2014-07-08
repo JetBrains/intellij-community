@@ -23,6 +23,7 @@ import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
@@ -46,7 +47,7 @@ public class FileResponses {
     String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
     if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
-        if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
+        if (DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
           send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
           return true;
         }
@@ -59,7 +60,7 @@ public class FileResponses {
     return false;
   }
 
-  public static void sendFile(HttpRequest request, Channel channel, File file) throws IOException {
+  public static void sendFile(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull File file) throws IOException {
     if (checkCache(request, channel, file.lastModified())) {
       return;
     }
@@ -68,7 +69,7 @@ public class FileResponses {
     response.headers().add(CONTENT_TYPE, getContentType(file.getPath()));
     addCommonHeaders(response);
     response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
-    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
+    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, DATE_FORMAT.get().format(new Date(file.lastModified())));
 
     boolean keepAlive = addKeepAliveIfNeed(response, request);
 
@@ -84,12 +85,12 @@ public class FileResponses {
 
     try {
       long fileLength = raf.length();
-      if (request.getMethod() != HttpMethod.HEAD) {
+      if (request.method() != HttpMethod.HEAD) {
         HttpHeaders.setContentLength(response, fileLength);
       }
 
       channel.write(response);
-      if (request.getMethod() != HttpMethod.HEAD) {
+      if (request.method() != HttpMethod.HEAD) {
         if (channel.pipeline().get(SslHandler.class) == null) {
           // no encryption - use zero-copy
           channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));

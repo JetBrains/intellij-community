@@ -658,7 +658,7 @@
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler"/>
     <editorActionHandler action="EditorDeleteToWordStart"
                          implementationClass="com.intellij.codeInsight.editorActions.BackspaceToWordStartHandler"/>
-    <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler"/>
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler" order="first"/>
 
     <editorActionHandler action="EditorDuplicate" implementationClass="com.intellij.openapi.editor.actions.NamedElementDuplicateHandler"/>
 
@@ -682,7 +682,7 @@
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.rename.inplace.EscapeHandler"
                          order="before hide-hints"/>
 
-    <typedHandler implementation="com.intellij.codeInsight.lookup.impl.LookupTypedHandler" id="lookup" order="first"/>
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.lookup.impl.LookupTypedHandler" id="lookup"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler" id="completionAutoPopup"
                   order="first"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler" id="selectionQuoting"/>
@@ -873,6 +873,7 @@
     <lang.foldingBuilder language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFoldingBuilder"/>
 
     <virtualFileSystem key="scratchpad" implementationClass="com.intellij.ide.scratch.ScratchpadFileSystem"/>
+    <fileIconProvider implementation="com.intellij.ide.scratch.ScratchpadIconProvider"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>

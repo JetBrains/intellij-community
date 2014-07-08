@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -164,6 +166,15 @@ public class XLineBreakpointManager {
     }
   }
 
+  @NotNull
+  public Collection<XLineBreakpointImpl> getDocumentBreakpoints(Document document) {
+    Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
+    if (breakpoints == null) {
+      breakpoints = Collections.emptyList();
+    }
+    return breakpoints;
+  }
+
   private void updateBreakpoints(@NotNull Document document) {
     Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
     if (breakpoints == null) {
@@ -250,7 +261,7 @@ public class XLineBreakpointManager {
 
   private class MyEditorMouseListener extends EditorMouseAdapter {
     @Override
-    public void mouseClicked(EditorMouseEvent e) {
+    public void mouseClicked(final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
       if (mouseEvent.isPopupTrigger()
@@ -274,6 +285,8 @@ public class XLineBreakpointManager {
               @Override
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
+                  ActionManagerEx.getInstanceEx().fireBeforeActionPerformed("ToggleLineBreakpoint", e.getMouseEvent());
+
                   XLineBreakpoint breakpoint =
                       XBreakpointUtil.toggleLineBreakpoint(myProject, file, editor, line, mouseEvent.isAltDown(), false);
                   if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {

@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -66,7 +65,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
-    add(myBrowseButton, BorderLayout.EAST);
+    // don't force FixedSizeButton to occupy the whole height
+    add(wrapWithoutResize(myBrowseButton), BorderLayout.EAST);
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
 
@@ -74,9 +74,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
     }
-    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
-      setBorder(new EmptyBorder(0, 1, 0, 1));
-    }
+  }
+
+  private static JPanel wrapWithoutResize(JComponent component) {
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    panel.add(component);
+    return panel;
   }
 
   public final Comp getChildComponent() {

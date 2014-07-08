@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
@@ -38,9 +38,8 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class JavaConcatenationInjectorManager implements ModificationTracker {
+public class JavaConcatenationInjectorManager extends SimpleModificationTracker {
   public static final ExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationAwareInjector");
-  private volatile long myModificationCounter;
 
   public JavaConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
     final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
@@ -58,18 +57,13 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
     psiManagerEx.registerRunnableToRunOnAnyChange(new Runnable() {
       @Override
       public void run() {
-        myModificationCounter++; // clear caches even on non-physical changes
+        incModificationCount(); // clear caches even on non-physical changes
       }
     });
   }
 
   public static JavaConcatenationInjectorManager getInstance(final Project project) {
     return ServiceManager.getService(project, JavaConcatenationInjectorManager.class);
-  }
-
-  @Override
-  public long getModificationCount() {
-    return myModificationCounter;
   }
 
   private static Pair<PsiElement,PsiElement[]> computeAnchorAndOperandsImpl(@NotNull PsiElement context) {
@@ -228,6 +222,6 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
   }
 
   private void concatenationInjectorsChanged() {
-    myModificationCounter++;
+    incModificationCount();
   }
 }

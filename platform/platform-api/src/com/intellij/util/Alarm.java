@@ -98,7 +98,7 @@ public class Alarm implements Disposable {
                    "You must provide parent Disposable for ThreadToUse.POOLED_THREAD and ThreadToUse.OWN_THREAD Alarm");
   }
 
-  public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
+  public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
 
     if (threadToUse == ThreadToUse.POOLED_THREAD) {

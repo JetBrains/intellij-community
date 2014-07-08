@@ -2,6 +2,7 @@ package com.jetbrains.python.newProject;
 
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ public abstract class PythonProjectGenerator {
     return new PyNewProjectSettings();
   }
 
-  public ValidationResult warningValitation() {
+  public ValidationResult warningValidation(@Nullable final Sdk sdk) {
     return ValidationResult.OK;
   }
 

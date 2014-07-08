@@ -84,10 +84,6 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
 
   @Nullable
   public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
-    if (!(element instanceof PsiIdentifier || element instanceof PsiKeyword)) {
-      return null;
-    }
-
     PsiElement expression = null;
     PsiElement parent = element.getParent();
     if (parent instanceof PsiVariable) {
@@ -98,12 +94,31 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
       if (pparent instanceof PsiCallExpression) {
         parent = pparent;
       }
+      else if (pparent instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
+        if (resolve instanceof PsiClass) {
+          parent = pparent;
+        }
+      }
       if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
         expression = parent;
       }
     }
     else if (parent instanceof PsiThisExpression) {
       expression = parent;
+    }
+    else if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiBinaryExpression || parent instanceof PsiPolyadicExpression) {
+      if (allowMethodCalls || !DebuggerUtils.hasSideEffects(parent)) {
+        expression = parent;
+      }
+    }
+    else if (allowMethodCalls) {
+      PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class, PsiMethod.class);
+      if (e instanceof PsiNewExpression) {
+        if (((PsiNewExpression)e).getAnonymousClass() == null) {
+          expression = e;
+        }
+      }
     }
 
     if (expression != null) {

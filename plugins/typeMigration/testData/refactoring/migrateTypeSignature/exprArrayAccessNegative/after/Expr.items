@@ -1,0 +1,9 @@
+Types:
+PsiParameter:p : double
+PsiReferenceExpression:p : double
+
+Conversions:
+
+New expression type changes:
+Fails:
+p->double

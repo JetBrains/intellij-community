@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
+import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextUtil
 import com.intellij.debugger.impl.DebuggerManagerImpl
@@ -37,6 +38,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.OSProcessManager
 import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -52,11 +54,14 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author peter
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
+  private static final int ourTimeout = 60000
+
   @Override
   protected void setUp() {
     edt {
@@ -72,7 +77,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(Runnable runnable) {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run()
   }
 
@@ -95,7 +100,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      def listener = [onTextAvailable: { evt, type -> }] as ProcessAdapter
+      def listener = [onTextAvailable: { ProcessEvent evt, type -> /*println evt.text*/}] as ProcessAdapter
       runConfiguration(DefaultDebugExecutor, listener, runner, configuration);
     }
     try {
@@ -104,7 +109,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     finally {
       def handler = debugProcess.executionResult.processHandler
       resume()
-      if (!handler.waitFor(20000)) {
+      if (!handler.waitFor(ourTimeout)) {
         if (handler instanceof OSProcessHandler) {
           OSProcessManager.instance.killProcessTree(handler.process)
         } else {
@@ -338,7 +343,7 @@ foo()
     }
   }
 
-  public void "test navigation to script outside source root"() {
+  public void "test_navigation_outside_source"() {
     def module1 = addModule("module1", false)
     def module2 = addModule("module2", true)
     addGroovyLibrary(module1)
@@ -405,10 +410,22 @@ public static void main(String[] args) {
   }
 
   private def resume() {
-    debugProcess.managerThread.invokeAndWait(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
+    Semaphore semaphore = new Semaphore()
+    semaphore.down()
+    // wait for all events processed
+    debugProcess.managerThread.schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        semaphore.up();
+      }
+    });
+    def finished = semaphore.waitFor(ourTimeout);
+    assert finished : 'Too long debugger actions'
+
     int i = 0
     def suspendManager = debugProcess.suspendManager
     while (i++ < 1000 && !suspendManager.pausedContext && !debugProcess.executionResult.processHandler.processTerminated) {
@@ -433,11 +450,15 @@ public static void main(String[] args) {
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
     Semaphore semaphore = new Semaphore()
     semaphore.down()
-    debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
+    debugProcess.managerThread.invoke(new DebuggerContextCommandImpl(ctx) {
       @Override
       void threadAction() {
-        result = cl()
-        semaphore.up()
+        try {
+          result = cl()
+        }
+        finally {
+          semaphore.up()
+        }
       }
 
       @Override
@@ -445,7 +466,7 @@ public static void main(String[] args) {
         println DebugUtil.currentStackTrace()
       }
     })
-    def finished = semaphore.waitFor(20000)
+    def finished = semaphore.waitFor(ourTimeout)
     assert finished : 'Too long debugger action'
     return result
   }
@@ -462,7 +483,7 @@ public static void main(String[] args) {
       item.updateRepresentation(ctx, { } as DescriptorLabelListener)
       semaphore.up()
     }
-    assert semaphore.waitFor(10000):  "too long evaluation: $item.label $item.evaluateException"
+    assert semaphore.waitFor(ourTimeout):  "too long evaluation: $item.label $item.evaluateException"
 
     String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
     assert result == expected

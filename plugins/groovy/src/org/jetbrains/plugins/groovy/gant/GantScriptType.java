@@ -20,12 +20,12 @@ import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
       final GrNamedArgument[] args = ((GrMethodCallExpression)parent).getNamedArguments();
       if (args.length == 1) {
         final GrArgumentLabel label = args[0].getLabel();
-        if (label != null && GantUtils.isPlainIdentifier(label)) {
+        if (label != null) {
           return label.getName();
         }
       }
@@ -104,7 +104,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
   }
 
   public static List<VirtualFile> additionalScopeFiles(@NotNull GroovyFile file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       final String sdkHome = GantUtils.getSdkHomeFromClasspath(module);
       if (sdkHome != null) {
@@ -123,10 +123,6 @@ public class GantScriptType extends GroovyRunnableScriptType {
 
   @Override
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
-    GlobalSearchScope result = baseScope;
-    for (final VirtualFile root : additionalScopeFiles(file)) {
-      result = result.uniteWith(new NonClasspathDirectoryScope(root));
-    }
-    return result;
+    return baseScope.uniteWith(new NonClasspathDirectoriesScope(additionalScopeFiles(file)));
   }
 }

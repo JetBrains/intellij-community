@@ -235,7 +235,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   private <T> void collectProperties(final List<T> children, final Function<PsiMember, T> factory, final boolean acceptPrimitive) {
-    final List<PsiMember> fieldList =
+    final List<PsiMember> fieldList = myPsiClass == null ? null :
       CachedValuesManager.getCachedValue(myPsiClass, new CachedValueProvider<List<PsiMember>>() {
         @Nullable
         @Override
@@ -273,10 +273,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         private boolean acceptablePropertyType(PsiType fieldType) {
           return fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
                  (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
-                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && JavaGenericsUtil
-                                                                                                                     .getCollectionItemType(
-                                                                                                                       fieldType, myPsiClass
-                                                                                                                       .getResolveScope()) != null;
+                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && JavaGenericsUtil.getCollectionItemType(fieldType, myPsiClass.getResolveScope()) != null ||
+                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER);
         }
       });
     if (fieldList != null) {

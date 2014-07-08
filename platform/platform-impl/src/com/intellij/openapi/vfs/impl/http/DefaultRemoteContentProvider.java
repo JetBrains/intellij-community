@@ -30,6 +30,7 @@ import com.intellij.util.Url;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.io.Responses;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -69,6 +70,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
       callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
       HttpURLConnection connection = (HttpURLConnection)new URL(url.toExternalForm()).openConnection();
+      connection.setRequestProperty("User-Agent", Responses.getServerHeaderValue());
       connection.setConnectTimeout(CONNECT_TIMEOUT);
       connection.setReadTimeout(READ_TIMEOUT);
       if (connection instanceof HttpsURLConnection) {

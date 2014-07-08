@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,20 +150,25 @@ public class GithubUtil {
       @Override
       @NotNull
       public GithubAuthData compute() throws GithubOperationCanceledException {
-        final GithubLoginDialog dialog = new GithubLoginDialog(project, oldAuth);
+        final GithubAuthData[] authData = new GithubAuthData[1];
+        final boolean[] ok = new boolean[1];
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
+            final GithubLoginDialog dialog = new GithubLoginDialog(project, oldAuth);
             DialogManager.show(dialog);
+            ok[0] = dialog.isOK();
+
+            if (ok[0]) {
+              authData[0] = dialog.getAuthData();
+              GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+            }
           }
         }, indicator.getModalityState());
-        if (!dialog.isOK()) {
+        if (!ok[0]) {
           throw new GithubOperationCanceledException("Can't get valid credentials");
         }
-        GithubAuthData authData = dialog.getAuthData();
-
-        GithubSettings.getInstance().setAuthData(authData, dialog.isSavePasswordSelected());
-        return authData;
+        return authData[0];
       }
     });
   }
@@ -177,23 +182,28 @@ public class GithubUtil {
       @Override
       @NotNull
       public GithubAuthData compute() throws GithubOperationCanceledException {
-        final GithubLoginDialog dialog = new GithubBasicLoginDialog(project, oldAuth, host);
+        final GithubAuthData[] authData = new GithubAuthData[1];
+        final boolean[] ok = new boolean[1];
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           @Override
           public void run() {
+            final GithubLoginDialog dialog = new GithubBasicLoginDialog(project, oldAuth, host);
             DialogManager.show(dialog);
+            ok[0] = dialog.isOK();
+            if (ok[0]) {
+              authData[0] = dialog.getAuthData();
+
+              final GithubSettings settings = GithubSettings.getInstance();
+              if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
+                GithubSettings.getInstance().setAuthData(authData[0], dialog.isSavePasswordSelected());
+              }
+            }
           }
         }, indicator.getModalityState());
-        if (!dialog.isOK()) {
+        if (!ok[0]) {
           throw new GithubOperationCanceledException("Can't get valid credentials");
         }
-        GithubAuthData authData = dialog.getAuthData();
-
-        final GithubSettings settings = GithubSettings.getInstance();
-        if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
-          GithubSettings.getInstance().setAuthData(authData, dialog.isSavePasswordSelected());
-        }
-        return authData;
+        return authData[0];
       }
     });
   }

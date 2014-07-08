@@ -78,7 +78,8 @@ public class ToStringRenderer extends NodeRendererImpl {
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
-          message == null? "" : "\"" + DebuggerUtils.convertToPresentationString(DebuggerUtilsEx.truncateString(message)) + "\""
+          // no need to add quotes and escape characters here, XValueTextRendererImpl handles the presentation
+          message == null? "" : /*"\"" + DebuggerUtils.convertToPresentationString(*/DebuggerUtilsEx.truncateString(message)/*) + "\""*/
         );
         labelListener.labelChanged();
       }

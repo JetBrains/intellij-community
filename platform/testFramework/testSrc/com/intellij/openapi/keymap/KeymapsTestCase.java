@@ -92,7 +92,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Jdbc.Execute", "Console.Jpa.Execute", "Groovy.Shell.Execute"},
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
-    { "control D",                "CompareDirs", "EditorDuplicate", "CompareTwoFiles", "SendEOF"},
+    { "control D",                "CompareDirs", "EditorDuplicate", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
     { "control N",                "FileChooser.NewFolder", "GotoClass"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
@@ -175,7 +175,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control 5",                "ChangeSplitOrientation", "GotoBookmark5"},
-    { "control D",                "CompareDirs", "$Delete", "CompareTwoFiles", "SendEOF"},
+    { "control D",                "CompareDirs", "$Delete", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control K",                "EditorCutLineEnd", "CheckinProject"},
     { "control N",                "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
@@ -200,7 +200,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control F1",               "ExternalJavaDoc", "ShowErrorDescription"},
-    { "control F10",              "RunToCursor", "javaee.UpdateRunningApplication"},
+    { "control F10",              "RunToCursor", "javaee.UpdateRunningApplication", "liveedit.UpdateRunningApplication"},
     { "control F5",               "Rerun", "Run"},
     { "control N",                "FileChooser.NewFolder", "Generate", },
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
@@ -240,7 +240,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
     { "control F10",              "ShowPopupMenu", "javaee.UpdateRunningApplication"},
     { "control F11",              "Rerun", "ToggleBookmarkWithMnemonic"},
-    { "control D",                "CompareDirs", "EditorDeleteLine", "CompareTwoFiles", "SendEOF"},
+    { "control D",                "CompareDirs", "EditorDeleteLine", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control N",                "ShowPopupMenu", "FileChooser.NewFolder"},
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
     { "control R",                "RunToCursor", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
@@ -276,7 +276,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
     { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
-    { "control D",                "EditorDuplicate", "CompareDirs", "CompareTwoFiles", "SendEOF"},
+    { "control D",                "EditorDuplicate", "CompareDirs", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
     { "control M",                "Vcs.ShowMessageHistory", "Move"},
     { "control R",                "RenameElement", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
@@ -321,7 +321,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
       { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
       { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},
-      { "meta D",                   "EditorDeleteLine", "CompareTwoFiles", "CompareDirs", "SendEOF"},
+      { "meta D",                   "EditorDeleteLine", "CompareTwoFiles", "CompareDirs", "SendEOF", "FileChooser.GotoDesktop"},
       { "meta P",                   "FileChooser.TogglePathShowing", "Print"},
       { "meta R",                   "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "RunToCursor"},
       { "meta U",                   "CommanderSwapPanels", "EvaluateExpression"},
@@ -438,9 +438,10 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
       }
       else {
         if (failMessage.length() == 0)  {
-          failMessage.append("Shortcut '" + getText(shortcut) + "' conflicts found in keymap '" + keymap.getName() + "':\n");
+          failMessage.append("Shortcut '").append(getText(shortcut)).append("' conflicts found in keymap '")
+            .append(keymap.getName()).append("':\n");
         }
-        failMessage.append(def + "\n");
+        failMessage.append(def).append("\n");
       }
     }
     if (OUTPUT_TEST_DATA) {

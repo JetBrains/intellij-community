@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -35,13 +36,16 @@ import org.jetbrains.annotations.NotNull;
 public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(IndentingBackspaceHandler.class);
 
+  private boolean caretWasAtLineStart;
+
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
+    caretWasAtLineStart = editor.getCaretModel().getLogicalPosition().column == 0;
   }
 
   @Override
   public boolean charDeleted(char c, PsiFile file, Editor editor) {
-    if (!CodeInsightSettings.getInstance().INDENTING_BACKSPACE || " \n\t".indexOf(c) == -1) {
+    if (!CodeInsightSettings.getInstance().INDENTING_BACKSPACE || !StringUtil.isWhiteSpace(c)) {
       return false;
     }
     LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
@@ -51,18 +55,17 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
     Document document = editor.getDocument();
 
-    int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), editor.getCaretModel().getOffset(), " \t");
+    int caretOffset = editor.getCaretModel().getOffset();
+    int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), caretOffset, " \t");
     int beforeWhitespaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), offset - 1, " \t") + 1;
-    LogicalPosition logicalPosition = editor.offsetToLogicalPosition(offset);
+    LogicalPosition logicalPosition = caretOffset < offset ? editor.offsetToLogicalPosition(offset) : editor.getCaretModel().getLogicalPosition();
     int lineStartOffset = document.getLineStartOffset(logicalPosition.line);
     if (lineStartOffset < beforeWhitespaceOffset) {
-      if (c == '\n' && beforeWhitespaceOffset < offset) {
+      if (caretWasAtLineStart && beforeWhitespaceOffset < offset) {
         document.deleteString(beforeWhitespaceOffset, offset);
         return true;
       }
-      else {
-        return false;
-      }
+      return false;
     }
 
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(editor.getProject());
@@ -75,11 +78,16 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
     int targetColumn = getWidth(indent, tabSize);
 
     if (logicalPosition.column == targetColumn) {
+      if (caretOffset < offset) {
+        editor.getCaretModel().moveToLogicalPosition(logicalPosition);
+        return true;
+      }
       return false;
     }
 
-    if (c == '\n' || logicalPosition.column > targetColumn) {
-      smartReplace(document, lineStartOffset, offset, indent);
+    if (caretWasAtLineStart || logicalPosition.column > targetColumn) {
+      document.replaceString(lineStartOffset, offset, indent);
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logicalPosition.line, targetColumn));
       return true;
     }
 
@@ -93,20 +101,13 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
     if (prevLineStartOffset < targetOffset) {
       document.deleteString(targetOffset, offset);
+      editor.getCaretModel().moveToOffset(targetOffset);
     }
     else {
-      smartReplace(document, prevLineStartOffset, offset, indent);
+      document.replaceString(prevLineStartOffset, offset, indent);
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logicalPosition.line - 1, targetColumn));
     }
     return true;
-  }
-
-  private static void smartReplace(Document document, int from, int to, String indent) {
-    CharSequence text = document.getCharsSequence();
-    int prefixLength = 0;
-    while ((prefixLength + from) < to && prefixLength < indent.length() && text.charAt(prefixLength + from) == indent.charAt(prefixLength)) {
-      prefixLength++;
-    }
-    document.replaceString(from + prefixLength, to, indent.substring(prefixLength));
   }
 
   private static int getTabSize(@NotNull CodeStyleFacade codeStyleFacade, @NotNull Document document) {

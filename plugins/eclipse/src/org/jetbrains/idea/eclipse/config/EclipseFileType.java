@@ -31,6 +31,9 @@ import javax.swing.*;
  * Author: Vladislav.Kaznacheev
  */
 public class EclipseFileType implements FileType {
+
+  public static final FileType INSTANCE = new EclipseFileType();
+
   @NotNull
   @NonNls
   public String getName() {

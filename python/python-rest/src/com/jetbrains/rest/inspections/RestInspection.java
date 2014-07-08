@@ -15,9 +15,7 @@
  */
 package com.jetbrains.rest.inspections;
 
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.Nls;
@@ -27,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : catherine
  */
-public abstract class RestInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class RestInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -46,9 +44,10 @@ public abstract class RestInspection extends LocalInspectionTool implements Cust
     return true;
   }
 
+  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
-    return null;
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    return SuppressQuickFix.EMPTY_ARRAY;
   }
 
   @Override
