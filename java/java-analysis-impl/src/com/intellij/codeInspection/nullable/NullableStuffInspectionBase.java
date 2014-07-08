@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -282,7 +283,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       if (!reported_nullable_method_overrides_notnull
           && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE
           && annotated.isDeclaredNullable
-          && NullableNotNullManager.isNotNull(superMethod)) {
+          && isNotNullNotInferred(superMethod)) {
         reported_nullable_method_overrides_notnull = true;
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNullables(), true);
         holder.registerProblem(annotation != null ? annotation : method.getNameIdentifier(),
@@ -293,7 +294,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL
           && !annotated.isDeclaredNullable
           && !annotated.isDeclaredNotNull
-          && NullableNotNullManager.isNotNull(superMethod)) {
+          && isNotNullNotInferred(superMethod)) {
         reported_not_annotated_method_overrides_notnull = true;
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
@@ -413,6 +414,12 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         }
       }
     }
+  }
+
+  private static boolean isNotNullNotInferred(@NotNull PsiMethod superMethod) {
+    Project project = superMethod.getProject();
+    PsiAnnotation notNull = NullableNotNullManager.getInstance(project).getNotNullAnnotation(superMethod);
+    return notNull != null && !InferredAnnotationsManager.getInstance(project).isInferredAnnotation(notNull);
   }
 
   @NotNull

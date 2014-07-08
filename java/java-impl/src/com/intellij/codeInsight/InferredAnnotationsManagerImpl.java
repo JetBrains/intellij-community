@@ -28,9 +28,14 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return listOwner.getProject().getComponent(ProjectBytecodeAnalysis.class).findInferredAnnotation(listOwner, annotationFQN);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     return listOwner.getProject().getComponent(ProjectBytecodeAnalysis.class).findInferredAnnotations(listOwner);
+  }
+
+  @Override
+  public boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
+    return annotation.getUserData(ProjectBytecodeAnalysis.INFERRED_ANNOTATION) != null;
   }
 }

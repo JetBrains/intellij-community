@@ -94,8 +94,13 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   
   @Nullable
   public String getNullable(PsiModifierListOwner owner) {
-    PsiAnnotation annotation = findNullabilityAnnotation(owner, false, true);
+    PsiAnnotation annotation = getNullableAnnotation(owner);
     return annotation == null ? null : annotation.getQualifiedName();
+  }
+
+  @Nullable
+  public PsiAnnotation getNullableAnnotation(PsiModifierListOwner owner) {
+    return findNullabilityAnnotation(owner, false, true);
   }
 
   public void setDefaultNullable(@NotNull String defaultNullable) {
@@ -108,8 +113,13 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   }
   
   @Nullable
+  public PsiAnnotation getNotNullAnnotation(PsiModifierListOwner owner) {
+    return findNullabilityAnnotation(owner, false, false);
+  }
+
+  @Nullable
   public String getNotNull(PsiModifierListOwner owner) {
-    PsiAnnotation annotation = findNullabilityAnnotation(owner, false, false);
+    PsiAnnotation annotation = getNotNullAnnotation(owner);
     return annotation == null ? null : annotation.getQualifiedName();
   }
 

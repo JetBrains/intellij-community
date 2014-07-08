@@ -17,9 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.JavaParser;
-import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,12 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -54,15 +51,8 @@ import java.util.Collection;
  */
 public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
+  public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
   private static final PsiAnnotation[] NO_DATA = new PsiAnnotation[0];
-  private static final CharTableImpl charTable = new CharTableImpl();
-  private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
-    }
-  };
-  private final PsiManager myPsiManager;
 
   private volatile Annotations myAnnotations = null;
 
@@ -73,9 +63,8 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
     return INSTANCE_KEY.getValue(project);
   }
 
-  public ProjectBytecodeAnalysis(Project project, PsiManager psiManager) {
+  public ProjectBytecodeAnalysis(Project project) {
     super(project);
-    myPsiManager = psiManager;
 
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
@@ -191,7 +180,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       if (notNull && contractValue != null) {
         return new PsiAnnotation[]{
           getNotNullAnnotation(),
-          createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")")
+          createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
         };
       }
       else if (notNull) {
@@ -201,7 +190,7 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
       }
       else if (contractValue != null) {
         return new PsiAnnotation[]{
-          createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")")
+          createAnnotationFromText("@" + ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + contractValue + ")")
         };
       }
       else {
@@ -281,14 +270,10 @@ public class ProjectBytecodeAnalysis extends AbstractProjectComponent {
   }
 
   @NotNull
-  PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
-    synchronized (charTable) {
-      final DummyHolder holder = DummyHolderFactory.createHolder(myPsiManager,
-                                                                 new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null,
-                                                                 charTable);
-      final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-      return (PsiAnnotation) element;
-    }
+  private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
+    PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
+    annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
+    return annotation;
   }
 }
 

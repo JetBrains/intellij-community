@@ -16,7 +16,6 @@ class MyClass {
             return super.clone();
         }
 
-        @NotNull
         @Override
         public String toString() {
             return super.toString();

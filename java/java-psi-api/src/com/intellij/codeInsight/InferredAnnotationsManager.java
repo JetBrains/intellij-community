@@ -35,4 +35,6 @@ public abstract class InferredAnnotationsManager {
 
   @NotNull
   public abstract PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner);
+
+  public abstract boolean isInferredAnnotation(@NotNull PsiAnnotation annotation);
 }
