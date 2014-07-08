@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -389,17 +390,21 @@ public class TestDataGuessByExistingFilesUtil {
     return new TestDataDescriptor(descriptors);
   }
 
-  private static synchronized MultiMap<String, Trinity<Matcher, String, String>> getAllFileNames(List<Trinity<Matcher, String, String>> input,
+  private static MultiMap<String, Trinity<Matcher, String, String>> getAllFileNames(final List<Trinity<Matcher, String, String>> input,
                                                                                                  final GotoFileModel model) {
-    LinkedMultiMap<String, Trinity<Matcher, String, String>> map = new LinkedMultiMap<String, Trinity<Matcher, String, String>>();
-    for (String name : model.getNames(false)) {
-      ProgressManager.checkCanceled();
-      for (Trinity<Matcher, String, String> trinity : input) {
-        if (trinity.first.matches(name)) {
-          map.putValue(name, trinity);
+    final LinkedMultiMap<String, Trinity<Matcher, String, String>> map = new LinkedMultiMap<String, Trinity<Matcher, String, String>>();
+    model.processNames(new Processor<String>() {
+      @Override
+      public boolean process(String name) {
+        ProgressManager.checkCanceled();
+        for (Trinity<Matcher, String, String> trinity : input) {
+          if (trinity.first.matches(name)) {
+            map.putValue(name, trinity);
+          }
         }
+        return true;
       }
-    }
+    }, false);
     return map;
   }
 
