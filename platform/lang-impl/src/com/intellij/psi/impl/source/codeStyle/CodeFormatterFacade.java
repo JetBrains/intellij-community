@@ -20,6 +20,7 @@ import com.intellij.formatting.*;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -39,10 +40,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -174,13 +172,16 @@ public class CodeFormatterFacade {
 
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    final Language contextLanguage = file.getLanguage();
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
         LOG.assertTrue(document != null);
         try {
-          final PsiElement startElement = file.findElementAt(textRanges.get(0).getTextRange().getStartOffset());
-          final PsiElement endElement = file.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1);
+          final FileViewProvider viewProvider = file.getViewProvider();
+          final PsiElement startElement = viewProvider.findElementAt(textRanges.get(0).getTextRange().getStartOffset(), contextLanguage);
+          final PsiElement endElement =
+            viewProvider.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1, contextLanguage);
           final PsiElement commonParent = startElement != null && endElement != null ? PsiTreeUtil.findCommonParent(startElement, endElement) : null;
           ASTNode node = null;
           if (commonParent != null) {
@@ -258,7 +259,7 @@ public class CodeFormatterFacade {
   private TextRange preprocess(@NotNull final ASTNode node, @NotNull TextRange range) {
     TextRange result = range;
     PsiElement psi = node.getPsi();
-    if (!psi.isValid()) {      
+    if (!psi.isValid()) {
       return result;
     }
 
