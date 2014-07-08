@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.idea.svn.api.Depth;
 
 import javax.swing.*;
@@ -22,43 +23,24 @@ import javax.swing.*;
 public class DepthCombo extends JComboBox {
   public DepthCombo(final boolean forUpdate) {
     super(forUpdate ? ourForUpdate : ourForCheckout);
-    setSelectedIndex(forUpdate ? 0 : 3);
+    setRenderer(new DepthRenderer());
+    setSelectedItem(forUpdate ? Depth.UNKNOWN : Depth.INFINITY);
     setEditable(false);
     setToolTipText(SvnBundle.message("label.depth.description"));
   }
 
   public Depth getDepth() {
-    return ((DepthWithName) super.getSelectedItem()).getDepth();
+    return (Depth)super.getSelectedItem();
   }
 
-  private final static DepthWithName [] ourForUpdate = {new DepthWithName(Depth.UNKNOWN, "working copy"),
-    new DepthWithName(Depth.EMPTY), new DepthWithName(Depth.FILES), new DepthWithName(Depth.IMMEDIATES),
-    new DepthWithName(Depth.INFINITY)};
-  private final static DepthWithName [] ourForCheckout = {
-    new DepthWithName(Depth.EMPTY), new DepthWithName(Depth.FILES), new DepthWithName(Depth.IMMEDIATES),
-    new DepthWithName(Depth.INFINITY)};
+  private final static Depth[] ourForUpdate = {Depth.UNKNOWN, Depth.EMPTY, Depth.FILES, Depth.IMMEDIATES, Depth.INFINITY};
+  private final static Depth[] ourForCheckout = {Depth.EMPTY, Depth.FILES, Depth.IMMEDIATES, Depth.INFINITY};
 
-  private static class DepthWithName {
-    private final Depth myDepth;
-    private final String myName;
-
-    private DepthWithName(Depth depth) {
-      myDepth = depth;
-      myName = myDepth.toString();
-    }
-
-    private DepthWithName(Depth depth, String name) {
-      myDepth = depth;
-      myName = name;
-    }
+  private static class DepthRenderer extends ListCellRendererWrapper<Depth> {
 
     @Override
-    public String toString() {
-      return myName;
-    }
-
-    public Depth getDepth() {
-      return myDepth;
+    public void customize(JList list, Depth value, int index, boolean selected, boolean hasFocus) {
+      setText(Depth.UNKNOWN.equals(value) ? "working copy" : value.getName());
     }
   }
 }
