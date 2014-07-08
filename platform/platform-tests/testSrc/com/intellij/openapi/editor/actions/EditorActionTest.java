@@ -102,4 +102,15 @@ public class EditorActionTest extends AbstractEditorTest {
     deleteLine();
     checkResultByText("");
   }
+
+  public void testDeleteLineHonorSelection() throws Exception {
+    init("xxxx\n" +
+         "bla <selection><caret>bla\n" +
+         "bla</selection> bla\n" +
+         "yyy",
+         TestFileType.TEXT);
+    deleteLine();
+    checkResultByText("xxxx\n" +
+                      "yyy<caret>");
+  }
 }
