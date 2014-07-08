@@ -96,6 +96,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.*;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -1008,14 +1009,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Component cmp;
       PsiFile file = null;
       myLocationString = null;
+      String pattern = "*" + myPopupField.getText();
+      Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
       if (isMoreItem(index)) {
         cmp = More.get(isSelected);
       } else if (value instanceof VirtualFile
                  && myProject != null
                  && (((VirtualFile)value).isDirectory()
                      || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
+        myFileRenderer.setPatternMatcher(matcher);
         cmp = myFileRenderer.getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
+        myPsiRenderer.setPatternMatcher(matcher);
         cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
       } else {
         cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
