@@ -53,7 +53,7 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class PushedFilePropertiesUpdater {
+public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater");
 
   private final Project myProject;
@@ -62,12 +62,7 @@ public class PushedFilePropertiesUpdater {
   private final Queue<Runnable> myTasks = new ConcurrentLinkedQueue<Runnable>();
   private final MessageBusConnection myConnection;
 
-  @NotNull
-  public static PushedFilePropertiesUpdater getInstance(Project project) {
-    return project.getComponent(PushedFilePropertiesUpdater.class);
-  }
-
-  public PushedFilePropertiesUpdater(final Project project) {
+  public PushedFilePropertiesUpdaterImpl(final Project project) {
     myProject = project;
     myPushers = Extensions.getExtensions(FilePropertyPusher.EP_NAME);
     myFilePushers = ContainerUtil.findAllAsArray(myPushers, new Condition<FilePropertyPusher>() {
@@ -122,22 +117,24 @@ public class PushedFilePropertiesUpdater {
     });
   }
 
+  @Override
   public void initializeProperties() {
     for (final FilePropertyPusher pusher : myPushers) {
       pusher.initExtra(myProject, myProject.getMessageBus(), new FilePropertyPusher.Engine() {
         @Override
         public void pushAll() {
-          PushedFilePropertiesUpdater.this.pushAll(pusher);
+          PushedFilePropertiesUpdaterImpl.this.pushAll(pusher);
         }
 
         @Override
         public void pushRecursively(VirtualFile file, Project project) {
-          PushedFilePropertiesUpdater.this.schedulePushRecursively(file, pusher);
+          PushedFilePropertiesUpdaterImpl.this.schedulePushRecursively(file, pusher);
         }
       });
     }
   }
 
+  @Override
   public void pushAllPropertiesNow() {
     performPushTasks();
     doPushAll(myPushers);
@@ -222,6 +219,7 @@ public class PushedFilePropertiesUpdater {
     return projectValue != null ? projectValue : pusher.getDefaultValue();
   }
 
+  @Override
   public void pushAll(final FilePropertyPusher... pushers) {
     queueTask(new Runnable() {
       @Override
@@ -289,7 +287,7 @@ public class PushedFilePropertiesUpdater {
         pusher = pushers[i];
         if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
         else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
-        findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
+        findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
       }
     }
     catch (AbstractMethodError ame) { // acceptsDirectory is missed
@@ -298,17 +296,18 @@ public class PushedFilePropertiesUpdater {
     }
   }
 
-  public static <T> void findAndUpdateValue(final Project project, final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue) {
-    final T value = findPusherValuesUpwards(project, fileOrDir, pusher, moduleValue);
-    updateValue(fileOrDir, value, pusher);
+  @Override
+  public <T> void findAndUpdateValue(final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue) {
+    final T value = findPusherValuesUpwards(myProject, fileOrDir, pusher, moduleValue);
+    updateValue(myProject, fileOrDir, value, pusher);
   }
 
-  private static <T> void updateValue(final VirtualFile fileOrDir, final T value, final FilePropertyPusher<T> pusher) {
+  private static <T> void updateValue(final Project project, final VirtualFile fileOrDir, final T value, final FilePropertyPusher<T> pusher) {
     final T oldValue = fileOrDir.getUserData(pusher.getFileDataKey());
     if (value != oldValue) {
       fileOrDir.putUserData(pusher.getFileDataKey(), value);
       try {
-        pusher.persistAttribute(fileOrDir, value);
+        pusher.persistAttribute(project, fileOrDir, value);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -316,7 +315,8 @@ public class PushedFilePropertiesUpdater {
     }
   }
 
-  public static void filePropertiesChanged(@NotNull final VirtualFile file) {
+  @Override
+  public void filePropertiesChanged(@NotNull final VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     FileBasedIndex.getInstance().requestReindex(file);
     for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -344,6 +344,7 @@ public class PushedFilePropertiesUpdater {
     }
   }
 
+  @Override
   public void processPendingEvents() {
     myConnection.deliverImmediately();
   }

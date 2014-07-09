@@ -208,6 +208,7 @@
 
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
+      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
     </component>
 
     <component>

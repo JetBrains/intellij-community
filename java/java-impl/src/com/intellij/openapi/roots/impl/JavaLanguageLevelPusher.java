@@ -86,7 +86,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
   private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 3, true);
 
   @Override
-  public void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
+  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
       try {
@@ -104,7 +104,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
 
     for (VirtualFile child : fileOrDir.getChildren()) {
       if (!child.isDirectory() && StdFileTypes.JAVA.equals(child.getFileType())) {
-        PushedFilePropertiesUpdater.filePropertiesChanged(child);
+        PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(child);
       }
     }
   }
