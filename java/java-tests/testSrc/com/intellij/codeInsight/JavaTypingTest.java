@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -55,6 +56,13 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testMulticaretInsertQuote() {
     doTest('"');
+  }
+
+  public void testColumnMode() {
+    myFixture.configureByFile(getTestName(true) + "_before.java");
+    ((EditorEx)myFixture.getEditor()).setColumnMode(true);
+    myFixture.type('(');
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 
   private void doTest(char c) {
