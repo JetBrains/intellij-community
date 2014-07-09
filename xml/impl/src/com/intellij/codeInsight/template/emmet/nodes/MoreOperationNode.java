@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,12 @@ public class MoreOperationNode extends ZenCodingNode {
   @Override
   public List<ZenCodingNode> getChildren() {
     return ContainerUtil.newLinkedList(myLeftOperand, myRightOperand);
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    int mul = myLeftOperand instanceof MulOperationNode ? ((MulOperationNode)myLeftOperand).getRightOperand() : 1;
+    return myLeftOperand.getApproximateOutputLength(callback) + (myRightOperand.getApproximateOutputLength(callback) * mul);
   }
 
   @NotNull

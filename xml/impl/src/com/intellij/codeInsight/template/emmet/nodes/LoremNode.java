@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +52,12 @@ public class LoremNode extends ZenCodingNode {
     final GenerationNode node = new GenerationNode(templateToken, numberInIteration,
                                                    totalIterations, surroundedText, insertSurroundedTextAtTheEnd, parent);
     return Collections.singletonList(node);
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    
+    return myWordsCount * 7;
   }
 
   @Override

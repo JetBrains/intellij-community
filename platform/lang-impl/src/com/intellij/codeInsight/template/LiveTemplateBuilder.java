@@ -247,8 +247,13 @@ public class LiveTemplateBuilder {
         else {
           newVarName = varName;
         }
-        Variable var =
-          new Variable(newVarName, template.getExpressionStringAt(i), template.getDefaultValueStringAt(i), template.isAlwaysStopAt(i));
+        Variable var = new Variable(newVarName, template.getExpressionStringAt(i), template.getDefaultValueStringAt(i), template.isAlwaysStopAt(i));
+        if (mySegmentLimit >= 0 && myVariables.size() >= mySegmentLimit) {
+          if (mySegmentLimit > 0) {
+            LOGGER.warn("Template with more than " + mySegmentLimit + " segments had been build. Text: " + myText);
+          }
+          break;
+        }
         myVariables.add(var);
         myVarNames.add(newVarName);
       }
