@@ -62,12 +62,12 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
                                         final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
     final PsiFile file = session.getFile();
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    if (module == null) return super.buildVisitor(holder, isOnTheFly, session);
+    if (ModuleUtilCore.findModuleForPsiElement(file) == null) return super.buildVisitor(holder, isOnTheFly, session);
+
     Object[] extensions = Extensions.getExtensions("com.intellij.referencesSearch");
     final PropertySearcher searcher =
       (PropertySearcher)ContainerUtil.find(extensions, new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
-    final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(file.getProject());
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     return new PsiElementVisitor() {
       @Override

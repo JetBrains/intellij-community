@@ -65,4 +65,9 @@ public class AddOperationNode extends ZenCodingNode {
   public String toString() {
     return "+";
   }
+
+  @Override
+  public int getApproximateOutputLength(CustomTemplateCallback callback) {
+    return myLeftOperand.getApproximateOutputLength(callback) + myRightOperand.getApproximateOutputLength(callback);
+  }
 }

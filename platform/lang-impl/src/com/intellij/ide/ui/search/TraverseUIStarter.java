@@ -129,7 +129,7 @@ public class TraverseUIStarter implements ApplicationStarter {
 
     System.out.println("Searchable options index builder completed");
 
-    ((ApplicationEx)ApplicationManager.getApplication()).exit(true);
+    ((ApplicationEx)ApplicationManager.getApplication()).exit(true, true);
   }
 
   private static void processFileTemplates(Element configurableElement) {

@@ -69,13 +69,11 @@
               <size top="0" left="0" bottom="2" right="0"/>
             </border>
             <children>
-              <component id="a5e28" class="com.intellij.ui.components.JBLabel" binding="myName">
+              <component id="edd99" class="com.intellij.ui.SimpleColoredComponent" binding="myName">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties>
-                  <text value="Plugin Name"/>
-                </properties>
+                <properties/>
               </component>
             </children>
           </grid>

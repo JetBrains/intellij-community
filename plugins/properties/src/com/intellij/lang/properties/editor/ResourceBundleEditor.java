@@ -346,9 +346,19 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     releaseAllEditors();
     myTitledPanels.clear();
     int y = 0;
+    Editor previousEditor = null;
+    Editor firstEditor = null;
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       final Editor editor = createEditor();
       final Editor oldEditor = myEditors.put(propertiesFile, editor);
+      if (firstEditor == null) {
+        firstEditor = editor;
+      }
+      if (previousEditor != null) {
+        editor.putUserData(ChooseSubsequentPropertyValueEditorAction.PREV_EDITOR_KEY, previousEditor);
+        previousEditor.putUserData(ChooseSubsequentPropertyValueEditorAction.NEXT_EDITOR_KEY, editor);
+      }
+      previousEditor = editor;
       if (oldEditor != null) {
         EditorFactory.getInstance().releaseEditor(oldEditor);
       }
@@ -400,6 +410,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       myTitledPanels.put(propertiesFile, (JPanel)comp);
 
       valuesPanelComponent.add(comp, gc);
+    }
+    if (previousEditor != null) {
+      previousEditor.putUserData(ChooseSubsequentPropertyValueEditorAction.NEXT_EDITOR_KEY, firstEditor);
+      firstEditor.putUserData(ChooseSubsequentPropertyValueEditorAction.PREV_EDITOR_KEY, previousEditor);
     }
 
     gc.gridx = 0;

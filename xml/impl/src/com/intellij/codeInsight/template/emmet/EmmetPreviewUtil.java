@@ -61,12 +61,19 @@ public class EmmetPreviewUtil {
       if (generator != null && generator instanceof XmlZenCodingGenerator) {
         final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
         if (templatePrefix != null) {
-          ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.<ZenCodingFilter>emptyList(), expandPrimitiveAbbreviations, 0);
-          TemplateImpl template = generatedTemplate.get();
-          String templateText = template != null ? template.getTemplateText() : null;
-          if (!StringUtil.isEmpty(templateText)) {
-            return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
+          try {
+            ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.<ZenCodingFilter>emptyList(),
+                                     expandPrimitiveAbbreviations, 0);
+            TemplateImpl template = generatedTemplate.get();
+            String templateText = template != null ? template.getTemplateText() : null;
+            if (!StringUtil.isEmpty(templateText)) {
+              return template.isToReformat() ? reformatTemplateText(file, templateText) : templateText;
+            }
           }
+          catch (EmmetException e) {
+            return e.getMessage();
+          }
+          
         }
       }
     }

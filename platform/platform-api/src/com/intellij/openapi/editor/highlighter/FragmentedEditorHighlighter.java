@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -69,13 +70,13 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
 
       if (range.getEndOffset() >= iterator.getStart()) {
         int relativeStart = Math.max(iterator.getStart() - range.getStartOffset(), 0);
-        int relativeEnd = Math.min(iterator.getEnd() - range.getStartOffset(), range.getLength());
+        int relativeEnd = Math.min(iterator.getEnd() - range.getStartOffset(), range.getLength() + 1);
         boolean merged = false;
         if (myMergeByTextAttributes && !myPieces.isEmpty()) {
           Element element = myPieces.get(myPieces.size() - 1);
           if (element.getEnd() >= offset + relativeStart &&
-              element.getAttributes().equals(iterator.getTextAttributes()) &&
-              element.getElementType().equals(iterator.getTokenType())) {
+              Comparing.equal(element.getAttributes(), iterator.getTextAttributes()) &&
+              Comparing.equal(element.getElementType(), iterator.getTokenType())) {
             merged = true;
             myPieces.add(new Element(element.getStart(),
                                      offset + relativeEnd,
@@ -93,6 +94,8 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
 
       if (range.getEndOffset() < iterator.getEnd()) {
         offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+        int lastEnd = myPieces.isEmpty() ? -1 : myPieces.get(myPieces.size() - 1).getEnd();
+        myPieces.add(new Element(Math.max(offset - 1 - myAdditionalOffset, lastEnd), offset, null, TextAttributes.ERASE_MARKER));
         index++;
         continue;
       }

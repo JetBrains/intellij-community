@@ -161,7 +161,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
 
-    myCbIndentingBackspace.setSelected(codeInsightSettings.INDENTING_BACKSPACE);
+    myCbIndentingBackspace.setSelected(codeInsightSettings.SMART_BACKSPACE == CodeInsightSettings.AUTOINDENT);
 
     super.reset();
   }
@@ -182,7 +182,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED = myCbSurroundSelectionOnTyping.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
-    codeInsightSettings.INDENTING_BACKSPACE = myCbIndentingBackspace.isSelected();
+    codeInsightSettings.SMART_BACKSPACE = myCbIndentingBackspace.isSelected() ? CodeInsightSettings.AUTOINDENT : CodeInsightSettings.OFF;
 
     super.apply();
   }
@@ -208,7 +208,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
 
     isModified |= isModified(myCbSurroundSelectionOnTyping, codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
 
-    isModified |= isModified(myCbIndentingBackspace, codeInsightSettings.INDENTING_BACKSPACE);
+    isModified |= isModified(myCbIndentingBackspace, codeInsightSettings.SMART_BACKSPACE == CodeInsightSettings.AUTOINDENT);
 
     return isModified;
 

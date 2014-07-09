@@ -221,7 +221,8 @@ class GitRepositoryReader {
         return hashAndName.name.endsWith(ref);
       }
     });
-    return hashAndNames.get(0).hash;
+    HashAndName item = ContainerUtil.getFirstItem(hashAndNames);
+    return item == null ? null : item.hash;
   }
 
   /**

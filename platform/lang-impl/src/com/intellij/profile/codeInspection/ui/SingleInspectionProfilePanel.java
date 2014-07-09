@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.*;
@@ -81,8 +80,6 @@ import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -785,35 +782,26 @@ public class SingleInspectionProfilePanel extends JPanel {
       final NamedScope scope = node.getScope(myProjectProfileManager.getProject());
       if (scope != null || node.isInspectionNode()) {
         final HighlightDisplayKey key = descriptor.getKey();
-        final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar()) {
-          @Override
-          public Dimension getPreferredSize() {
-            Dimension preferredSize = super.getPreferredSize();
-            return new Dimension(Math.min(300, preferredSize.width), preferredSize.height);
-          }
-
-          @Override
-          public Dimension getMinimumSize() {
-            return getPreferredSize();
-          }
-        };
-        chooser.getComboBox().addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            Project project = myProjectProfileManager.getProject();
-            boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != chooser.getLevel();
-            mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.isInspectionNode() || node.isByDefault() ? -1 : node.getParent().getIndex(node),
-                                            project);
-            if (toUpdate) node.dropCache();
-          }
-        });
-        chooser.setLevel(mySelectedProfile.getErrorLevel(key, scope, myProjectProfileManager.getProject()));
+        final LevelChooserAction chooser =
+          new LevelChooserAction(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar()) {
+            @Override
+            protected void onChosen(final HighlightSeverity severity) {
+              final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+              final Project project = myProjectProfileManager.getProject();
+              final boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope, project) != level;
+              mySelectedProfile.setErrorLevel(key, level,
+                                              node.isInspectionNode() || node.isByDefault() ? -1 : node.getParent().getIndex(node),
+                                              project);
+              if (toUpdate) node.dropCache();
+            }
+          };
+        chooser.setChosen(mySelectedProfile.getErrorLevel(key, scope, myProjectProfileManager.getProject()).getSeverity());
 
         final JPanel withSeverity = new JPanel(new GridBagLayout());
         withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),
                          new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
                                                 GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
-        withSeverity.add(chooser, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST,
+        withSeverity.add(chooser.createCustomComponent(chooser.getTemplatePresentation()), new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST,
                                                          GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
 
         final JComponent comp = descriptor.getState().getAdditionalConfigPanel();

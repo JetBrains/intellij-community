@@ -15,17 +15,14 @@
  */
 package com.intellij.injected.editor;
 
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class InjectedCaret implements Caret {
+public class InjectedCaret implements Caret {
   private final EditorWindow myEditorWindow;
   final Caret myDelegate;
 
@@ -36,8 +33,18 @@ class InjectedCaret implements Caret {
 
   @NotNull
   @Override
+  public Editor getEditor() {
+    return myEditorWindow;
+  }
+
+  @NotNull
+  @Override
   public CaretModel getCaretModel() {
     return myEditorWindow.getCaretModel();
+  }
+
+  public Caret getDelegate() {
+    return myDelegate;
   }
 
   @Override

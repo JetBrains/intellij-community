@@ -41,18 +41,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaBreak
     super("java-line", DebuggerBundle.message("line.breakpoints.tab.title"));
   }
 
-  @NotNull
-  @Override
-  public Icon getEnabledIcon() {
-    return AllIcons.Debugger.Db_set_breakpoint;
-  }
-
-  @NotNull
-  @Override
-  public Icon getDisabledIcon() {
-    return AllIcons.Debugger.Db_disabled_breakpoint;
-  }
-
   //@Override
   protected String getHelpID() {
     return HelpID.LINE_BREAKPOINTS;

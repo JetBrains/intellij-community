@@ -84,7 +84,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
       final GrNamedArgument[] args = ((GrMethodCallExpression)parent).getNamedArguments();
       if (args.length == 1) {
         final GrArgumentLabel label = args[0].getLabel();
-        if (label != null && GantUtils.isPlainIdentifier(label)) {
+        if (label != null) {
           return label.getName();
         }
       }

@@ -811,6 +811,10 @@ def layout_core(String home, String target) {
       module("annotations")
     }
 
+    jar("intellij-core-analysis-api.jar") {
+      analysisApiModules.each { module it; }
+    }
+
     fileset(dir: "$home/lib") {
       include(name: "guava-17.0.jar")
       include(name: "picocontainer.jar")

@@ -767,12 +767,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void exit() {
-    exit(false);
+    exit(false, false);
   }
 
   @Override
-  public void exit(final boolean force) {
-    exit(force, true, false);
+  public void exit(boolean force, final boolean exitConfirmed) {
+    exit(false, exitConfirmed, true, false);
   }
 
   @Override
@@ -781,8 +781,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void restart(boolean force) {
-    exit(force, true, true);
+  public void restart(boolean exitConfirmed) {
+    exit(false, exitConfirmed, true, true);
   }
 
   /*
@@ -796,7 +796,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    */
   private static volatile boolean exiting = false;
 
-  public void exit(final boolean force, final boolean allowListenersToCancel, final boolean restart) {
+  public void exit(final boolean force, final boolean exitConfirmed, final boolean allowListenersToCancel, final boolean restart) {
     if (exiting) return;
 
     exiting = true;
@@ -808,7 +808,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          if (!confirmExitIfNeeded(force)) {
+          if (!force && !confirmExitIfNeeded(exitConfirmed)) {
             saveAll();
             return;
           }
@@ -857,9 +857,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  private static boolean confirmExitIfNeeded(boolean force) {
+  private static boolean confirmExitIfNeeded(boolean exitConfirmed) {
     final boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
-    if (force && !hasUnsafeBgTasks) {
+    if (exitConfirmed && !hasUnsafeBgTasks) {
       return true;
     }
 

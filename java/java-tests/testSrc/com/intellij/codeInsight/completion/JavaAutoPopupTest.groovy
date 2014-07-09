@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
@@ -1641,5 +1642,15 @@ class Foo {
     joinCompletion()
     assert lookup
     assert myFixture.lookupElementStrings == ['goo']
+  }
+
+  public void "test in column selection mode"() {
+    myFixture.configureByText "a.java", """
+class Foo {{
+  <caret>
+}}"""
+    edt { ((EditorEx)myFixture.editor).setColumnMode(true) }
+    type 'toStr'
+    assert lookup
   }
 }

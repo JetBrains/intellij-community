@@ -25,10 +25,10 @@ abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHand
   protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
     if (BuiltInServer.LOG.isDebugEnabled()) {
 //      BuiltInServer.LOG.debug("IN HTTP:\n" + message);
-      BuiltInServer.LOG.debug("IN HTTP: " + message.getUri());
+      BuiltInServer.LOG.debug("IN HTTP: " + message.uri());
     }
 
-    if (!process(context, message, new QueryStringDecoder(message.getUri()))) {
+    if (!process(context, message, new QueryStringDecoder(message.uri()))) {
       Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), message);
     }
   }

@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
  * Time: 2:09 PM
  */
 public interface HelpID {
-  @NonNls String RESET_PASSWORD = "reference_ide_settings_master_password_reset";
-  @NonNls String CHANGE_PASSWORD = "reference_settings_password_safe_master_password";
+  @NonNls String INIT_PASSWORD = "settings_passwords_master_password_init";
+  @NonNls String ENTER_PASSWORD = "settings_passwords_master_password_enter";
+  @NonNls String RESET_PASSWORD = "settings_passwords_master_password_reset";
+  @NonNls String CHANGE_PASSWORD = "settings_passwords_master_password_change";
 }

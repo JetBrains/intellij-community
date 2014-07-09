@@ -52,6 +52,7 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
@@ -124,7 +125,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), false);
     assert defaultGenerator != null;
-    expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
+    try {
+      expand(key, callback, defaultGenerator, Collections.<ZenCodingFilter>emptyList(), true, Registry.intValue("emmet.segments.limit"));
+    }
+    catch (EmmetException e) {
+      CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
+    }
   }
 
   @Nullable
@@ -182,7 +188,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback,
                             @NotNull ZenCodingGenerator defaultGenerator,
                             @NotNull Collection<? extends ZenCodingFilter> extraFilters,
-                            boolean expandPrimitiveAbbreviations, int segmentsLimit) {
+                            boolean expandPrimitiveAbbreviations, int segmentsLimit) throws EmmetException {
     final ZenCodingNode node = parse(key, callback, defaultGenerator, null);
     if (node == null) {
       return;
@@ -204,6 +210,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     List<ZenCodingFilter> filters = getFilters(node, context);
     filters.addAll(extraFilters);
 
+    checkTemplateOutputLength(node, callback);
+    
     callback.deleteTemplateKey(key);
     expand(node, generator, filters, null, callback, expandPrimitiveAbbreviations, segmentsLimit);
   }
@@ -212,7 +220,10 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                              ZenCodingGenerator generator,
                              List<ZenCodingFilter> filters,
                              String surroundedText,
-                             CustomTemplateCallback callback, boolean expandPrimitiveAbbreviations, int segmentsLimit) {
+                             CustomTemplateCallback callback, boolean expandPrimitiveAbbreviations, int segmentsLimit) throws EmmetException {
+    
+    checkTemplateOutputLength(node, callback);
+    
     if (surroundedText != null) {
       surroundedText = surroundedText.trim();
     }
@@ -280,6 +291,13 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         }
       }
     });
+  }
+
+  private static void checkTemplateOutputLength(ZenCodingNode node, CustomTemplateCallback callback) throws EmmetException {
+    int predictedOutputLength = node.getApproximateOutputLength(callback);
+    if (predictedOutputLength > 15 * 1024) {
+      throw new EmmetException();
+    }
   }
 
   private static boolean isPrimitiveNode(@NotNull ZenCodingNode node) {
@@ -434,7 +452,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                   EditorModificationUtil.deleteSelectedText(callback.getEditor());
                   PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
 
-                  expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
+                  try {
+                    expand(node, generator, filters, selection, callback, true, Registry.intValue("emmet.segments.limit"));
+                  }
+                  catch (EmmetException e) {
+                    CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
+                  }
                 }
               }
             });
@@ -509,7 +532,12 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         if (!regularTemplateWithSamePrefixExists) {
           // exclude perfect matches with existing templates because LiveTemplateCompletionContributor handles it
           final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
-          expand(templatePrefix, callback, generator, extraFilters, false, 0);
+          try {
+            expand(templatePrefix, callback, generator, extraFilters, false, 0);
+          }
+          catch (EmmetException e) {
+            generatedTemplate.set(null);
+          }
           if (!generatedTemplate.isNull()) {
             final TemplateImpl template = generatedTemplate.get();
             template.setKey(templatePrefix);

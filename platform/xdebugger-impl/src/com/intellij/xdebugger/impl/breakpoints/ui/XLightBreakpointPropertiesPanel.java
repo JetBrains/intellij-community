@@ -206,9 +206,10 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpointBase<?,?,?>> i
     }
 
     if (myConditionComboBox != null) {
-      myBreakpoint.setConditionEnabled(myConditionEnabledCheckbox.isSelected());
       XExpression expression = myConditionComboBox.getExpression();
-      myBreakpoint.setConditionExpression(!XDebuggerUtilImpl.isEmptyExpression(expression) ? expression : null);
+      XExpression condition = !XDebuggerUtilImpl.isEmptyExpression(expression) ? expression : null;
+      myBreakpoint.setConditionEnabled(myConditionEnabledCheckbox.isSelected() && condition != null);
+      myBreakpoint.setConditionExpression(condition);
       myConditionComboBox.saveTextInHistory();
     }
 

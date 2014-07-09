@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class CodeInsightTestCaseUtil {
-  public static void doAction(CodeInsightTestCase testCase, CodeInsightAction action, String testName, String ext) throws Exception {
+  public static void doAction(CodeInsightTestCase testCase, AnAction action, String testName, String ext) throws Exception {
     testCase.configureByFile(testName + "." + ext);
 
     action.actionPerformed(new AnActionEvent(

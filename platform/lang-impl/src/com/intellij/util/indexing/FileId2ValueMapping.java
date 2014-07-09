@@ -49,7 +49,7 @@ class FileId2ValueMapping<Value> {
     if (mapped != null) {
       valueContainer.removeValue(inputId, mapped);
     }
-    if (DebugAssertions.DEBUG) {
+    if (DebugAssertions.EXTRA_SANITY_CHECKS) {
       for (final ValueContainer.ValueIterator<Value> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
         valueIterator.next();
         DebugAssertions.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));

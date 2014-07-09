@@ -29,6 +29,12 @@ public class TextComponentCaret extends UserDataHolderBase implements Caret {
 
   @NotNull
   @Override
+  public Editor getEditor() {
+    return myEditor;
+  }
+
+  @NotNull
+  @Override
   public CaretModel getCaretModel() {
     return myEditor.getCaretModel();
   }

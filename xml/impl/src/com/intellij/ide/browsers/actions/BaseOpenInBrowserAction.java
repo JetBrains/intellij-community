@@ -84,12 +84,11 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       StringBuilder builder = new StringBuilder(description);
       builder.append(" (");
       Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("WebOpenInAction");
-      if (shortcuts.length > 0) {
-        builder.append(KeymapUtil.getShortcutText(shortcuts[0]));
-      }
+      boolean exists = shortcuts.length > 0;
+      if (exists) builder.append(KeymapUtil.getShortcutText(shortcuts[0]));
 
       if (HtmlUtil.isHtmlFile(result.first.getFile())) {
-        builder.append(", hold Shift to open URL of local file");
+        builder.append(exists ? ", " : "").append("hold Shift to open URL of local file");
       }
       builder.append(')');
       description = builder.toString();

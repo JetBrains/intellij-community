@@ -1,7 +1,6 @@
 public class Foo {
    public void foo() {
-       foo();
-       <caret>
+       foo();<caret>
        // some line comment
    }
 }

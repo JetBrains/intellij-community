@@ -36,6 +36,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SmartEnterProcessor {
   public abstract boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile);
 
+  public boolean processAfterCompletion(@NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+    return process(psiFile.getProject(), editor, psiFile);
+  }
+
   protected void reformat(PsiElement atCaret) throws IncorrectOperationException {
     final TextRange range = atCaret.getTextRange();
     final PsiFile file = atCaret.getContainingFile();

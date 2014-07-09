@@ -772,11 +772,8 @@ public class CodeCompletionHandlerBase {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
       if (language != null) {
-        final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
-        if (processors.size() > 0) {
-          for (SmartEnterProcessor processor : processors) {
-            processor.process(project, editor, indicator.getParameters().getOriginalFile());
-          }
+        for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.forKey(language)) {
+          if (processor.processAfterCompletion(editor, indicator.getParameters().getOriginalFile())) break;
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,13 +130,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
     myScrollPane = new JBScrollPane(myPanel,
                                     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
   }
 
   @Nullable
   private static Language getLanguage(FileType fileType) {
-    return (fileType instanceof LanguageFileType) ? ((LanguageFileType)fileType).getLanguage() : null;
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
-
 
   @Override
   protected void somethingChanged() {

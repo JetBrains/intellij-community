@@ -18,9 +18,7 @@ package com.intellij.ide.browsers.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ComputableActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.psi.util.CachedValueProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +30,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
     super(popup);
+    Presentation p = getTemplatePresentation();
+    p.setText("Open in _Browser");
+    p.setDescription("Open selected file in browser");
+    p.setIcon(AllIcons.Nodes.PpWeb);
   }
 
   @NotNull
@@ -74,5 +76,9 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     public OpenInBrowserEditorContextBarGroupAction() {
       super(false);
     }
+  }
+
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e));
   }
 }

@@ -325,6 +325,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             if (bytes != null) {
               data = deserializeSavedPersistentData(bytes);
               havePersistentData = true;
+              if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+                DebugAssertions.assertTrue(myIndexer.map(content).equals(data));
+              }
             }
           } else {
             skippedReadingPersistentDataButMayHaveIt = true;

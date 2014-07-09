@@ -42,29 +42,37 @@ import org.jetbrains.annotations.Nullable;
 public class PlainEnterProcessor implements EnterProcessor {
   @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
+    if (expandCodeBlock(editor, psiElement)) return true;
+
+    getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE).execute(editor, ((EditorEx)editor).getDataContext());
+    return true;
+  }
+
+  static boolean expandCodeBlock(Editor editor, PsiElement psiElement) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
     if (processExistingBlankLine(editor, block, psiElement)) {
       return true;
     }
-    EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
-    if (block != null) {
-      PsiElement firstElement = block.getFirstBodyElement();
-      if (firstElement == null) {
-        firstElement = block.getRBrace();
-        // Plain enter processor inserts enter after the end of line, hence, we don't want to use it here because the line ends with 
-        // the empty braces block. So, we get the following in case of default handler usage:
-        //     Before:
-        //         if (condition[caret]) {}
-        //     After:
-        //         if (condition) {}
-        //             [caret]
-        enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_ENTER);
-      }
-      editor.getCaretModel().moveToOffset(firstElement != null ?
-                                          firstElement.getTextRange().getStartOffset() :
-                                          block.getTextRange().getEndOffset());
+    if (block == null) {
+      return false;
     }
 
+    EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
+    PsiElement firstElement = block.getFirstBodyElement();
+    if (firstElement == null) {
+      firstElement = block.getRBrace();
+      // Plain enter processor inserts enter after the end of line, hence, we don't want to use it here because the line ends with
+      // the empty braces block. So, we get the following in case of default handler usage:
+      //     Before:
+      //         if (condition[caret]) {}
+      //     After:
+      //         if (condition) {}
+      //             [caret]
+      enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_ENTER);
+    }
+    editor.getCaretModel().moveToOffset(firstElement != null ?
+                                        firstElement.getTextRange().getStartOffset() :
+                                        block.getTextRange().getEndOffset());
     enterHandler.execute(editor, ((EditorEx)editor).getDataContext());
     return true;
   }

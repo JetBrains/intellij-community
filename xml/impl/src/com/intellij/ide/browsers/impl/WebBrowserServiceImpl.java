@@ -62,7 +62,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
       }
     }
-    return virtualFile instanceof LightVirtualFile ? Collections.<Url>emptySet() : Collections.singleton(Urls.newFromVirtualFile(virtualFile));
+    return virtualFile instanceof LightVirtualFile || !request.getFile().getViewProvider().isPhysical() ? Collections.<Url>emptySet() : Collections.singleton(Urls.newFromVirtualFile(virtualFile));
   }
 
   @Nullable

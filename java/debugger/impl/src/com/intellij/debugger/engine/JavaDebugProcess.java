@@ -115,7 +115,7 @@ public class JavaDebugProcess extends XDebugProcess {
                     Breakpoint breakpoint = descriptors.get(0).getFirst();
                     XBreakpoint xBreakpoint = breakpoint.getXBreakpoint();
                     if (xBreakpoint != null) {
-                      ((XDebugSessionImpl)getSession()).breakpointReached(xBreakpoint, null, context, false);
+                      ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, context);
                       return;
                     }
                   }

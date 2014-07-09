@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.groovy
 
-import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import org.jetbrains.annotations.NotNull
@@ -100,7 +100,7 @@ print 2
     doTest(before, after, new CommentByBlockCommentAction())
   }
 
-  private void doTest(@NotNull String before, @NotNull String after, final CodeInsightAction action) {
+  private void doTest(@NotNull String before, @NotNull String after, final AnAction action) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
     final DataContext dataContext = DataManager.instance.dataContextFromFocus.result
     action.actionPerformed(new AnActionEvent(null, dataContext, "", action.templatePresentation, ActionManager.instance, 0));

@@ -128,7 +128,7 @@ public class ChangeBufferingList implements Cloneable {
         if (someElementsNumberEstimation < MAX_FILES) {
           if (removals == 0) {
             if (DEBUG) {
-              ValueContainer.IntIterator sorted = SortedFileIdSetIterator.getTransientIterator(new ChangesIterator());
+              ValueContainer.IntIterator sorted = SortedFileIdSetIterator.getTransientIterator(new ChangesIterator(changes, length));
               int lastIndex = 0;
               while(sorted.hasNext()) {
                 currentChanges[lastIndex++] = sorted.next();
@@ -253,10 +253,11 @@ public class ChangeBufferingList implements Cloneable {
   public ValueContainer.IntIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && removals == 0) {
-      ValueContainer.IntIterator iterator = new ChangesIterator();
+      ValueContainer.IntIterator iterator = new ChangesIterator(changes, length);
       if (DEBUG) {
-        iterator = SortedFileIdSetIterator.getTransientIterator(iterator);
-        DebugAssertions.assertTrue(iterator.size() == length);
+        ValueContainer.IntIterator iteratorSurelyWithoutDupes = SortedFileIdSetIterator.getTransientIterator(iterator);
+        DebugAssertions.assertTrue(iteratorSurelyWithoutDupes.size() == length);
+        iterator = iterator.createCopyInInitialState();
       }
       return iterator;
     }
@@ -267,8 +268,15 @@ public class ChangeBufferingList implements Cloneable {
     return checkSet;
   }
 
-  private class ChangesIterator implements ValueContainer.IntIterator {
+  private static class ChangesIterator implements ValueContainer.IntIterator {
     private int cursor;
+    private final int length;
+    private final int[] changes;
+
+    ChangesIterator(int[] _changes, int _length) {
+      changes = _changes;
+      length = _length;
+    }
 
     @Override
     public boolean hasNext() {
@@ -294,7 +302,7 @@ public class ChangeBufferingList implements Cloneable {
 
     @Override
     public ValueContainer.IntIterator createCopyInInitialState() {
-      return new ChangesIterator();
+      return new ChangesIterator(changes, length);
     }
   }
 }

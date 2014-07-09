@@ -100,7 +100,7 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, Channel channel, @Nullable HttpRequest request) {
-    if (response.getStatus() != HttpResponseStatus.NOT_MODIFIED && !HttpHeaders.isContentLengthSet(response)) {
+    if (response.status() != HttpResponseStatus.NOT_MODIFIED && !HttpHeaders.isContentLengthSet(response)) {
       HttpHeaders.setContentLength(response,
                                    response instanceof FullHttpResponse ? ((FullHttpResponse)response).content().readableBytes() : 0);
     }
@@ -159,7 +159,7 @@ public final class Responses {
   }
 
   private static HttpResponse createStatusResponse(HttpResponseStatus responseStatus, @Nullable HttpRequest request, @Nullable String description) {
-    if (request != null && request.getMethod() == HttpMethod.HEAD) {
+    if (request != null && request.method() == HttpMethod.HEAD) {
       return response(responseStatus);
     }
 
