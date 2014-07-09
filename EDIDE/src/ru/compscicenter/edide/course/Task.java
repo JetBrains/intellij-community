@@ -21,7 +21,7 @@ public class Task {
   private String name;
   private String text;
   private List<TaskFile> taskFiles;
-  private  Lesson myLesson;
+  private Lesson myLesson;
   private boolean mySolved = false;
   private int myIndex;
 
@@ -39,7 +39,7 @@ public class Task {
   }
 
   public boolean isResolved() {
-    for (TaskFile taskFile:taskFiles) {
+    for (TaskFile taskFile : taskFiles) {
       if (!taskFile.isResolved()) {
         return false;
       }
@@ -83,21 +83,11 @@ public class Task {
       taskFiles.get(i).create(project, taskDir, newResourceRoot);
     }
     FileUtil.copy(new File(newResourceRoot, text), new File(taskDir.getCanonicalPath(), text));
-    String systemIndependentName = FileUtil.toSystemIndependentName(testFile);
-    final int i = systemIndependentName.lastIndexOf("/");
-    if (i > 0) {
-      systemIndependentName = systemIndependentName.substring(i + 1);
-    }
-      VirtualFile ideaDir = project.getBaseDir().findChild(".idea");
-      if (ideaDir != null) {
-        FileUtil.copy(new File(newResourceRoot, testFile),
-                      new File(new File(ideaDir.getCanonicalPath(), "study-tests"),systemIndependentName));
-      }
-
+    FileUtil.copy(new File(newResourceRoot, testFile), new File(taskDir.getCanonicalPath(), testFile));
   }
 
   public TaskFile getFile(String fileName) {
-    for (TaskFile file: taskFiles) {
+    for (TaskFile file : taskFiles) {
       if (file.getName().equals(fileName)) {
         return file;
       }
@@ -111,7 +101,7 @@ public class Task {
     taskElement.setAttribute("name", name);
     //TODO:replace with real text, not fileName
     taskElement.setAttribute("text", text);
-    for (TaskFile file: taskFiles) {
+    for (TaskFile file : taskFiles) {
       taskElement.addContent(file.saveState());
     }
     return taskElement;
@@ -119,7 +109,7 @@ public class Task {
 
   public void setParents(Lesson lesson) {
     myLesson = lesson;
-    for (TaskFile tasFile: taskFiles) {
+    for (TaskFile tasFile : taskFiles) {
       tasFile.setParents(this);
     }
   }

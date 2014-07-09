@@ -2,10 +2,13 @@ package ru.compscicenter.edide;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.compscicenter.edide.course.TaskFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,12 +25,20 @@ public class StudyTreeStructureProvider implements TreeStructureProvider{
                                              ViewSettings settings) {
     Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     for (AbstractTreeNode node:children) {
+      Project project = node.getProject();
       if (node.getValue() instanceof PsiDirectory) {
-        StudyDirectoryNode newNode = new StudyDirectoryNode(node.getProject(), (PsiDirectory)node.getValue(), settings);
+        PsiDirectory nodeValue = (PsiDirectory)node.getValue();
+        StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
         nodes.add(newNode);
       }  else {
         if (parent instanceof StudyDirectoryNode) {
-          nodes.add(node);
+          if (node instanceof PsiFileNode) {
+            PsiFileNode psiFileNode = (PsiFileNode) node;
+            TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(psiFileNode.getVirtualFile());
+            if (taskFile != null) {
+              nodes.add(node);
+            }
+          }
         }
       }
     }

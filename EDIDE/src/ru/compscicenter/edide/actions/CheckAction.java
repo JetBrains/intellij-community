@@ -19,10 +19,7 @@ import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
 
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
 /**
  * User: lia
@@ -56,12 +53,14 @@ public class CheckAction extends AnAction {
     }
     //TODO: replace with platform independent path join
 
-    String testFile = basePath +
-                      "/.idea/study-tests/" + selectedTaskFile.getTask().getTestFile();
+    File testFile = new File(openedFile.getParent().getCanonicalPath(), selectedTaskFile.getTask().getTestFile());
+    String testPath = testFile.getAbsolutePath();
+    //String testFile = basePath +
+    //                  "/.idea/study-tests/" + selectedTaskFile.getTask().getTestFile();
     GeneralCommandLine cmd = new GeneralCommandLine();
-    cmd.setWorkDirectory(basePath + "/.idea/study-tests/");
+    cmd.setWorkDirectory(openedFile.getParent().getCanonicalPath());
     cmd.setExePath("python");
-    cmd.addParameter(testFile);
+    cmd.addParameter(testPath);
     try {
       Process p = cmd.createProcess();
       InputStream is_err = p.getErrorStream();
