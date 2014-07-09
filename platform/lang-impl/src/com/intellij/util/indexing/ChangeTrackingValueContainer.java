@@ -22,7 +22,6 @@ import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -75,7 +74,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
 
   @NotNull
   @Override
-  public Iterator<Value> getValueIterator() {
+  public ValueIterator<Value> getValueIterator() {
     return getMergedData().getValueIterator();
   }
 

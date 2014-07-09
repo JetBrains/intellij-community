@@ -22,7 +22,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Iterator;
 
 /**
  * @author Dmitry Avdeev
@@ -96,11 +95,11 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
 
     private void saveImpl(@NotNull DataOutput out, @NotNull final ValueContainer<T> container) throws IOException {
       DataInputOutputUtil.writeSINT(out, container.size());
-      for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
+      for (final ValueContainer.ValueIterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next();
         myExternalizer.save(out, value);
 
-        final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
+        final ValueContainer.IntIterator ids = valueIterator.getInputIdsIterator();
         DataInputOutputUtil.writeSINT(out, ids.size());
         while (ids.hasNext()) {
           final int id = ids.next();

@@ -38,7 +38,10 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
@@ -965,9 +968,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           if (restrictToFile != null) {
             if (restrictToFile instanceof VirtualFileWithId) {
               final int restrictedFileId = getFileId(restrictToFile);
-              for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+              for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
                 final V value = valueIt.next();
-                if (container.isAssociated(value, restrictedFileId)) {
+                if (valueIt.getValueAssociationPredicate().contains(restrictedFileId)) {
                   shouldContinue = processor.process(restrictToFile, value);
                   if (!shouldContinue) {
                     break;
@@ -980,9 +983,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
             final IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
             VALUES_LOOP:
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+            for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
               final V value = valueIt.next();
-              for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
+              for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
                 final int id = inputIdsIterator.next();
                 if (filter != null && !filter.containsFileId(id)) continue;
                 VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
@@ -1142,13 +1145,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final TIntHashSet copy = new TIntHashSet();
             final ValueContainer<V> container = index.getData(dataKey);
 
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+            for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
               final V value = valueIt.next();
               if (valueChecker != null && !valueChecker.value(value)) {
                 continue;
               }
 
-              ValueContainer.IntIterator iterator = container.getInputIdsIterator(value);
+              ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
 
               if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
                 while (iterator.hasNext()) {
@@ -1162,7 +1165,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
               else {
                 mainIntersection.forEach(new TIntProcedure() {
-                  final ValueContainer.IntPredicate predicate = container.getValueAssociationPredicate(value);
+                  final ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
 
                   @Override
                   public boolean execute(int id) {
@@ -1234,9 +1237,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           locals.add(local);
           final ValueContainer<V> container = index.getData(dataKey);
 
-          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+          for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
             final V value = valueIt.next();
-            for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
+            for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
               final int id = inputIdsIterator.next();
               local.add(id);
             }
