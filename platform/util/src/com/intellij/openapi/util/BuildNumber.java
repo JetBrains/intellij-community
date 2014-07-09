@@ -100,7 +100,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     int buildNumber;
     if (baselineVersionSeparator > 0) {
       try {
-        final String baselineVersionString = code.substring(0, baselineVersionSeparator);
+        String baselineVersionString = code.substring(0, baselineVersionSeparator);
         if (baselineVersionString.trim().isEmpty()) return null;
         baselineVersion = Integer.parseInt(baselineVersionString);
         code = code.substring(baselineVersionSeparator + 1);
@@ -109,6 +109,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
         throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + name);
       }
 
+      int minorBuildSeparator = code.indexOf('.'); // allow <BuildNumber>.<BuildAttemptNumber> skipping BuildAttemptNumber
+      if (minorBuildSeparator > 0) code = code.substring(0, minorBuildSeparator);
       buildNumber = parseBuildNumber(version, code, name);
     }
     else {
