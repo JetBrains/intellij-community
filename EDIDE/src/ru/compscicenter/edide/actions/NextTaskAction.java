@@ -50,7 +50,7 @@ public class NextTaskAction extends AnAction {
       try {
 
         VirtualFile taskDir =
-          project.getBaseDir().findChild("lesson" + String.valueOf(lessonIndex + 1)).findChild("task" + String.valueOf(nextTaskIndex + 1));
+          project.getBaseDir().findChild("course").findChild("lesson" + String.valueOf(lessonIndex + 1)).findChild("task" + String.valueOf(nextTaskIndex + 1));
 
         FileEditorManager.getInstance(project).openFile(taskDir.findChild(nextTask.getTaskFiles().iterator().next().getName()), true);
       }
