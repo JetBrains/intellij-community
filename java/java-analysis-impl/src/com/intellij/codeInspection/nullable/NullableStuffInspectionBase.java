@@ -418,7 +418,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
   private static boolean isNotNullNotInferred(@NotNull PsiMethod superMethod) {
     Project project = superMethod.getProject();
-    PsiAnnotation notNull = NullableNotNullManager.getInstance(project).getNotNullAnnotation(superMethod);
+    PsiAnnotation notNull = NullableNotNullManager.getInstance(project).getNotNullAnnotation(superMethod, true);
     return notNull != null && !InferredAnnotationsManager.getInstance(project).isInferredAnnotation(notNull);
   }
 
