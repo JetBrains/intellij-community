@@ -28,6 +28,8 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import java.io.File;
 
 /**
+ * TODO: Could also inherit BaseNodeDescription when myKind becomes final.
+ *
  * @author Konstantin Kolosovsky.
  */
 public class Status {

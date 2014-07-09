@@ -619,7 +619,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
       NodeKind kind = status.getKind();
       // kind differs.
-      if (directory && kind != NodeKind.DIR || !directory && kind != NodeKind.FILE) {
+      if (directory && !kind.isDirectory() || !directory && !kind.isFile()) {
         return false;
       }
       try {

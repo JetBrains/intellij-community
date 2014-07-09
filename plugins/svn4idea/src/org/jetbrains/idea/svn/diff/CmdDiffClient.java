@@ -211,7 +211,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     public String path;
 
     public boolean isDirectory() {
-      return NodeKind.DIR.equals(kind);
+      return kind.isDirectory();
     }
   }
 }

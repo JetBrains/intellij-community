@@ -50,6 +50,18 @@ public enum NodeKind {
     myKey = key;
   }
 
+  public boolean isFile() {
+    return FILE.equals(this);
+  }
+
+  public boolean isDirectory() {
+    return DIR.equals(this);
+  }
+
+  public boolean isNone() {
+    return NONE.equals(this);
+  }
+
   @Override
   public String toString() {
     return myKey;
@@ -73,5 +85,10 @@ public enum NodeKind {
   @NotNull
   public static NodeKind from(@NotNull SVNNodeKind nodeKind) {
     return from(nodeKind.toString());
+  }
+
+  @NotNull
+  public static NodeKind from(boolean isDirectory) {
+    return isDirectory ? DIR : FILE;
   }
 }

@@ -741,7 +741,7 @@ public class SvnStatusHandler extends DefaultHandler {
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {
-        status.setKind(exists, file.isDirectory() ? NodeKind.DIR : NodeKind.FILE);
+        status.setKind(exists, NodeKind.from(file.isDirectory()));
       } else {
         // this is a hack. This is done so because of strange svn native client output:
         /*

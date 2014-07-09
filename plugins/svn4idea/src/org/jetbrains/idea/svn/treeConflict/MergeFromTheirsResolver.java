@@ -52,7 +52,6 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -125,11 +124,7 @@ public class MergeFromTheirsResolver {
     });
 
     final List<TaskDescriptor> tasks = new SmartList<TaskDescriptor>();
-    if (NodeKind.DIR.equals(myDescription.getNodeKind())) {
-      tasks.add(new PreloadChangesContentsForDir());
-    } else {
-      tasks.add(new PreloadChangesContentsForFile());
-    }
+    tasks.add(myDescription.isDirectory() ? new PreloadChangesContentsForDir() : new PreloadChangesContentsForFile());
     tasks.add(new ConvertTextPaths());
     tasks.add(new PatchCreator());
     tasks.add(new SelectPatchesInApplyPatchDialog());

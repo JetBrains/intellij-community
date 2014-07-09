@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.browse;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -28,10 +29,9 @@ import java.util.Date;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class DirectoryEntry implements Comparable<DirectoryEntry> {
+public class DirectoryEntry extends BaseNodeDescription implements Comparable<DirectoryEntry> {
 
   private final String myName;
-  @NotNull private final NodeKind myKind;
   @NotNull private final CommitInfo myCommitInfo;
   private final String myPath;
   private final SVNURL myUrl;
@@ -50,10 +50,10 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
                         @NotNull NodeKind kind,
                         @Nullable CommitInfo commitInfo,
                         String path) {
+    super(kind);
     myUrl = url;
     myRepositoryRoot = repositoryRoot;
     myName = name;
-    myKind = kind;
     myCommitInfo = ObjectUtils.notNull(commitInfo, CommitInfo.EMPTY);
     myPath = path;
   }

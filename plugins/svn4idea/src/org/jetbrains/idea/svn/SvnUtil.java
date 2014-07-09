@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -777,7 +776,7 @@ public class SvnUtil {
   public static String getChangelistName(@NotNull final Status status) {
     // no explicit check on working copy format supports change lists as they are supported from svn 1.5
     // and anyway status.getChangelistName() should just return null if change lists are not supported.
-    return NodeKind.FILE.equals(status.getKind()) ? status.getChangelistName() : null;
+    return status.getKind().isFile() ? status.getChangelistName() : null;
   }
 
   public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {

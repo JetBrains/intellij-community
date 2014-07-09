@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
@@ -241,7 +240,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     if (node == null) return null;
 
     DirectoryEntry entry = node.getSVNDirEntry();
-    if (entry == null || entry.getKind() != NodeKind.FILE) {
+    if (entry == null || !entry.isFile()) {
       return null;
     }
 

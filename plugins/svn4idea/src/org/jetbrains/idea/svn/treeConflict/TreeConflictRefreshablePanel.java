@@ -43,7 +43,6 @@ import gnu.trove.TLongArrayList;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
@@ -296,7 +295,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   private Paths getPaths(final TreeConflictDescription description) {
-    FilePath mainPath = new FilePathImpl(description.getPath(), NodeKind.DIR.equals(description.getNodeKind()));
+    FilePath mainPath;
     FilePath additionalPath = null;
     if (myChange.isMoved() || myChange.isRenamed()) {
       if (ConflictAction.ADD.equals(description.getConflictAction())) {
@@ -360,7 +359,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     if (ConflictAction.EDIT.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null &&
         ConflictReason.DELETED.equals(description.getConflictReason()) && (myChange.isMoved() || myChange.isRenamed()) &&
         myCommittedRevision != null) {
-      if (myPath.isDirectory() == NodeKind.DIR.equals(description.getSourceRightVersion().getKind())) {
+      if (myPath.isDirectory() == description.getSourceRightVersion().isDirectory()) {
         return createMergeTheirsForFile(description);
       }
     }
@@ -477,7 +476,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       myPeg = peg;
       try {
         myPath = FilePathImpl.createNonLocal(
-          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(), NodeKind.DIR.equals(version.getKind()));
+          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(), version.isDirectory());
       }
       catch (SVNException e) {
         throw new VcsException(e);

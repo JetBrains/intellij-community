@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
@@ -25,13 +26,12 @@ import javax.xml.bind.annotation.*;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class LogEntryPath {
+public class LogEntryPath extends BaseNodeDescription {
 
   private final String myPath;
   private final char myType;
   private final String myCopyPath;
   private final long myCopyRevision;
-  @NotNull private final NodeKind myNodeKind;
 
   @NotNull
   public static LogEntryPath.Builder create(@NotNull SVNLogEntryPath path) {
@@ -40,11 +40,11 @@ public class LogEntryPath {
   }
 
   public LogEntryPath(@NotNull LogEntryPath.Builder builder) {
+    super(builder.kind);
     myPath = builder.path;
     myType = CommandUtil.getStatusChar(builder.action);
     myCopyPath = builder.copyFromPath;
     myCopyRevision = builder.copyFromRevision;
-    myNodeKind = builder.kind;
   }
 
   public String getCopyPath() {
@@ -65,7 +65,7 @@ public class LogEntryPath {
 
   @NotNull
   public NodeKind getKind() {
-    return myNodeKind;
+    return myKind;
   }
 
   @XmlAccessorType(XmlAccessType.NONE)

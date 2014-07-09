@@ -53,7 +53,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
-import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -349,8 +348,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (node == null) {
         return;
       }
-      boolean isDirectory = node.getUserObject() instanceof SVNURL ||
-                            (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == NodeKind.DIR);
+      boolean isDirectory =
+        node.getUserObject() instanceof SVNURL || (node.getSVNDirEntry() != null && node.getSVNDirEntry().isDirectory());
       String url = node.getURL().toDecodedString();
       final SvnRepositoryLocation repositoryLocation = new SvnRepositoryLocation(node.getURL().toString());
 
@@ -900,8 +899,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   private static void setEnabled(@NotNull AnActionEvent e, @Nullable RepositoryTreeNode node, boolean isRunning) {
-    e.getPresentation()
-      .setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().getKind() == NodeKind.DIR) && !isRunning);
+    e.getPresentation().setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().isDirectory()) && !isRunning);
   }
 
   protected class BrowseChangesAction extends AnAction {

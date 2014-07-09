@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
@@ -24,12 +25,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class ConflictVersion {
+public class ConflictVersion extends BaseNodeDescription {
 
   private final SVNURL myRepositoryRoot;
   private final String myPath;
   private final long myPegRevision;
-  @NotNull private final NodeKind myKind;
 
   @Nullable
   public static ConflictVersion create(@Nullable SVNConflictVersion conflictVersion) {
@@ -44,10 +44,10 @@ public class ConflictVersion {
   }
 
   public ConflictVersion(SVNURL repositoryRoot, String path, long pegRevision, @NotNull NodeKind kind) {
+    super(kind);
     myRepositoryRoot = repositoryRoot;
     myPath = path;
     myPegRevision = pegRevision;
-    myKind = kind;
   }
 
   public SVNURL getRepositoryRoot() {

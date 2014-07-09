@@ -32,7 +32,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
@@ -299,7 +298,7 @@ public class SvnRecursiveStatusWalker {
           myReceiver.processUnversioned(vFile);
         }
       } else {
-        final FilePath path = VcsUtil.getFilePath(ioFile, status.getKind().equals(NodeKind.DIR));
+        final FilePath path = VcsUtil.getFilePath(ioFile, status.getKind().isDirectory());
         myReceiver.process(path, status);
       }
     }

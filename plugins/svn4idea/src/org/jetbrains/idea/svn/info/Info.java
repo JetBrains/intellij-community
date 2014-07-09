@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
@@ -32,13 +33,12 @@ import java.util.Date;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class Info {
+public class Info extends BaseNodeDescription {
 
   private final File myFile;
   private final String myPath;
   private final SVNURL myURL;
   private final SVNRevision myRevision;
-  @NotNull private final NodeKind myKind;
   private final SVNURL myRepositoryRootURL;
   private final String myRepositoryUUID;
   private final SVNRevision myCommittedRevision;
@@ -96,10 +96,10 @@ public class Info {
               @Nullable Lock lock,
               Depth depth,
               @Nullable TreeConflictDescription treeConflict) {
+    super(kind);
     myFile = file;
     myURL = url;
     myRevision = SVNRevision.create(revision);
-    myKind = kind;
     myRepositoryUUID = uuid;
     myRepositoryRootURL = rootURL;
 
@@ -137,10 +137,10 @@ public class Info {
               String author,
               @Nullable Lock lock,
               Depth depth) {
+    super(kind);
     myIsRemote = true;
     myURL = url;
     myRevision = revision;
-    myKind = kind;
     myRepositoryRootURL = reposRootURL;
     myRepositoryUUID = uuid;
 

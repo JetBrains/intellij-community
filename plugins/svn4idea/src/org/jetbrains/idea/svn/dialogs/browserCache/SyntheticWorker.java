@@ -68,9 +68,9 @@ public class SyntheticWorker {
 
     Collections.sort(children, new Comparator<DirectoryEntry>() {
       public int compare(final DirectoryEntry o1, final DirectoryEntry o2) {
-        final boolean dirStatus = NodeKind.DIR.equals(o1.getKind()) ^ NodeKind.DIR.equals(o1.getKind());
+        final boolean dirStatus = o1.isDirectory() ^ o1.isDirectory();
         if (dirStatus) {
-          return NodeKind.DIR.equals(o1.getKind()) ? -1 : 1;
+          return o1.isDirectory() ? -1 : 1;
         }
         return o1.toString().compareTo(o2.toString());
       }
@@ -92,7 +92,7 @@ public class SyntheticWorker {
   }
 
   public static DirectoryEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
-    return new DirectoryEntry(newUrl, repositoryUrl, name, isDir ? NodeKind.DIR : NodeKind.FILE, CommitInfo.EMPTY, null);
+    return new DirectoryEntry(newUrl, repositoryUrl, name, NodeKind.from(isDir), CommitInfo.EMPTY, null);
   }
 
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
@@ -124,7 +124,7 @@ public class SyntheticWorker {
 
       try {
         for (DirectoryEntry child : children) {
-          newChildren.add(createSyntheticEntry(convertUrl(child.getUrl()), child.getRepositoryRoot(), child.getName(), NodeKind.DIR.equals(child.getKind())));
+          newChildren.add(createSyntheticEntry(convertUrl(child.getUrl()), child.getRepositoryRoot(), child.getName(), child.isDirectory()));
         }
         myCache.put(convertUrl(repositoryTreeNode.getURL()).toString(), newChildren);
       }
