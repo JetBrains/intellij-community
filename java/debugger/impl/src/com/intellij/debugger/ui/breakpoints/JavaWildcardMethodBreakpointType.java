@@ -50,6 +50,18 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
     return AllIcons.Debugger.Db_disabled_method_breakpoint;
   }
 
+  @NotNull
+  @Override
+  public Icon getMutedEnabledIcon() {
+    return AllIcons.Debugger.Db_muted_method_breakpoint;
+  }
+
+  @NotNull
+  @Override
+  public Icon getMutedDisabledIcon() {
+    return AllIcons.Debugger.Db_muted_disabled_method_breakpoint;
+  }
+
   //@Override
   protected String getHelpID() {
     return HelpID.METHOD_BREAKPOINTS;
