@@ -28,6 +28,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
@@ -98,12 +99,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     mySwitchModeAction = new SwitchModeAction();
 
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        doOKAction();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK)), getRootPane(), myDisposable);
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -129,6 +124,23 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     evaluate();
+  }
+
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    myOKAction = new OkAction(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        super.actionPerformed(e);
+        if (myMode == EvaluationMode.EXPRESSION && ((e.getModifiers() & InputEvent.CTRL_MASK) != 0)) {
+          // add to watches
+          XExpression expression = myInputComponent.getInputEditor().getExpression();
+          if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
+            ((XDebugSessionImpl)mySession).getSessionTab().getWatchesView().addWatchExpression(expression, -1, false);
+          }
+        }
+      }
+    };
   }
 
   @NotNull
