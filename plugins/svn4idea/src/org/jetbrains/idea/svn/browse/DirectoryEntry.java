@@ -18,9 +18,9 @@ package org.jetbrains.idea.svn.browse;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Date;
@@ -31,7 +31,7 @@ import java.util.Date;
 public class DirectoryEntry implements Comparable<DirectoryEntry> {
 
   private final String myName;
-  private final SVNNodeKind myKind;
+  @NotNull private final NodeKind myKind;
   @NotNull private final CommitInfo myCommitInfo;
   private final String myPath;
   private final SVNURL myUrl;
@@ -39,7 +39,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
 
   @NotNull
   public static DirectoryEntry create(@NotNull SVNDirEntry entry) {
-    return new DirectoryEntry(entry.getURL(), entry.getRepositoryRoot(), entry.getName(), entry.getKind(),
+    return new DirectoryEntry(entry.getURL(), entry.getRepositoryRoot(), entry.getName(), NodeKind.from(entry.getKind()),
                               new CommitInfo.Builder(entry.getRevision(), entry.getDate(), entry.getAuthor()).build(),
                               entry.getRelativePath());
   }
@@ -47,7 +47,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
   public DirectoryEntry(SVNURL url,
                         SVNURL repositoryRoot,
                         String name,
-                        SVNNodeKind kind,
+                        @NotNull NodeKind kind,
                         @Nullable CommitInfo commitInfo,
                         String path) {
     myUrl = url;
@@ -70,7 +70,8 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
     return myName;
   }
 
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     return myKind;
   }
 

@@ -30,13 +30,13 @@ import org.jetbrains.idea.svn.SvnStatusConvertor;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -211,7 +211,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     public String path;
 
     public boolean isDirectory() {
-      return SVNNodeKind.DIR.equals(SVNNodeKind.parseKind(kind));
+      return NodeKind.DIR.equals(NodeKind.from(kind));
     }
   }
 }

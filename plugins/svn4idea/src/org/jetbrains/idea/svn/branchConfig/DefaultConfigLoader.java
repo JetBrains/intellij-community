@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.info.Info;
@@ -96,7 +97,7 @@ public class DefaultConfigLoader {
 
       @Override
       public void consume(final DirectoryEntry entry) throws SVNException {
-        if (SVNNodeKind.DIR.equals(entry.getKind())) {
+        if (NodeKind.DIR.equals(entry.getKind())) {
           SVNURL childUrl = rootPath.appendPath(entry.getName(), false);
 
           if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {

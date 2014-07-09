@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
@@ -28,7 +28,7 @@ import java.io.File;
 public class TreeConflictDescription {
 
   private final File myPath;
-  private final SVNNodeKind myNodeKind;
+  @NotNull private final NodeKind myNodeKind;
   private final ConflictAction myConflictAction;
   private final ConflictReason myConflictReason;
 
@@ -42,7 +42,8 @@ public class TreeConflictDescription {
 
     if (conflict != null) {
       result =
-        new TreeConflictDescription(conflict.getPath(), conflict.getNodeKind(), ConflictAction.from(conflict.getConflictAction().getName()),
+        new TreeConflictDescription(conflict.getPath(), NodeKind.from(conflict.getNodeKind()),
+                                    ConflictAction.from(conflict.getConflictAction().getName()),
                                     ConflictReason.from(conflict.getConflictReason().getName()),
                                     ConflictOperation.from(conflict.getOperation().getName()),
                                     ConflictVersion.create(conflict.getSourceLeftVersion()),
@@ -53,7 +54,7 @@ public class TreeConflictDescription {
   }
 
   public TreeConflictDescription(File path,
-                                 SVNNodeKind nodeKind,
+                                 @NotNull NodeKind nodeKind,
                                  ConflictAction conflictAction,
                                  ConflictReason conflictReason,
                                  ConflictOperation operation,
@@ -94,7 +95,8 @@ public class TreeConflictDescription {
     return myConflictReason;
   }
 
-  public SVNNodeKind getNodeKind() {
+  @NotNull
+  public NodeKind getNodeKind() {
     return myNodeKind;
   }
 

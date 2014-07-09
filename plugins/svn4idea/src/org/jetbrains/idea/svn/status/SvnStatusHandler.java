@@ -24,9 +24,9 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -741,7 +741,7 @@ public class SvnStatusHandler extends DefaultHandler {
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {
-        status.setKind(exists, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+        status.setKind(exists, file.isDirectory() ? NodeKind.DIR : NodeKind.FILE);
       } else {
         // this is a hack. This is done so because of strange svn native client output:
         /*
@@ -779,12 +779,12 @@ and no "mod4" under
         final SVNStatusType ns = status.getNodeStatus();
         if (myBase.getName().equals(path) && ! SVNStatusType.MISSING.equals(ns) &&
             ! SVNStatusType.STATUS_DELETED.equals(ns) ) {
-          status.setKind(true, SVNNodeKind.DIR);
+          status.setKind(true, NodeKind.DIR);
           status.setFile(myBase);
           status.setPath("");
           return;
         }
-        status.setKind(exists, SVNNodeKind.UNKNOWN);
+        status.setKind(exists, NodeKind.UNKNOWN);
       }
       status.setPath(path);
     }

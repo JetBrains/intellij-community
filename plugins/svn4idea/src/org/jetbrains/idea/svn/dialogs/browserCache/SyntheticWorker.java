@@ -17,11 +17,11 @@ package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.*;
@@ -68,9 +68,9 @@ public class SyntheticWorker {
 
     Collections.sort(children, new Comparator<DirectoryEntry>() {
       public int compare(final DirectoryEntry o1, final DirectoryEntry o2) {
-        final boolean dirStatus = SVNNodeKind.DIR.equals(o1.getKind()) ^ SVNNodeKind.DIR.equals(o1.getKind());
+        final boolean dirStatus = NodeKind.DIR.equals(o1.getKind()) ^ NodeKind.DIR.equals(o1.getKind());
         if (dirStatus) {
-          return SVNNodeKind.DIR.equals(o1.getKind()) ? -1 : 1;
+          return NodeKind.DIR.equals(o1.getKind()) ? -1 : 1;
         }
         return o1.toString().compareTo(o2.toString());
       }
@@ -92,7 +92,7 @@ public class SyntheticWorker {
   }
 
   public static DirectoryEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
-    return new DirectoryEntry(newUrl, repositoryUrl, name, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, CommitInfo.EMPTY, null);
+    return new DirectoryEntry(newUrl, repositoryUrl, name, isDir ? NodeKind.DIR : NodeKind.FILE, CommitInfo.EMPTY, null);
   }
 
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
@@ -124,7 +124,7 @@ public class SyntheticWorker {
 
       try {
         for (DirectoryEntry child : children) {
-          newChildren.add(createSyntheticEntry(convertUrl(child.getUrl()), child.getRepositoryRoot(), child.getName(), SVNNodeKind.DIR.equals(child.getKind())));
+          newChildren.add(createSyntheticEntry(convertUrl(child.getUrl()), child.getRepositoryRoot(), child.getName(), NodeKind.DIR.equals(child.getKind())));
         }
         myCache.put(convertUrl(repositoryTreeNode.getURL()).toString(), newChildren);
       }

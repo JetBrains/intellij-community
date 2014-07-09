@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
@@ -40,7 +41,7 @@ public class SvnInfoStructure {
   public SVNURL myUrl;
   public SVNURL myRootURL;
   public long myRevision;
-  public SVNNodeKind myKind;
+  public NodeKind myKind;
   public String myUuid;
   public long myCommittedRevision;
   public String myCommittedDate;
@@ -94,7 +95,7 @@ public class SvnInfoStructure {
     return version == null
            ? null
            : new org.jetbrains.idea.svn.conflict.ConflictVersion(SVNURL.parseURIEncoded(version.myRepoUrl), version.myPathInRepo,
-                                                           parseRevision(version.myRevision), SVNNodeKind.parseKind(version.myKind));
+                                                           parseRevision(version.myRevision), NodeKind.from(version.myKind));
   }
   
   private long parseRevision(final String revision) throws SAXException {

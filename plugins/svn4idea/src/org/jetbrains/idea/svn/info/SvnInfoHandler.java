@@ -21,9 +21,9 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.xml.sax.Attributes;
@@ -880,7 +880,7 @@ public class SvnInfoHandler extends DefaultHandler {
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
       final String kind = attributes.getValue("kind");
       assertSAX(! StringUtil.isEmptyOrSpaces(kind));
-      structure.myKind = SVNNodeKind.parseKind(kind);
+      structure.myKind = NodeKind.from(kind);
 
       if (myBase != null) {
         final String path = attributes.getValue("path");

@@ -23,13 +23,13 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import junit.framework.Assert;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNNodeKind;
 
 import java.io.File;
 
@@ -82,7 +82,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -108,11 +108,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.FILE, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.FILE, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.NONE, version.getKind());
+    Assert.assertEquals(NodeKind.NONE, version.getKind());
   }
 
   private String createConflict(final TreeConflictData.Data data) throws Exception {
@@ -147,11 +147,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.FILE, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.FILE, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -177,11 +177,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.FILE, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.FILE, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.NONE, version.getKind());
+    Assert.assertEquals(NodeKind.NONE, version.getKind());
   }
 
   @Test
@@ -210,7 +210,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -238,11 +238,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.FILE, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.FILE, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -270,11 +270,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNull(leftVersion);
-    //Assert.assertEquals(SVNNodeKind.FILE, leftVersion.getKind());
+    //Assert.assertEquals(NodeKind.FILE, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   //---------------------------------- dirs --------------------------------------------------------
@@ -304,7 +304,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   // not a conflict in Subversion 1.7.7. "mine" file becomes added
@@ -331,11 +331,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.NONE, version.getKind());
+    Assert.assertEquals(NodeKind.NONE, version.getKind());
   }*/
 
   @Test
@@ -359,11 +359,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -389,11 +389,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.NONE, version.getKind());
+    Assert.assertEquals(NodeKind.NONE, version.getKind());
   }
 
   @Test
@@ -422,7 +422,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -446,11 +446,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNotNull(leftVersion);
-    Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
+    Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -474,11 +474,11 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
     Assert.assertTrue(beforeDescription.isTreeConflict());
     ConflictVersion leftVersion = beforeDescription.getSourceLeftVersion();
     Assert.assertNull(leftVersion);
-    //Assert.assertEquals(SVNNodeKind.DIR, leftVersion.getKind());
+    //Assert.assertEquals(NodeKind.DIR, leftVersion.getKind());
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
   //---------------------------------
   @Test
@@ -510,7 +510,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -542,7 +542,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -574,7 +574,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -606,7 +606,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
 
   @Test
@@ -638,7 +638,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.DIR, version.getKind());
+    Assert.assertEquals(NodeKind.DIR, version.getKind());
   }
   //******************************************
   // dir -> file (mine, theirs)
@@ -671,7 +671,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -703,7 +703,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -735,7 +735,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -767,7 +767,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   @Test
@@ -799,7 +799,7 @@ public class SvnTreeConflictDataTest extends Svn17TestCase {
 
     final ConflictVersion version = beforeDescription.getSourceRightVersion();
     Assert.assertNotNull(version);
-    Assert.assertEquals(SVNNodeKind.FILE, version.getKind());
+    Assert.assertEquals(NodeKind.FILE, version.getKind());
   }
 
   private void createSubTree() throws Exception {

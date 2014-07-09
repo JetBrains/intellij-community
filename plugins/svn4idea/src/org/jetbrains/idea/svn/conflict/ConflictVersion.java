@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 
@@ -29,7 +29,7 @@ public class ConflictVersion {
   private final SVNURL myRepositoryRoot;
   private final String myPath;
   private final long myPegRevision;
-  private final SVNNodeKind myKind;
+  @NotNull private final NodeKind myKind;
 
   @Nullable
   public static ConflictVersion create(@Nullable SVNConflictVersion conflictVersion) {
@@ -37,13 +37,13 @@ public class ConflictVersion {
 
     if (conflictVersion != null) {
       result = new ConflictVersion(conflictVersion.getRepositoryRoot(), conflictVersion.getPath(), conflictVersion.getPegRevision(),
-                                   conflictVersion.getKind());
+                                   NodeKind.from(conflictVersion.getKind()));
     }
 
     return result;
   }
 
-  public ConflictVersion(SVNURL repositoryRoot, String path, long pegRevision, SVNNodeKind kind) {
+  public ConflictVersion(SVNURL repositoryRoot, String path, long pegRevision, @NotNull NodeKind kind) {
     myRepositoryRoot = repositoryRoot;
     myPath = path;
     myPegRevision = pegRevision;
@@ -62,7 +62,8 @@ public class ConflictVersion {
     return myPegRevision;
   }
 
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     return myKind;
   }
 

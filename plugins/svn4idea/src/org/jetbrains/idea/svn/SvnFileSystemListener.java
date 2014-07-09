@@ -46,6 +46,7 @@ import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
@@ -616,9 +617,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       return false;
     }
     else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
-      SVNNodeKind kind = status.getKind();
+      NodeKind kind = status.getKind();
       // kind differs.
-      if (directory && kind != SVNNodeKind.DIR || !directory && kind != SVNNodeKind.FILE) {
+      if (directory && kind != NodeKind.DIR || !directory && kind != NodeKind.FILE) {
         return false;
       }
       try {

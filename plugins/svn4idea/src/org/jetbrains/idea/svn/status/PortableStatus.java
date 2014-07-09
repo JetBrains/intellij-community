@@ -16,11 +16,12 @@
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -83,7 +84,7 @@ public class PortableStatus extends Status {
    */
   public PortableStatus(SVNURL url,
                         File file,
-                        SVNNodeKind kind,
+                        @NotNull NodeKind kind,
                         SVNRevision revision,
                         SVNRevision committedRevision,
                         Date committedDate,
@@ -156,7 +157,8 @@ public class PortableStatus extends Status {
   }
 
   @Override
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     if (myFileExists) return super.getKind();
     final Info info = initInfo();
     if (info != null) {
@@ -252,7 +254,7 @@ public class PortableStatus extends Status {
     return myPath;
   }
 
-  public void setKind(boolean exists, SVNNodeKind kind) {
+  public void setKind(boolean exists, @NotNull NodeKind kind) {
     myFileExists = exists;
     setKind(kind);
   }

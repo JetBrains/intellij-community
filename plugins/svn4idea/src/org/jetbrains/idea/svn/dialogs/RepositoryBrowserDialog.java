@@ -53,6 +53,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -347,7 +348,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
-                            (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
+                            (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == NodeKind.DIR);
       String url = node.getURL().toDecodedString();
       final SvnRepositoryLocation repositoryLocation = new SvnRepositoryLocation(node.getURL().toString());
 
@@ -506,7 +507,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       //e.getPresentation().setText(SvnBundle.message("repository.browser.new.folder.action"), true);
       if (node != null) {
         DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
+        e.getPresentation().setEnabled(entry == null || entry.getKind() == NodeKind.DIR);
       } else {
         e.getPresentation().setEnabled(false);
       }
@@ -543,7 +544,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setText("Compare With...", true);
       if (node != null) {
         DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
+        e.getPresentation().setEnabled(entry == null || entry.getKind() == NodeKind.DIR);
       } else {
         e.getPresentation().setEnabled(false);
       }
@@ -860,7 +861,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       final boolean running = ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
       if (node != null) {
         DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled((entry == null || entry.getKind() == SVNNodeKind.DIR) && (! running));
+        e.getPresentation().setEnabled((entry == null || entry.getKind() == NodeKind.DIR) && (! running));
       } else {
         e.getPresentation().setEnabled(false);
       }
@@ -902,7 +903,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       if (node != null) {
         DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
+        e.getPresentation().setEnabled(entry == null || entry.getKind() == NodeKind.DIR);
       } else {
         e.getPresentation().setEnabled(false);
       }

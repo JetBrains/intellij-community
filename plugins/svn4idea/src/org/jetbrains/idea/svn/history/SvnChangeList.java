@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -120,7 +121,7 @@ public class SvnChangeList implements CommittedChangeList {
     for(LogEntryPath entry : logEntry.getChangedPaths().values()) {
       final String path = entry.getPath();
 
-      if (SVNNodeKind.DIR.equals(entry.getKind())) {
+      if (NodeKind.DIR.equals(entry.getKind())) {
         myKnownAsDirectories.add(path);
       }
 
@@ -398,7 +399,7 @@ public class SvnChangeList implements CommittedChangeList {
         // TODO: if loading from disk - use cached values? Not to invoke separate call here.
         SVNRevision beforeRevision = SVNRevision.create(getRevision(idxData.second.booleanValue()));
         Info info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
-        boolean isDirectory = info != null && SVNNodeKind.DIR.equals(info.getKind());
+        boolean isDirectory = info != null && NodeKind.DIR.equals(info.getKind());
         Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision)sourceChange.getBeforeRevision(), isDirectory),
                                             createRevision((SvnRepositoryContentRevision)sourceChange.getAfterRevision(), isDirectory));
         replacingChange.setIsReplaced(sourceChange.isIsReplaced());
@@ -488,7 +489,7 @@ public class SvnChangeList implements CommittedChangeList {
           final String childPath = path + '/' + entry.getRelativePath();
 
           if (!duplicates.contains(Pair.create(isBefore, childPath))) {
-            final ContentRevision contentRevision = createRevision(childPath, isBefore, SVNNodeKind.DIR.equals(entry.getKind()));
+            final ContentRevision contentRevision = createRevision(childPath, isBefore, NodeKind.DIR.equals(entry.getKind()));
             result.add(new Change(isBefore ? contentRevision : null, isBefore ? null : contentRevision));
           }
         }

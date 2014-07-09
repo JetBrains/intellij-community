@@ -18,9 +18,9 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -38,7 +38,7 @@ public class Info {
   private final String myPath;
   private final SVNURL myURL;
   private final SVNRevision myRevision;
-  private final SVNNodeKind myKind;
+  @NotNull private final NodeKind myKind;
   private final SVNURL myRepositoryRootURL;
   private final String myRepositoryUUID;
   private final SVNRevision myCommittedRevision;
@@ -61,17 +61,17 @@ public class Info {
     Info result;
 
     if (info.isRemote()) {
-      result = new Info(info.getPath(), info.getURL(), info.getRevision(), info.getKind(), info.getRepositoryUUID(),
-                           info.getRepositoryRootURL(), info.getCommittedRevision().getNumber(), info.getCommittedDate(), info.getAuthor(),
-                           Lock.create(info.getLock()), Depth.from(info.getDepth()));
+      result = new Info(info.getPath(), info.getURL(), info.getRevision(), NodeKind.from(info.getKind()), info.getRepositoryUUID(),
+                        info.getRepositoryRootURL(), info.getCommittedRevision().getNumber(), info.getCommittedDate(), info.getAuthor(),
+                        Lock.create(info.getLock()), Depth.from(info.getDepth()));
     }
     else {
-      result = new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), info.getKind(),
-                        info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()),
-                        info.getAuthor(), info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(),
-                        getPath(info.getConflictOldFile()), getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()),
-                        getPath(info.getPropConflictFile()), Lock.create(info.getLock()), Depth.from(info.getDepth()),
-                        TreeConflictDescription.create(info.getTreeConflict()));
+      result =
+        new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), NodeKind.from(info.getKind()),
+                 info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()), info.getAuthor(),
+                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getPath(info.getConflictOldFile()),
+                 getPath(info.getConflictNewFile()), getPath(info.getConflictWrkFile()), getPath(info.getPropConflictFile()),
+                 Lock.create(info.getLock()), Depth.from(info.getDepth()), TreeConflictDescription.create(info.getTreeConflict()));
     }
 
     return result;
@@ -81,7 +81,7 @@ public class Info {
               SVNURL url,
               SVNURL rootURL,
               long revision,
-              SVNNodeKind kind,
+              @NotNull NodeKind kind,
               String uuid,
               long committedRevision,
               String committedDate,
@@ -129,7 +129,7 @@ public class Info {
   public Info(String path,
               SVNURL url,
               SVNRevision revision,
-              SVNNodeKind kind,
+              @NotNull NodeKind kind,
               String uuid,
               SVNURL reposRootURL,
               long committedRevision,
@@ -208,7 +208,8 @@ public class Info {
     return myIsRemote;
   }
 
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     return myKind;
   }
 

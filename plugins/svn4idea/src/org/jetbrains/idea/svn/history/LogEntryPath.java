@@ -16,9 +16,9 @@
 package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.SVNNodeKind;
 
 import javax.xml.bind.annotation.*;
 
@@ -31,12 +31,12 @@ public class LogEntryPath {
   private final char myType;
   private final String myCopyPath;
   private final long myCopyRevision;
-  private final SVNNodeKind myNodeKind;
+  @NotNull private final NodeKind myNodeKind;
 
   @NotNull
   public static LogEntryPath.Builder create(@NotNull SVNLogEntryPath path) {
     return new LogEntryPath.Builder().setPath(path.getPath()).setType(path.getType()).setCopyFromPath(
-      path.getCopyPath()).setCopyFromRevision(path.getCopyRevision()).setKind(path.getKind());
+      path.getCopyPath()).setCopyFromRevision(path.getCopyRevision()).setKind(NodeKind.from(path.getKind()));
   }
 
   public LogEntryPath(@NotNull LogEntryPath.Builder builder) {
@@ -44,7 +44,7 @@ public class LogEntryPath {
     myType = CommandUtil.getStatusChar(builder.action);
     myCopyPath = builder.copyFromPath;
     myCopyRevision = builder.copyFromRevision;
-    myNodeKind = SVNNodeKind.parseKind(builder.kind);
+    myNodeKind = NodeKind.from(builder.kind);
   }
 
   public String getCopyPath() {
@@ -63,7 +63,8 @@ public class LogEntryPath {
     return myType;
   }
 
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     return myNodeKind;
   }
 
@@ -92,7 +93,7 @@ public class LogEntryPath {
     }
 
     @NotNull
-    public Builder setKind(@NotNull SVNNodeKind kind) {
+    public Builder setKind(@NotNull NodeKind kind) {
       this.kind = kind.toString();
       return this;
     }

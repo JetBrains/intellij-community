@@ -21,9 +21,9 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNNodeKind;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -53,7 +53,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
             append(" " + DateFormatUtil.formatPrettyDateTime(entry.getDate()), SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
-        if (node.getSVNDirEntry().getKind() == SVNNodeKind.FILE) {
+        if (node.getSVNDirEntry().getKind() == NodeKind.FILE) {
           setIcon(FileTypeManager.getInstance().getFileTypeByFileName(name).getIcon());
         } else {
           setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);

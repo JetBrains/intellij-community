@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -305,7 +306,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   private void revertFileOrDir(File file) throws SVNException, VcsException {
     Info info = mySvnVcs.getInfo(file);
     if (info != null) {
-      if (info.getKind() == SVNNodeKind.FILE) {
+      if (info.getKind() == NodeKind.FILE) {
         doRevert(file, false);
       } else {
         if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {

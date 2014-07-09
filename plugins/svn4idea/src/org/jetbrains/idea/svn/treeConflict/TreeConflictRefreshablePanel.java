@@ -43,6 +43,7 @@ import gnu.trove.TLongArrayList;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
@@ -50,7 +51,6 @@ import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnHistorySession;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -296,7 +296,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
   }
 
   private Paths getPaths(final TreeConflictDescription description) {
-    FilePath mainPath = new FilePathImpl(description.getPath(), SVNNodeKind.DIR.equals(description.getNodeKind()));
+    FilePath mainPath = new FilePathImpl(description.getPath(), NodeKind.DIR.equals(description.getNodeKind()));
     FilePath additionalPath = null;
     if (myChange.isMoved() || myChange.isRenamed()) {
       if (ConflictAction.ADD.equals(description.getConflictAction())) {
@@ -360,7 +360,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     if (ConflictAction.EDIT.equals(description.getConflictAction()) && description.getSourceLeftVersion() != null &&
         ConflictReason.DELETED.equals(description.getConflictReason()) && (myChange.isMoved() || myChange.isRenamed()) &&
         myCommittedRevision != null) {
-      if (myPath.isDirectory() == SVNNodeKind.DIR.equals(description.getSourceRightVersion().getKind())) {
+      if (myPath.isDirectory() == NodeKind.DIR.equals(description.getSourceRightVersion().getKind())) {
         return createMergeTheirsForFile(description);
       }
     }
@@ -477,7 +477,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       myPeg = peg;
       try {
         myPath = FilePathImpl.createNonLocal(
-          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(), SVNNodeKind.DIR.equals(version.getKind()));
+          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(), NodeKind.DIR.equals(version.getKind()));
       }
       catch (SVNException e) {
         throw new VcsException(e);

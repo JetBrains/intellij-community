@@ -15,10 +15,11 @@
  */
 package org.jetbrains.idea.svn.status;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -32,7 +33,7 @@ import java.io.File;
 public class Status {
   private SVNURL myURL;
   private File myFile;
-  private SVNNodeKind myKind;
+  private @NotNull NodeKind myKind;
   private SVNRevision myRevision;
   private SVNRevision myCommittedRevision;
   private SVNStatusType myContentsStatus;
@@ -59,7 +60,7 @@ public class Status {
     Status result = null;
 
     if (status != null) {
-      result = new Status(status.getURL(), status.getFile(), status.getKind(), status.getRevision(),
+      result = new Status(status.getURL(), status.getFile(), NodeKind.from(status.getKind()), status.getRevision(),
                           status.getCommittedRevision(), status.getContentsStatus(), status.getPropertiesStatus(),
                           status.getRemoteContentsStatus(), status.getRemotePropertiesStatus(), status.isLocked(),
                           status.isCopied(), status.isSwitched(), status.getCopyFromURL(), Lock.create(status.getRemoteLock()),
@@ -77,7 +78,7 @@ public class Status {
 
   public Status(SVNURL url,
                 File file,
-                SVNNodeKind kind,
+                @NotNull NodeKind kind,
                 SVNRevision revision,
                 SVNRevision committedRevision,
                 SVNStatusType contentsStatus,
@@ -94,7 +95,7 @@ public class Status {
                 @Nullable TreeConflictDescription treeConflict) {
     myURL = url;
     myFile = file;
-    myKind = kind == null ? SVNNodeKind.NONE : kind;
+    myKind = kind;
     myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
     myCommittedRevision = committedRevision == null ? SVNRevision.UNDEFINED : committedRevision;
     myContentsStatus = contentsStatus == null ? SVNStatusType.STATUS_NONE : contentsStatus;
@@ -126,7 +127,8 @@ public class Status {
     return myFile;
   }
 
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     return myKind;
   }
 
@@ -220,7 +222,7 @@ public class Status {
     myFile = file;
   }
 
-  public void setKind(SVNNodeKind kind) {
+  public void setKind(@NotNull NodeKind kind) {
     myKind = kind;
   }
 

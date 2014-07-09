@@ -21,10 +21,10 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -88,7 +88,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public boolean isLeaf() {
-    return myUserObject instanceof DirectoryEntry ? ((DirectoryEntry) myUserObject).getKind() == SVNNodeKind.FILE : false;
+    return myUserObject instanceof DirectoryEntry ? ((DirectoryEntry) myUserObject).getKind() == NodeKind.FILE : false;
   }
 
   public TreeNode getParent() {
@@ -196,7 +196,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   public void setChildren(final List<DirectoryEntry> children, final NodeLoadState state) {
     final List<TreeNode> nodes = new ArrayList<TreeNode>();
     for (final DirectoryEntry entry : children) {
-      if (!myModel.isShowFiles() && entry.getKind() != SVNNodeKind.DIR) {
+      if (!myModel.isShowFiles() && entry.getKind() != NodeKind.DIR) {
         continue;
       }
       nodes.add(new RepositoryTreeNode(myModel, this, entry.getUrl(), entry, state));
