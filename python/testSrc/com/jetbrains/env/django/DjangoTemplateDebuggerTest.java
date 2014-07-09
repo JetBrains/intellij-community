@@ -130,27 +130,22 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
         waitForPause();
 
         eval("x").hasValue("1");
-        eval("name").hasValue("'TemplateDebugging'");
-
-        setVal("name", "'TemplateDjangoDebugging'");
 
         resume();
 
         waitForPause();
 
         eval("x").hasValue("2");
-        eval("name").hasValue("'TemplateDjangoDebugging'");
 
         resume();
 
         waitForPause();
 
         eval("x").hasValue("3");
-        eval("name").hasValue("'TemplateDjangoDebugging'");
 
         resume();
 
-        page.get().contains("templatedjangodebugging");
+        page.get().contains("templatedebugging");
       }
     });
   }
