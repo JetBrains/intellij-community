@@ -775,7 +775,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
-    ArrayList<PsiTypeParameter> result = null;
+    List<PsiTypeParameter> result = null;
 
     PsiTypeParameterListOwner currentOwner = owner;
     while (currentOwner != null) {
