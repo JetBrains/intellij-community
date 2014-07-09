@@ -32,6 +32,7 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
@@ -259,7 +260,8 @@ public class SignatureParsing {
     return variance;
   }
 
-  public static String parseTypeString(CharacterIterator signature) throws ClsFormatException {
+  @NotNull
+  public static String parseTypeString(@NotNull CharacterIterator signature) throws ClsFormatException {
     int arrayDimensions = 0;
     while (signature.current() == '[') {
       arrayDimensions++;

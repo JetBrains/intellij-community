@@ -44,6 +44,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   @Override
   public StubBuilder getBuilder() {
     return new DefaultStubBuilder() {
+      @NotNull
       @Override
       protected StubElement createStubForFile(@NotNull final PsiFile file) {
         if (file instanceof GroovyFile) {
