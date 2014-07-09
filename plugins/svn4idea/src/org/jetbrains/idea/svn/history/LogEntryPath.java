@@ -44,7 +44,7 @@ public class LogEntryPath {
     myType = CommandUtil.getStatusChar(builder.action);
     myCopyPath = builder.copyFromPath;
     myCopyRevision = builder.copyFromRevision;
-    myNodeKind = NodeKind.from(builder.kind);
+    myNodeKind = builder.kind;
   }
 
   public String getCopyPath() {
@@ -73,8 +73,10 @@ public class LogEntryPath {
   @XmlType(name = "logentrypath")
   public static class Builder {
 
-    @XmlAttribute(name = "kind")
-    private String kind;
+    // empty string could be here if repository was < 1.6 when committing (see comments in schema for svn client xml output , in
+    // svn source code repository) - this will result in kind = NodeKind.UNKNOWN
+    @XmlAttribute(name = "kind", required = true)
+    private NodeKind kind;
 
     @XmlAttribute(name = "action")
     private String action;
@@ -94,7 +96,7 @@ public class LogEntryPath {
 
     @NotNull
     public Builder setKind(@NotNull NodeKind kind) {
-      this.kind = kind.toString();
+      this.kind = kind;
       return this;
     }
 

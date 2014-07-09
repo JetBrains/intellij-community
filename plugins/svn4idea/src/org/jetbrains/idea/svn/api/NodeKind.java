@@ -19,18 +19,22 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNNodeKind;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
 import java.util.Map;
 
 /**
  * @author Konstantin Kolosovsky.
  */
+@XmlEnum
 public enum NodeKind {
 
-  UNKNOWN("unknown"),
-  FILE("file"),
-  DIR("dir"),
+  // see comments in LogEntryPath.Builder for cases when "" kind could appear
+  @XmlEnumValue("") UNKNOWN("unknown"),
+  @XmlEnumValue("file") FILE("file"),
+  @XmlEnumValue("dir") DIR("dir"),
   // used in ConflictVersion when node is missing
-  NONE("none");
+  @XmlEnumValue("none") NONE("none");
 
   @NotNull private static final Map<String, NodeKind> ourAllNodeKinds = ContainerUtil.newHashMap();
 

@@ -198,8 +198,8 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
   public static class DiffPath {
 
-    @XmlAttribute(name = "kind")
-    public String kind;
+    @XmlAttribute(name = "kind", required = true)
+    public NodeKind kind;
 
     @XmlAttribute(name = "props")
     public String propertiesStatus;
@@ -211,7 +211,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     public String path;
 
     public boolean isDirectory() {
-      return NodeKind.DIR.equals(NodeKind.from(kind));
+      return NodeKind.DIR.equals(kind);
     }
   }
 }

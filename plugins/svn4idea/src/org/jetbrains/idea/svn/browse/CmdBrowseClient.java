@@ -126,8 +126,8 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
   public static class Entry {
 
-    @XmlAttribute(name = "kind")
-    public String kind;
+    @XmlAttribute(name = "kind", required = true)
+    public NodeKind kind;
 
     @XmlElement(name = "name")
     public String name;
@@ -142,7 +142,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     @NotNull
     public DirectoryEntry toDirectoryEntry(@NotNull SVNURL url) throws SVNException {
       // TODO: repository is not used for now
-      return new DirectoryEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), NodeKind.from(kind),
+      return new DirectoryEntry(url.appendPath(name, false), null, PathUtil.getFileName(name), kind,
                                 commit != null ? commit.build() : null, name);
     }
   }
