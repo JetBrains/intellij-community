@@ -31,15 +31,6 @@ import java.util.regex.Pattern;
  * User: catherine
  */
 public class DocStringUtil {
-  private static final String PARAMETERS = "Parameters";
-  private static final Pattern NUMPY_PARAMETERS_SECTION = Pattern.compile(PARAMETERS + "[ \\t]*\\n[ \\t]*[-]{" + PARAMETERS.length() + "}");
-  private static final String RETURNS = "Returns";
-  private static final Pattern NUMPY_RETURNS_SECTION = Pattern.compile(RETURNS + "[ \\t]*\\n[ \\t]*[-]{" + RETURNS.length() + "}");
-  private static final String SEE_ALSO = "See Also";
-  private static final Pattern NUMPY_SEE_ALSO_SECTION = Pattern.compile(SEE_ALSO + "[ \\t]*\\n[ \\t]*[-]{" + SEE_ALSO.length() + "}");
-  private static final String EXAMPLES = "Examples";
-  private static final Pattern NUMPY_EXAMPLES_SECTION = Pattern.compile(EXAMPLES + "[ \\t]*\\n[ \\t]*[-]{" + EXAMPLES.length() + "}");
-
   private DocStringUtil() {
   }
 
@@ -70,16 +61,9 @@ public class DocStringUtil {
     return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
   }
 
-  public static boolean isNumpyDocString(@NotNull String text) {
-    return text.contains("ndarray") ||
-           NUMPY_PARAMETERS_SECTION.matcher(text).find() ||
-           NUMPY_RETURNS_SECTION.matcher(text).find() ||
-           NUMPY_SEE_ALSO_SECTION.matcher(text).find() ||
-           NUMPY_EXAMPLES_SECTION.matcher(text).find();
-  }
-
   /**
    * Looks for a doc string under given parent.
+   *
    * @param parent where to look. For classes and functions, this would be PyStatementList, for modules, PyFile.
    * @return the defining expression, or null.
    */
