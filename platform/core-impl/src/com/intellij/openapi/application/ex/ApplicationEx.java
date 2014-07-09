@@ -61,9 +61,9 @@ public interface ApplicationEx extends Application {
   boolean isDoNotSave();
 
   //force exit
-  void exit(boolean force);
+  void exit(boolean force, boolean exitConfirmed);
 
-  void restart(boolean force);
+  void restart(boolean exitConfirmed);
 
   /**
    * Runs modal process. For internal use only, see {@link Task}
