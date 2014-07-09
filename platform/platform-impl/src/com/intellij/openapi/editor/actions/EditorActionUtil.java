@@ -601,7 +601,9 @@ public class EditorActionUtil {
       }
     }
     caretModel.moveToOffset(newOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -673,7 +675,9 @@ public class EditorActionUtil {
       if (isWordStart(text, newOffset, camel)) break;
     }
     editor.getCaretModel().moveToOffset(newOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
