@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
@@ -330,5 +331,24 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public TransferToEDTQueue<Runnable> getLaterInvocator() {
     return myLaterInvocator;
+  }
+
+  public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {
+    addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (nodeFilter.value(node) && !node.isLeaf()) {
+          // cause children computing
+          node.getChildCount();
+        }
+      }
+
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+        if (nodeFilter.value(node)) {
+          expandPath(node.getPath());
+        }
+      }
+    });
   }
 }
