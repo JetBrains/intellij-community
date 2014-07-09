@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ public class InheritanceImplUtil {
     if (baseClass instanceof PsiAnonymousClass) return false;
     if (!checkDeep) return isInheritor(candidateClass, baseClass, false, null);
 
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(candidateClass.getQualifiedName())) return false;
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) return true;
+    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(candidateClass.getName()) && CommonClassNames.JAVA_LANG_OBJECT.equals(candidateClass.getQualifiedName())) return false;
+    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(baseClass.getName()) && CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) return true;
     Map<PsiClass, Boolean> map = CachedValuesManager.
       getCachedValue(candidateClass, new CachedValueProvider<Map<PsiClass, Boolean>>() {
         @Nullable
@@ -82,7 +82,7 @@ public class InheritanceImplUtil {
     }
 
     @NonNls final String baseName = baseClass.getName();
-    if ("Object".equals(baseName)) {
+    if (CommonClassNames.JAVA_LANG_OBJECT_SHORT.equals(baseName)) {
       PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, candidateClass.getResolveScope());
       if (manager.areElementsEquivalent(baseClass, objectClass)) {
         if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
