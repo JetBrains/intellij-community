@@ -255,8 +255,9 @@ public class ChangeBufferingList implements Cloneable {
     if (intContainer == null && removals == 0) {
       ValueContainer.IntIterator iterator = new ChangesIterator(changes, length);
       if (DEBUG) {
-        iterator = SortedFileIdSetIterator.getTransientIterator(iterator);
-        DebugAssertions.assertTrue(iterator.size() == length);
+        ValueContainer.IntIterator iteratorSurelyWithoutDupes = SortedFileIdSetIterator.getTransientIterator(iterator);
+        DebugAssertions.assertTrue(iteratorSurelyWithoutDupes.size() == length);
+        iterator = iterator.createCopyInInitialState();
       }
       return iterator;
     }
