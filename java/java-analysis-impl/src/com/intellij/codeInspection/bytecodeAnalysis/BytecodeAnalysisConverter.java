@@ -51,7 +51,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(BytecodeAnalysisConverter.class);
   }
 
-  private PersistentStringEnumerator myPackageEnumerator;
   private PersistentStringEnumerator myNamesEnumerator;
   private PersistentEnumeratorDelegate<int[]> myCompoundKeyEnumerator;
   private int version;
@@ -60,7 +59,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   public void initComponent() {
     version = PropertiesComponent.getInstance().getOrInitInt(VERSION, 0);
     final File keysDir = new File(PathManager.getIndexRoot(), "bytecodekeys");
-    final File packageKeysFile = new File(keysDir, "packages");
     final File namesFile = new File(keysDir, "names");
     final File compoundKeysFile = new File(keysDir, "compound");
 
@@ -68,7 +66,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       IOUtil.openCleanOrResetBroken(new ThrowableComputable<Void, IOException>() {
         @Override
         public Void compute() throws IOException {
-          myPackageEnumerator = new PersistentStringEnumerator(packageKeysFile, true);
           myNamesEnumerator = new PersistentStringEnumerator(namesFile, true);
           myCompoundKeyEnumerator = new PersistentEnumeratorDelegate<int[]>(compoundKeysFile, new IntArrayKeyDescriptor(), 1024 * 4);
           return null;
@@ -92,7 +89,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   @Override
   public void disposeComponent() {
     try {
-      myPackageEnumerator.close();
       myNamesEnumerator.close();
       myCompoundKeyEnumerator.close();
     }
@@ -118,25 +114,24 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       IntIdComponent[] components = new IntIdComponent[sumOrigin.size()];
       int componentI = 0;
       for (Product<Key, Value> prod : sumOrigin) {
-        int[] ids = new int[prod.ids.size()];
+        int[] intProd = new int[prod.ids.size()];
         int idI = 0;
         for (Key id : prod.ids) {
-          int[] compoundKey = mkCompoundKey(id);
-          int rawId = myCompoundKeyEnumerator.enumerate(compoundKey);
+          int rawId = mkAsmKey(id);
           if (rawId <= 0) {
             LOG.error("raw key should be positive. rawId = " + rawId);
           }
-          ids[idI] = id.stable ? rawId : -rawId;
+          intProd[idI] = id.stable ? rawId : -rawId;
           idI++;
         }
-        IntIdComponent intIdComponent = new IntIdComponent(prod.value, ids);
+        IntIdComponent intIdComponent = new IntIdComponent(prod.value, intProd);
         components[componentI] = intIdComponent;
         componentI++;
       }
       result = new IntIdPending(components);
     }
 
-    int rawKey = myCompoundKeyEnumerator.enumerate(mkCompoundKey(equation.id));
+    int rawKey = mkAsmKey(equation.id);
     if (rawKey <= 0) {
       LOG.error("raw key should be positive. rawKey = " + rawKey);
     }
@@ -145,46 +140,49 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     return new IntIdEquation(key, result);
   }
 
-  @NotNull
-  public int[] mkCompoundKey(@NotNull Key key) throws IOException {
-    Direction direction = key.direction;
-    Method method = key.method;
+  public int mkAsmKey(@NotNull Key key) throws IOException {
+    return myCompoundKeyEnumerator.enumerate(new int[]{mkDirectionKey(key.direction), mkAsmSignatureKey(key.method)});
+  }
 
-    Type ownerType = Type.getObjectType(method.internalClassName);
+  private int mkDirectionKey(Direction dir) throws IOException {
+    return myCompoundKeyEnumerator.enumerate(new int[]{dir.directionId(), dir.paramId(), dir.valueId()});
+  }
+
+  // class + short signature
+  private int mkAsmSignatureKey(@NotNull Method method) throws IOException {
+    int[] sigKey = new int[2];
+    sigKey[0] = mkAsmTypeKey(Type.getObjectType(method.internalClassName));
+    sigKey[1] = mkAsmShortSignatureKey(method);
+    return myCompoundKeyEnumerator.enumerate(sigKey);
+  }
+
+  private int mkAsmShortSignatureKey(@NotNull Method method) throws IOException {
     Type[] argTypes = Type.getArgumentTypes(method.methodDesc);
-    Type returnType = Type.getReturnType(method.methodDesc);
-
     int arity = argTypes.length;
-    int[] compoundKey = new int[9 + arity * 2];
-
-    compoundKey[0] = direction.directionId();
-    compoundKey[1] = direction.paramId();
-    compoundKey[2] = direction.valueId();
-    writeType(compoundKey, 3, ownerType);
-    writeType(compoundKey, 5, returnType);
-    compoundKey[7] = myNamesEnumerator.enumerate(method.methodName);
-    compoundKey[8] = argTypes.length;
-
+    int[] sigKey = new int[3 + arity];
+    sigKey[0] = mkAsmTypeKey(Type.getReturnType(method.methodDesc));
+    sigKey[1] = myNamesEnumerator.enumerate(method.methodName);
+    sigKey[2] = argTypes.length;
     for (int i = 0; i < argTypes.length; i++) {
-      writeType(compoundKey, 9 + 2*i, argTypes[i]);
+      sigKey[3 + i] = mkAsmTypeKey(argTypes[i]);
     }
-    return compoundKey;
+    return myCompoundKeyEnumerator.enumerate(sigKey);
   }
 
   @Nullable
-  private static Direction extractDirection(int[] compoundKey) {
-    switch (compoundKey[0]) {
+  private static Direction extractDirection(int[] directionKey) {
+    switch (directionKey[0]) {
       case Direction.OUT_DIRECTION:
         return new Out();
       case Direction.IN_DIRECTION:
-        return new In(compoundKey[1]);
+        return new In(directionKey[1]);
       case Direction.INOUT_DIRECTION:
-        return new InOut(compoundKey[1], Value.values()[compoundKey[2]]);
+        return new InOut(directionKey[1], Value.values()[directionKey[2]]);
     }
     return null;
   }
 
-  private void writeType(int[] compoundKey, int i, Type type) throws IOException {
+  private int mkAsmTypeKey(Type type) throws IOException {
     String className = type.getClassName();
     int dotIndex = className.lastIndexOf('.');
     String packageName;
@@ -196,98 +194,101 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       packageName = "";
       simpleName = className;
     }
-    compoundKey[i] = myPackageEnumerator.enumerate(packageName);
-    compoundKey[i + 1] = myNamesEnumerator.enumerate(simpleName);
+    int[] classKey = new int[]{myNamesEnumerator.enumerate(packageName), myNamesEnumerator.enumerate(simpleName)};
+    return myCompoundKeyEnumerator.enumerate(classKey);
   }
 
-  @Nullable
-  public int[] mkCompoundKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
-
+  public int mkPsiKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
     if (psiClass == null) {
       LOG.debug("PsiClass was null for " + psiMethod.getName());
-      return null;
+      return -1;
+    }
+    int sigKey = mkPsiSignatureKey(psiMethod);
+    if (sigKey == -1) {
+      return -1;
+    }
+    return myCompoundKeyEnumerator.enumerate(new int[]{mkDirectionKey(direction), sigKey});
+
+  }
+
+  private int mkPsiSignatureKey(@NotNull PsiMethod psiMethod) throws IOException {
+    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
+    if (psiClass == null) {
+      LOG.debug("PsiClass was null for " + psiMethod.getName());
+      return -1;
     }
     PsiClass outerClass = psiClass.getContainingClass();
     boolean isInnerClassConstructor = psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    PsiType returnType = psiMethod.getReturnType();
 
     final int shift = isInnerClassConstructor ? 1 : 0;
     final int arity = parameters.length + shift;
-
-    int[] compoundKey = new int[9 + arity * 2];
-    compoundKey[0] = direction.directionId();
-    compoundKey[1] = direction.paramId();
-    compoundKey[2] = direction.valueId();
-    if (!writeClass(compoundKey, 3, psiClass, 0)) {
-      return null;
-    }
-
-    PsiType returnType = psiMethod.getReturnType();
+    int[] shortSigKey = new int[3 + arity];
     if (returnType == null) {
-      if (!writeType(compoundKey, 5, PsiType.VOID)) {
-        return null;
-      }
-      compoundKey[7] = myNamesEnumerator.enumerate("<init>");
+      shortSigKey[0] = mkPsiTypeKey(PsiType.VOID);
+      shortSigKey[1] = myNamesEnumerator.enumerate("<init>");
     } else {
-      if (!writeType(compoundKey, 5, returnType)) {
-        return null;
-      }
-      compoundKey[7] = myNamesEnumerator.enumerate(psiMethod.getName());
+      shortSigKey[0] = mkPsiTypeKey(returnType);
+      shortSigKey[1] = myNamesEnumerator.enumerate(psiMethod.getName());
     }
-    compoundKey[8] = arity;
+    shortSigKey[2] = arity;
     if (isInnerClassConstructor) {
-      writeClass(compoundKey, 9, outerClass, 0);
+      shortSigKey[3] = mkPsiClassKey(outerClass, 0);
     }
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      if (!writeType(compoundKey, 9 + (2 * (i + shift)), parameter.getType())) {
-        return null;
+      shortSigKey[3 + i + shift] = mkPsiTypeKey(parameter.getType());
+    }
+    for (int aShortSigKey : shortSigKey) {
+      if (aShortSigKey == -1) {
+        return -1;
       }
     }
 
-    return compoundKey;
-  }
-
-  public int mkKey(@NotNull PsiMethod psiMethod, Direction direction) throws IOException {
-    int[] compoundKey = mkCompoundKey(psiMethod, direction);
-    if (compoundKey == null) {
+    int[] sigKey = new int[2];
+    int classKey = mkPsiClassKey(psiClass, 0);
+    if (classKey == -1) {
       return -1;
     }
-    else {
-      return myCompoundKeyEnumerator.enumerate(compoundKey);
-    }
+    sigKey[0] = classKey;
+    sigKey[1] = myCompoundKeyEnumerator.enumerate(shortSigKey);
+
+    return myCompoundKeyEnumerator.enumerate(sigKey);
   }
 
-  private boolean writeClass(int[] compoundKey, int i, PsiClass psiClass, int dimensions) throws IOException {
+
+  private int mkPsiClassKey(PsiClass psiClass, int dimensions) throws IOException {
     PsiClassOwner psiFile = (PsiClassOwner) psiClass.getContainingFile();
     if (psiFile == null) {
       LOG.debug("getContainingFile was null for " + psiClass.getQualifiedName());
-      return false;
+      return -1;
     }
     String packageName = psiFile.getPackageName();
     String qname = psiClass.getQualifiedName();
     if (qname == null) {
-      return false;
+      return -1;
     }
     String className = qname;
     if (packageName.length() > 0) {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
     }
-    compoundKey[i] = myPackageEnumerator.enumerate(packageName);
+    int[] classKey = new int[2];
+    classKey[0] = myNamesEnumerator.enumerate(packageName);
     if (dimensions == 0) {
-      compoundKey[i + 1] = myNamesEnumerator.enumerate(className);
+      classKey[1] = myNamesEnumerator.enumerate(className);
     } else {
       StringBuilder sb = new StringBuilder(className);
       for (int j = 0; j < dimensions; j++) {
         sb.append("[]");
       }
-      compoundKey[i + 1] = myNamesEnumerator.enumerate(sb.toString());
+      classKey[1] = myNamesEnumerator.enumerate(sb.toString());
     }
-    return true;
+    return myCompoundKeyEnumerator.enumerate(classKey);
   }
 
-  private boolean writeType(int[] compoundKey, int i, PsiType psiType) throws IOException {
+  private int mkPsiTypeKey(PsiType psiType) throws IOException {
     int dimensions = 0;
     psiType = TypeConversionUtil.erasure(psiType);
     if (psiType instanceof PsiArrayType) {
@@ -300,30 +301,30 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       // no resolve() -> no package/class split
       PsiClass psiClass = ((PsiClassType)psiType).resolve();
       if (psiClass != null) {
-        writeClass(compoundKey, i, psiClass, dimensions);
-        return true;
+        return mkPsiClassKey(psiClass, dimensions);
       }
       else {
         LOG.debug("resolve was null for " + ((PsiClassType)psiType).getClassName());
-        return false;
+        return -1;
       }
     }
     else if (psiType instanceof PsiPrimitiveType) {
       String packageName = "";
       String className = psiType.getPresentableText();
-      compoundKey[i] = myPackageEnumerator.enumerate(packageName);
+      int[] classKey = new int[2];
+      classKey[0] = myNamesEnumerator.enumerate(packageName);
       if (dimensions == 0) {
-        compoundKey[i + 1] = myNamesEnumerator.enumerate(className);
+        classKey[1] = myNamesEnumerator.enumerate(className);
       } else {
         StringBuilder sb = new StringBuilder(className);
         for (int j = 0; j < dimensions; j++) {
           sb.append("[]");
         }
-        compoundKey[i + 1] = myNamesEnumerator.enumerate(sb.toString());
+        classKey[1] = myNamesEnumerator.enumerate(sb.toString());
       }
-      return true;
+      return myCompoundKeyEnumerator.enumerate(classKey);
     }
-    return false;
+    return -1;
   }
 
   public void addAnnotations(TIntObjectHashMap<Value> internalIdSolutions, Annotations annotations) {
@@ -341,23 +342,14 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       if (value == Value.Top || value == Value.Bot) {
         continue;
       }
-      int[] compoundKey = null;
       try {
-        compoundKey = myCompoundKeyEnumerator.valueOf(key);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-      }
-
-      if (compoundKey != null) {
-        Direction direction = extractDirection(compoundKey);
+        int[] compoundKey = myCompoundKeyEnumerator.valueOf(key);
+        Direction direction = extractDirection(myCompoundKeyEnumerator.valueOf(compoundKey[0]));
         if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
           notNulls.add(key);
         }
         else if (direction instanceof InOut) {
-          compoundKey[0] = 0;
-          compoundKey[1] = 0;
-          compoundKey[2] = 0;
+          compoundKey[0] = mkDirectionKey(new Out());
           try {
             int baseKey = myCompoundKeyEnumerator.enumerate(compoundKey);
             List<String> clauses = contractClauses.get(baseKey);
@@ -365,13 +357,18 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
               clauses = new ArrayList<String>();
               contractClauses.put(baseKey, clauses);
             }
-            int arity = compoundKey[8];
+            int[] sig = myCompoundKeyEnumerator.valueOf(compoundKey[1]);
+            int[] shortSig = myCompoundKeyEnumerator.valueOf(sig[1]);
+            int arity = shortSig[2];
             clauses.add(contractElement(arity, (InOut)direction, value));
           }
           catch (IOException e) {
             LOG.debug(e);
           }
         }
+      }
+      catch (IOException e) {
+        LOG.debug(e);
       }
     }
 

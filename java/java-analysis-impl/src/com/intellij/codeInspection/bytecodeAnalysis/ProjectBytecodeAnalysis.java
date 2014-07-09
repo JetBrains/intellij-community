@@ -246,7 +246,7 @@ public class ProjectBytecodeAnalysis {
 
   public static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {
     if (owner instanceof PsiMethod) {
-      return BytecodeAnalysisConverter.getInstance().mkKey((PsiMethod)owner, new Out());
+      return BytecodeAnalysisConverter.getInstance().mkPsiKey((PsiMethod)owner, new Out());
     }
 
     if (owner instanceof PsiParameter) {
@@ -255,7 +255,7 @@ public class ProjectBytecodeAnalysis {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
           final int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
-          return BytecodeAnalysisConverter.getInstance().mkKey((PsiMethod)gParent, new In(index));
+          return BytecodeAnalysisConverter.getInstance().mkPsiKey((PsiMethod)gParent, new In(index));
         }
       }
     }

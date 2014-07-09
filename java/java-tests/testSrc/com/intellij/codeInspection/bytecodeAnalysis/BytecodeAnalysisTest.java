@@ -131,7 +131,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
         PsiAnnotation inferredAnnotation = myInferredAnnotationsManager.findInferredAnnotation(psiParameter, AnnotationUtil.NOT_NULL);
         for (Annotation parameterAnnotation : parameterAnnotations) {
           if (parameterAnnotation.annotationType() == ExpectNotNull.class) {
-            assertNotNull(inferredAnnotation);
+            assertNotNull(javaMethod.toString() + " " + i, inferredAnnotation);
             continue params;
           }
         }
@@ -182,18 +182,18 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
   private void checkCompoundId(Method method, PsiMethod psiMethod, boolean noKey) throws IOException {
     Direction direction = new Out();
-    int[] psiKey = myBytecodeAnalysisConverter.mkCompoundKey(psiMethod, direction);
+    int psiKey = myBytecodeAnalysisConverter.mkPsiKey(psiMethod, direction);
     if (noKey) {
-      assertNull(psiKey);
+      assertTrue(-1 == psiKey);
       return;
     }
     else {
-      assertNotNull(psiKey);
+      assertFalse(-1 == psiKey);
     }
 
-    int[] asmKey = myBytecodeAnalysisConverter.mkCompoundKey(new Key(method, direction, true));
+    int asmKey = myBytecodeAnalysisConverter.mkAsmKey(new Key(method, direction, true));
 
-    Assert.assertArrayEquals(asmKey, psiKey);
+    Assert.assertEquals(asmKey, psiKey);
   }
 
   private void setUpDataClasses() throws IOException {
