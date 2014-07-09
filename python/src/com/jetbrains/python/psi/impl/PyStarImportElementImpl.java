@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
@@ -50,12 +52,31 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
-          chain.add(((PyFile) source).iterateNames());
+          // PY-13140
+          Iterable<PyElement> declaredNames = ((PyFile)source).iterateNames();
+          // Filter out names starting with underscore only if __all__ attribute is not defined in the module
+          if (((PyFile)source).getDunderAll() == null) {
+            declaredNames = excludeUnderscoredNames(declaredNames);
+          }
+          chain.add(declaredNames);
         }
       }
       return chain;
     }
     return Collections.emptyList();
+  }
+
+  private static Iterable<PyElement> excludeUnderscoredNames(Iterable<PyElement> declaredNames) {
+    return Iterables.filter(declaredNames, new Predicate<PyElement>() {
+      @Override
+      public boolean apply(@Nullable PyElement input) {
+        String name = input != null ? input.getName() : null;
+        if (name != null && name.startsWith("_")) {
+          return false;
+        }
+        return true;
+      }
+    });
   }
 
   @Nullable
@@ -76,7 +97,8 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
           final PsiElement result = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
           if (result != null) {
             final List<String> all = sourceFile.getDunderAll();
-            if (all != null && !all.contains(name)) {
+            // PY-13140
+            if (all != null ? !all.contains(name) : name.startsWith("_")) {
               continue;
             }
             return result;
