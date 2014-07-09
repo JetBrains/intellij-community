@@ -265,9 +265,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
 
-    //leftmost folded block position
-    if (myEditor.xyToVisualPosition(p).equals(myEditor.logicalToVisualPosition(pos))) return null;
-
     int offset = myEditor.logicalPositionToOffset(pos);
 
     return myFoldTree.fetchOutermost(offset);
