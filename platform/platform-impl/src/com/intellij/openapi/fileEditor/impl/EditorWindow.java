@@ -503,6 +503,8 @@ public class EditorWindow {
   public void requestFocus(boolean forced) {
     if (myTabbedPane != null) {
       myTabbedPane.requestFocus(forced);
+    } else {
+      IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel, forced);
     }
   }
 
