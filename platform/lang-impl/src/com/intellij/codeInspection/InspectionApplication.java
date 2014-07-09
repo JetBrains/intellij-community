@@ -105,7 +105,7 @@ public class InspectionApplication {
           LOG.error(e);
         }
         finally {
-          if (myErrorCodeRequired) application.exit(true);
+          if (myErrorCodeRequired) application.exit(true, true);
         }
       }
     });

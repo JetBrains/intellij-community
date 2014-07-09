@@ -156,11 +156,11 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   }
 
   public boolean isLogExpressionEnabled() {
-    return myLogExpression == null || !myLogExpression.myDisabled;
+    return myLogExpression != null && !myLogExpression.myDisabled;
   }
 
   public boolean isConditionEnabled() {
-    return myCondition == null || !myCondition.myDisabled;
+    return myCondition != null && !myCondition.myDisabled;
   }
 
   @Property(surroundWithTag = false)

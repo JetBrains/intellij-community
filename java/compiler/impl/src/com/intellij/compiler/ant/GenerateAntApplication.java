@@ -61,7 +61,7 @@ public class GenerateAntApplication {
           GenerateAntApplication.LOG.error(e);
         }
         finally {
-          application.exit(true);
+          application.exit(true, true);
         }
       }
     });

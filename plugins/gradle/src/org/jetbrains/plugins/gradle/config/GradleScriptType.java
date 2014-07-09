@@ -261,9 +261,14 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
         final String scriptPath = configuration.getScriptPath();
         if (scriptPath == null) {
-          throw new CantRunException("Target script is undefined");
+          throw new CantRunException("Target script or gradle project path is undefined");
         }
-        params.getProgramParametersList().add("--project-dir");
+
+        if(new File(scriptPath).isFile()) {
+          params.getProgramParametersList().add("--build-file");
+        } else {
+          params.getProgramParametersList().add("--project-dir");
+        }
         params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
         params.getProgramParametersList().addParametersString(scriptParameters);

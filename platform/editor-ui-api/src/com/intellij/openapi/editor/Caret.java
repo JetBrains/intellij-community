@@ -26,6 +26,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Caret extends UserDataHolderEx, Disposable {
   /**
+   * Returns an instance of Editor, current caret belongs to.
+   */
+  @NotNull
+  Editor getEditor();
+
+  /**
    * Returns an instance of CaretModel, current caret is associated with.
    */
   @NotNull

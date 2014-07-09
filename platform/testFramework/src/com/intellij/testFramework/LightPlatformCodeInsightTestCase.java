@@ -15,7 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
+import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -501,7 +501,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected static void lineComment() {
-    new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
+    new CommentByLineCommentAction().actionPerformedImpl(getProject(), getEditor());
   }
 
   protected static void executeAction(@NonNls @NotNull final String actionId) {

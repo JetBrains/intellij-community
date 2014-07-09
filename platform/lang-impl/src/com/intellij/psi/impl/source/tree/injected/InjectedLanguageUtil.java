@@ -20,6 +20,7 @@ import com.intellij.injected.editor.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -156,6 +157,22 @@ public class InjectedLanguageUtil {
 
     int offset = editor.getCaretModel().getOffset();
     return getEditorForInjectedLanguageNoCommit(editor, file, offset);
+  }
+
+  public static Caret getCaretForInjectedLanguageNoCommit(@Nullable Caret caret, @Nullable PsiFile file) {
+    if (caret == null || file == null || caret instanceof InjectedCaret) return caret;
+
+    PsiFile injectedFile = findInjectedPsiNoCommit(file, caret.getOffset());
+    Editor injectedEditor = getInjectedEditorForInjectedFile(caret.getEditor(), injectedFile);
+    if (!(injectedEditor instanceof EditorWindow)) {
+      return caret;
+    }
+    for (Caret injectedCaret : injectedEditor.getCaretModel().getAllCarets()) {
+      if (((InjectedCaret)injectedCaret).getDelegate() == caret) {
+        return injectedCaret;
+      }
+    }
+    return null;
   }
 
   public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {

@@ -664,7 +664,7 @@ public abstract class PluginManagerMain implements Disposable {
                                 app.restart(true);
                               }
                               else {
-                                app.exit(true);
+                                app.exit(false, true);
                               }
                             }
                           }).notify(project);
