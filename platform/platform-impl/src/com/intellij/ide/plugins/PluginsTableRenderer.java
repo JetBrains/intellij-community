@@ -23,10 +23,16 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,7 +46,7 @@ import java.util.Set;
 * @author Konstantin Bulenkov
 */
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
-  private JLabel myName;
+  private SimpleColoredComponent myName;
   private JLabel myStatus;
   private RatesPanel myRating;
   private JLabel myDownloads;
@@ -85,7 +91,23 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (myPluginDescriptor != null) {
       final PluginId pluginId = myPluginDescriptor.getPluginId();
-      myName.setText(myPluginDescriptor.getName() + "  ");
+      myName.clear();
+      myName.setOpaque(false);
+      String pluginName = myPluginDescriptor.getName() + "  ";
+      Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
+      if (query instanceof String) {
+        String pattern = "*" + query;
+        Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
+        SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
+                                                             UIUtil.getListForeground(isSelected),
+                                                             JBColor.RED,
+                                                             SimpleTextAttributes.STYLE_PLAIN);
+
+        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher,
+                                                        UIUtil.getTableBackground(isSelected), true);
+      } else {
+        myName.append(pluginName);
+      }
 
       final Color fg = UIUtil.getTableForeground(isSelected);
       final Color bg = UIUtil.getTableBackground(isSelected);

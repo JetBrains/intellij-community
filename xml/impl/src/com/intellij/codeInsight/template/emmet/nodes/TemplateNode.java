@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,21 +60,19 @@ public class TemplateNode extends ZenCodingNode {
     String templateKey = templateToken.getKey();
     if (myGenerator != null && StringUtil.containsChar(templateKey, '$') && callback.findApplicableTemplate(templateKey) == null) {
       String newTemplateKey = ZenCodingUtil.replaceMarkers(templateKey, numberInIteration, totalIterations, surroundedText);
-      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey,
-                                        templateToken.getAttribute2Value());
-
+      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttribute2Value());
       TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey);
       if (template != null) {
         template.setDeactivated(true);
         newTemplateToken.setTemplate(template, callback);
         templateToken = newTemplateToken;
       }
-  }
+    }
 
-  GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
-                                           surroundedText, insertSurroundedTextAtTheEnd, parent);
-  return Arrays.asList(node);
-}
+    GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
+                                             surroundedText, insertSurroundedTextAtTheEnd, parent);
+    return Arrays.asList(node);
+  }
 
   @Override
   public String toString() {
@@ -84,5 +82,18 @@ public class TemplateNode extends ZenCodingNode {
       result += "[" + JOINER.join(myTemplateToken.getAttribute2Value()) + "]";
     }
     return "Template(" + result + ")";
+  }
+
+  @Override
+  public int getApproximateOutputLength(@Nullable CustomTemplateCallback callback) {
+    TemplateImpl template = myTemplateToken.getTemplate();
+    if (template != null) {
+      int result = template.getTemplateText().length();
+      for (Couple<String> attribute : myTemplateToken.getAttribute2Value()) {
+        result += attribute.first.length() + attribute.second.length() + 4; //plus space, eq, quotes
+      }
+      return result;
+    }
+    return 0;
   }
 }

@@ -16,6 +16,9 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -53,6 +56,11 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   public void addComponent(JPanel contentPanel, JPanel resultPanel) {
     contentPanel.add(resultPanel, BorderLayout.CENTER);
     contentPanel.add(myMainPanel, BorderLayout.NORTH);
+    final JBLabel hint = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint"), SwingConstants.RIGHT);
+    hint.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 6, 0));
+    hint.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    hint.setFontColor(UIUtil.FontColor.BRIGHTER);
+    contentPanel.add(hint, BorderLayout.SOUTH);
   }
 
   protected XDebuggerEditorBase getInputEditor() {

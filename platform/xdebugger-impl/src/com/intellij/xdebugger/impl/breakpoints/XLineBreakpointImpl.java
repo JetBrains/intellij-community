@@ -90,8 +90,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
     RangeHighlighterEx highlighter = myHighlighter;
     if (highlighter != null &&
-        (!highlighter.isValid() ||
-         highlighter.getStartOffset() >= document.getTextLength()
+        (!highlighter.isValid()
+         || highlighter.getStartOffset() >= document.getTextLength()
+         || !Comparing.equal(highlighter.getTextAttributes(), attributes)
          // it seems that this check is not needed - we always update line number from the highlighter
          // and highlighter is removed on line and file change anyway
          /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {

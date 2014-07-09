@@ -34,7 +34,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class ModuleWithDependenciesScope extends GlobalSearchScope {
-
   public static final int COMPILE = 0x01;
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
@@ -62,7 +61,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myProjectFileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
     OrderEnumerator en = ModuleRootManager.getInstance(module).orderEntries();
-    /*if (myIncludeOtherModules) */en.recursively();
+    en.recursively();
 
     if (hasOption(COMPILE)) {
       en.exportedOnly().compileOnly();
@@ -117,6 +116,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     }
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }

@@ -147,7 +147,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
-    EditorSettings settings = previewEditor.getSettings();
+    final EditorSettings settings = previewEditor.getSettings();
     settings.setLineNumbersShown(false);
     settings.setAdditionalLinesCount(1);
     settings.setAdditionalColumnsCount(1);
@@ -172,7 +172,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
         int maxWidth = (int)parentEditorSize.getWidth() / 3;
         int maxHeight = (int)parentEditorSize.getHeight() / 2;
         Dimension contentSize = previewEditor.getContentSize();
-        return new Dimension(maxWidth > contentSize.getWidth() ? (int)size.getWidth() : maxWidth,
+        return new Dimension(maxWidth > contentSize.getWidth() && !settings.isUseSoftWraps() ? (int)size.getWidth() : maxWidth,
                              maxHeight > contentSize.getHeight() ? (int)size.getHeight() : maxHeight);
       }
 

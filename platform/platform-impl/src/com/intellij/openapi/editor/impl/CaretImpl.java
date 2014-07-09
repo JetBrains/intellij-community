@@ -1453,6 +1453,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     return marker != null && marker.isValid() && isVirtualSelectionEnabled() && myEndVirtualOffset > myStartVirtualOffset;
   }
 
+  @Override
+  @NotNull
   public EditorImpl getEditor() {
     return myEditor;
   }

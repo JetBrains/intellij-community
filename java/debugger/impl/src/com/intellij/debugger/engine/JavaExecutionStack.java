@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Iterator;
 
 /**
  * @author egor
@@ -120,7 +120,6 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
-    final AtomicInteger skipCounter = new AtomicInteger(firstFrameIndex);
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
       public Priority getPriority() {
@@ -135,27 +134,18 @@ public class JavaExecutionStack extends XExecutionStack {
               !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&
               !(status == ThreadReference.THREAD_STATUS_ZOMBIE)) {
             try {
-              boolean first = true;
-              for (StackFrameProxyImpl stackFrame : myThreadProxy.frames()) {
-                if (first && firstFrameIndex > 0) {
-                  skipCounter.decrementAndGet();
-                  first = false;
-                  continue;
-                }
-                myDebugProcess.getManagerThread().schedule(new AppendFrameCommand(getSuspendContext(), stackFrame, container, skipCounter));
+              int added = 0;
+              Iterator<StackFrameProxyImpl> iterator = myThreadProxy.frames().iterator();
+              if (iterator.hasNext() && firstFrameIndex > 0) {
+                iterator.next();
+                added++;
               }
+              myDebugProcess.getManagerThread().schedule(new AppendFrameCommand(getSuspendContext(), iterator, container, added, firstFrameIndex));
             }
             catch (EvaluateException e) {
               container.errorOccurred(e.getMessage());
-              return;
             }
           }
-          myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(getSuspendContext()) {
-            @Override
-            public void contextAction() throws Exception {
-              container.addStackFrames(Collections.<JavaStackFrame>emptyList(), true);
-            }
-          });
         }
         else {
           container.errorOccurred(DebuggerBundle.message("frame.panel.frames.not.available"));
@@ -165,28 +155,42 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   private class AppendFrameCommand extends SuspendContextCommandImpl {
-    private final StackFrameProxyImpl myStackFrameProxy;
+    private final Iterator<StackFrameProxyImpl> myStackFramesIterator;
     private final XStackFrameContainer myContainer;
-    private final AtomicInteger mySkipCounter;
+    private int myAdded;
+    private final int mySkip;
 
     public AppendFrameCommand(SuspendContextImpl suspendContext,
-                              StackFrameProxyImpl stackFrame,
+                              Iterator<StackFrameProxyImpl> stackFramesIterator,
                               XStackFrameContainer container,
-                              AtomicInteger skipCounter) {
+                              int added,
+                              int skip) {
       super(suspendContext);
-      myStackFrameProxy = stackFrame;
+      myStackFramesIterator = stackFramesIterator;
       myContainer = container;
-      mySkipCounter = skipCounter;
+      myAdded = added;
+      mySkip = skip;
+    }
+
+    @Override
+    public Priority getPriority() {
+      return myAdded <= 10 ? Priority.NORMAL : Priority.LOW;
     }
 
     @Override
     public void contextAction() throws Exception {
-      boolean showLibraryStackframes = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
-      JavaStackFrame frame = new JavaStackFrame(myStackFrameProxy, myDebugProcess, myTracker);
-      if (showLibraryStackframes || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
-        if (mySkipCounter.getAndDecrement() <= 0) {
-          myContainer.addStackFrames(Arrays.asList(frame), false);
+      if (myStackFramesIterator.hasNext()) {
+        JavaStackFrame frame = new JavaStackFrame(myStackFramesIterator.next(), myDebugProcess, myTracker);
+        if (DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES || (!frame.getDescriptor().isSynthetic() && !frame.getDescriptor().isInLibraryContent())) {
+          if (++myAdded > mySkip) {
+            myContainer.addStackFrames(Arrays.asList(frame), false);
+          }
         }
+        myDebugProcess.getManagerThread().schedule(
+          new AppendFrameCommand(getSuspendContext(), myStackFramesIterator, myContainer, myAdded, mySkip));
+      }
+      else {
+        myContainer.addStackFrames(Collections.<JavaStackFrame>emptyList(), true);
       }
     }
   }

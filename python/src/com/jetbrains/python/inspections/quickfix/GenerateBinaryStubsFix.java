@@ -19,6 +19,8 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -65,6 +67,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   /**
    * Generates pack of fixes available for some unresolved import statement.
    * Be sure to call {@link #isApplicable(com.jetbrains.python.psi.PyImportStatementBase)} first to make sure this statement is supported
+   *
    * @param importStatementBase statement to fix
    * @return pack of fixes
    */
@@ -73,14 +76,14 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
     final List<GenerateBinaryStubsFix> result = new ArrayList<GenerateBinaryStubsFix>(names.size());
     for (final String qualifiedName : names) {
-        result.add(new GenerateBinaryStubsFix(importStatementBase, qualifiedName));
+      result.add(new GenerateBinaryStubsFix(importStatementBase, qualifiedName));
     }
     return result;
   }
 
   /**
    * @param importStatementBase statement to fix
-   * @param qualifiedName name should be fixed (one of {@link com.jetbrains.python.psi.PyImportStatementBase#getFullyQualifiedObjectNames()})
+   * @param qualifiedName       name should be fixed (one of {@link com.jetbrains.python.psi.PyImportStatementBase#getFullyQualifiedObjectNames()})
    */
   private GenerateBinaryStubsFix(@NotNull final PyImportStatementBase importStatementBase, @NotNull final String qualifiedName) {
     myQualifiedName = qualifiedName;
@@ -110,7 +113,14 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
 
-        final List<String> assemblyRefs = collectAssemblyReferences(file);
+
+        final List<String> assemblyRefs = new ReadAction<List<String>>() {
+          @Override
+          protected void run(@NotNull Result<List<String>> result) throws Throwable {
+            result.setResult(collectAssemblyReferences(file));
+          }
+        }.execute().getResultObject();
+
 
         try {
           final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null, folder);
@@ -185,8 +195,8 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
         // TODO: What if user loads it not by literal? We need to ask user for list of DLLs
         if (node.isCalleeText("AddReference", "AddReferenceByPartialName", "AddReferenceByName")) {
           final PyExpression[] args = node.getArguments();
-          if (args.length == 1 && args [0] instanceof PyStringLiteralExpression) {
-            result.add(((PyStringLiteralExpression) args [0]).getStringValue());
+          if (args.length == 1 && args[0] instanceof PyStringLiteralExpression) {
+            result.add(((PyStringLiteralExpression)args[0]).getStringValue());
           }
         }
       }

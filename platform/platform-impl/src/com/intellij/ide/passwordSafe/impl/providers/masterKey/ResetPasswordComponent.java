@@ -49,7 +49,7 @@ public class ResetPasswordComponent extends PasswordComponentBase {
 
   @Override
   public String getHelpId() {
-    return HelpID.RESET_PASSWORD;
+    return myFirstTime ? HelpID.INIT_PASSWORD : HelpID.RESET_PASSWORD;
   }
 
   @Override

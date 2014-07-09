@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,10 @@ import java.beans.PropertyChangeListener;
  * @author Konstantin Bulenkov
  */
 public abstract class SpeedSearchSupply {
+  /**
+   * Client property key to use in jcomponents for passing the actual search query to renderers
+   */
+  public static final String SEARCH_QUERY_KEY = "SEARCH_QUERY";
   private static final Key SPEED_SEARCH_COMPONENT_MARKER = new Key("SPEED_SEARCH_COMPONENT_MARKER");
   public static final DataKey<String> SPEED_SEARCH_CURRENT_QUERY = DataKey.create("SPEED_SEARCH_CURRENT_QUERY");
 

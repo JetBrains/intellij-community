@@ -45,7 +45,7 @@ public class IndentingBackspaceHandler extends BackspaceHandlerDelegate {
 
   @Override
   public boolean charDeleted(char c, PsiFile file, Editor editor) {
-    if (!CodeInsightSettings.getInstance().INDENTING_BACKSPACE || !StringUtil.isWhiteSpace(c)) {
+    if (CodeInsightSettings.getInstance().SMART_BACKSPACE != CodeInsightSettings.AUTOINDENT || !StringUtil.isWhiteSpace(c)) {
       return false;
     }
     LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());

@@ -39,10 +39,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
+@SuppressWarnings("UnusedDeclaration") // Upsource and Kotlin
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     super(parentDisposable);
@@ -105,8 +108,12 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
         return false;
       }
     });
+
+    registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
+    registerExtensionPoint(Extensions.getRootArea(), ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
   }
 
+  @SuppressWarnings("MethodMayBeStatic") // overridden in upsource
   protected CoreJavaDirectoryService createJavaDirectoryService() {
     return new CoreJavaDirectoryService();
   }

@@ -26,9 +26,6 @@ import javax.swing.*;
 
 public class AssignmentToMethodParameterInspection extends BaseAssignmentToParameterInspection {
 
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreTransformationOfOriginalParameter = false;
-
   @Override
   @NotNull
   public String getDisplayName() {

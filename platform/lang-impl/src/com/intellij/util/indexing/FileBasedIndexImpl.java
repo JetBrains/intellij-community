@@ -1659,20 +1659,26 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         final ID<?, ?> indexId = affectedIndexCandidates.get(i);
         if (shouldIndexFile(file, indexId)) {
           if (fc == null) {
+            if (project == null) {
+              project = ProjectUtil.guessProjectForFile(file);
+            }
+
             byte[] currentBytes;
             byte[] hash;
             try {
               currentBytes = content.getBytes();
-              hash = fileType.isBinary() || !IdIndex.ourSnapshotMappingsEnabled ? null:ContentHashesSupport.calcContentHashWithFileType(currentBytes, fileType);
+              if (fileType.isBinary() || !IdIndex.ourSnapshotMappingsEnabled) {
+                hash = null;
+              } else {
+                hash = ContentHashesSupport
+                  .calcContentHashWithFileType(currentBytes, SubstitutedFileType.substituteFileType(file, fileType, project));
+              }
             }
             catch (IOException e) {
               currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
               hash = null;
             }
             fc = new FileContentImpl(file, currentBytes, hash);
-            if (project == null) {
-              project = ProjectUtil.guessProjectForFile(file);
-            }
 
             psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
             initFileContent(fc, project, psiFile);

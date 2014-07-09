@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.rmi;
 
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.naming.Context;
@@ -115,12 +116,13 @@ public class RemoteServer {
 
   @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
+    @NotNull
     public Context getInitialContext(final Hashtable<?, ?> environment) throws NamingException {
       return (Context)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Context.class}, this);
     }
 
     @Nullable
-    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+    public Object invoke(final Object proxy, @NotNull final Method method, final Object[] args) throws Throwable {
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
       }

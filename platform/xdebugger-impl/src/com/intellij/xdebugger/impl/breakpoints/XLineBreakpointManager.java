@@ -118,14 +118,7 @@ public class XLineBreakpointManager {
     // Update breakpoints colors if global color schema was changed
     final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     if (colorsManager != null) { // in some debugger tests EditorColorsManager component isn't loaded
-      final MyEditorColorsListener myColorsSchemeListener = new MyEditorColorsListener();
-      Disposer.register(project, new Disposable() {
-        @Override
-        public void dispose() {
-          colorsManager.removeEditorColorsListener(myColorsSchemeListener);
-        }
-      });
-      colorsManager.addEditorColorsListener(myColorsSchemeListener);
+      colorsManager.addEditorColorsListener(new MyEditorColorsListener(), project);
     }
   }
 

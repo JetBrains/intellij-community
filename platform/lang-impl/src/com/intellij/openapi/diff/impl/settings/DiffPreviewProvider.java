@@ -66,7 +66,7 @@ public abstract class DiffPreviewProvider {
                                                    "  long value;\n" +
                                                    "\n" +
                                                    "  void foo() {\n" +
-                                                   "   // Left changes\n" +
+                                                   "   // Right changes\n" +
                                                    "  }\n" +
                                                    "\n" +
                                                    "  void removedFromLeft() {}\n" +

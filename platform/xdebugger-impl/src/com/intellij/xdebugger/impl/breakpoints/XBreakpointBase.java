@@ -387,13 +387,18 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Nullable
   protected final Icon calculateSpecialIcon() {
+    XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (!isEnabled()) {
       // disabled icon takes precedence to other to visually distinguish it and provide feedback then it is enabled/disabled
       // (e.g. in case of mute-mode we would like to differentiate muted but enabled breakpoints from simply disabled ones)
-      return getType().getDisabledIcon();
+      if (session == null || !session.areBreakpointsMuted()) {
+        return getType().getDisabledIcon();
+      }
+      else {
+        return getType().getMutedDisabledIcon();
+      }
     }
 
-    XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (session == null) {
       if (getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this) != null) {
         return getType().getInactiveDependentIcon();
@@ -401,7 +406,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
     else {
       if (session.areBreakpointsMuted()) {
-        return AllIcons.Debugger.Db_muted_breakpoint;
+        return getType().getMutedEnabledIcon();
       }
       if (session.isInactiveSlaveBreakpoint(this)) {
         return getType().getInactiveDependentIcon();

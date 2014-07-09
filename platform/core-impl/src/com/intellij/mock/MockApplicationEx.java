@@ -53,11 +53,11 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
-  public void exit(boolean force) {
+  public void exit(boolean force, boolean exitConfirmed) {
   }
 
   @Override
-  public void restart(boolean force) {
+  public void restart(boolean exitConfirmed) {
   }
 
   @Override

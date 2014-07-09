@@ -23,9 +23,9 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -83,20 +83,22 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   @Nullable
   public static Language getLanguageInEditor(@NotNull final Editor editor, @NotNull final Project project) {
+    return getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), project);
+  }
+
+  @Nullable
+  public static Language getLanguageInEditor(@NotNull Caret caret, @NotNull final Project project) {
+    Editor editor = caret.getEditor();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    int caretOffset = editor.getCaretModel().getOffset();
-    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
-                                            caretOffset == selectionModel.getSelectionEnd()
-                                            ? selectionModel.getSelectionStart()
-                                            : caretOffset;
+    int caretOffset = caret.getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
     Language lang = findLanguageFromElement(elt);
 
-    if (selectionModel.hasSelection()) {
-      final Language rangeLanguage = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file);
+    if (caret.hasSelection()) {
+      final Language rangeLanguage = evaluateLanguageInRange(caret.getSelectionStart(), caret.getSelectionEnd(), file);
       if (rangeLanguage == null) return file.getLanguage();
 
       lang = rangeLanguage;
@@ -115,22 +117,24 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   @Nullable
   public static PsiFile getPsiFileInEditor(@NotNull final Editor editor, @NotNull final Project project) {
+    return getPsiFileInEditor(editor.getCaretModel().getCurrentCaret(), project);
+  }
+
+  @Nullable
+  public static PsiFile getPsiFileInEditor(@NotNull Caret caret, @NotNull final Project project) {
+    Editor editor = caret.getEditor();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
     PsiUtilCore.ensureValid(file);
 
-    final Language language = getLanguageInEditor(editor, project);
+    final Language language = getLanguageInEditor(caret, project);
     if (language == null) return file;
 
     if (language == file.getLanguage()) return file;
 
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    int caretOffset = editor.getCaretModel().getOffset();
-    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
-                                            caretOffset == selectionModel.getSelectionEnd()
-                                            ? selectionModel.getSelectionStart()
-                                            : caretOffset;
+    int caretOffset = caret.getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
     return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
   }
 

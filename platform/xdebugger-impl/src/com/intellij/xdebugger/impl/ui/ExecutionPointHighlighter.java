@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -53,6 +54,17 @@ public class ExecutionPointHighlighter {
 
   public ExecutionPointHighlighter(final Project project) {
     myProject = project;
+
+    // Update highlighter colors if global color schema was changed
+    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    if (colorsManager != null) { // in some debugger tests EditorColorsManager component isn't loaded
+      colorsManager.addEditorColorsListener(new EditorColorsListener() {
+        @Override
+        public void globalSchemeChange(EditorColorsScheme scheme) {
+          update();
+        }
+      }, project);
+    }
   }
 
   public void show(final @NotNull XSourcePosition position, final boolean useSelection,
