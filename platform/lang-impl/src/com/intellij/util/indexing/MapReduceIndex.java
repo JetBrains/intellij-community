@@ -318,7 +318,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
     if (myContents != null && weProcessPhysicalContent && content != null) {
       try {
-        hashId = getHashOfContent((FileContent)content);
+        FileContent fileContent = (FileContent)content;
+        hashId = getHashOfContent(fileContent);
         if (doReadSavedPersistentData) {
           if (!myContents.isBusyReading()) { // avoid blocking read, we can calculate index value
             ByteSequence bytes = myContents.get(hashId);
@@ -326,7 +327,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
               data = deserializeSavedPersistentData(bytes);
               havePersistentData = true;
               if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-                DebugAssertions.assertTrue(myIndexer.map(content).equals(data));
+                boolean sameValueForSavedIndexedResultAndCurrentOne = myIndexer.map(content).equals(data);
+                DebugAssertions.assertTrue(
+                  sameValueForSavedIndexedResultAndCurrentOne,
+                  "Unexpected difference in indexing of %s by index %s",
+                  fileContent.getFile(),
+                  myIndexId
+                );
               }
             }
           } else {

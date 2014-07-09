@@ -19,6 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 
+import java.util.Formatter;
+
 public class DebugAssertions {
   private static final Logger LOG = Logger.getInstance(DebugAssertions.class);
 
@@ -35,6 +37,12 @@ public class DebugAssertions {
   public static void assertTrue(boolean value) {
     if (!value) {
       LOG.assertTrue(false);
+    }
+  }
+
+  public static void assertTrue(boolean value, String message, Object ... args) {
+    if (!value) {
+      LOG.error(new Formatter().format(message, args));
     }
   }
 }
