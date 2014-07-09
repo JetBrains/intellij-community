@@ -47,13 +47,15 @@ public class RefreshTaskAction extends AnAction {
                 String taskDir = "task" + String.valueOf(currentTask.getIndex() + 1);
                 if (openedFile != null) {
                   File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), openedFile.getName());
+                  BufferedReader reader;
                   try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern)));
+                    reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern)));
                     int i = 0;
                     while (reader.ready()) {
                       document.insertString(document.getLineStartOffset(i), reader.readLine());
                       i++;
                     }
+                    reader.close();
                   }
                   catch (FileNotFoundException e1) {
                     e1.printStackTrace();

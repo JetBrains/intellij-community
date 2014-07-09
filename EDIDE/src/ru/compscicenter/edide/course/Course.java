@@ -45,6 +45,8 @@ public class Course {
                   lessons.get(i).setIndex(i);
                   lessons.get(i).create(project, baseDir, resourseRoot);
                 }
+                //we need z because we want this folder shown last in project tree
+                baseDir.createChildDirectory(this, "zPlayground");
               }
               catch (IOException e) {
                 e.printStackTrace();

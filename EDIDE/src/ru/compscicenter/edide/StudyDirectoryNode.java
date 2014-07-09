@@ -26,6 +26,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   }
 
+  //TODO:improve
   @Override
   protected void updateImpl(PresentationData data) {
     data.setIcon(StudyIcons.UncheckedTask);
@@ -38,6 +39,15 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       }
     }
 
+    if (myValue.getName().contains("zPlayground")) {
+      if (myValue.getParent()!=null) {
+        if (!myValue.getParent().getName().contains("zPlayground")) {
+          data.setPresentableText("Playground");
+          data.setIcon(StudyIcons.Playground);
+          return;
+        }
+      }
+    }
     if (myValue.getName().equals(myProject.getName())) {
       data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
     } else {

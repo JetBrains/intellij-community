@@ -194,12 +194,13 @@ class StudyEditorFactoryListener implements EditorFactoryListener {
                 final Editor editor = event.getEditor();
                 VirtualFile openedFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
                 if (openedFile != null) {
-                  HintManager.getInstance().showInformationHint(editor, "Select any window");
+
                   StudyTaskManager taskManager = StudyTaskManager.getInstance(editor.getProject());
                   ru.compscicenter.edide.course.TaskFile taskFile = taskManager.getTaskFile(openedFile);
                   if (taskFile == null) {
                     return;
                   }
+                  HintManager.getInstance().showInformationHint(editor, "Select any window");
                   taskFile.setLineNum(editor.getDocument().getLineCount());
                   editor.addEditorMouseListener(new MyMouseListener(taskFile));
                   //editor.getCaretModel().addCaretListener(new myCaretAdapter());

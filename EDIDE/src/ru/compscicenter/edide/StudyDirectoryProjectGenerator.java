@@ -193,7 +193,7 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
   }
 
   private String getCourseName(File file) {
-    InputStream metaIS = null;
+    InputStream metaIS;
     String name = null;
     try {
       metaIS = new FileInputStream(file);
@@ -202,8 +202,12 @@ public class StudyDirectoryProjectGenerator implements DirectoryProjectGenerator
       JsonParser parser = new JsonParser();
       com.google.gson.JsonElement el = parser.parse(r);
       name  = el.getAsJsonObject().get("name").getAsString();
+      metaIS.close();
     }
     catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
       e.printStackTrace();
     }
     return name;

@@ -22,4 +22,5 @@ public class StudyIcons {
   public static final Icon ShortcutReminder = load("/icons/ShortcutReminder.png");
   public static final Icon WatchInput = load("/icons/WatchInput.png");
   public static final Icon Refresh24 = load("/icons/refresh24.png");
+  public static final Icon Playground = load("/icons/playground.png");
 }
