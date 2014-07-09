@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.EncodingReference;
+import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.util.ProcessingContext;
@@ -31,11 +32,13 @@ import static com.intellij.patterns.StandardPatterns.string;
  * @author peter
  */
 public class JavaCharsetReferenceContributor extends PsiReferenceContributor {
+  public static final PsiMethodPattern CHARSET_METHOD =
+    psiMethod().withName(string().oneOf("forName", "isSupported")).inClass(Charset.class.getName());
+
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
-      literalExpression().methodCallParameter(
-        0, psiMethod().withName(string().oneOf("forName", "isSupported")).inClass(Charset.class.getName())),
+      literalExpression().methodCallParameter(0, CHARSET_METHOD),
       new PsiReferenceProvider() {
         @NotNull
         @Override

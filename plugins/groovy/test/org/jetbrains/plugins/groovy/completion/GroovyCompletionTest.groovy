@@ -1923,4 +1923,10 @@ var.<caret>
 ''', '', CompletionType.BASIC, CompletionResult.contain, 1, 'A__foo', 'bar')
   }
 
+  void testCharsetName() {
+    myFixture.addClass("package java.nio.charset; public class Charset { public static boolean isSupported(String s) {} }")
+    doVariantableTest('import java.nio.charset.*; Charset.isSupported("<caret>")', '', CompletionType.BASIC, CompletionResult.contain, 1, 'UTF-8')
+  }
+
+
 }
