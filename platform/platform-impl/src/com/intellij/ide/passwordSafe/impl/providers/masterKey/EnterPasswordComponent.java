@@ -16,6 +16,7 @@
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.ide.TypePresentationService;
+import com.intellij.ide.passwordSafe.HelpID;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,5 +46,10 @@ public class EnterPasswordComponent extends PasswordComponentBase {
   public boolean apply() {
     String password = new String(myPasswordField.getPassword());
     return mySafe.changeMasterPassword(password, password, myEncryptCheckBox.isSelected());
+  }
+
+  @Override
+  public String getHelpId() {
+    return HelpID.ENTER_PASSWORD;
   }
 }
