@@ -62,7 +62,9 @@ import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -503,14 +505,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void update(AnActionEvent e) {
-      RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       //e.getPresentation().setText(SvnBundle.message("repository.browser.new.folder.action"), true);
-      if (node != null) {
-        DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == NodeKind.DIR);
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, myBrowserComponent.getSelectedNode());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -540,14 +536,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected class DiffAction extends AnAction {
     public void update(AnActionEvent e) {
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setText("Compare With...", true);
-      if (node != null) {
-        DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == NodeKind.DIR);
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, getRepositoryBrowser().getSelectedNode());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -857,14 +847,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(showImportAction());
       e.getPresentation().setText(SvnBundle.message("repository.browser.import.action"));
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      final boolean running = ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
-      if (node != null) {
-        DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled((entry == null || entry.getKind() == NodeKind.DIR) && (! running));
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, getRepositoryBrowser().getSelectedNode(),
+                 ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -900,13 +884,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class CheckoutAction extends AnAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Checkout...", true);
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      if (node != null) {
-        DirectoryEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == NodeKind.DIR);
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, getRepositoryBrowser().getSelectedNode());
     }
     public void actionPerformed(AnActionEvent e) {
       final RepositoryTreeNode selectedNode = getSelectedNode();
@@ -915,6 +893,15 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener(), selectedNode);
     }
+  }
+
+  private static void setEnabled(@NotNull AnActionEvent e, @Nullable RepositoryTreeNode node) {
+    setEnabled(e, node, false);
+  }
+
+  private static void setEnabled(@NotNull AnActionEvent e, @Nullable RepositoryTreeNode node, boolean isRunning) {
+    e.getPresentation()
+      .setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().getKind() == NodeKind.DIR) && !isRunning);
   }
 
   protected class BrowseChangesAction extends AnAction {
