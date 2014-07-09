@@ -66,15 +66,8 @@ public class SyntheticWorker {
     }
     children.add(createSyntheticEntry(newUrl, repositoryUrl, name, isDir));
 
-    Collections.sort(children, new Comparator<DirectoryEntry>() {
-      public int compare(final DirectoryEntry o1, final DirectoryEntry o2) {
-        final boolean dirStatus = o1.isDirectory() ^ o1.isDirectory();
-        if (dirStatus) {
-          return o1.isDirectory() ? -1 : 1;
-        }
-        return o1.toString().compareTo(o2.toString());
-      }
-    });
+    // TODO: Seems that just Set instead of List could be used in cache - so no sort() after add() will be required
+    Collections.sort(children);
     myCache.put(currentUrlAsString, children);
   }
 
