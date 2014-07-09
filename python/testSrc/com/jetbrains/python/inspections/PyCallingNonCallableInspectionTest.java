@@ -99,6 +99,12 @@ public class PyCallingNonCallableInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-11025
+  public void testNumpyMatrixNotCallable() {
+    myFixture.copyDirectoryToProject("inspections/PyCallingNonCallableInspection/" + getTestName(false), "");
+    doTest();
+  }
+
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON27);
     try {
