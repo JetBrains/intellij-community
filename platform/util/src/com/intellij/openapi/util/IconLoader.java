@@ -159,10 +159,6 @@ public final class IconLoader {
     ourIsActivated = true;
   }
 
-  public static void deactivate() {
-    ourIsActivated = false;
-  }
-
   private static boolean isLoaderDisabled() {
     return !ourIsActivated;
   }
