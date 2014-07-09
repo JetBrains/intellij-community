@@ -49,6 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -676,6 +677,7 @@ public abstract class PluginManagerMain implements Disposable {
     }
 
     public void filter() {
+      getPluginTable().putClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY, getFilter());
       pluginsModel.filter(getFilter().toLowerCase());
       TableUtil.ensureSelectionExists(getPluginTable());
     }
