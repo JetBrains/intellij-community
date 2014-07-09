@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
-
-  private final String m_shortName = StringUtil.trimEnd(getClass().getSimpleName(), "Inspection");
+  private final String m_shortName = InspectionProfileEntry.getShortName(getClass().getSimpleName());
 
   public static final String ASSIGNMENT_ISSUES = "Assignment issues";
   public static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
