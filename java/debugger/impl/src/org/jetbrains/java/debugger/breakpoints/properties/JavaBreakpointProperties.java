@@ -45,7 +45,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   public boolean setInstanceFilters(InstanceFilter[] instanceFilters) {
-    boolean changed = !Comparing.equal(myInstanceFilters, instanceFilters);
+    boolean changed = !filtersEqual(myInstanceFilters, instanceFilters);
     myInstanceFilters = instanceFilters;
     return changed;
   }
@@ -64,9 +64,16 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   public final boolean setClassFilters(ClassFilter[] classFilters) {
-    boolean changed = !Comparing.equal(myClassFilters, classFilters);
+    boolean changed = !filtersEqual(myClassFilters, classFilters);
     myClassFilters = classFilters;
     return changed;
+  }
+
+  private static boolean filtersEqual(Object[] a, Object[] b) {
+    if ((a == null || a.length == 0) && (b == null || b.length == 0)) {
+      return true;
+    }
+    return Comparing.equal(a, b);
   }
 
   @Tag("class-exclusion-filters")
@@ -76,7 +83,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   }
 
   public boolean setClassExclusionFilters(ClassFilter[] classExclusionFilters) {
-    boolean changed = !Comparing.equal(myClassExclusionFilters, classExclusionFilters);
+    boolean changed = !filtersEqual(myClassExclusionFilters, classExclusionFilters);
     myClassExclusionFilters = classExclusionFilters;
     return changed;
   }
