@@ -50,6 +50,7 @@
     <tipAndTrick file="HierarchyBrowser.html"/>
     <tipAndTrick file="BreakpointSpeedmenu.html"/>
     <tipAndTrick file="EvaluateExpressionInEditor.html"/>
+    <tipAndTrick file="QuickEvaluateExpression.html"/>
     <tipAndTrick file="WordCompletion.html"/>
     <tipAndTrick file="QuickJavaDocInLookups.html" feature-id="codeassists.quickjavadoc.lookup"/>
     <tipAndTrick file="DotEtcInLookups.html" feature-id="editing.completion.finishByDotEtc"/>
