@@ -60,9 +60,17 @@ public interface ApplicationEx extends Application {
   void doNotSave(boolean value);
   boolean isDoNotSave();
 
-  //force exit
+  /**
+   * @param force if true, no additional confirmations will be shown. The application is guaranteed to exit
+   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   *                      a corresponding confirmation will be shown with the possibility to cancel the operation
+   */
   void exit(boolean force, boolean exitConfirmed);
 
+  /**
+   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   *                      a corresponding confirmation will be shown with the possibility to cancel the operation
+   */
   void restart(boolean exitConfirmed);
 
   /**
