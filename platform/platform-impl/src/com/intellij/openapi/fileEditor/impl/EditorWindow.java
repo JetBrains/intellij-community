@@ -503,9 +503,10 @@ public class EditorWindow {
   public void requestFocus(boolean forced) {
     if (myTabbedPane != null) {
       myTabbedPane.requestFocus(forced);
-    }else{
+    }
+    else {
       //No Tabs Issue (IDEA-107376)
-      IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel,true);
+      IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel,forced);
     }
   }
 
