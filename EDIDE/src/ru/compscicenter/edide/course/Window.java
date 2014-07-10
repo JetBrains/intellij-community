@@ -215,6 +215,7 @@ public class Window implements Comparable{
   }
 
   public void reset() {
+    myResolveStatus = false;
     line = myInitialLine;
     start = myInitialStart;
     myLength = myInitialLength;
