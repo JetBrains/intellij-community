@@ -19,6 +19,9 @@
     <component>
       <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
