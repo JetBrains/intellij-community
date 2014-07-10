@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -149,17 +150,26 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     try {
       List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
       if (!locations.isEmpty()) {
+        locations = ContainerUtil.filter(locations, new Condition<Location>() {
+          @Override
+          public boolean value(Location location) {
+            return acceptLocation(debugProcess, classType, location);
+          }
+        });
+        Location location = null;
         for (Location loc : locations) {
+          if (location == null || location.codeIndex() > loc.codeIndex()) {
+            location = loc;
+          }
+        }
+        if (location != null) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Found location [codeIndex=" + loc.codeIndex() +"] for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
+            LOG.debug("Found location [codeIndex=" + location.codeIndex() +"] for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && location.method().isObsolete()));
           }
-          if (!acceptLocation(debugProcess, classType, loc)) {
-            continue;
-          }
-          final BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
+          final BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, location);
           debugProcess.getRequestsManager().enableRequest(request);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
+            LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + location.codeIndex());
           }
         }
       }
