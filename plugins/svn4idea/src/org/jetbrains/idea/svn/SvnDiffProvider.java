@@ -37,6 +37,7 @@ import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -259,7 +260,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   private boolean itemExists(Status svnStatus) {
-    return ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
-      ! SVNStatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
+    return ! StatusType.STATUS_DELETED.equals(svnStatus.getRemoteContentsStatus()) &&
+      ! StatusType.STATUS_DELETED.equals(svnStatus.getRemoteNodeStatus());
   }
 }

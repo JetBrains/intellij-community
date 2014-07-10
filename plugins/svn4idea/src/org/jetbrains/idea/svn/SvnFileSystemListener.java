@@ -50,10 +50,10 @@ import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNMoveClient;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,7 +156,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
 
     final Status fileStatus = getFileStatus(vcs, srcFile);
-    if (fileStatus != null && SvnVcs.svnStatusIs(fileStatus, SVNStatusType.STATUS_ADDED)) {
+    if (fileStatus != null && SvnVcs.svnStatusIs(fileStatus, StatusType.STATUS_ADDED)) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(toDir, copyName, null, false));
       return null;
     }
@@ -299,9 +299,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     return true;
   }
 
-  private final static Set<SVNStatusType> ourStatusesForUndoMove = new HashSet<SVNStatusType>();
+  private final static Set<StatusType> ourStatusesForUndoMove = new HashSet<StatusType>();
   static {
-    ourStatusesForUndoMove.add(SVNStatusType.STATUS_ADDED);
+    ourStatusesForUndoMove.add(StatusType.STATUS_ADDED);
   }
 
   private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, Status srcStatus) throws VcsException {
@@ -384,9 +384,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     // if src is not under version control, do usual move.
     Status srcStatus = getFileStatus(vcs, src);
     if (srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus) ||
-        SvnVcs.svnStatusIs(srcStatus, SVNStatusType.STATUS_OBSTRUCTED) ||
-        SvnVcs.svnStatusIs(srcStatus, SVNStatusType.STATUS_MISSING) ||
-        SvnVcs.svnStatusIs(srcStatus, SVNStatusType.STATUS_EXTERNAL)) {
+        SvnVcs.svnStatusIs(srcStatus, StatusType.STATUS_OBSTRUCTED) ||
+        SvnVcs.svnStatusIs(srcStatus, StatusType.STATUS_MISSING) ||
+        SvnVcs.svnStatusIs(srcStatus, StatusType.STATUS_EXTERNAL)) {
       return true;
     }
     return false;
@@ -496,12 +496,12 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
     if (status == null ||
         SvnVcs.svnStatusIsUnversioned(status) ||
-        SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_OBSTRUCTED) ||
-        SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_MISSING) ||
-        SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL) ||
-        SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_IGNORED)) {
+        SvnVcs.svnStatusIs(status, StatusType.STATUS_OBSTRUCTED) ||
+        SvnVcs.svnStatusIs(status, StatusType.STATUS_MISSING) ||
+        SvnVcs.svnStatusIs(status, StatusType.STATUS_EXTERNAL) ||
+        SvnVcs.svnStatusIs(status, StatusType.STATUS_IGNORED)) {
       return false;
-    } else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
+    } else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
       if (isUndo(vcs)) {
         moveToUndoStorage(file);
       }
@@ -513,7 +513,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           myDeletedFiles.putValue(vcs.getProject(), ioFile);
           return true;
         }
-        if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED)) {
+        if (SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED)) {
           try {
             createRevertAction(vcs, ioFile, false).execute();
           }
@@ -608,15 +608,15 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     final File targetFile = new File(ioDir, name);
     Status status = getFileStatus(vcs, targetFile);
 
-    if (status == null || status.getContentsStatus() == SVNStatusType.STATUS_NONE ||
-        status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED) {
+    if (status == null || status.getContentsStatus() == StatusType.STATUS_NONE ||
+        status.getContentsStatus() == StatusType.STATUS_UNVERSIONED) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
       return false;
     }
-    else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_MISSING)) {
+    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_MISSING)) {
       return false;
     }
-    else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
+    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
       NodeKind kind = status.getKind();
       // kind differs.
       if (directory && !kind.isDirectory() || !directory && !kind.isFile()) {
@@ -855,7 +855,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
       if (addedFile != null) {
         final Status fileStatus = getFileStatus(vcs, ioFile);
-        if (fileStatus == null || ! SvnVcs.svnStatusIs(fileStatus, SVNStatusType.STATUS_IGNORED)) {
+        if (fileStatus == null || ! SvnVcs.svnStatusIs(fileStatus, StatusType.STATUS_IGNORED)) {
           boolean isIgnored = changeListManager.isIgnoredFile(addedFile);
           if (!isIgnored) {
             addedVFiles.add(addedFile);
@@ -988,7 +988,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           myT = vcs.getFactory(file).createStatusClient().doStatus(file, false);
         }
       }.compute();
-      boolean isAdded = SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus());
+      boolean isAdded = StatusType.STATUS_ADDED.equals(status.getNodeStatus());
       final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
       if (isAdded) {
         deleteAnyway.add(filePath);

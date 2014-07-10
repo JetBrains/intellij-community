@@ -21,9 +21,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.HashSet;
@@ -44,7 +44,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
 
   public void process(final FilePath path, final Status status) throws SVNException {
     VirtualFile file = path.getVirtualFile();
-    if (file != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
+    if (file != null && SvnVcs.svnStatusIs(status, StatusType.STATUS_EXTERNAL)) {
       // We do not determine here url, repository url - because url, repository url in status will determine location in the
       // repository where folder is located and not where svn:externals property points. We want the later parameters - they'll
       // determined while creating RootUrlInfos later. Format will be also determined later.

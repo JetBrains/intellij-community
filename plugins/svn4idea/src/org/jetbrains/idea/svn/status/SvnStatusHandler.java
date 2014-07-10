@@ -29,7 +29,6 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -47,29 +46,29 @@ public class SvnStatusHandler extends DefaultHandler {
 
   private static final Logger LOG = Logger.getInstance(SvnStatusHandler.class);
 
-  public static final Map<String, SVNStatusType> ourStatusTypes = ContainerUtil.newHashMap();
+  public static final Map<String, StatusType> ourStatusTypes = ContainerUtil.newHashMap();
 
   static {
     // TODO: Check STATUS_MERGED as it is marked deprecated
-    put(SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_CONFLICTED, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_EXTERNAL,
-        SVNStatusType.STATUS_IGNORED, SVNStatusType.STATUS_INCOMPLETE, SVNStatusType.STATUS_MERGED, SVNStatusType.STATUS_MISSING,
-        SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NORMAL, SVNStatusType.STATUS_OBSTRUCTED,
-        SVNStatusType.STATUS_REPLACED, SVNStatusType.STATUS_UNVERSIONED);
+    put(StatusType.STATUS_ADDED, StatusType.STATUS_CONFLICTED, StatusType.STATUS_DELETED, StatusType.STATUS_EXTERNAL,
+        StatusType.STATUS_IGNORED, StatusType.STATUS_INCOMPLETE, StatusType.STATUS_MERGED, StatusType.STATUS_MISSING,
+        StatusType.STATUS_MODIFIED, StatusType.STATUS_NONE, StatusType.STATUS_NORMAL, StatusType.STATUS_OBSTRUCTED,
+        StatusType.STATUS_REPLACED, StatusType.STATUS_UNVERSIONED);
   }
 
-  private static void put(@NotNull SVNStatusType... statusTypes) {
-    for (SVNStatusType statusType : statusTypes) {
+  private static void put(@NotNull StatusType... statusTypes) {
+    for (StatusType statusType : statusTypes) {
       put(statusType);
     }
   }
 
-  private static void put(@NotNull SVNStatusType statusType) {
+  private static void put(@NotNull StatusType statusType) {
     ourStatusTypes.put(statusType.toString(), statusType);
   }
 
   @Nullable
-  public static SVNStatusType getStatus(@NotNull String code) {
-    SVNStatusType result = ourStatusTypes.get(code);
+  public static StatusType getStatus(@NotNull String code) {
+    StatusType result = ourStatusTypes.get(code);
 
     if (result == null) {
       LOG.info("Unknown status type " + code);
@@ -365,13 +364,13 @@ public class SvnStatusHandler extends DefaultHandler {
     }
   }
 
-  private static SVNStatusType parseContentsStatus(Attributes attributes) throws SAXException {
+  private static StatusType parseContentsStatus(Attributes attributes) throws SAXException {
     final String item = attributes.getValue("item");
     assertSAX(item != null);
     return getStatus(item);
   }
 
-  private static SVNStatusType parsePropertiesStatus(Attributes attributes) throws SAXException {
+  private static StatusType parsePropertiesStatus(Attributes attributes) throws SAXException {
     final String props = attributes.getValue("props");
     assertSAX(props != null);
     return getStatus(props);
@@ -628,10 +627,10 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
-      final SVNStatusType propertiesStatus = parsePropertiesStatus(attributes);
+      final StatusType propertiesStatus = parsePropertiesStatus(attributes);
       status.setRemotePropertiesStatus(propertiesStatus);
 
-      final SVNStatusType contentsStatus = parseContentsStatus(attributes);
+      final StatusType contentsStatus = parseContentsStatus(attributes);
       status.setRemoteContentsStatus(contentsStatus);
     }
 
@@ -673,12 +672,12 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
-      final SVNStatusType propertiesStatus = parsePropertiesStatus(attributes);
+      final StatusType propertiesStatus = parsePropertiesStatus(attributes);
       status.setPropertiesStatus(propertiesStatus);
-      final SVNStatusType contentsStatus = parseContentsStatus(attributes);
+      final StatusType contentsStatus = parseContentsStatus(attributes);
       status.setContentsStatus(contentsStatus);
 
-      if (SVNStatusType.STATUS_CONFLICTED.equals(propertiesStatus) || SVNStatusType.STATUS_CONFLICTED.equals(contentsStatus)) {
+      if (StatusType.STATUS_CONFLICTED.equals(propertiesStatus) || StatusType.STATUS_CONFLICTED.equals(contentsStatus)) {
         status.setIsConflicted(true);
       }
 
@@ -776,9 +775,9 @@ c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4>dir
 and no "mod4" under
 
         */
-        final SVNStatusType ns = status.getNodeStatus();
-        if (myBase.getName().equals(path) && ! SVNStatusType.MISSING.equals(ns) &&
-            ! SVNStatusType.STATUS_DELETED.equals(ns) ) {
+        final StatusType ns = status.getNodeStatus();
+        if (myBase.getName().equals(path) && ! StatusType.MISSING.equals(ns) &&
+            ! StatusType.STATUS_DELETED.equals(ns) ) {
           status.setKind(true, NodeKind.DIR);
           status.setFile(myBase);
           status.setPath("");

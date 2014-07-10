@@ -40,8 +40,8 @@ import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.Collection;
@@ -130,8 +130,8 @@ public class MarkResolvedAction extends BasicAction {
         client.doStatus(path, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, new StatusConsumer() {
           @Override
           public void consume(Status status) {
-            if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
-                status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
+            if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
+                status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
               target.add(status.getFile().getAbsolutePath());
             }
           }

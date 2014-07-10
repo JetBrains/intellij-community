@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.Arrays;
@@ -123,9 +123,9 @@ public class UpdateOutputLineConverter {
     if (line.length() < 5) return null;
     final char first = line.charAt(0);
     if (' ' != first && ! ourActions.contains(first)) return null;
-    final SVNStatusType contentsStatus = CommandUtil.getStatusType(first);
+    final StatusType contentsStatus = CommandUtil.getStatusType(first);
     final char second = line.charAt(1);
-    final SVNStatusType propertiesStatus = CommandUtil.getStatusType(second);
+    final StatusType propertiesStatus = CommandUtil.getStatusType(second);
     final char lock = line.charAt(2); // dont know what to do with stolen lock info
     if (' ' != lock && 'B' != lock) return null;
     final char treeConflict = line.charAt(3);
@@ -135,16 +135,16 @@ public class UpdateOutputLineConverter {
     final String path = line.substring(4).trim();
     if (StringUtil.isEmptyOrSpaces(path)) return null;
     final File file = createFile(path);
-    if (SVNStatusType.STATUS_OBSTRUCTED.equals(contentsStatus)) {
+    if (StatusType.STATUS_OBSTRUCTED.equals(contentsStatus)) {
       // obstructed
       return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, EventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
     }
     
     EventAction action;
     EventAction expectedAction;
-    if (SVNStatusType.STATUS_ADDED.equals(contentsStatus)) {
+    if (StatusType.STATUS_ADDED.equals(contentsStatus)) {
       expectedAction = EventAction.UPDATE_ADD;
-    } else if (SVNStatusType.STATUS_DELETED.equals(contentsStatus)) {
+    } else if (StatusType.STATUS_DELETED.equals(contentsStatus)) {
       expectedAction = EventAction.UPDATE_DELETE;
     } else {
       expectedAction = EventAction.UPDATE_UPDATE;

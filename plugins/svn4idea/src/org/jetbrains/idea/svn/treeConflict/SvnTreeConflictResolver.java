@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -90,7 +91,7 @@ public class SvnTreeConflictResolver {
     final File ioFile = myRevertPath.getIOFile();
     final Status status = myVcs.getFactory(ioFile).createStatusClient().doStatus(ioFile, false);
     myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
-    if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+    if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
       FileUtil.delete(ioFile);
     }
     pathDirty(myRevertPath);
@@ -109,11 +110,11 @@ public class SvnTreeConflictResolver {
     if (myCommittedRevision == null) {
       myCommittedRevision = new SvnRevisionNumber(status.getCommittedRevision());
     }
-    if (status == null || SVNStatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
+    if (status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
       myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
       updateIoFile(ioFile, SVNRevision.HEAD);
       return;
-    } else if (SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+    } else if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
       myVcs.getFactory(ioFile).createRevertClient().revert(new File[]{ioFile}, Depth.INFINITY, null);
       updateIoFile(ioFile, SVNRevision.HEAD);
       FileUtil.delete(ioFile);
@@ -126,7 +127,7 @@ public class SvnTreeConflictResolver {
                               new StatusConsumer() {
                                 @Override
                                 public void consume(Status status) throws SVNException {
-                                  if (status != null && SVNStatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+                                  if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
                                     usedToBeAdded.add(status.getFile());
                                   }
                                 }

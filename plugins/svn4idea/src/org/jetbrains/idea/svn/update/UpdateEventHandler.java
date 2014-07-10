@@ -28,6 +28,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -95,7 +96,7 @@ public class UpdateEventHandler implements ProgressTracker {
     if (event.getAction() == EventAction.UPDATE_ADD ||
         event.getAction() == EventAction.ADD) {
       myText2 = SvnBundle.message("progress.text2.added", displayPath);
-      if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+      if (event.getContentsStatus() == StatusType.CONFLICTED || event.getPropertiesStatus() == StatusType.CONFLICTED) {
         addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
         myText2 = SvnBundle.message("progress.text2.conflicted", displayPath);
       } else if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
@@ -119,28 +120,28 @@ public class UpdateEventHandler implements ProgressTracker {
     }
     else if (event.getAction() == EventAction.UPDATE_UPDATE) {
       possiblySwitched(event);
-      if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-        if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
+      if (event.getContentsStatus() == StatusType.CONFLICTED || event.getPropertiesStatus() == StatusType.CONFLICTED) {
+        if (event.getContentsStatus() == StatusType.CONFLICTED) {
           addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
         }
-        if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
+        if (event.getPropertiesStatus() == StatusType.CONFLICTED) {
           addFileToGroup(FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, event);
         }
         myText2 = SvnBundle.message("progress.text2.conflicted", displayPath);
       }
-      else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
+      else if (event.getContentsStatus() == StatusType.MERGED || event.getPropertiesStatus() == StatusType.MERGED) {
         myText2 = SvnBundle.message("progres.text2.merged", displayPath);
         addFileToGroup(FileGroup.MERGED_ID, event);
       }
-      else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
+      else if (event.getContentsStatus() == StatusType.CHANGED || event.getPropertiesStatus() == StatusType.CHANGED) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
         addFileToGroup(FileGroup.UPDATED_ID, event);
       }
-      else if (event.getContentsStatus() == SVNStatusType.UNCHANGED &&
-               (event.getPropertiesStatus() == SVNStatusType.UNCHANGED || event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
+      else if (event.getContentsStatus() == StatusType.UNCHANGED &&
+               (event.getPropertiesStatus() == StatusType.UNCHANGED || event.getPropertiesStatus() == StatusType.UNKNOWN)) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
-      } else if (SVNStatusType.INAPPLICABLE.equals(event.getContentsStatus()) &&
-                 (event.getPropertiesStatus() == SVNStatusType.UNCHANGED || event.getPropertiesStatus() == SVNStatusType.UNKNOWN)) {
+      } else if (StatusType.INAPPLICABLE.equals(event.getContentsStatus()) &&
+                 (event.getPropertiesStatus() == StatusType.UNCHANGED || event.getPropertiesStatus() == StatusType.UNKNOWN)) {
         myText2 = SvnBundle.message("progres.text2.updated", displayPath);
       }
       else {

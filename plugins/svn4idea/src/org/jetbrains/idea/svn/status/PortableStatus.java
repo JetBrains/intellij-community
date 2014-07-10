@@ -89,10 +89,10 @@ public class PortableStatus extends Status {
                         SVNRevision committedRevision,
                         Date committedDate,
                         String author,
-                        SVNStatusType contentsStatus,
-                        SVNStatusType propertiesStatus,
-                        SVNStatusType remoteContentsStatus,
-                        SVNStatusType remotePropertiesStatus,
+                        StatusType contentsStatus,
+                        StatusType propertiesStatus,
+                        StatusType remoteContentsStatus,
+                        StatusType remotePropertiesStatus,
                         boolean isLocked,
                         boolean isCopied,
                         boolean isSwitched,
@@ -143,8 +143,8 @@ public class PortableStatus extends Status {
 
   private Info initInfo() {
     if (myInfo == null) {
-      final SVNStatusType contentsStatus = getContentsStatus();
-      if (contentsStatus == null || SVNStatusType.UNKNOWN.equals(contentsStatus)) {
+      final StatusType contentsStatus = getContentsStatus();
+      if (contentsStatus == null || StatusType.UNKNOWN.equals(contentsStatus)) {
         return null;
       }
       myInfo = myInfoGetter.get();
@@ -223,9 +223,9 @@ public class PortableStatus extends Status {
     final SVNRevision revision = super.getRevision();
     if (revision != null && revision.isValid()) return revision;
 
-    final SVNStatusType status = getContentsStatus();
-    if (SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
-        SVNStatusType.STATUS_ADDED.equals(status)) return revision;
+    final StatusType status = getContentsStatus();
+    if (StatusType.STATUS_NONE.equals(status) || StatusType.STATUS_UNVERSIONED.equals(status) ||
+        StatusType.STATUS_ADDED.equals(status)) return revision;
 
     final Info info = initInfo();
     return info == null ? revision : info.getRevision();

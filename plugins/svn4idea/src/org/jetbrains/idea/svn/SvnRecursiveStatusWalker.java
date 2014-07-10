@@ -36,11 +36,11 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -238,22 +238,22 @@ public class SvnRecursiveStatusWalker {
         }
         if (statusInner == null)  return;
 
-        final SVNStatusType status = statusInner.getNodeStatus();
+        final StatusType status = statusInner.getNodeStatus();
         final VirtualFile vf = myCurrentItem.getPath().getVirtualFile();
-        if (SVNStatusType.STATUS_IGNORED.equals(status)) {
+        if (StatusType.STATUS_IGNORED.equals(status)) {
           if (vf != null) {
             myReceiver.processIgnored(vf);
           }
           return;
         }
-        if (SVNStatusType.STATUS_UNVERSIONED.equals(status) || SVNStatusType.UNKNOWN.equals(status)) {
+        if (StatusType.STATUS_UNVERSIONED.equals(status) || StatusType.UNKNOWN.equals(status)) {
           if (vf != null) {
             myReceiver.processUnversioned(vf);
             processRecursively(vf, myCurrentItem.getDepth());
           }
           return;
         }
-        if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_NONE.equals(status)) {
+        if (StatusType.OBSTRUCTED.equals(status) || StatusType.STATUS_NONE.equals(status)) {
           return;
         }
         if (vf != null) {

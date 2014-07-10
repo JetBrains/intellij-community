@@ -83,6 +83,7 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -599,12 +600,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     try {
       Status status = getFactory(file).createStatusClient().doStatus(file, false);
       if (status != null) {
-        if (svnStatusIs(status, SVNStatusType.STATUS_ADDED)) {
+        if (svnStatusIs(status, StatusType.STATUS_ADDED)) {
           return status.isCopied();
         }
         return !(svnStatusIsUnversioned(status) ||
-                 svnStatusIs(status, SVNStatusType.STATUS_IGNORED) ||
-                 svnStatusIs(status, SVNStatusType.STATUS_OBSTRUCTED));
+                 svnStatusIs(status, StatusType.STATUS_IGNORED) ||
+                 svnStatusIs(status, StatusType.STATUS_OBSTRUCTED));
       }
     }
     catch (SvnBindException e) {
@@ -614,10 +615,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public static boolean svnStatusIsUnversioned(final Status status) {
-    return svnStatusIs(status, SVNStatusType.STATUS_UNVERSIONED);
+    return svnStatusIs(status, StatusType.STATUS_UNVERSIONED);
   }
 
-  public static boolean svnStatusIs(final Status status, @NotNull final SVNStatusType value) {
+  public static boolean svnStatusIs(final Status status, @NotNull final StatusType value) {
     return value.equals(status.getNodeStatus()) || value.equals(status.getContentsStatus());
   }
 

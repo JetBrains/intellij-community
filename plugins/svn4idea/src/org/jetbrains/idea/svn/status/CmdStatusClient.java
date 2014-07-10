@@ -104,7 +104,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
           PortableStatus status = new PortableStatus();
           status.setPath(path.getAbsolutePath());
-          status.setContentsStatus(SVNStatusType.STATUS_NORMAL);
+          status.setContentsStatus(StatusType.STATUS_NORMAL);
           status.setInfoGetter(new Getter<Info>() {
             @Override
             public Info get() {
@@ -216,7 +216,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
             }
             pending.setURL(SVNURL.parseURIEncoded(append));
           }
-          if (SVNStatusType.STATUS_EXTERNAL.equals(pending.getNodeStatus())) {
+          if (StatusType.STATUS_EXTERNAL.equals(pending.getNodeStatus())) {
             externalsMap.put(pending.getFile(), pending.getInfo());
           }
           handler.consume(pending);

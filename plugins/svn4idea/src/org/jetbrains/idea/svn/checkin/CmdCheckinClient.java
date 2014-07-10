@@ -36,7 +36,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -132,8 +132,8 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
         else {
           try {
             final Status status = statusClient.doStatus(file, false);
-            if (status != null && !SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
-                !SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
+            if (status != null && !StatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
+                !StatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
               result.add(file);
             }
           }

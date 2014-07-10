@@ -9,7 +9,7 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.api.Depth;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -60,7 +60,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
   private static class AddStatusConvertor implements Convertor<Matcher, ProgressEvent> {
     @Override
     public ProgressEvent convert(Matcher o) {
-      SVNStatusType contentStatus = CommandUtil.getStatusType(o.group(1));
+      StatusType contentStatus = CommandUtil.getStatusType(o.group(1));
       String path = o.group(3);
 
       return new ProgressEvent(new File(path), 0, contentStatus, null, null, null, null);

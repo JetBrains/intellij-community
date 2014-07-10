@@ -29,10 +29,10 @@ import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.*;
@@ -180,11 +180,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if ((SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) || SVNStatusType.STATUS_MODIFIED.equals(status.getNodeStatus())) &&
+    if ((SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())) &&
         status.getCopyFromURL() != null) {
       addCopiedFile(filePath, status, status.getCopyFromURL());
     }
-    else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
+    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
       myDeletedFiles.add(new SvnChangedFile(filePath, status));
     }
     else {
@@ -207,38 +207,38 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status != null) {
       FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 
-      final SVNStatusType statusType = status.getContentsStatus();
-      final SVNStatusType propStatus = status.getPropertiesStatus();
-      if (SvnVcs.svnStatusIsUnversioned(status) || SvnVcs.svnStatusIs(status, SVNStatusType.UNKNOWN)) {
+      final StatusType statusType = status.getContentsStatus();
+      final StatusType propStatus = status.getPropertiesStatus();
+      if (SvnVcs.svnStatusIsUnversioned(status) || SvnVcs.svnStatusIs(status, StatusType.UNKNOWN)) {
         final VirtualFile file = filePath.getVirtualFile();
         if (file != null) {
           myChangelistBuilder.processUnversionedFile(file);
         }
       }
-      else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED)) {
+      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED)) {
         myChangelistBuilder.processChangeInList(createChange(null, CurrentContentRevision.create(filePath), fStatus, status),
                                                 SvnUtil.getChangelistName(status), SvnVcs.getKey());
       }
-      else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_CONFLICTED) ||
-               SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_MODIFIED) ||
-               SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED) ||
-               propStatus == SVNStatusType.STATUS_MODIFIED ||
-               propStatus == SVNStatusType.STATUS_CONFLICTED) {
+      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_CONFLICTED) ||
+               SvnVcs.svnStatusIs(status, StatusType.STATUS_MODIFIED) ||
+               SvnVcs.svnStatusIs(status, StatusType.STATUS_REPLACED) ||
+               propStatus == StatusType.STATUS_MODIFIED ||
+               propStatus == StatusType.STATUS_CONFLICTED) {
         myChangelistBuilder.processChangeInList(
           createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath), fStatus,
                        status), SvnUtil.getChangelistName(status), SvnVcs.getKey()
         );
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
       }
-      else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
+      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
         myChangelistBuilder.processChangeInList(
           createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), null, fStatus, status),
           SvnUtil.getChangelistName(status), SvnVcs.getKey());
       }
-      else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_MISSING)) {
+      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_MISSING)) {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
       }
-      else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_IGNORED)) {
+      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_IGNORED)) {
         if (!myVcs.isWcRoot(filePath)) {
           myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
         }
@@ -246,7 +246,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       else if (status.isCopied()) {
         //
       }
-      else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
+      else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != StatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
           myChangelistBuilder.processChangeInList(
@@ -346,7 +346,7 @@ class SvnChangeProviderContext implements StatusReceiver {
                                                                             getState(svnStatus),
                                                                             after == null ? before.getFile() : after.getFile());
     if (svnStatus != null) {
-      if (SVNStatusType.STATUS_DELETED.equals(svnStatus.getNodeStatus()) && !svnStatus.getRevision().isValid()) {
+      if (StatusType.STATUS_DELETED.equals(svnStatus.getNodeStatus()) && !svnStatus.getRevision().isValid()) {
         conflictedSvnChange.setIsPhantom(true);
       }
       conflictedSvnChange.setBeforeDescription(svnStatus.getTreeConflict());
@@ -367,18 +367,18 @@ class SvnChangeProviderContext implements StatusReceiver {
   private Change patchWithPropertyChange(final Change change, final Status svnStatus, final Status deletedStatus)
     throws SVNException {
     if (svnStatus == null) return change;
-    final SVNStatusType propertiesStatus = svnStatus.getPropertiesStatus();
-    if (SVNStatusType.STATUS_CONFLICTED.equals(propertiesStatus) || SVNStatusType.CHANGED.equals(propertiesStatus) ||
-        SVNStatusType.STATUS_ADDED.equals(propertiesStatus) || SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ||
-        SVNStatusType.STATUS_MODIFIED.equals(propertiesStatus) || SVNStatusType.STATUS_REPLACED.equals(propertiesStatus) ||
-        SVNStatusType.MERGED.equals(propertiesStatus)) {
+    final StatusType propertiesStatus = svnStatus.getPropertiesStatus();
+    if (StatusType.STATUS_CONFLICTED.equals(propertiesStatus) || StatusType.CHANGED.equals(propertiesStatus) ||
+        StatusType.STATUS_ADDED.equals(propertiesStatus) || StatusType.STATUS_DELETED.equals(propertiesStatus) ||
+        StatusType.STATUS_MODIFIED.equals(propertiesStatus) || StatusType.STATUS_REPLACED.equals(propertiesStatus) ||
+        StatusType.MERGED.equals(propertiesStatus)) {
 
       final FilePath path = ChangesUtil.getFilePath(change);
       final File ioFile = path.getIOFile();
       final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
-      final String beforeList = SVNStatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
+      final String beforeList = StatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
                                 AbstractShowPropertiesDiffAction.getPropertyList(myVcs, beforeFile, SVNRevision.BASE);
-      final String afterList = SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
+      final String afterList = StatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
                                AbstractShowPropertiesDiffAction.getPropertyList(myVcs, ioFile, SVNRevision.WORKING);
 
       // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
@@ -403,11 +403,11 @@ class SvnChangeProviderContext implements StatusReceiver {
       return ConflictState.none;
     }
 
-    final SVNStatusType propertiesStatus = svnStatus.getPropertiesStatus();
+    final StatusType propertiesStatus = svnStatus.getPropertiesStatus();
 
     final boolean treeConflict = svnStatus.getTreeConflict() != null;
-    final boolean textConflict = SVNStatusType.STATUS_CONFLICTED == svnStatus.getContentsStatus();
-    final boolean propertyConflict = SVNStatusType.STATUS_CONFLICTED == propertiesStatus;
+    final boolean textConflict = StatusType.STATUS_CONFLICTED == svnStatus.getContentsStatus();
+    final boolean propertyConflict = StatusType.STATUS_CONFLICTED == propertiesStatus;
     if (treeConflict) {
       reportTreeConflict(svnStatus);
     }

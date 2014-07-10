@@ -53,9 +53,9 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusConsumer;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.DataInput;
@@ -395,8 +395,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return result;
   }
 
-  private static boolean isNotNone(@Nullable SVNStatusType status) {
-    return status != null && !SVNStatusType.STATUS_NONE.equals(status);
+  private static boolean isNotNone(@Nullable StatusType status) {
+    return status != null && !StatusType.STATUS_NONE.equals(status);
   }
 
   public boolean refreshCacheByNumber() {

@@ -23,7 +23,6 @@ import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 
@@ -38,11 +37,11 @@ public class Status {
   private @NotNull NodeKind myKind;
   private SVNRevision myRevision;
   private SVNRevision myCommittedRevision;
-  private SVNStatusType myContentsStatus;
-  private SVNStatusType myPropertiesStatus;
-  private SVNStatusType myRemoteContentsStatus;
-  private SVNStatusType myRemoteNodeStatus;
-  private SVNStatusType myRemotePropertiesStatus;
+  private StatusType myContentsStatus;
+  private StatusType myPropertiesStatus;
+  private StatusType myRemoteContentsStatus;
+  private StatusType myRemoteNodeStatus;
+  private StatusType myRemotePropertiesStatus;
   private boolean myIsLocked;
   private boolean myIsCopied;
   private boolean myIsSwitched;
@@ -54,7 +53,7 @@ public class Status {
   @Nullable private TreeConflictDescription myTreeConflict;
   private boolean myIsConflicted;
 
-  private SVNStatusType myNodeStatus;
+  private StatusType myNodeStatus;
   private SVNURL myRepositoryRootURL;
 
   @Nullable
@@ -62,15 +61,16 @@ public class Status {
     Status result = null;
 
     if (status != null) {
-      result = new Status(status.getURL(), status.getFile(), NodeKind.from(status.getKind()), status.getRevision(),
-                          status.getCommittedRevision(), status.getContentsStatus(), status.getPropertiesStatus(),
-                          status.getRemoteContentsStatus(), status.getRemotePropertiesStatus(), status.isLocked(),
-                          status.isCopied(), status.isSwitched(), status.getCopyFromURL(), Lock.create(status.getRemoteLock()),
-                          Lock.create(status.getLocalLock()), status.getChangelistName(),
-                          TreeConflictDescription.create(status.getTreeConflict()));
+      result =
+        new Status(status.getURL(), status.getFile(), NodeKind.from(status.getKind()), status.getRevision(), status.getCommittedRevision(),
+                   StatusType.from(status.getContentsStatus()), StatusType.from(status.getPropertiesStatus()),
+                   StatusType.from(status.getRemoteContentsStatus()), StatusType.from(status.getRemotePropertiesStatus()),
+                   status.isLocked(), status.isCopied(), status.isSwitched(), status.getCopyFromURL(), Lock.create(status.getRemoteLock()),
+                   Lock.create(status.getLocalLock()), status.getChangelistName(),
+                   TreeConflictDescription.create(status.getTreeConflict()));
       result.setIsConflicted(status.isConflicted());
-      result.setNodeStatus(status.getNodeStatus());
-      result.setRemoteNodeStatus(status.getRemoteNodeStatus());
+      result.setNodeStatus(StatusType.from(status.getNodeStatus()));
+      result.setRemoteNodeStatus(StatusType.from(status.getRemoteNodeStatus()));
       result.setRemoteRevision(status.getRemoteRevision());
       result.setRepositoryRootURL(status.getRepositoryRootURL());
     }
@@ -83,10 +83,10 @@ public class Status {
                 @NotNull NodeKind kind,
                 SVNRevision revision,
                 SVNRevision committedRevision,
-                SVNStatusType contentsStatus,
-                SVNStatusType propertiesStatus,
-                SVNStatusType remoteContentsStatus,
-                SVNStatusType remotePropertiesStatus,
+                StatusType contentsStatus,
+                StatusType propertiesStatus,
+                StatusType remoteContentsStatus,
+                StatusType remotePropertiesStatus,
                 boolean isLocked,
                 boolean isCopied,
                 boolean isSwitched,
@@ -100,11 +100,11 @@ public class Status {
     myKind = kind;
     myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
     myCommittedRevision = committedRevision == null ? SVNRevision.UNDEFINED : committedRevision;
-    myContentsStatus = contentsStatus == null ? SVNStatusType.STATUS_NONE : contentsStatus;
-    myPropertiesStatus = propertiesStatus == null ? SVNStatusType.STATUS_NONE : propertiesStatus;
-    myRemoteContentsStatus = remoteContentsStatus == null ? SVNStatusType.STATUS_NONE : remoteContentsStatus;
-    myRemotePropertiesStatus = remotePropertiesStatus == null ? SVNStatusType.STATUS_NONE : remotePropertiesStatus;
-    myRemoteNodeStatus = SVNStatusType.STATUS_NONE;
+    myContentsStatus = contentsStatus == null ? StatusType.STATUS_NONE : contentsStatus;
+    myPropertiesStatus = propertiesStatus == null ? StatusType.STATUS_NONE : propertiesStatus;
+    myRemoteContentsStatus = remoteContentsStatus == null ? StatusType.STATUS_NONE : remoteContentsStatus;
+    myRemotePropertiesStatus = remotePropertiesStatus == null ? StatusType.STATUS_NONE : remotePropertiesStatus;
+    myRemoteNodeStatus = StatusType.STATUS_NONE;
     myIsLocked = isLocked;
     myIsCopied = isCopied;
     myIsSwitched = isSwitched;
@@ -142,19 +142,19 @@ public class Status {
     return myCommittedRevision;
   }
 
-  public SVNStatusType getContentsStatus() {
+  public StatusType getContentsStatus() {
     return myContentsStatus;
   }
 
-  public SVNStatusType getPropertiesStatus() {
+  public StatusType getPropertiesStatus() {
     return myPropertiesStatus;
   }
 
-  public SVNStatusType getRemoteContentsStatus() {
+  public StatusType getRemoteContentsStatus() {
     return myRemoteContentsStatus;
   }
 
-  public SVNStatusType getRemotePropertiesStatus() {
+  public StatusType getRemotePropertiesStatus() {
     return myRemotePropertiesStatus;
   }
 
@@ -201,11 +201,11 @@ public class Status {
     return myIsConflicted;
   }
 
-  public SVNStatusType getRemoteNodeStatus() {
+  public StatusType getRemoteNodeStatus() {
     return myRemoteNodeStatus;
   }
 
-  public SVNStatusType getNodeStatus() {
+  public StatusType getNodeStatus() {
     if (myNodeStatus == null) {
       return myContentsStatus;
     }
@@ -236,19 +236,19 @@ public class Status {
     myCommittedRevision = committedRevision;
   }
 
-  public void setContentsStatus(SVNStatusType statusType) {
+  public void setContentsStatus(StatusType statusType) {
     myContentsStatus = statusType;
   }
 
-  public void setPropertiesStatus(SVNStatusType propertiesStatus) {
+  public void setPropertiesStatus(StatusType propertiesStatus) {
     myPropertiesStatus = propertiesStatus;
   }
 
-  public void setRemoteContentsStatus(SVNStatusType remoteContentsStatus) {
+  public void setRemoteContentsStatus(StatusType remoteContentsStatus) {
     myRemoteContentsStatus = remoteContentsStatus;
   }
 
-  public void setRemotePropertiesStatus(SVNStatusType remotePropertiesStatus) {
+  public void setRemotePropertiesStatus(StatusType remotePropertiesStatus) {
     myRemotePropertiesStatus = remotePropertiesStatus;
   }
 
@@ -280,11 +280,11 @@ public class Status {
     myIsConflicted = isConflicted;
   }
 
-  public void setRemoteNodeStatus(SVNStatusType remoteNodeStatus) {
+  public void setRemoteNodeStatus(StatusType remoteNodeStatus) {
     myRemoteNodeStatus = remoteNodeStatus;
   }
 
-  public void setNodeStatus(SVNStatusType nodeStatus) {
+  public void setNodeStatus(StatusType nodeStatus) {
     myNodeStatus = nodeStatus;
   }
 

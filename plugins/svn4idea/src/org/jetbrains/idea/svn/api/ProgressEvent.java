@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.svn.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 
@@ -33,8 +34,8 @@ public class ProgressEvent {
   private final long myRevision;
   private final SVNURL myURL;
 
-  private final SVNStatusType myContentsStatus;
-  private final SVNStatusType myPropertiesStatus;
+  @NotNull private final StatusType myContentsStatus;
+  @NotNull private final StatusType myPropertiesStatus;
   private final SVNErrorMessage myErrorMessage;
   private final EventAction myAction;
 
@@ -48,7 +49,7 @@ public class ProgressEvent {
       }
       else {
         result =
-          new ProgressEvent(event.getFile(), event.getRevision(), event.getContentsStatus(), event.getPropertiesStatus(),
+          new ProgressEvent(event.getFile(), event.getRevision(), StatusType.from(event.getContentsStatus()), StatusType.from(event.getPropertiesStatus()),
                             EventAction.from(event.getAction()), event.getErrorMessage(), event.getURL());
       }
     }
@@ -62,15 +63,15 @@ public class ProgressEvent {
 
   public ProgressEvent(File file,
                        long revision,
-                       SVNStatusType contentStatus,
-                       SVNStatusType propertiesStatus,
+                       @Nullable StatusType contentStatus,
+                       @Nullable StatusType propertiesStatus,
                        EventAction action,
                        SVNErrorMessage error,
                        SVNURL url) {
     myFile = file != null ? file.getAbsoluteFile() : null;
     myRevision = revision;
-    myContentsStatus = contentStatus == null ? SVNStatusType.INAPPLICABLE : contentStatus;
-    myPropertiesStatus = propertiesStatus == null ? SVNStatusType.INAPPLICABLE : propertiesStatus;
+    myContentsStatus = contentStatus == null ? StatusType.INAPPLICABLE : contentStatus;
+    myPropertiesStatus = propertiesStatus == null ? StatusType.INAPPLICABLE : propertiesStatus;
     myAction = action;
     myErrorMessage = error;
     myURL = url;
@@ -84,7 +85,8 @@ public class ProgressEvent {
     return myAction;
   }
 
-  public SVNStatusType getContentsStatus() {
+  @NotNull
+  public StatusType getContentsStatus() {
     return myContentsStatus;
   }
 
@@ -92,7 +94,8 @@ public class ProgressEvent {
     return myErrorMessage;
   }
 
-  public SVNStatusType getPropertiesStatus() {
+  @NotNull
+  public StatusType getPropertiesStatus() {
     return myPropertiesStatus;
   }
 

@@ -50,9 +50,9 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -202,8 +202,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     Status status = getStatus(file);
 
     if (status != null &&
-        (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) ||
-         SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED))) {
+        (SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED) ||
+         SvnVcs.svnStatusIs(status, StatusType.STATUS_REPLACED))) {
       // file should be added
       adder.add(file);
       file = file.getParentFile();
