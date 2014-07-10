@@ -192,6 +192,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setLogExpression(@Nullable final String expression) {
+    setLogExpressionEnabled(true);
     if (!Comparing.equal(getLogExpression(), expression)) {
       myLogExpression = XExpressionImpl.fromText(expression);
       fireBreakpointChanged();
@@ -224,6 +225,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public void setCondition(@Nullable final String condition) {
+    setConditionEnabled(true);
     if (!Comparing.equal(condition, getCondition())) {
       myCondition = XExpressionImpl.fromText(condition);
       fireBreakpointChanged();
