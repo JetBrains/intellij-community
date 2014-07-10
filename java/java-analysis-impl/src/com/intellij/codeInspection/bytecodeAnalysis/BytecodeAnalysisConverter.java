@@ -349,7 +349,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
           notNulls.add(key);
         }
         else if (direction instanceof InOut) {
-          compoundKey[0] = mkDirectionKey(new Out());
+          compoundKey = new int[]{mkDirectionKey(new Out()), compoundKey[1]};
           try {
             int baseKey = myCompoundKeyEnumerator.enumerate(compoundKey);
             List<String> clauses = contractClauses.get(baseKey);
