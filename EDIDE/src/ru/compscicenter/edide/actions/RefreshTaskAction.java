@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
@@ -43,19 +44,28 @@ public class RefreshTaskAction extends AnAction {
                 VirtualFile openedFile = fileDocumentManager.getFile(document);
                 TaskFile selectedTaskFile = taskManager.getTaskFile(openedFile);
                 Task currentTask = selectedTaskFile.getTask();
-                String lessonDir = "lesson" + String.valueOf(currentTask.getLesson().getIndex() + 1);
-                String taskDir = "task" + String.valueOf(currentTask.getIndex() + 1);
+                String lessonDir = Lesson.LESSON_DIR + String.valueOf(currentTask.getLesson().getIndex() + 1);
+                String taskDir = Task.TASK_DIR + String.valueOf(currentTask.getIndex() + 1);
                 if (openedFile != null) {
                   File pattern = new File(new File(new File(resourceRoot, lessonDir), taskDir), openedFile.getName());
-                  BufferedReader reader;
+                  BufferedReader reader = null;
                   try {
                     reader = new BufferedReader(new InputStreamReader(new FileInputStream(pattern)));
-                    int i = 0;
-                    while (reader.ready()) {
-                      document.insertString(document.getLineStartOffset(i), reader.readLine());
-                      i++;
+                    String line;
+                    StringBuilder patternText = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                      patternText.append(line);
+                      patternText.append("\n");
                     }
-                    reader.close();
+                    int patternLength = patternText.length();
+                    if (patternText.charAt(patternLength - 1) == '\n') {
+                      patternText.delete(patternLength - 1, patternLength);
+                    }
+                    document.setText(patternText);
+                    for (Window window : selectedTaskFile.getWindows()) {
+                      window.reset();
+                    }
+                    selectedTaskFile.drawAllWindows(editor);
                   }
                   catch (FileNotFoundException e1) {
                     e1.printStackTrace();
@@ -63,10 +73,16 @@ public class RefreshTaskAction extends AnAction {
                   catch (IOException e1) {
                     e1.printStackTrace();
                   }
-                  for (Window window : selectedTaskFile.getWindows()) {
-                    window.reset();
+                  finally {
+                    if (reader != null) {
+                      try {
+                        reader.close();
+                      }
+                      catch (IOException e) {
+                        e.printStackTrace();
+                      }
+                    }
                   }
-                  selectedTaskFile.drawAllWindows(editor);
                 }
               }
             }, null, null);
@@ -77,6 +93,6 @@ public class RefreshTaskAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    // TODO: insert action logic here
+    refresh(e.getProject());
   }
 }
