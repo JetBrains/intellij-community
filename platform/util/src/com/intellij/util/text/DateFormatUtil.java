@@ -53,6 +53,7 @@ public class DateFormatUtil {
   private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT;
   private static final SyncDateFormat DATE_TIME_FORMAT;
   private static final SyncDateFormat ABOUT_DATE_FORMAT;
+  private static final SyncDateFormat SHORT_DATE_FORMAT;
   static {
     SyncDateFormat[] formats = getDateTimeFormats();
     DATE_FORMAT = formats[0];
@@ -60,6 +61,7 @@ public class DateFormatUtil {
     TIME_WITH_SECONDS_FORMAT = formats[2];
     DATE_TIME_FORMAT = formats[3];
     ABOUT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.LONG, Locale.US));
+    SHORT_DATE_FORMAT = new SyncDateFormat(DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.US));
   }
 
   private static final long[] DENOMINATORS = {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
@@ -271,6 +273,11 @@ public class DateFormatUtil {
   @NotNull
   public static String formatAboutDialogDate(@NotNull Date date) {
     return ABOUT_DATE_FORMAT.format(date);
+  }
+
+  @NotNull
+  public static String formatShortDate(@NotNull Date date) {
+    return SHORT_DATE_FORMAT.format(date);
   }
 
   // helpers
