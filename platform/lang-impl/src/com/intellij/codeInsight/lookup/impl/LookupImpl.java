@@ -623,10 +623,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public boolean performGuardedChange(Runnable change) {
-    return performGuardedChange(change, null);
-  }
-
-  public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert !myChangeGuard : "already in change";
 
@@ -634,7 +630,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myChangeGuard = true;
     boolean result;
     try {
-      result = myOffsets.performGuardedChange(change, debug);
+      result = myOffsets.performGuardedChange(change);
     }
     finally {
       myEditor.getDocument().stopGuardedBlockChecking();
