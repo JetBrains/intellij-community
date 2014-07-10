@@ -64,6 +64,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
     }
   }
 
+  /* TODO: uncomment after fixing http://youtrack.jetbrains.com/issue/PY-13465
   public void testSetVal() throws IOException {
 //setShouldPrintOutput(true);
     final int[] ports = findFreePorts(2);
@@ -111,6 +112,7 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
       
     });
   }
+  */
 
   public void testVariableDoesNotExistExceptionBreak() throws IOException {
 //setShouldPrintOutput(true);
