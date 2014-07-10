@@ -44,6 +44,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
@@ -731,9 +733,29 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private static Field stickyAltField;
   //IDEA-17359
   private static void fixStickyAlt(AWTEvent e) {
-    if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+    if (Registry.is("actionSystem.win.suppressAlt.new")) {
+      if (SystemInfo.isWindows
+          && UIManager.getLookAndFeel() instanceof WindowsLookAndFeel
+          && e instanceof InputEvent
+          && (((InputEvent)e).getModifiers() & (InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)) != 0
+          && !(e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT)) {
+        try {
+          if (stickyAltField == null) {
+            stickyAltField = Class
+              .forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI$AltProcessor")
+              .getDeclaredField("menuCanceledOnPress");
+            stickyAltField.setAccessible(true);
+          }
+          stickyAltField.set(null, true);
+        }
+        catch (Exception exception) {
+          LOG.error(exception);
+        }
+      }
+    } else if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
       ((KeyEvent)e).consume();
     }
   }
@@ -940,7 +962,7 @@ public class IdeEventQueue extends EventQueue {
     @Override
     public boolean dispatch(AWTEvent e) {
       boolean dispatch = true;
-      if (e instanceof KeyEvent) {
+      if (!Registry.is("actionSystem.win.suppressAlt.new") && e instanceof KeyEvent) {
         KeyEvent ke = (KeyEvent)e;
         final Component component = ke.getComponent();
         final Window window = component == null ? null : SwingUtilities.windowForComponent(component);
