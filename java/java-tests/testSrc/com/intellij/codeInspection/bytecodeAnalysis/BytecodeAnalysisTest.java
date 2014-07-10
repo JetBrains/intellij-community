@@ -78,7 +78,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     checkLeakingParameters(LeakingParametersData.class);
   }
 
-  private void checkLeakingParameters(Class<?> jClass) throws IOException {
+  private static void checkLeakingParameters(Class<?> jClass) throws IOException {
     final HashMap<Method, boolean[]> map = new HashMap<Method, boolean[]>();
 
     // collecting leakedParameters
