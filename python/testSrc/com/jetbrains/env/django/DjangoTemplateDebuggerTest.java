@@ -261,6 +261,8 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
         toggleBreakpoint(file, 6);
         XDebuggerTestUtil.setBreakpointLogExpression(getProject(), 6, "'x = %d'%x");
+
+        useLongTimeout();
       }
 
       @Override
@@ -335,6 +337,12 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
   public void testBreakpointStopAndEvalInAutoReloadMode() throws IOException {
     final int[] ports = findFreePorts(4);
     BreakpointStopAndEvalTask testTask = new BreakpointStopAndEvalTask("/djangoDebug", "manage.py", "runserver ", ports[3]) {
+      @Override
+      public void before() throws Exception {
+        super.before();
+        useLongTimeout();
+      }
+
       @Override
       public Set<String> getTags() {
         Set<String> tags = Sets.newHashSet(super.getTags());
