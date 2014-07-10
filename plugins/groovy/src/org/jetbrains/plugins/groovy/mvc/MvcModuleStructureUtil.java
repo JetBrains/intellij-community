@@ -143,9 +143,15 @@ public class MvcModuleStructureUtil {
   }
 
   public static void removeSrcFolderFromRoots(final VirtualFile file,
-                                              List<Consumer<ContentEntry>> actions,
-                                              Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
-    if (sourceRoots.containsKey(file)) {
+                                              @NotNull List<Consumer<ContentEntry>> actions,
+                                              @NotNull Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
+    removeSrcFolderFromRoots(file, actions, sourceRoots.keySet());
+  }
+
+  public static void removeSrcFolderFromRoots(final VirtualFile file,
+                                              @NotNull List<Consumer<ContentEntry>> actions,
+                                              @NotNull Collection<VirtualFile> sourceRoots) {
+    if (sourceRoots.contains(file)) {
       actions.add(new Consumer<ContentEntry>() {
         @Override
         public void consume(ContentEntry contentEntry) {
