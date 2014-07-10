@@ -3,8 +3,11 @@ package ru.compscicenter.edide.course;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,5 +76,30 @@ public class Course {
 
   public String getResourcePath() {
     return myResourcePath;
+  }
+
+  public  Element saveState() {
+    Element courseElement = new Element("courseElement");
+    courseElement.setAttribute("name", name);
+    courseElement.setAttribute("description", description);
+    courseElement.setAttribute("myResourcePath", myResourcePath);
+    for (Lesson lesson:lessons) {
+      courseElement.addContent(lesson.saveState());
+    }
+    return courseElement;
+  }
+
+  public void loadState(Element courseElement) {
+    name = courseElement.getAttributeValue("name");
+    description = courseElement.getAttributeValue("description");
+    myResourcePath = courseElement.getAttributeValue("myResourcePath");
+    List<Element> lessonElements = courseElement.getChildren();
+    lessons = new ArrayList<Lesson>(lessonElements.size());
+    for (Element lessonElement:lessonElements) {
+      Lesson lesson = new Lesson();
+      lesson.loadState(lessonElement);
+      lessons.add(lesson);
+    }
+
   }
 }

@@ -4,10 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 import ru.compscicenter.edide.StudyTaskManager;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,6 +30,46 @@ public class Task {
   private String input = null;
   private String output = null;
 
+
+  public Element saveState() {
+    Element taskElement = new Element("task");
+    taskElement.setAttribute("testFile", testFile);
+    taskElement.setAttribute("name", name);
+    taskElement.setAttribute("text", text);
+    taskElement.setAttribute("myIndex", String.valueOf(myIndex));
+    taskElement.setAttribute("mySolved", String.valueOf(mySolved));
+    if (input!= null)
+      taskElement.setAttribute("input", input);
+    if (output != null)
+      taskElement.setAttribute("output", output);
+    for (TaskFile file : taskFiles) {
+      taskElement.addContent(file.saveState());
+    }
+    return taskElement;
+  }
+
+  public void loadState(Element taskElement) {
+    testFile = taskElement.getAttributeValue("testFile");
+    name = taskElement.getAttributeValue("name");
+    text =taskElement.getAttributeValue("text");
+    input = taskElement.getAttributeValue("input");
+    output = taskElement.getAttributeValue("output");
+    try {
+      mySolved = taskElement.getAttribute("mySolved").getBooleanValue();
+      myIndex = taskElement.getAttribute("myIndex").getIntValue();
+    }
+    catch (DataConversionException e) {
+      e.printStackTrace();
+    }
+
+    List<Element> taskFileElements = taskElement.getChildren();
+    taskFiles = new ArrayList<TaskFile>(taskFileElements.size());
+    for (Element taskFileElement:taskFileElements) {
+      TaskFile taskFile = new TaskFile();
+      taskFile.loadState(taskFileElement);
+      taskFiles.add(taskFile);
+    }
+  }
 
   public boolean isSolved() {
     return mySolved;
@@ -106,17 +148,6 @@ public class Task {
     return null;
   }
 
-
-  public Element saveState() {
-    Element taskElement = new Element("task");
-    taskElement.setAttribute("testFile", testFile);
-    taskElement.setAttribute("name", name);
-    taskElement.setAttribute("text", text);
-    for (TaskFile file : taskFiles) {
-      taskElement.addContent(file.saveState());
-    }
-    return taskElement;
-  }
 
   public void setParents(Lesson lesson) {
     myLesson = lesson;
@@ -216,4 +247,5 @@ public class Task {
     }
     return null;
   }
+
 }

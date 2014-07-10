@@ -61,9 +61,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (myCourse == null) {
       return taskManagerElement;
     }
-    for (Lesson lesson : myCourse.getLessons()) {
-      taskManagerElement.addContent(lesson.saveState());
-    }
+    taskManagerElement.addContent(myCourse.saveState());
     return taskManagerElement;
   }
 
@@ -79,51 +77,11 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void loadState(Element el) {
-    Course loadedCourse = new Course();
-    List<Lesson> loadedLessons = new ArrayList<Lesson>();
-    for (Element lessonElement : el.getChildren()) {
-      Lesson lesson = new Lesson();
-      lesson.setName(lessonElement.getAttributeValue("name"));
-      List<Task> loadedTasks = new ArrayList<Task>();
-      for (Element taskElement : lessonElement.getChildren()) {
-        Task task = new Task();
-        task.setName(taskElement.getAttributeValue("name"));
-        task.setText(taskElement.getAttributeValue("text"));
-        task.setTestFile(taskElement.getAttributeValue("testFile"));
-        List<TaskFile> taskFiles = new ArrayList<TaskFile>();
-        for (Element taskFileElement : taskElement.getChildren()) {
-          TaskFile taskFile = new TaskFile();
-          taskFile.setName(taskFileElement.getAttributeValue("name"));
-          try {
-            taskFile.setLineNum(taskFileElement.getAttribute("myLineNum").getIntValue());
-            List<Window> windows = new ArrayList<Window>();
-            for (Element windowElement:taskFileElement.getChildren()) {
-              Window window = new Window();
-              window.setLine(windowElement.getAttribute("line").getIntValue());
-              window.setStart(windowElement.getAttribute("start").getIntValue());
-              window.setLength(windowElement.getAttribute("myOffsetInLine").getIntValue());
-              window.setText(windowElement.getAttributeValue("text"));
-              window.setHint(windowElement.getAttributeValue("hint"));
-              window.setPossibleAnswer(windowElement.getAttributeValue("possibleAnswer"));
-              window.setResolveStatus(windowElement.getAttribute("myResolveStatus").getBooleanValue());
-              windows.add(window);
-            }
-            taskFile.setWindows(windows);
-          }
-          catch (DataConversionException e) {
-            e.printStackTrace();
-          }
-          taskFiles.add(taskFile);
-        }
-        task.setTaskFiles(taskFiles);
-        loadedTasks.add(task);
-      }
-      lesson.setTaskList(loadedTasks);
-      loadedLessons.add(lesson);
-    }
-    loadedCourse.setLessons(loadedLessons);
-    loadedCourse.setName("name");
-    myCourse = loadedCourse;
+    Course course =  new Course();
+    Element courseElement = el.getChild("courseElement");
+    course.loadState(courseElement);
+    myCourse = course;
+    myCourse.setParents();
   }
 
 

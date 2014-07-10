@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.JBColor;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,14 +42,37 @@ public class Window implements Comparable{
 
   public Element saveState() {
     Element windowElement = new Element("window");
-    windowElement.setAttribute("line", Integer.toString(line));
-    windowElement.setAttribute("start", Integer.toString(start));
+    windowElement.setAttribute("line", String.valueOf(line));
+    windowElement.setAttribute("start", String.valueOf(start));
     windowElement.setAttribute("text", text);
     windowElement.setAttribute("hint", hint);
     windowElement.setAttribute("possibleAnswer", possibleAnswer);
-    windowElement.setAttribute("myResolveStatus", Boolean.toString(myResolveStatus));
-    windowElement.setAttribute("myLength", Integer.toString(myLength));
+    windowElement.setAttribute("myResolveStatus", String.valueOf(myResolveStatus));
+    windowElement.setAttribute("myLength", String.valueOf(myLength));
+    windowElement.setAttribute("myInitialLine", String.valueOf(myInitialLine));
+    windowElement.setAttribute("myInitialStart", String.valueOf(myInitialStart));
+    windowElement.setAttribute("myInitialLength", String.valueOf(myInitialLength));
+    windowElement.setAttribute("myIndex", String.valueOf(myIndex));
     return windowElement;
+  }
+
+  public void loadState(Element windowElement) {
+    try {
+      line = windowElement.getAttribute("line").getIntValue();
+      start = windowElement.getAttribute("start").getIntValue();
+      text = windowElement.getAttributeValue("text");
+      hint = windowElement.getAttributeValue("hint");
+      possibleAnswer = windowElement.getAttributeValue("possibleAnswer");
+      myResolveStatus = windowElement.getAttribute("myResolveStatus").getBooleanValue();
+      myLength = windowElement.getAttribute("myLength").getIntValue();
+      myInitialLine = windowElement.getAttribute("myInitialLine").getIntValue();
+      myInitialStart = windowElement.getAttribute("myInitialStart").getIntValue();
+      myInitialLength = windowElement.getAttribute("myInitialLength").getIntValue();
+      myIndex = windowElement.getAttribute("myIndex").getIntValue();
+    }
+    catch (DataConversionException e) {
+      e.printStackTrace();
+    }
   }
 
   public void setRangeHighlighter(RangeHighlighter rangeHighlighter) {
@@ -155,7 +179,7 @@ public class Window implements Comparable{
 
   public void init(TaskFile file) {
     myInitialLine = line;
-    myInitialLength = myLength;
+    myInitialLength = text.length();
     myInitialStart = start;
     myTaskFile = file;
   }
@@ -208,4 +232,5 @@ public class Window implements Comparable{
     start = myInitialStart;
     myLength = myInitialLength;
   }
+
 }

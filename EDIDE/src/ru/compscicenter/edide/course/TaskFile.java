@@ -7,10 +7,12 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,18 +27,36 @@ public class TaskFile {
   private int myLineNum = -1;
   private Task myTask;
   private Window mySelectedWindow = null;
-  private int myIndex;
+  private int myIndex = -1;
 
   public Element saveState() {
-    Element fileElement = new Element("file");
-    fileElement.setAttribute("name", name);
-    fileElement.setAttribute("myLineNum", Integer.toString(myLineNum));
-    for (Window window : windows) {
-      fileElement.addContent(window.saveState());
+    Element taskFileElement = new Element("taskFile");
+    taskFileElement.setAttribute("name", name);
+    taskFileElement.setAttribute("myLineNum", String.valueOf(myLineNum));
+    taskFileElement.setAttribute("myIndex", String.valueOf(myIndex));
+    for (Window window:windows) {
+      taskFileElement.addContent(window.saveState());
     }
-    return fileElement;
+    return  taskFileElement;
   }
 
+  public void loadState(Element taskFileElement) {
+    name = taskFileElement.getAttributeValue("name");
+    try {
+      myLineNum = taskFileElement.getAttribute("myLineNum").getIntValue();
+      myIndex = taskFileElement.getAttribute("myIndex").getIntValue();
+    }
+    catch (DataConversionException e) {
+      e.printStackTrace();
+    }
+    List<Element> windowElements = taskFileElement.getChildren();
+    windows = new ArrayList<Window>(windowElements.size());
+    for (Element windowElement : windowElements) {
+      Window window = new Window();
+      window.loadState(windowElement);
+      windows.add(window);
+    }
+  }
   public boolean isResolved() {
     for (Window window : windows) {
       if (!window.isResolveStatus()) {
@@ -195,4 +215,5 @@ public class TaskFile {
   public void setIndex(int index) {
     myIndex = index;
   }
+
 }

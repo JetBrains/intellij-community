@@ -2,10 +2,12 @@ package ru.compscicenter.edide.course;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,6 +21,33 @@ public class Lesson {
   private Course myCourse = null;
   private int myIndex = -1;
   public static final String LESSON_DIR = "lesson";
+
+  public Element saveState() {
+    Element lessonElement = new Element("lessonElement");
+    lessonElement.setAttribute("name", name);
+    lessonElement.setAttribute("myIndex", String.valueOf(myIndex));
+    for (Task task:taskList) {
+      lessonElement.addContent(task.saveState());
+    }
+    return lessonElement;
+  }
+
+  public void loadState(Element rootElement) {
+    name = rootElement.getAttributeValue("name");
+    try {
+      myIndex = rootElement.getAttribute("myIndex").getIntValue();
+    }
+    catch (DataConversionException e) {
+      e.printStackTrace();
+    }
+    List<Element> taskElements = rootElement.getChildren();
+    taskList = new ArrayList<Task>(taskElements.size());
+    for (Element taskElement:taskElements) {
+      Task task =  new Task();
+      task.loadState(taskElement);
+      taskList.add(task);
+    }
+  }
 
   public boolean isResolved() {
     for (Task task:taskList) {
@@ -53,13 +82,7 @@ public class Lesson {
 
   }
 
-  public Element saveState() {
-    Element lessonElement =  new Element("lesson");
-    for (Task task : taskList) {
-      lessonElement.addContent(task.saveState());
-    }
-    return lessonElement;
-  }
+
 
   public void setParents(Course course) {
     myCourse = course;
