@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -82,13 +83,13 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
 
     ProgressTracker revertHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
-        if (event.getAction() == SVNEventAction.REVERT) {
+        if (event.getAction() == EventAction.REVERT) {
           final File file = event.getFile();
           if (file != null) {
             listener.accept(file);
           }
         }
-        if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+        if (event.getAction() == EventAction.FAILED_REVERT) {
           exceptions.add(new VcsException("Revert failed"));
         }
       }

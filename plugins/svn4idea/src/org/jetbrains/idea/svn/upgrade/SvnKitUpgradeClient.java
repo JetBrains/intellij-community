@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.checkout.SvnKitCheckoutClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -48,7 +48,7 @@ public class SvnKitUpgradeClient extends BaseSvnClient implements UpgradeClient 
     // cleanup is executed only for SVNKit as it could handle both 1.6 and 1.7 formats
     if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
       // fake event indicating cleanup start
-      callHandler(handler, createEvent(path, SVNEventAction.UPDATE_STARTED));
+      callHandler(handler, createEvent(path, EventAction.UPDATE_STARTED));
       client.doCleanup(path);
     }
   }
@@ -58,7 +58,7 @@ public class SvnKitUpgradeClient extends BaseSvnClient implements UpgradeClient 
                               @NotNull SVNWCClient client,
                               @Nullable ProgressTracker handler) throws SVNException, VcsException {
     // fake event indicating upgrade start
-    callHandler(handler, createEvent(path, SVNEventAction.UPDATE_COMPLETED));
+    callHandler(handler, createEvent(path, EventAction.UPDATE_COMPLETED));
     client.doSetWCFormat(path, format.getFormat());
   }
 }

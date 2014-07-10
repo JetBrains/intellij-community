@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -191,7 +192,7 @@ public class SvnUtil {
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
-        if (event.getAction() == SVNEventAction.LOCK_FAILED) {
+        if (event.getAction() == EventAction.LOCK_FAILED) {
           failedLocks.add(event.getErrorMessage() != null ?
                           event.getErrorMessage().getFullMessage() :
                           event.getFile().getAbsolutePath());
@@ -256,7 +257,7 @@ public class SvnUtil {
     final int[] count = new int[]{ioFiles.length};
     final ProgressTracker eventHandler = new ProgressTracker() {
       public void consume(ProgressEvent event) {
-        if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
+        if (event.getAction() == EventAction.UNLOCK_FAILED) {
           failedUnlocks.add(event.getErrorMessage() != null ?
                             event.getErrorMessage().getFullMessage() :
                             event.getFile().getAbsolutePath());

@@ -9,7 +9,6 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.api.Depth;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -62,17 +61,17 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
     }
 
     @Nullable
-    public static SVNEventAction createAction(@NotNull String code) {
-      SVNEventAction result = null;
+    public static EventAction createAction(@NotNull String code) {
+      EventAction result = null;
 
       if ("Reverted".equals(code)) {
-        result = SVNEventAction.REVERT;
+        result = EventAction.REVERT;
       }
       else if ("Failed to revert".equals(code)) {
-        result = SVNEventAction.FAILED_REVERT;
+        result = EventAction.FAILED_REVERT;
       }
       else if ("Skipped".equals(code)) {
-        result = SVNEventAction.SKIP;
+        result = EventAction.SKIP;
       }
 
       return result;

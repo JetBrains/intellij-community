@@ -122,7 +122,7 @@ public abstract class BaseSvnClient implements SvnClient {
   }
 
   @NotNull
-  protected static ProgressEvent createEvent(@NotNull File path, @Nullable SVNEventAction action) {
+  protected static ProgressEvent createEvent(@NotNull File path, @Nullable EventAction action) {
     return new ProgressEvent(path, 0, null, null, action, null, null);
   }
 

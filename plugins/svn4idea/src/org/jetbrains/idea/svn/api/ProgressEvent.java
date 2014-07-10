@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -37,7 +36,7 @@ public class ProgressEvent {
   private final SVNStatusType myContentsStatus;
   private final SVNStatusType myPropertiesStatus;
   private final SVNErrorMessage myErrorMessage;
-  private final SVNEventAction myAction;
+  private final EventAction myAction;
 
   @Nullable
   public static ProgressEvent create(@Nullable SVNEvent event) {
@@ -49,8 +48,8 @@ public class ProgressEvent {
       }
       else {
         result =
-          new ProgressEvent(event.getFile(), event.getRevision(), event.getContentsStatus(), event.getPropertiesStatus(), event.getAction(),
-                            event.getErrorMessage(), event.getURL());
+          new ProgressEvent(event.getFile(), event.getRevision(), event.getContentsStatus(), event.getPropertiesStatus(),
+                            EventAction.from(event.getAction()), event.getErrorMessage(), event.getURL());
       }
     }
 
@@ -58,14 +57,14 @@ public class ProgressEvent {
   }
 
   public ProgressEvent(SVNErrorMessage errorMessage) {
-    this(null, 0, null, null, SVNEventAction.SKIP, errorMessage, null);
+    this(null, 0, null, null, EventAction.SKIP, errorMessage, null);
   }
 
   public ProgressEvent(File file,
                        long revision,
                        SVNStatusType contentStatus,
                        SVNStatusType propertiesStatus,
-                       SVNEventAction action,
+                       EventAction action,
                        SVNErrorMessage error,
                        SVNURL url) {
     myFile = file != null ? file.getAbsoluteFile() : null;
@@ -81,7 +80,7 @@ public class ProgressEvent {
     return myFile;
   }
 
-  public SVNEventAction getAction() {
+  public EventAction getAction() {
     return myAction;
   }
 

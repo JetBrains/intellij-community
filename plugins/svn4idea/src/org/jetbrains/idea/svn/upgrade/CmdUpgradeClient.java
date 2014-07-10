@@ -7,14 +7,10 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.FileStatusResultParser;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -38,7 +34,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     validateFormat(format, getSupportedFormats());
 
     // fake event indicating upgrade start
-    callHandler(handler, createEvent(path, SVNEventAction.UPDATE_COMPLETED));
+    callHandler(handler, createEvent(path, EventAction.UPDATE_COMPLETED));
 
     List<String> parameters = new ArrayList<String>();
 
@@ -74,11 +70,11 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     }
 
     @Nullable
-    public static SVNEventAction createAction(@NotNull String code) {
-      SVNEventAction result = null;
+    public static EventAction createAction(@NotNull String code) {
+      EventAction result = null;
 
       if ("Upgraded".equals(code)) {
-        result = SVNEventAction.UPGRADED_PATH;
+        result = EventAction.UPGRADED_PATH;
       }
 
       return result;

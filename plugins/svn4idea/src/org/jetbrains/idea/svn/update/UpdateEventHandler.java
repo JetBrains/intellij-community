@@ -25,6 +25,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -83,7 +84,7 @@ public class UpdateEventHandler implements ProgressTracker {
       return;
     }
 
-    if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
+    if (event.getAction() == EventAction.TREE_CONFLICT) {
       myText2 = SvnBundle.message("progress.text2.treeconflicted", displayPath);
       updateProgressIndicator();
       myUpdatedFiles.registerGroup(createFileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
@@ -91,8 +92,8 @@ public class UpdateEventHandler implements ProgressTracker {
       addFileToGroup(FileGroup.MERGED_WITH_TREE_CONFLICT, event);
     }
 
-    if (event.getAction() == SVNEventAction.UPDATE_ADD ||
-        event.getAction() == SVNEventAction.ADD) {
+    if (event.getAction() == EventAction.UPDATE_ADD ||
+        event.getAction() == EventAction.ADD) {
       myText2 = SvnBundle.message("progress.text2.added", displayPath);
       if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
         addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
@@ -108,15 +109,15 @@ public class UpdateEventHandler implements ProgressTracker {
         addFileToGroup(FileGroup.CREATED_ID, event);
       }
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_NONE) {
+    else if (event.getAction() == EventAction.UPDATE_NONE) {
       // skip it
       return;
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
+    else if (event.getAction() == EventAction.UPDATE_DELETE) {
       myText2 = SvnBundle.message("progress.text2.deleted", displayPath);
       addFileToGroup(FileGroup.REMOVED_FROM_REPOSITORY_ID, event);
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
+    else if (event.getAction() == EventAction.UPDATE_UPDATE) {
       possiblySwitched(event);
       if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
         if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
@@ -147,7 +148,7 @@ public class UpdateEventHandler implements ProgressTracker {
         addFileToGroup(FileGroup.UNKNOWN_ID, event);
       }
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
+    else if (event.getAction() == EventAction.UPDATE_EXTERNAL) {
       if (mySequentialUpdatesContext != null) {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
@@ -160,11 +161,11 @@ public class UpdateEventHandler implements ProgressTracker {
       addFileToGroup(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID, event);
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }
-    else if (event.getAction() == SVNEventAction.RESTORE) {
+    else if (event.getAction() == EventAction.RESTORE) {
       myText2 = SvnBundle.message("progress.text2.restored.file", displayPath);
       addFileToGroup(FileGroup.RESTORED_ID, event);
     }
-    else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
+    else if (event.getAction() == EventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
       possiblySwitched(event);
       myExternalsCount--;
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
@@ -173,7 +174,7 @@ public class UpdateEventHandler implements ProgressTracker {
         StatusBar.Info.set(SvnBundle.message("status.text.updated.to.revision", event.getRevision()), myVCS.getProject());
       }
     }
-    else if (event.getAction() == SVNEventAction.SKIP) {
+    else if (event.getAction() == EventAction.SKIP) {
       myText2 = SvnBundle.message("progress.text2.skipped.file", displayPath);
       addFileToGroup(FileGroup.SKIPPED_ID, event);
     }

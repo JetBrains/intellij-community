@@ -18,10 +18,10 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -88,19 +88,19 @@ public class UpdateOutputLineConverter {
       return null;
     } else if (line.startsWith(UPDATING)) {
       myCurrentFile = parseForPath(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.UPDATE_NONE, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.UPDATE_NONE, null, null);
     } else if (line.startsWith(RESTORED)) {
       myCurrentFile = parseForPath(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.RESTORE, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.RESTORE, null, null);
     } else if (line.startsWith(SKIPPED)) {
       // called, for instance, when folder is not working copy
       myCurrentFile = parseForPath(line);
       final String comment = parseComment(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.SKIP,
+      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.SKIP,
                                comment == null ? null : SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, comment), null);
     } else if (line.startsWith(FETCHING_EXTERNAL)) {
       myCurrentFile = parseForPath(line);
-      return new ProgressEvent(myCurrentFile, -1, null, null, SVNEventAction.UPDATE_EXTERNAL, null, null);
+      return new ProgressEvent(myCurrentFile, -1, null, null, EventAction.UPDATE_EXTERNAL, null, null);
     }
 
     for (int i = 0; i < ourCompletePatterns.length; i++) {
@@ -109,7 +109,7 @@ public class UpdateOutputLineConverter {
       if (revision != -1) {
         // TODO: seems that myCurrentFile will not always be correct - complete update message could be right after complete externals update
         // TODO: check this and use Stack instead
-        return new ProgressEvent(myCurrentFile, revision, null, null, SVNEventAction.UPDATE_COMPLETED, null, null);
+        return new ProgressEvent(myCurrentFile, revision, null, null, EventAction.UPDATE_COMPLETED, null, null);
       }
     }
 
@@ -137,21 +137,21 @@ public class UpdateOutputLineConverter {
     final File file = createFile(path);
     if (SVNStatusType.STATUS_OBSTRUCTED.equals(contentsStatus)) {
       // obstructed
-      return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
+      return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, EventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
     }
     
-    SVNEventAction action;
-    SVNEventAction expectedAction;
+    EventAction action;
+    EventAction expectedAction;
     if (SVNStatusType.STATUS_ADDED.equals(contentsStatus)) {
-      expectedAction = SVNEventAction.UPDATE_ADD;
+      expectedAction = EventAction.UPDATE_ADD;
     } else if (SVNStatusType.STATUS_DELETED.equals(contentsStatus)) {
-      expectedAction = SVNEventAction.UPDATE_DELETE;
+      expectedAction = EventAction.UPDATE_DELETE;
     } else {
-      expectedAction = SVNEventAction.UPDATE_UPDATE;
+      expectedAction = EventAction.UPDATE_UPDATE;
     }
     action = expectedAction;
     if (haveTreeConflict) {
-      action = SVNEventAction.TREE_CONFLICT;
+      action = EventAction.TREE_CONFLICT;
     }
 
     return new ProgressEvent(file, -1, contentsStatus, propertiesStatus, action, null, null);

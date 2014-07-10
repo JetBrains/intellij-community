@@ -27,10 +27,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 import java.io.File;
 import java.util.List;
@@ -134,22 +134,22 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
   }
 
   @NotNull
-  private static CommitEventType convert(@NotNull SVNEventAction action) {
+  private static CommitEventType convert(@NotNull EventAction action) {
     CommitEventType result = CommitEventType.unknown;
 
-    if (SVNEventAction.COMMIT_ADDED.equals(action)) {
+    if (EventAction.COMMIT_ADDED.equals(action)) {
       result = CommitEventType.adding;
-    } else if (SVNEventAction.COMMIT_DELETED.equals(action)) {
+    } else if (EventAction.COMMIT_DELETED.equals(action)) {
       result = CommitEventType.deleting;
-    } else if (SVNEventAction.COMMIT_MODIFIED.equals(action)) {
+    } else if (EventAction.COMMIT_MODIFIED.equals(action)) {
       result = CommitEventType.sending;
-    } else if (SVNEventAction.COMMIT_REPLACED.equals(action)) {
+    } else if (EventAction.COMMIT_REPLACED.equals(action)) {
       result = CommitEventType.replacing;
-    } else if (SVNEventAction.COMMIT_DELTA_SENT.equals(action)) {
+    } else if (EventAction.COMMIT_DELTA_SENT.equals(action)) {
       result = CommitEventType.transmittingDeltas;
-    } else if (SVNEventAction.SKIP.equals(action)) {
+    } else if (EventAction.SKIP.equals(action)) {
       result = CommitEventType.skipped;
-    } else if (SVNEventAction.FAILED_OUT_OF_DATE.equals(action)) {
+    } else if (EventAction.FAILED_OUT_OF_DATE.equals(action)) {
       result = CommitEventType.failedOutOfDate;
     }
 

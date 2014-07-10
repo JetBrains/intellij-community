@@ -33,11 +33,11 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -162,15 +162,15 @@ public class SvnFormatWorker extends Task.Backgroundable {
       @Override
       public void consume(ProgressEvent event) throws SVNException {
         if (event.getFile() != null) {
-          if (SVNEventAction.UPGRADED_PATH.equals(event.getAction())) {
+          if (EventAction.UPGRADED_PATH.equals(event.getAction())) {
             indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
           }
           // fake event indicating cleanup start
-          if (SVNEventAction.UPDATE_STARTED.equals(event.getAction())) {
+          if (EventAction.UPDATE_STARTED.equals(event.getAction())) {
             indicator.setText(cleanupMessage);
           }
           // fake event indicating upgrade start
-          if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
+          if (EventAction.UPDATE_COMPLETED.equals(event.getAction())) {
             indicator.setText(upgradeMessage);
           }
         }
