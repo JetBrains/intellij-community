@@ -33,23 +33,6 @@ public class ReplaceDialog extends SearchDialog {
     return SSRBundle.message("structural.replace.title");
   }
 
-  protected boolean isChanged(Configuration configuration) {
-    if (super.isChanged(configuration)) return true;
-
-    String replacement;
-
-    if (configuration instanceof ReplaceConfiguration) {
-      replacement = ((ReplaceConfiguration)configuration).getOptions().getReplacement();
-    }
-    else {
-      replacement = configuration.getMatchOptions().getSearchPattern();
-    }
-
-    if (replacement == null) return false;
-
-    return !replaceCriteriaEdit.getDocument().getText().equals(replacement);
-  }
-
   protected JComponent createEditorContent() {
     JPanel result = new JPanel(new BorderLayout());
     Splitter p;

@@ -135,11 +135,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     this.useLastConfiguration = useLastConfiguration;
   }
 
-  protected boolean isChanged(Configuration configuration) {
-    return configuration.getMatchOptions().getSearchPattern() != null &&
-           !searchCriteriaEdit.getDocument().getText().equals(configuration.getMatchOptions().getSearchPattern());
-  }
-
   public void setSearchPattern(final Configuration config) {
     model.setShadowConfig(config);
     setValuesFromConfig(config);

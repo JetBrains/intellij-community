@@ -449,9 +449,13 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         element.getParent().deleteChildRange(firstToDelete, lastToDelete);
       }
     }
-    
-    if (options.isToShortenFQN() && elementParent.isValid()) {
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(elementParent, 0, elementParent.getTextLength());
+  }
+
+  @Override
+  public void postprocess(PsiElement affectedElement, ReplaceOptions options) {
+    if (options.isToShortenFQN() && affectedElement.isValid()) {
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(affectedElement.getProject());
+      codeStyleManager.shortenClassReferences(affectedElement, 0, affectedElement.getTextLength());
     }
   }
 
