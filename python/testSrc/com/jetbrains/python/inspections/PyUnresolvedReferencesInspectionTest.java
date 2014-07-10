@@ -366,6 +366,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-13140
   public void testPrivateModuleNames() {
     doMultiFileTest();
   }

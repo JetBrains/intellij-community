@@ -618,7 +618,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-13140
   public void testModulePrivateNamesCompletedInsideImport() {
-    //doMultiFileTest();
     myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
     myFixture.configureByFile("a.py");
     myFixture.completeBasic();
