@@ -4,10 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
@@ -442,6 +439,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("ret").hasValue("16");
         resume();
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython"); //TODO: fix that for Jython if anybody needs it
       }
     });
   }
