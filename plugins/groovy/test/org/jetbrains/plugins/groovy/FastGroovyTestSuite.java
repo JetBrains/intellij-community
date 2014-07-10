@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
+import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest;
@@ -45,7 +46,7 @@ public class FastGroovyTestSuite {
   private static boolean isSlow(Class aClass) {
     return aClass.equals(GroovyDebuggerTest.class) ||
            aClass.equals(GroovyStressPerformanceTest.class) ||
-           aClass.getName().startsWith(GroovyCompilerTest.class.getName());
+           aClass.getName().startsWith(GroovyCompilerTest.class.getName()) ||
+           ExternalSystemTestCase.class.isAssignableFrom(aClass);
   }
-
 }
