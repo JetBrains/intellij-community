@@ -127,9 +127,9 @@ public abstract class GroupedElementsRenderer {
   }
 
 
-  protected final  void setDeselected(JComponent aComponent) {
+  protected final void setDeselected(JComponent aComponent) {
     aComponent.setBackground(getBackground());
-    aComponent.setForeground(Registry.is("ide.new.project.settings") ? Gray._60 : getForeground());
+    aComponent.setForeground(getForeground());
   }
 
   protected abstract Color getSelectionBackground();

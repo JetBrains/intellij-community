@@ -18,9 +18,7 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.EngravedLabel;
 import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.Gray;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.components.panels.OpaquePanel;
 
@@ -58,15 +56,8 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
   @Override
   protected JComponent createItemComponent() {
-    if (Registry.is("ide.new.project.settings")) {
-      myTextLabel = new EngravedLabel();
-      myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
-      myTextLabel.setForeground(Gray._240);
-    } else {
-      myTextLabel = new ErrorLabel();
-      myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-    }
-
+    myTextLabel = new ErrorLabel();
+    myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     myTextLabel.setOpaque(true);
     return layoutComponent(myTextLabel);
   }

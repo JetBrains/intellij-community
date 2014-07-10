@@ -18,6 +18,8 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.EngravedLabel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.navigation.History;
@@ -93,6 +95,19 @@ public class SidePanel extends JPanel {
       {
         mySeparatorComponent.setCaptionCentered(false);
       }
+
+      @Override
+      protected JComponent createItemComponent() {
+        if (Registry.is("ide.new.project.settings")) {
+          myTextLabel = new EngravedLabel();
+          myTextLabel.setFont(myTextLabel.getFont().deriveFont(Font.BOLD));
+          myTextLabel.setForeground(Gray._240);
+          myTextLabel.setOpaque(true);
+          return layoutComponent(myTextLabel);
+        }
+        return super.createItemComponent();
+      }
+
       @Override
       protected Color getBackground() {
         return Registry.is("ide.new.project.settings") ? new Color(0xD2D6DD) : super.getBackground();
