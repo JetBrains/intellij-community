@@ -83,8 +83,8 @@ public class MethodEvaluator implements Evaluator {
       ReferenceType referenceType = null;
 
       if(object instanceof ObjectReference) {
-        final ReferenceType qualifierType = ((ObjectReference)object).referenceType();
-        referenceType = debugProcess.findClass(context, qualifierType.name(), qualifierType.classLoader());
+        // it seems that if we have an object of the class, the class must be ready, so no need to use findClass here
+        referenceType = ((ObjectReference)object).referenceType();
       }
       else if(object instanceof ClassType) {
         final ClassType qualifierType = (ClassType)object;
