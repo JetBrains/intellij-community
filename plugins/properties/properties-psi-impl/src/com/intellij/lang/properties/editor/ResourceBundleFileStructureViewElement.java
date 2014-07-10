@@ -25,7 +25,6 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,7 +87,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   }
 
   @Override
-  public PsiElement[] getPsiElements(@NotNull Project project) {
+  public PsiElement[] getPsiElements() {
     final List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
     return ContainerUtil.map2Array(propertiesFiles, new PsiElement[propertiesFiles.size()], new Function<PropertiesFile, PsiElement>() {
       @Override

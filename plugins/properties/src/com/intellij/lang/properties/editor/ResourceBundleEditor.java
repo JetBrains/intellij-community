@@ -123,29 +123,39 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
     myStructureViewComponent.getTree().getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      private String selectedPropertyName;
+      private IProperty selectedProperty;
       private PropertiesFile selectedPropertiesFile;
 
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         // filter out temp unselect/select events
-        if (getSelectedPropertyName() == null) return;
-        if (!Comparing.strEqual(selectedPropertyName, getSelectedPropertyName()) ||
+        if (getSelectedProperty() == null) return;
+        if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
 
           if (e.getOldLeadSelectionPath() != null) {
             for (Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
               if (entry.getValue() == mySelectedEditor) {
-                writeEditorPropertyValue(mySelectedEditor, entry.getKey(), selectedPropertyName);
+                writeEditorPropertyValue(mySelectedEditor, entry.getKey(), selectedProperty.getName());
                 break;
               }
             }
           }
 
-          selectedPropertyName = getSelectedPropertyName();
+          selectedProperty = getSelectedProperty();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
         }
+      }
+
+      private boolean arePropertiesEquivalent(@Nullable IProperty p1, @Nullable IProperty p2) {
+        if (p1 == p2) {
+          return true;
+        }
+        if (p1 == null || p2 == null) {
+          return false;
+        }
+        return p1.getPsiElement().isEquivalentTo(p2.getPsiElement());
       }
     });
     installPropertiesChangeListeners();
@@ -233,7 +243,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     DefaultMutableTreeNode nodeToSelect = null;
     while (!toCheck.isEmpty()) {
       DefaultMutableTreeNode node = toCheck.pop();
-      String value = getNodeValue(node);
+      final ResourceBundleEditorViewElement element = getSelectedElement(node);
+      String value = element instanceof ResourceBundlePropertyStructureViewElement
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
+                     : null;
       if (propertyName.equals(value)) {
         nodeToSelect = node;
         break;
@@ -279,13 +292,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   @Nullable
-  private static String getNodeValue(@NotNull DefaultMutableTreeNode node) {
-    final ResourceBundleEditorViewElement element = getSelectedElement(node);
-    return element instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
-                                                                       : null;
-  }
-
-  @Nullable
   private static ResourceBundleEditorViewElement getSelectedElement(@NotNull DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (!(userObject instanceof AbstractTreeNode)) return null;
@@ -296,8 +302,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private void writeEditorPropertyValue(final Editor editor, final PropertiesFile propertiesFile, final @Nullable String propertyName) {
     final String currentValue = editor.getDocument().getText();
     final String currentSelectedProperty = propertyName ==  null ? getSelectedPropertyName() : propertyName;
-
-    assert currentSelectedProperty != null;
+    if (currentSelectedProperty == null) {
+      return;
+    }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -564,21 +571,41 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   @Nullable
-  public String getSelectedPropertyName() {
+  private DefaultMutableTreeNode getSelectedNode() {
     JTree tree = myStructureViewComponent.getTree();
     if (tree == null) return null;
     TreePath selected = tree.getSelectionModel().getSelectionPath();
     if (selected == null) return null;
-    return getNodeValue((DefaultMutableTreeNode)selected.getLastPathComponent());
+    return (DefaultMutableTreeNode)selected.getLastPathComponent();
+  }
+
+  @Nullable
+  private String getSelectedPropertyName() {
+    final IProperty selectedProperty = getSelectedProperty();
+    return selectedProperty == null ? null : selectedProperty.getName();
+  }
+
+  @Nullable
+  private IProperty getSelectedProperty() {
+    final DefaultMutableTreeNode selectedNode = getSelectedNode();
+    if (selectedNode == null) {
+      return null;
+    }
+    final ResourceBundleEditorViewElement element = getSelectedElement(selectedNode);
+    return element instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)element).getProperty()
+                                                                       : null;
   }
 
   @Nullable
   public ResourceBundleEditorViewElement getSelectedElement() {
-    JTree tree = myStructureViewComponent.getTree();
-    if (tree == null) return null;
-    TreePath selected = tree.getSelectionModel().getSelectionPath();
-    if (selected == null) return null;
-    return getSelectedElement((DefaultMutableTreeNode)selected.getLastPathComponent());
+    final DefaultMutableTreeNode selectedNode = getSelectedNode();
+    if (selectedNode == null) {
+      return null;
+    }
+    Object userObject = selectedNode.getUserObject();
+    if (!(userObject instanceof AbstractTreeNode)) return null;
+    Object value = ((AbstractTreeNode)userObject).getValue();
+    return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
   }
 
   @Override

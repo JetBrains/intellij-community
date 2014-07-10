@@ -64,7 +64,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
       if (baseName.equals(getBaseName(psiFile))) {
         final PropertiesFile propertiesFile = getPropertiesFile(psiFile);
         if (propertiesFile != null) {
-          if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) < 0) {
+          if (defaultPropertiesFile == null || defaultPropertiesFile.getName().compareTo(propertiesFile.getName()) > 0) {
             defaultPropertiesFile = propertiesFile;
           }
         }
