@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,23 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
  */
-public class NonClasspathDirectoryScope extends GlobalSearchScope {
-  private final VirtualFile myRoot;
+public class NonClasspathDirectoriesScope extends GlobalSearchScope {
+  private final Set<VirtualFile> myRoots;
 
-  public NonClasspathDirectoryScope(@NotNull VirtualFile root) {
-    myRoot = root;
+  public NonClasspathDirectoriesScope(@NotNull Collection<VirtualFile> roots) {
+    myRoots = ContainerUtil.newHashSet(roots);
   }
 
   @Override
@@ -44,16 +47,12 @@ public class NonClasspathDirectoryScope extends GlobalSearchScope {
       return EMPTY_SCOPE;
     }
 
-    GlobalSearchScope scope = new NonClasspathDirectoryScope(roots.get(0));
-    for (int i = 1; i < roots.size(); i++) {
-      scope = scope.uniteWith(new NonClasspathDirectoryScope(roots.get(i)));
-    }
-    return scope;
+    return new NonClasspathDirectoriesScope(roots);
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return VfsUtil.isAncestor(myRoot, file, false);
+    return VfsUtilCore.isUnder(file, myRoots);
   }
 
   @Override
@@ -74,11 +73,11 @@ public class NonClasspathDirectoryScope extends GlobalSearchScope {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof NonClasspathDirectoryScope)) return false;
+    if (!(o instanceof NonClasspathDirectoriesScope)) return false;
 
-    NonClasspathDirectoryScope that = (NonClasspathDirectoryScope)o;
+    NonClasspathDirectoriesScope that = (NonClasspathDirectoriesScope)o;
 
-    if (!myRoot.equals(that.myRoot)) return false;
+    if (!myRoots.equals(that.myRoots)) return false;
 
     return true;
   }
@@ -86,7 +85,7 @@ public class NonClasspathDirectoryScope extends GlobalSearchScope {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myRoot.hashCode();
+    result = 31 * result + myRoots.hashCode();
     return result;
   }
 }

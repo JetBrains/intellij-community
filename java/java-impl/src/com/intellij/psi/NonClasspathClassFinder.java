@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.NonClasspathDirectoryScope;
+import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -199,7 +198,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   private PsiPackageImpl createPackage(String qualifiedName) {
-    return new PsiPackageImpl((PsiManagerEx)myManager, qualifiedName);
+    return new PsiPackageImpl(myManager, qualifiedName);
   }
 
   @Override
@@ -271,7 +270,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     GlobalSearchScope scope = base;
     for (PsiElementFinder finder : Extensions.getExtensions(EP_NAME, project)) {
       if (finder instanceof NonClasspathClassFinder) {
-        scope = scope.uniteWith(NonClasspathDirectoryScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
+        scope = scope.uniteWith(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
       }
     }
     return scope;
