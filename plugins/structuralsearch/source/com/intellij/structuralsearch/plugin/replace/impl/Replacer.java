@@ -228,7 +228,7 @@ public class Replacer {
             .reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
         }
         if (replaceHandler != null) {
-          replaceHandler.postprocess(elementParent, options);
+          replaceHandler.postProcess(elementParent, options);
         }
       }
     };

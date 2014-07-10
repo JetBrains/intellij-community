@@ -12,5 +12,5 @@ public abstract class StructuralReplaceHandler {
 
   public void prepare(ReplacementInfo info) {}
 
-  public void postprocess(PsiElement affectedElement, ReplaceOptions options) {}
+  public void postProcess(PsiElement affectedElement, ReplaceOptions options) {}
 }

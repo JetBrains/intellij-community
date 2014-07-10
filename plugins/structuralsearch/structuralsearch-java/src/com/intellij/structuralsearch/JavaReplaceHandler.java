@@ -35,15 +35,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
   private PsiCodeBlock getCodeBlock() throws IncorrectOperationException {
     if (codeBlock == null) {
-      PsiCodeBlock search;
-      search = (PsiCodeBlock)MatcherImplUtil.createTreeFromText(
+      codeBlock = (PsiCodeBlock)MatcherImplUtil.createTreeFromText(
         myContext.getOptions().getMatchOptions().getSearchPattern(),
         PatternTreeContext.Block,
         myContext.getOptions().getMatchOptions().getFileType(),
         myContext.getProject()
       )[0].getParent();
-
-      codeBlock = search;
     }
     return codeBlock;
   }
@@ -452,7 +449,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void postprocess(PsiElement affectedElement, ReplaceOptions options) {
+  public void postProcess(PsiElement affectedElement, ReplaceOptions options) {
     if (options.isToShortenFQN() && affectedElement.isValid()) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(affectedElement.getProject());
       codeStyleManager.shortenClassReferences(affectedElement, 0, affectedElement.getTextLength());
