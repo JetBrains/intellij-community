@@ -14,7 +14,6 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -42,74 +41,72 @@ public class SearchCommand {
   public void findUsages(final Processor<Usage> processor) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
+    final MatchResultSink sink = new MatchResultSink() {
+      int count;
+
+      public void setMatchingProcess(MatchingProcess _process) {
+        process = _process;
+        findStarted();
+      }
+
+      public void processFile(PsiFile element) {
+        final VirtualFile virtualFile = element.getVirtualFile();
+        if (virtualFile != null)
+          progress.setText(SSRBundle.message("looking.in.progress.message", virtualFile.getPresentableName()));
+      }
+
+      public void matchingFinished() {
+        findEnded();
+        progress.setText(SSRBundle.message("found.progress.message", count));
+      }
+
+      public ProgressIndicator getProgressIndicator() {
+        return progress;
+      }
+
+      public void newMatch(MatchResult result) {
+        UsageInfo info;
+
+        if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
+          int start = -1;
+          int end = -1;
+          PsiElement parent = result.getMatchRef().getElement().getParent();
+
+          for (final MatchResult matchResult : ((MatchResultImpl)result).getMatches()) {
+            PsiElement el = matchResult.getMatchRef().getElement();
+            final int elementStart = el.getTextRange().getStartOffset();
+
+            if (start == -1 || start > elementStart) {
+              start = elementStart;
+            }
+            final int newend = elementStart + el.getTextLength();
+
+            if (newend > end) {
+              end = newend;
+            }
+          }
+
+          final int parentStart = parent.getTextRange().getStartOffset();
+          int startOffset = start - parentStart;
+          info = new UsageInfo(parent, startOffset, end - parentStart);
+        }
+        else {
+          PsiElement element = result.getMatch();
+          if (element instanceof PsiNameIdentifierOwner) {
+            element = ObjectUtils.notNull(((PsiNameIdentifierOwner)element).getNameIdentifier(), element);
+          }
+          info = new UsageInfo(element, result.getStart(), result.getEnd() == -1 ? element.getTextLength() : result.getEnd());
+        }
+
+        Usage usage = new UsageInfo2UsageAdapter(info);
+        processor.process(usage);
+        foundUsage(result, usage);
+        ++count;
+      }
+    };
+
     try {
-      DoSearchAction.execute(
-        project,
-        new MatchResultSink() {
-          int count;
-
-          public void setMatchingProcess(MatchingProcess _process) {
-            process = _process;
-            findStarted();
-          }
-
-          public void processFile(PsiFile element) {
-            final VirtualFile virtualFile = element.getVirtualFile();
-            if (virtualFile != null)
-              progress.setText(SSRBundle.message("looking.in.progress.message", virtualFile.getPresentableName()));
-          }
-
-          public void matchingFinished() {
-            findEnded();
-            progress.setText(SSRBundle.message("found.progress.message", count));
-          }
-
-          public ProgressIndicator getProgressIndicator() {
-            return progress;
-          }
-
-          public void newMatch(MatchResult result) {
-            UsageInfo info;
-
-            if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
-              int start = -1;
-              int end = -1;
-              PsiElement parent = result.getMatchRef().getElement().getParent();
-
-              for (final MatchResult matchResult : ((MatchResultImpl)result).getMatches()) {
-                PsiElement el = matchResult.getMatchRef().getElement();
-                final int elementStart = el.getTextRange().getStartOffset();
-
-                if (start == -1 || start > elementStart) {
-                  start = elementStart;
-                }
-                final int newend = elementStart + el.getTextLength();
-
-                if (newend > end) {
-                  end = newend;
-                }
-              }
-
-              final int parentStart = parent.getTextRange().getStartOffset();
-              int startOffset = start - parentStart;
-              info = new UsageInfo(parent, startOffset, end - parentStart);
-            }
-            else {
-              PsiElement element = result.getMatch();
-              if (element instanceof PsiNameIdentifierOwner) {
-                element = ObjectUtils.notNull(((PsiNameIdentifierOwner)element).getNameIdentifier(), element);
-              }
-              info = new UsageInfo(element, result.getStart(), result.getEnd() == -1 ? element.getTextLength() : result.getEnd());
-            }
-
-            Usage usage = new UsageInfo2UsageAdapter(info);
-            processor.process(usage);
-            foundUsage(result, usage);
-            ++count;
-          }
-        },
-        context.getConfiguration()
-      );
+      new Matcher(project).findMatches(sink, context.getConfiguration().getMatchOptions());
     }
     catch (final StructuralSearchException e) {
       final Alarm alarm = new Alarm();
