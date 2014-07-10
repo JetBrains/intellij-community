@@ -17,16 +17,20 @@ package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -48,35 +52,56 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     myProjectFileIndex = ProjectRootManager.getInstance(myModule.getProject()).getFileIndex();
     myProjectScope = ProjectScope.getProjectScope(myModule.getProject());
 
-    myModules = new HashSet<Module>();
-    myModules.add(myModule);
-
-    fillModules();
+    myModules = fillModules();
   }
 
-  private void fillModules() {
+  private Set<Module> fillModules() {
+    Set<Module> result = new THashSet<Module>();
+    result.add(myModule);
+
+    ModuleIndex index = getModuleIndex(myModule.getProject());
+
     Queue<Module> walkingQueue = new Queue<Module>(10);
     walkingQueue.addLast(myModule);
 
-    Module[] allModules = ModuleManager.getInstance(myModule.getProject()).getModules();
-    Set<Module> processed = new THashSet<Module>();
-
     while (!walkingQueue.isEmpty()) {
       Module current = walkingQueue.pullFirst();
-      processed.add(current);
-      for (Module dependent : allModules) {
-        for (OrderEntry orderEntry : ModuleRootManager.getInstance(dependent).getOrderEntries()) {
-          if (orderEntry instanceof ModuleOrderEntry && current.equals(((ModuleOrderEntry)orderEntry).getModule())) {
-            myModules.add(dependent);
-            if (!processed.contains(dependent) && ((ModuleOrderEntry)orderEntry).isExported()) {
-              walkingQueue.addLast(dependent);
-            }
-          }
+      result.addAll(index.plainUsages.get(current));
+      for (Module dependent : index.exportingUsages.get(current)) {
+        if (result.add(dependent)) {
+          walkingQueue.addLast(dependent);
         }
       }
     }
+    return result;
   }
 
+  private static class ModuleIndex {
+    final MultiMap<Module, Module> plainUsages = MultiMap.create();
+    final MultiMap<Module, Module> exportingUsages = MultiMap.create();
+  }
+
+  private static ModuleIndex getModuleIndex(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<ModuleIndex>() {
+      @Nullable
+      @Override
+      public Result<ModuleIndex> compute() {
+        ModuleIndex index = new ModuleIndex();
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+            if (orderEntry instanceof ModuleOrderEntry) {
+              Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
+              if (referenced != null) {
+                MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
+                map.putValue(referenced, module);
+              }
+            }
+          }
+        }
+        return Result.create(index, ProjectRootManager.getInstance(project));
+      }
+    });
+  }
 
   public boolean contains(@NotNull VirtualFile file) {
     Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
