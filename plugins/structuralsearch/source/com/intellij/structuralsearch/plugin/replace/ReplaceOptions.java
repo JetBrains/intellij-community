@@ -1,16 +1,12 @@
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
-import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -19,7 +15,7 @@ import java.util.*;
  * Date: Mar 5, 2004
  * Time: 7:51:38 PM
  */
-public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHolder {
+public class ReplaceOptions implements JDOMExternalizable, Cloneable {
   private Map<String, ReplacementVariableDefinition> variableDefs;
   private String replacement = "";
   private boolean toShortenFQN;
@@ -30,7 +26,6 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
   @NonNls private static final String REPLACEMENT_ATTR_NAME = "replacement";
   @NonNls private static final String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
 
-  private THashMap myUserMap = null;
   @NonNls private static final String VARIABLE_DEFINITION_TAG_NAME = "variableDefinition";
 
   public String getReplacement() {
@@ -144,16 +139,6 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
       e.printStackTrace();
       return null;
     }
-  }
-
-  public <T> T getUserData(@NotNull Key<T> key) {
-    if (myUserMap==null) return null;
-    return (T)myUserMap.get(key);
-  }
-
-  public <T> void putUserData(@NotNull Key<T> key, T value) {
-    if (myUserMap==null) myUserMap = new THashMap(1);
-    myUserMap.put(key,value);
   }
 
   public ReplacementVariableDefinition getVariableDefinition(String name) {
