@@ -160,18 +160,6 @@ public class Window implements Comparable{
     myTaskFile = file;
   }
 
-  public int getInitialLine() {
-    return myInitialLine;
-  }
-
-  public int getInitialStart() {
-    return myInitialStart;
-  }
-
-  public int getInitialLength() {
-    return myInitialLength;
-  }
-
   public TaskFile getTaskFile() {
     return myTaskFile;
   }

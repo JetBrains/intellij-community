@@ -66,7 +66,8 @@ public class StudyEditor implements FileEditor {
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    Task currentTask = StudyTaskManager.getInstance(project).getTaskFile(file).getTask();
+    TaskFile taskFile = StudyTaskManager.getInstance(project).getTaskFile(file);
+    Task currentTask = taskFile.getTask();
     final JLabel taskText = new JLabel(currentTask.getResourceText(project, currentTask.getText(), false));
     int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
     String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
@@ -77,22 +78,18 @@ public class StudyEditor implements FileEditor {
     JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     studyButtonPanel.add(taskActionsPanel);
     studyButtonPanel.add(new JPanel());
-    initializeButtons(project, studyPanel, studyButtonPanel, taskActionsPanel, currentTask.getInput() != null);
+    initializeButtons(project, taskActionsPanel, taskFile);
     studyPanel.add(studyButtonPanel);
     myComponent.add(studyPanel, BorderLayout.NORTH);
   }
 
-  private void initializeButtons(final Project project,
-                                 JPanel studyPanel,
-                                 JPanel studyButtonPanel,
-                                 JPanel taskActionsPanel,
-                                 boolean hasInputExample) {
+  private void initializeButtons(final Project project, JPanel taskActionsPanel, TaskFile taskFile) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
-    if (hasInputExample) {
+    if (taskFile.getTask().getInput()!=null) {
       myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
       myWatchInputButton.addActionListener(new ActionListener() {
         @Override
@@ -102,8 +99,16 @@ public class StudyEditor implements FileEditor {
         }
       });
     }
-
-    addButton(taskActionsPanel, "Run", StudyIcons.Run);
+    if (taskFile.getTask().getTaskFiles().size() == 1) {
+      JButton runButton = addButton(taskActionsPanel, "Run", StudyIcons.Run);
+      runButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          StudyRunAction studyRunAction = (StudyRunAction)ActionManager.getInstance().getAction("StudyRunAction");
+          studyRunAction.run(project);
+        }
+      });
+    }
     myCheckButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
