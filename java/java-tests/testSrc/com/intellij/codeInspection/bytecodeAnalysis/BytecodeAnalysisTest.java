@@ -33,6 +33,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -81,24 +82,24 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     final HashMap<Method, boolean[]> map = new HashMap<Method, boolean[]>();
 
     // collecting leakedParameters
-    final ClassReader classReader = new ClassReader(jClass.getCanonicalName());
-      classReader.accept(new ClassVisitor(Opcodes.ASM5) {
-        @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
-          final Method method = new Method(classReader.getClassName(), name, desc);
-          return new MethodVisitor(Opcodes.ASM5, node) {
-            @Override
-            public void visitEnd() {
-              super.visitEnd();
-              try {
-                map.put(method, cfg.leakingParameters(classReader.getClassName(), node));
-              }
-              catch (AnalyzerException ignore) {}
+    final ClassReader classReader = new ClassReader(new FileInputStream(jClass.getResource("/" + jClass.getName().replace('.', '/') + ".class").getFile()));
+    classReader.accept(new ClassVisitor(Opcodes.ASM5) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        final MethodNode node = new MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions);
+        final Method method = new Method(classReader.getClassName(), name, desc);
+        return new MethodVisitor(Opcodes.ASM5, node) {
+          @Override
+          public void visitEnd() {
+            super.visitEnd();
+            try {
+              map.put(method, cfg.leakingParameters(classReader.getClassName(), node));
             }
-          };
-        }
-      }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            catch (AnalyzerException ignore) {}
+          }
+        };
+      }
+    }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     for (java.lang.reflect.Method jMethod : jClass.getDeclaredMethods()) {
       Method method = new Method(Type.getType(jClass).getInternalName(), jMethod.getName(), Type.getMethodDescriptor(jMethod));
