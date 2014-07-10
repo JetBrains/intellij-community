@@ -1,6 +1,5 @@
 package ru.compscicenter.edide.course;
 
-import com.google.gson.annotations.Expose;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -15,12 +14,11 @@ import java.util.List;
  * Time: 18:40
  */
 public class Lesson {
-  @Expose
   private String name;
-  @Expose
   private List<Task> taskList;
   private Course myCourse = null;
   private int myIndex = -1;
+  public static final String LESSON_DIR = "lesson";
 
   public boolean isResolved() {
     for (Task task:taskList) {
@@ -47,7 +45,7 @@ public class Lesson {
   }
 
   public void create(final Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
-    VirtualFile lessonDir =  baseDir.createChildDirectory(this, "lesson" + Integer.toString(myIndex + 1));
+    VirtualFile lessonDir =  baseDir.createChildDirectory(this, LESSON_DIR + Integer.toString(myIndex + 1));
     for (int i = 0; i < taskList.size(); i++) {
       taskList.get(i).setIndex(i);
       taskList.get(i).create(project, lessonDir, new File(resourseRoot, lessonDir.getName()));

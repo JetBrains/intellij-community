@@ -1,15 +1,8 @@
 package ru.compscicenter.edide;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
@@ -17,30 +10,20 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HideableTitledPanel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.awt.RelativePoint;
 import icons.StudyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.compscicenter.edide.actions.CheckAction;
-import ru.compscicenter.edide.actions.NextTaskAction;
-import ru.compscicenter.edide.actions.PreviousTaskAction;
-import ru.compscicenter.edide.actions.RefreshTaskAction;
+import ru.compscicenter.edide.actions.*;
 import ru.compscicenter.edide.course.*;
-import ru.compscicenter.edide.course.Window;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
-import java.io.*;
 
 /**
  * User: lia
@@ -48,12 +31,18 @@ import java.io.*;
  * Time: 14:16
  */
 public class StudyEditor implements FileEditor {
+  private static final String TASK_TEXT_HEADER = "Task Text";
   private final FileEditor myDefaultEditor;
   private final JComponent myComponent;
   private JButton myCheckButton;
   private JButton myNextTaskButton;
   private JButton myPrevTaskButton;
   private JButton myRefreshButton;
+  private JButton myWatchInputButton;
+
+  public JButton getWatchInputButton() {
+    return myWatchInputButton;
+  }
 
   public JButton getCheckButton() {
     return myCheckButton;
@@ -61,26 +50,6 @@ public class StudyEditor implements FileEditor {
 
   public JButton getPrevTaskButton() {
     return myPrevTaskButton;
-  }
-
-  private String getTextForTask(VirtualFile file, Project project) {
-    Task currentTask = StudyTaskManager.getInstance(project).getTaskFile(file).getTask();
-    String textFileName = currentTask.getText();
-    File textFile = new File(file.getParent().getCanonicalPath(), textFileName);
-    StringBuilder taskText = new StringBuilder();
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(textFile)));
-      while (reader.ready()) {
-        taskText.append(reader.readLine());
-      }
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    return taskText.toString();
   }
 
   private JButton addButton(JComponent parentComponent, String toolTipText, Icon icon) {
@@ -97,30 +66,44 @@ public class StudyEditor implements FileEditor {
     myComponent = myDefaultEditor.getComponent();
     JPanel studyPanel = new JPanel();
     studyPanel.setLayout(new BoxLayout(studyPanel, BoxLayout.Y_AXIS));
-    final JLabel taskText = new JLabel(getTextForTask(file, project));
+    Task currentTask = StudyTaskManager.getInstance(project).getTaskFile(file).getTask();
+    final JLabel taskText = new JLabel(currentTask.getResourceText(project, currentTask.getText(), false));
     int fontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
     String fontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
     taskText.setFont(new Font(fontName, Font.PLAIN, fontSize));
-    HideableTitledPanel taskTextPanel = new HideableTitledPanel("Task Text", taskText, true);
+    HideableTitledPanel taskTextPanel = new HideableTitledPanel(TASK_TEXT_HEADER, taskText, true);
     studyPanel.add(taskTextPanel);
     JPanel studyButtonPanel = new JPanel(new GridLayout(1, 2));
     JPanel taskActionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     studyButtonPanel.add(taskActionsPanel);
     studyButtonPanel.add(new JPanel());
-    initializeButtons(project, studyPanel, studyButtonPanel, taskActionsPanel);
+    initializeButtons(project, studyPanel, studyButtonPanel, taskActionsPanel, currentTask.getInput() != null);
     studyPanel.add(studyButtonPanel);
     myComponent.add(studyPanel, BorderLayout.NORTH);
   }
 
-  private void initializeButtons(final Project project, JPanel studyPanel, JPanel studyButtonPanel, JPanel taskActionsPanel) {
+  private void initializeButtons(final Project project,
+                                 JPanel studyPanel,
+                                 JPanel studyButtonPanel,
+                                 JPanel taskActionsPanel,
+                                 boolean hasInputExample) {
     myCheckButton = addButton(taskActionsPanel, "Check task", StudyIcons.Resolve);
     myPrevTaskButton = addButton(taskActionsPanel, "Prev Task", StudyIcons.Prev);
     myNextTaskButton = addButton(taskActionsPanel, "Next Task", StudyIcons.Next);
     myRefreshButton = addButton(taskActionsPanel, "Start task again", StudyIcons.Refresh24);
     addButton(taskActionsPanel, "Remind shortcuts", StudyIcons.ShortcutReminder);
-    addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
-    addButton(taskActionsPanel, "Run", StudyIcons.Run);
+    if (hasInputExample) {
+      myWatchInputButton = addButton(taskActionsPanel, "Watch test input", StudyIcons.WatchInput);
+      myWatchInputButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          WatchInputAction watchInputAction = (WatchInputAction)ActionManager.getInstance().getAction("WatchInputAction");
+          watchInputAction.showInput(project);
+        }
+      });
+    }
 
+    addButton(taskActionsPanel, "Run", StudyIcons.Run);
     myCheckButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

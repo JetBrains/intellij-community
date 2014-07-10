@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import ru.compscicenter.edide.StudyTaskManager;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -17,6 +17,7 @@ import java.util.List;
  */
 public class Task {
   private static final Logger LOG = Logger.getInstance(Task.class.getName());
+  public static final String TASK_DIR = "task";
   private String testFile;
   private String name;
   private String text;
@@ -24,6 +25,8 @@ public class Task {
   private Lesson myLesson;
   private boolean mySolved = false;
   private int myIndex;
+  private String input = null;
+  private String output = null;
 
 
   public boolean isSolved() {
@@ -75,15 +78,23 @@ public class Task {
     this.text = text;
   }
 
-  public void create(Project project, VirtualFile baseDir, File resourseRoot) throws IOException {
-    VirtualFile taskDir = baseDir.createChildDirectory(this, "task" + Integer.toString(myIndex + 1));
-    File newResourceRoot = new File(resourseRoot, taskDir.getName());
+  public void create(Project project, VirtualFile baseDir, File resourceRoot) throws IOException {
+    VirtualFile taskDir = baseDir.createChildDirectory(this, TASK_DIR + Integer.toString(myIndex + 1));
+    File newResourceRoot = new File(resourceRoot, taskDir.getName());
     for (int i = 0; i < taskFiles.size(); i++) {
       taskFiles.get(i).setIndex(i);
       taskFiles.get(i).create(project, taskDir, newResourceRoot);
     }
-    FileUtil.copy(new File(newResourceRoot, text), new File(taskDir.getCanonicalPath(), text));
-    FileUtil.copy(new File(newResourceRoot, testFile), new File(taskDir.getCanonicalPath(), testFile));
+    File[] filesInTask = newResourceRoot.listFiles();
+    if (filesInTask != null) {
+      for (File file : filesInTask) {
+        for (TaskFile taskFile : taskFiles) {
+          if (!file.getName().equals(taskFile.getName())) {
+            FileUtil.copy(new File(newResourceRoot, file.getName()), new File(taskDir.getCanonicalPath(), file.getName()));
+          }
+        }
+      }
+    }
   }
 
   public TaskFile getFile(String fileName) {
@@ -95,11 +106,11 @@ public class Task {
     return null;
   }
 
+
   public Element saveState() {
     Element taskElement = new Element("task");
     taskElement.setAttribute("testFile", testFile);
     taskElement.setAttribute("name", name);
-    //TODO:replace with real text, not fileName
     taskElement.setAttribute("text", text);
     for (TaskFile file : taskFiles) {
       taskElement.addContent(file.saveState());
@@ -148,5 +159,61 @@ public class Task {
       return null;
     }
     return prevLesson.getTaskList().get(prevLesson.getTaskList().size() - 1);
+  }
+
+  public String getInput() {
+    return input;
+  }
+
+  public String getOutput() {
+    return output;
+  }
+
+  //you should check if there is such resourceFile
+  public String getResourceText(Project project, String fileName, boolean wrapHTML) {
+    String lessonDirName = Lesson.LESSON_DIR + String.valueOf(myLesson.getIndex() + 1);
+    String taskDirName = TASK_DIR + String.valueOf(myIndex + 1);
+    BufferedReader reader = null;
+    try {
+      VirtualFile parentDir = project.getBaseDir().findChild(Course.COURSE_DIR).findChild(lessonDirName).findChild(taskDirName);
+      File inputFile = new File(parentDir.getCanonicalPath(), fileName);
+      StringBuilder taskText = new StringBuilder();
+      if (wrapHTML) {
+        taskText.append("<html>");
+      }
+
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile)));
+      String line =  null;
+      while ((line = reader.readLine()) != null) {
+        taskText.append(line);
+        if (wrapHTML) {
+          taskText.append("<br>");
+        }
+      }
+      if (wrapHTML) {
+        taskText.append("</html>");
+      }
+      return taskText.toString();
+    }
+    catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    catch (NullPointerException e) {
+      LOG.error("not valid project structure'");
+    }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    return null;
   }
 }

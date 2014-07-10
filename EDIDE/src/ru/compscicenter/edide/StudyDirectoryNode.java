@@ -48,11 +48,14 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
         }
       }
     }
-    if (myValue.getName().equals(myProject.getName())) {
-      data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
-    } else {
-      data.setPresentableText(myValue.getName());
+    PsiDirectory parent = myValue.getParent();
+    if (parent != null) {
+      if (myProject.getName().equals(parent.getName()) && myValue.getName().contains("course")) {
+        data.setPresentableText(StudyTaskManager.getInstance(myProject).getCourse().getName());
+      }
+      else {
+        data.setPresentableText(myValue.getName());
+      }
     }
-
   }
 }

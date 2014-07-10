@@ -46,12 +46,6 @@
       <add-to-group group-id="MainToolBar" anchor="last"/>
       <keyboard-shortcut first-keystroke="shift R" keymap="$default"/>
     </action>
-    <!--action id="ru.compscicenter.edide.DrawAllWindowsAction" class="ru.compscicenter.edide.DrawAllWindowsAction" text="Draw Windows"
-            description="Draws All Windows" icon="/ru/compscicenter/edide/icon.jpg">
-        <add-to-group group-id="MainToolBar" anchor="last"/>
-        <keyboard-shortcut first-keystroke="shift A"  keymap="$default"/>
-    </action-->
-
     <action id="PrevWindowAction" class="ru.compscicenter.edide.actions.PrevWindowAction" text="PrevWindowAction" description="prev"
             icon="/icons/prev.png">
       <keyboard-shortcut keymap="$default" first-keystroke="alt LEFT"/>
@@ -68,6 +62,8 @@
             description="Previous Task"/>
     <action id="RefreshTaskAction" class="ru.compscicenter.edide.actions.RefreshTaskAction" text="RefreshTaskAction"
             description="Refresh current task"/>
+    <action id="WatchInputAction" class="ru.compscicenter.edide.actions.WatchInputAction" text="WatchInputAction"
+            description="watch input"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

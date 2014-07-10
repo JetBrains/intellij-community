@@ -17,6 +17,7 @@ public class Course {
   private String description;
   private String name;
   private String myResourcePath = "";
+  public static final String COURSE_DIR = "course";
 
   public List<Lesson> getLessons() {
     return lessons;
@@ -41,9 +42,10 @@ public class Course {
             @Override
             public void run() {
               try {
+                VirtualFile courseDir = baseDir.createChildDirectory(this, COURSE_DIR);
                 for (int i = 0; i < lessons.size(); i++) {
                   lessons.get(i).setIndex(i);
-                  lessons.get(i).create(project, baseDir, resourseRoot);
+                  lessons.get(i).create(project, courseDir, resourseRoot);
                 }
                 //we need z because we want this folder shown last in project tree
                 baseDir.createChildDirectory(this, "zPlayground");
