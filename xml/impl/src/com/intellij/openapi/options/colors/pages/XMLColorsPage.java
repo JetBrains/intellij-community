@@ -84,8 +84,9 @@ public class XMLColorsPage implements ColorSettingsPage {
            "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
            "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
            "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
-           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n&amp; &#x00B7;" +
-           "   <indexitem text=\"project\" target=\"project.management\"/>" +
+           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
+           "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
+           "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
            "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
            "</index>";
   }
