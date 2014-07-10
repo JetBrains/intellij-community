@@ -1,7 +1,10 @@
 package com.jetbrains.env.python.dotNet;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.psi.PyFile;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 /**
@@ -93,9 +96,15 @@ public class PyIronPythonTest extends PyEnvTestCase {
     );
     runPythonTest(task);
     final PyFile skeleton = task.getGeneratedSkeleton();
-    Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
-                         skeleton.getTopLevelClasses(),
-                         skeleton.findTopLevelClass("AspNetHostingPermissionLevel"));
+    new ReadAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
+                             skeleton.getTopLevelClasses(),
+                             skeleton.findTopLevelClass("AspNetHostingPermissionLevel"));
+      }
+    }.execute();
+
   }
 
   /**
