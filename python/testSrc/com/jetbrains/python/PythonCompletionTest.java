@@ -615,4 +615,15 @@ public class PythonCompletionTest extends PyTestCase {
                           "    __metaclass__ = \n");
 
   }
+
+  // PY-13140
+  public void testModulePrivateNamesCompletedInsideImport() {
+    //doMultiFileTest();
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "normal_name", "_private_name", "__magic_name__");
+  }
 }

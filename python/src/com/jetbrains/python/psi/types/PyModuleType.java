@@ -308,7 +308,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
           return !(psiElement instanceof PyImportElement) ||
                  PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
         }
-      }, new PyUtil.UnderscoreFilter(0));
+      }, null);
       if (suppressParentheses) {
         processor.suppressParentheses();
       }
