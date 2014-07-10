@@ -111,7 +111,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
       prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(prevVisibleLeaf);
     }
 
-    if (startOffset < 0 || currentOffset >= documentText.length()) {
+    if (startOffset < 0 || currentOffset > documentText.length()) {
       Logger.getInstance(getClass()).error("Error while calculating emmet abbreviation. Offset: " + currentOffset + "; Start: " + startOffset, 
                                            AttachmentFactory.createAttachment(editor.getDocument()));
       return null;
