@@ -174,7 +174,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     final TextRange range;
-    if (!processWholeFile && editor != null && editor.getSelectionModel().hasSelection()){
+    if (!processWholeFile && hasSelection) {
       range = TextRange.create(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     }
     else{
@@ -185,7 +185,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       new OptimizeImportsProcessor(new ReformatCodeProcessor(project, file, null, processChangedTextOnly)).run();
     }
     else {
-      new ReformatCodeProcessor(project, file, range, processChangedTextOnly).run();
+      new ReformatCodeProcessor(project, file, range, !hasSelection && processChangedTextOnly).run();
     }
 
     if (rearrangeEntries && file != null && editor != null) {
