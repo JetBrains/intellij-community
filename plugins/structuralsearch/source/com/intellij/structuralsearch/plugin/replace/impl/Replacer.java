@@ -158,12 +158,12 @@ public class Replacer {
       currentAffectedElement = doReplace(aResultPtrList);
 
       if (currentAffectedElement != lastAffectedElement) {
-        if (lastAffectedElement != null) reformatAndShortenRefs(lastAffectedElement);
+        if (lastAffectedElement != null) reformatAndPostProcess(lastAffectedElement);
         lastAffectedElement = currentAffectedElement;
       }
     }
 
-    reformatAndShortenRefs(lastAffectedElement);
+    reformatAndPostProcess(lastAffectedElement);
   }
 
   public void replace(ReplacementInfo info) {
@@ -173,7 +173,7 @@ public class Replacer {
     if (replaceHandler != null) {
       replaceHandler.prepare(info);
     }
-    reformatAndShortenRefs(doReplace(info));
+    reformatAndPostProcess(doReplace(info));
   }
 
   @Nullable
@@ -211,11 +211,10 @@ public class Replacer {
     return elementParent;
   }
 
-  private void reformatAndShortenRefs(final PsiElement elementParent) {
+  private void reformatAndPostProcess(final PsiElement elementParent) {
     if (elementParent == null) return;
     final Runnable action = new Runnable() {
       public void run() {
-        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject());
         final PsiFile containingFile = elementParent.getContainingFile();
 
         if (containingFile != null && options.isToReformatAccordingToStyle()) {
@@ -224,9 +223,12 @@ public class Replacer {
               .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
           }
 
-          final int parentOffset = elementParent.getTextRange().getStartOffset();
-
-          codeStyleManager.reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
+          final int parentOffset = elementParent.getTextOffset();
+          CodeStyleManager.getInstance(project)
+            .reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
+        }
+        if (replaceHandler != null) {
+          replaceHandler.postprocess(elementParent, options);
         }
       }
     };
