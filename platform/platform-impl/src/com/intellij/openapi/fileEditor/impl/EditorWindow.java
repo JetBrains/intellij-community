@@ -264,11 +264,11 @@ public class EditorWindow {
   }
 
   public void closeFile(final VirtualFile file) {
-    closeFile (file, true);
+    closeFile(file, true);
   }
 
-  public void closeFile(final VirtualFile file, final boolean unsplit) {
-    closeFile(file, unsplit, true);
+  public void closeFile(final VirtualFile file, final boolean disposeIfNeeded) {
+    closeFile(file, disposeIfNeeded, true);
   }
 
   public boolean hasClosedTabs() {
@@ -286,7 +286,7 @@ public class EditorWindow {
     }
   }
 
-  public void closeFile(final VirtualFile file, final boolean unsplit, final boolean transferFocus) {
+  public void closeFile(final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
       @Override
@@ -317,13 +317,15 @@ public class EditorWindow {
             }
           }
 
-          if (unsplit && getTabCount() == 0) {
-            unsplit (true);
+          if (disposeIfNeeded && getTabCount() == 0) {
+            removeFromSplitter();
           }
-          myPanel.revalidate ();
-          if (myTabbedPane == null) {
-            // in tabless mode
-            myPanel.repaint();
+          else {
+            myPanel.revalidate();
+            if (myTabbedPane == null) {
+              // in tabless mode
+              myPanel.repaint();
+            }
           }
         }
         finally {
@@ -345,6 +347,39 @@ public class EditorWindow {
         }
       }
     }, myOwner);
+  }
+
+  private void removeFromSplitter() {
+    if (!inSplitter()) return;
+
+    if (myOwner.getCurrentWindow() == this) {
+      EditorWindow[] siblings = findSiblings();
+      myOwner.setCurrentWindow(siblings[0], false);
+    }
+
+    Splitter splitter = (Splitter)myPanel.getParent();
+    JComponent otherComponent = splitter.getOtherComponent(myPanel);
+
+    Container parent = splitter.getParent().getParent();
+    if (parent instanceof Splitter) {
+      Splitter parentSplitter = (Splitter)parent;
+      if (parentSplitter.getFirstComponent() == splitter.getParent()) {
+        parentSplitter.setFirstComponent(otherComponent);
+      }
+      else {
+        parentSplitter.setSecondComponent(otherComponent);
+      }
+    }
+    else if (parent instanceof EditorsSplitters) {
+      parent.removeAll();
+      parent.add(otherComponent, BorderLayout.CENTER);
+      ((JComponent)parent).revalidate();
+    }
+    else {
+      throw new IllegalStateException("Unknown container: " + parent);
+    }
+
+    dispose();
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
