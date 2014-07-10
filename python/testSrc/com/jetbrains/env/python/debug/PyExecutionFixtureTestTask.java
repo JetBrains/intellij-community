@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int NORMAL_TIMEOUT = 30000;
   public static final int LONG_TIMEOUT = 120000;
-  private int myTimeout = NORMAL_TIMEOUT;
+  protected int myTimeout = NORMAL_TIMEOUT;
   protected CodeInsightTestFixture myFixture;
 
   public Project getProject() {

@@ -198,13 +198,13 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   public void waitForOutput(String ... string) throws InterruptedException {
-    int count = 0;
+    long started = System.currentTimeMillis();
+
     while (!containsOneOf(output(), string)) {
-      if (count > 10) {
+      if (System.currentTimeMillis() - started > myTimeout) {
         Assert.fail("None of '" + StringUtil.join(string, ", ") + "'" + " is not present in output.\n" + output());
       }
       Thread.sleep(2000);
-      count++;
     }
   }
 
