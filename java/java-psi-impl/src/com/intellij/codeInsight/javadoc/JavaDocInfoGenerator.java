@@ -720,9 +720,11 @@ public class JavaDocInfoGenerator {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
+      boolean inferred = InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
+          if (inferred) buffer.append("<i>");
           final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
           generateType(buffer, type, owner, generateLink);
@@ -745,11 +747,14 @@ public class JavaDocInfoGenerator {
             }
             buffer.append(")");
           }
+          if (inferred) buffer.append("</i>");
           buffer.append("&nbsp;");
         }
       } else if (external) {
+        if (inferred) buffer.append("<i>");
         buffer.append(annotation.getText());
         buffer.append("&nbsp;");
+        if (inferred) buffer.append("</i>");
       }
       else {
         buffer.append("<font color=red>");
