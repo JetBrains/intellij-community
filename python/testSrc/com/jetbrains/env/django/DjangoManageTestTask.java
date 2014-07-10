@@ -34,6 +34,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.templateLanguages.TemplatesService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

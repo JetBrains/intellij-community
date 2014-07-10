@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
+import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 

@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
+import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

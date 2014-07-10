@@ -33,7 +33,7 @@ public abstract class PyTestTask {
 
   /**
    * Run test on certain SDK path.
-   * To create SDK from path, use {@link com.jetbrains.env.python.debug.PyExecutionFixtureTestTask#createTempSdk(String, com.jetbrains.env.python.debug.PyExecutionFixtureTestTask.SdkCreationType)}
+   * To create SDK from path, use {@link com.jetbrains.env.python.debug.PyExecutionFixtureTestTask#createTempSdk(String, com.jetbrains.python.sdkTools.SdkCreationType)}
    *
    * @param sdkHome sdk path
    */

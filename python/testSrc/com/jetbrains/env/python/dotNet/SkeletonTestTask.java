@@ -13,6 +13,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;

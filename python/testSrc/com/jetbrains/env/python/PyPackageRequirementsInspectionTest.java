@@ -10,6 +10,7 @@ import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
+import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
