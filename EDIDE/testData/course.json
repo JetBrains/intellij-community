@@ -9,6 +9,8 @@
                     "name": "Задание 1",
                     "text": "hello-text.html",
                     "test_file": "hello-tests.py",
+                    "input": "input",
+                    "output":"output",
                     "task_files": [
                         {
                             "name": "helloworld.py",

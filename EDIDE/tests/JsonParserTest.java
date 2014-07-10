@@ -24,6 +24,7 @@ public class JsonParserTest {
   @Test
   public void testCourseLevel() {
     assertEquals(myCourse.getName(), "Python для начинающих");
+    assertEquals(myCourse.getLessons().get(0).getTaskList().get(0).getInput(), "input");
     assertEquals(myCourse.getLessons().size(), 2);
     assertEquals(myCourse.getLessons().get(0).getTaskList().size(), 2);
     assertEquals(myCourse.getLessons().get(1).getTaskList().size(), 1);
