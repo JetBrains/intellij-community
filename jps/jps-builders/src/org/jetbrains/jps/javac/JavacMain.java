@@ -452,4 +452,59 @@ public class JavacMain {
     }
   }
 
+  private static class ZipFileIndexCleanupDataHolder {
+    @Nullable
+    static final Method cacheInstanceGetter;
+    @Nullable
+    static final Method cacheClearMethod;
+
+    static {
+      Method getterMethod = null;
+      Method clearMethod = null;
+      try {
+        //trying JDK 6
+        clearMethod = Class.forName("com.sun.tools.javac.zip.ZipFileIndex").getDeclaredMethod("clearCache");
+        clearMethod.setAccessible(true);
+      }
+      catch (Throwable e) {
+        try {
+          final Class<?> cacheClass = Class.forName("com.sun.tools.javac.file.ZipFileIndexCache");
+          clearMethod = cacheClass.getDeclaredMethod("clearCache");
+          getterMethod = cacheClass.getDeclaredMethod("getSharedInstance");
+          clearMethod.setAccessible(true);
+          getterMethod.setAccessible(true);
+        }
+        catch (Throwable ignored2) {
+          clearMethod = null;
+          getterMethod = null;
+        }
+      }
+
+      cacheInstanceGetter = getterMethod;
+      cacheClearMethod = clearMethod;
+    }
+  }
+
+  private static volatile boolean zipCacheCleanupPossible = true;
+
+  public static void clearCompilerZipFileCache() {
+    if (zipCacheCleanupPossible) {
+      final Method clearMethod = ZipFileIndexCleanupDataHolder.cacheClearMethod;
+      if (clearMethod != null) {
+        final Method getter = ZipFileIndexCleanupDataHolder.cacheInstanceGetter;
+        try {
+          Object instance = getter != null? getter.invoke(null) : null;
+          clearMethod.invoke(instance);
+        }
+        catch (Throwable e) {
+          zipCacheCleanupPossible = false;
+        }
+      }
+      else {
+        zipCacheCleanupPossible = false;
+      }
+    }
+  }
+
+
 }
