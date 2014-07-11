@@ -541,6 +541,10 @@ public class EditorWindow {
     } else {
       IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel, forced);
     }
+    else {
+      //No Tabs Issue (IDEA-107376)
+      IdeFocusManager.findInstanceByComponent(myPanel).requestFocus(myPanel,forced);
+    }
   }
 
   public boolean isValid() {
