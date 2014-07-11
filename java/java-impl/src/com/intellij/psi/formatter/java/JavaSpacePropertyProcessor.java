@@ -44,6 +44,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -229,7 +230,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                       new TextRange(dependanceStart, myChild1.getTextRange().getEndOffset()),
                                       keepOneLine, true);
     }
-    else if (myRole1 == ChildRole.LBRACE) {
+    else if (myRole1 == ChildRole.LBRACE || isEndOfLineCommentAfterLBrace(myChild1)) {
       if (aClass.isEnum()) {
         createParenthSpace(true, false);
       }
@@ -273,6 +274,19 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else {
       processClassBody();
     }
+  }
+
+  private boolean isEndOfLineCommentAfterLBrace(@NotNull ASTNode node) {
+    if (node.getPsi() instanceof PsiComment) {
+      PsiElement ws = node.getPsi().getPrevSibling();
+      if (ws instanceof PsiWhiteSpace && !ws.textContains('\n')) {
+        PsiElement beforeWs = ws.getPrevSibling();
+        if (beforeWs instanceof PsiJavaToken && ((PsiJavaToken)beforeWs).getTokenType() == JavaTokenType.LBRACE) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isTheOnlyClassMember(final ASTNode node) {
