@@ -1061,19 +1061,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
-    final Collection<Integer> originalOffsets = new ArrayList<Integer>(carets.size());
+    final List<Integer> originalOffsets = new ArrayList<Integer>(carets.size());
 
     for (final Caret caret : carets) {
       originalOffsets.add(caret.getOffset());
     }
     caretModel.removeSecondaryCarets();
 
-    int newOffset = 0; // To be incremented each time we complete something
+    // We do it in reverse order because completions would affect offsets
+    // i.e.: when you complete "spa" to "spam", next caret offset increased by 1
+    Collections.reverse(originalOffsets);
     for (final int originalOffset : originalOffsets) {
-      final int realOffsetBeforeCompletion = originalOffset + newOffset;
-      caretModel.moveToOffset(realOffsetBeforeCompletion);
+      caretModel.moveToOffset(originalOffset);
       completeBasic();
-      newOffset += (getCaretOffset() - realOffsetBeforeCompletion);
     }
   }
 
