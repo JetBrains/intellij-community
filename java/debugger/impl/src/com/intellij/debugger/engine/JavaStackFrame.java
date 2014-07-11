@@ -66,7 +66,6 @@ public class JavaStackFrame extends XStackFrame {
 
   private final DebugProcessImpl myDebugProcess;
   private final XSourcePosition myXSourcePosition;
-  private final SourcePosition mySourcePosition;
   private final NodeManagerImpl myNodeManager;
   private final StackFrameDescriptorImpl myDescriptor;
   private static final JavaFramesListRenderer FRAME_RENDERER = new JavaFramesListRenderer();
@@ -74,41 +73,20 @@ public class JavaStackFrame extends XStackFrame {
 
   public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull DebugProcessImpl debugProcess, MethodsTracker tracker) {
     myDebugProcess = debugProcess;
-    Pair<SourcePosition, XSourcePosition> positions = calcSourcePosition(stackFrameProxy);
-    mySourcePosition = positions.getFirst();
-    myXSourcePosition = positions.getSecond();
     myNodeManager = debugProcess.getXdebugProcess().getNodeManager();
     myDescriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
     myDescriptor.setContext(null);
     myDescriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER);
+    myXSourcePosition = ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
+      @Override
+      public XSourcePosition compute() {
+        return myDescriptor.getSourcePosition() != null ? DebuggerUtilsEx.toXSourcePosition(myDescriptor.getSourcePosition()) : null;
+      }
+    });
   }
 
   public StackFrameDescriptorImpl getDescriptor() {
     return myDescriptor;
-  }
-
-  private Pair<SourcePosition, XSourcePosition> calcSourcePosition(StackFrameProxyImpl stackFrameProxy) {
-    final CompoundPositionManager positionManager = myDebugProcess.getPositionManager();
-    if (positionManager == null) {
-      // process already closed
-      return null;
-    }
-    Location location = null;
-    try {
-      location = stackFrameProxy.location();
-    }
-    catch (Throwable e) {
-      LOG.info(e);
-    }
-    final Location loc = location;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Pair<SourcePosition, XSourcePosition>>() {
-      @Override
-      public Pair<SourcePosition, XSourcePosition> compute() {
-        SourcePosition position = positionManager.getSourcePosition(loc);
-        XSourcePosition xSourcePosition = position != null ? DebuggerUtilsEx.toXSourcePosition(position) : null;
-        return new Pair<SourcePosition, XSourcePosition>(position, xSourcePosition);
-      }
-    });
   }
 
   @Nullable
@@ -174,7 +152,7 @@ public class JavaStackFrame extends XStackFrame {
         threadSuspendContext,
         getStackFrameProxy().threadProxy(),
         getStackFrameProxy());
-      context.setPositionCache(mySourcePosition);
+      context.setPositionCache(myDescriptor.getSourcePosition());
       context.initCaches();
     }
     return context;
