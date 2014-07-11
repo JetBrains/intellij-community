@@ -86,8 +86,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public String getCaptionAboveOf(final Object value) {
-        String text = myIndex2Separator.get(myPlaces.indexOf(value));
-        return text != null && Registry.is("ide.new.project.settings") ? text.toUpperCase() : text;
+        return myIndex2Separator.get(myPlaces.indexOf(value));
       }
     };
 
