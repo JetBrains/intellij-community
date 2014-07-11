@@ -1,7 +1,12 @@
 package com.jetbrains.env.python.dotNet;
 
 import com.google.common.collect.Sets;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -9,11 +14,13 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -86,7 +93,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     final File skeletonFile = skeletonFileOrDirectory;
 
     if (skeletonFile.exists()) { // To make sure we do not reuse it
-      skeletonFile.delete();
+      assert skeletonFile.delete() : "Failed to delete file " + skeletonFile;
     }
 
     myFixture.copyFileToProject("dotNet/" + mySourceFileToRunGenerationOn, mySourceFileToRunGenerationOn); // File that uses CLR library
@@ -101,8 +108,14 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
       public void run() {
         PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
         final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
-        myFixture.findSingleIntention(intentionName).invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
-        waitForSkeleton(skeletonFile);
+        final IntentionAction intention = myFixture.findSingleIntention(intentionName);
+        Assert.assertNotNull("No intention found to generate skeletons!", intention);
+        Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));
+        final LocalQuickFix quickFix = ((QuickFixWrapper)intention).getFix();
+        Assert.assertThat("Quick fix should be 'generate binary skeletons' fix to run", quickFix,
+                          Matchers.instanceOf(GenerateBinaryStubsFix.class));
+        final Task fixTask = ((GenerateBinaryStubsFix)quickFix).getFixTask(myFixture.getFile());
+        fixTask.run(new AbstractProgressIndicatorBase());
       }
     });
 
@@ -117,31 +130,6 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   @Override
   public Set<String> getTags() {
     return Collections.unmodifiableSet(IRON_TAGS);
-  }
-
-  /**
-   * Waits {@link #SECONDS_TO_WAIT_FOR_SKELETON_GENERATION} seconds for file to be created.
-   * Fails test after that.
-   *
-   * @param skeletonToWait file to wait
-   */
-  private static void waitForSkeleton(@NotNull final File skeletonToWait) {
-    for (int i = 0; i < SECONDS_TO_WAIT_FOR_SKELETON_GENERATION; i++) {
-      try {
-        // Can't sync with external process (no IPC is available for now), so we use busy wait
-        //noinspection BusyWait
-        Thread.sleep(1000L);
-        if (skeletonToWait.exists()) {
-          return;
-        }
-      }
-      catch (final InterruptedException e) {
-        throw new IllegalStateException("Interrupted while waiting for skeleton ", e);
-      }
-    }
-    final String message =
-      String.format("After %s seconds of waiting, skeleton %s still not ready", SECONDS_TO_WAIT_FOR_SKELETON_GENERATION, skeletonToWait);
-    Assert.assertTrue(message, skeletonToWait.exists());
   }
 
   /**
