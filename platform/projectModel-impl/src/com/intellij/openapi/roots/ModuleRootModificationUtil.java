@@ -22,10 +22,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -165,6 +167,28 @@ public class ModuleRootModificationUtil {
       model.dispose();
       throw e;
     }
+  }
+
+  public static void updateExcludedFolders(final Module module,
+                                                        @NotNull final VirtualFile contentRoot,
+                                                        final Collection<String> urlsToUnExclude,
+                                                        final Collection<String> urlsToExclude) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel modifiableModel) {
+        for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
+          if (contentRoot.equals(contentEntry.getFile())) {
+            for (String url : urlsToUnExclude) {
+              contentEntry.removeExcludeFolder(url);
+            }
+            for (String url : urlsToExclude) {
+              contentEntry.addExcludeFolder(url);
+            }
+            break;
+          }
+        }
+      }
+    });
   }
 
   private static void doWriteAction(final Runnable action) {
