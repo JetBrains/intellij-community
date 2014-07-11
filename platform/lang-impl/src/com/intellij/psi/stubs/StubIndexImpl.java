@@ -207,7 +207,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
-                                                           @NotNull final GlobalSearchScope scope) {
+                                                           @Nullable final GlobalSearchScope scope) {
     return get(indexKey, key, project, scope, null);
   }
 
@@ -215,7 +215,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull Key key,
                                                            @NotNull Project project,
-                                                           @NotNull GlobalSearchScope scope,
+                                                           @Nullable GlobalSearchScope scope,
                                                            IdFilter filter) {
     final List<Psi> result = new SmartList<Psi>();
     process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
