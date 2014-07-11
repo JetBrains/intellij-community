@@ -47,7 +47,7 @@ class SignatureFactory(object):
                 name = code.co_varnames[i]
                 tp = type(locals[name])
                 class_name = tp.__name__
-                if class_name == 'instance':
+                if class_name == 'instance':  # old-style classes
                     tp = locals[name].__class__
                     class_name = tp.__name__
 
