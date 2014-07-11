@@ -1,7 +1,10 @@
 package ru.compscicenter.edide.actions;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,6 +20,7 @@ import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
 import ru.compscicenter.edide.course.TaskFile;
 import ru.compscicenter.edide.course.Window;
+import sun.java2d.loops.ProcessPath;
 
 import java.awt.*;
 import java.io.*;
@@ -52,11 +56,8 @@ public class CheckAction extends AnAction {
       return;
     }
     //TODO: replace with platform independent path join
-
     File testFile = new File(openedFile.getParent().getCanonicalPath(), selectedTaskFile.getTask().getTestFile());
     String testPath = testFile.getAbsolutePath();
-    //String testFile = basePath +
-    //                  "/.idea/study-tests/" + selectedTaskFile.getTask().getTestFile();
     GeneralCommandLine cmd = new GeneralCommandLine();
     cmd.setWorkDirectory(openedFile.getParent().getCanonicalPath());
     cmd.setExePath("python");

@@ -14,6 +14,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import ru.compscicenter.edide.StudyEditor;
 import ru.compscicenter.edide.StudyTaskManager;
+import ru.compscicenter.edide.course.Course;
+import ru.compscicenter.edide.course.Lesson;
 import ru.compscicenter.edide.course.Task;
 import ru.compscicenter.edide.course.TaskFile;
 
@@ -50,7 +52,7 @@ public class NextTaskAction extends AnAction {
       try {
 
         VirtualFile taskDir =
-          project.getBaseDir().findChild("course").findChild("lesson" + String.valueOf(lessonIndex + 1)).findChild("task" + String.valueOf(nextTaskIndex + 1));
+          project.getBaseDir().findChild(Course.COURSE_DIR).findChild(Lesson.LESSON_DIR + String.valueOf(lessonIndex + 1)).findChild(Task.TASK_DIR + String.valueOf(nextTaskIndex + 1));
 
         FileEditorManager.getInstance(project).openFile(taskDir.findChild(nextTask.getTaskFiles().iterator().next().getName()), true);
       }
@@ -61,7 +63,6 @@ public class NextTaskAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    // TODO: find some free shortcuts :(
     nextTask(e.getProject());
   }
 }

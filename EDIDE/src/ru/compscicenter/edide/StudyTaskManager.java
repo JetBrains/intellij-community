@@ -2,10 +2,19 @@ package ru.compscicenter.edide;
 
 
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -87,12 +96,10 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void projectOpened() {
-
   }
 
   @Override
   public void projectClosed() {
-
   }
 
   @Override
@@ -102,7 +109,6 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
 
   @Override
   public void disposeComponent() {
-
   }
 
   @NotNull
@@ -116,8 +122,7 @@ public class StudyTaskManager implements ProjectComponent, PersistentStateCompon
     if (item != null) {
       return item;
     }
-    StudyTaskManager taskManager = new StudyTaskManager(project);
-    return taskManager;
+    return new StudyTaskManager(project);
   }
 
   private int getIndex(String fullName, String logicalName) {
