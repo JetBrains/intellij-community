@@ -201,9 +201,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private void addParents(File file, final Adder adder) {
     Status status = getStatus(file);
 
-    if (status != null &&
-        (SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED) ||
-         SvnVcs.svnStatusIs(status, StatusType.STATUS_REPLACED))) {
+    if (status != null && status.is(StatusType.STATUS_ADDED, StatusType.STATUS_REPLACED)) {
       // file should be added
       adder.add(file);
       file = file.getParentFile();

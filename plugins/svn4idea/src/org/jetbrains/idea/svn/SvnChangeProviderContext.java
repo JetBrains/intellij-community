@@ -180,11 +180,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if ((SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())) &&
+    if ((status.is(StatusType.STATUS_ADDED) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())) &&
         status.getCopyFromURL() != null) {
       addCopiedFile(filePath, status, status.getCopyFromURL());
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
+    else if (status.is(StatusType.STATUS_DELETED)) {
       myDeletedFiles.add(new SvnChangedFile(filePath, status));
     }
     else {
@@ -209,19 +209,17 @@ class SvnChangeProviderContext implements StatusReceiver {
 
       final StatusType statusType = status.getContentsStatus();
       final StatusType propStatus = status.getPropertiesStatus();
-      if (SvnVcs.svnStatusIsUnversioned(status) || SvnVcs.svnStatusIs(status, StatusType.UNKNOWN)) {
+      if (status.is(StatusType.STATUS_UNVERSIONED, StatusType.UNKNOWN)) {
         final VirtualFile file = filePath.getVirtualFile();
         if (file != null) {
           myChangelistBuilder.processUnversionedFile(file);
         }
       }
-      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED)) {
+      else if (status.is(StatusType.STATUS_ADDED)) {
         myChangelistBuilder.processChangeInList(createChange(null, CurrentContentRevision.create(filePath), fStatus, status),
                                                 SvnUtil.getChangelistName(status), SvnVcs.getKey());
       }
-      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_CONFLICTED) ||
-               SvnVcs.svnStatusIs(status, StatusType.STATUS_MODIFIED) ||
-               SvnVcs.svnStatusIs(status, StatusType.STATUS_REPLACED) ||
+      else if (status.is(StatusType.STATUS_CONFLICTED, StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED) ||
                propStatus == StatusType.STATUS_MODIFIED ||
                propStatus == StatusType.STATUS_CONFLICTED) {
         myChangelistBuilder.processChangeInList(
@@ -230,15 +228,15 @@ class SvnChangeProviderContext implements StatusReceiver {
         );
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
       }
-      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
+      else if (status.is(StatusType.STATUS_DELETED)) {
         myChangelistBuilder.processChangeInList(
           createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), null, fStatus, status),
           SvnUtil.getChangelistName(status), SvnVcs.getKey());
       }
-      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_MISSING)) {
+      else if (status.is(StatusType.STATUS_MISSING)) {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
       }
-      else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_IGNORED)) {
+      else if (status.is(StatusType.STATUS_IGNORED)) {
         if (!myVcs.isWcRoot(filePath)) {
           myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
         }

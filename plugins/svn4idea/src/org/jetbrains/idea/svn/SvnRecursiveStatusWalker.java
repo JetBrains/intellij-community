@@ -285,7 +285,7 @@ public class SvnRecursiveStatusWalker {
       }
       if (myProject.isDisposed()) throw new ProcessCanceledException();
 
-      if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
+      if ((vFile != null) && (status.is(StatusType.STATUS_UNVERSIONED))) {
         if (vFile.isDirectory()) {
           if (FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
             //myReceiver.processUnversioned(vFile);

@@ -78,8 +78,8 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.status.Status;
@@ -89,7 +89,8 @@ import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -600,26 +601,15 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     try {
       Status status = getFactory(file).createStatusClient().doStatus(file, false);
       if (status != null) {
-        if (svnStatusIs(status, StatusType.STATUS_ADDED)) {
-          return status.isCopied();
-        }
-        return !(svnStatusIsUnversioned(status) ||
-                 svnStatusIs(status, StatusType.STATUS_IGNORED) ||
-                 svnStatusIs(status, StatusType.STATUS_OBSTRUCTED));
+        return status.is(StatusType.STATUS_ADDED)
+               ? status.isCopied()
+               : !status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_IGNORED, StatusType.STATUS_OBSTRUCTED);
       }
     }
     catch (SvnBindException e) {
       LOG.info(e);
     }
     return false;
-  }
-
-  public static boolean svnStatusIsUnversioned(final Status status) {
-    return svnStatusIs(status, StatusType.STATUS_UNVERSIONED);
-  }
-
-  public static boolean svnStatusIs(final Status status, @NotNull final StatusType value) {
-    return value.equals(status.getNodeStatus()) || value.equals(status.getContentsStatus());
   }
 
   @Override

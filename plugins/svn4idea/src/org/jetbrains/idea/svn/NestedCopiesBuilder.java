@@ -44,7 +44,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
 
   public void process(final FilePath path, final Status status) throws SVNException {
     VirtualFile file = path.getVirtualFile();
-    if (file != null && SvnVcs.svnStatusIs(status, StatusType.STATUS_EXTERNAL)) {
+    if (file != null && status.is(StatusType.STATUS_EXTERNAL)) {
       // We do not determine here url, repository url - because url, repository url in status will determine location in the
       // repository where folder is located and not where svn:externals property points. We want the later parameters - they'll
       // determined while creating RootUrlInfos later. Format will be also determined later.
@@ -55,7 +55,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     }
     if (file == null || status.getURL() == null) return;
 
-    if (!SvnVcs.svnStatusIsUnversioned(status) && status.isSwitched()) {
+    if (!status.is(StatusType.STATUS_UNVERSIONED) && status.isSwitched()) {
       // this one called when there is switched directory under nested working copy
       // TODO: some other cases?
       final NestedCopyInfo

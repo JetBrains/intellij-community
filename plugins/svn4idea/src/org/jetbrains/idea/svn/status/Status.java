@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.status;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
@@ -156,6 +158,19 @@ public class Status {
 
   public StatusType getRemotePropertiesStatus() {
     return myRemotePropertiesStatus;
+  }
+
+  public boolean is(@NotNull StatusType type) {
+    return type.equals(getNodeStatus()) || type.equals(getContentsStatus());
+  }
+
+  public boolean is(@NotNull StatusType... types) {
+    return ContainerUtil.or(types, new Condition<StatusType>() {
+      @Override
+      public boolean value(StatusType type) {
+        return is(type);
+      }
+    });
   }
 
   public boolean isLocked() {

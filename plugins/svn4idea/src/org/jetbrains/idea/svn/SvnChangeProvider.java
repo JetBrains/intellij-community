@@ -257,7 +257,7 @@ public class SvnChangeProvider implements ChangeProvider {
         LOG.info(ex);
         status = null;
       }
-      if (status != null && SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
+      if (status != null && status.is(StatusType.STATUS_DELETED)) {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());

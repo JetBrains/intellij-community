@@ -41,28 +41,28 @@ public class SvnStatusConvertor {
     if (status == null) {
       return FileStatus.UNKNOWN;
     }
-    if (SvnVcs.svnStatusIsUnversioned(status)) {
+    if (status.is(StatusType.STATUS_UNVERSIONED)) {
       return FileStatus.UNKNOWN;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_MISSING)) {
+    else if (status.is(StatusType.STATUS_MISSING)) {
       return FileStatus.DELETED_FROM_FS;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_EXTERNAL)) {
+    else if (status.is(StatusType.STATUS_EXTERNAL)) {
       return SvnFileStatus.EXTERNAL;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_OBSTRUCTED)) {
+    else if (status.is(StatusType.STATUS_OBSTRUCTED)) {
       return SvnFileStatus.OBSTRUCTED;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_IGNORED)) {
+    else if (status.is(StatusType.STATUS_IGNORED)) {
       return FileStatus.IGNORED;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_ADDED)) {
+    else if (status.is(StatusType.STATUS_ADDED)) {
       return FileStatus.ADDED;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_DELETED)) {
+    else if (status.is(StatusType.STATUS_DELETED)) {
       return FileStatus.DELETED;
     }
-    else if (SvnVcs.svnStatusIs(status, StatusType.STATUS_REPLACED)) {
+    else if (status.is(StatusType.STATUS_REPLACED)) {
       return SvnFileStatus.REPLACED;
     }
     else if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
