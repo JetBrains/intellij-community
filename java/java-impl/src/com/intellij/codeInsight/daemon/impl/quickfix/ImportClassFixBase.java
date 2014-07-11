@@ -102,14 +102,19 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       // can happen when e.g. class name happened to be in a method position
       if (element instanceof PsiClass && result.isValidResult()) return Collections.emptyList();
     }
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myElement.getProject());
+
     String name = getReferenceName(myRef);
     GlobalSearchScope scope = myElement.getResolveScope();
     if (name == null) {
       return Collections.emptyList();
     }
+
+    if (!canReferenceClass(myRef)) {
+      return Collections.emptyList();
+    }
+
     boolean referenceHasTypeParameters = hasTypeParameters(myRef);
-    PsiClass[] classes = cache.getClassesByName(name, scope);
+    PsiClass[] classes = PsiShortNamesCache.getInstance(myElement.getProject()).getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
     List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myElement.getParent() instanceof PsiAnnotation;
@@ -138,6 +143,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     filterAlreadyImportedButUnresolved(classList);
     return classList;
+  }
+
+  protected boolean canReferenceClass(R ref) {
+    return true;
   }
 
   private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {
