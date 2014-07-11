@@ -190,7 +190,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
           exceptionRef.set(e);
         }
         catch (Throwable t) {
-          handler.completed(file.getPath());
+          exceptionRef.set(new VcsException(t));
         }
       }
 
