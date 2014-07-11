@@ -31,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
@@ -48,7 +49,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   private byte[] myContent;
   private CharSequence myContentAsText;
   private final long myStamp;
-  private final byte[] myHash;
+  private byte[] myHash;
 
   @Override
   public Project getProject() {
@@ -94,31 +95,26 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
-    this(file, contentAsText, null, charset, -1, null);
+    this(file, contentAsText, null, charset, -1);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset, long documentStamp) {
-    this(file, contentAsText, null, charset, documentStamp, null);
+    this(file, contentAsText, null, charset, documentStamp);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    this(file, content, null);
-  }
-
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content, byte[] hash) {
-    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1, hash);
+    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1);
   }
 
   public FileContentImpl(@NotNull final VirtualFile file) {
-    this(file, null, null, null, -1, null);
+    this(file, null, null, null, -1);
   }
 
   private FileContentImpl(@NotNull VirtualFile file,
                           CharSequence contentAsText,
                           byte[] content,
                           Charset charset,
-                          long stamp,
-                          byte[] hash
+                          long stamp
   ) {
     myFile = file;
     myContentAsText = contentAsText;
@@ -128,7 +124,6 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     // remember name explicitly because the file could be renamed afterwards
     myFileName = file.getName();
     myStamp = stamp;
-    myHash = hash;
   }
 
   @NotNull
@@ -215,8 +210,12 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     return myFileName;
   }
 
-  public byte[] getHash() {
+  public @Nullable byte[] getHash() {
     return myHash;
+  }
+
+  public void setHash(byte[] hash) {
+    myHash = hash;
   }
 
   public PsiFile getPsiFileAccountingForUnsavedDocument() {

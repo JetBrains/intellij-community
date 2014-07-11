@@ -1664,21 +1664,26 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             }
 
             byte[] currentBytes;
-            byte[] hash;
             try {
               currentBytes = content.getBytes();
-              if (fileType.isBinary() || !IdIndex.ourSnapshotMappingsEnabled) {
-                hash = null;
-              } else {
-                hash = ContentHashesSupport
-                  .calcContentHashWithFileType(currentBytes, SubstitutedFileType.substituteFileType(file, fileType, project));
-              }
             }
             catch (IOException e) {
               currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
-              hash = null;
             }
-            fc = new FileContentImpl(file, currentBytes, hash);
+            fc = new FileContentImpl(file, currentBytes);
+
+            if (!fileType.isBinary() && IdIndex.ourSnapshotMappingsEnabled) {
+              try {
+                byte[] hash = ContentHashesSupport.calcContentHashWithFileType(
+                  currentBytes,
+                  fc.getCharset(),
+                  SubstitutedFileType.substituteFileType(file, fileType, project)
+                );
+                fc.setHash(hash);
+              } catch (IOException e) {
+                LOG.error(e);
+              }
+            }
 
             psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
             initFileContent(fc, project, psiFile);
@@ -1909,21 +1914,26 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
-      if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
-        // indexes may depend on file name
-        final VirtualFile file = event.getFile();
+      String propertyName = event.getPropertyName();
 
+      if (propertyName.equals(VirtualFile.PROP_NAME)) {
+        // indexes may depend on file name
         // name change may lead to filetype change so the file might become not indexable
         // in general case have to 'unindex' the file and index it again if needed after the name has been changed
-        invalidateIndices(file, false);
+        invalidateIndices(event.getFile(), false);
+      } else if (propertyName.equals(VirtualFile.PROP_ENCODING)) {
+        invalidateIndices(event.getFile(), true);
       }
     }
 
     @Override
     public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
-      if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+      String propertyName = event.getPropertyName();
+      if (propertyName.equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
         markDirty(event, false);
+      } else if (propertyName.equals(VirtualFile.PROP_ENCODING)) {
+        markDirty(event, true);
       }
     }
 
