@@ -17,12 +17,14 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.util.*;
 
@@ -107,7 +109,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
         };
       }
 
-      void processMethod(String className, MethodNode methodNode, boolean stableClass) {
+      void processMethod(final String className, final MethodNode methodNode, boolean stableClass) {
         ProgressManager.checkCanceled();
         Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
         Type resultType = Type.getReturnType(methodNode.desc);
@@ -145,7 +147,18 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
             DFSTree dfs = cfg.buildDFSTree(graph.transitions);
             boolean reducible = dfs.back.isEmpty() || cfg.reducible(graph, dfs);
             if (reducible) {
-              TIntHashSet resultOrigins = cfg.resultOrigins(className, methodNode);
+              NotNullLazyValue<TIntHashSet> resultOrigins = new NotNullLazyValue<TIntHashSet>() {
+                @NotNull
+                @Override
+                protected TIntHashSet compute() {
+                  try {
+                    return cfg.resultOrigins(className, methodNode);
+                  }
+                  catch (AnalyzerException e) {
+                    throw new RuntimeException(e);
+                  }
+                }
+              };
               boolean[] leakingParameters = maybeLeakingParameter ? cfg.leakingParameters(className, methodNode) : null;
               boolean shouldComputeResult = isReferenceResult;
 
@@ -163,7 +176,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
               }
 
               Equation<Key, Value> resultEquation =
-                shouldComputeResult ? new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze() : null;
+                shouldComputeResult ? new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins.getValue(), stable).analyze() : null;
 
               for (int i = 0; i < argumentTypes.length; i++) {
                 Type argType = argumentTypes[i];
@@ -179,8 +192,8 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 }
                 if (isReferenceArg && isInterestingResult) {
                   if (leakingParameters[i]) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins, stable).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins, stable).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.Null), resultOrigins.getValue(), stable).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.NotNull), resultOrigins.getValue(), stable).analyze());
                   } else {
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.Null), stable), resultEquation.rhs));
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.NotNull), stable), resultEquation.rhs));
@@ -188,8 +201,8 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 }
                 if (isBooleanArg && isInterestingResult) {
                   if (leakingParameters[i]) {
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins, stable).analyze());
-                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins, stable).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.False), resultOrigins.getValue(), stable).analyze());
+                    contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new InOut(i, Value.True), resultOrigins.getValue(), stable).analyze());
                   } else {
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.False), stable), resultEquation.rhs));
                     contractEquations.add(new Equation<Key, Value>(new Key(method, new InOut(i, Value.True), stable), resultEquation.rhs));
@@ -200,7 +213,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
                 if (resultEquation != null) {
                   contractEquations.add(resultEquation);
                 } else {
-                  contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins, stable).analyze());
+                  contractEquations.add(new InOutAnalysis(new RichControlFlow(graph, dfs), new Out(), resultOrigins.getValue(), stable).analyze());
                 }
               }
               added = true;
