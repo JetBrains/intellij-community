@@ -11,6 +11,7 @@ public class FlipAssertLiteralIntentionTest extends IPPTestCase {
 
   public void testMessage() { doTest(); }
   public void testExistingStaticImport() { doTest(); }
+  public void testStaticImportWithoutTestMethod() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
