@@ -43,6 +43,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
   private static final DataIndexer<Integer, Collection<IntIdEquation>, FileContent> INDEXER =
     new ClassDataIndexer(BytecodeAnalysisConverter.getInstance());
 
+  private static final int ourInternalVersion = 1;
   private static boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", isEnabledByDefault());
 
   private static boolean isEnabledByDefault() {
@@ -96,7 +97,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Integer, Coll
 
   @Override
   public int getVersion() {
-    return BytecodeAnalysisConverter.getInstance().getVersion() + (ourEnabled ? 0xFF : 0);
+    return ourInternalVersion + BytecodeAnalysisConverter.getInstance().getVersion() + (ourEnabled ? 0xFF : 0);
   }
 
   public static class EquationExternalizer implements DataExternalizer<Collection<IntIdEquation>> {
