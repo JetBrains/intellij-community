@@ -27,6 +27,7 @@ import org.jdom.Document;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -508,6 +509,17 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       ((Map)field.get(null)).clear();
     }
     catch (Exception ignored) {
+      try { // trying jdk 7
+        final Method getInstance = Class.forName("com.sun.tools.javac.file.ZipFileIndexCache").getDeclaredMethod("getSharedInstance");
+        getInstance.setAccessible(true);
+        Object cache = getInstance.invoke(null);
+        final Method clearMethod = cache.getClass().getDeclaredMethod("clearCache");
+        clearMethod.setAccessible(true);
+        clearMethod.invoke(cache);
+      }
+      catch (Exception ingored2) {
+      }
     }
+
   }
 }
