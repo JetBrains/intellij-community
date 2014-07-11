@@ -26,6 +26,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,7 +59,7 @@ public class SidePanel extends JPanel {
     myModel = new DefaultListModel();
     myList = new JBList(myModel);
     if (Registry.is("ide.new.project.settings")) {
-      myList.setBackground(new Color(0xD2D6DD));
+      myList.setBackground(UIUtil.getSidePanelColor());
       myList.setBorder(new EmptyBorder(5, 0, 0, 0));
     }
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
@@ -109,7 +110,7 @@ public class SidePanel extends JPanel {
 
       @Override
       protected Color getBackground() {
-        return Registry.is("ide.new.project.settings") ? new Color(0xD2D6DD) : super.getBackground();
+        return Registry.is("ide.new.project.settings") ? UIUtil.getSidePanelColor() : super.getBackground();
       }
     });
 
