@@ -58,8 +58,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
-import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -1793,8 +1791,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         myActionModel = createActionModel();
         myConfigurables.clear();
-        fillConfigurablesIds(null, new IdeConfigurablesGroup().getConfigurables());
-        fillConfigurablesIds(null, new ProjectConfigurablesGroup(project).getConfigurables());
+        fillConfigurablesIds(null, ShowSettingsUtilImpl.getConfigurables(project, true));
       }
     }
 

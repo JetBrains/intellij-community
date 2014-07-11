@@ -135,11 +135,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
     if (Registry.is("ide.new.project.settings")) {
-      mySplitter.setDividerWidth(1);
-      mySplitter.setShowDividerIcon(false);
-      mySplitter.getDivider().setBackground(Gray._153.withAlpha(128));
-      mySplitter.setShowDividerControls(false);
-      mySplitter.setOrientation(mySplitter.getOrientation());
+      mySplitter.setOnePixelMode();
     }
 
     installAutoScroll();

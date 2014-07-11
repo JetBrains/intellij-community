@@ -43,7 +43,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.BackAction;
@@ -179,11 +178,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
     if (Registry.is("ide.new.project.settings")) {
-      mySplitter.setDividerWidth(1);
-      mySplitter.setShowDividerIcon(false);
-      mySplitter.getDivider().setBackground(Gray._153.withAlpha(128));
-      mySplitter.setShowDividerControls(false);
-      mySplitter.setOrientation(mySplitter.getOrientation());
+      mySplitter.setOnePixelMode();
     }
 
     initSidePanel();

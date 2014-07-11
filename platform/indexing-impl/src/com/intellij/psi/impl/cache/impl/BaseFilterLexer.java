@@ -76,7 +76,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
       todoScanningState = new TodoScanningState(patterns, matchers);
 
       for (int i = 0; i < patterns.length; ++i) {
-        Pattern pattern = patterns[i].getPattern();
+        Pattern pattern = patterns[i].getOptimizedIndexingPattern();
 
         if (pattern != null) {
           matchers[i] = pattern.matcher("");

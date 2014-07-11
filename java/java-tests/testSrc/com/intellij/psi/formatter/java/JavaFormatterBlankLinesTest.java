@@ -400,4 +400,36 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIDEA126836() {
+    doTextTest(
+      "public class JavaClass {  // comment\n" +
+      "    public void doSomething() {\n" +
+      "                int a = 3;\n" +
+      "    }\n" +
+      "}",
+      "public class JavaClass {  // comment\n" +
+      "    public void doSomething() {\n" +
+      "        int a = 3;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testBlankLinesAfterClassHeaderWithComment() {
+    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 5;
+    doTextTest(
+      "public class JavaClass {  // comment\n" +
+      "    public void doSomething() {\n" +
+      "                int a = 3;\n" +
+      "    }\n" +
+      "}",
+      "public class JavaClass {  // comment\n" +
+      "\n\n\n\n\n" +
+      "    public void doSomething() {\n" +
+      "        int a = 3;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
