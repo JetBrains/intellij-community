@@ -146,6 +146,9 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
         }
         myPropertiesPanelLayout.show(myPropertiesPanel, cardName);
       }
+      else {
+        showMessageLabel("");
+      }
     }
     else if (node instanceof ServersTreeStructure.RemoteServerNode) {
       updateServerDetails((ServersTreeStructure.RemoteServerNode)node);

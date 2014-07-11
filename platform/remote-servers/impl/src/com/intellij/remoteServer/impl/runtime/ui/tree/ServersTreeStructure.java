@@ -287,16 +287,6 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       myParentNode = parentNode;
     }
 
-    @Override
-    public boolean equals(Object object) {
-      return object instanceof DeploymentNodeImpl && getValue().getName().equals(((DeploymentNodeImpl)object).getValue().getName());
-    }
-
-    @Override
-    public int hashCode() {
-      return getValue().getName().hashCode();
-    }
-
     @NotNull
     @Override
     public ServerNode getServerNode() {
@@ -377,10 +367,14 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(getValue());
     }
 
+    public String getId() {
+      return myParentNode.getName() + ";deployment" + getValue().getName();
+    }
+
     @NotNull
     @Override
     public String getLogId() {
-      return "deployment:" + getValue().getName();
+      return getId() + ";main-log";
     }
 
     @NotNull
@@ -451,7 +445,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public String getLogId() {
-      return "deployment:" + myDeploymentNode.getValue().getName() + ";log:" + getLogName();
+      return myDeploymentNode.getId() + ";log:" + getLogName();
     }
   }
 }
