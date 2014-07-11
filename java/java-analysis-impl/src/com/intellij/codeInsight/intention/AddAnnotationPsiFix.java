@@ -75,13 +75,16 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
     PsiElement element = file.findElementAt(offset);
 
-    PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
-    if (listOwner != null) return listOwner;
+    PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
+    if (listOwner instanceof PsiParameter) return listOwner;
 
-    final PsiIdentifier psiIdentifier = PsiTreeUtil.getParentOfType(element, PsiIdentifier.class, false);
-    if (psiIdentifier != null && psiIdentifier.getParent() instanceof PsiModifierListOwner) {
-      return (PsiModifierListOwner)psiIdentifier.getParent();
+    if (listOwner instanceof PsiNameIdentifierOwner) {
+      PsiElement id = ((PsiNameIdentifierOwner)listOwner).getNameIdentifier();
+      if (id != null && id.getTextRange().containsOffset(offset)) { // Groovy methods will pass this check as well
+        return listOwner;
+      }
     }
+
     return null;
   }
 
