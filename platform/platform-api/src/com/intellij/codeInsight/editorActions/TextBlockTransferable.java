@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class TextBlockTransferable implements Transferable {
+public class TextBlockTransferable implements Transferable {
   private final Collection<TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;

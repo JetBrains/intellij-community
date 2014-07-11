@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
-  private static final Logger LOG = Logger.getInstance(CopyHandler.class);
-
   private final EditorActionHandler myOriginalAction;
 
   public CopyHandler(final EditorActionHandler originalHandler) {
@@ -93,7 +91,10 @@ public class CopyHandler extends EditorActionHandler {
       transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
     }
 
-    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(true), "\n", transferableDatas);
+    String text = editor.getCaretModel().supportsMultipleCarets()
+                  ? CopyPasteSupport.getSelectedTextForClipboard(editor, transferableDatas)
+                  : selectionModel.getSelectedText();
+    String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDatas);
     String escapedText = null;
     for (CopyPastePreProcessor processor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
       escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);

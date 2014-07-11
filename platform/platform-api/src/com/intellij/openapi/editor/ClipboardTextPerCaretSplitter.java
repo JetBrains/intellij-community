@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ClipboardTextPerCaretSplitter {
-  public List<String> split(String input, int caretCount) {
+  @NotNull
+  public List<String> split(@NotNull String input, @Nullable CaretStateTransferableData caretData, int caretCount) {
     if (caretCount <= 0) {
       throw new IllegalArgumentException("Caret count must be positive");
     }
@@ -28,9 +32,17 @@ public class ClipboardTextPerCaretSplitter {
       return Collections.singletonList(input);
     }
     List<String> result = new ArrayList<String>(caretCount);
-    String[] lines = input.split("\n", -1);
+    int sourceCaretCount = caretData == null ? -1 : caretData.startOffsets.length;
+    String[] lines = sourceCaretCount == 1 || sourceCaretCount == caretCount ? null : input.split("\n", -1);
     for (int i = 0; i < caretCount; i++) {
-      if (lines.length == 0) {
+      if (sourceCaretCount == 1) {
+        result.add(input);
+      }
+      else if (sourceCaretCount == caretCount) {
+        //noinspection ConstantConditions
+        result.add(new String(input.substring(caretData.startOffsets[i], caretData.endOffsets[i])));
+      }
+      else if (lines.length == 0) {
         result.add("");
       }
       else if (lines.length == 1) {

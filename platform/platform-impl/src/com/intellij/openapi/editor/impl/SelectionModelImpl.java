@@ -36,16 +36,13 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.StringSelection;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -570,13 +567,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public void copySelectionToClipboard() {
-    validateContext(true);
-    String s = getSelectedText(true);
-    if (s == null) return;
-
-    s = StringUtil.convertLineSeparators(s);
-    StringSelection contents = new StringSelection(s);
-    CopyPasteManager.getInstance().setContents(contents);
+    CopyPasteSupport.copySelectionToClipboard(myEditor);
   }
 
   @Override
