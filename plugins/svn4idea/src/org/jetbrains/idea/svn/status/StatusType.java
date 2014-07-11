@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.status;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.util.Map;
@@ -54,7 +55,10 @@ public enum StatusType {
   STATUS_INCOMPLETE("incomplete", '!'),
   STATUS_EXTERNAL("external", 'X');
 
+  private static final String STATUS_PREFIX = "STATUS_";
+
   @NotNull private static final Map<String, StatusType> ourAllStatusTypes = ContainerUtil.newHashMap();
+  @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = ContainerUtil.newHashMap();
 
   static {
     for (StatusType action : StatusType.values()) {
@@ -84,10 +88,19 @@ public enum StatusType {
 
   private static void register(@NotNull StatusType action) {
     ourAllStatusTypes.put(action.myName, action);
+
+    if (action.name().startsWith(STATUS_PREFIX)) {
+      ourStatusTypesForStatusOperation.put(action.myName, action);
+    }
   }
 
   @NotNull
   public static StatusType from(@NotNull SVNStatusType type) {
     return ObjectUtils.notNull(ourAllStatusTypes.get(type.toString()), UNUSED);
+  }
+
+  @Nullable
+  public static StatusType forStatusOperation(@NotNull String statusName) {
+    return ourStatusTypesForStatusOperation.get(statusName);
   }
 }

@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.status;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -46,28 +45,9 @@ public class SvnStatusHandler extends DefaultHandler {
 
   private static final Logger LOG = Logger.getInstance(SvnStatusHandler.class);
 
-  public static final Map<String, StatusType> ourStatusTypes = ContainerUtil.newHashMap();
-
-  static {
-    put(StatusType.STATUS_ADDED, StatusType.STATUS_CONFLICTED, StatusType.STATUS_DELETED, StatusType.STATUS_EXTERNAL,
-        StatusType.STATUS_IGNORED, StatusType.STATUS_INCOMPLETE, StatusType.STATUS_MISSING, StatusType.STATUS_MODIFIED,
-        StatusType.STATUS_NONE, StatusType.STATUS_NORMAL, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_REPLACED,
-        StatusType.STATUS_UNVERSIONED);
-  }
-
-  private static void put(@NotNull StatusType... statusTypes) {
-    for (StatusType statusType : statusTypes) {
-      put(statusType);
-    }
-  }
-
-  private static void put(@NotNull StatusType statusType) {
-    ourStatusTypes.put(statusType.toString(), statusType);
-  }
-
   @Nullable
   public static StatusType getStatus(@NotNull String code) {
-    StatusType result = ourStatusTypes.get(code);
+    StatusType result = StatusType.forStatusOperation(code);
 
     if (result == null) {
       LOG.info("Unknown status type " + code);
