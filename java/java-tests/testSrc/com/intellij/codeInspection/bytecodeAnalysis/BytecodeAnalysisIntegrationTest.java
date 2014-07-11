@@ -27,7 +27,9 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -75,7 +77,8 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
     ModuleRootModificationUtil.updateModel(myModule, new AsynchConsumer<ModifiableRootModel>() {
       @Override
-      public void finished() {}
+      public void finished() {
+      }
 
       @Override
       public void consume(ModifiableRootModel modifiableRootModel) {
@@ -95,6 +98,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       }
     });
 
+    VfsUtilCore.visitChildrenRecursively(annotationsDir, new VirtualFileVisitor() { });
     annotationsDir.refresh(false, true);
   }
 
