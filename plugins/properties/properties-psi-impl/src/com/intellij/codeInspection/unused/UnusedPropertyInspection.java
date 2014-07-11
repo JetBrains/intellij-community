@@ -20,9 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesQuickFixFactory;
-import com.intellij.lang.properties.PropertySuppressableInspectionBase;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.findUsages.PropertySearcher;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -39,6 +38,10 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -56,6 +59,28 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     return "UnusedProperty";
   }
 
+  @Nullable
+  private static GlobalSearchScope getWidestUseScope(@Nullable String key, @NotNull Project project) {
+    if (key == null) return null;
+
+    Set<Module> modules = ContainerUtil.newLinkedHashSet();
+    for (IProperty property : PropertiesImplUtil.findPropertiesByKey(project, key)) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(property.getPsiElement());
+      if (module == null) {
+        return GlobalSearchScope.allScope(project);
+      }
+      modules.add(module);
+    }
+    if (modules.isEmpty()) return null;
+
+    List<Module> list = ContainerUtil.newArrayList(modules);
+    GlobalSearchScope result = GlobalSearchScope.moduleWithDependentsScope(list.get(0));
+    for (int i = 1; i < list.size(); i++) {
+      result = result.uniteWith(GlobalSearchScope.moduleWithDependentsScope(list.get(i)));
+    }
+    return result;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
@@ -67,7 +92,6 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     Object[] extensions = Extensions.getExtensions("com.intellij.referencesSearch");
     final PropertySearcher searcher =
       (PropertySearcher)ContainerUtil.find(extensions, new FilteringIterator.InstanceOf<PropertySearcher>(PropertySearcher.class));
-    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(file.getProject());
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
     return new PsiElementVisitor() {
       @Override
@@ -89,6 +113,9 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
           name = searcher.getKeyToSearch(name, element.getProject());
           if (name == null) return;
         }
+
+        final GlobalSearchScope searchScope = getWidestUseScope(property.getKey(), element.getProject());
+        if (searchScope == null) return;
 
         PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, searchScope, file, original);
         if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return;
