@@ -213,7 +213,7 @@ public abstract class PlatformIdTableBuilding {
       }
       OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
       for (IndexPattern indexPattern : indexPatterns) {
-        Pattern pattern = indexPattern.getPattern();
+        Pattern pattern = indexPattern.getOptimizedIndexingPattern();
         if (pattern != null) {
           Matcher matcher = pattern.matcher(chars);
           while (matcher.find()) {
