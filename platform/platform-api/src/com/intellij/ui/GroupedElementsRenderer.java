@@ -49,9 +49,9 @@ public abstract class GroupedElementsRenderer {
                                LEFT,
                                viewR, iconR, textR, 0);
         GraphicsUtil.setupAAPainting(g);
-        g.setColor(Gray._255.withAlpha(80));
+        g.setColor(new JBColor(Gray._255.withAlpha(80), Gray._0.withAlpha(80)));
         g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
-        g.setColor(new Color(0x5F6D7B));
+        g.setColor(new JBColor(new Color(0x5F6D7B), Gray._120));
         g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
       } else {
         super.paintComponent(g);
