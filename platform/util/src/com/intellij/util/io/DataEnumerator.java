@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
+import java.io.IOException;
 
 /**
- * Author: dmitrylomov
+ * @author peter
  */
-public interface AbstractStringEnumerator extends Closeable, Forceable, DataEnumerator<String> {
+public interface DataEnumerator<Data> {
+  int enumerate(@Nullable Data value) throws IOException;
 
-  void markCorrupted();
+  @Nullable
+  Data valueOf(int idx) throws IOException;
 }

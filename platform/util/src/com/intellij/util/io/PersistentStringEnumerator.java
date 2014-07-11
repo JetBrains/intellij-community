@@ -15,22 +15,14 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.containers.SLRUMap;
-import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.locks.Lock;
 
 public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String> implements AbstractStringEnumerator {
-  private static final int STRIPE_POWER = 4;
-  private static final int STRIPE_COUNT = 1 << STRIPE_POWER;
-  private static final int STRIPE_MASK = STRIPE_COUNT - 1;
-  @Nullable private final SLRUMap<Integer, Integer>[] myHashcodeToIdCache;
-  @Nullable private final SLRUMap<Integer, String>[] myIdToStringCache;
-  @Nullable private final Lock[] myStripeLocks;
+  @Nullable private final CachingEnumerator<String> myCache;
 
   public PersistentStringEnumerator(@NotNull final File file) throws IOException {
     this(file, null);
@@ -58,129 +50,36 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
                                      final int initialSize,
                                      boolean cacheLastMappings,
                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
-    super(file, new EnumeratorStringDescriptor(), initialSize, lockContext);
-    if (cacheLastMappings) {
-      myIdToStringCache = new SLRUMap[STRIPE_COUNT];
-      myHashcodeToIdCache = new SLRUMap[STRIPE_COUNT];
-      myStripeLocks = new Lock[STRIPE_COUNT];
-      int protectedSize = 8192;
-      int probationalSize = 8192;
-
-      for(int i = 0; i < STRIPE_COUNT; ++i) {
-        myHashcodeToIdCache[i] = new SLRUMap<Integer, Integer>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
-        myIdToStringCache[i] = new SLRUMap<Integer, String>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
-        myStripeLocks[i] = new SequenceLock();
+    super(file, EnumeratorStringDescriptor.INSTANCE, initialSize, lockContext);
+    myCache = cacheLastMappings ? new CachingEnumerator<String>(new DataEnumerator<String>() {
+      @Override
+      public int enumerate(@Nullable String value) throws IOException {
+        return PersistentStringEnumerator.super.enumerate(value);
       }
-    } else {
-      myIdToStringCache = null;
-      myHashcodeToIdCache = null;
-      myStripeLocks = null;
-    }
+
+      @Nullable
+      @Override
+      public String valueOf(int idx) throws IOException {
+        return PersistentStringEnumerator.super.valueOf(idx);
+      }
+    }, EnumeratorStringDescriptor.INSTANCE) : null;
   }
 
   @Override
   public int enumerate(@Nullable String value) throws IOException {
-    int valueHashCode =-1;
-    int stripe = -1;
-
-    if (myHashcodeToIdCache != null && value != null) {
-      valueHashCode = value.hashCode();
-      stripe = Math.abs(valueHashCode) & STRIPE_MASK;
-
-      Integer cachedId;
-
-      myStripeLocks[stripe].lock();
-      try {
-        cachedId = myHashcodeToIdCache[stripe].get(valueHashCode);
-      }
-      finally {
-        myStripeLocks[stripe].unlock();
-      }
-
-      if (cachedId != null) {
-        int stripe2 = idStripe(cachedId.intValue());
-        myStripeLocks[stripe2].lock();
-        try {
-          String s = myIdToStringCache[stripe2].get(cachedId);
-          if (s != null && value.equals(s)) return cachedId.intValue();
-        }
-        finally {
-          myStripeLocks[stripe2].unlock();
-        }
-      }
-    }
-
-    int enumerate = super.enumerate(value);
-
-    if (stripe != -1) {
-      Integer enumeratedInteger;
-
-      myStripeLocks[stripe].lock();
-      try {
-        enumeratedInteger = enumerate;
-        myHashcodeToIdCache[stripe].put(valueHashCode, enumeratedInteger);
-      } finally {
-        myStripeLocks[stripe].unlock();
-      }
-
-      int stripe2 = idStripe(enumerate);
-      myStripeLocks[stripe2].lock();
-      try {
-        myIdToStringCache[stripe2].put(enumeratedInteger, value);
-      } finally {
-        myStripeLocks[stripe2].unlock();
-      }
-    }
-
-    return enumerate;
-  }
-
-  private int idStripe(int h) {
-    h ^= (h >>> 20) ^ (h >>> 12);
-    return Math.abs(h ^ (h >>> 7) ^ (h >>> 4)) & STRIPE_MASK;
+    return myCache != null ? myCache.enumerate(value) : super.enumerate(value);
   }
 
   @Nullable
   @Override
   public String valueOf(int idx) throws IOException {
-    int stripe = -1;
-    if (myIdToStringCache != null) {
-      stripe = idStripe(idx);
-      myStripeLocks[stripe].lock();
-      try {
-        String s = myIdToStringCache[stripe].get(idx);
-        if (s != null) return s;
-      }
-      finally {
-        myStripeLocks[stripe].unlock();
-      }
-    }
-    String s = super.valueOf(idx);
-
-    if (stripe != -1 && s != null) {
-      myStripeLocks[stripe].lock();
-      try {
-        myIdToStringCache[stripe].put(idx, s);
-      }
-      finally {
-        myStripeLocks[stripe].unlock();
-      }
-    }
-    return s;
+    return myCache != null ? myCache.valueOf(idx) : super.valueOf(idx);
   }
 
   @Override
   public void close() throws IOException {
     super.close();
-
-    if (myIdToStringCache != null) {
-      for(int i = 0; i < myIdToStringCache.length; ++i) {
-        myStripeLocks[i].lock();
-        myIdToStringCache[i].clear();
-        myHashcodeToIdCache[i].clear();
-        myStripeLocks[i].unlock();
-      }
-    }
+    if (myCache != null) myCache.close();
   }
 
   @Override

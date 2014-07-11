@@ -171,6 +171,7 @@ gruntfile
 hardcoded
 hardlink
 hardlinks
+hashcode
 haxe
 helvetica
 holdability
@@ -486,6 +487,7 @@ sigwaiting
 sigwinch
 sigxcpu
 sigxfsz
+slru
 smallfile
 smallint
 soname
