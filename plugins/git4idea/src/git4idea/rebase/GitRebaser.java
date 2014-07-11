@@ -85,28 +85,34 @@ public class GitRebaser {
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();
-    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void onSuccess() {
-        updateResult.set(GitUpdateResult.SUCCESS);
-      }
-
-      @Override
-      protected void onCancel() {
-        if (onCancel != null) {
-          onCancel.run();
+    try {
+      GitUtil.workingTreeChangeBegan(myProject);
+      rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+        @Override
+        protected void onSuccess() {
+          updateResult.set(GitUpdateResult.SUCCESS);
         }
-        updateResult.set(GitUpdateResult.CANCEL);
-      }
 
-      @Override
-      protected void onFailure() {
-        failure.set(true);
-      }
-    });
+        @Override
+        protected void onCancel() {
+          if (onCancel != null) {
+            onCancel.run();
+          }
+          updateResult.set(GitUpdateResult.CANCEL);
+        }
 
-    if (failure.get()) {
-      updateResult.set(handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector));
+        @Override
+        protected void onFailure() {
+          failure.set(true);
+        }
+      });
+
+      if (failure.get()) {
+        updateResult.set(handleRebaseFailure(rebaseHandler, root, rebaseConflictDetector, untrackedFilesDetector));
+      }
+    }
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
     }
     return updateResult.get();
   }
@@ -134,11 +140,17 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
-    boolean success = true;
-    for (VirtualFile root : rebasingRoots) {
-      success &= continueRebase(root);
+    GitUtil.workingTreeChangeBegan(myProject);
+    try {
+      boolean success = true;
+      for (VirtualFile root : rebasingRoots) {
+        success &= continueRebase(root);
+      }
+      return success;
     }
-    return success;
+    finally {
+      GitUtil.workingTreeChangeFinished(myProject);
+    }
   }
 
   // start operation may be "--continue" or "--skip" depending on the situation.

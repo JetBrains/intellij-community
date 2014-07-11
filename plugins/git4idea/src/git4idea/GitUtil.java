@@ -18,6 +18,7 @@ package git4idea;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -1010,4 +1012,15 @@ public class GitUtil {
     builder.setTitle(title);
     builder.show();
   }
+
+  public static void workingTreeChangeBegan(@NotNull Project project) {
+    HeavyProcessLatch.INSTANCE.processStarted();
+    project.getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted();
+  }
+
+  public static void workingTreeChangeFinished(@NotNull Project project) {
+    HeavyProcessLatch.INSTANCE.processFinished();
+    project.getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted();
+  }
+
 }
