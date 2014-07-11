@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module builtins
 # from (built-in)
-# by generator 1.118
+# by generator 1.135
 """
 Built-in functions, exceptions, and other objects.
 
@@ -25,24 +25,23 @@ def abs(number): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def all(iterable): # real signature unknown; restored from __doc__
     """
     all(iterable) -> bool
     
     Return True if bool(x) is True for all values x in the iterable.
+    If the iterable is empty, return True.
     """
     return False
-
 
 def any(iterable): # real signature unknown; restored from __doc__
     """
     any(iterable) -> bool
     
     Return True if bool(x) is True for any x in the iterable.
+    If the iterable is empty, return False.
     """
     return False
-
 
 def ascii(p_object): # real signature unknown; restored from __doc__
     """
@@ -55,7 +54,6 @@ def ascii(p_object): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def bin(number): # real signature unknown; restored from __doc__
     """
     bin(number) -> string
@@ -63,7 +61,6 @@ def bin(number): # real signature unknown; restored from __doc__
     Return the binary representation of an integer.
     """
     return ""
-
 
 def callable(p_object): # real signature unknown; restored from __doc__
     """
@@ -75,15 +72,14 @@ def callable(p_object): # real signature unknown; restored from __doc__
     """
     return False
 
-
 def chr(i): # real signature unknown; restored from __doc__
     """
     chr(i) -> Unicode character
     
     Return a Unicode string of one character with ordinal i; 0 <= i <= 0x10ffff.
+    If 0x10000 <= i, a surrogate pair is returned.
     """
     return ""
-
 
 def compile(source, filename, mode, flags=None, dont_inherit=None): # real signature unknown; restored from __doc__
     """
@@ -103,7 +99,6 @@ def compile(source, filename, mode, flags=None, dont_inherit=None): # real signa
     """
     pass
 
-
 def copyright(*args, **kwargs): # real signature unknown
     """
     interactive prompt objects for printing the license text, a list of
@@ -111,14 +106,12 @@ def copyright(*args, **kwargs): # real signature unknown
     """
     pass
 
-
 def credits(*args, **kwargs): # real signature unknown
     """
     interactive prompt objects for printing the license text, a list of
         contributors and the copyright notice.
     """
     pass
-
 
 def delattr(p_object, name): # real signature unknown; restored from __doc__
     """
@@ -128,7 +121,6 @@ def delattr(p_object, name): # real signature unknown; restored from __doc__
     ``del x.y''.
     """
     pass
-
 
 def dir(p_object=None): # real signature unknown; restored from __doc__
     """
@@ -147,7 +139,6 @@ def dir(p_object=None): # real signature unknown; restored from __doc__
     """
     return []
 
-
 def divmod(x, y): # known case of builtins.divmod
     """
     divmod(x, y) -> (div, mod)
@@ -155,7 +146,6 @@ def divmod(x, y): # known case of builtins.divmod
     Return the tuple ((x-x%y)/y, x%y).  Invariant: div*y + mod == x.
     """
     return (0, 0)
-
 
 def eval(source, globals=None, locals=None): # real signature unknown; restored from __doc__
     """
@@ -170,7 +160,6 @@ def eval(source, globals=None, locals=None): # real signature unknown; restored 
     """
     pass
 
-
 def exec(p_object, globals=None, locals=None): # real signature unknown; restored from __doc__
     """
     exec(object[, globals[, locals]])
@@ -182,10 +171,8 @@ def exec(p_object, globals=None, locals=None): # real signature unknown; restore
     """
     pass
 
-
 def exit(*args, **kwargs): # real signature unknown
     pass
-
 
 def format(value, format_spec=None): # real signature unknown; restored from __doc__
     """
@@ -195,7 +182,6 @@ def format(value, format_spec=None): # real signature unknown; restored from __d
     format_spec defaults to ""
     """
     return ""
-
 
 def getattr(object, name, default=None): # known special case of getattr
     """
@@ -207,7 +193,6 @@ def getattr(object, name, default=None): # known special case of getattr
     """
     pass
 
-
 def globals(): # real signature unknown; restored from __doc__
     """
     globals() -> dictionary
@@ -215,7 +200,6 @@ def globals(): # real signature unknown; restored from __doc__
     Return the dictionary containing the current scope's global variables.
     """
     return {}
-
 
 def hasattr(p_object, name): # real signature unknown; restored from __doc__
     """
@@ -226,7 +210,6 @@ def hasattr(p_object, name): # real signature unknown; restored from __doc__
     """
     return False
 
-
 def hash(p_object): # real signature unknown; restored from __doc__
     """
     hash(object) -> integer
@@ -236,14 +219,12 @@ def hash(p_object): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def help(with_a_twist): # real signature unknown; restored from __doc__
     """
     Define the builtin 'help'.
         This is a wrapper around pydoc.help (with a twist).
     """
     pass
-
 
 def hex(number): # real signature unknown; restored from __doc__
     """
@@ -253,7 +234,6 @@ def hex(number): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def id(p_object): # real signature unknown; restored from __doc__
     """
     id(object) -> integer
@@ -262,7 +242,6 @@ def id(p_object): # real signature unknown; restored from __doc__
     simultaneously existing objects.  (Hint: it's the object's memory address.)
     """
     return 0
-
 
 def input(prompt=None): # real signature unknown; restored from __doc__
     """
@@ -275,7 +254,6 @@ def input(prompt=None): # real signature unknown; restored from __doc__
     """
     return ""
 
-
 def isinstance(p_object, class_or_type_or_tuple): # real signature unknown; restored from __doc__
     """
     isinstance(object, class-or-type-or-tuple) -> bool
@@ -287,7 +265,6 @@ def isinstance(p_object, class_or_type_or_tuple): # real signature unknown; rest
     """
     return False
 
-
 def issubclass(C, B): # real signature unknown; restored from __doc__
     """
     issubclass(C, B) -> bool
@@ -297,7 +274,6 @@ def issubclass(C, B): # real signature unknown; restored from __doc__
     is a shortcut for issubclass(X, A) or issubclass(X, B) or ... (etc.).
     """
     return False
-
 
 def iter(source, sentinel=None): # known special case of iter
     """
@@ -310,7 +286,6 @@ def iter(source, sentinel=None): # known special case of iter
     """
     pass
 
-
 def len(p_object): # real signature unknown; restored from __doc__
     """
     len(object) -> integer
@@ -319,14 +294,12 @@ def len(p_object): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def license(*args, **kwargs): # real signature unknown
     """
     interactive prompt objects for printing the license text, a list of
         contributors and the copyright notice.
     """
     pass
-
 
 def locals(): # real signature unknown; restored from __doc__
     """
@@ -335,7 +308,6 @@ def locals(): # real signature unknown; restored from __doc__
     Update and return a dictionary containing the current scope's local variables.
     """
     return {}
-
 
 def max(*args, key=None): # known special case of max
     """
@@ -347,7 +319,6 @@ def max(*args, key=None): # known special case of max
     """
     pass
 
-
 def min(*args, key=None): # known special case of min
     """
     min(iterable[, key=func]) -> value
@@ -358,7 +329,6 @@ def min(*args, key=None): # known special case of min
     """
     pass
 
-
 def next(iterator, default=None): # real signature unknown; restored from __doc__
     """
     next(iterator[, default])
@@ -368,7 +338,6 @@ def next(iterator, default=None): # real signature unknown; restored from __doc_
     """
     pass
 
-
 def oct(number): # real signature unknown; restored from __doc__
     """
     oct(number) -> string
@@ -376,7 +345,6 @@ def oct(number): # real signature unknown; restored from __doc__
     Return the octal representation of an integer.
     """
     return ""
-
 
 def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True): # known special case of open
     """
@@ -468,9 +436,9 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     
     * On output, if newline is None, any '\n' characters written are
       translated to the system default line separator, os.linesep. If
-      newline is '', no translation takes place. If newline is any of the
-      other legal values, any '\n' characters written are translated to
-      the given string.
+      newline is '' or '\n', no translation takes place. If newline is any
+      of the other legal values, any '\n' characters written are translated
+      to the given string.
     
     If closefd is False, the underlying file descriptor will be kept open
     when the file is closed. This does not work when a file name is given
@@ -492,15 +460,14 @@ def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=Non
     """
     pass
 
-
 def ord(c): # real signature unknown; restored from __doc__
     """
     ord(c) -> integer
     
     Return the integer ordinal of a one-character string.
+    A valid surrogate pair is also accepted.
     """
     return 0
-
 
 def pow(x, y, z=None): # real signature unknown; restored from __doc__
     """
@@ -510,7 +477,6 @@ def pow(x, y, z=None): # real signature unknown; restored from __doc__
     equivalent to (x**y) % z, but may be more efficient (e.g. for longs).
     """
     return 0
-
 
 def print(*args, sep=' ', end='\n', file=None): # known special case of print
     """
@@ -524,10 +490,8 @@ def print(*args, sep=' ', end='\n', file=None): # known special case of print
     """
     pass
 
-
 def quit(*args, **kwargs): # real signature unknown
     pass
-
 
 def repr(p_object): # real signature unknown; restored from __doc__
     """
@@ -537,7 +501,6 @@ def repr(p_object): # real signature unknown; restored from __doc__
     For most object types, eval(repr(object)) == object.
     """
     return ""
-
 
 def round(number, ndigits=None): # real signature unknown; restored from __doc__
     """
@@ -549,7 +512,6 @@ def round(number, ndigits=None): # real signature unknown; restored from __doc__
     """
     return 0
 
-
 def setattr(p_object, name, value): # real signature unknown; restored from __doc__
     """
     setattr(object, name, value)
@@ -559,11 +521,9 @@ def setattr(p_object, name, value): # real signature unknown; restored from __do
     """
     pass
 
-
 def sorted(iterable, key=None, reverse=False): # real signature unknown; restored from __doc__
     """ sorted(iterable, key=None, reverse=False) --> new sorted list """
     pass
-
 
 def sum(iterable, start=None): # real signature unknown; restored from __doc__
     """
@@ -575,7 +535,6 @@ def sum(iterable, start=None): # real signature unknown; restored from __doc__
     """
     pass
 
-
 def vars(p_object=None): # real signature unknown; restored from __doc__
     """
     vars([object]) -> dictionary
@@ -585,7 +544,6 @@ def vars(p_object=None): # real signature unknown; restored from __doc__
     """
     return {}
 
-
 def __build_class__(func, name, *bases, metaclass=None, **kwds): # real signature unknown; restored from __doc__
     """
     __build_class__(func, name, *bases, metaclass=None, **kwds) -> class
@@ -593,7 +551,6 @@ def __build_class__(func, name, *bases, metaclass=None, **kwds): # real signatur
     Internal helper function used by the class statement.
     """
     pass
-
 
 def __import__(name, globals={}, locals={}, fromlist=[], level=-1): # real signature unknown; restored from __doc__
     """
@@ -616,8 +573,83 @@ def __import__(name, globals={}, locals={}, fromlist=[], level=-1): # real signa
     """
     pass
 
-
 # classes
+
+
+class __generator(object):
+    '''A mock class representing the generator function type.'''
+    def __init__(self):
+        self.gi_code = None
+        self.gi_frame = None
+        self.gi_running = 0
+
+    def __iter__(self):
+        '''Defined to support iteration over container.'''
+        pass
+
+    def __next__(self):
+        '''Return the next item from the container.'''
+        pass
+
+    def close(self):
+        '''Raises new GeneratorExit exception inside the generator to terminate the iteration.'''
+        pass
+
+    def send(self, value):
+        '''Resumes the generator and "sends" a value that becomes the result of the current yield-expression.'''
+        pass
+
+    def throw(self, type, value=None, traceback=None):
+        '''Used to raise an exception inside the generator.'''
+        pass
+
+
+class __function(object):
+    '''A mock class representing function type.'''
+
+    def __init__(self):
+        self.__name__ = ''
+        self.__doc__ = ''
+        self.__dict__ = ''
+        self.__module__ = ''
+
+        self.__annotations__ = {}
+        self.__defaults__ = {}
+        self.__globals__ = {}
+        self.__kwdefaults__ = {}
+        self.__closure__ = None
+        self.__code__ = None
+        self.__name__ = ''
+
+
+class __namedtuple(tuple):
+    '''A mock base class for named tuples.'''
+
+    __slots__ = ()
+    _fields = ()
+
+    def __new__(cls, *args, **kwargs):
+        'Create a new instance of the named tuple.'
+        return tuple.__new__(cls, *args)
+
+    @classmethod
+    def _make(cls, iterable, new=tuple.__new__, len=len):
+        'Make a new named tuple object from a sequence or iterable.'
+        return new(cls, iterable)
+
+    def __repr__(self):
+        return ''
+
+    def _asdict(self):
+        'Return a new dict which maps field types to their values.'
+        return {}
+
+    def _replace(self, **kwargs):
+        'Return a new named tuple object replacing specified fields with new values.'
+        return self
+
+    def __getnewargs__(self):
+        return tuple(self)
 
 class object:
     """ The most base type """
@@ -715,6 +747,8 @@ class object:
     __module__ = ''
 
 
+from .object import object
+
 class BaseException(object):
     """ Common base class for all exceptions """
     def with_traceback(self, tb): # real signature unknown; restored from __doc__
@@ -758,13 +792,21 @@ class BaseException(object):
         """ x.__str__() <==> str(x) """
         pass
 
-    args = property(lambda self: object()) # default
-    __cause__ = property(lambda self: object()) # default
-    __context__ = property(lambda self: object()) # default
-    __traceback__ = property(lambda self: object()) # default
+    args = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    __cause__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception cause"""
+
+    __context__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception context"""
+
+    __traceback__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
 
     __dict__ = None # (!) real value is ''
 
+
+from .BaseException import BaseException
 
 class Exception(BaseException):
     """ Common base class for all non-exit exceptions. """
@@ -777,6 +819,8 @@ class Exception(BaseException):
         pass
 
 
+from .Exception import Exception
+
 class ArithmeticError(Exception):
     """ Base class for arithmetic errors. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -787,6 +831,8 @@ class ArithmeticError(Exception):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .Exception import Exception
 
 class AssertionError(Exception):
     """ Assertion failed. """
@@ -799,6 +845,8 @@ class AssertionError(Exception):
         pass
 
 
+from .Exception import Exception
+
 class AttributeError(Exception):
     """ Attribute not found. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -810,15 +858,24 @@ class AttributeError(Exception):
         pass
 
 
+from .object import object
+
 class int(object):
     """
-    int(x[, base]) -> integer
+    int(x=0) -> integer
+    int(x, base=10) -> integer
     
-    Convert a string or number to an integer, if possible.  A floating
-    point argument will be truncated towards zero (this does not include a
-    string representation of a floating point number!)  When converting a
-    string, use the optional base.  It is an error to supply a base when
-    converting a non-string.
+    Convert a number or string to an integer, or return 0 if no arguments
+    are given.  If x is a number, return x.__int__().  For floating point
+    numbers, this truncates towards zero.
+    
+    If x is not a number or if base is given, then x must be a string,
+    bytes, or bytearray instance representing an integer literal in the
+    given base.  The literal can be preceded by '+' or '-' and be surrounded
+    by whitespace.  The base defaults to 10.  Valid bases are 0 and 2-36.
+    Base 0 means to interpret the base from the string as an integer literal.
+    >>> int('0b100', base=0)
+    4
     """
     def bit_length(self): # real signature unknown; restored from __doc__
         """
@@ -836,7 +893,8 @@ class int(object):
         """ Returns self, the complex conjugate of any int. """
         pass
 
-    def from_bytes(self, bytes, byteorder, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    @classmethod # known case
+    def from_bytes(cls, bytes, byteorder, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
         int.from_bytes(bytes, byteorder, *, signed=False) -> int
         
@@ -947,13 +1005,20 @@ class int(object):
 
     def __init__(self, x, base=10): # known special case of int.__init__
         """
-        int(x[, base]) -> integer
+        int(x=0) -> integer
+        int(x, base=10) -> integer
         
-        Convert a string or number to an integer, if possible.  A floating
-        point argument will be truncated towards zero (this does not include a
-        string representation of a floating point number!)  When converting a
-        string, use the optional base.  It is an error to supply a base when
-        converting a non-string.
+        Convert a number or string to an integer, or return 0 if no arguments
+        are given.  If x is a number, return x.__int__().  For floating point
+        numbers, this truncates towards zero.
+        
+        If x is not a number or if base is given, then x must be a string,
+        bytes, or bytearray instance representing an integer literal in the
+        given base.  The literal can be preceded by '+' or '-' and be surrounded
+        by whitespace.  The base defaults to 10.  Valid bases are 0 and 2-36.
+        Base 0 means to interpret the base from the string as an integer literal.
+        >>> int('0b100', base=0)
+        4
         # (copied from class doc)
         """
         pass
@@ -1102,11 +1167,21 @@ class int(object):
         """ x.__xor__(y) <==> x^y """
         pass
 
-    denominator = property(lambda self: object()) # default
-    imag = property(lambda self: object()) # default
-    numerator = property(lambda self: object()) # default
-    real = property(lambda self: object()) # default
+    denominator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the denominator of a rational number in lowest terms"""
 
+    imag = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the imaginary part of a complex number"""
+
+    numerator = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the numerator of a rational number in lowest terms"""
+
+    real = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the real part of a complex number"""
+
+
+
+from .int import int
 
 class bool(int):
     """
@@ -1157,6 +1232,8 @@ class bool(int):
         pass
 
 
+from .Exception import Exception
+
 class BufferError(Exception):
     """ Buffer error. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -1168,22 +1245,22 @@ class BufferError(Exception):
         pass
 
 
+from .object import object
+
 class bytearray(object):
     """
     bytearray(iterable_of_ints) -> bytearray
     bytearray(string, encoding[, errors]) -> bytearray
-    bytearray(bytes_or_bytearray) -> mutable copy of bytes_or_bytearray
-    bytearray(memory_view) -> bytearray
+    bytearray(bytes_or_buffer) -> mutable copy of bytes_or_buffer
+    bytearray(int) -> bytes array of size given by the parameter initialized with null bytes
+    bytearray() -> empty bytes array
     
     Construct an mutable bytearray object from:
       - an iterable yielding integers in range(256)
       - a text string encoded using the specified encoding
-      - a bytes or a bytearray object
+      - a bytes or a buffer object
       - any object implementing the buffer API.
-    
-    bytearray(int) -> bytearray
-    
-    Construct a zero-initialized bytearray of the given length.
+      - an integer
     """
     def append(self, p_int): # real signature unknown; restored from __doc__
         """
@@ -1662,18 +1739,16 @@ class bytearray(object):
         """
         bytearray(iterable_of_ints) -> bytearray
         bytearray(string, encoding[, errors]) -> bytearray
-        bytearray(bytes_or_bytearray) -> mutable copy of bytes_or_bytearray
-        bytearray(memory_view) -> bytearray
+        bytearray(bytes_or_buffer) -> mutable copy of bytes_or_buffer
+        bytearray(int) -> bytes array of size given by the parameter initialized with null bytes
+        bytearray() -> empty bytes array
         
         Construct an mutable bytearray object from:
           - an iterable yielding integers in range(256)
           - a text string encoded using the specified encoding
-          - a bytes or a bytearray object
+          - a bytes or a buffer object
           - any object implementing the buffer API.
-        
-        bytearray(int) -> bytearray
-        
-        Construct a zero-initialized bytearray of the given length.
+          - an integer
         # (copied from class doc)
         """
         pass
@@ -1738,18 +1813,21 @@ class bytearray(object):
     __hash__ = None
 
 
+from .object import object
+
 class bytes(object):
     """
     bytes(iterable_of_ints) -> bytes
     bytes(string, encoding[, errors]) -> bytes
     bytes(bytes_or_buffer) -> immutable copy of bytes_or_buffer
-    bytes(memory_view) -> bytes
+    bytes(int) -> bytes object of size given by the parameter initialized with null bytes
+    bytes() -> empty bytes object
     
     Construct an immutable array of bytes from:
       - an iterable yielding integers in range(256)
       - a text string encoded using the specified encoding
-      - a bytes or a buffer object
       - any object implementing the buffer API.
+      - an integer
     """
     def capitalize(self): # real signature unknown; restored from __doc__
         """
@@ -2073,7 +2151,7 @@ class bytes(object):
         B.strip([bytes]) -> bytes
         
         Strip leading and trailing bytes contained in the argument.
-        If the argument is omitted, strip trailing ASCII whitespace.
+        If the argument is omitted, strip leading and trailing ASCII whitespace.
         """
         return b""
 
@@ -2163,13 +2241,14 @@ class bytes(object):
         bytes(iterable_of_ints) -> bytes
         bytes(string, encoding[, errors]) -> bytes
         bytes(bytes_or_buffer) -> immutable copy of bytes_or_buffer
-        bytes(memory_view) -> bytes
+        bytes(int) -> bytes object of size given by the parameter initialized with null bytes
+        bytes() -> empty bytes object
         
         Construct an immutable array of bytes from:
           - an iterable yielding integers in range(256)
           - a text string encoded using the specified encoding
-          - a bytes or a buffer object
           - any object implementing the buffer API.
+          - an integer
         # (copied from class doc)
         """
         pass
@@ -2220,6 +2299,8 @@ class bytes(object):
         pass
 
 
+from .Exception import Exception
+
 class Warning(Exception):
     """ Base class for warning categories. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -2230,6 +2311,8 @@ class Warning(Exception):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .Warning import Warning
 
 class BytesWarning(Warning):
     """
@@ -2244,6 +2327,8 @@ class BytesWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class classmethod(object):
     """
@@ -2283,8 +2368,11 @@ class classmethod(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-    __func__ = property(lambda self: object()) # default
+    __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+
+
+from .object import object
 
 class complex(object):
     """
@@ -2449,8 +2537,20 @@ class complex(object):
         pass
 
     imag = property(lambda self: 0.0)
-    real = property(lambda self: 0.0)
+    """the imaginary part of a complex number
 
+    :type: float
+    """
+
+    real = property(lambda self: 0.0)
+    """the real part of a complex number
+
+    :type: float
+    """
+
+
+
+from .Warning import Warning
 
 class DeprecationWarning(Warning):
     """ Base class for warnings about deprecated features. """
@@ -2462,6 +2562,8 @@ class DeprecationWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class dict(object):
     """
@@ -2523,9 +2625,9 @@ class dict(object):
 
     def update(self, E=None, **F): # known special case of dict.update
         """
-        D.update(E, **F) -> None.  Update D from dict/iterable E and F.
-        If E has a .keys() method, does:     for k in E: D[k] = E[k]
-        If E lacks .keys() method, does:     for (k, v) in E: D[k] = v
+        D.update([E, ]**F) -> None.  Update D from dict/iterable E and F.
+        If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
+        If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
         In either case, this is followed by: for k in F: D[k] = F[k]
         """
         pass
@@ -2617,6 +2719,8 @@ class dict(object):
     __hash__ = None
 
 
+from .object import object
+
 class enumerate(object):
     """
     enumerate(iterable[, start]) -> iterator for index, value of iterable
@@ -2649,6 +2753,8 @@ class enumerate(object):
         pass
 
 
+from .Exception import Exception
+
 class EnvironmentError(Exception):
     """ Base class for I/O related errors. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -2666,10 +2772,18 @@ class EnvironmentError(Exception):
         """ x.__str__() <==> str(x) """
         pass
 
-    errno = property(lambda self: object()) # default
-    filename = property(lambda self: object()) # default
-    strerror = property(lambda self: object()) # default
+    errno = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception errno"""
 
+    filename = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception filename"""
+
+    strerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception strerror"""
+
+
+
+from .Exception import Exception
 
 class EOFError(Exception):
     """ Read beyond end of file. """
@@ -2681,6 +2795,8 @@ class EOFError(Exception):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class filter(object):
     """
@@ -2709,6 +2825,8 @@ class filter(object):
         """ x.__next__() <==> next(x) """
         pass
 
+
+from .object import object
 
 class float(object):
     """
@@ -2952,9 +3070,15 @@ class float(object):
         """ Returns the Integral closest to x between 0 and x. """
         pass
 
-    imag = property(lambda self: object()) # default
-    real = property(lambda self: object()) # default
+    imag = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the imaginary part of a complex number"""
 
+    real = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """the real part of a complex number"""
+
+
+
+from .ArithmeticError import ArithmeticError
 
 class FloatingPointError(ArithmeticError):
     """ Floating point operation failed. """
@@ -2966,6 +3090,8 @@ class FloatingPointError(ArithmeticError):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class frozenset(object):
     """
@@ -3120,6 +3246,8 @@ class frozenset(object):
         pass
 
 
+from .Warning import Warning
+
 class FutureWarning(Warning):
     """
     Base class for warnings about constructs that will change semantically
@@ -3134,6 +3262,8 @@ class FutureWarning(Warning):
         pass
 
 
+from .BaseException import BaseException
+
 class GeneratorExit(BaseException):
     """ Request that a generator exit. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3144,6 +3274,8 @@ class GeneratorExit(BaseException):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .Exception import Exception
 
 class ImportError(Exception):
     """ Import can't find module, or can't find name in module. """
@@ -3156,6 +3288,8 @@ class ImportError(Exception):
         pass
 
 
+from .Warning import Warning
+
 class ImportWarning(Warning):
     """ Base class for warnings about probable mistakes in module imports """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3166,6 +3300,8 @@ class ImportWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .Exception import Exception
 
 class SyntaxError(Exception):
     """ Invalid syntax. """
@@ -3181,13 +3317,27 @@ class SyntaxError(Exception):
         """ x.__str__() <==> str(x) """
         pass
 
-    filename = property(lambda self: object()) # default
-    lineno = property(lambda self: object()) # default
-    msg = property(lambda self: object()) # default
-    offset = property(lambda self: object()) # default
-    print_file_and_line = property(lambda self: object()) # default
-    text = property(lambda self: object()) # default
+    filename = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception filename"""
 
+    lineno = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception lineno"""
+
+    msg = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception msg"""
+
+    offset = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception offset"""
+
+    print_file_and_line = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception print_file_and_line"""
+
+    text = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception text"""
+
+
+
+from .SyntaxError import SyntaxError
 
 class IndentationError(SyntaxError):
     """ Improper indentation. """
@@ -3200,6 +3350,8 @@ class IndentationError(SyntaxError):
         pass
 
 
+from .Exception import Exception
+
 class LookupError(Exception):
     """ Base class for lookup errors. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3210,6 +3362,8 @@ class LookupError(Exception):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .LookupError import LookupError
 
 class IndexError(LookupError):
     """ Sequence index out of range. """
@@ -3222,6 +3376,8 @@ class IndexError(LookupError):
         pass
 
 
+from .EnvironmentError import EnvironmentError
+
 class IOError(EnvironmentError):
     """ I/O operation failed. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3233,6 +3389,8 @@ class IOError(EnvironmentError):
         pass
 
 
+from .BaseException import BaseException
+
 class KeyboardInterrupt(BaseException):
     """ Program interrupted by user. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3243,6 +3401,8 @@ class KeyboardInterrupt(BaseException):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .LookupError import LookupError
 
 class KeyError(LookupError):
     """ Mapping key not found. """
@@ -3258,6 +3418,8 @@ class KeyError(LookupError):
         """ x.__str__() <==> str(x) """
         pass
 
+
+from .object import object
 
 class list(object):
     """
@@ -3409,6 +3571,8 @@ class list(object):
     __hash__ = None
 
 
+from .object import object
+
 class map(object):
     """
     map(func, *iterables) --> map object
@@ -3437,6 +3601,8 @@ class map(object):
         pass
 
 
+from .Exception import Exception
+
 class MemoryError(Exception):
     """ Out of memory. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3448,20 +3614,37 @@ class MemoryError(Exception):
         pass
 
 
+from .object import object
+
 class memoryview(object):
     """
     memoryview(object)
     
     Create a new memoryview object which references the given object.
     """
-    def release(self, *args, **kwargs): # real signature unknown
+    def release(self): # real signature unknown; restored from __doc__
+        """
+        M.release() -> None
+        
+        Release the underlying buffer exposed by the memoryview object.
+        """
         pass
 
-    def tobytes(self, *args, **kwargs): # real signature unknown
-        pass
+    def tobytes(self): # real signature unknown; restored from __doc__
+        """
+        M.tobytes() -> bytes
+        
+        Return the data in the buffer as a byte string.
+        """
+        return b""
 
-    def tolist(self, *args, **kwargs): # real signature unknown
-        pass
+    def tolist(self): # real signature unknown; restored from __doc__
+        """
+        M.tolist() -> list
+        
+        Return the data in the buffer as a list of elements.
+        """
+        return []
 
     def __delitem__(self, y): # real signature unknown; restored from __doc__
         """ x.__delitem__(y) <==> del x[y] """
@@ -3525,16 +3708,36 @@ class memoryview(object):
         """ x.__setitem__(i, y) <==> x[i]=y """
         pass
 
-    format = property(lambda self: object()) # default
-    itemsize = property(lambda self: object()) # default
-    ndim = property(lambda self: object()) # default
-    readonly = property(lambda self: object()) # default
-    shape = property(lambda self: object()) # default
-    strides = property(lambda self: object()) # default
-    suboffsets = property(lambda self: object()) # default
+    format = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A string containing the format (in struct module style)
+ for each element in the view."""
+
+    itemsize = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """The size in bytes of each element of the memoryview."""
+
+    ndim = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """An integer indicating how many dimensions of a multi-dimensional
+ array the memory represents."""
+
+    readonly = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A bool indicating whether the memory is read only."""
+
+    shape = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A tuple of ndim integers giving the shape of the memory
+ as an N-dimensional array."""
+
+    strides = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A tuple of ndim integers giving the size in bytes to access
+ each element for each dimension of the array."""
+
+    suboffsets = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """A tuple of integers used internally for PIL-style arrays."""
+
 
     __hash__ = None
 
+
+from .Exception import Exception
 
 class NameError(Exception):
     """ Name not found globally. """
@@ -3547,6 +3750,8 @@ class NameError(Exception):
         pass
 
 
+from .Exception import Exception
+
 class RuntimeError(Exception):
     """ Unspecified run-time error. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3557,6 +3762,8 @@ class RuntimeError(Exception):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .RuntimeError import RuntimeError
 
 class NotImplementedError(RuntimeError):
     """ Method or function hasn't been implemented yet. """
@@ -3569,6 +3776,8 @@ class NotImplementedError(RuntimeError):
         pass
 
 
+from .EnvironmentError import EnvironmentError
+
 class OSError(EnvironmentError):
     """ OS system call failed. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3580,6 +3789,8 @@ class OSError(EnvironmentError):
         pass
 
 
+from .ArithmeticError import ArithmeticError
+
 class OverflowError(ArithmeticError):
     """ Result too large to be represented. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3590,6 +3801,8 @@ class OverflowError(ArithmeticError):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .Warning import Warning
 
 class PendingDeprecationWarning(Warning):
     """
@@ -3604,6 +3817,8 @@ class PendingDeprecationWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class property(object):
     """
@@ -3686,14 +3901,20 @@ class property(object):
         """ descr.__set__(obj, value) """
         pass
 
-    fdel = property(lambda self: object()) # default
-    fget = property(lambda self: object()) # default
-    fset = property(lambda self: object()) # default
+    fdel = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    fget = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    fset = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+
+
+from .object import object
 
 class range(object):
     """
-    range([start,] stop[, step]) -> range object
+    range(stop) -> range object
+    range(start, stop[, step]) -> range object
     
     Returns a virtual sequence of numbers from start to stop by step.
     """
@@ -3720,7 +3941,7 @@ class range(object):
         """ x.__getitem__(y) <==> x[y] """
         pass
 
-    def __init__(self, start=None, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def __init__(self, stop): # real signature unknown; restored from __doc__
         pass
 
     def __iter__(self): # real signature unknown; restored from __doc__
@@ -3748,6 +3969,8 @@ class range(object):
         pass
 
 
+from .Exception import Exception
+
 class ReferenceError(Exception):
     """ Weak ref proxy used after referent went away. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3759,6 +3982,8 @@ class ReferenceError(Exception):
         pass
 
 
+from .Warning import Warning
+
 class ResourceWarning(Warning):
     """ Base class for warnings about resource usage. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3769,6 +3994,8 @@ class ResourceWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class reversed(object):
     """
@@ -3801,6 +4028,8 @@ class reversed(object):
         pass
 
 
+from .Warning import Warning
+
 class RuntimeWarning(Warning):
     """ Base class for warnings about dubious runtime behavior. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3811,6 +4040,8 @@ class RuntimeWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class set(object):
     """
@@ -3943,7 +4174,7 @@ class set(object):
         pass
 
     def __iand__(self, y): # real signature unknown; restored from __doc__
-        """ x.__iand__(y) <==> x&y """
+        """ x.__iand__(y) <==> x&=y """
         pass
 
     def __init__(self, seq=()): # known special case of set.__init__
@@ -3957,11 +4188,11 @@ class set(object):
         pass
 
     def __ior__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ior__(y) <==> x|y """
+        """ x.__ior__(y) <==> x|=y """
         pass
 
     def __isub__(self, y): # real signature unknown; restored from __doc__
-        """ x.__isub__(y) <==> x-y """
+        """ x.__isub__(y) <==> x-=y """
         pass
 
     def __iter__(self): # real signature unknown; restored from __doc__
@@ -3969,7 +4200,7 @@ class set(object):
         pass
 
     def __ixor__(self, y): # real signature unknown; restored from __doc__
-        """ x.__ixor__(y) <==> x^y """
+        """ x.__ixor__(y) <==> x^=y """
         pass
 
     def __len__(self): # real signature unknown; restored from __doc__
@@ -4036,9 +4267,12 @@ class set(object):
     __hash__ = None
 
 
+from .object import object
+
 class slice(object):
     """
-    slice([start,] stop[, step])
+    slice(stop)
+    slice(start, stop[, step])
     
     Create a slice object.  This is used for extended slicing (e.g. a[0:10:2]).
     """
@@ -4069,7 +4303,7 @@ class slice(object):
         """ x.__gt__(y) <==> x>y """
         pass
 
-    def __init__(self, start=None, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def __init__(self, stop): # real signature unknown; restored from __doc__
         pass
 
     def __le__(self, y): # real signature unknown; restored from __doc__
@@ -4098,11 +4332,19 @@ class slice(object):
         pass
 
     start = property(lambda self: 0)
+    """:type: int"""
+
     step = property(lambda self: 0)
+    """:type: int"""
+
     stop = property(lambda self: 0)
+    """:type: int"""
+
 
     __hash__ = None
 
+
+from .object import object
 
 class staticmethod(object):
     """
@@ -4139,8 +4381,11 @@ class staticmethod(object):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-    __func__ = property(lambda self: object()) # default
+    __func__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+
+
+from .Exception import Exception
 
 class StopIteration(Exception):
     """ Signal the end from iterator.__next__(). """
@@ -4153,13 +4398,20 @@ class StopIteration(Exception):
         pass
 
 
+from .object import object
+
 class str(object):
     """
-    str(string[, encoding[, errors]]) -> str
+    str(object='') -> str
+    str(bytes_or_buffer[, encoding[, errors]]) -> str
     
-    Create a new string object from the given encoded string.
-    encoding defaults to the current default string encoding.
-    errors can be 'strict', 'replace' or 'ignore' and defaults to 'strict'.
+    Create a new string object from the given object. If encoding or
+    errors is specified, then the object must expose a data buffer
+    that will be decoded using the given encoding and error handler.
+    Otherwise, returns the result of object.__str__() (if defined)
+    or repr(object).
+    encoding defaults to sys.getdefaultencoding().
+    errors defaults to 'strict'.
     """
     def capitalize(self): # real signature unknown; restored from __doc__
         """
@@ -4234,14 +4486,14 @@ class str(object):
         """
         return 0
 
-    def format(self, *args, **kwargs): # real signature unknown; restored from __doc__
+    def format(*args, **kwargs): # known special case of str.format
         """
         S.format(*args, **kwargs) -> str
         
         Return a formatted version of S, using substitutions from args and kwargs.
         The substitutions are identified by braces ('{' and '}').
         """
-        return ""
+        pass
 
     def format_map(self, mapping): # real signature unknown; restored from __doc__
         """
@@ -4626,11 +4878,16 @@ class str(object):
 
     def __init__(self, value='', encoding=None, errors='strict'): # known special case of str.__init__
         """
-        str(string[, encoding[, errors]]) -> str
+        str(object='') -> str
+        str(bytes_or_buffer[, encoding[, errors]]) -> str
         
-        Create a new string object from the given encoded string.
-        encoding defaults to the current default string encoding.
-        errors can be 'strict', 'replace' or 'ignore' and defaults to 'strict'.
+        Create a new string object from the given object. If encoding or
+        errors is specified, then the object must expose a data buffer
+        that will be decoded using the given encoding and error handler.
+        Otherwise, returns the result of object.__str__() (if defined)
+        or repr(object).
+        encoding defaults to sys.getdefaultencoding().
+        errors defaults to 'strict'.
         # (copied from class doc)
         """
         pass
@@ -4689,6 +4946,8 @@ class str(object):
         pass
 
 
+from .object import object
+
 class super(object):
     """
     super() -> same as super(__class__, <first argument>)
@@ -4743,9 +5002,26 @@ class super(object):
         pass
 
     __self_class__ = property(lambda self: type(object))
-    __self__ = property(lambda self: type(object))
-    __thisclass__ = property(lambda self: type(object))
+    """the type of the instance invoking super(); may be None
 
+    :type: type
+    """
+
+    __self__ = property(lambda self: type(object))
+    """the instance invoking super(); may be None
+
+    :type: type
+    """
+
+    __thisclass__ = property(lambda self: type(object))
+    """the class invoking super()
+
+    :type: type
+    """
+
+
+
+from .Warning import Warning
 
 class SyntaxWarning(Warning):
     """ Base class for warnings about dubious syntax. """
@@ -4757,6 +5033,8 @@ class SyntaxWarning(Warning):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .Exception import Exception
 
 class SystemError(Exception):
     """
@@ -4774,6 +5052,8 @@ class SystemError(Exception):
         pass
 
 
+from .BaseException import BaseException
+
 class SystemExit(BaseException):
     """ Request to exit from the interpreter. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -4784,8 +5064,12 @@ class SystemExit(BaseException):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
-    code = property(lambda self: object()) # default
+    code = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception code"""
 
+
+
+from .IndentationError import IndentationError
 
 class TabError(IndentationError):
     """ Improper mixture of spaces and tabs. """
@@ -4797,6 +5081,8 @@ class TabError(IndentationError):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class tuple(object):
     """
@@ -4903,6 +5189,8 @@ class tuple(object):
         pass
 
 
+from .object import object
+
 class type(object):
     """
     type(object) -> the object's type
@@ -4973,7 +5261,8 @@ class type(object):
         """ __subclasses__() -> list of immediate subclasses """
         return []
 
-    __abstractmethods__ = property(lambda self: object()) # default
+    __abstractmethods__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
 
     __bases__ = (
         object,
@@ -4992,6 +5281,8 @@ class type(object):
     __weakrefoffset__ = 368
 
 
+from .Exception import Exception
+
 class TypeError(Exception):
     """ Inappropriate argument type. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5002,6 +5293,8 @@ class TypeError(Exception):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .NameError import NameError
 
 class UnboundLocalError(NameError):
     """ Local name referenced but not bound to a value. """
@@ -5014,6 +5307,8 @@ class UnboundLocalError(NameError):
         pass
 
 
+from .Exception import Exception
+
 class ValueError(Exception):
     """ Inappropriate argument value (of correct type). """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5025,6 +5320,8 @@ class ValueError(Exception):
         pass
 
 
+from .ValueError import ValueError
+
 class UnicodeError(ValueError):
     """ Unicode related error. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5035,6 +5332,8 @@ class UnicodeError(ValueError):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .UnicodeError import UnicodeError
 
 class UnicodeDecodeError(UnicodeError):
     """ Unicode decoding error. """
@@ -5050,12 +5349,24 @@ class UnicodeDecodeError(UnicodeError):
         """ x.__str__() <==> str(x) """
         pass
 
-    encoding = property(lambda self: object()) # default
-    end = property(lambda self: object()) # default
-    object = property(lambda self: object()) # default
-    reason = property(lambda self: object()) # default
-    start = property(lambda self: object()) # default
+    encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception encoding"""
 
+    end = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception end"""
+
+    object = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception object"""
+
+    reason = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception reason"""
+
+    start = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception start"""
+
+
+
+from .UnicodeError import UnicodeError
 
 class UnicodeEncodeError(UnicodeError):
     """ Unicode encoding error. """
@@ -5071,12 +5382,24 @@ class UnicodeEncodeError(UnicodeError):
         """ x.__str__() <==> str(x) """
         pass
 
-    encoding = property(lambda self: object()) # default
-    end = property(lambda self: object()) # default
-    object = property(lambda self: object()) # default
-    reason = property(lambda self: object()) # default
-    start = property(lambda self: object()) # default
+    encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception encoding"""
 
+    end = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception end"""
+
+    object = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception object"""
+
+    reason = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception reason"""
+
+    start = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception start"""
+
+
+
+from .UnicodeError import UnicodeError
 
 class UnicodeTranslateError(UnicodeError):
     """ Unicode translation error. """
@@ -5092,12 +5415,24 @@ class UnicodeTranslateError(UnicodeError):
         """ x.__str__() <==> str(x) """
         pass
 
-    encoding = property(lambda self: object()) # default
-    end = property(lambda self: object()) # default
-    object = property(lambda self: object()) # default
-    reason = property(lambda self: object()) # default
-    start = property(lambda self: object()) # default
+    encoding = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception encoding"""
 
+    end = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception end"""
+
+    object = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception object"""
+
+    reason = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception reason"""
+
+    start = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """exception start"""
+
+
+
+from .Warning import Warning
 
 class UnicodeWarning(Warning):
     """
@@ -5113,6 +5448,8 @@ class UnicodeWarning(Warning):
         pass
 
 
+from .Warning import Warning
+
 class UserWarning(Warning):
     """ Base class for warnings generated by user code. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5124,6 +5461,8 @@ class UserWarning(Warning):
         pass
 
 
+from .ArithmeticError import ArithmeticError
+
 class ZeroDivisionError(ArithmeticError):
     """ Second argument to a division or modulo operation was zero. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -5134,6 +5473,8 @@ class ZeroDivisionError(ArithmeticError):
         """ T.__new__(S, ...) -> a new object with type S, a subtype of T """
         pass
 
+
+from .object import object
 
 class zip(object):
     """
@@ -5164,64 +5505,6 @@ class zip(object):
         """ x.__next__() <==> next(x) """
         pass
 
-
-
-class __generator(object):
-    '''A mock class representing the generator function type.'''
-    def __init__(self):
-        self.gi_code = None
-        self.gi_frame = None
-        self.gi_running = 0
-
-    def __iter__(self):
-        '''Defined to support iteration over container.'''
-        pass
-
-    def __next__(self):
-        '''Return the next item from the container.'''
-        pass
-
-    def close(self):
-        '''Raises new GeneratorExit exception inside the generator to terminate the iteration.'''
-        pass
-
-    def send(self, value):
-        '''Resumes the generator and "sends" a value that becomes the result of the current yield-expression.'''
-        pass
-
-    def throw(self, type, value=None, traceback=None):
-        '''Used to raise an exception inside the generator.'''
-        pass
-
-
-class __namedtuple(tuple):
-    '''A mock base class for named tuples.'''
-
-    __slots__ = ()
-    _fields = ()
-
-    def __new__(cls, *args, **kwargs):
-        'Create a new instance of the named tuple.'
-        return tuple.__new__(cls, *args)
-
-    @classmethod
-    def _make(cls, iterable, new=tuple.__new__, len=len):
-        'Make a new named tuple object from a sequence or iterable.'
-        return new(cls, iterable)
-
-    def __repr__(self):
-        return ''
-
-    def _asdict(self):
-        'Return a new dict which maps field types to their values.'
-        return {}
-
-    def _replace(self, **kwargs):
-        'Return a new named tuple object replacing specified fields with new values.'
-        return self
-
-    def __getnewargs__(self):
-        return tuple(self)
 
 # variables with complex values
 

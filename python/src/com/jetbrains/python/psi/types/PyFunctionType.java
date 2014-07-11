@@ -16,8 +16,11 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -71,12 +74,20 @@ public class PyFunctionType implements PyCallableType {
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    return Collections.emptyList();
+    final PyClassTypeImpl functionType = PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
+    if (functionType == null) {
+      return Collections.emptyList();
+    }
+    return functionType.resolveMember(name, location, direction, resolveContext);
   }
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return new Object[0];
+    final PyClassTypeImpl functionType = PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
+    if (functionType == null) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+    return functionType.getCompletionVariants(completionPrefix, location, context);
   }
 
   @Override

@@ -59,6 +59,7 @@ public class PyNames {
 
   public static final String FAKE_OLD_BASE = "___Classobj";
   public static final String FAKE_GENERATOR = "__generator";
+  public static final String FAKE_FUNCTION = "__function";
   public static final String FAKE_NAMEDTUPLE = "__namedtuple";
 
   public static final String FUTURE_MODULE = "__future__";
@@ -167,17 +168,24 @@ public class PyNames {
    */
   public static ImmutableSet<String> UnderscoredAttributes = ImmutableSet.of(
     "__all__",
+    "__annotations__",
     "__author__",
     "__bases__",
+    "__closure__",
+    "__code__",
     "__defaults__",
     "__dict__",
+    "__dir__",
     "__doc__",
     "__docformat__",
     "__file__",
+    "__func__",
+    "__globals__",
     "__kwdefaults__",
     "__members__",
     "__metaclass__",
     "__mod__",
+    "__module__",
     "__mro__",
     "__name__",
     "__path__",
