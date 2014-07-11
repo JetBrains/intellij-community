@@ -63,10 +63,6 @@ public class GitRebaser {
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
   }
 
-  public void setProgressIndicator(@Nullable ProgressIndicator progressIndicator) {
-    myProgressIndicator = progressIndicator;
-  }
-
   public GitUpdateResult rebase(@NotNull VirtualFile root,
                                 @NotNull List<String> parameters,
                                 @Nullable final Runnable onCancel,
