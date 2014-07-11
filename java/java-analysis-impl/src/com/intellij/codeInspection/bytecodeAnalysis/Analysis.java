@@ -123,18 +123,15 @@ class AbstractValues {
   }
 
   static boolean equiv(Conf curr, Conf prev) {
-    if (curr.insnIndex != prev.insnIndex) {
-      return false;
-    }
     Frame<BasicValue> currFr = curr.frame;
     Frame<BasicValue> prevFr = prev.frame;
-    for (int i = 0; i < currFr.getLocals(); i++) {
-      if (!equiv(currFr.getLocal(i), prevFr.getLocal(i))) {
+    for (int i = currFr.getStackSize() - 1; i >= 0; i--) {
+      if (!equiv(currFr.getStack(i), prevFr.getStack(i))) {
         return false;
       }
     }
-    for (int i = 0; i < currFr.getStackSize(); i++) {
-      if (!equiv(currFr.getStack(i), prevFr.getStack(i))) {
+    for (int i = currFr.getLocals() - 1; i >= 0; i--) {
+      if (!equiv(currFr.getLocal(i), prevFr.getLocal(i))) {
         return false;
       }
     }
@@ -142,18 +139,6 @@ class AbstractValues {
   }
 
   static boolean equiv(BasicValue curr, BasicValue prev) {
-    if (InstanceOfCheckValue == prev) {
-      return InstanceOfCheckValue == curr;
-    }
-    if (TrueValue == prev) {
-      return TrueValue == curr;
-    }
-    if (FalseValue == prev) {
-      return FalseValue == curr;
-    }
-    if (NullValue == prev) {
-      return NullValue == curr;
-    }
     if (curr.getClass() == prev.getClass()) {
       if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
         Set<Key> keys1 = ((CallResultValue)prev).inters;
@@ -169,10 +154,20 @@ class AbstractValues {
 final class Conf {
   final int insnIndex;
   final Frame<BasicValue> frame;
+  final int fastHashCode;
 
   Conf(int insnIndex, Frame<BasicValue> frame) {
     this.insnIndex = insnIndex;
     this.frame = frame;
+
+    int hash = 0;
+    for (int i = 0; i < frame.getLocals(); i++) {
+      hash = hash * 31 + frame.getLocal(i).getClass().hashCode();
+    }
+    for (int i = 0; i < frame.getStackSize(); i++) {
+      hash = hash * 31 + frame.getStack(i).getClass().hashCode();
+    }
+    fastHashCode = hash;
   }
 }
 
@@ -182,7 +177,6 @@ final class State {
   final List<Conf> history;
   final boolean taken;
   final boolean hasCompanions;
-  final int insnIndex;
 
   State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions) {
     this.index = index;
@@ -190,7 +184,6 @@ final class State {
     this.history = history;
     this.taken = taken;
     this.hasCompanions = hasCompanions;
-    insnIndex = conf.insnIndex;
   }
 }
 
@@ -256,6 +249,9 @@ abstract class Analysis<Res> {
     if (curr.taken != prev.taken) {
       return false;
     }
+    if (curr.conf.fastHashCode != prev.conf.fastHashCode) {
+      return false;
+    }
     if (!AbstractValues.equiv(curr.conf, prev.conf)) {
       return false;
     }
@@ -263,7 +259,9 @@ abstract class Analysis<Res> {
       return false;
     }
     for (int i = 0; i < curr.history.size(); i++) {
-      if (!AbstractValues.equiv(curr.history.get(i), prev.history.get(i))) {
+      Conf curr1 = curr.history.get(i);
+      Conf prev1 = prev.history.get(i);
+      if (curr1.fastHashCode != prev1.fastHashCode || !AbstractValues.equiv(curr1, prev1)) {
         return false;
       }
     }
@@ -290,7 +288,7 @@ abstract class Analysis<Res> {
           earlyResult = result;
         } else {
           State state = makeResult.state;
-          int insnIndex = state.insnIndex;
+          int insnIndex = state.conf.insnIndex;
           results.put(state.index, result);
           List<State> thisComputed = computed.get(insnIndex);
           if (thisComputed == null) {
@@ -303,7 +301,7 @@ abstract class Analysis<Res> {
       else if (action instanceof ProceedState) {
         ProceedState<Res> proceedState = (ProceedState<Res>) action;
         State state = proceedState.state;
-        int insnIndex = state.insnIndex;
+        int insnIndex = state.conf.insnIndex;
         Conf conf = state.conf;
         List<Conf> history = state.history;
 

@@ -61,6 +61,11 @@
   <item name="java.net.InetAddress int checkNumericZone(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name="java.net.InetAddress java.lang.Object checkLookupTable(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.Contract">
+      <val val="&quot;null-&gt;null&quot;"/>
+    </annotation>
+  </item>
   <item name="java.net.InetAddress java.lang.Object getCachedAddress(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>

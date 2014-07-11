@@ -226,8 +226,8 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
     }
   }
 
-  private Conf generalize(Conf conf) {
-    Frame<BasicValue> frame = conf.frame;
+  private static Conf generalize(Conf conf) {
+    Frame<BasicValue> frame = new Frame<BasicValue>(conf.frame);
     for (int i = 0; i < frame.getLocals(); i++) {
       BasicValue value = frame.getLocal(i);
       Class<?> valueClass = value.getClass();
@@ -251,7 +251,7 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       }
     }
 
-    return conf;
+    return new Conf(conf.insnIndex, frame);
   }
 }
 
