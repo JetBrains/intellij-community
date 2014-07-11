@@ -240,7 +240,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
           LOG.debug("Unexpected Error during processing of " + method, e);
         }
       }
-    }, 0);
+    }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     return new ClassEquations(parameterEquations, contractEquations);
   }
