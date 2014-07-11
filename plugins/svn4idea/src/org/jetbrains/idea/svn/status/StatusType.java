@@ -57,7 +57,7 @@ public enum StatusType {
 
   private static final String STATUS_PREFIX = "STATUS_";
 
-  @NotNull private static final Map<String, StatusType> ourAllStatusTypes = ContainerUtil.newHashMap();
+  @NotNull private static final Map<String, StatusType> ourOtherStatusTypes = ContainerUtil.newHashMap();
   @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = ContainerUtil.newHashMap();
 
   static {
@@ -87,16 +87,20 @@ public enum StatusType {
   }
 
   private static void register(@NotNull StatusType action) {
-    ourAllStatusTypes.put(action.myName, action);
-
-    if (action.name().startsWith(STATUS_PREFIX)) {
-      ourStatusTypesForStatusOperation.put(action.myName, action);
-    }
+    (action.name().startsWith(STATUS_PREFIX) ? ourStatusTypesForStatusOperation : ourOtherStatusTypes).put(action.myName, action);
   }
 
   @NotNull
   public static StatusType from(@NotNull SVNStatusType type) {
-    return ObjectUtils.notNull(ourAllStatusTypes.get(type.toString()), UNUSED);
+    StatusType result = ourOtherStatusTypes.get(type.toString());
+
+    // CONFLICTED, OBSTRUCTED, MISSING status types have corresponding STATUS_* analogs with same names - so additional check added when
+    // converting from SVNKit values
+    if (type != SVNStatusType.CONFLICTED && type != SVNStatusType.OBSTRUCTED && type != SVNStatusType.MISSING) {
+      result = ObjectUtils.chooseNotNull(ourStatusTypesForStatusOperation.get(type.toString()), result);
+    }
+
+    return ObjectUtils.notNull(result, UNUSED);
   }
 
   @Nullable
