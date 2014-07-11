@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
@@ -100,6 +101,9 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
           return;
         }
+
+        // XXX: A workaround for invalidating VFS cache with the test file copied to our temp directory
+        LocalFileSystem.getInstance().refresh(false);
 
         // Run inspections on code that uses named tuples
         myFixture.configureByFile(getTestName(false) + ".py");
