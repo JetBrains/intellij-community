@@ -2982,4 +2982,8 @@ public class UIUtil {
     }
     return new EmptyBorder(0, leftGap, 0, 0);
   }
+
+  public static Color getSidePanelColor() {
+    return new JBColor(new Color(0xD2D6DD), new Color(60, 68, 71));
+  }
 }
