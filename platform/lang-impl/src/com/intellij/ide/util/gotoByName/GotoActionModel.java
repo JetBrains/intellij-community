@@ -19,6 +19,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -32,8 +33,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
-import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -103,10 +102,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       }
     }
     myIndex = SearchableOptionsRegistrar.getInstance();
-    fillConfigurablesNames(new IdeConfigurablesGroup().getConfigurables());
-    if (project != null) {
-      fillConfigurablesNames(new ProjectConfigurablesGroup(project).getConfigurables());
-    }
+    fillConfigurablesNames(ShowSettingsUtilImpl.getConfigurables(project, true));
   }
 
   private void fillConfigurablesNames(Configurable[] configurables) {
