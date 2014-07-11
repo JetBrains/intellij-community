@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -104,6 +105,8 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   }
 
   IntIdEquation convert(Equation<Key, Value> equation) throws IOException {
+    ProgressManager.checkCanceled();
+
     Result<Key, Value> rhs = equation.rhs;
     IntIdResult result;
     if (rhs instanceof Final) {
