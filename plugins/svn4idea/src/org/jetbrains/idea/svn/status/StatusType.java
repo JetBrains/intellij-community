@@ -52,9 +52,7 @@ public enum StatusType {
   STATUS_IGNORED("ignored", 'I'),
   // directory is incomplete - checkout or update was interrupted
   STATUS_INCOMPLETE("incomplete", '!'),
-  STATUS_EXTERNAL("external", 'X'),
-  // TODO: TO REMOVE
-  STATUS_MERGED("merged", 'G');
+  STATUS_EXTERNAL("external", 'X');
 
   @NotNull private static final Map<String, StatusType> ourAllStatusTypes = ContainerUtil.newHashMap();
 

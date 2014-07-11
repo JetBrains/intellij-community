@@ -49,11 +49,10 @@ public class SvnStatusHandler extends DefaultHandler {
   public static final Map<String, StatusType> ourStatusTypes = ContainerUtil.newHashMap();
 
   static {
-    // TODO: Check STATUS_MERGED as it is marked deprecated
     put(StatusType.STATUS_ADDED, StatusType.STATUS_CONFLICTED, StatusType.STATUS_DELETED, StatusType.STATUS_EXTERNAL,
-        StatusType.STATUS_IGNORED, StatusType.STATUS_INCOMPLETE, StatusType.STATUS_MERGED, StatusType.STATUS_MISSING,
-        StatusType.STATUS_MODIFIED, StatusType.STATUS_NONE, StatusType.STATUS_NORMAL, StatusType.STATUS_OBSTRUCTED,
-        StatusType.STATUS_REPLACED, StatusType.STATUS_UNVERSIONED);
+        StatusType.STATUS_IGNORED, StatusType.STATUS_INCOMPLETE, StatusType.STATUS_MISSING, StatusType.STATUS_MODIFIED,
+        StatusType.STATUS_NONE, StatusType.STATUS_NORMAL, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_REPLACED,
+        StatusType.STATUS_UNVERSIONED);
   }
 
   private static void put(@NotNull StatusType... statusTypes) {
