@@ -117,6 +117,7 @@
               </grid>
             </constraints>
             <properties>
+              <lineWrap value="true"/>
               <toolTipText value=""/>
             </properties>
           </component>
