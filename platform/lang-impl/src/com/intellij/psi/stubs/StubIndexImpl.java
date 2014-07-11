@@ -207,7 +207,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
-                                                           final GlobalSearchScope scope) {
+                                                           @NotNull final GlobalSearchScope scope) {
     return get(indexKey, key, project, scope, null);
   }
 
@@ -215,7 +215,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull Key key,
                                                            @NotNull Project project,
-                                                           GlobalSearchScope scope,
+                                                           @NotNull GlobalSearchScope scope,
                                                            IdFilter filter) {
     final List<Psi> result = new SmartList<Psi>();
     process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
@@ -226,7 +226,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key, Psi extends PsiElement> boolean processElements(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                        @NotNull Key key,
                                                        @NotNull Project project,
-                                                       GlobalSearchScope scope,
+                                                       @Nullable GlobalSearchScope scope,
                                                        Class<Psi> requiredClass,
                                                        @NotNull Processor<? super Psi> processor) {
     return processElements(indexKey, key, project, scope, null, requiredClass, processor);
@@ -238,7 +238,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                        @NotNull final Project project,
                                                        @Nullable final GlobalSearchScope scope,
                                                        @Nullable IdFilter idFilter,
-                                                       final Class<Psi> requiredClass,
+                                                       @NotNull final Class<Psi> requiredClass,
                                                        @NotNull final Processor<? super Psi> processor) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
@@ -315,7 +315,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
   }
 
-  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, Processor<K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
 
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
