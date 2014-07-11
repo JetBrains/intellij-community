@@ -109,8 +109,18 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
 
       void processMethod(String className, MethodNode methodNode, boolean stableClass) {
         ProgressManager.checkCanceled();
-        Method method = new Method(className, methodNode.name, methodNode.desc);
+        Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
+        Type resultType = Type.getReturnType(methodNode.desc);
+        int resultSort = resultType.getSort();
+        boolean isReferenceResult = resultSort == Type.OBJECT || resultSort == Type.ARRAY;
+        boolean isBooleanResult = Type.BOOLEAN_TYPE == resultType;
+        boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
+        if (argumentTypes.length == 0 && !isInterestingResult) {
+          return;
+        }
+
+        Method method = new Method(className, methodNode.name, methodNode.desc);
         int access = methodNode.access;
         boolean stable =
           stableClass ||
@@ -121,13 +131,7 @@ public class ClassDataIndexer implements DataIndexer<Integer, Collection<IntIdEq
         try {
           boolean added = false;
           ControlFlowGraph graph = cfg.buildControlFlowGraph(className, methodNode);
-          Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
-          Type resultType = Type.getReturnType(methodNode.desc);
-          int resultSort = resultType.getSort();
 
-          boolean isReferenceResult = resultSort == Type.OBJECT || resultSort == Type.ARRAY;
-          boolean isBooleanResult = Type.BOOLEAN_TYPE == resultType;
-          boolean isInterestingResult = isReferenceResult || isBooleanResult;
           boolean maybeLeakingParameter = false;
           for (Type argType : argumentTypes) {
             int argSort = argType.getSort();
