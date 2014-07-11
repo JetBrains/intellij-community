@@ -2695,4 +2695,39 @@ public class StringUtil extends StringUtilRt {
       return delegate.subSequence(i, i1);
     }
   }
+
+  /**
+   * Word wrap string by specified length. The method removes all line breaks and adds new one, so the lines does not exceeds the specified
+   * limit. The only exceptions are the words having length exceeding the limit. They are placed to the separate lines.
+   * @param str string to wrap
+   * @param wrapLen limit
+   * @return wrapped string
+   * @throws java.lang.IllegalArgumentException if wrapLen &lt;= 0
+   */
+  @NotNull
+  public static String wordWrapString(@NotNull String str, int wrapLen) {
+    if (wrapLen <= 0) throw new IllegalArgumentException("Invalid wrapping parameter");
+    StringTokenizer st = new StringTokenizer(str, " \n\r");
+    StringBuilder result = new StringBuilder();
+    if (st.hasMoreTokens()) {
+      String word = st.nextToken();
+      result.append(word);
+      int lineLen = word.length();
+
+      while (st.hasMoreTokens()) {
+        word = st.nextToken();
+        int wordLen = word.length();
+        if (lineLen + wordLen > wrapLen) {
+          result.append('\n');
+          lineLen = wordLen;
+        }
+        else {
+          result.append(' ');
+          lineLen += wordLen + 1;
+        }
+        result.append(word);
+      }
+    }
+    return result.toString();
+  }
 }

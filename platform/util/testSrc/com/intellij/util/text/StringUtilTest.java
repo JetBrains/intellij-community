@@ -195,4 +195,18 @@ public class StringUtilTest extends TestCase {
     assertEquals(Arrays.asList("\n", "\r\n", "\n", "\r\n", "\r", "\r", "aa\r", "bb\r\n", "cc\n", "\r", "dd\n", "\n", "\r\n", "\r"),
                  Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\r\n\n\r\n\r\raa\rbb\r\ncc\n\rdd\n\n\r\n\r")));
   }
+
+  public void testWordWrapString() {
+    try {
+      StringUtil.wordWrapString("sss", -1);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals(e.getMessage(), "Invalid wrapping parameter");
+    }
+
+    assertEquals("", StringUtil.wordWrapString("", 1));
+    assertEquals("aaaaaa", StringUtil.wordWrapString("aaaaaa", 3));
+    assertEquals("aa\naa\naaa\nbb", StringUtil.wordWrapString("aa aa aaa bb", 3));
+    assertEquals("aa\naa\naaa\nbb", StringUtil.wordWrapString("aa\r\naa\naaa\rbb", 3));
+  }
 }
