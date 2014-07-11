@@ -170,11 +170,7 @@ public class DetailsComponent {
       myContent.setBorder(new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
     }
     else {
-      if (Registry.is("ide.new.project.settings")) {
-        myContent.setBorder(new EmptyBorder(16, 10, 16, 10));
-      } else {
-        myContent.setBorder(null);
-      }
+      myContent.setBorder(null);
     }
   }
 
