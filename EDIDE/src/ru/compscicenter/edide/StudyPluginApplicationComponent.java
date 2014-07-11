@@ -19,7 +19,9 @@ public class StudyPluginApplicationComponent implements ApplicationComponent {
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public boolean canCloseProject(Project project) {
-        FileEditorManagerImpl.getInstanceEx(project).closeAllFiles();
+        if (StudyTaskManager.getInstance(project).getCourse()!=null) {
+          FileEditorManagerImpl.getInstanceEx(project).closeAllFiles();
+        }
         return super.canCloseProject(project);
       }
     });

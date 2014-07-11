@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,9 @@ public class StudyTreeStructureProvider implements TreeStructureProvider{
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                              @NotNull Collection<AbstractTreeNode> children,
                                              ViewSettings settings) {
+    if (!needModify(parent)) {
+      return  children;
+    }
     Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     for (AbstractTreeNode node:children) {
       Project project = node.getProject();
@@ -43,6 +47,17 @@ public class StudyTreeStructureProvider implements TreeStructureProvider{
       }
     }
     return nodes;
+  }
+
+  private boolean needModify(AbstractTreeNode parent) {
+    Project project = parent.getProject();
+    if (project != null) {
+      StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);
+      if (studyTaskManager.getCourse() == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
