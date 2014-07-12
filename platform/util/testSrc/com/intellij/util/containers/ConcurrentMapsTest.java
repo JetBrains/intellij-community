@@ -98,7 +98,7 @@ public class ConcurrentMapsTest {
     List<Object> list = ContainerUtil.newArrayList();
     while (reference.get() != null) {
       int chunk = (int)Math.min(Runtime.getRuntime().freeMemory() / 2, Integer.MAX_VALUE);
-      list.add(new SoftReference<byte[]>(new byte[chunk / 2]));
+      list.add(new SoftReference<byte[]>(new byte[chunk]));
     }
   }
 
