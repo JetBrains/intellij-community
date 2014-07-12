@@ -16,8 +16,10 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -450,9 +452,63 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
   @Override
   public void postProcess(PsiElement affectedElement, ReplaceOptions options) {
-    if (options.isToShortenFQN() && affectedElement.isValid()) {
+    if (!affectedElement.isValid()) {
+      return;
+    }
+    if (options.isToUseStaticImport()) {
+      shortenWithStaticImports(affectedElement, 0, affectedElement.getTextLength());
+    }
+    if (options.isToShortenFQN()) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(affectedElement.getProject());
       codeStyleManager.shortenClassReferences(affectedElement, 0, affectedElement.getTextLength());
+    }
+  }
+
+  private static void shortenWithStaticImports(PsiElement affectedElement, int startOffset, int endOffset) {
+    final int elementOffset = affectedElement.getTextOffset();
+    final int finalStartOffset = startOffset + elementOffset;
+    final int finalEndOffset = endOffset + elementOffset;
+    final List<PsiReferenceExpression> references = new ArrayList<PsiReferenceExpression>();
+    final JavaRecursiveElementVisitor collector = new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        final int offset = expression.getTextOffset();
+        if (offset > finalEndOffset) {
+          return;
+        }
+        super.visitReferenceExpression(expression);
+        if (offset + expression.getTextLength() < finalStartOffset)
+        if (expression.getQualifierExpression() == null) {
+          return;
+        }
+        references.add(expression);
+      }
+    };
+    affectedElement.accept(collector);
+    for (PsiReferenceExpression expression : references) {
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiMember)) {
+        continue;
+      }
+      final PsiMember member = (PsiMember)target;
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass == null) {
+        continue;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (className == null) {
+        continue;
+      }
+      final String name = member.getName();
+      if (name == null) {
+        continue;
+      }
+      if (ImportUtils.addStaticImport(className, name, expression)) {
+        final PsiExpression qualifierExpression = expression.getQualifierExpression();
+        if (qualifierExpression != null) {
+          qualifierExpression.delete();
+        }
+      }
     }
   }
 

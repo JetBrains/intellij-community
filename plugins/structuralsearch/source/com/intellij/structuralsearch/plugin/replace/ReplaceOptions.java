@@ -20,11 +20,13 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
   private String replacement = "";
   private boolean toShortenFQN;
   private boolean myToReformatAccordingToStyle;
+  private boolean myToUseStaticImport;
   private MatchOptions matchOptions = new MatchOptions();
 
   @NonNls private static final String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
   @NonNls private static final String REPLACEMENT_ATTR_NAME = "replacement";
   @NonNls private static final String SHORTEN_FQN_ATTR_NAME = "shortenFQN";
+  @NonNls private static final String USE_STATIC_IMPORT_ATTR_NAME = "useStaticImport";
 
   @NonNls private static final String VARIABLE_DEFINITION_TAG_NAME = "variableDefinition";
 
@@ -60,6 +62,14 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
     myToReformatAccordingToStyle = reformatAccordingToStyle;
   }
 
+  public boolean isToUseStaticImport() {
+    return myToUseStaticImport;
+  }
+
+  public void setToUseStaticImport(boolean useStaticImport) {
+    myToUseStaticImport = useStaticImport;
+  }
+
   public void readExternal(Element element) {
     matchOptions.readExternal(element);
 
@@ -73,7 +83,13 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
     try {
       toShortenFQN = attribute.getBooleanValue();
     } catch(DataConversionException ex) {}
-    
+
+    attribute = element.getAttribute(USE_STATIC_IMPORT_ATTR_NAME);
+    try {
+      myToUseStaticImport = attribute.getBooleanValue();
+    }
+    catch (DataConversionException ignore) {}
+
     replacement = element.getAttributeValue(REPLACEMENT_ATTR_NAME);
 
     List<Element> elements = element.getChildren(VARIABLE_DEFINITION_TAG_NAME);
@@ -92,6 +108,7 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
 
     element.setAttribute(REFORMAT_ATTR_NAME,String.valueOf(myToReformatAccordingToStyle));
     element.setAttribute(SHORTEN_FQN_ATTR_NAME,String.valueOf(toShortenFQN));
+    element.setAttribute(USE_STATIC_IMPORT_ATTR_NAME, String.valueOf(isToUseStaticImport()));
     element.setAttribute(REPLACEMENT_ATTR_NAME,replacement);
 
     if (variableDefs!=null) {
@@ -111,6 +128,7 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
 
     if (myToReformatAccordingToStyle != replaceOptions.myToReformatAccordingToStyle) return false;
     if (toShortenFQN != replaceOptions.toShortenFQN) return false;
+    if (myToUseStaticImport != replaceOptions.myToUseStaticImport) return false;
     if (matchOptions != null ? !matchOptions.equals(replaceOptions.matchOptions) : replaceOptions.matchOptions != null) return false;
     if (replacement != null ? !replacement.equals(replaceOptions.replacement) : replaceOptions.replacement != null) return false;
     if (variableDefs != null ? !variableDefs.equals(replaceOptions.variableDefs) : replaceOptions.variableDefs != null) {
@@ -125,6 +143,7 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
     result = (replacement != null ? replacement.hashCode() : 0);
     result = 29 * result + (toShortenFQN ? 1 : 0);
     result = 29 * result + (myToReformatAccordingToStyle ? 1 : 0);
+    result = 29 * result + (myToUseStaticImport ? 1 : 0);
     result = 29 * result + (matchOptions != null ? matchOptions.hashCode() : 0);
     result = 29 * result + (variableDefs != null ? variableDefs.hashCode() : 0);
     return result;

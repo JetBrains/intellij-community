@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -26,6 +27,7 @@ public class ReplaceDialog extends SearchDialog {
   private Editor replaceCriteriaEdit;
   private JCheckBox shortenFQN;
   private JCheckBox formatAccordingToStyle;
+  private JCheckBox useStaticImport;
 
   private String mySavedEditorText;
 
@@ -61,12 +63,14 @@ public class ReplaceDialog extends SearchDialog {
 
   protected void buildOptions(JPanel searchOptions) {
     super.buildOptions(searchOptions);
-    searchOptions
-      .add(UIUtil.createOptionLine(shortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"), true)));
+    searchOptions.add(UIUtil.createOptionLine(shortenFQN = new JCheckBox(
+      SSRBundle.message("shorten.fully.qualified.names.checkbox"), true)));
 
-    searchOptions
-      .add(UIUtil.createOptionLine(formatAccordingToStyle = new JCheckBox(SSRBundle.message("format.according.to.style.checkbox"), true)));
+    searchOptions.add(UIUtil.createOptionLine(formatAccordingToStyle = new JCheckBox(
+      CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"), true)));
 
+    searchOptions.add(UIUtil.createOptionLine(useStaticImport = new JCheckBox(
+      CodeInsightBundle.message("dialog.edit.template.checkbox.use.static.import"), true)));
   }
 
   protected UsageViewContext createUsageViewContext(Configuration configuration) {
@@ -107,6 +111,7 @@ public class ReplaceDialog extends SearchDialog {
 
       shortenFQN.setSelected(options.isToShortenFQN());
       formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());
+      useStaticImport.setSelected(options.isToUseStaticImport());
 
       ReplaceOptions newReplaceOptions = ((ReplaceConfiguration)model.getConfig()).getOptions();
       newReplaceOptions.clearVariableDefinitions();
@@ -133,6 +138,7 @@ public class ReplaceDialog extends SearchDialog {
     options.setReplacement(replaceCriteriaEdit.getDocument().getText());
     options.setToShortenFQN(shortenFQN.isSelected());
     options.setToReformatAccordingToStyle(formatAccordingToStyle.isSelected());
+    options.setToUseStaticImport(useStaticImport.isSelected());
   }
 
   protected boolean isRecursiveSearchEnabled() {
