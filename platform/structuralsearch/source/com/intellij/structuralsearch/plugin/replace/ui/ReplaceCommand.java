@@ -1,10 +1,9 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.structuralsearch.plugin.ui.SearchCommand;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.MatchResult;
 import com.intellij.openapi.project.Project;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
+import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.usages.Usage;
 
 /**
@@ -15,12 +14,9 @@ import com.intellij.usages.Usage;
  * To change this template use File | Settings | File Templates.
  */
 public class ReplaceCommand extends SearchCommand {
-  private final ReplaceOptions options;
 
   public ReplaceCommand(Project project, ReplaceUsageViewContext context) {
     super( project, context );
-    options = ((ReplaceConfiguration)context.getConfiguration()).getOptions();
-
   }
 
   protected void findStarted() {
@@ -40,9 +36,5 @@ public class ReplaceCommand extends SearchCommand {
 
     final ReplaceUsageViewContext replaceUsageViewContext = ((ReplaceUsageViewContext)context);
     replaceUsageViewContext.addReplaceUsage(usage,replaceUsageViewContext.getReplacer().buildReplacement(result));
-  }
-
-  public ReplaceOptions getOptions() {
-    return options;
   }
 }
