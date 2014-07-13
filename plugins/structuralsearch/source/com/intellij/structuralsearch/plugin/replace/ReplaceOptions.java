@@ -89,6 +89,9 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
       myToUseStaticImport = attribute.getBooleanValue();
     }
     catch (DataConversionException ignore) {}
+    catch (NullPointerException ignore) {
+      // old saved configurations without this attribute present
+    }
 
     replacement = element.getAttributeValue(REPLACEMENT_ATTR_NAME);
 
