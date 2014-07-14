@@ -742,7 +742,7 @@ public class JavaDocInfoGenerator {
               }
               final PsiAnnotationMemberValue value = pair.getValue();
               if (value != null) {
-                buffer.append(value.getText());
+                buffer.append(XmlStringUtil.escapeString(value.getText()));
               }
             }
             buffer.append(")");
@@ -752,13 +752,13 @@ public class JavaDocInfoGenerator {
         }
       } else if (external) {
         if (inferred) buffer.append("<i>");
-        buffer.append(annotation.getText());
+        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
         buffer.append("&nbsp;");
         if (inferred) buffer.append("</i>");
       }
       else {
         buffer.append("<font color=red>");
-        buffer.append(annotation.getText());
+        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
         buffer.append("</font>");
         buffer.append("&nbsp;");
       }

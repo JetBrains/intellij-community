@@ -103,7 +103,7 @@ class ContractInferenceInterpreter {
     return RecursionManager.doPreventingRecursion(myMethod, true, new Computable<List<MethodContract>>() {
       @Override
       public List<MethodContract> compute() {
-        List<MethodContract> delegateContracts = ContractInference.inferContracts(targetMethod); //todo use explicit contracts, too
+        List<MethodContract> delegateContracts = ControlFlowAnalyzer.getMethodContracts(targetMethod);
         return ContainerUtil.mapNotNull(delegateContracts, new NullableFunction<MethodContract, MethodContract>() {
           @Nullable
           @Override
@@ -187,17 +187,20 @@ class ContractInferenceInterpreter {
       return toContracts(states, constraint);
     }
 
-    int parameter = resolveParameter(expr);
-    if (parameter >= 0) {
+    int paramIndex = resolveParameter(expr);
+    if (paramIndex >= 0) {
       List<MethodContract> result = ContainerUtil.newArrayList();
       for (ValueConstraint[] state : states) {
-        if (state[parameter] != ANY_VALUE) {
+        if (state[paramIndex] != ANY_VALUE) {
           // the second 'o' reference in cases like: if (o != null) return o;
-          result.add(new MethodContract(state, state[parameter]));
+          result.add(new MethodContract(state, state[paramIndex]));
         } else {
-          // if (boolValue) ...
-          result.add(new MethodContract(withConstraint(state, parameter, TRUE_VALUE), TRUE_VALUE));
-          result.add(new MethodContract(withConstraint(state, parameter, FALSE_VALUE), FALSE_VALUE));
+          PsiTypeElement typeElement = myMethod.getParameterList().getParameters()[paramIndex].getTypeElement();
+          if (typeElement != null && typeElement.textMatches(PsiKeyword.BOOLEAN)) {
+            // if (boolValue) ...
+            result.add(new MethodContract(withConstraint(state, paramIndex, TRUE_VALUE), TRUE_VALUE));
+            result.add(new MethodContract(withConstraint(state, paramIndex, FALSE_VALUE), FALSE_VALUE));
+          }
         }
       }
       return result;
