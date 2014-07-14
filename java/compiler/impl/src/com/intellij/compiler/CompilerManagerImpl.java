@@ -309,7 +309,9 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-      myEventPublisher.compilationFinished(aborted, errors, warnings, compileContext);
+      if (!myProject.isDisposed()) {
+        myEventPublisher.compilationFinished(aborted, errors, warnings, compileContext);
+      }
       if (myDelegate != null) {
         myDelegate.finished(aborted, errors, warnings, compileContext);
       }
