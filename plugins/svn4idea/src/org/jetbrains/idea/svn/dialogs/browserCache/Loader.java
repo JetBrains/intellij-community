@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import java.util.List;
 
@@ -47,7 +46,7 @@ public abstract class Loader {
     existingNode.setErrorNode(text, getNodeLoadState());
   }
 
-  protected void refreshNode(final RepositoryTreeNode node, final List<SVNDirEntry> data, final Expander expander) {
+  protected void refreshNode(final RepositoryTreeNode node, final List<DirectoryEntry> data, final Expander expander) {
     if (node.isDisposed()) {
       return;
     }

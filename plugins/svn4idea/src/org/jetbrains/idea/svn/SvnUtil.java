@@ -45,9 +45,17 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
@@ -99,7 +107,7 @@ public class SvnUtil {
   }
 
   public static boolean isSvnVersioned(final @NotNull SvnVcs vcs, File parent) {
-    final SVNInfo info = vcs.getInfo(parent);
+    final Info info = vcs.getInfo(parent);
 
     return info != null;
   }
@@ -157,7 +165,7 @@ public class SvnUtil {
 
   @Nullable
   public static String getExactLocation(final SvnVcs vcs, File path) {
-    SVNInfo info = vcs.getInfo(path);
+    Info info = vcs.getInfo(path);
     return info != null && info.getURL() != null ? info.getURL().toString() : null;
   }
 
@@ -182,9 +190,9 @@ public class SvnUtil {
     final VcsException[] exception = new VcsException[1];
     final Collection<String> failedLocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
-    final ISVNEventHandler eventHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.LOCK_FAILED) {
+    final ProgressTracker eventHandler = new ProgressTracker() {
+      public void consume(ProgressEvent event) {
+        if (event.getAction() == EventAction.LOCK_FAILED) {
           failedLocks.add(event.getErrorMessage() != null ?
                           event.getErrorMessage().getFullMessage() :
                           event.getFile().getAbsolutePath());
@@ -247,9 +255,9 @@ public class SvnUtil {
     final VcsException[] exception = new VcsException[1];
     final Collection<String> failedUnlocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
-    final ISVNEventHandler eventHandler = new ISVNEventHandler() {
-      public void handleEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
+    final ProgressTracker eventHandler = new ProgressTracker() {
+      public void consume(ProgressEvent event) {
+        if (event.getAction() == EventAction.UNLOCK_FAILED) {
           failedUnlocks.add(event.getErrorMessage() != null ?
                             event.getErrorMessage().getFullMessage() :
                             event.getFile().getAbsolutePath());
@@ -398,40 +406,41 @@ public class SvnUtil {
 
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final File file) {
-    final SVNInfo info = vcs.getInfo(file);
+    final Info info = vcs.getInfo(file);
     return info != null ? info.getRepositoryUUID() : null;
   }
 
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final SVNURL url) {
     try {
-      final SVNInfo info = vcs.getInfo(url, SVNRevision.UNDEFINED);
+      final Info info = vcs.getInfo(url, SVNRevision.UNDEFINED);
 
       return (info == null) ? null : info.getRepositoryUUID();
-    } catch (SVNException e) {
+    }
+    catch (SvnBindException e) {
       return null;
     }
   }
 
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final File file) {
-    final SVNInfo info = vcs.getInfo(file);
+    final Info info = vcs.getInfo(file);
     return info != null ? info.getRepositoryRootURL() : null;
   }
 
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final String url) {
     try {
-      return getRepositoryRoot(vcs, SVNURL.parseURIEncoded(url));
+      return getRepositoryRoot(vcs, createUrl(url));
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SVNException {
-    SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SvnBindException {
+    Info info = vcs.getInfo(url, SVNRevision.HEAD);
 
     return (info == null) ? null : info.getRepositoryRootURL();
   }
@@ -496,17 +505,6 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static String getPathForProgress(final SVNEvent event) {
-    if (event.getFile() != null) {
-      return event.getFile().getName();
-    }
-    if (event.getURL() != null) {
-      return event.getURL().toString();
-    }
-    return null;
-  }
-
-  @Nullable
   public static VirtualFile correctRoot(final Project project, final VirtualFile file) {
     if (file.getPath().length() == 0) {
       // project root
@@ -533,19 +531,19 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNStatus getStatus(@NotNull final SvnVcs vcs, @NotNull final File file) {
+  public static Status getStatus(@NotNull final SvnVcs vcs, @NotNull final File file) {
     try {
       return vcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return null;
     }
   }
 
-  public static SVNDepth getDepth(final SvnVcs vcs, final File file) {
-    SVNInfo info = vcs.getInfo(file);
+  public static Depth getDepth(final SvnVcs vcs, final File file) {
+    Info info = vcs.getInfo(file);
 
-    return info != null && info.getDepth() != null ? info.getDepth() : SVNDepth.UNKNOWN;
+    return info != null && info.getDepth() != null ? info.getDepth() : Depth.UNKNOWN;
   }
 
   public static boolean seemsLikeVersionedDir(final VirtualFile file) {
@@ -579,7 +577,7 @@ public class SvnUtil {
   @Nullable
   public static SVNURL getUrl(final SvnVcs vcs, final File file) {
     // todo for moved items?
-    final SVNInfo info = vcs.getInfo(file);
+    final Info info = vcs.getInfo(file);
 
     return info == null ? null : info.getURL();
   }
@@ -587,15 +585,17 @@ public class SvnUtil {
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
     SvnTarget target = SvnTarget.fromURL(createUrl(url));
     final Ref<Boolean> result = new Ref<Boolean>(true);
-    ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
-      public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-        if (dirEntry != null) {
+    DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
+
+      @Override
+      public void consume(final DirectoryEntry entry) throws SVNException {
+        if (entry != null) {
           result.set(false);
         }
       }
     };
 
-    vcs.getFactory(target).createBrowseClient().list(target, null, SVNDepth.IMMEDIATES, handler);
+    vcs.getFactory(target).createBrowseClient().list(target, null, Depth.IMMEDIATES, handler);
     return result.get();
   }
 
@@ -637,9 +637,7 @@ public class SvnUtil {
 
     WorkingCopyFormat format = getFormat(current);
 
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)
-           ? current
-           : getWorkingCopyRoot(file);
+    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : getWorkingCopyRoot(file);
   }
 
   private static File getParentWithDb(File file) {
@@ -695,14 +693,19 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SVNException {
-    SVNInfo info = vcs.getInfo(url, SVNRevision.HEAD);
+  public static SVNURL removePathTail(@NotNull SVNURL url) throws SvnBindException {
+    return createUrl(SVNPathUtil.removeTail(url.toDecodedString()));
+  }
+
+  @NotNull
+  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
+    Info info = vcs.getInfo(url, SVNRevision.HEAD);
 
     if (info == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get info for " + url));
+      throw new SvnBindException("Could not get info for " + url);
     }
     if (info.getRevision() == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Could not get revision for " + url));
+      throw new SvnBindException("Could not get revision for " + url);
     }
 
     return info.getRevision();
@@ -771,18 +774,18 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static String getChangelistName(@NotNull final SVNStatus status) {
+  public static String getChangelistName(@NotNull final Status status) {
     // no explicit check on working copy format supports change lists as they are supported from svn 1.5
     // and anyway status.getChangelistName() should just return null if change lists are not supported.
-    return SVNNodeKind.FILE.equals(status.getKind()) ? status.getChangelistName() : null;
+    return status.getKind().isFile() ? status.getChangelistName() : null;
   }
 
-  public static boolean isUnversionedOrNotFound(@NotNull SVNErrorCode code) {
-    return SVNErrorCode.WC_PATH_NOT_FOUND.equals(code) ||
-           SVNErrorCode.UNVERSIONED_RESOURCE.equals(code) ||
-           SVNErrorCode.WC_NOT_WORKING_COPY.equals(code) ||
+  public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {
+    return e.contains(SVNErrorCode.WC_PATH_NOT_FOUND) ||
+           e.contains(SVNErrorCode.UNVERSIONED_RESOURCE) ||
+           e.contains(SVNErrorCode.WC_NOT_WORKING_COPY) ||
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-           SVNErrorCode.ILLEGAL_TARGET.equals(code);
+           e.contains(SVNErrorCode.ILLEGAL_TARGET);
   }
 
   // TODO: Create custom Target class and implement append there

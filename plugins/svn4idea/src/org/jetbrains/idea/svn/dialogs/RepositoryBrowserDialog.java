@@ -53,6 +53,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.*;
@@ -60,7 +61,9 @@ import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -345,8 +348,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (node == null) {
         return;
       }
-      boolean isDirectory = node.getUserObject() instanceof SVNURL ||
-                            (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
+      boolean isDirectory =
+        node.getUserObject() instanceof SVNURL || (node.getSVNDirEntry() != null && node.getSVNDirEntry().isDirectory());
       String url = node.getURL().toDecodedString();
 
       AbstractVcsHelper.getInstance(myProject)
@@ -500,14 +503,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void update(AnActionEvent e) {
-      RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       //e.getPresentation().setText(SvnBundle.message("repository.browser.new.folder.action"), true);
-      if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, myBrowserComponent.getSelectedNode());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -537,14 +534,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected class DiffAction extends AnAction {
     public void update(AnActionEvent e) {
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setText("Compare With...", true);
-      if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, getRepositoryBrowser().getSelectedNode());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -854,14 +845,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(showImportAction());
       e.getPresentation().setText(SvnBundle.message("repository.browser.import.action"));
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      final boolean running = ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning();
-      if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled((entry == null || entry.getKind() == SVNNodeKind.DIR) && (! running));
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, getRepositoryBrowser().getSelectedNode(),
+                 ProjectLevelVcsManager.getInstance(myProject).isBackgroundVcsOperationRunning());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -897,13 +882,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class CheckoutAction extends AnAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Checkout...", true);
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
-        e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
-      } else {
-        e.getPresentation().setEnabled(false);
-      }
+      setEnabled(e, getRepositoryBrowser().getSelectedNode());
     }
     public void actionPerformed(AnActionEvent e) {
       final RepositoryTreeNode selectedNode = getSelectedNode();
@@ -912,6 +891,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       doCheckout(ProjectLevelVcsManager.getInstance(myProject).getCompositeCheckoutListener(), selectedNode);
     }
+  }
+
+  private static void setEnabled(@NotNull AnActionEvent e, @Nullable RepositoryTreeNode node) {
+    setEnabled(e, node, false);
+  }
+
+  private static void setEnabled(@NotNull AnActionEvent e, @Nullable RepositoryTreeNode node, boolean isRunning) {
+    e.getPresentation().setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().isDirectory()) && !isRunning);
   }
 
   protected class BrowseChangesAction extends AnAction {
@@ -1051,14 +1038,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     SVNURL url = selectedNode.getURL();
 
     String relativePath = "";
-    final SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
-    if (dirEntry != null) {
-      if (dirEntry.getRepositoryRoot() != null) {
-        if (! dirEntry.getRepositoryRoot().equals(url)) {
-          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toDecodedString());
+    final DirectoryEntry entry = selectedNode.getSVNDirEntry();
+    if (entry != null) {
+      if (entry.getRepositoryRoot() != null) {
+        if (! entry.getRepositoryRoot().equals(url)) {
+          relativePath = SVNPathUtil.getRelativePath(entry.getRepositoryRoot().toString(), url.toDecodedString());
         }
       } else {
-        relativePath = dirEntry.getRelativePath();
+        relativePath = entry.getRelativePath();
       }
     } else {
       relativePath = url.getPath();

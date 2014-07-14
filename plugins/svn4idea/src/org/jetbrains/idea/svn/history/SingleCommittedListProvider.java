@@ -125,8 +125,9 @@ public class SingleCommittedListProvider {
     SvnTarget target = SvnTarget.fromURL(url);
 
     myVcs.getFactory(target).createHistoryClient().doLog(target, SVNRevision.HEAD, revisionBefore, false, true, false, 0, null,
-        new ISVNLogEntryHandler() {
-          public void handleLogEntry(SVNLogEntry logEntry) {
+        new LogEntryConsumer() {
+          @Override
+          public void consume(LogEntry logEntry) {
             checkDisposed();
             // date could be null for lists where there are paths that user has no rights to observe
             if (logEntry.getDate() != null) {
@@ -144,7 +145,7 @@ public class SingleCommittedListProvider {
   }
 
   @NotNull
-  private SvnChangeList createChangeList(@NotNull SVNLogEntry logEntry) {
+  private SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
     return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toDecodedString());
   }
 
@@ -155,8 +156,9 @@ public class SingleCommittedListProvider {
   }
 
   private boolean searchForUrl(@NotNull SVNURL url) throws VcsException {
-    ISVNLogEntryHandler handler = new ISVNLogEntryHandler() {
-      public void handleLogEntry(SVNLogEntry logEntry) {
+    LogEntryConsumer handler = new LogEntryConsumer() {
+      @Override
+      public void consume(LogEntry logEntry) {
         checkDisposed();
         // date could be null for lists where there are paths that user has no rights to observe
         if (logEntry.getDate() != null) {

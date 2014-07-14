@@ -30,21 +30,18 @@ import org.jetbrains.idea.svn.SvnStatusConvertor;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
+import javax.xml.bind.annotation.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -64,7 +61,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
       assertDirectory(target1);
 
       WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
-      if (!format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT)) {
+      if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
         throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format);
       }
     }
@@ -104,8 +101,8 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
       DiffInfo diffInfo = CommandUtil.parse(executor.getOutput(), DiffInfo.class);
       List<Change> result = ContainerUtil.newArrayList();
 
-      if (diffInfo != null && diffInfo.paths != null) {
-        for (DiffPath path : diffInfo.paths.diffPaths) {
+      if (diffInfo != null) {
+        for (DiffPath path : diffInfo.diffPaths) {
           result.add(createChange(target1, target2, path));
         }
       }
@@ -194,20 +191,15 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
   @XmlRootElement(name = "diff")
   public static class DiffInfo {
 
-    @XmlElement(name = "paths")
-    public DiffPaths paths;
-  }
-
-  public static class DiffPaths {
-
+    @XmlElementWrapper(name = "paths")
     @XmlElement(name = "path")
     public List<DiffPath> diffPaths = new ArrayList<DiffPath>();
   }
 
   public static class DiffPath {
 
-    @XmlAttribute(name = "kind")
-    public String kind;
+    @XmlAttribute(name = "kind", required = true)
+    public NodeKind kind;
 
     @XmlAttribute(name = "props")
     public String propertiesStatus;
@@ -219,7 +211,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     public String path;
 
     public boolean isDirectory() {
-      return SVNNodeKind.DIR.equals(SVNNodeKind.parseKind(kind));
+      return kind.isDirectory();
     }
   }
 }

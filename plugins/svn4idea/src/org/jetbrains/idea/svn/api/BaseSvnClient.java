@@ -8,10 +8,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.diff.DiffOptions;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -109,10 +110,10 @@ public abstract class BaseSvnClient implements SvnClient {
     return runtime.runWithAuthenticationAttempt(command);
   }
 
-  protected static void callHandler(@Nullable ISVNEventHandler handler, @NotNull SVNEvent event) throws VcsException {
+  protected static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws VcsException {
     if (handler != null) {
       try {
-        handler.handleEvent(event, 0);
+        handler.consume(event);
       }
       catch (SVNException e) {
         throw new SvnBindException(e);
@@ -121,7 +122,44 @@ public abstract class BaseSvnClient implements SvnClient {
   }
 
   @NotNull
-  protected static SVNEvent createEvent(@NotNull File path, @Nullable SVNEventAction action) {
-    return new SVNEvent(path, null, null, 0, null, null, null, null, action, null, null, null, null, null, null);
+  protected static ProgressEvent createEvent(@NotNull File path, @Nullable EventAction action) {
+    return new ProgressEvent(path, 0, null, null, action, null, null);
+  }
+
+  @Nullable
+  protected static ISVNEventHandler toEventHandler(@Nullable final ProgressTracker handler) {
+    ISVNEventHandler result = null;
+
+    if (handler != null) {
+      result = new ISVNEventHandler() {
+        @Override
+        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+          handler.consume(ProgressEvent.create(event));
+        }
+
+        @Override
+        public void checkCancelled() throws SVNCancelException {
+          handler.checkCancelled();
+        }
+      };
+    }
+
+    return result;
+  }
+
+  @Nullable
+  protected static SVNDiffOptions toDiffOptions(@Nullable DiffOptions options) {
+    return options != null ? new SVNDiffOptions(options.isIgnoreAllWhitespace(), options.isIgnoreAmountOfWhitespace(),
+                                                options.isIgnoreEOLStyle()) : null;
+  }
+
+  @Nullable
+  protected static SVNDepth toDepth(@Nullable Depth depth) {
+    return depth != null ? SVNDepth.fromString(depth.getName()) : null;
+  }
+
+  @NotNull
+  protected static SVNRevision notNullize(@Nullable SVNRevision revision) {
+    return revision != null ? revision : SVNRevision.UNDEFINED;
   }
 }

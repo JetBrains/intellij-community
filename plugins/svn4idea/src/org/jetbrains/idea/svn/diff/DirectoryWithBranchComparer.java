@@ -65,7 +65,7 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
     // svn 1.7 command line "--summarize" option for "diff" command does not support comparing working copy directories with repository
     // directories - that is why command line is only used explicitly for svn 1.8
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? myVcs.getCommandLineFactory() : myVcs.getSvnKitFactory();
+    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT) ? myVcs.getCommandLineFactory() : myVcs.getSvnKitFactory();
   }
 
   @Override

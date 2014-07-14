@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
@@ -73,6 +74,8 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     final ContentManager contentManager = toolWindow.getContentManager();
 
     final MyDialog dialog = new MyDialog(project, revision, file);
+    // TODO: Temporary memory leak fix - rewrite this part not to create dialog if only createCenterPanel(), but not show() is invoked
+    Disposer.register(project, dialog.getDisposable());
 
     Content content = ContentFactory.SERVICE.getInstance().createContent(dialog.createCenterPanel(),
         SvnBundle.message("merge.source.details.title", (file == null) ? revision.getURL() : file.getName(), revision.getRevisionNumber().asString()), true);
@@ -213,7 +216,10 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
         if (list == null) {
           myPanel = new JPanel();
         } else {
-          myPanel = new ChangeListViewerDialog(myProject, list).createCenterPanel();
+          ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, list);
+          // TODO: Temporary memory leak fix - rewrite this part not to create dialog if only createCenterPanel(), but not show() is invoked
+          Disposer.register(myProject, dialog.getDisposable());
+          myPanel = dialog.createCenterPanel();
         }
       }
       return myPanel;

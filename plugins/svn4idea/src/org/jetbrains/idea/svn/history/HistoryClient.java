@@ -4,7 +4,6 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -21,5 +20,5 @@ public interface HistoryClient extends SvnClient {
              boolean includeMergedRevisions,
              long limit,
              @Nullable String[] revisionProperties,
-             @Nullable ISVNLogEntryHandler handler) throws VcsException;
+             @Nullable LogEntryConsumer handler) throws VcsException;
 }

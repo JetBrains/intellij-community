@@ -21,10 +21,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -123,7 +123,7 @@ public class BranchInfo {
   }
 
   private SvnMergeInfoCache.MergeCheckResult checkAlive(final SvnChangeList list, final String branchPath) {
-    final SVNInfo info = getInfo(new File(branchPath));
+    final Info info = getInfo(new File(branchPath));
     if (info == null || info.getURL() == null || (! SVNPathUtil.isAncestor(myBranchUrl, info.getURL().toString()))) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
@@ -179,7 +179,7 @@ public class BranchInfo {
         // no paths in local copy
         return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
       }
-      final SVNInfo svnInfo = getInfo(new File(branchRootPath));
+      final Info svnInfo = getInfo(new File(branchRootPath));
       if (svnInfo == null || svnInfo.getRevision() == null || svnInfo.getURL() == null) {
         return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
@@ -238,7 +238,7 @@ public class BranchInfo {
     return processMergeinfoProperty(keyString, revisionAsked, mergeinfoProperty.getValue(), trunkUrl, false);
   }
 
-  private SVNInfo getInfo(final File pathFile) {
+  private Info getInfo(final File pathFile) {
     return myVcs.getInfo(pathFile);
   }
 
@@ -255,7 +255,7 @@ public class BranchInfo {
       }
     }
     
-    final SVNInfo svnInfo = getInfo(pathFile);
+    final Info svnInfo = getInfo(pathFile);
     if (svnInfo == null || svnInfo.getRevision() == null || svnInfo.getURL() == null) {
       LOG.info("Svninfo for " + pathFile + " is null or not full.");
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;

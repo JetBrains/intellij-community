@@ -37,10 +37,10 @@ import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -264,7 +264,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     super.init();
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     String revStr = "";
-    SVNInfo info = vcs.getInfo(mySrcFile);
+    Info info = vcs.getInfo(mySrcFile);
     if (info != null) {
       mySrcURL = info.getURL() == null ? null : info.getURL().toString();
       revStr = String.valueOf(info.getRevision());
@@ -349,7 +349,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         return true;
       }
       else if (myWorkingCopyRadioButton.isSelected()) {
-        SVNInfo info = SvnVcs.getInstance(myProject).getInfo(mySrcFile);
+        Info info = SvnVcs.getInstance(myProject).getInfo(mySrcFile);
         String srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
         if (srcUrl == null) {
           myErrorLabel.setText(SvnBundle.message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));

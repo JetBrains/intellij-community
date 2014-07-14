@@ -5,8 +5,8 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -38,18 +38,18 @@ public interface PropertyClient extends SvnClient {
 
   void getProperty(@NotNull SvnTarget target, @NotNull String property,
                    @Nullable SVNRevision revision,
-                   @Nullable SVNDepth depth,
+                   @Nullable Depth depth,
                    @Nullable ISVNPropertyHandler handler) throws VcsException;
 
   void list(@NotNull SvnTarget target,
             @Nullable SVNRevision revision,
-            @Nullable SVNDepth depth,
+            @Nullable Depth depth,
             @Nullable ISVNPropertyHandler handler) throws VcsException;
 
   void setProperty(@NotNull File file,
                    @NotNull String property,
                    @Nullable SVNPropertyValue value,
-                   @Nullable SVNDepth depth,
+                   @Nullable Depth depth,
                    boolean force) throws VcsException;
 
   void setProperties(@NotNull File file, @NotNull SVNProperties properties) throws VcsException;

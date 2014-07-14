@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyClient;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -221,7 +221,7 @@ public class SetPropertyDialog extends DialogWrapper {
         };
 
         PropertyClient client = myVCS.getFactory(file).createPropertyClient();
-        client.list(SvnTarget.fromFile(file, SVNRevision.WORKING), SVNRevision.WORKING, SVNDepth.EMPTY, handler);
+        client.list(SvnTarget.fromFile(file, SVNRevision.WORKING), SVNRevision.WORKING, Depth.EMPTY, handler);
       }
       catch (VcsException e) {
         LOG.info(e);

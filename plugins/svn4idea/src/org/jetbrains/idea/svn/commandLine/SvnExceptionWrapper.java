@@ -40,4 +40,8 @@ public class SvnExceptionWrapper extends RuntimeException {
   public SvnExceptionWrapper(SVNException cause) {
     super(cause);
   }
+
+  public SvnExceptionWrapper(SvnBindException cause) {
+    super(cause);
+  }
 }

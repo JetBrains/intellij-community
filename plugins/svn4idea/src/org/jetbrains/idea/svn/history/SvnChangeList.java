@@ -40,10 +40,13 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -102,7 +105,7 @@ public class SvnChangeList implements CommittedChangeList {
     myKnownAsDirectories = new HashSet<String>(0);
   }
 
-  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
+  public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final LogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
     myRevision = logEntry.getRevision();
@@ -114,10 +117,10 @@ public class SvnChangeList implements CommittedChangeList {
     myCommonPathSearcher = new CommonPathSearcher();
 
     myKnownAsDirectories = new HashSet<String>(0);
-    for(SVNLogEntryPath entry : logEntry.getChangedPaths().values()) {
+    for(LogEntryPath entry : logEntry.getChangedPaths().values()) {
       final String path = entry.getPath();
 
-      if (SVNNodeKind.DIR.equals(entry.getKind())) {
+      if (entry.isDirectory()) {
         myKnownAsDirectories.add(path);
       }
 
@@ -394,8 +397,8 @@ public class SvnChangeList implements CommittedChangeList {
         // TODO: Logic with detecting "isDirectory" status is not clear enough. Why we can't just collect this info from logEntry and
         // TODO: if loading from disk - use cached values? Not to invoke separate call here.
         SVNRevision beforeRevision = SVNRevision.create(getRevision(idxData.second.booleanValue()));
-        SVNInfo info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
-        boolean isDirectory = info != null && SVNNodeKind.DIR.equals(info.getKind());
+        Info info = myVcs.getInfo(SvnUtil.createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
+        boolean isDirectory = info != null && info.isDirectory();
         Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision)sourceChange.getBeforeRevision(), isDirectory),
                                             createRevision((SvnRepositoryContentRevision)sourceChange.getAfterRevision(), isDirectory));
         replacingChange.setIsReplaced(sourceChange.isIsReplaced());
@@ -478,12 +481,14 @@ public class SvnChangeList implements CommittedChangeList {
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
       SvnTarget target = SvnTarget.fromURL(fullPath, revisionNumber);
 
-      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, SVNDepth.INFINITY, new ISVNDirEntryHandler() {
-        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-          final String childPath = path + '/' + dirEntry.getRelativePath();
+      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, Depth.INFINITY, new DirectoryEntryConsumer() {
+
+        @Override
+        public void consume(final DirectoryEntry entry) throws SVNException {
+          final String childPath = path + '/' + entry.getRelativePath();
 
           if (!duplicates.contains(Pair.create(isBefore, childPath))) {
-            final ContentRevision contentRevision = createRevision(childPath, isBefore, SVNNodeKind.DIR.equals(dirEntry.getKind()));
+            final ContentRevision contentRevision = createRevision(childPath, isBefore, entry.isDirectory());
             result.add(new Change(isBefore ? contentRevision : null, isBefore ? null : contentRevision));
           }
         }

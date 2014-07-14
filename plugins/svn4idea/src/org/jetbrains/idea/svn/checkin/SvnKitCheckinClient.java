@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -41,7 +43,7 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
 
   @NotNull
   @Override
-  public SVNCommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String comment) throws VcsException {
+  public CommitInfo[] commit(@NotNull Collection<File> paths, @NotNull String comment) throws VcsException {
     File[] pathsToCommit = ArrayUtil.toObjectArray(paths, File.class);
     boolean keepLocks = myVcs.getSvnConfiguration().isKeepLocks();
     SVNCommitPacket[] commitPackets = null;
@@ -49,7 +51,7 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
     SVNCommitClient committer = myVcs.getSvnKitManager().createCommitClient();
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator(), true, true);
 
-    committer.setEventHandler(handler);
+    committer.setEventHandler(toEventHandler(handler));
     try {
       commitPackets = committer.doCollectCommitItems(pathsToCommit, keepLocks, true, SVNDepth.EMPTY, true, null);
       results = committer.doCommit(commitPackets, keepLocks, comment);
@@ -76,6 +78,17 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
       f.putUserData(VirtualFile.REQUESTOR_MARKER, this);
     }
 
-    return results;
+    return convert(results);
+  }
+
+  @NotNull
+  private static CommitInfo[] convert(@NotNull SVNCommitInfo[] infos) {
+    return ContainerUtil.map(infos, new Function<SVNCommitInfo, CommitInfo>() {
+      @Override
+      public CommitInfo fun(SVNCommitInfo info) {
+        return new CommitInfo.Builder(info.getNewRevision(), info.getDate(), info.getAuthor())
+          .setError(info.getErrorMessage()).build();
+      }
+    }, new CommitInfo[0]);
   }
 }

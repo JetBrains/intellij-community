@@ -34,14 +34,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.*;
@@ -86,12 +87,12 @@ public class SvnChangeProvider implements ChangeProvider {
       final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), partner);
 
       for (FilePath path : zipper.getRecursiveDirs()) {
-        walker.go(path, SVNDepth.INFINITY);
+        walker.go(path, Depth.INFINITY);
       }
 
       partner.setFileProvider(fileProvider);
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-        walker.go(item.getDir(), SVNDepth.IMMEDIATES);
+        walker.go(item.getDir(), Depth.IMMEDIATES);
       }
 
       processCopiedAndDeleted(context, dirtyScope);
@@ -111,6 +112,10 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  /**
+   * TODO: Currently could not find exact case when "file status is not correctly refreshed after external commit" that is covered by this
+   * TODO: code. So for now, checks for formats greater than 1.7 are not added here.
+   */
   private static void putAdministrative17UnderVfsListener(Set<NestedCopyInfo> pointInfos) {
     if (! SvnVcs.ourListenToWcDb) return;
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -169,11 +174,12 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
+  public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder)
+    throws SVNException, SvnBindException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, ProgressManager.getInstance().getProgressIndicator());
     final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
-    walker.go(path, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES);
+    walker.go(path, recursive ? Depth.INFINITY : Depth.IMMEDIATES);
     processCopiedAndDeleted(context, null);
   }
 
@@ -181,7 +187,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                  ChangelistBuilder builder,
                                  SvnChangeProviderContext context, final VcsDirtyScope dirtyScope) throws SVNException {
     boolean foundRename = false;
-    final SVNStatus copiedStatus = copiedFile.getStatus();
+    final Status copiedStatus = copiedFile.getStatus();
     final String copyFromURL = copiedFile.getCopyFromURL();
     final FilePath copiedToPath = copiedFile.getFilePath();
 
@@ -199,7 +205,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
     for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
       SvnChangedFile deletedFile = iterator.next();
-      final SVNStatus deletedStatus = deletedFile.getStatus();
+      final Status deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
         final Change newChange = context.createMovedChange(createBeforeRevision(deletedFile, true),
@@ -208,7 +214,7 @@ public class SvnChangeProvider implements ChangeProvider {
         applyMovedChange(copiedFile.getFilePath(), builder, dirtyScope, deletedToDelete, deletedFile, clName, newChange);
         for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
           SvnChangedFile deletedChild = iterChild.next();
-          final SVNStatus childStatus = deletedChild.getStatus();
+          final Status childStatus = deletedChild.getStatus();
           if (childStatus == null) {
             continue;
           }
@@ -243,15 +249,15 @@ public class SvnChangeProvider implements ChangeProvider {
     // by building a relative url
     if (!foundRename && copiedStatus.getURL() != null) {
       File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copyFromURL);
-      SVNStatus status;
+      Status status;
       try {
         status = myVcs.getFactory(wcPath).createStatusClient().doStatus(wcPath, false);
       }
-      catch(SVNException ex) {
+      catch(SvnBindException ex) {
         LOG.info(ex);
         status = null;
       }
-      if (status != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
+      if (status != null && status.is(StatusType.STATUS_DELETED)) {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());

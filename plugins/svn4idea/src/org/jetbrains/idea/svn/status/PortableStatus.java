@@ -15,10 +15,13 @@
  */
 package org.jetbrains.idea.svn.status;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -27,18 +30,18 @@ import java.util.Date;
 import java.util.Map;
 
 /**
+ * TODO: Merge PortableStatus and Status to single class.
+ *
  * Created by IntelliJ IDEA.
  * User: Irina.Chernushina
  * Date: 1/24/12
  * Time: 12:29 PM
  */
-public class PortableStatus extends SVNStatus {
-
-  private static final Logger LOG = Logger.getInstance(PortableStatus.class);
+public class PortableStatus extends Status {
 
   private boolean myConflicted;
-  private Getter<SVNInfo> myInfoGetter;
-  private SVNInfo myInfo;
+  private Getter<Info> myInfoGetter;
+  private Info myInfo;
   private String myPath;
   private boolean myFileExists;
 
@@ -81,52 +84,46 @@ public class PortableStatus extends SVNStatus {
    */
   public PortableStatus(SVNURL url,
                         File file,
-                        SVNNodeKind kind,
+                        @NotNull NodeKind kind,
                         SVNRevision revision,
                         SVNRevision committedRevision,
                         Date committedDate,
                         String author,
-                        SVNStatusType contentsStatus,
-                        SVNStatusType propertiesStatus,
-                        SVNStatusType remoteContentsStatus,
-                        SVNStatusType remotePropertiesStatus,
+                        StatusType contentsStatus,
+                        StatusType propertiesStatus,
+                        StatusType remoteContentsStatus,
+                        StatusType remotePropertiesStatus,
                         boolean isLocked,
                         boolean isCopied,
                         boolean isSwitched,
                         boolean isFileExternal,
-                        SVNLock remoteLock,
-                        SVNLock localLock,
+                        @Nullable Lock remoteLock,
+                        @Nullable Lock localLock,
                         Map entryProperties,
                         String changelistName,
                         int wcFormatVersion,
                         boolean isConflicted,
-                        Getter<SVNInfo> infoGetter) {
-    super(url, file, kind, revision, committedRevision, committedDate, author, contentsStatus, propertiesStatus, remoteContentsStatus,
-          remotePropertiesStatus, isLocked, isCopied, isSwitched, isFileExternal, null, null, null, null, null, null, remoteLock,
-          localLock, entryProperties, changelistName, wcFormatVersion, null);
+                        Getter<Info> infoGetter) {
+    super(url, file, kind, revision, committedRevision, contentsStatus, propertiesStatus, remoteContentsStatus,
+          remotePropertiesStatus, isLocked, isCopied, isSwitched, null, remoteLock,
+          localLock, changelistName, null);
     myConflicted = isConflicted;
-    myInfoGetter = infoGetter == null ? new Getter<SVNInfo>() {
+    myInfoGetter = infoGetter == null ? new Getter<Info>() {
       @Override
-      public SVNInfo get() {
+      public Info get() {
         return null;
       }
     } : infoGetter;
   }
 
   public PortableStatus() {
-    myInfoGetter = new Getter<SVNInfo>() {
+    myInfoGetter = new Getter<Info>() {
       @Override
-      public SVNInfo get() {
+      public Info get() {
         return null;
       }
     };
     setCommittedRevision(SVNRevision.UNDEFINED);
-  }
-
-  @Override
-  public int getWorkingCopyFormat() {
-    LOG.error("Do not use working copy format detection through status");
-    return 0;
   }
 
   @Override
@@ -135,11 +132,7 @@ public class PortableStatus extends SVNStatus {
     super.setIsConflicted(isConflicted);
   }
 
-  public void setConflicted(boolean conflicted) {
-    myConflicted = conflicted;
-  }
-
-  public void setInfoGetter(Getter<SVNInfo> infoGetter) {
+  public void setInfoGetter(Getter<Info> infoGetter) {
     myInfoGetter = infoGetter;
   }
 
@@ -148,10 +141,10 @@ public class PortableStatus extends SVNStatus {
     return myConflicted;
   }
 
-  private SVNInfo initInfo() {
+  private Info initInfo() {
     if (myInfo == null) {
-      final SVNStatusType contentsStatus = getContentsStatus();
-      if (contentsStatus == null || SVNStatusType.UNKNOWN.equals(contentsStatus)) {
+      final StatusType contentsStatus = getContentsStatus();
+      if (contentsStatus == null || StatusType.UNKNOWN.equals(contentsStatus)) {
         return null;
       }
       myInfo = myInfoGetter.get();
@@ -159,80 +152,19 @@ public class PortableStatus extends SVNStatus {
     return myInfo;
   }
 
-  public SVNInfo getInfo() {
+  public Info getInfo() {
     return initInfo();
   }
 
   @Override
-  public SVNNodeKind getKind() {
+  @NotNull
+  public NodeKind getKind() {
     if (myFileExists) return super.getKind();
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     if (info != null) {
       return info.getKind();
     }
     return super.getKind();
-  }
-
-  /**
-   * Gets the temporary file that contains all latest changes from the
-   * repository which led to a conflict with local changes. This file is at
-   * the HEAD revision.
-   *
-   * @return an autogenerated temporary file just as it is in the latest
-   *         revision in the repository
-   */
-  @Override
-  public File getConflictNewFile() {
-    if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
-    return info == null ? null : info.getConflictNewFile();
-  }
-
-  /**
-   * Gets the temporary BASE revision file of that working file that is
-   * currently in conflict with changes received from the repository. This
-   * file does not contain the latest user's modifications, only 'pristine'
-   * contents.
-   *
-   * @return an autogenerated temporary file just as the conflicting file was
-   *         before any modifications to it
-   */
-  @Override
-  public File getConflictOldFile() {
-    if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
-    return info == null ? null : info.getConflictOldFile();
-  }
-
-  /**
-   * Gets the temporary <i>'.mine'</i> file with all current local changes to
-   * the original file. That is if the file item is in conflict with changes
-   * that came during an update this temporary file is created to get the
-   * snapshot of the user's file with only the user's local modifications and
-   * nothing more.
-   *
-   * @return an autogenerated temporary file with only the user's
-   *         modifications
-   */
-  @Override
-  public File getConflictWrkFile() {
-    if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
-    return info == null ? null : info.getConflictWrkFile();
-  }
-
-  /**
-   * Gets the <i>'.prej'</i> file containing details on properties conflicts.
-   * If the item's properties are in conflict with those that came during an
-   * update this file will contain a conflict description.
-   *
-   * @return the properties conflicts file
-   */
-  @Override
-  public File getPropRejectFile() {
-    if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
-    return info == null ? null : info.getPropConflictFile();
   }
 
   /**
@@ -244,7 +176,7 @@ public class PortableStatus extends SVNStatus {
   @Override
   public String getCopyFromURL() {
     if (! isCopied()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     if (info == null) return null;
     SVNURL url = initInfo().getCopyFromURL();
     return url == null ? null : url.toString();
@@ -255,7 +187,7 @@ public class PortableStatus extends SVNStatus {
     SVNURL url = super.getURL();
 
     if (url == null) {
-      SVNInfo info = initInfo();
+      Info info = initInfo();
       url = info != null ? info.getURL() : url;
     }
 
@@ -267,7 +199,7 @@ public class PortableStatus extends SVNStatus {
     SVNURL url = super.getRepositoryRootURL();
 
     if (url == null) {
-      SVNInfo info = initInfo();
+      Info info = initInfo();
       url = info != null ? info.getRepositoryRootURL() : url;
     }
 
@@ -279,7 +211,7 @@ public class PortableStatus extends SVNStatus {
     File file = super.getFile();
 
     if (file == null) {
-      SVNInfo info = initInfo();
+      Info info = initInfo();
       file = info != null ? info.getFile() : file;
     }
 
@@ -291,25 +223,12 @@ public class PortableStatus extends SVNStatus {
     final SVNRevision revision = super.getRevision();
     if (revision != null && revision.isValid()) return revision;
 
-    final SVNStatusType status = getContentsStatus();
-    if (SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
-        SVNStatusType.STATUS_ADDED.equals(status)) return revision;
+    final StatusType status = getContentsStatus();
+    if (StatusType.STATUS_NONE.equals(status) || StatusType.STATUS_UNVERSIONED.equals(status) ||
+        StatusType.STATUS_ADDED.equals(status)) return revision;
 
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? revision : info.getRevision();
-  }
-
-  /**
-   * Gets the revision of the item's ancestor from which the item was copied
-   * (the item is added with history).
-   *
-   * @return the ancestor's revision
-   */
-  @Override
-  public SVNRevision getCopyFromRevision() {
-    if (! isCopied()) return null;
-    final SVNInfo info = initInfo();
-    return info == null ? null : info.getCopyFromRevision();
   }
 
   /**
@@ -320,9 +239,10 @@ public class PortableStatus extends SVNStatus {
    * @since 1.3
    */
   @Override
-  public SVNTreeConflictDescription getTreeConflict() {
+  @Nullable
+  public TreeConflictDescription getTreeConflict() {
     if (! isConflicted()) return null;
-    final SVNInfo info = initInfo();
+    final Info info = initInfo();
     return info == null ? null : info.getTreeConflict();
   }
 
@@ -334,7 +254,7 @@ public class PortableStatus extends SVNStatus {
     return myPath;
   }
 
-  public void setKind(boolean exists, SVNNodeKind kind) {
+  public void setKind(boolean exists, @NotNull NodeKind kind) {
     myFileExists = exists;
     setKind(kind);
   }

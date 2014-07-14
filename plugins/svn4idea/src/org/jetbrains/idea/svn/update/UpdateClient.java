@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -32,14 +32,19 @@ import java.io.File;
  */
 public interface UpdateClient extends SvnClient {
 
-  long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean makeParents) throws SVNException;
-
-  long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException;
+  long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+    throws SvnBindException;
 
   void setUpdateLocksOnDemand(boolean locksOnDemand);
 
-  long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException;
+  long doSwitch(File path,
+                SVNURL url,
+                SVNRevision pegRevision,
+                SVNRevision revision,
+                Depth depth,
+                boolean allowUnversionedObstructions,
+                boolean depthIsSticky) throws SvnBindException;
 
-  void setEventHandler(ISVNEventHandler dispatcher);
+  void setEventHandler(ProgressTracker dispatcher);
   void setIgnoreExternals(boolean ignoreExternals);
 }

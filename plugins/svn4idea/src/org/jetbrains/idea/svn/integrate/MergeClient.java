@@ -3,10 +3,10 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -20,27 +20,27 @@ public interface MergeClient extends SvnClient {
   void merge(@NotNull SvnTarget source,
              @NotNull File destination,
              boolean dryRun,
-             @Nullable SVNDiffOptions diffOptions,
-             @Nullable ISVNEventHandler handler) throws VcsException;
+             @Nullable DiffOptions diffOptions,
+             @Nullable ProgressTracker handler) throws VcsException;
 
   void merge(@NotNull SvnTarget source,
              @NotNull SVNRevisionRange range,
              @NotNull File destination,
-             @Nullable SVNDepth depth,
+             @Nullable Depth depth,
              boolean dryRun,
              boolean recordOnly,
              boolean force,
-             @Nullable SVNDiffOptions diffOptions,
-             @Nullable ISVNEventHandler handler) throws VcsException;
+             @Nullable DiffOptions diffOptions,
+             @Nullable ProgressTracker handler) throws VcsException;
 
   void merge(@NotNull SvnTarget source1,
              @NotNull SvnTarget source2,
              @NotNull File destination,
-             @Nullable SVNDepth depth,
+             @Nullable Depth depth,
              boolean useAncestry,
              boolean dryRun,
              boolean recordOnly,
              boolean force,
-             @Nullable SVNDiffOptions diffOptions,
-             @Nullable ISVNEventHandler handler) throws VcsException;
+             @Nullable DiffOptions diffOptions,
+             @Nullable ProgressTracker handler) throws VcsException;
 }
