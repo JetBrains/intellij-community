@@ -36,14 +36,14 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -56,6 +56,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
 public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object>, EdtSortingModel {
   @NonNls public static final String SETTINGS_KEY = "$$$SETTINGS$$$";
@@ -147,13 +150,29 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public void saveInitialCheckBoxState(boolean state) {
   }
 
+  public static class MatchedValue implements Comparable<MatchedValue> {
+    @NotNull public final Comparable value;
+    @NotNull final String pattern;
+
+    MatchedValue(@NotNull Comparable value, @NotNull String pattern) {
+      this.value = value;
+      this.pattern = pattern;
+    }
+
+    @Override
+    public int compareTo(@NotNull MatchedValue o) {
+      //noinspection unchecked
+      return value.compareTo(o.value);
+    }
+  }
+
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
 
       @Override
       public Component getListCellRendererComponent(@NotNull final JList list,
-                                                    final Object value,
+                                                    final Object matchedValue,
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
@@ -161,19 +180,38 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         Color bg = UIUtil.getListBackground(isSelected);
         panel.setBackground(bg);
 
+        if (matchedValue instanceof String) { //...
+          final JBLabel label = new JBLabel((String)matchedValue);
+          label.setIcon(EMPTY_ICON);
+          panel.add(label, BorderLayout.WEST);
+          return panel;
+        }
+
         Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getLabelDisabledForeground();
+
+        Object value = ((MatchedValue) matchedValue).value;
+        String pattern = ((MatchedValue)matchedValue).pattern;
+
+        SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+        nameComponent.setBackground(bg);
+        panel.add(nameComponent, BorderLayout.CENTER);
 
         if (value instanceof ActionWrapper) {
           final ActionWrapper actionWithParentGroup = (ActionWrapper)value;
 
           final AnAction anAction = actionWithParentGroup.getAction();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
-          final Icon icon = templatePresentation.getIcon();
 
           final Color fg = defaultActionForeground(isSelected, actionWithParentGroup.getPresentation());
 
-          final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText(), fg, bg, icon);
-          panel.add(actionLabel, BorderLayout.WEST);
+          panel.add(createIconLabel(templatePresentation.getIcon()), BorderLayout.WEST);
+
+          appendWithColoredMatches(nameComponent, templatePresentation.getText(), pattern, fg, isSelected);
+
+          final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction)));
+          if (shortcut != null) {
+            nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", REGULAR_ITALIC_ATTRIBUTES);
+          }
 
           final String groupName = actionWithParentGroup.getGroupName();
           if (groupName != null) {
@@ -196,22 +234,30 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
 
           final Color fg = UIUtil.getListForeground(isSelected);
-          final JLabel label = new JLabel(hit.trim());
-          label.setIcon(EMPTY_ICON);
-          label.setForeground(fg);
-          label.setBackground(bg);
-          panel.add(label, BorderLayout.WEST);
+
+          appendWithColoredMatches(nameComponent, hit.trim(), pattern, fg, isSelected);
+
+          panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+
           final JLabel settingsLabel = new JLabel(getGroupName((OptionDescription)value));
           settingsLabel.setForeground(groupFg);
           settingsLabel.setBackground(bg);
           panel.add(settingsLabel, BorderLayout.EAST);
         }
-        else if (value instanceof String) {
-          final JBLabel label = new JBLabel((String)value);
-          label.setIcon(EMPTY_ICON);
-          panel.add(label, BorderLayout.WEST);
-        }
         return panel;
+      }
+
+      private void appendWithColoredMatches(SimpleColoredComponent nameComponent, String name, String pattern, Color fg, boolean selected) {
+        final SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
+        final SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, STYLE_SEARCH_MATCH);
+        List<TextRange> fragments = ContainerUtil.newArrayList();
+        if (selected) {
+          int matchStart = StringUtil.indexOfIgnoreCase(name, pattern, 0);
+          if (matchStart >= 0) {
+            fragments.add(TextRange.from(matchStart, pattern.length()));
+          }
+        }
+        SpeedSearchUtil.appendColoredFragments(nameComponent, name, fragments, plain, highlighted);
       }
     };
   }
@@ -219,6 +265,18 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   protected String getActionId(@NotNull final AnAction anAction) {
     return myActionManager.getId(anAction);
   }
+
+  private static JLabel createIconLabel(final Icon icon) {
+    final LayeredIcon layeredIcon = new LayeredIcon(2);
+    layeredIcon.setIcon(EMPTY_ICON, 0);
+    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
+      layeredIcon
+        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
+    }
+
+    return new JLabel(layeredIcon);
+  }
+
 
   protected JLabel createActionLabel(final AnAction anAction, final String anActionName,
                                      final Color fg, final Color bg,
@@ -307,7 +365,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Override
   @NotNull
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
-    List<Object> objects = new ArrayList<Object>();
+    List<Comparable> objects = ContainerUtil.newArrayList();
     final AnAction act = myActionManager.getAction(id);
     DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
     if (act != null) {
@@ -385,7 +443,12 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         }
       }
     }
-    return objects.toArray(new Object[objects.size()]);
+    return ContainerUtil.map2Array(objects, MatchedValue.class, new Function<Comparable, MatchedValue>() {
+      @Override
+      public MatchedValue fun(Comparable o) {
+        return new MatchedValue(o, pattern);
+      }
+    });
   }
 
   @NotNull
@@ -455,7 +518,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   @Override
-  public String getElementName(final Object element) {
+  public String getElementName(final Object mv) {
+    Object element = ((MatchedValue) mv).value;
     if (element instanceof OptionDescription) return ((OptionDescription)element).getHit();
     if (!(element instanceof ActionWrapper)) return null;
     return ((ActionWrapper)element).getAction().getTemplatePresentation().getText();
