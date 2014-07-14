@@ -24,6 +24,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testInsideStaticInnerClass() throws Exception { doSingleTest(); }
   public void testCreateFromEquals() throws Exception { doSingleTest(); }
   public void testCreateFromEqualsToPrimitiveType() throws Exception { doSingleTest(); }
+  public void testInsideInterface() throws Exception { doSingleTest(); }
   public void testWithAlignment() throws Exception {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
