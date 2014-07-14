@@ -203,7 +203,7 @@ class IntToIntBtree {
       boolean canUseLastKey = myCanUseLastKey;
       if (canUseLastKey) {
         myCanUseLastKey = false;
-        if (key == myLastGetKey && !myAccessNodeView.myHasFullPagesAlongPath) {
+        if (key == myLastGetKey && !myAccessNodeView.myHasFullPagesAlongPath && myAccessNodeView.isValid()) {
           ++myOptimizedInserts;
           ++count;
           myAccessNodeView.insert(key, value);
@@ -284,6 +284,7 @@ class IntToIntBtree {
     private short myChildrenCount;
     protected int myAddressInBuffer;
     protected ByteBuffer myBuffer;
+    protected ByteBufferWrapper myBufferWrapper;
     protected boolean myHasFullPagesAlongPath;
     protected boolean myIsDirty;
 
@@ -302,7 +303,8 @@ class IntToIntBtree {
     protected void syncWithStore() {
       PagedFileStorage pagedFileStorage = btree.storage.getPagedFileStorage();
       myAddressInBuffer = pagedFileStorage.getOffsetInPage(address);
-      myBuffer = pagedFileStorage.getByteBuffer(address, false);
+      myBufferWrapper = pagedFileStorage.getByteBuffer(address, false);
+      myBuffer = myBufferWrapper.getCachedBuffer();
       myIsDirty = false; // we will mark dirty on child count change, attrs change or existing key put
       doInitFlags(myBuffer.getInt(myAddressInBuffer));
     }
@@ -539,6 +541,10 @@ class IntToIntBtree {
     public void initTraversal(int address) {
       myHasFullPagesAlongPath = false;
       setAddress(address);
+    }
+
+    public boolean isValid() {
+      return myBufferWrapper.getCachedBuffer() == myBuffer;
     }
 
     private static class HashLeafData {
