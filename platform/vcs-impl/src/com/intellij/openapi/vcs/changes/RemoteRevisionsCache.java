@@ -92,7 +92,14 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
           boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
           somethingChanged |= myRemoteRevisionsStateCache.updateStep();
           if (somethingChanged) {
-            myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              @Override
+              public void run() {
+                if (!myProject.isDisposed()) {
+                  myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+                }
+              }
+            });
           }
         }
         return shouldBeDone;
