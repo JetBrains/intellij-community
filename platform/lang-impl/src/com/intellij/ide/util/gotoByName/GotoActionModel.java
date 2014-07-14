@@ -159,10 +159,34 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       this.pattern = pattern;
     }
 
+    @Nullable
+    private String getValueText() {
+      if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
+      if (!(value instanceof ActionWrapper)) return null;
+      return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
+    }
+
+    private int getMatchingDegree() {
+      String text = getValueText();
+      if (text != null) {
+        if (StringUtil.startsWithIgnoreCase(text, pattern)) return 2;
+        if (StringUtil.containsIgnoreCase(text, pattern)) return 1;
+      }
+      return 0;
+    }
+
     @Override
     public int compareTo(@NotNull MatchedValue o) {
+      if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) {
+        return 1;
+      }
+      if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) {
+        return -1;
+      }
+
+      int diff = o.getMatchingDegree() - getMatchingDegree();
       //noinspection unchecked
-      return value.compareTo(o.value);
+      return diff != 0 ? diff : value.compareTo(o.value);
     }
   }
 
@@ -310,23 +334,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public int compare(@NotNull Object o1, @NotNull Object o2) {
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
-
-    if (o1 instanceof OptionDescription && !(o2 instanceof OptionDescription)) {
-      return 1;
-    }
-    if (o2 instanceof OptionDescription && !(o1 instanceof OptionDescription)) {
-      return -1;
-    }
-
-    if (o1 instanceof OptionDescription) {
-      return ((OptionDescription)o1).compareTo(o2);
-    }
-
-    if (o1 instanceof ActionWrapper && o2 instanceof ActionWrapper) {
-      return ((ActionWrapper)o1).compareTo((ActionWrapper)o2);
-    }
-
-    return StringUtil.compare(getFullName(o1), getFullName(o2), true);
+    return ((MatchedValue) o1).compareTo((MatchedValue)o2);
   }
 
   public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
@@ -519,10 +527,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public String getElementName(final Object mv) {
-    Object element = ((MatchedValue) mv).value;
-    if (element instanceof OptionDescription) return ((OptionDescription)element).getHit();
-    if (!(element instanceof ActionWrapper)) return null;
-    return ((ActionWrapper)element).getAction().getTemplatePresentation().getText();
+    return ((MatchedValue) mv).getValueText();
   }
 
   @Override
