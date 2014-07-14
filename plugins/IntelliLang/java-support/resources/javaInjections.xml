@@ -115,5 +115,21 @@
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("selectNodes").withParameters("java.lang.Object", "java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("selectSingleNode").withParameters("java.lang.Object", "java.lang.String").definedInClass("org.jdom.xpath.XPath"))]]></place>
   </injection>
+  <injection language="encoding-reference" injector-id="java">
+    <display-name>Charset Name</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("forName").withParameters("java.lang.String").definedInClass("java.nio.charset.Charset"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("isSupported").withParameters("java.lang.String").definedInClass("java.nio.charset.Charset"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("getBytes").withParameters("java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(3, psiMethod().withName("String").withParameters("byte[]", "int", "int", "java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("String").withParameters("byte[]", "java.lang.String").definedInClass("java.lang.String"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("InputStreamReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("java.io.InputStreamReader"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("OutputStreamWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("java.io.OutputStreamWriter"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("toString").withParameters("java.lang.String").definedInClass("java.io.ByteArrayOutputStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("PrintStream").withParameters("java.io.File", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(2, psiMethod().withName("PrintStream").withParameters("java.io.OutputStream", "boolean", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("PrintStream").withParameters("java.lang.String", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("encode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLEncoder"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("decode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLDecoder"))]]></place>
+  </injection>
 
 </component>
