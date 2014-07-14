@@ -300,7 +300,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addErrorPane() {
-    addConfigurable(new ErrorPaneConfigurable(myProject), true);
+    addConfigurable(new ErrorPaneConfigurable(myProject, myContext), true);
   }
 
   private void addGlobalLibrariesConfig() {

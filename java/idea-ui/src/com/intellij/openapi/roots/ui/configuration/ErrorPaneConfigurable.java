@@ -15,22 +15,63 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ErrorPaneConfigurable implements Configurable {
+public class ErrorPaneConfigurable extends JPanel implements Configurable, Disposable, ConfigurationErrors {
   private final Project myProject;
+  private final StructureConfigurableContext myContext;
+  private final Alarm myAlarm;
+  private final ArrayList<ConfigurationError> myErrors = new ArrayList<ConfigurationError>();
+  private final JTextPane myContent = new JTextPane();
 
-  public ErrorPaneConfigurable(Project project) {
+  public ErrorPaneConfigurable(Project project, StructureConfigurableContext context) {
+    super(new BorderLayout());
+    myContent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myContent.setEditable(false);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    add(pane);
     myProject = project;
+    myContext = context;
+    myAlarm = new Alarm(this);
+    project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
+
+    refresh();
+  }
+
+  public void refresh() {
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        String html = "<html><body>";
+        int i = 0;
+        for (ConfigurationError error : myErrors) {
+          i++;
+          html+= i + ". " + error.getDescription() + "<br/>";
+        }
+        html += "</body></html>";
+        myContent.setText(html);
+      }
+    }, 100);
   }
 
   @Nls
@@ -48,7 +89,7 @@ public class ErrorPaneConfigurable implements Configurable {
   @Nullable
   @Override
   public JComponent createComponent() {
-    return new JLabel("Demo");
+    return this;
   }
 
   @Override
@@ -68,6 +109,22 @@ public class ErrorPaneConfigurable implements Configurable {
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(this);
+  }
 
+  @Override
+  public void dispose() {
+  }
+
+  @Override
+  public void addError(@NotNull ConfigurationError error) {
+    myErrors.add(error);
+    refresh();
+  }
+
+  @Override
+  public void removeError(@NotNull ConfigurationError error) {
+    myErrors.remove(error);
+    refresh();
   }
 }
