@@ -18,24 +18,23 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ThrowableConsumer;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
 
 public class SvnMergeSourceTracker {
   private int myMergeLevel;
   // -1 - not merge source; 0 - direct merge source
-  private ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException> myConsumer;
+  private ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> myConsumer;
 
-  public SvnMergeSourceTracker(final ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException> consumer) {
+  public SvnMergeSourceTracker(final ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> consumer) {
     myConsumer = consumer;
     myMergeLevel = -1;
   }
 
-  public void consume(final SVNLogEntry logEntry) throws SVNException {
+  public void consume(final LogEntry logEntry) throws SVNException {
     if (logEntry.getRevision() < 0) {
       -- myMergeLevel;
       return;
     }
-    myConsumer.consume(new Pair<SVNLogEntry, Integer>(logEntry, myMergeLevel));
+    myConsumer.consume(new Pair<LogEntry, Integer>(logEntry, myMergeLevel));
     if (logEntry.hasChildren()) {
       ++ myMergeLevel;
     }

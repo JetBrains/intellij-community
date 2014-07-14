@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -31,13 +31,13 @@ public class Node {
   @NotNull private final VirtualFile myFile;
   @NotNull private final SVNURL myUrl;
   @NotNull private final SVNURL myRepositoryUrl;
-  @Nullable private final SVNException myError;
+  @Nullable private final SvnBindException myError;
 
   public Node(@NotNull VirtualFile file, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl) {
     this(file, url, repositoryUrl, null);
   }
 
-  public Node(@NotNull VirtualFile file, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl, @Nullable SVNException error) {
+  public Node(@NotNull VirtualFile file, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl, @Nullable SvnBindException error) {
     myFile = file;
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
@@ -65,7 +65,7 @@ public class Node {
   }
 
   @Nullable
-  public SVNException getError() {
+  public SvnBindException getError() {
     return myError;
   }
 

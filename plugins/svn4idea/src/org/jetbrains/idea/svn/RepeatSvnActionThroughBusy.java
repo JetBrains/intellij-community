@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Processor;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -52,20 +53,23 @@ public abstract class RepeatSvnActionThroughBusy {
 
   protected int myCnt = REPEAT;
   protected long myTimeout = 50;
-  protected abstract void executeImpl() throws SVNException;
+
+  protected abstract void executeImpl() throws VcsException;
+
   protected Object myT;
 
-  public <T> T compute() throws SVNException {
+  public <T> T compute() throws VcsException {
     execute();
     return (T) myT;
   }
 
-  public void execute() throws SVNException {
+  public void execute() throws VcsException {
     while (true) {
       try {
         executeImpl();
         break;
-      } catch (SVNException e) {
+      }
+      catch (VcsException e) {
         if (ourBusyExceptionProcessor.process(e)) {
           if (myCnt > 0) {
             try {

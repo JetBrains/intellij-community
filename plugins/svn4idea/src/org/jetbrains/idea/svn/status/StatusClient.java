@@ -15,12 +15,11 @@
  */
 package org.jetbrains.idea.svn.status;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
 import java.util.Collection;
@@ -32,13 +31,20 @@ import java.util.Collection;
  * Time: 9:46 AM
  */
 public interface StatusClient extends SvnClient {
-  long doStatus(File path, boolean recursive, boolean remote, boolean reportAll,
-          boolean includeIgnored, ISVNStatusHandler handler) throws SVNException;
-  long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;
-  long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;
-  long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll,
-          boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler,
-          Collection changeLists) throws SVNException;
-  SVNStatus doStatus( File path, boolean remote) throws SVNException;
-  SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException;
+
+  /**
+   * TODO: Return value is never used by other code
+   */
+  long doStatus(File path,
+                SVNRevision revision,
+                Depth depth,
+                boolean remote,
+                boolean reportAll,
+                boolean includeIgnored,
+                boolean collectParentExternals,
+                StatusConsumer handler,
+                Collection changeLists) throws SvnBindException;
+
+  @Nullable
+  Status doStatus(File path, boolean remote) throws SvnBindException;
 }

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.api.Depth;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
@@ -64,7 +64,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return new File(myPathField.getText());
   }
 
-  public SVNDepth getDepth() {
+  public Depth getDepth() {
     return myDepth.getDepth();
   }
 

@@ -16,16 +16,17 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -47,46 +48,24 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
   private static final String ourAuthenticationRealm = "Authentication realm:";
 
-  @Override
-  public long[] doUpdate(final File[] paths, final SVNRevision revision, final SVNDepth depth, final boolean allowUnversionedObstructions,
-                         final boolean depthIsSticky, final boolean makeParents) throws SVNException {
-    // since one revision is passed -> I assume same repository here
-    checkWorkingCopy(paths[0]);
-
-    final List<String> parameters = new ArrayList<String>();
-
-    fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
-    CommandUtil.put(parameters, makeParents, "--parents");
-    CommandUtil.put(parameters, myIgnoreExternals, "--ignore-externals");
-    CommandUtil.put(parameters, paths);
-
-    return run(paths, parameters, SvnCommandName.up);
-  }
-
-  private void checkWorkingCopy(@NotNull File path) throws SVNException {
-    final SVNInfo info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
+  private void checkWorkingCopy(@NotNull File path) throws SvnBindException {
+    final Info info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath()));
+      throw new SvnBindException(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath());
     }
   }
 
-  private long[] run(@NotNull File[] paths, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SVNException {
-    File base = paths[0];
-    base = base.isDirectory() ? base : base.getParentFile();
+  private long[] run(@NotNull File path, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SvnBindException {
+    File base = path.isDirectory() ? path : path.getParentFile();
 
     final AtomicReference<long[]> updatedToRevision = new AtomicReference<long[]>();
     updatedToRevision.set(new long[0]);
 
-    final BaseUpdateCommandListener listener = createCommandListener(paths, updatedToRevision, base);
-    try {
-      execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
-    }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
-    }
+    final BaseUpdateCommandListener listener = createCommandListener(new File[]{path}, updatedToRevision, base);
+    execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
 
-    listener.throwIfException();
+    listener.throwWrappedIfException();
 
     return updatedToRevision.get();
   }
@@ -98,8 +77,8 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
       final long[] myRevisions = new long[paths.length];
 
       @Override
-      protected void beforeHandler(@NotNull SVNEvent event) {
-        if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
+      protected void beforeHandler(@NotNull ProgressEvent event) {
+        if (EventAction.UPDATE_COMPLETED.equals(event.getAction())) {
           final long eventRevision = event.getRevision();
           for (int i = 0; i < paths.length; i++) {
             final File path = paths[i];
@@ -121,7 +100,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
 
   private static void fillParameters(@NotNull List<String> parameters,
                                      @Nullable SVNRevision revision,
-                                     @Nullable SVNDepth depth,
+                                     @Nullable Depth depth,
                                      boolean depthIsSticky,
                                      boolean allowUnversionedObstructions) {
 
@@ -155,9 +134,17 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
  }
 
   @Override
-  public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
-    throws SVNException {
-    final long[] longs = doUpdate(new File[]{path}, revision, depth, allowUnversionedObstructions, depthIsSticky, false);
+  public long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+    throws SvnBindException {
+    checkWorkingCopy(path);
+
+    final List<String> parameters = new ArrayList<String>();
+
+    fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
+    CommandUtil.put(parameters, myIgnoreExternals, "--ignore-externals");
+    CommandUtil.put(parameters, path);
+
+    final long[] longs = run(path, parameters, SvnCommandName.up);
     return longs[0];
   }
 
@@ -166,9 +153,9 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
                        SVNURL url,
                        SVNRevision pegRevision,
                        SVNRevision revision,
-                       SVNDepth depth,
+                       Depth depth,
                        boolean allowUnversionedObstructions,
-                       boolean depthIsSticky) throws SVNException {
+                       boolean depthIsSticky) throws SvnBindException {
     checkWorkingCopy(path);
 
     List<String> parameters = new ArrayList<String>();
@@ -178,7 +165,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
     parameters.add("--ignore-ancestry");
 
-    long[] revisions = run(new File[]{path}, parameters, SvnCommandName.switchCopy);
+    long[] revisions = run(path, parameters, SvnCommandName.switchCopy);
 
     return revisions != null && revisions.length > 0 ? revisions[0] : -1;
   }

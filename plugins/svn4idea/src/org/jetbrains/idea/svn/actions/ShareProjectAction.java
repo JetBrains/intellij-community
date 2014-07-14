@@ -35,9 +35,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -167,7 +167,7 @@ public class ShareProjectAction extends BasicAction {
                 final ClientFactory factory = SvnCheckoutProvider.getFactory(activeVcs, format);
 
                 factory.createCheckoutClient()
-                  .checkout(SvnTarget.fromURL(checkoutUrl), path, revision, SVNDepth.INFINITY, false, false, format, null);
+                  .checkout(SvnTarget.fromURL(checkoutUrl), path, revision, Depth.INFINITY, false, false, format, null);
                 addRecursively(activeVcs, factory, file);
               } catch (SVNException e) {
                 error[0] = e;
@@ -254,9 +254,9 @@ public class ShareProjectAction extends BasicAction {
           indicator.checkCanceled();
           indicator.setText(SvnBundle.message("share.or.import.add.progress.text", virtualFile.getPath()));
         }
-        factory.createAddClient().add(ioFile, SVNDepth.EMPTY, false, false, true, null);
+        factory.createAddClient().add(ioFile, Depth.EMPTY, false, false, true, null);
       }
-    }, SVNDepth.INFINITY);
+    }, Depth.INFINITY);
 
     operation.execute(file);
   }

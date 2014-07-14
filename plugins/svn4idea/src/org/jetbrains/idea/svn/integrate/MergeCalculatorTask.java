@@ -33,16 +33,11 @@ import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.dialogs.MergeContext;
 import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
-import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.history.TreeStructureNode;
+import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -121,13 +116,13 @@ public class MergeCalculatorTask extends BaseMergeTask implements
     String relativeBranch = SVNPathUtil.getRelativePath(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl());
     relativeBranch = (relativeBranch.startsWith("/") ? relativeBranch : "/" + relativeBranch);
 
-    final LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>> list =
-      new LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>>();
+    final LinkedList<Pair<SvnChangeList, LogHierarchyNode>> list =
+      new LinkedList<Pair<SvnChangeList, LogHierarchyNode>>();
     try {
       committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()), 0,
-                                                                     new PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>>() {
+                                                                     new PairConsumer<SvnChangeList, LogHierarchyNode>() {
                                                                        public void consume(SvnChangeList svnList,
-                                                                                           TreeStructureNode<SVNLogEntry> tree) {
+                                                                                           LogHierarchyNode tree) {
                                                                          indicator.checkCanceled();
                                                                          if (sourceLatest >= svnList.getNumber()) return;
                                                                          list.add(
@@ -144,7 +139,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
     indicator.setText("Checking merge information...");
     // to do not go into file system while asking something on the net
-    for (Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair : list) {
+    for (Pair<SvnChangeList, LogHierarchyNode> pair : list) {
       final SvnChangeList svnList = pair.getFirst();
       final SvnMergeInfoCache.MergeCheckResult checkResult = myMergeChecker.checkList(svnList);
       indicator.setText2("Processing revision " + svnList.getNumber());
@@ -204,7 +199,7 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
   // true if errors found
   static boolean checkListForPaths(String relativeLocal,
-                                   String relativeBranch, Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair) {
+                                   String relativeBranch, Pair<SvnChangeList, LogHierarchyNode> pair) {
     // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
     // TODO: from branch1 to branch2 and have revision which contain merge changes from branch3 to branch1.
     // TODO: In this case paths of child log entries will not contain neither urls from branch1 nor from branch2 - and checkEntry() method
@@ -212,9 +207,9 @@ public class MergeCalculatorTask extends BaseMergeTask implements
 
     // TODO: Why do we check entries recursively - we have a revision - set of changes in the "merge from" branch? Why do we need to check
     // TODO: where they came from - we want avoid some circular merges or what? Does subversion itself perform such checks or not?
-    final List<TreeStructureNode<SVNLogEntry>> children = pair.getSecond().getChildren();
+    final List<LogHierarchyNode> children = pair.getSecond().getChildren();
     boolean localChange = false;
-    for (TreeStructureNode<SVNLogEntry> child : children) {
+    for (LogHierarchyNode child : children) {
       if (checkForSubtree(child, relativeLocal, relativeBranch)) {
         localChange = true;
         break;
@@ -228,13 +223,13 @@ public class MergeCalculatorTask extends BaseMergeTask implements
   }
 
   // true if errors found
-  private static boolean checkForSubtree(final TreeStructureNode<SVNLogEntry> tree,
+  private static boolean checkForSubtree(final LogHierarchyNode tree,
                                          String relativeBranch, final String localURL) {
-    final LinkedList<TreeStructureNode<SVNLogEntry>> queue = new LinkedList<TreeStructureNode<SVNLogEntry>>();
+    final LinkedList<LogHierarchyNode> queue = new LinkedList<LogHierarchyNode>();
     queue.addLast(tree);
 
     while (!queue.isEmpty()) {
-      final TreeStructureNode<SVNLogEntry> element = queue.removeFirst();
+      final LogHierarchyNode element = queue.removeFirst();
       ProgressManager.checkCanceled();
 
       if (checkForEntry(element.getMe(), localURL, relativeBranch)) return true;
@@ -248,11 +243,11 @@ public class MergeCalculatorTask extends BaseMergeTask implements
   // or if no changed paths in current branch, checks if at least one path in "merge from" branch
   // NOTE: this fails for "merge-source" log entries from other branches - when all changed paths are from some
   // third branch - this logic treats such log entry as local.
-  private static boolean checkForEntry(final SVNLogEntry entry, final String localURL, String relativeBranch) {
+  private static boolean checkForEntry(final LogEntry entry, final String localURL, String relativeBranch) {
     boolean atLeastOneUnderBranch = false;
     final Map map = entry.getChangedPaths();
     for (Object o : map.values()) {
-      final SVNLogEntryPath path = (SVNLogEntryPath)o;
+      final LogEntryPath path = (LogEntryPath)o;
       if (SVNPathUtil.isAncestor(localURL, path.getPath())) {
         return true;
       }

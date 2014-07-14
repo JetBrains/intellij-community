@@ -161,6 +161,9 @@ def list_sources(paths):
 
             path = os.path.normpath(path)
 
+            if path.endswith('.egg') and os.path.isfile(path):
+                say("%s\t%s\t%d", path, path, os.path.getsize(path))
+
             for root, files in walk_python_path(path):
                 for name in files:
                     if name.endswith('.py'):

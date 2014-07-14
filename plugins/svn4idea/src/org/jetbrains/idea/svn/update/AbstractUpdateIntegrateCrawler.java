@@ -22,9 +22,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWCRootCrawler;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.io.File;
 import java.util.Collection;
@@ -58,12 +56,8 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       long rev = doUpdate(root);
 
       if (rev < 0 && !isMerge()) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, SvnBundle.message("exception.text.root.was.not.properly.updated", root)));
+        throw new SvnBindException(SvnBundle.message("exception.text.root.was.not.properly.updated", root));
       }
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-      myExceptions.add(new VcsException(e));
     }
     catch (VcsException e) {
       LOG.info(e);
@@ -73,7 +67,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
 
   protected abstract void showProgressMessage(ProgressIndicator progress, File root);
 
-  protected abstract long doUpdate(File root) throws SVNException, VcsException;
+  protected abstract long doUpdate(File root) throws VcsException;
 
   protected abstract boolean isMerge();
 }

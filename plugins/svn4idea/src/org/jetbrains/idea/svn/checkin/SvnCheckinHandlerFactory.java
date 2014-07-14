@@ -32,15 +32,15 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -74,22 +74,20 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
         if (executor instanceof LocalCommitExecutor) return ReturnResult.COMMIT;
         final SvnVcs vcs = SvnVcs.getInstance(project);
-        final Map<String, Integer> copiesInfo = splitIntoCopies(vcs, myChanges);
+        final MultiMap<String, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, myChanges);
         final List<String> repoUrls = new ArrayList<String>();
-        for (Map.Entry<String, Integer> entry : copiesInfo.entrySet()) {
-          if (entry.getValue() == 3) {
+        for (Map.Entry<String, Collection<WorkingCopyFormat>> entry : copiesInfo.entrySet()) {
+          if (entry.getValue().size() > 1) {
             repoUrls.add(entry.getKey());
           }
         }
         if (! repoUrls.isEmpty()) {
-          final String join = StringUtil.join(repoUrls.toArray(new String[repoUrls.size()]), ",\n");
+          final String join = StringUtil.join(repoUrls, ",\n");
           final int isOk = Messages.showOkCancelDialog(project,
             SvnBundle.message("checkin.different.formats.involved", repoUrls.size() > 1 ? 1 : 0, join),
             "Subversion: Commit Will Split", Messages.getWarningIcon());
-          if (Messages.OK == isOk) {
-            return ReturnResult.COMMIT;
-          }
-          return ReturnResult.CANCEL;
+
+          return Messages.OK == isOk ? ReturnResult.COMMIT : ReturnResult.CANCEL;
         }
         return ReturnResult.COMMIT;
       }
@@ -104,17 +102,17 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         if (SvnConfiguration.getInstance(project).isAutoUpdateAfterCommit()) {
           final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
           final List<FilePath> paths = new ArrayList<FilePath>();
-          for (int i = 0; i < roots.length; i++) {
-            VirtualFile root = roots[i];
+          for (VirtualFile root : roots) {
             boolean take = false;
             for (VirtualFile commitRoot : commitRoots) {
-              if (VfsUtil.isAncestor(root, commitRoot, false)) {
+              if (VfsUtilCore.isAncestor(root, commitRoot, false)) {
                 take = true;
                 break;
               }
             }
-            if (! take) continue;
-            paths.add(new FilePathImpl(root));
+            if (take) {
+              paths.add(new FilePathImpl(root));
+            }
           }
           if (paths.isEmpty()) return;
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -128,25 +126,19 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     };
   }
 
-  private static Map<String, Integer> splitIntoCopies(SvnVcs vcs, final Collection<Change> changes) {
-    final SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
+  @NotNull
+  private static MultiMap<String, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
+    MultiMap<String, WorkingCopyFormat> result = MultiMap.createSet();
+    SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
 
-    final Map<String, Integer> copiesInfo = new java.util.HashMap<String, Integer>();
     for (Change change : changes) {
-      final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
-      final RootUrlInfo path = mapping.getWcRootForFilePath(ioFile);
-      if (path == null) continue;
-      final Integer integer = copiesInfo.get(path.getRepositoryUrl());
-      int result = integer == null ? 0 : integer;
-      if (result != 3) {
-        if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(path.getFormat())) {
-          result |= 2;
-        } else {
-          result |= 1;
-        }
-        copiesInfo.put(path.getRepositoryUrl(), result);
+      RootUrlInfo path = mapping.getWcRootForFilePath(ChangesUtil.getFilePath(change).getIOFile());
+
+      if (path != null) {
+        result.putValue(path.getRepositoryUrl(), path.getFormat());
       }
     }
-    return copiesInfo;
+
+    return result;
   }
 }

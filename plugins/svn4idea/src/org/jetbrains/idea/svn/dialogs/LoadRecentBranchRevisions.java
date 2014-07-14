@@ -27,12 +27,8 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
-import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.history.TreeStructureNode;
+import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.util.ArrayList;
@@ -94,12 +90,12 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
 
     ProgressManager.progress2(
       SvnBundle.message("progress.text2.collecting.history", myMergeContext.getSourceUrl() + (myFirst > 0 ? ("@" + myFirst) : "")));
-    final List<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>> list = new ArrayList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>>();
+    final List<Pair<SvnChangeList, LogHierarchyNode>> list = new ArrayList<Pair<SvnChangeList, LogHierarchyNode>>();
     try {
       committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(myMergeContext.getSourceUrl()),
                                                                      myBunchSize + (myFirst > 0 ? 2 : 1),
-                                                                     new PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>>() {
-                                                                       public void consume(SvnChangeList svnList, TreeStructureNode<SVNLogEntry> tree) {
+                                                                     new PairConsumer<SvnChangeList, LogHierarchyNode>() {
+                                                                       public void consume(SvnChangeList svnList, LogHierarchyNode tree) {
                                                                          indicator.setText2(SvnBundle.message("progress.text2.processing.revision", svnList.getNumber()));
                                                                          list.add(Pair.create(svnList, tree));
                                                                        }
@@ -109,7 +105,7 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
       return;
     }
     myCommittedChangeLists = new ArrayList<CommittedChangeList>();
-    for (Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair : list) {
+    for (Pair<SvnChangeList, LogHierarchyNode> pair : list) {
       // do not take first since it's equal
       if (myFirst > 0 && myFirst == pair.getFirst().getNumber()) continue;
       // TODO: Currently path filtering with QuickMerge.checkListForPaths is not applied as it removes some necessary revisions

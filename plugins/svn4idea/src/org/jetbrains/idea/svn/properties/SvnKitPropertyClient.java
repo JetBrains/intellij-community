@@ -4,6 +4,7 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -50,7 +51,7 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   public void getProperty(@NotNull SvnTarget target,
                           @NotNull String property,
                           @Nullable SVNRevision revision,
-                          @Nullable SVNDepth depth,
+                          @Nullable Depth depth,
                           @Nullable ISVNPropertyHandler handler) throws VcsException {
     runGetProperty(target, property, revision, depth, handler);
   }
@@ -58,7 +59,7 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   @Override
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
-                   @Nullable SVNDepth depth,
+                   @Nullable Depth depth,
                    @Nullable ISVNPropertyHandler handler) throws VcsException {
     runGetProperty(target, null, revision, depth, handler);
   }
@@ -67,10 +68,10 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   public void setProperty(@NotNull File file,
                           @NotNull String property,
                           @Nullable SVNPropertyValue value,
-                          @Nullable SVNDepth depth,
+                          @Nullable Depth depth,
                           boolean force) throws VcsException {
     try {
-      createClient().doSetProperty(file, property, value, force, depth, null, null);
+      createClient().doSetProperty(file, property, value, force, toDepth(depth), null, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -114,15 +115,15 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   private void runGetProperty(@NotNull SvnTarget target,
                               @Nullable String property,
                               @Nullable SVNRevision revision,
-                              @Nullable SVNDepth depth,
+                              @Nullable Depth depth,
                               @Nullable ISVNPropertyHandler handler) throws VcsException {
     SVNWCClient client = createClient();
 
     try {
       if (target.isURL()) {
-        client.doGetProperty(target.getURL(), property, target.getPegRevision(), revision, depth, handler);
+        client.doGetProperty(target.getURL(), property, target.getPegRevision(), revision, toDepth(depth), handler);
       } else {
-        client.doGetProperty(target.getFile(), property, target.getPegRevision(), revision, depth, handler, null);
+        client.doGetProperty(target.getFile(), property, target.getPegRevision(), revision, toDepth(depth), handler, null);
       }
     } catch (SVNException e) {
       throw new VcsException(e);

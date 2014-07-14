@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.revert.RevertClient;
 import org.jetbrains.idea.svn.update.RelocateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.UpgradeClient;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 /**
@@ -102,7 +101,7 @@ public abstract class ClientFactory {
   }
 
   @NotNull
-  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
+  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ProgressTracker handler) {
     return createStatusClient();
   }
 

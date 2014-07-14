@@ -377,7 +377,16 @@ public class AnnotationUtil {
   }
 
   @NotNull
-  public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner, boolean inHierarchy, Set<PsiModifierListOwner> visited) {
+  public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
+                                                  boolean inHierarchy,
+                                                  Set<PsiModifierListOwner> visited) {
+    return getAllAnnotations(owner, inHierarchy, visited, true);
+  }
+
+  @NotNull
+  public static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner owner,
+                                                  boolean inHierarchy,
+                                                  Set<PsiModifierListOwner> visited, boolean withInferred) {
     final PsiModifierList list = owner.getModifierList();
     PsiAnnotation[] annotations = PsiAnnotation.EMPTY_ARRAY;
     if (list != null) {
@@ -389,8 +398,10 @@ public class AnnotationUtil {
     if (externalAnnotations != null) {
       annotations = ArrayUtil.mergeArrays(annotations, externalAnnotations, PsiAnnotation.ARRAY_FACTORY);
     }
-    final PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);
-    annotations = ArrayUtil.mergeArrays(annotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
+    if (withInferred) {
+      final PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);
+      annotations = ArrayUtil.mergeArrays(annotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
+    }
 
     if (inHierarchy) {
       if (owner instanceof PsiClass) {
@@ -448,6 +459,10 @@ public class AnnotationUtil {
 
   public static boolean isInsideAnnotation(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+  }
+
+  public static boolean isInferredAnnotation(@NotNull PsiAnnotation annotation) {
+    return InferredAnnotationsManager.getInstance(annotation.getProject()).isInferredAnnotation(annotation);
   }
 
   @Nullable

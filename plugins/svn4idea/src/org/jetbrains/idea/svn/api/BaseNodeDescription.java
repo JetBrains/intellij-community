@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.history;
+package org.jetbrains.idea.svn.api;
 
-import java.util.LinkedList;
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
-public class TreeStructureNode<T> {
-  private final T myMe;
-  private final List<TreeStructureNode<T>> myChildren;
+/**
+ * @author Konstantin Kolosovsky.
+ */
+public abstract class BaseNodeDescription {
 
-  public TreeStructureNode(final T me) {
-    myChildren = new LinkedList<TreeStructureNode<T>>();
-    myMe = me;
+  @NotNull protected final NodeKind myKind;
+
+  protected BaseNodeDescription(@NotNull NodeKind kind) {
+    myKind = kind;
   }
 
-  public void add(final T child) {
-    myChildren.add(new TreeStructureNode<T>(child));
+  public boolean isFile() {
+    return myKind.isFile();
   }
 
-  public List<TreeStructureNode<T>> getChildren() {
-    return myChildren;
+  public boolean isDirectory() {
+    return myKind.isDirectory();
   }
 
-  public T getMe() {
-    return myMe;
+  public boolean isNone() {
+    return myKind.isNone();
   }
 }

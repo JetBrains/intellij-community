@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -31,6 +32,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -443,13 +445,18 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
     int lastSize = buffer.length();
-    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null)) {
+    Set<String> shownAnnotations = ContainerUtil.newHashSet();
+    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, !DumbService.isDumb(owner.getProject()))) {
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
         if (resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiClass)resolved, "java.lang.annotation.Documented", false)) continue;
+
+        String referenceName = element.getReferenceName();
+        if (!shownAnnotations.add(referenceName)) continue;
+
         if (lastSize != buffer.length()) buffer.append(" ");
-        buffer.append("@").append(element.getReferenceName());
+        buffer.append("@").append(referenceName);
       }
     }
     if (lastSize != buffer.length()) buffer.append(" ");

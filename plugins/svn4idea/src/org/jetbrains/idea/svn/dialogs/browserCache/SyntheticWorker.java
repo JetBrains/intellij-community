@@ -17,12 +17,12 @@ package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -44,13 +44,13 @@ public class SyntheticWorker {
       return;
     }
 
-    final List<SVNDirEntry> children = myCache.getChildren(parentUrl);
+    final List<DirectoryEntry> children = myCache.getChildren(parentUrl);
     if (children == null) {
       return;
     }
-    for (Iterator<SVNDirEntry> iterator = children.iterator(); iterator.hasNext();) {
-      final SVNDirEntry entry = iterator.next();
-      if (myUrl.equals(entry.getURL())) {
+    for (Iterator<DirectoryEntry> iterator = children.iterator(); iterator.hasNext(); ) {
+      final DirectoryEntry entry = iterator.next();
+      if (myUrl.equals(entry.getUrl())) {
         iterator.remove();
       }
     }
@@ -60,21 +60,14 @@ public class SyntheticWorker {
   public void addSyntheticChildToSelf(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
     final String currentUrlAsString = myUrl.toString();
 
-    final List<SVNDirEntry> children = myCache.getChildren(currentUrlAsString);
+    final List<DirectoryEntry> children = myCache.getChildren(currentUrlAsString);
     if (children == null) {
       return;
     }
     children.add(createSyntheticEntry(newUrl, repositoryUrl, name, isDir));
 
-    Collections.sort(children, new Comparator<SVNDirEntry>() {
-      public int compare(final SVNDirEntry o1, final SVNDirEntry o2) {
-        final boolean dirStatus = SVNNodeKind.DIR.equals(o1.getKind()) ^ SVNNodeKind.DIR.equals(o1.getKind());
-        if (dirStatus) {
-          return SVNNodeKind.DIR.equals(o1.getKind()) ? -1 : 1;
-        }
-        return o1.toString().compareTo(o2.toString());
-      }
-    });
+    // TODO: Seems that just Set instead of List could be used in cache - so no sort() after add() will be required
+    Collections.sort(children);
     myCache.put(currentUrlAsString, children);
   }
 
@@ -91,8 +84,8 @@ public class SyntheticWorker {
     node.doOnSubtree(new Remover());
   }
 
-  public static SVNDirEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
-    return new SVNDirEntry(newUrl, repositoryUrl, name, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, 0, false, SVNRevision.UNDEFINED.getNumber(), null, null);
+  public static DirectoryEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
+    return new DirectoryEntry(newUrl, repositoryUrl, name, NodeKind.from(isDir), CommitInfo.EMPTY, null);
   }
 
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
@@ -116,15 +109,15 @@ public class SyntheticWorker {
 
     @NotNull
     public Object fun(final RepositoryTreeNode repositoryTreeNode) {
-      final List<SVNDirEntry> children = myCache.getChildren(repositoryTreeNode.getURL().toString());
+      final List<DirectoryEntry> children = myCache.getChildren(repositoryTreeNode.getURL().toString());
       if (children == null) {
         return Boolean.FALSE;
       }
-      final List<SVNDirEntry> newChildren = new ArrayList<SVNDirEntry>(children.size());
+      final List<DirectoryEntry> newChildren = new ArrayList<DirectoryEntry>(children.size());
 
       try {
-        for (SVNDirEntry child : children) {
-          newChildren.add(createSyntheticEntry(convertUrl(child.getURL()), child.getRepositoryRoot(), child.getName(), SVNNodeKind.DIR.equals(child.getKind())));
+        for (DirectoryEntry child : children) {
+          newChildren.add(createSyntheticEntry(convertUrl(child.getUrl()), child.getRepositoryRoot(), child.getName(), child.isDirectory()));
         }
         myCache.put(convertUrl(repositoryTreeNode.getURL()).toString(), newChildren);
       }

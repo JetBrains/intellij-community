@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
+import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
@@ -222,7 +223,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
     root.deleteOnExit();
     Assert.assertTrue(root.exists());
     SvnCheckoutProvider
-      .checkout(myProject, root, url, SVNRevision.HEAD, SVNDepth.INFINITY, false, new CheckoutProvider.Listener() {
+      .checkout(myProject, root, url, SVNRevision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
         public void directoryCheckedOut(File directory, VcsKey vcs) {
         }

@@ -6,8 +6,6 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,20 +15,18 @@ import java.util.regex.Pattern;
  */
 public class FileStatusResultParser {
 
-  private static final double DEFAULT_PROGRESS = 0.0;
-
   @NotNull
   private Pattern myLinePattern;
 
   @Nullable
-  private ISVNEventHandler handler;
+  private ProgressTracker handler;
 
   @NotNull
-  private Convertor<Matcher, SVNEvent> myConvertor;
+  private Convertor<Matcher, ProgressEvent> myConvertor;
 
   public FileStatusResultParser(@NotNull Pattern linePattern,
-                                @Nullable ISVNEventHandler handler,
-                                @NotNull Convertor<Matcher, SVNEvent> convertor) {
+                                @Nullable ProgressTracker handler,
+                                @NotNull Convertor<Matcher, ProgressEvent> convertor) {
     myLinePattern = linePattern;
     this.handler = handler;
     myConvertor = convertor;
@@ -59,7 +55,7 @@ public class FileStatusResultParser {
   public void process(@NotNull Matcher matcher) throws VcsException {
     if (handler != null) {
       try {
-        handler.handleEvent(myConvertor.convert(matcher), DEFAULT_PROGRESS);
+        handler.consume(myConvertor.convert(matcher));
       } catch (SVNException e) {
         throw new VcsException(e);
       }

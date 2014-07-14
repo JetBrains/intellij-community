@@ -236,12 +236,16 @@ public class ProjectBytecodeAnalysis {
         return null;
       }
       String contractValue = myAnnotations.contracts.get(key);
-      return contractValue != null ? createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")") : null;
+      return contractValue != null ? createContractAnnotation(contractValue) : null;
     }
     catch (IOException e) {
       LOG.debug(e);
       return null;
     }
+  }
+
+  public PsiAnnotation createContractAnnotation(String contractValue) {
+    return createAnnotationFromText("@org.jetbrains.annotations.Contract(" + contractValue + ")");
   }
 
   public static int getKey(@NotNull PsiModifierListOwner owner) throws IOException {

@@ -29,7 +29,6 @@ import org.jetbrains.idea.svn.update.SvnKitRelocateClient;
 import org.jetbrains.idea.svn.update.SvnKitUpdateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.SvnKitUpgradeClient;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 /**
@@ -72,7 +71,7 @@ public class SvnKitClientFactory extends ClientFactory {
 
   @NotNull
   @Override
-  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ISVNEventHandler handler) {
+  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ProgressTracker handler) {
     return prepare(new SvnKitStatusClient(provider, handler));
   }
 

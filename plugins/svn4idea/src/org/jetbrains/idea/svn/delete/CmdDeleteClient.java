@@ -5,12 +5,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -23,7 +23,7 @@ import java.util.List;
 public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
 
   @Override
-  public void delete(@NotNull File path, boolean force, boolean dryRun, @Nullable ISVNEventHandler handler) throws VcsException {
+  public void delete(@NotNull File path, boolean force, boolean dryRun, @Nullable ProgressTracker handler) throws VcsException {
     // TODO: no actual support for dryRun in 'svn delete', SvnKit performs certain validation on file status and svn:externals property
     // TODO: probably add some widespread checks for dryRun delete - but most likely this should be placed upper - in merge logic
     if (!dryRun) {

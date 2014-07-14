@@ -16,19 +16,19 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
-import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.jetbrains.idea.svn.status.Status;
 
 class SvnChangedFile {
   private final FilePath myFilePath;
-  private final SVNStatus myStatus;
+  private final Status myStatus;
   private String myCopyFromURL;
 
-  public SvnChangedFile(final FilePath filePath, final SVNStatus status) {
+  public SvnChangedFile(final FilePath filePath, final Status status) {
     myFilePath = filePath;
     myStatus = status;
   }
 
-  public SvnChangedFile(final FilePath filePath, final SVNStatus status, final String copyFromURL) {
+  public SvnChangedFile(final FilePath filePath, final Status status, final String copyFromURL) {
     myFilePath = filePath;
     myStatus = status;
     myCopyFromURL = copyFromURL;
@@ -38,7 +38,7 @@ class SvnChangedFile {
     return myFilePath;
   }
 
-  public SVNStatus getStatus() {
+  public Status getStatus() {
     return myStatus;
   }
 

@@ -20,24 +20,23 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
 
 import java.util.List;
 
 /**
 * @author Konstantin Kolosovsky.
 */
-public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException> {
+public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEntry, Integer>, SVNException> {
 
-  private TreeStructureNode<SVNLogEntry> myCurrentHierarchy;
-  @NotNull private final Consumer<TreeStructureNode<SVNLogEntry>> myConsumer;
+  private LogHierarchyNode myCurrentHierarchy;
+  @NotNull private final Consumer<LogHierarchyNode> myConsumer;
 
-  public MergeSourceHierarchyBuilder(@NotNull Consumer<TreeStructureNode<SVNLogEntry>> consumer) {
+  public MergeSourceHierarchyBuilder(@NotNull Consumer<LogHierarchyNode> consumer) {
     myConsumer = consumer;
   }
 
-  public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
-    final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
+  public void consume(Pair<LogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+    final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
     final Integer mergeLevel = svnLogEntryIntegerPair.getSecond();
 
     if (mergeLevel < 0) {
@@ -45,11 +44,11 @@ public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<SVNLo
         myConsumer.consume(myCurrentHierarchy);
       }
       if (logEntry.hasChildren()) {
-        myCurrentHierarchy = new TreeStructureNode<SVNLogEntry>(logEntry);
+        myCurrentHierarchy = new LogHierarchyNode(logEntry);
       } else {
         // just pass
         myCurrentHierarchy = null;
-        myConsumer.consume(new TreeStructureNode<SVNLogEntry>(logEntry));
+        myConsumer.consume(new LogHierarchyNode(logEntry));
       }
     } else {
       addToLevel(myCurrentHierarchy, logEntry, mergeLevel);
@@ -62,12 +61,12 @@ public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<SVNLo
     }
   }
 
-  private static void addToLevel(final TreeStructureNode<SVNLogEntry> tree, final SVNLogEntry entry, final int left) {
+  private static void addToLevel(final LogHierarchyNode tree, final LogEntry entry, final int left) {
     assert tree != null;
     if (left == 0) {
       tree.add(entry);
     } else {
-      final List<TreeStructureNode<SVNLogEntry>> children = tree.getChildren();
+      final List<LogHierarchyNode> children = tree.getChildren();
       assert ! children.isEmpty();
       addToLevel(children.get(children.size() - 1), entry, left - 1);
     }

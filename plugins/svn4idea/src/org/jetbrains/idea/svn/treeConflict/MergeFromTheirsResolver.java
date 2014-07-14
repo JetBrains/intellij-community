@@ -52,12 +52,11 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +70,7 @@ import java.util.*;
  */
 public class MergeFromTheirsResolver {
   private final SvnVcs myVcs;
-  private final SVNTreeConflictDescription myDescription;
+  private final TreeConflictDescription myDescription;
   private final Change myChange;
   private final FilePath myOldFilePath;
   private final FilePath myNewFilePath;
@@ -86,7 +85,7 @@ public class MergeFromTheirsResolver {
   private List<TextFilePatch> myTextPatches;
   private VirtualFile myBaseForPatch;
 
-  public MergeFromTheirsResolver(SvnVcs vcs, SVNTreeConflictDescription description, Change change, SvnRevisionNumber revision) {
+  public MergeFromTheirsResolver(SvnVcs vcs, TreeConflictDescription description, Change change, SvnRevisionNumber revision) {
     myVcs = vcs;
     myDescription = description;
     myChange = change;
@@ -126,11 +125,7 @@ public class MergeFromTheirsResolver {
     });
 
     final List<TaskDescriptor> tasks = new SmartList<TaskDescriptor>();
-    if (SVNNodeKind.DIR.equals(myDescription.getNodeKind())) {
-      tasks.add(new PreloadChangesContentsForDir());
-    } else {
-      tasks.add(new PreloadChangesContentsForFile());
-    }
+    tasks.add(myDescription.isDirectory() ? new PreloadChangesContentsForDir() : new PreloadChangesContentsForFile());
     tasks.add(new ConvertTextPaths());
     tasks.add(new PatchCreator());
     tasks.add(new SelectPatchesInApplyPatchDialog());
@@ -290,7 +285,7 @@ public class MergeFromTheirsResolver {
         // TODO: is used. Command line also does not support automatic directory creation.
         // TODO: Need to check additionally if there are cases when directory does not exist and add corresponding code.
         myVcs.getFactory(myOldFilePath.getIOFile()).createAddClient()
-          .add(myOldFilePath.getIOFile(), SVNDepth.EMPTY, true, false, true, null);
+          .add(myOldFilePath.getIOFile(), Depth.EMPTY, true, false, true, null);
       }
       catch (VcsException e) {
         context.handleException(e, true);
@@ -564,7 +559,7 @@ public class MergeFromTheirsResolver {
     }
   }
 
-  private List<CommittedChangeList> loadSvnChangeListsForPatch(SVNTreeConflictDescription description) throws VcsException {
+  private List<CommittedChangeList> loadSvnChangeListsForPatch(TreeConflictDescription description) throws VcsException {
     long max = description.getSourceRightVersion().getPegRevision();
     long min = description.getSourceLeftVersion().getPegRevision();
 

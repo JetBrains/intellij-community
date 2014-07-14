@@ -42,8 +42,15 @@ public class SvnBindException extends VcsException {
   public static final int ERROR_BASE = 120000;
   public static final int CATEGORY_SIZE = 5000;
 
+  public static final String ERROR_MESSAGE_FORMAT = "svn: E%d: %s";
+
   @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
   @NotNull private final MultiMap<Integer, String> warnings = MultiMap.create();
+
+  public SvnBindException(@NotNull SVNErrorCode code, @NotNull String message) {
+    super(String.format(ERROR_MESSAGE_FORMAT, code.getCode(), message));
+    errors.putValue(code.getCode(), getMessage());
+  }
 
   public SvnBindException(String message) {
     super(message);

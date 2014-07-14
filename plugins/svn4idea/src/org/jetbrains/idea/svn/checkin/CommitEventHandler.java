@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.jetbrains.idea.svn.api.ProgressTracker;
 
 import java.io.File;
 
@@ -26,7 +26,7 @@ import java.io.File;
  * Date: 2/26/13
  * Time: 10:12 AM
  */
-public interface CommitEventHandler extends ISVNEventHandler {
+public interface CommitEventHandler extends ProgressTracker {
   void commitEvent(final CommitEventType type, final File target);
   void committedRevision(final long revNum);
 }

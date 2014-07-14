@@ -2,16 +2,11 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
 
 public class StructuralSearchAction extends AnAction {
-
-  public StructuralSearchAction() {
-    super(SSRBundle.message("structuralsearch.action"));
-  }
 
   /** Handles IDEA action event
    * @param event the event of action

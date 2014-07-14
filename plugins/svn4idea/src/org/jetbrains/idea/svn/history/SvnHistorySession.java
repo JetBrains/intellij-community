@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.history.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -69,7 +69,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   }
 
   public static VcsRevisionNumber getCurrentCommittedRevision(final SvnVcs vcs, final File file) {
-    SVNInfo info = vcs.getInfo(file);
+    Info info = vcs.getInfo(file);
     return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
   }
 
