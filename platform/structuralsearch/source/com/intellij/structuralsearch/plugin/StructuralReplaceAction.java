@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
@@ -11,10 +10,6 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
  * Search and replace structural java code patterns action.
  */
 public class StructuralReplaceAction extends AnAction {
-
-  public StructuralReplaceAction() {
-    super(SSRBundle.message("structuralreplace.action"));
-  }
 
   /** Handles IDEA action event
    * @param event the event of action

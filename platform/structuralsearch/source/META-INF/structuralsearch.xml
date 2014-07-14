@@ -18,7 +18,6 @@
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
   </extensions>
 
-  <resource-bundle>messages.SSRBundle</resource-bundle>
   <project-components>
     <component>
       <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
