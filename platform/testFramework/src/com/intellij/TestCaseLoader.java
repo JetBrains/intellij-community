@@ -66,11 +66,11 @@ public class TestCaseLoader {
       if (excludedStream != null) {
         TestClassesFilter filter;
         try {
-          String testGroupName = System.getProperty(TARGET_TEST_GROUP, "").trim();
+          List<String> testGroupNames = StringUtil.split(System.getProperty(TARGET_TEST_GROUP, "").trim(), ";");
           InputStreamReader reader = new InputStreamReader(excludedStream.openStream());
           try {
-            filter = GroupBasedTestClassFilter.createOn(reader, testGroupName);
-            System.out.println("Using test group: [" + testGroupName +"]");
+            filter = GroupBasedTestClassFilter.createOn(reader, testGroupNames);
+            System.out.println("Using test groups: " + testGroupNames);
           }
           finally {
             reader.close();

@@ -15,7 +15,7 @@
  */
 package com.intellij;
 
-import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  *     {@link PatternListTestClassFilter#PatternListTestClassFilter(List) PatternListTestClassFilter};
  *   </li>
  *   <li>
- *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(Reader, String)};
+ *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(java.io.Reader, java.util.List)};
  *   </li>
  * </ul>
  */
@@ -54,18 +54,18 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   private final Map<String, List<Pattern>> myPatterns = new HashMap<String, List<Pattern>>();
   private final List<Pattern> myAllPatterns = new ArrayList<Pattern>();
   private final List<Pattern> myTestGroupPatterns;
-  private boolean myAllExcludeDefinedGroup;
+  private boolean myContainsAllExcludeDefinedGroup;
 
-  private GroupBasedTestClassFilter(Map<String, List<String>> filters, String testGroupName) {
+  private GroupBasedTestClassFilter(Map<String, List<String>> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
-    myAllExcludeDefinedGroup = isAllExcludeDefinedGroup(testGroupName);
+    myContainsAllExcludeDefinedGroup = containsAllExcludeDefinedGroup(testGroupNames);
 
     for (String groupName : filters.keySet()) {
       List<String> filterList = filters.get(groupName);
       addPatterns(groupName, filterList);
     }
 
-    myTestGroupPatterns = collectPatternsFor(testGroupName);
+    myTestGroupPatterns = collectPatternsFor(testGroupNames);
   }
 
   private void addPatterns(String groupName, List<String> filterList) {
@@ -114,11 +114,12 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    *
    *
    * @param reader   reader that points to the target test groups config
-   * @param testGroupName
+   * @param testGroupNames
    * @return newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
    * @see #matches(String)
    */
-  public static TestClassesFilter createOn(Reader reader, String testGroupName) throws IOException {
+  @NotNull
+  public static TestClassesFilter createOn(@NotNull Reader reader, @NotNull List<String> testGroupNames) throws IOException {
     Map<String, List<String>> groupNameToPatternsMap = new HashMap<String, List<String>>();
     String currentGroupName = "";
 
@@ -137,7 +138,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
       }
     }
 
-    return new GroupBasedTestClassFilter(groupNameToPatternsMap, testGroupName);
+    return new GroupBasedTestClassFilter(groupNameToPatternsMap, testGroupNames);
   }
 
   /**
@@ -157,28 +158,26 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @Override
   public boolean matches(String className) {
-    boolean result = matchesAnyPattern(myTestGroupPatterns, className);
-    if (myAllExcludeDefinedGroup) {
-      return !result;
+    if (matchesAnyPattern(myTestGroupPatterns, className)) {
+      return true;
     }
-    else {
-      return result;
+    if (myContainsAllExcludeDefinedGroup && !matchesAnyPattern(myAllPatterns, className)) {
+      return true;
     }
+    return false;
   }
 
-  private static boolean isAllExcludeDefinedGroup(String groupName) {
-    return StringUtil.isEmpty(groupName) || ALL_EXCLUDE_DEFINED.equalsIgnoreCase(groupName.trim());
+  private static boolean containsAllExcludeDefinedGroup(List<String> groupNames) {
+    return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
   }
 
-  private List<Pattern> collectPatternsFor(String groupName) {
-    if (isAllExcludeDefinedGroup(groupName)) {
-      return myAllPatterns;
+  private List<Pattern> collectPatternsFor(List<String> groupNames) {
+    List<Pattern> patterns = new ArrayList<Pattern>();
+    for (String groupName : groupNames) {
+      if (myPatterns.containsKey(groupName)) {
+        patterns.addAll(myPatterns.get(groupName));
+      }
     }
-    else if (myPatterns.containsKey(groupName)) {
-      return myPatterns.get(groupName);
-    }
-    else {
-      return Collections.emptyList();
-    }
+    return patterns;
   }
 }
