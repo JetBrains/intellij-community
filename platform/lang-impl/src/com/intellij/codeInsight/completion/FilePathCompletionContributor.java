@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,9 +72,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
         final PsiReference psiReference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
         if (getReference(psiReference) != null && parameters.getInvocationCount() == 1) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
-          if (shortcut != null) {
-            result.addLookupAdvertisement(CodeInsightBundle.message("class.completion.file.path", shortcut));
-          }
+          result.addLookupAdvertisement(CodeInsightBundle.message("class.completion.file.path", shortcut));
         }
       }
     });
@@ -203,7 +202,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     final String path = StringUtil.join(contextParts, "/");
 
     int nextIndex = 0;
-    for (final String s : pathPrefix) {
+    for (@NonNls final String s : pathPrefix) {
       if ((nextIndex = path.indexOf(s.toLowerCase(), nextIndex)) == -1) return false;
     }
 
@@ -252,7 +251,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public class FilePathLookupItem extends LookupElement {
+  public static class FilePathLookupItem extends LookupElement {
     private final String myName;
     private final String myPath;
     private final String myInfo;
