@@ -1,4 +1,3 @@
 FILE
-  PsiElement(STRING)('"should not be here"')
-  PsiErrorElement:unexpected end of file
-    <empty list>
+  PsiErrorElement:'[' or '{' expected, got '"should not be here"'
+    PsiElement(STRING)('"should not be here"')

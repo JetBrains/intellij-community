@@ -18,44 +18,43 @@ public class JsonParser implements PsiParser {
   public static final Logger LOG_ = Logger.getInstance("com.jetbrains.json.JsonParser");
 
   public ASTNode parse(IElementType root_, PsiBuilder builder_) {
-    int level_ = 0;
     boolean result_;
     builder_ = adapt_builder_(root_, builder_, this, EXTENDS_SETS_);
+    Marker marker_ = enter_section_(builder_, 0, _COLLAPSE_, null);
     if (root_ == ARRAY) {
-      result_ = array(builder_, level_ + 1);
+      result_ = array(builder_, 0);
     }
     else if (root_ == BOOLEAN_LITERAL) {
-      result_ = boolean_literal(builder_, level_ + 1);
+      result_ = boolean_literal(builder_, 0);
     }
     else if (root_ == LITERAL) {
-      result_ = literal(builder_, level_ + 1);
+      result_ = literal(builder_, 0);
     }
     else if (root_ == NULL_LITERAL) {
-      result_ = null_literal(builder_, level_ + 1);
+      result_ = null_literal(builder_, 0);
     }
     else if (root_ == NUMBER_LITERAL) {
-      result_ = number_literal(builder_, level_ + 1);
+      result_ = number_literal(builder_, 0);
     }
     else if (root_ == OBJECT) {
-      result_ = object(builder_, level_ + 1);
+      result_ = object(builder_, 0);
     }
     else if (root_ == PROPERTY) {
-      result_ = property(builder_, level_ + 1);
+      result_ = property(builder_, 0);
     }
     else if (root_ == PROPERTY_NAME) {
-      result_ = property_name(builder_, level_ + 1);
+      result_ = property_name(builder_, 0);
     }
     else if (root_ == STRING_LITERAL) {
-      result_ = string_literal(builder_, level_ + 1);
+      result_ = string_literal(builder_, 0);
     }
     else if (root_ == VALUE) {
-      result_ = value(builder_, level_ + 1);
+      result_ = value(builder_, 0);
     }
     else {
-      Marker marker_ = enter_section_(builder_, level_, _NONE_, null);
-      result_ = parse_root_(root_, builder_, level_);
-      exit_section_(builder_, level_, marker_, root_, result_, true, TOKEN_ADVANCER);
+      result_ = parse_root_(root_, builder_, 0);
     }
+    exit_section_(builder_, 0, marker_, root_, result_, true, TRUE_CONDITION);
     return builder_.getTreeBuilt();
   }
 
@@ -121,15 +120,11 @@ public class JsonParser implements PsiParser {
   // (COMMA array_element)*
   private static boolean array_elements_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "array_elements_1")) return false;
-    int offset_ = builder_.getCurrentOffset();
+    int pos_ = current_position_(builder_);
     while (true) {
       if (!array_elements_1_0(builder_, level_ + 1)) break;
-      int next_offset_ = builder_.getCurrentOffset();
-      if (offset_ == next_offset_) {
-        empty_element_parsed_guard_(builder_, offset_, "array_elements_1");
-        break;
-      }
-      offset_ = next_offset_;
+      if (!empty_element_parsed_guard_(builder_, "array_elements_1", pos_)) break;
+      pos_ = current_position_(builder_);
     }
     return true;
   }
@@ -151,8 +146,7 @@ public class JsonParser implements PsiParser {
   // TRUE | FALSE
   public static boolean boolean_literal(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "boolean_literal")) return false;
-    if (!nextTokenIs(builder_, FALSE) && !nextTokenIs(builder_, TRUE)
-        && replaceVariants(builder_, 2, "<boolean literal>")) return false;
+    if (!nextTokenIs(builder_, "<boolean literal>", FALSE, TRUE)) return false;
     boolean result_ = false;
     Marker marker_ = enter_section_(builder_, level_, _COLLAPSE_, "<boolean literal>");
     result_ = consumeToken(builder_, TRUE);
@@ -209,7 +203,7 @@ public class JsonParser implements PsiParser {
   // object | array
   static boolean json(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "json")) return false;
-    if (!nextTokenIs(builder_, L_BRACKET) && !nextTokenIs(builder_, L_CURLY)) return false;
+    if (!nextTokenIs(builder_, "", L_BRACKET, L_CURLY)) return false;
     boolean result_ = false;
     Marker marker_ = enter_section_(builder_);
     result_ = object(builder_, level_ + 1);
@@ -297,15 +291,11 @@ public class JsonParser implements PsiParser {
   // (COMMA property)*
   private static boolean properties_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "properties_1")) return false;
-    int offset_ = builder_.getCurrentOffset();
+    int pos_ = current_position_(builder_);
     while (true) {
       if (!properties_1_0(builder_, level_ + 1)) break;
-      int next_offset_ = builder_.getCurrentOffset();
-      if (offset_ == next_offset_) {
-        empty_element_parsed_guard_(builder_, offset_, "properties_1");
-        break;
-      }
-      offset_ = next_offset_;
+      if (!empty_element_parsed_guard_(builder_, "properties_1", pos_)) break;
+      pos_ = current_position_(builder_);
     }
     return true;
   }

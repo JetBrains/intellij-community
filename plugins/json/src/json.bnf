@@ -50,13 +50,13 @@ private properties ::= property (COMMA property)* { pin(".*")=1 }
 property ::= property_name COLON value {
   pin = 1
   methods=[ getName ]
-  recoverUntil = brace_or_comma
+  recoverWhile = brace_or_comma
 }
 
 array ::= L_BRACKET [array_elements] R_BRACKET { pin=1 }
 private array_elements ::= array_element (COMMA array_element)* { pin(".*")=1 }
 private array_element ::= value {
-  recoverUntil = bracket_or_comma
+  recoverWhile = bracket_or_comma
 }
 
 property_name ::= string_literal
