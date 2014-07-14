@@ -427,7 +427,7 @@ def StartClient(host, port):
 
     s = socket(AF_INET, SOCK_STREAM)
 
-    MAX_TRIES = 20
+    MAX_TRIES = 100
     i = 0
     while i<MAX_TRIES:
         try:
