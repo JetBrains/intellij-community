@@ -158,7 +158,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
         int base = addr;
         int address = storage.getOffsetInPage(addr);
         boolean same = true;
-        ByteBuffer buffer = storage.getByteBuffer(addr, false);
+        ByteBuffer buffer = storage.getByteBuffer(addr, false).getCachedBuffer();
         final int myPageSize = storage.myPageSize;
 
         @Override
@@ -166,7 +166,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
           if (same) {
             if (myPageSize == address && address < myFileLength) {    // reached end of current byte buffer
               base += address;
-              buffer = storage.getByteBuffer(base, false);
+              buffer = storage.getByteBuffer(base, false).getCachedBuffer();
               address = 0;
             }
             same = address < myFileLength && buffer.get(address++) == (byte)b;
