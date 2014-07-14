@@ -31,7 +31,7 @@ public class DebugAssertions {
 
   public static final boolean EXTRA_SANITY_CHECKS = SystemProperties.getBooleanProperty(
     "intellij.idea.indices.debug.extra.sanity",
-    DEBUG && ApplicationManager.getApplication().isInternal()
+    true
   );
 
   public static void assertTrue(boolean value) {
@@ -42,7 +42,11 @@ public class DebugAssertions {
 
   public static void assertTrue(boolean value, String message, Object ... args) {
     if (!value) {
-      LOG.error(new Formatter().format(message, args));
+      error(message, args);
     }
+  }
+
+  public static void error(String message, Object ... args) {
+    LOG.error(new Formatter().format(message, args));
   }
 }
