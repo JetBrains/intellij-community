@@ -19,16 +19,16 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -75,17 +75,42 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
     return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform(new Function<PsiElement, AbstractTreeNode>() {
       @Override
       public AbstractTreeNode apply(PsiElement input) {
-        if (input instanceof PsiDirectory) {
-          PsiDirectory directory = (PsiDirectory)input;
-          if (myRemoteSdkData.getPathMappings().canReplaceLocal((directory.getVirtualFile().getPath()))) {
-            return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(directory.getVirtualFile().getPath()),
-                                        getProject(), directory, getSettings());
+        if (input instanceof PsiFileSystemItem) {
+          String path = ((PsiFileSystemItem)input).getVirtualFile().getPath();
+
+
+          PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
+
+
+          if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
+            return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
+                                        getProject(), dir, getSettings());
           }
         }
 
         return null;
       }
     }).filter(Predicates.notNull()).toList();
+  }
+
+  @Nullable
+  private PsiDirectory getDirectoryForJar(PsiFile input) {
+    VirtualFile jarRoot = getJarRoot(input);
+    if (myProject != null && jarRoot != null) {
+      return PsiManager.getInstance(myProject).findDirectory(jarRoot);
+    }
+    else {
+      return null;
+    }
+  }
+
+  @Nullable
+  private static VirtualFile getJarRoot(PsiFile input) {
+    final VirtualFile file = input.getVirtualFile();
+    if (file == null || !file.isValid() || !(file.getFileType() instanceof ArchiveFileType)) {
+      return null;
+    }
+    return JarFileSystem.getInstance().getJarRootForLocalFile(file);
   }
 
   public static class PyRemoteRootNode extends PsiDirectoryNode {
