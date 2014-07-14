@@ -144,11 +144,36 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
   }
 
   public int mkAsmKey(@NotNull Key key) throws IOException {
-    return myCompoundKeyEnumerator.enumerate(new int[]{mkDirectionKey(key.direction), mkAsmSignatureKey(key.method)});
+    return myCompoundKeyEnumerator.enumerate(new int[]{mkAsmSignatureKey(key.method), mkDirectionKey(key.direction)});
   }
 
-  private int mkDirectionKey(Direction dir) throws IOException {
-    return myCompoundKeyEnumerator.enumerate(new int[]{dir.directionId(), dir.paramId(), dir.valueId()});
+  private static int mkDirectionKey(Direction dir) throws IOException {
+    if (dir instanceof Out) {
+      return 0;
+    } else if (dir instanceof In) {
+      In in = (In)dir;
+      return 8 * in.paramId() + 1;
+    } else {
+      InOut inOut = (InOut)dir;
+      return 8 * inOut.paramId() + 2 + inOut.valueId();
+    }
+  }
+
+  @NotNull
+  private static Direction extractDirection(int directionKey) {
+    if (directionKey == 0) {
+      return new Out();
+    }
+    else {
+      int paramId = directionKey / 8;
+      int subDirection = directionKey % 8;
+      if (subDirection == 1) {
+        return new In(paramId);
+      }
+      else {
+        return new InOut(paramId, Value.values()[subDirection - 2]);
+      }
+    }
   }
 
   // class + short signature
@@ -170,19 +195,6 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       sigKey[3 + i] = mkAsmTypeKey(argTypes[i]);
     }
     return myCompoundKeyEnumerator.enumerate(sigKey);
-  }
-
-  @Nullable
-  private static Direction extractDirection(int[] directionKey) {
-    switch (directionKey[0]) {
-      case Direction.OUT_DIRECTION:
-        return new Out();
-      case Direction.IN_DIRECTION:
-        return new In(directionKey[1]);
-      case Direction.INOUT_DIRECTION:
-        return new InOut(directionKey[1], Value.values()[directionKey[2]]);
-    }
-    return null;
   }
 
   private int mkAsmTypeKey(Type type) throws IOException {
@@ -211,7 +223,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
     if (sigKey == -1) {
       return -1;
     }
-    return myCompoundKeyEnumerator.enumerate(new int[]{mkDirectionKey(direction), sigKey});
+    return myCompoundKeyEnumerator.enumerate(new int[]{sigKey, mkDirectionKey(direction)});
 
   }
 
@@ -348,12 +360,12 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
       }
       try {
         int[] compoundKey = myCompoundKeyEnumerator.valueOf(key);
-        Direction direction = extractDirection(myCompoundKeyEnumerator.valueOf(compoundKey[0]));
+        Direction direction = extractDirection(compoundKey[1]);
         if (value == Value.NotNull && (direction instanceof In || direction instanceof Out)) {
           notNulls.add(key);
         }
         else if (direction instanceof InOut) {
-          compoundKey = new int[]{mkDirectionKey(new Out()), compoundKey[1]};
+          compoundKey = new int[]{compoundKey[0], 0};
           try {
             int baseKey = myCompoundKeyEnumerator.enumerate(compoundKey);
             List<String> clauses = contractClauses.get(baseKey);
@@ -361,7 +373,7 @@ public class BytecodeAnalysisConverter implements ApplicationComponent {
               clauses = new ArrayList<String>();
               contractClauses.put(baseKey, clauses);
             }
-            int[] sig = myCompoundKeyEnumerator.valueOf(compoundKey[1]);
+            int[] sig = myCompoundKeyEnumerator.valueOf(compoundKey[0]);
             int[] shortSig = myCompoundKeyEnumerator.valueOf(sig[1]);
             int arity = shortSig[2];
             clauses.add(contractElement(arity, (InOut)direction, value));
