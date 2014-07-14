@@ -1,10 +1,10 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
@@ -70,6 +70,6 @@ public class SSRCodeInsightTest extends UsefulTestCase {
   }
 
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("structuralsearch") + "/testData/ssBased";
+    return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/ssBased";
   }
 }

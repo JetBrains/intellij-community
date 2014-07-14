@@ -35,5 +35,4 @@
       <category>Declaration</category>
     </intentionAction>
   </extensions>
-  <depends>Structural Search</depends>
 </idea-plugin>

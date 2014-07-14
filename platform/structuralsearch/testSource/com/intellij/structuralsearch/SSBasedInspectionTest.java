@@ -1,11 +1,11 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +42,6 @@ public class SSBasedInspectionTest extends InspectionTestCase {
   }
 
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("structuralsearch") + "/testData";
+    return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/";
   }
 }

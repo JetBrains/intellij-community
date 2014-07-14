@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -78,11 +79,11 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
     LoggerHolder.logger.info(str);
   }
 
-  public void readExternal(org.jdom.Element element) {
+  public void readExternal(Element element) {
     myConfigurationManager.loadConfigurations(element);
   }
 
-  public void writeExternal(org.jdom.Element element) {
+  public void writeExternal(Element element) {
     myConfigurationManager.saveConfigurations(element);
   }
 

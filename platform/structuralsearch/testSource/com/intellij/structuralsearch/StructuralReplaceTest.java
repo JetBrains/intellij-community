@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -1457,7 +1456,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("structuralsearch") + "/testData/";
+    return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/";
   }
 
   public void testClassReplacement9() throws IOException {

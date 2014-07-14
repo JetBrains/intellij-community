@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -2583,7 +2584,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("structuralsearch") + "/testData/java/";
+    return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/java/";
   }
 
   public void testDoNotFindReturn() throws IOException {

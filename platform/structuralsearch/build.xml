@@ -1,4 +1,4 @@
-<project name="StructuralSearchPlugin" default="jar_plugin" basedir=".">
+<project name="StructuralSearchPlugin" default="jar_plugin" basedir="">
   <property name="plugname" value="StructuralSearchPlugin"/>
   <property name="releasePlugname" value="SS"/>
   <property name="build.path" value="${project.path}/build_out"/>

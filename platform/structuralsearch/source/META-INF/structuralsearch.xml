@@ -1,12 +1,4 @@
 <idea-plugin>
-  <name>Structural Search</name>
-  <description>Searching / replacing source code in terms of syntax (query / replace code by example :-).
-  </description>
-  <version>9.0</version>
-  <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.lang</depends>
-  <depends optional="true" config-file="java.xml">com.intellij.java-i18n</depends>
-
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
