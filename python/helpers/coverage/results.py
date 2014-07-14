@@ -2,7 +2,7 @@
 
 import os
 
-from coverage.backward import set, sorted           # pylint: disable=W0622
+from coverage.backward import iitems, set, sorted       # pylint: disable=W0622
 from coverage.misc import format_lines, join_regex, NoSource
 from coverage.parser import CodeParser
 
@@ -15,16 +15,10 @@ class Analysis(object):
         self.code_unit = code_unit
 
         self.filename = self.code_unit.filename
-        ext = os.path.splitext(self.filename)[1]
-        source = None
-        if ext == '.py':
-            if not os.path.exists(self.filename):
-                source = self.coverage.file_locator.get_zip_data(self.filename)
-                if not source:
-                    raise NoSource("No source for code: %r" % self.filename)
+        actual_filename, source = self.find_source(self.filename)
 
         self.parser = CodeParser(
-            text=source, filename=self.filename,
+            text=source, filename=actual_filename,
             exclude=self.coverage._exclude_regex('exclude')
             )
         self.statements, self.excluded = self.parser.parse_source()
@@ -32,7 +26,7 @@ class Analysis(object):
         # Identify missing statements.
         executed = self.coverage.data.executed_lines(self.filename)
         exec1 = self.parser.first_lines(executed)
-        self.missing = sorted(set(self.statements) - set(exec1))
+        self.missing = self.statements - exec1
 
         if self.coverage.data.has_arcs():
             self.no_branch = self.parser.lines_matching(
@@ -41,9 +35,12 @@ class Analysis(object):
                 )
             n_branches = self.total_branches()
             mba = self.missing_branch_arcs()
-            n_missing_branches = sum([len(v) for v in mba.values()])
+            n_partial_branches = sum(
+                [len(v) for k,v in iitems(mba) if k not in self.missing]
+                )
+            n_missing_branches = sum([len(v) for k,v in iitems(mba)])
         else:
-            n_branches = n_missing_branches = 0
+            n_branches = n_partial_branches = n_missing_branches = 0
             self.no_branch = set()
 
         self.numbers = Numbers(
@@ -52,8 +49,47 @@ class Analysis(object):
             n_excluded=len(self.excluded),
             n_missing=len(self.missing),
             n_branches=n_branches,
+            n_partial_branches=n_partial_branches,
             n_missing_branches=n_missing_branches,
             )
+
+    def find_source(self, filename):
+        """Find the source for `filename`.
+
+        Returns two values: the actual filename, and the source.
+
+        The source returned depends on which of these cases holds:
+
+            * The filename seems to be a non-source file: returns None
+
+            * The filename is a source file, and actually exists: returns None.
+
+            * The filename is a source file, and is in a zip file or egg:
+              returns the source.
+
+            * The filename is a source file, but couldn't be found: raises
+              `NoSource`.
+
+        """
+        source = None
+
+        base, ext = os.path.splitext(filename)
+        TRY_EXTS = {
+            '.py':  ['.py', '.pyw'],
+            '.pyw': ['.pyw'],
+        }
+        try_exts = TRY_EXTS.get(ext)
+        if not try_exts:
+            return filename, None
+
+        for try_ext in try_exts:
+            try_filename = base + try_ext
+            if os.path.exists(try_filename):
+                return try_filename, None
+            source = self.coverage.file_locator.get_zip_data(try_filename)
+            if source:
+                return try_filename, source
+        raise NoSource("No source for code: '%s'" % filename)
 
     def missing_formatted(self):
         """The missing line numbers, formatted nicely.
@@ -107,7 +143,7 @@ class Analysis(object):
     def branch_lines(self):
         """Returns a list of line numbers that have more than one exit."""
         exit_counts = self.parser.exit_counts()
-        return [l1 for l1,count in exit_counts.items() if count > 1]
+        return [l1 for l1,count in iitems(exit_counts) if count > 1]
 
     def total_branches(self):
         """How many total branches are there?"""
@@ -164,13 +200,14 @@ class Numbers(object):
     _near100 = 99.0
 
     def __init__(self, n_files=0, n_statements=0, n_excluded=0, n_missing=0,
-                    n_branches=0, n_missing_branches=0
+                    n_branches=0, n_partial_branches=0, n_missing_branches=0
                     ):
         self.n_files = n_files
         self.n_statements = n_statements
         self.n_excluded = n_excluded
         self.n_missing = n_missing
         self.n_branches = n_branches
+        self.n_partial_branches = n_partial_branches
         self.n_missing_branches = n_missing_branches
 
     def set_precision(cls, precision):
@@ -234,8 +271,12 @@ class Numbers(object):
         nums.n_excluded = self.n_excluded + other.n_excluded
         nums.n_missing = self.n_missing + other.n_missing
         nums.n_branches = self.n_branches + other.n_branches
-        nums.n_missing_branches = (self.n_missing_branches +
-                                                    other.n_missing_branches)
+        nums.n_partial_branches = (
+            self.n_partial_branches + other.n_partial_branches
+            )
+        nums.n_missing_branches = (
+            self.n_missing_branches + other.n_missing_branches
+            )
         return nums
 
     def __radd__(self, other):
