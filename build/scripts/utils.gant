@@ -302,7 +302,8 @@ binding.setVariable("platformImplementationModules", [
   "xml-structure-view-impl",
   "protocol-reader-runtime",
   "script-debugger-backend",
-  "script-debugger-ui"
+  "script-debugger-ui",
+  "structuralsearch"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->

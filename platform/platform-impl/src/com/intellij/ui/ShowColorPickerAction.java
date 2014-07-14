@@ -18,12 +18,12 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,9 +34,8 @@ public class ShowColorPickerAction extends AnAction {
     final Project project = e.getProject();
     JComponent root = rootComponent(project);
     if (root != null) {
-      ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
-      final ColorPicker.ColorPickerDialog picker =
-        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
+      List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
+      ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
       picker.setModal(false);
       picker.show();
     }
